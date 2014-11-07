@@ -27,6 +27,7 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
 
 import static com.mongodb.connection.ProtocolHelper.getQueryFailureException;
+import static java.lang.String.format;
 
 class QueryResultCallback<T> extends ResponseCallback {
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
@@ -54,7 +55,11 @@ class QueryResultCallback<T> extends ResponseCallback {
                 throw getQueryFailureException(getServerAddress(), errorDocument);
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
-                LOGGER.debug("Query results received " + result.getResults().size() + " documents with cursor " + result.getCursor());
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("Query results received %s documents with cursor %s",
+                                        result.getResults().size(),
+                                        result.getCursor()));
+                }
             }
         } catch (MongoException me) {
             exceptionResult = me;

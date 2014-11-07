@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+import static java.lang.String.format;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 
 /**
@@ -145,8 +146,8 @@ public class JsonWriter extends AbstractBsonWriter {
             switch (settings.getOutputMode()) {
                 case SHELL:
                     writeNameHelper(getName());
-                    writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
-                                               printBase64Binary(binary.getData())));
+                    writer.write(format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
+                                        printBase64Binary(binary.getData())));
 
                     break;
                 default:
@@ -186,9 +187,9 @@ public class JsonWriter extends AbstractBsonWriter {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\'");
                     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                     if (value >= -59014396800000L && value <= 253399536000000L) {
-                        writer.write(String.format("ISODate(\"%s\")", dateFormat.format(new Date(value))));
+                        writer.write(format("ISODate(\"%s\")", dateFormat.format(new Date(value))));
                     } else {
-                        writer.write(String.format("new Date(%d)", value));
+                        writer.write(format("new Date(%d)", value));
                     }
                     break;
                 default:
@@ -235,15 +236,15 @@ public class JsonWriter extends AbstractBsonWriter {
                 case STRICT:
                     writeStartDocument();
                     writeNameHelper("$numberLong");
-                    writer.write(String.format("\"%d\"", value));
+                    writer.write(format("\"%d\"", value));
                     writeEndDocument();
                     break;
                 case SHELL:
                     writeNameHelper(getName());
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
-                        writer.write(String.format("NumberLong(%d)", value));
+                        writer.write(format("NumberLong(%d)", value));
                     } else {
-                        writer.write(String.format("NumberLong(\"%d\")", value));
+                        writer.write(format("NumberLong(\"%d\")", value));
                     }
                     break;
                 default:
@@ -305,7 +306,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     break;
                 case SHELL:
                     writeNameHelper(getName());
-                    writer.write(String.format("ObjectId(\"%s\")", objectId.toString()));
+                    writer.write(format("ObjectId(\"%s\")", objectId.toString()));
                     break;
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());
@@ -373,7 +374,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     break;
                 case SHELL:
                     writeNameHelper(getName());
-                    writer.write(String.format("Timestamp(%d, %d)", value.getTime(), value.getInc()));
+                    writer.write(format("Timestamp(%d, %d)", value.getTime(), value.getInc()));
                     break;
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());

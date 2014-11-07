@@ -25,6 +25,8 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.codecs.Decoder;
 
+import static java.lang.String.format;
+
 class GetMoreResultCallback<T> extends ResponseCallback {
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
     private final SingleResultCallback<QueryResult<T>> callback;
@@ -50,7 +52,11 @@ class GetMoreResultCallback<T> extends ResponseCallback {
                 throw new MongoCursorNotFoundException(cursorId, getServerAddress());
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
-                LOGGER.debug("GetMore results received " + result.getResults().size() + " documents with cursor " + result.getCursor());
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug(format("GetMore results received %s documents with cursor %s",
+                                        result.getResults().size(),
+                                        result.getCursor()));
+                }
             }
         } catch (MongoException me) {
             exceptionResult = me;

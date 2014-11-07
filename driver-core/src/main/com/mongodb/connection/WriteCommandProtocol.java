@@ -79,7 +79,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             BsonDocument result = receiveMessage(connection, message);
 
             if (nextMessage != null || batchNum > 1) {
-                getLogger().debug(format("Received response for batch %d", batchNum));
+                if (getLogger().isDebugEnabled()) {
+                    getLogger().debug(format("Received response for batch %d", batchNum));
+                }
             }
 
             if (WriteCommandResultHelper.hasError(result)) {
@@ -118,7 +120,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             final int nextRangeStartIndex = currentRangeStartIndex + itemCount;
 
             if (nextBatchNum > 1) {
-                getLogger().debug(format("Asynchronously sending batch %d", batchNum));
+                if (getLogger().isDebugEnabled()) {
+                    getLogger().debug(format("Asynchronously sending batch %d", batchNum));
+                }
             }
 
             sendMessageAsync(connection, message.getId(), bsonOutput).register(new SingleResultCallback<BsonDocument>() {
@@ -130,7 +134,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                     } else {
 
                         if (nextBatchNum > 1) {
-                            getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
+                            if (getLogger().isDebugEnabled()) {
+                                getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
+                            }
                         }
 
                         if (WriteCommandResultHelper.hasError(result)) {
@@ -164,7 +170,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
         try {
             BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
             if (nextMessage != null || batchNum > 1) {
-                getLogger().debug(format("Sending batch %d", batchNum));
+                if (getLogger().isDebugEnabled()) {
+                    getLogger().debug(format("Sending batch %d", batchNum));
+                }
             }
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return nextMessage;

@@ -45,7 +45,9 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
         if (e != null) {
             callback.onResult(null, e);
         } else {
-            LOGGER.debug("Command execution completed with status " + ProtocolHelper.isCommandOk(response));
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Command execution completed with status " + ProtocolHelper.isCommandOk(response));
+            }
             if (!ProtocolHelper.isCommandOk(response)) {
                 callback.onResult(null, ProtocolHelper.getCommandFailureException(response, getServerAddress()));
             } else {

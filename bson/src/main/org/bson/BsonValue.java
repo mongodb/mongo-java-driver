@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import static java.lang.String.format;
+
 /**
  * Base class for any BSON type.
  *
@@ -76,8 +78,8 @@ public abstract class BsonValue {
      */
     public BsonNumber asNumber() {
         if (getBsonType() != BsonType.INT32 && getBsonType() != BsonType.INT64 && getBsonType() != BsonType.DOUBLE) {
-            throw new BsonInvalidOperationException(String.format("Value expected to be of a numerical BSON type is of unexpected type %s",
-                                                                  getBsonType()));
+            throw new BsonInvalidOperationException(format("Value expected to be of a numerical BSON type is of unexpected type %s",
+                                                           getBsonType()));
         }
         return (BsonNumber) this;
     }
@@ -392,8 +394,8 @@ public abstract class BsonValue {
 
     private void throwIfInvalidType(final BsonType expectedType) {
         if (getBsonType() != expectedType) {
-            throw new BsonInvalidOperationException(String.format("Value expected to be of type %s is of unexpected type %s",
-                                                                  expectedType, getBsonType()));
+            throw new BsonInvalidOperationException(format("Value expected to be of type %s is of unexpected type %s",
+                                                           expectedType, getBsonType()));
         }
     }
 }

@@ -104,8 +104,10 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (!selectionFailureLogged) {
-                    LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                       serverSelector, curDescription, MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
+                                           serverSelector, curDescription, MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    }
                     selectionFailureLogged = true;
                 }
 
@@ -159,8 +161,10 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (!selectionFailureLogged) {
-                    LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                       MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
+                                           MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    }
                     selectionFailureLogged = true;
                 }
 
@@ -210,7 +214,9 @@ abstract class BaseCluster implements Cluster {
     protected abstract ClusterableServer getServer(ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
-        LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));
+        }
 
         description = newDescription;
         CountDownLatch current = phase.getAndSet(new CountDownLatch(1));

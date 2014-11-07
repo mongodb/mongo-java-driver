@@ -102,7 +102,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     /**
      * Construct an instance.
      *
-     * @param codecRegistry the non-null codec registry
+     *  @param codecRegistry the non-null codec registry
      * @param bsonTypeClassMap the non-null BsonTypeClassMap
      * @param objectFactory the non-null object factory used to create empty DBObject instances when decoding
      */

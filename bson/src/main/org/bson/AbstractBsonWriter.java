@@ -491,7 +491,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             throw new IllegalArgumentException("BSON field name can not be null");
         }
         if (!fieldNameValidatorStack.peek().validate(name)) {
-            throw new IllegalArgumentException(String.format("Invalid BSON field name %s", name));
+            throw new IllegalArgumentException(format("Invalid BSON field name %s", name));
         }
         context.name = name;
         state = State.VALUE;
@@ -648,10 +648,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
                                            final BsonContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
-        String message = format("%s can only be called when ContextType is %s, "
-                                + "not when ContextType is %s.", methodName, validContextTypesString,
-                                actualContextType);
-        throw new BsonInvalidOperationException(message);
+        throw new BsonInvalidOperationException(format("%s can only be called when ContextType is %s, "
+                                                       + "not when ContextType is %s.", 
+                                                       methodName, validContextTypesString, actualContextType));
     }
 
     /**
@@ -662,7 +661,6 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      * @throws BsonInvalidOperationException when the method called is not valid for the current state.
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
-        String message;
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.DONE) {
             if (!methodName.startsWith("end") && !methodName.equals("writeName")) { // NOPMD
                 //NOPMD collapsing these if statements will not aid readability
@@ -674,16 +672,14 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                 if (Arrays.asList('A', 'E', 'I', 'O', 'U').contains(typeName.charAt(0))) {
                     article = "An";
                 }
-                message = format("%s %s value cannot be written to the root level of a BSON document.", article,
-                                 typeName);
-                throw new BsonInvalidOperationException(message);
+                throw new BsonInvalidOperationException(format("%s %s value cannot be written to the root level of a BSON document.", 
+                                                               article, typeName));
             }
         }
 
         String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
-        message = format("%s can only be called when State is %s, not when State is %s", methodName,
-                         validStatesString, state);
-        throw new BsonInvalidOperationException(message);
+        throw new BsonInvalidOperationException(format("%s can only be called when State is %s, not when State is %s", 
+                                                       methodName, validStatesString, state));
     }
 
     @Override

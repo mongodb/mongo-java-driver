@@ -22,6 +22,8 @@ import org.bson.types.ObjectId;
 
 import java.util.Stack;
 
+import static java.lang.String.format;
+
 /**
  * A BsonWriter implementation that writes to a binary stream of data.  This is the most commonly used implementation.
  *
@@ -371,9 +373,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private void backpatchSize() {
         int size = bsonOutput.getPosition() - getContext().startPosition;
         if (size > maxDocumentSizeStack.peek()) {
-            String message = String.format("Size %d is larger than MaxDocumentSize %d.", size,
-                                           binaryWriterSettings.getMaxDocumentSize());
-            throw new BsonSerializationException(message);
+            throw new BsonSerializationException(format("Size %d is larger than MaxDocumentSize %d.", size,
+                                                        binaryWriterSettings.getMaxDocumentSize()));
         }
         bsonOutput.writeInt32(bsonOutput.getPosition() - size, size);
     }

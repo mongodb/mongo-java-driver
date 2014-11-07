@@ -102,12 +102,16 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
             RequestMessage nextMessage = lastMessage.encode(bsonOutput);
             int batchNum = 1;
             if (nextMessage != null) {
-                getLogger().debug(format("Sending batch %d", batchNum));
+                if (getLogger().isDebugEnabled()) {
+                    getLogger().debug(format("Sending batch %d", batchNum));
+                }
             }
 
             while (nextMessage != null) {
                 batchNum++;
-                getLogger().debug(format("Sending batch %d", batchNum));
+                if (getLogger().isDebugEnabled()) {
+                    getLogger().debug(format("Sending batch %d", batchNum));
+                }
                 lastMessage = nextMessage;
                 nextMessage = nextMessage.encode(bsonOutput);
             }
@@ -153,7 +157,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
      * @param settings the message settings
      * @return the request message
      */
-    protected abstract RequestMessage createRequestMessage(final MessageSettings settings);
+    protected abstract RequestMessage createRequestMessage(MessageSettings settings);
 
     /**
      * Gets the namespace.

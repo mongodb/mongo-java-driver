@@ -652,9 +652,9 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
             throwInvalidState(methodName, State.VALUE);
         }
         if (currentBsonType != requiredBsonType) {
-            String message = format("%s can only be called when CurrentBSONType is %s, not when CurrentBSONType is %s.",
-                                    methodName, requiredBsonType, currentBsonType);
-            throw new BsonInvalidOperationException(message);
+            throw new BsonInvalidOperationException(format("%s can only be called when CurrentBSONType is %s, " 
+                                                           + "not when CurrentBSONType is %s.",
+                                                           methodName, requiredBsonType, currentBsonType));
         }
     }
 
@@ -668,9 +668,8 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         readBsonType();
         String actualName = readName();
         if (!actualName.equals(expectedName)) {
-            String message = format("Expected element name to be '%s', not '%s'.",
-                                    expectedName, actualName);
-            throw new BsonSerializationException(message);
+            throw new BsonSerializationException(format("Expected element name to be '%s', not '%s'.",
+                                                        expectedName, actualName));
         }
     }
 
