@@ -54,7 +54,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private BsonDocument projection;
     private BsonDocument sort;
     private long maxTimeMS;
-    private boolean returnUpdated = false;
+    private boolean returnOriginal = false;
     private boolean upsert = false;
 
     /**
@@ -194,18 +194,18 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @return true if the updated document should be returned, otherwise false
      */
-    public boolean isReturnUpdated() {
-        return returnUpdated;
+    public boolean isReturnOriginal() {
+        return returnOriginal;
     }
 
     /**
      * Set to true if the updated document should be returned rather than the original. The default is false.
      *
-     * @param returnUpdated set to true if the updated document should be returned rather than the original.
+     * @param returnOriginal set to true if the updated document should be returned rather than the original.
      * @return this
      */
-    public FindAndUpdateOperation<T> returnUpdated(final boolean returnUpdated) {
-        this.returnUpdated = returnUpdated;
+    public FindAndUpdateOperation<T> returnOriginal(final boolean returnOriginal) {
+        this.returnOriginal = returnOriginal;
         return this;
     }
 
@@ -248,7 +248,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         putIfNotNull(command, "query", getFilter());
         putIfNotNull(command, "fields", getProjection());
         putIfNotNull(command, "sort", getSort());
-        putIfTrue(command, "new", isReturnUpdated());
+        putIfTrue(command, "new", isReturnOriginal());
         putIfTrue(command, "upsert", isUpsert());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("update", getUpdate());

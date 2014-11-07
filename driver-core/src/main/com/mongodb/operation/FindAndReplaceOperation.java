@@ -54,7 +54,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private BsonDocument projection;
     private BsonDocument sort;
     private long maxTimeMS;
-    private boolean returnReplaced = false;
+    private boolean returnOriginal = false;
     private boolean upsert = false;
 
     /**
@@ -194,18 +194,18 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      *
      * @return true if the updated document should be returned, otherwise false
      */
-    public boolean isReturnReplaced() {
-        return returnReplaced;
+    public boolean isReturnOriginal() {
+        return returnOriginal;
     }
 
     /**
      * Set to true if the updated document should be returned.
      *
-     * @param returnReplaced set to true if the updated document should be returned
+     * @param returnOriginal set to true if the updated document should be returned
      * @return this
      */
-    public FindAndReplaceOperation<T> returnReplaced(final boolean returnReplaced) {
-        this.returnReplaced = returnReplaced;
+    public FindAndReplaceOperation<T> returnOriginal(final boolean returnOriginal) {
+        this.returnOriginal = returnOriginal;
         return this;
     }
 
@@ -248,7 +248,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         putIfNotNull(command, "query", getFilter());
         putIfNotNull(command, "fields", getProjection());
         putIfNotNull(command, "sort", getSort());
-        putIfTrue(command, "new", isReturnReplaced());
+        putIfTrue(command, "new", isReturnOriginal());
         putIfTrue(command, "upsert", isUpsert());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("update", getReplacement());

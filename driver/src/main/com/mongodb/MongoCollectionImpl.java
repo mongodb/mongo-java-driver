@@ -480,7 +480,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                    .filter(asBson(filter))
                                                    .projection(asBson(options.getProjection()))
                                                    .sort(asBson(options.getSort()))
-                                                   .returnReplaced(options.getReturnReplaced())
+                                                   .returnOriginal(options.getReturnOriginal())
                                                    .upsert(options.isUpsert()));
     }
 
@@ -495,7 +495,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                   .filter(asBson(filter))
                                                   .projection(asBson(options.getProjection()))
                                                   .sort(asBson(options.getSort()))
-                                                  .returnUpdated(options.getReturnUpdated())
+                                                  .returnOriginal(options.getReturnOriginal())
                                                   .upsert(options.isUpsert()));
     }
 

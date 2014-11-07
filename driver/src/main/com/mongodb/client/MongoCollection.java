@@ -444,7 +444,7 @@ public interface MongoCollection<T> {
      *
      * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
-     * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
+     * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
@@ -456,7 +456,7 @@ public interface MongoCollection<T> {
      * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options the options to apply to the operation
-     * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
+     * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
@@ -469,7 +469,7 @@ public interface MongoCollection<T> {
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
-     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
+     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
@@ -483,7 +483,7 @@ public interface MongoCollection<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param options the options to apply to the operation
-     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
+     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */

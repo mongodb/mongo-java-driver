@@ -26,7 +26,7 @@ public class FindOneAndReplaceOptions {
     private Object projection;
     private Object sort;
     private boolean upsert;
-    private boolean returnReplaced;
+    private boolean returnOriginal;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -98,18 +98,18 @@ public class FindOneAndReplaceOptions {
      *
      * @return true if the updated document should be returned, otherwise false
      */
-    public boolean getReturnReplaced() {
-        return returnReplaced;
+    public boolean getReturnOriginal() {
+        return returnOriginal;
     }
 
     /**
      * Set true to return the updated document rather than the original.
      *
-     * @param returnReplaced set true to return the updated document rather than the original.
+     * @param returnOriginal set true to return the updated document rather than the original.
      * @return this
      */
-    public FindOneAndReplaceOptions returnReplaced(final boolean returnReplaced) {
-        this.returnReplaced = returnReplaced;
+    public FindOneAndReplaceOptions returnOriginal(final boolean returnOriginal) {
+        this.returnOriginal = returnOriginal;
         return this;
     }
 }
