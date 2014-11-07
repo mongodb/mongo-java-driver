@@ -281,7 +281,9 @@ public abstract class DBCollection {
      * Method to be overridden if you need to add any fields to a given document before saving it to the collection.
      *
      * @param document object to which to add the fields
+     * @deprecated This method will be removed in a future release.  There is no replacement.
      */
+    @Deprecated
     protected abstract void doapply(DBObject document);
 
     /**
@@ -963,7 +965,9 @@ public abstract class DBCollection {
      *
      * @param document document to be passed to {@code doapply()}
      * @return '_id' of the document
+     * @deprecated This method will be removed in a future release.  There is no replacement.
      */
+    @Deprecated
     public Object apply(final DBObject document) {
         return apply(document, true);
     }
@@ -975,7 +979,9 @@ public abstract class DBCollection {
      * @param document document to be passed to {@code doapply()}
      * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
      * @return '_id' of the document
+     * @deprecated This method will be removed in a future release.  There is no replacement.
      */
+    @Deprecated
     public Object apply(final DBObject document, final boolean ensureId) {
         Object id = document.get("_id");
         if (ensureId && id == null) {
