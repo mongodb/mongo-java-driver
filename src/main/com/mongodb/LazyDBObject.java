@@ -19,22 +19,41 @@ package com.mongodb;
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
 import org.bson.io.BSONByteBuffer;
+import org.bson.util.annotations.Immutable;
 
+/**
+ * An immutable {@code DBObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
+ * BSON documents between servers when you don't want to pay the performance penalty of encoding or decoding them fully.
+ */
+@Immutable
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
-	public void markAsPartialObject() {
-	_partial = true;
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyDBObject(byte[] bytes, LazyBSONCallback callback){
+        this(bytes, 0, callback);
     }
 
-    public boolean isPartialObject() {
-        return _partial;
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyDBObject(byte[] bytes, int offset, LazyBSONCallback callback){
+        super(bytes, offset, callback);
     }
 
     /**
      * @deprecated use {@link #LazyDBObject(byte[], org.bson.LazyBSONCallback)} instead
      */
     @Deprecated
-    public LazyDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){ 
+    public LazyDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){
         super(buff, cbk);
     }
 
@@ -42,17 +61,18 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
      * @deprecated use {@link #LazyDBObject(byte[], int, org.bson.LazyBSONCallback)} instead
      */
     @Deprecated
-    public LazyDBObject(BSONByteBuffer buff, int offset, LazyBSONCallback cbk){ 
+    public LazyDBObject(BSONByteBuffer buff, int offset, LazyBSONCallback cbk){
         super(buff, offset, cbk);
     }
 
-    
-    public LazyDBObject(byte[] data, LazyBSONCallback cbk){
-        this(data, 0, cbk);
+    @Override
+    public void markAsPartialObject() {
+        _partial = true;
     }
 
-    public LazyDBObject(byte[] data, int offset, LazyBSONCallback cbk){
-        super(data, offset, cbk);
+    @Override
+    public boolean isPartialObject() {
+        return _partial;
     }
 
     private boolean _partial = false;

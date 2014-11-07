@@ -26,18 +26,4 @@
     
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
-
-    <!--Classes to be documented later - JAVA-1428 -->
-    <suppress checks="Javadoc*" files="LazyBSONCallback"/>
-    <suppress checks="Javadoc*" files="LazyBSONDecoder"/>
-    <suppress checks="Javadoc*" files="LazyBSONObject"/>
-    <suppress checks="Javadoc*" files="LazyBSONList"/>
-    <suppress checks="Javadoc*" files="LazyDBCallback"/>
-    <suppress checks="Javadoc*" files="LazyDBDecoder"/>
-    <suppress checks="Javadoc*" files="LazyDBList"/>
-    <suppress checks="Javadoc*" files="LazyDBObject"/>
-    <suppress checks="Javadoc*" files="LazyWriteableDBCallback"/>
-    <suppress checks="Javadoc*" files="LazyWriteableDBDecoder"/>
-    <suppress checks="Javadoc*" files="LazyWriteableDBObject"/>
-    
 </suppressions>

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
+ *  A decoder for {@code LazyDBObject} instances.
  */
 public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
     static class LazyDBDecoderFactory implements DBDecoderFactory {
@@ -32,17 +32,19 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
         }
     }
 
+    /**
+     * A factory for instances of this class
+     */
     public static DBDecoderFactory FACTORY = new LazyDBDecoderFactory();
 
-    public LazyDBDecoder( ){
-    }
-        
+    @Override
     public DBCallback getDBCallback(DBCollection collection) {
         // callback doesnt do anything special, could be unique per decoder
         // but have to create per collection due to DBRef, at least
         return new LazyDBCallback(collection);
     }
 
+    @Override
     public DBObject decode(byte[] b, DBCollection collection) {
         DBCallback cbk = getDBCallback(collection);
         cbk.reset();
@@ -50,6 +52,7 @@ public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
         return (DBObject) cbk.get();
     }
 
+    @Override
     public DBObject decode(InputStream in,  DBCollection collection) throws IOException {
         DBCallback cbk = getDBCallback(collection);
         cbk.reset();

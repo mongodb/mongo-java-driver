@@ -24,12 +24,17 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- *
+ * A {@code BSONCallback} for the creation of {@code LazyDBObject} and {@code LazyDBList} instances.
  */
 public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
-    public LazyDBCallback( DBCollection coll ){
-        _collection = coll;
+    /**
+     * Construct an instance.
+     *
+     * @param collection the {@code DBCollection} containing the document.  This parameter is no longer used.
+     */
+    public LazyDBCallback( DBCollection collection ){
+        _collection = collection;
         _db = _collection == null ? null : _collection.getDB();
     }
 
@@ -52,6 +57,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
         return new LazyDBList(data, offset, this);
     }
 
+    @Override
     public Object createDBRef( String ns, ObjectId id ){
         return new DBRef( _db, ns, id );
     }

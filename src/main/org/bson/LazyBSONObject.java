@@ -40,15 +40,30 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
+ * An immutable {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
+ * BSON documents between servers when you don't want to pay the performance penalty of encoding or decoding them fully.
  */
 public class LazyBSONObject implements BSONObject {
 
-    public LazyBSONObject( byte[] data, LazyBSONCallback callback ){
-        this( BSONByteBuffer.wrap( data ), callback );
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyBSONObject( byte[] bytes, LazyBSONCallback callback ){
+        this( BSONByteBuffer.wrap( bytes ), callback );
     }
 
-    public LazyBSONObject( byte[] data, int offset, LazyBSONCallback callback ){
-        this( BSONByteBuffer.wrap( data, offset, data.length - offset ), offset, callback );
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes representing the start of the document
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyBSONObject( byte[] bytes, int offset, LazyBSONCallback callback ){
+        this( BSONByteBuffer.wrap( bytes, offset, bytes.length - offset ), offset, callback );
     }
 
     /**
@@ -503,6 +518,11 @@ public class LazyBSONObject implements BSONObject {
         return getElementType( offset ) == BSON.EOO;
     }
 
+    /**
+     * Gets whether this is an empty {@code BSONObject}.
+     *
+     * @return true if this has no keys
+     */
     public boolean isEmpty(){
         return isElementEmpty( _doc_start_offset + FIRST_ELMT_OFFSET );
     }
@@ -511,10 +531,22 @@ public class LazyBSONObject implements BSONObject {
         return _input.getInt( offset );
     }
 
+    /**
+     * Gets the size in bytes of the BSON document.
+     *
+     * @return the size in bytes
+     */
     public int getBSONSize(){
         return getBSONSize( _doc_start_offset );
     }
-    
+
+    /**
+     * Pipe the raw bytes into the given output stream.
+     *
+     * @param os the output stream
+     * @return the number of bytes written
+     * @throws IOException any IOException thrown by the output stream
+     */
     public int pipe(OutputStream os) throws IOException {
         os.write(_input.array(), _doc_start_offset, getBSONSize());
         return getBSONSize();

@@ -20,41 +20,23 @@ import com.mongodb.LazyDBObject;
 import org.bson.types.ObjectId;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
- *
+ * A {@code BSONCallback} for creation of {@code LazyBSONObject} and {@code LazyBSONList} instances.
  */
 public class LazyBSONCallback extends EmptyBSONCallback {
 
-    public void objectStart(){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public void objectStart( String name ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    /**
-     * @deprecated instead, use {@link #arrayStart()} if {@code array} is true, and {@link #objectStart()} if {@code array} is false 
-     */
-    @Deprecated
-    public void objectStart( boolean array ){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
-    public Object objectDone(){
-        throw new UnsupportedOperationException( "Not supported yet." );
-    }
-
+    @Override
     public void reset(){
         _root = null;
     }
 
+    @Override
     public Object get(){
         return _root;
     }
 
+    @Override
     public void gotBinary( String name, byte type, byte[] data ){
         setRootObject( createObject( data, 0 ) );
     }
@@ -67,29 +49,39 @@ public class LazyBSONCallback extends EmptyBSONCallback {
         _root = root;
     }
 
-    public Object createObject( byte[] data, int offset ){
-        return new LazyDBObject( data, offset, this );
+    /**
+     * Create a {@code LazyBSONObject} instance from the given bytes starting from the given offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param offset the offset into the bytes
+     * @return the LazyBSONObject
+     */
+    public Object createObject( byte[] bytes, int offset ){
+        return new LazyDBObject( bytes, offset, this );
     }
 
+    /**
+     * Create a {@code LazyBSONList} from the given bytes starting from the given offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param offset the offset into the bytes
+     * @return the LazyBSONList
+     */
     @SuppressWarnings("rawtypes")
-	public List createArray( byte[] data, int offset ){
-        return new LazyBSONList( data, offset, this );
+	public List createArray( byte[] bytes, int offset ){
+        return new LazyBSONList( bytes, offset, this );
     }
 
+    /**
+     * This is a factory method pattern to create appropriate objects for BSON type DBPointer(0x0c).
+     *
+     * @param ns the namespace of the reference
+     * @param id the identifier of the reference
+     * @return object to be used as reference representation
+     */
     public Object createDBRef( String ns, ObjectId id ){
         return new BasicBSONObject( "$ns", ns ).append( "$id", id );
     }
 
-
-    /*    public Object createObject(InputStream input, int offset) {
-        try {
-            return new LazyBSONObject(input, offset, this);
-        }
-        catch ( IOException e ) {
-            e.printStackTrace();
-            return null;
-        }
-    }*/
     private Object _root;
-    private static final Logger log = Logger.getLogger( "org.bson.LazyBSONCallback" );
 }

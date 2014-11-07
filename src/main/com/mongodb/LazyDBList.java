@@ -19,14 +19,30 @@ package com.mongodb;
 import org.bson.LazyBSONCallback;
 import org.bson.io.BSONByteBuffer;
 
+/**
+ * A {@code LazyDBObject} representing a BSON array.
+ */
 public class LazyDBList extends org.bson.LazyDBList {
 
-    public LazyDBList(final byte[] data, final LazyBSONCallback callback) {
-        super(data, callback);
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param callback the callback to use to create nested values
+     */
+    public LazyDBList(final byte[] bytes, final LazyBSONCallback callback) {
+        super(bytes, callback);
     }
 
-    public LazyDBList(final byte[] data, final int offset, final LazyBSONCallback callback) {
-        super(data, offset, callback);
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to create nested values
+     */
+    public LazyDBList(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
+        super(bytes, offset, callback);
     }
 
     /**

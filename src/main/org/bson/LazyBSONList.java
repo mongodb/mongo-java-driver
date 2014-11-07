@@ -23,11 +23,31 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+/**
+ * A {@code LazyBSONObject} representing a BSON array.
+ */
 @SuppressWarnings( "rawtypes" )
 public class LazyBSONList extends LazyBSONObject implements List {
 
-    public LazyBSONList(byte[] data , LazyBSONCallback callback) { super( data , callback ); }
-    public LazyBSONList(byte[] data , int offset , LazyBSONCallback callback) { super( data , offset , callback ); }
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param callback the callback to use to create nested values
+     */
+
+    public LazyBSONList(byte[] bytes , LazyBSONCallback callback) {
+        super( bytes , callback );
+    }
+
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to create nested values
+     */
+    public LazyBSONList(byte[] bytes , int offset , LazyBSONCallback callback) { super( bytes , offset , callback ); }
 
     /**
      * @deprecated use {@link #LazyBSONList(byte[], LazyBSONCallback)} instead
@@ -102,6 +122,9 @@ public class LazyBSONList extends LazyBSONObject implements List {
         return getElements().size();
     }
 
+    /**
+     * An iterator over the values in a LazyBsonList.
+     */
     public class LazyBSONListIterator implements Iterator {
         List<ElementRecord> elements;
         int pos=0;

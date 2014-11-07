@@ -29,8 +29,12 @@ public class LazyWriteableDBDecoder extends LazyDBDecoder {
         }
     }
 
+    /**
+     * A factory for instances of this class
+     */
     public static DBDecoderFactory FACTORY = new LazyDBDecoderFactory();
 
+    @Override
     public DBCallback getDBCallback(DBCollection collection) {
         return new LazyWriteableDBCallback(collection);
     }

@@ -32,6 +32,27 @@ import java.util.Set;
 public class LazyWriteableDBObject extends LazyDBObject {
 
     /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyWriteableDBObject(byte[] bytes, LazyBSONCallback callback){
+        this(bytes, 0, callback);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
+    public LazyWriteableDBObject(byte[] bytes, int offset, LazyBSONCallback callback){
+        super(bytes, offset, callback);
+    }
+
+    /**
      * @deprecated use {@link #LazyWriteableDBObject(byte[], org.bson.LazyBSONCallback)} instead
      */
     @Deprecated
@@ -48,15 +69,7 @@ public class LazyWriteableDBObject extends LazyDBObject {
     }
 
 
-    public LazyWriteableDBObject(byte[] data, LazyBSONCallback cbk){
-        this(data, 0, cbk);
-    }
-
-    public LazyWriteableDBObject(byte[] data, int offset, LazyBSONCallback cbk){
-        super(data, offset, cbk);
-    }
-
-	@Override
+    @Override
 	public Object put(String key, Object v) {
 		return writeable.put(key, v);
 	}

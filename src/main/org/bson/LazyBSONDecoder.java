@@ -21,14 +21,13 @@ import org.bson.io.Bits;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Logger;
 
 /**
  * implementation of BSONDecoder that creates LazyBSONObject instances
  */
 public class LazyBSONDecoder implements BSONDecoder {
-    static final Logger LOG = Logger.getLogger( LazyBSONDecoder.class.getName() );
 
+    @Override
     public BSONObject readObject(byte[] b) {
         try {
             return readObject( new ByteArrayInputStream( b ) );
@@ -38,12 +37,14 @@ public class LazyBSONDecoder implements BSONDecoder {
         }
     }
 
+    @Override
     public BSONObject readObject(InputStream in) throws IOException {
         BSONCallback c = new LazyBSONCallback();
         decode( in , c );
         return (BSONObject)c.get();
     }
 
+    @Override
     public int decode(byte[] b, BSONCallback callback) {
         try {
             return decode( new ByteArrayInputStream( b ), callback );
@@ -53,6 +54,7 @@ public class LazyBSONDecoder implements BSONDecoder {
         }
     }
 
+    @Override
     public int decode(InputStream in, BSONCallback callback) throws IOException {
         byte[] objSizeBuffer = new byte[BYTES_IN_INTEGER];
         Bits.readFully(in, objSizeBuffer, 0, BYTES_IN_INTEGER);

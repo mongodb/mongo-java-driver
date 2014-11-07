@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 /**
  * @deprecated This class will be removed in a future release.  There is no replacement.
@@ -25,8 +24,12 @@ import java.util.logging.Logger;
 @Deprecated
 public class LazyWriteableDBCallback extends LazyDBCallback {
 
-    public LazyWriteableDBCallback( DBCollection coll ){
-	super(coll);
+    /**
+     * Construct an instance.
+     * @param collection the collection containing the documents to be decoded
+     */
+    public LazyWriteableDBCallback( DBCollection collection ){
+	super(collection);
     }
 
     @Override
@@ -42,6 +45,4 @@ public class LazyWriteableDBCallback extends LazyDBCallback {
         }
         return o;
     }
-
-    private static final Logger log = Logger.getLogger( LazyWriteableDBCallback.class.getName() );
 }
