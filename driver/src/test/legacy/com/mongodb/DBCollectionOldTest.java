@@ -26,7 +26,6 @@ import java.util.List;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -53,85 +52,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         DBObject obj = new BasicDBObject();
         c.insert(obj, WriteConcern.SAFE);
         c.insert(obj, WriteConcern.SAFE);
-    }
-
-    @Test
-    public void testFindOne() {
-        DBCollection c = collection;
-
-        DBObject obj = c.findOne();
-        assertEquals(obj, null);
-
-        obj = c.findOne();
-        assertEquals(obj, null);
-
-        obj = c.findOne();
-        assertEquals(obj, null);
-
-        // Test that findOne works when fields is specified but no match is found
-        // *** This is a Regression test for JAVA-411 ***
-        obj = c.findOne(null, new BasicDBObject("_id", true));
-
-        assertEquals(obj, null);
-
-        DBObject inserted = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).get();
-        c.insert(inserted);
-        c.insert(BasicDBObjectBuilder.start().add("_id", 123).add("x", 2).add("z", 2).get());
-
-        obj = c.findOne(123);
-        assertEquals(obj.get("_id"), 123);
-        assertEquals(obj.get("x"), 2);
-        assertEquals(obj.get("z"), 2);
-
-        obj = c.findOne(123, new BasicDBObject("x", 1));
-        assertEquals(obj.get("_id"), 123);
-        assertEquals(obj.get("x"), 2);
-        assertEquals(obj.containsField("z"), false);
-
-        obj = c.findOne(new BasicDBObject("x", 1));
-        assertEquals(obj.get("x"), 1);
-        assertEquals(obj.get("y"), 2);
-
-        obj = c.findOne(new BasicDBObject("x", 1), new BasicDBObject("y", 1));
-        assertEquals(obj.containsField("x"), false);
-        assertEquals(obj.get("y"), 2);
-    }
-
-    @Test
-    public void testFindOneSort() {
-        DBCollection c = collection;
-
-        DBObject obj = c.findOne();
-        assertEquals(obj, null);
-
-        c.insert(BasicDBObjectBuilder.start().add("_id", 1).add("x", 100).add("y", "abc").get());
-        c.insert(BasicDBObjectBuilder.start().add("_id", 2).add("x", 200).add("y", "abc").get()); //max x
-        c.insert(BasicDBObjectBuilder.start().add("_id", 3).add("x", 1).add("y", "abc").get());
-        c.insert(BasicDBObjectBuilder.start().add("_id", 4).add("x", -100).add("y", "xyz").get()); //min x
-        c.insert(BasicDBObjectBuilder.start().add("_id", 5).add("x", -50).add("y", "zzz").get());  //max y
-        c.insert(BasicDBObjectBuilder.start().add("_id", 6).add("x", 9).add("y", "aaa").get());  //min y
-        c.insert(BasicDBObjectBuilder.start().add("_id", 7).add("x", 1).add("y", "bbb").get());
-
-        //only sort
-        // Find all of them, order by x asc
-        obj = c.findOne(new BasicDBObject(), null, new BasicDBObject("x", 1));
-        assertNotNull(obj);
-        assertEquals(4, obj.get("_id"));
-
-        obj = c.findOne(new BasicDBObject(), null, new BasicDBObject("x", -1));
-        assertNotNull(obj);
-        assertEquals(obj.get("_id"), 2);
-
-        //query and sort
-        obj = c.findOne(new BasicDBObject("x", 1), null, BasicDBObjectBuilder.start().add("x", 1).add("y", 1).get());
-        assertNotNull(obj);
-        assertEquals(obj.get("_id"), 3);
-
-        obj = c.findOne(QueryBuilder.start("x").lessThan(2).get(), null,
-                        BasicDBObjectBuilder.start().add("y", -1).get());
-        assertNotNull(obj);
-        assertEquals(obj.get("_id"), 5);
-
     }
 
     @Test

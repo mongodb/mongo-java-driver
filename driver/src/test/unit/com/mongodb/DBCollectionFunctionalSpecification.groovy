@@ -17,6 +17,7 @@
 package com.mongodb
 
 import spock.lang.IgnoreIf
+import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
@@ -105,7 +106,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(ClassA)
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c': 1])
 
         then:
         document instanceof ClassA
@@ -118,7 +119,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setInternalClass('b', ClassB);
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c': 1])
 
         then:
         document.get('a') instanceof ClassA
@@ -481,6 +482,72 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should return null when findOne finds nothing'() {
+        expect:
+        collection.findOne([field: 'That Does Not Exist']) == null
+    }
+
+    def 'should return null when findOne finds nothing and a projection field is specified'() {
+        given:
+        collection.drop()
+
+        expect:
+        collection.findOne(null, [_id: true] as BasicDBObject) == null
+    }
+
+    @Unroll
+    def 'should return #result when performing findOne with #criteria'() {
+        given:
+        collection.insert([_id: 100, x: 1, y: 2] as BasicDBObject)
+        collection.insert([_id: 123, x: 2, z: 2] as BasicDBObject)
+
+        expect:
+        result == collection.findOne(criteria)
+
+        where:
+        criteria                | result
+        123                     | [_id: 123, x: 2, z: 2]
+        [x: 1] as BasicDBObject | [_id: 100, x: 1, y: 2]
+    }
+
+    @Unroll
+    def 'should return #result when performing findOne with #criteria and projection #projection'() {
+        given:
+        collection.insert([_id: 100, x: 1, y: 2] as BasicDBObject)
+        collection.insert([_id: 123, x: 2, z: 2] as BasicDBObject)
+
+        expect:
+        result == collection.findOne(criteria, projection)
+
+        where:
+        criteria                | projection              | result
+        123                     | [x: 1] as BasicDBObject | [_id: 123, x: 2]
+        [x: 1] as BasicDBObject | [y: 1] as BasicDBObject | [_id: 100, y: 2]
+    }
+
+    @Unroll
+    def 'should sort with #sortBy and filter with #criteria before selecting first result'() {
+        given:
+        collection.drop()
+        collection.insert([_id: 1, x: 100, y: 'abc'] as BasicDBObject)
+        collection.insert([_id: 2, x: 200, y: 'abc'] as BasicDBObject)
+        collection.insert([_id: 3, x: 1, y: 'abc'] as BasicDBObject)
+        collection.insert([_id: 4, x: -100, y: 'xyz'] as BasicDBObject)
+        collection.insert([_id: 5, x: -50, y: 'zzz'] as BasicDBObject)
+        collection.insert([_id: 6, x: 9, y: 'aaa'] as BasicDBObject)
+
+        expect:
+        collection.findOne(criteria, null, sortBy)['_id'] == expectedId;
+
+        where:
+        criteria                                  | sortBy                        | expectedId
+        new BasicDBObject()                       | [x: 1] as BasicDBObject       | 4
+        new BasicDBObject()                       | [x: -1] as BasicDBObject      | 2
+        [x: 1] as BasicDBObject                   | [x: 1, y: 1] as BasicDBObject | 3
+        QueryBuilder.start('x').lessThan(2).get() | [y: -1] as BasicDBObject      | 5
+
     }
 
     static class ClassA extends BasicDBObject { }
