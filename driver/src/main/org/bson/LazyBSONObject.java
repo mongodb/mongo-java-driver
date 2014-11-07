@@ -45,7 +45,8 @@ import java.util.regex.Pattern;
 import static org.bson.io.Bits.readLong;
 
 /**
- * A read-only {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request.
+ * An immutable {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
+ * BSON documents between servers when you don't want to pay the performance penalty of encoding or decoding them fully.
  */
 public class LazyBSONObject implements BSONObject {
     private final byte[] bytes;
@@ -67,7 +68,7 @@ public class LazyBSONObject implements BSONObject {
      * Construct an instance.
      *
      * @param bytes the raw bytes
-     * @param offset the offset into the raw bytes
+     * @param offset the offset into the raw bytes representing the start of the document
      * @param callback the callback to use to construct nested values
      */
     public LazyBSONObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
@@ -77,7 +78,7 @@ public class LazyBSONObject implements BSONObject {
     }
 
     /**
-     * Gets the offset.
+     * Gets the offset into the raw bytes representing the start of the document
      *
      * @return the offset
      */

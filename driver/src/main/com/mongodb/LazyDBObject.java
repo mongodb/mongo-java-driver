@@ -16,12 +16,15 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Immutable;
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
 
 /**
- * A read-only {@code DBObject} backed by a byte buffer that lazily provides keys and values on request.
+ * An immutable {@code DBObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
+ * BSON documents between servers when you don't want to pay the performance penalty of encoding or decoding them fully.
  */
+@Immutable
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
     private boolean isPartial = false;
