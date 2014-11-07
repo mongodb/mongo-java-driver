@@ -261,6 +261,24 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
+     * Gets the query limit.
+     *
+     * @return the limit, or 0 if no limit is set
+     */
+    public int getLimit() {
+        return findOptions.getLimit();
+    }
+
+    /**
+     * Gets the batch size.
+     *
+     * @return the batch size
+     */
+    public int getBatchSize() {
+        return findOptions.getBatchSize();
+    }
+
+    /**
      * Adds a special operator like $maxScan or $returnKey. For example:
      * <pre>
      *    addSpecial("$returnKey", 1)

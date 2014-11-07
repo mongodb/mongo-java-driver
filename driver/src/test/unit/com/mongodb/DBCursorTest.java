@@ -130,9 +130,66 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testLimit() {
-        DBCursor cursor = collection.find().limit(4);
+        DBCollection c = collection;
+        collection.drop();
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+
+        DBCursor dbCursor = c.find();
         try {
-            assertEquals(4, cursor.toArray().size());
+            assertEquals(0, dbCursor.getLimit());
+            assertEquals(0, dbCursor.getBatchSize());
+            assertEquals(100, dbCursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+
+        dbCursor = c.find().limit(50);
+        try {
+            assertEquals(50, dbCursor.getLimit());
+            assertEquals(50, dbCursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+
+        dbCursor = c.find().limit(-50);
+        try {
+            assertEquals(-50, dbCursor.getLimit());
+            assertEquals(50, dbCursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Test
+    public void testBatchSize() {
+        DBCollection c = collection;
+        collection.drop();
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+
+        DBCursor dbCursor = c.find().batchSize(0);
+        try {
+            assertEquals(0, dbCursor.getBatchSize());
+            assertEquals(100, dbCursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+
+        dbCursor = c.find().batchSize(50);
+        try {
+            assertEquals(50, dbCursor.getBatchSize());
+            assertEquals(100, dbCursor.toArray().size());
+        } finally {
+            cursor.close();
+        }
+
+        dbCursor = c.find().batchSize(-50);
+        try {
+            assertEquals(-50, dbCursor.getBatchSize());
+            assertEquals(50, dbCursor.toArray().size());
         } finally {
             cursor.close();
         }
