@@ -130,11 +130,11 @@ final class AsynchronousSocketChannelStream implements Stream {
                 channel = AsynchronousSocketChannel.open();
                 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 channel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
-                if (settings.getSendBufferSize() > 0) {
+                if (settings.getReceiveBufferSize() > 0) {
                     channel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
                 }
                 if (settings.getSendBufferSize() > 0) {
-                    channel.setOption(StandardSocketOptions.SO_SNDBUF, settings.getReceiveBufferSize());
+                    channel.setOption(StandardSocketOptions.SO_SNDBUF, settings.getSendBufferSize());
                 }
 
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
