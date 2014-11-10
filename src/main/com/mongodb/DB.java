@@ -120,21 +120,39 @@ public abstract class DB {
     /**
      * <p>Starts a new 'consistent request'</p>.
      * 
-     * <p>Following this call and until {@link com.mongodb.DB#requestDone()} is called,
-     * all db operations will use the same underlying connection.</p>
+     * <p>Following this call and until {@link com.mongodb.DB#requestDone()} is called, all db operations will use the same underlying
+     * connection.</p>
      * 
-     * <p>This is useful to ensure that operations happen in a certain order with predictable results.</p>
+     * @deprecated  The main use case for this method is to ensure that applications can read their own unacknowledged writes,
+     * but this is no longer so prevalent since the driver started defaulting to acknowledged writes. The other main use case is to
+     * ensure that related read operations are all routed to the same server when using a non-primary read preference.  But this is
+     * dangerous because mongos does not provide this guarantee.  For these reasons, this method is now deprecated and will be
+     * removed in the next major release.
      */
+    @Deprecated
     public abstract void requestStart();
 
     /**
      * Ends the current 'consistent request'.
+     * @deprecated  The main use case for this method is to ensure that applications can read their own unacknowledged writes,
+     * but this is no longer so prevalent since the driver started defaulting to acknowledged writes. The other main use case is to
+     * ensure that related read operations are all routed to the same server when using a non-primary read preference.  But this is
+     * dangerous because mongos does not provide this guarantee.  For these reasons, this method is now deprecated and will be
+     * removed in the next major release.
      */
+    @Deprecated
     public abstract void requestDone();
 
     /**
-     * Ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     * Ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set).
+     *
+     * @deprecated  The main use case for this method is to ensure that applications can read their own unacknowledged writes,
+     * but this is no longer so prevalent since the driver started defaulting to acknowledged writes. The other main use case is to
+     * ensure that related read operations are all routed to the same server when using a non-primary read preference.  But this is
+     * dangerous because mongos does not provide this guarantee.  For these reasons, this method is now deprecated and will be
+     * removed in the next major release.
      */
+    @Deprecated
     public abstract void requestEnsureConnection();
 
     /**
