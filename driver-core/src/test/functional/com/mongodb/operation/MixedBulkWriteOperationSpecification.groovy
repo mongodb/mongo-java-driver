@@ -530,6 +530,45 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ex.writeErrors[1].code == 11000
     }
 
+    def 'should continue to execute batches after a failure if writes are unordered'() {
+        given:
+        getCollectionHelper().insertDocuments([new BsonDocument('_id', new BsonInt32(500)), new BsonDocument('_id', new BsonInt32(1500))])
+        def inserts = []
+        for (int i = 0; i < 2000; i++) {
+            inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
+        }
+        def op = new MixedBulkWriteOperation(getNamespace(), inserts, false, ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        def ex = thrown(BulkWriteException)
+        ex.writeErrors.size() == 2
+        ex.getWriteResult().getInsertedCount() == 1998
+        getCollectionHelper().count() == 2000
+    }
+
+    def 'should stop executing batches after a failure if writes are ordered'() {
+        given:
+        getCollectionHelper().insertDocuments([new BsonDocument('_id', new BsonInt32(500)), new BsonDocument('_id', new BsonInt32(1500))])
+        def inserts = []
+        for (int i = 0; i < 2000; i++) {
+            inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
+        }
+        def op = new MixedBulkWriteOperation(getNamespace(), inserts, true, ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        def ex = thrown(BulkWriteException)
+        ex.writeErrors.size() == 1
+        ex.getWriteResult().getInsertedCount() == 500
+        getCollectionHelper().count() == 502
+    }
+
+
     // using w = 5 to force a timeout
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
