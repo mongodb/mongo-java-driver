@@ -28,9 +28,8 @@ import java.util.List;
  * An insert message.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
- * @since 3.0
  */
-public class InsertMessage extends RequestMessage {
+class InsertMessage extends RequestMessage {
 
     private final boolean ordered;
     private final WriteConcern writeConcern;
