@@ -54,7 +54,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
-        return getCollection(collectionName, MongoCollectionOptions.builder().build().withDefaults(options));
+        return getCollection(collectionName, MongoCollectionOptions.builder().build());
     }
 
     @Override
@@ -64,7 +64,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return getCollection(collectionName, clazz, MongoCollectionOptions.builder().build().withDefaults(options));
+        return getCollection(collectionName, clazz, MongoCollectionOptions.builder().build());
     }
 
     @Override

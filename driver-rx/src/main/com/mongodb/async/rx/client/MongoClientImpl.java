@@ -16,6 +16,9 @@
 
 package com.mongodb.async.rx.client;
 
+import com.mongodb.async.client.MongoClientOptions;
+import com.mongodb.async.client.MongoDatabaseOptions;
+
 class MongoClientImpl implements MongoClient {
 
     private final com.mongodb.async.client.MongoClient wrapped;
@@ -26,12 +29,22 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(wrapped.getDatabase(name));
+        return getDatabase(name, MongoDatabaseOptions.builder().build());
+    }
+
+    @Override
+    public MongoDatabase getDatabase(final String name, final MongoDatabaseOptions mongoDatabaseOptions) {
+        return new MongoDatabaseImpl(wrapped.getDatabase(name, mongoDatabaseOptions));
     }
 
     @Override
     public void close() {
         wrapped.close();
+    }
+
+    @Override
+    public MongoClientOptions getOptions() {
+        return wrapped.getOptions();
     }
 
     @Override

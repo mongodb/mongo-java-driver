@@ -41,9 +41,9 @@ public interface MongoCollection<T> {
     MongoNamespace getNamespace();
 
     /**
-     * Gets the options applied to operations on this collection.
+     * Gets the options to apply by default to all operations executed via this instance.
      *
-     * @return the options
+     * @return the collection options
      */
     MongoCollectionOptions getOptions();
 

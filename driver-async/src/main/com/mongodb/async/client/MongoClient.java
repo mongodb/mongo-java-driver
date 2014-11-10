@@ -40,10 +40,28 @@ public interface MongoClient extends Closeable {
     MongoDatabase getDatabase(String name);
 
     /**
+     * Gets the database with the given name.
+     *
+     * @param name                 the name of the database
+     * @param mongoDatabaseOptions the database options
+     * @return the database
+     */
+    MongoDatabase getDatabase(String name, MongoDatabaseOptions mongoDatabaseOptions);
+
+    /**
      * Close the client, which will close all underlying cached resources, including, for example,
      * sockets and background monitoring threads.
      */
     void close();
+
+    /**
+     * Gets the options that this client uses to connect to server.
+     *
+     * <p>Note: {@link MongoClientOptions} is immutable.</p>
+     *
+     * @return the options
+     */
+    MongoClientOptions getOptions();
 
     /**
      * @return the ClientAdministration that provides admin methods that can be performed

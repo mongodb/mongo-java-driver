@@ -16,7 +16,7 @@
 
 package com.mongodb.async.rx.client;
 
-import com.mongodb.async.client.MongoClientSettings;
+import com.mongodb.async.client.MongoClientOptions;
 
 import java.net.UnknownHostException;
 
@@ -33,7 +33,7 @@ public final class MongoClients {
      * @return the client
      * @throws java.net.UnknownHostException
      */
-    public static MongoClient create(final MongoClientSettings settings)
+    public static MongoClient create(final MongoClientOptions settings)
     throws UnknownHostException {
         return new MongoClientImpl(com.mongodb.async.client.MongoClients.create(settings));
     }

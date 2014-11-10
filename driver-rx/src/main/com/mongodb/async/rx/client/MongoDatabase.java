@@ -18,6 +18,7 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.client.MongoCollectionOptions;
+import com.mongodb.async.client.MongoDatabaseOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import rx.Observable;
@@ -52,11 +53,11 @@ public interface MongoDatabase {
     /**
      * Gets a collection with the given name and options
      *
-     * @param name the collection name
-     * @param options the options to apply
+     * @param name                   the collection name
+     * @param mongoCollectionOptions the options to apply
      * @return the collection
      */
-    MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
+    MongoCollection<Document> getCollection(String name, MongoCollectionOptions mongoCollectionOptions);
 
     /**
      * Gets a collection with the given name, codec, and options.
@@ -77,6 +78,15 @@ public interface MongoDatabase {
      * successfully.
      */
     Observable<Document> executeCommand(Document commandDocument);
+
+    /**
+     * Gets the options that are used with the database.
+     *
+     * <p>Note: {@link com.mongodb.async.client.MongoDatabaseOptions} is immutable.</p>
+     *
+     * @return the options
+     */
+    MongoDatabaseOptions getOptions();
 
     /**
      * @return the DatabaseAdministration that provides admin methods that can be performed

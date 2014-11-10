@@ -91,7 +91,7 @@ public class MongoDatabaseOptions {
         this.documentCodec = documentCodec;
     }
 
-    public MongoDatabaseOptions withDefaults(final MongoClientSettings settings) {
+    public MongoDatabaseOptions withDefaults(final MongoClientOptions settings) {
         Builder builder = new Builder();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : settings.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : settings.getReadPreference();

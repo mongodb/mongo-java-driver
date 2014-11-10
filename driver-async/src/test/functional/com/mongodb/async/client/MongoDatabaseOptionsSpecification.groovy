@@ -16,30 +16,27 @@
  *
  */
 
-package com.mongodb
+package com.mongodb.async.client
 
-import com.mongodb.client.ConcreteCodecProvider
-import com.mongodb.client.MongoDatabaseOptions
-import org.bson.codecs.configuration.RootCodecRegistry
+import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
 import spock.lang.Specification
 
-import static com.mongodb.Fixture.getDefaultDatabaseName
-import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.async.client.Fixture.getMongoClient
 
 class MongoDatabaseOptionsSpecification extends Specification {
 
     def 'should return default value inherited from MongoClientOptions'() {
         given:
         def client = getMongoClient()
-        def db = client.getDatabase(getDefaultDatabaseName())
 
         when:
-        def options = db.getOptions()
+        def options = client.getDatabase(getDefaultDatabaseName()).getOptions()
 
         then:
-        options.getCodecRegistry() == client.getMongoClientOptions().getCodecRegistry()
-        options.getReadPreference() == client.getMongoClientOptions().getReadPreference()
-        options.getWriteConcern() == client.getMongoClientOptions().getWriteConcern()
+        options.getReadPreference() == client.getOptions().getReadPreference()
+        options.getWriteConcern() == client.getOptions().getWriteConcern()
     }
 
     def 'should override inherited values'() {
@@ -53,30 +50,26 @@ class MongoDatabaseOptionsSpecification extends Specification {
         options = client.getDatabase(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
-        options.getCodecRegistry() == client.getMongoClientOptions().getCodecRegistry()
-        options.getReadPreference() == client.getMongoClientOptions().getReadPreference()
-        options.getWriteConcern() == client.getMongoClientOptions().getWriteConcern()
+        options.getReadPreference() == client.getOptions().getReadPreference()
+        options.getWriteConcern() == client.getOptions().getWriteConcern()
 
         when:
         customOptions = MongoDatabaseOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
         options = client.getDatabase(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
-        options.getCodecRegistry() == client.getMongoClientOptions().getCodecRegistry()
-        options.getReadPreference() == client.getMongoClientOptions().getReadPreference()
+        options.getReadPreference() == client.getOptions().getReadPreference()
         options.getWriteConcern() == customOptions.getWriteConcern()
 
         when:
         customOptions = MongoDatabaseOptions.builder()
-                .writeConcern(WriteConcern.MAJORITY)
-                .readPreference(ReadPreference.primaryPreferred())
-                .codecRegistry(new RootCodecRegistry(Arrays.asList(new ConcreteCodecProvider())))
-                .build()
+                                            .writeConcern(WriteConcern.MAJORITY)
+                                            .readPreference(ReadPreference.primaryPreferred())
+                                            .build()
 
         options = client.getDatabase(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
-        options.getCodecRegistry() == customOptions.getCodecRegistry()
         options.getReadPreference() == customOptions.getReadPreference()
         options.getWriteConcern() == customOptions.getWriteConcern()
     }

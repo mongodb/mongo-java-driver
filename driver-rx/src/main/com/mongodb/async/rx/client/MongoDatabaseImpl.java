@@ -18,6 +18,7 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.client.MongoCollectionOptions;
+import com.mongodb.async.client.MongoDatabaseOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import rx.Observable;
@@ -36,12 +37,12 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollection<Document> getCollection(final String name) {
-        return new MongoCollectionImpl<Document>(wrapped.getCollection(name));
+        return getCollection(name, MongoCollectionOptions.builder().build());
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String name, final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<Document>(wrapped.getCollection(name, options));
+    public MongoCollection<Document> getCollection(final String name, final MongoCollectionOptions mongoCollectionOptions) {
+        return new MongoCollectionImpl<Document>(wrapped.getCollection(name, mongoCollectionOptions));
     }
 
     @Override
@@ -57,6 +58,11 @@ class MongoDatabaseImpl implements MongoDatabase {
                 return wrapped.executeCommand(commandDocument);
             }
         }));
+    }
+
+    @Override
+    public MongoDatabaseOptions getOptions() {
+        return wrapped.getOptions();
     }
 
     @Override

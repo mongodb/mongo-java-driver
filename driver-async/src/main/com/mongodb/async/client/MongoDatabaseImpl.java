@@ -42,19 +42,20 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollection<Document> getCollection(final String name) {
-        return getCollection(name, MongoCollectionOptions.builder().build().withDefaults(options));
+        return getCollection(name, MongoCollectionOptions.builder().build());
     }
 
     @Override
     public MongoCollection<Document> getCollection(final String name,
-                                                   final MongoCollectionOptions options) {
-        return getCollection(name, new DocumentCodec(), options.withDefaults(this.options));
+                                                   final MongoCollectionOptions mongoCollectionOptions) {
+        return getCollection(name, new DocumentCodec(), mongoCollectionOptions.withDefaults(options));
     }
 
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec, final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(this.name, name), codec, options.withDefaults(this.options), client);
+    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec,
+                                                final MongoCollectionOptions mongoCollectionOptions) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(this.name, name), codec, mongoCollectionOptions.withDefaults(options), client);
     }
 
     @Override
@@ -62,6 +63,11 @@ class MongoDatabaseImpl implements MongoDatabase {
         return client.execute(new CommandWriteOperation<Document>(name, new BsonDocumentWrapper<Document>(commandDocument,
                                                                                                           options.getDocumentCodec()),
                                                                   new DocumentCodec()));
+    }
+
+    @Override
+    public MongoDatabaseOptions getOptions() {
+        return options;
     }
 
     @Override
