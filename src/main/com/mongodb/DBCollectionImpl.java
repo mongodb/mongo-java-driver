@@ -128,12 +128,14 @@ class DBCollectionImpl extends DBCollection {
 
     @Override
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
-                                              final WriteConcern writeConcern, DBEncoder encoder) {
+                                              WriteConcern writeConcern, DBEncoder encoder) {
         isTrue("no operations", !writeRequests.isEmpty());
 
         if (writeConcern == null) {
             throw new IllegalArgumentException("Write concern can not be null");
         }
+
+        writeConcern = writeConcern.continueOnError(!ordered);
 
         if (encoder == null) {
             encoder = DefaultDBEncoder.FACTORY.create();

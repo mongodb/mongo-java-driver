@@ -758,6 +758,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+
     // just need to check one case here, since the others are checked above
     def 'should throw IllegalStateException when already executed with write concern'() {
         given:
@@ -801,6 +802,44 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         where:
         ordered << [true, false]
+    }
+
+    def 'should continue to execute batches after a failure if writes are unordered'() {
+        given:
+        collection.insert(new BasicDBObject('_id', 0))
+        collection.insert(new BasicDBObject('_id', 1000))
+
+        when:
+        def operation = initializeBulkOperation(false)
+        for (int i = 0; i < 2000; i++) {
+            operation.insert(new BasicDBObject('_id', i))
+        }
+        operation.execute(WriteConcern.ACKNOWLEDGED)
+
+        then:
+        def ex = thrown(BulkWriteException)
+        ex.writeErrors.size() == 2
+        ex.getWriteResult().getInsertedCount() == 1998
+        collection.count() == 2000
+    }
+
+    def 'should stop executing batches after a failure if writes are ordered'() {
+        given:
+        collection.insert(new BasicDBObject('_id', 500))
+        collection.insert(new BasicDBObject('_id', 1500))
+
+        when:
+        def operation = initializeBulkOperation(true)
+        for (int i = 0; i < 2000; i++) {
+            operation.insert(new BasicDBObject('_id', i))
+        }
+        operation.execute(WriteConcern.ACKNOWLEDGED)
+
+        then:
+        def ex = thrown(BulkWriteException)
+        ex.writeErrors.size() == 1
+        ex.getWriteResult().getInsertedCount() == 500
+        collection.count() == 502
     }
 
     private static void addWritesToOperation(BulkWriteOperation operation) {
