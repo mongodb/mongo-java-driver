@@ -78,8 +78,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
     sourceSets {
         main { java.srcDirs = ['src/main'] }
         test {
-            java { srcDirs = ['src/test'] }
-            groovy { srcDirs = ['src/test'] }
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
+            java.srcDirs = ['src/test/functional', 'src/test/unit']
         }
     }
 
@@ -93,8 +93,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
 
-    project.ext.buildingWith = { n ->
-        project.hasProperty(n) && project.property(n).toBoolean()
+    project.ext.buildingWith = { propertyName ->
+        project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
     }
 
     /* Testing */
@@ -203,14 +203,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
 def nettyVersion = '4.0.19.Final'
 
 project(':driver-core') {
-    sourceSets {
-        test {
-            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
-            //Note: no groovy/spock tests in acceptance, these are Java tests
-            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
-        }
-    }
-
     dependencies {
         compile project(':bson')
 
@@ -292,10 +284,7 @@ project(':driver') {
     apply plugin: 'clirr'
 
     sourceSets {
-        test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
-            java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
-        }
+        test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
     }
 
     test {
@@ -320,6 +309,7 @@ project(':driver') {
     }
 
     tasks.withType(Checkstyle) {
+        // needed so the Javadoc checks can find the code in other modules
         classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
     }
 
