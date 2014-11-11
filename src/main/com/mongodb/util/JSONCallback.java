@@ -93,6 +93,18 @@ public class JSONCallback extends BasicBSONCallback {
                     format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
                     o = format.parse(b.get("$date").toString(), new ParsePosition(0));
                 }
+                if (o == null) {
+                    // try timezone
+                    format = new SimpleDateFormat(_msDateFormat_TZ);
+                    format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+                    o = format.parse(b.get("$date").toString(), new ParsePosition(0));
+                }
+                if (o == null) {
+                    // try older format timezone
+                    format = new SimpleDateFormat(_secDateFormat_TZ);
+                    format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+                    o = format.parse(b.get("$date").toString(), new ParsePosition(0));
+                }
             }
         } else if (b.containsField("$regex")) {
             o = Pattern.compile((String) b.get("$regex"),
@@ -141,4 +153,6 @@ public class JSONCallback extends BasicBSONCallback {
 
     public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String _msDateFormat_TZ = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+	public static final String _secDateFormat_TZ = "yyyy-MM-dd'T'HH:mm:ssZ";
 }
