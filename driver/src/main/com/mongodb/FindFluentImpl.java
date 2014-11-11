@@ -157,7 +157,7 @@ class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     private MongoIterable<T> execute() {
-        return new FinalOperationIterable(createQueryOperation(), this.options.getReadPreference(), executor);
+        return new FindOperationIterable(createQueryOperation(), this.options.getReadPreference(), executor);
     }
 
     private <C> Codec<C> getCodec(final Class<C> clazz) {
@@ -199,29 +199,21 @@ class FindFluentImpl<T> implements FindFluent<T> {
         }
     }
 
-    private final class FinalOperationIterable extends OperationIterable<T> {
-        private final FindOperation<T> operation;
+    private final class FindOperationIterable extends OperationIterable<T> {
         private final ReadPreference readPreference;
         private final OperationExecutor executor;
 
-        FinalOperationIterable(final FindOperation<T> operation, final ReadPreference readPreference,
-                                  final OperationExecutor executor) {
+        FindOperationIterable(final FindOperation<T> operation, final ReadPreference readPreference,
+                              final OperationExecutor executor) {
             super(operation, readPreference, executor);
-            this.operation = operation;
             this.readPreference = readPreference;
             this.executor = executor;
         }
 
         @Override
         public T first() {
-            FindOperation<T> findFirstOperation = createQueryOperation().batchSize(0)
-                                                                        .limit(-1);
-            MongoCursor<T> iterator = executor.execute(findFirstOperation, readPreference);
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            return iterator.next();
+            FindOperation<T> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
+            return new OperationIterable<T>(findFirstOperation, readPreference, executor).first();
         }
-
     }
 }
