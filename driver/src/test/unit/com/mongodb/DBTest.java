@@ -18,8 +18,6 @@ package com.mongodb;
 
 import category.ReplicaSet;
 import com.mongodb.operation.UserExistsOperation;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -302,39 +300,6 @@ public class DBTest extends DatabaseTestCase {
         database.removeUser(userName);
 
         assertFalse(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
-    }
-
-    @Test
-    public void shouldReleaseConnectionOnLastCallToRequestEndWhenRequestStartCallsAreNested() {
-        database.requestStart();
-        try {
-            database.command(new BasicDBObject("ping", 1));
-            database.requestStart();
-            try {
-                database.command(new BasicDBObject("ping", 1));
-            } finally {
-                database.requestDone();
-            }
-        } finally {
-            database.requestDone();
-        }
-    }
-
-    @Test
-    public void shouldNotThrowAnExceptionWhenRequestDoneIsCalledWithoutFirstCallingRequestStart() throws UnknownHostException {
-        database.requestDone();
-    }
-
-    @Test
-    @Category(ReplicaSet.class)
-    public void shouldNotThrowAnErrorWhenEnsureConnectionCalledAfterRequestStart() throws UnknownHostException {
-        database.requestStart();
-        try {
-            database.requestEnsureConnection();
-            database.executeCommand(new BsonDocument("ping", new BsonInt32(1)));
-        } finally {
-            database.requestDone();
-        }
     }
 
     @Test(expected = IllegalArgumentException.class)

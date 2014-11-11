@@ -17,7 +17,6 @@
 package com.mongodb
 
 import com.mongodb.binding.AsyncSingleConnectionBinding
-import com.mongodb.binding.PinnedBinding
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
@@ -63,15 +62,13 @@ class OperationFunctionalSpecification extends Specification {
         new MongoNamespace(getDatabaseName(), getCollectionName())
     }
 
-    void acknowledgeWrite(PinnedBinding binding) {
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                      [new InsertRequest(new BsonDocument())]).execute(binding);
+    void acknowledgeWrite(SingleConnectionBinding binding) {
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]).execute(binding);
         binding.release();
     }
 
     void acknowledgeWrite(AsyncSingleConnectionBinding binding) {
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                      [new InsertRequest(new BsonDocument())]).executeAsync(binding).get();
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]).executeAsync(binding).get();
         binding.release();
     }
 

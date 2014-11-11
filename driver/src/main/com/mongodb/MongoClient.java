@@ -311,6 +311,6 @@ public class MongoClient extends Mongo {
      */
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions mongoDatabaseOptions) {
         return new MongoDatabaseImpl(databaseName, mongoDatabaseOptions.withDefaults(getMongoClientOptions()),
-                                     createOperationExecutor(false));
+                                     createOperationExecutor());
     }
 }

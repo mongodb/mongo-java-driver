@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.PinnedBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
@@ -93,7 +92,6 @@ public class Mongo {
     private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-    private final ThreadLocal<BindingHolder> pinnedBinding = new ThreadLocal<BindingHolder>();
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
 
@@ -432,7 +430,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        return execute(new GetDatabaseNamesOperation(), primary(), true);
+        return execute(new GetDatabaseNamesOperation(), primary());
     }
 
     /**
@@ -449,7 +447,7 @@ public class Mongo {
             return db;
         }
 
-        db = new DB(this, dbName, createOperationExecutor(true));
+        db = new DB(this, dbName, createOperationExecutor());
         DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;
@@ -709,65 +707,38 @@ public class Mongo {
         return credentialsList;
     }
 
-    WriteBinding getWriteBinding(final boolean allowPinning) {
-        return getReadWriteBinding(primary(), allowPinning);
+    WriteBinding getWriteBinding() {
+        return getReadWriteBinding(primary());
     }
 
-    ReadBinding getReadBinding(final ReadPreference readPreference, final boolean allowPinning) {
-        return getReadWriteBinding(readPreference, allowPinning);
+    ReadBinding getReadBinding(final ReadPreference readPreference) {
+        return getReadWriteBinding(readPreference);
     }
 
-    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final boolean allowPinning) {
-        if (allowPinning && pinnedBinding.get() != null) {
-            PinnedBinding binding = pinnedBinding.get().binding;
-            binding.setReadPreference(readPreference);
-            return binding.retain(); // retain since caller will release
-        } else {
-            return new ClusterBinding(getCluster(), readPreference, options.getMaxWaitTime(), MILLISECONDS);
-        }
-    }
-
-    void pinBinding() {
-        BindingHolder currentlyBound = pinnedBinding.get();
-        if (currentlyBound == null) {
-            pinnedBinding.set(new BindingHolder(new PinnedBinding(cluster, options.getMaxWaitTime(), MILLISECONDS)));
-        } else {
-            currentlyBound.nestedBindings++;
-        }
-    }
-
-    void unpinBinding() {
-        BindingHolder currentlyBound = pinnedBinding.get();
-        if (currentlyBound != null) {
-            if (currentlyBound.nestedBindings > 0) {
-                currentlyBound.nestedBindings--;
-            } else {
-                pinnedBinding.remove();
-                currentlyBound.binding.release();
-            }
-        }
+    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
+        return new ClusterBinding(getCluster(), readPreference, options.getMaxWaitTime(), MILLISECONDS);
     }
 
     void addOrphanedCursor(final ServerCursor serverCursor) {
         orphanedCursors.add(serverCursor);
     }
 
-    OperationExecutor createOperationExecutor(final boolean allowPinning) {
+    OperationExecutor createOperationExecutor() {
         return new OperationExecutor() {
             @Override
             public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-                return Mongo.this.execute(operation, readPreference, allowPinning);
+                return Mongo.this.execute(operation, readPreference);
             }
 
             @Override
             public <T> T execute(final WriteOperation<T> operation) {
-                return Mongo.this.execute(operation, allowPinning);
+                return Mongo.this.execute(operation);
             }
         };
     }
 
-    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final boolean allowPinning) {
-        ReadBinding binding = getReadBinding(readPreference, allowPinning);
+    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        ReadBinding binding = getReadBinding(readPreference);
         try {
             return operation.execute(binding);
         } finally {
@@ -775,8 +746,8 @@ public class Mongo {
         }
     }
 
-    <T> T execute(final WriteOperation<T> operation, final boolean allowPinning) {
-        WriteBinding binding = getWriteBinding(allowPinning);
+    <T> T execute(final WriteOperation<T> operation) {
+        WriteBinding binding = getWriteBinding();
         try {
             return operation.execute(binding);
         } finally {
@@ -884,15 +855,6 @@ public class Mongo {
 
         private String toKey(final MongoClientURI uri) {
             return uri.toString();
-        }
-    }
-
-    private static final class BindingHolder {
-        private final PinnedBinding binding;
-        private int nestedBindings;
-
-        private BindingHolder(final PinnedBinding binding) {
-            this.binding = binding;
         }
     }
 

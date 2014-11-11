@@ -86,7 +86,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, mongo.createOperationExecutor(true));
+        this(mongo, name, mongo.createOperationExecutor());
     }
 
     /**
@@ -138,28 +138,6 @@ public class DB {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
-    }
-
-    /**
-     * Starts a new "consistent request". Following this call and until requestDone() is called, all db operations should use the same
-     * underlying connection. This is useful to ensure that operations happen in a certain order with predictable results.
-     */
-    public void requestStart() {
-        getMongo().pinBinding();
-    }
-
-    /**
-     * Ends the current "consistent request"
-     */
-    public void requestDone() {
-        getMongo().unpinBinding();
-    }
-
-    /**
-     * Ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
-     */
-    public void requestEnsureConnection() {
-        // do nothing for now
     }
 
     /**

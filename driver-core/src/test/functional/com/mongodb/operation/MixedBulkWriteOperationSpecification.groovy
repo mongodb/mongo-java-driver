@@ -39,7 +39,7 @@ import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static ClusterFixture.getBinding
-import static ClusterFixture.getPinnedBinding
+import static ClusterFixture.getSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
@@ -450,7 +450,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              UNACKNOWLEDGED)
 
         when:
-        def binding = getPinnedBinding()
+        def binding = getSingleConnectionBinding()
         def result = op.execute(binding)
         new InsertOperation(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))])
                 .execute(binding);

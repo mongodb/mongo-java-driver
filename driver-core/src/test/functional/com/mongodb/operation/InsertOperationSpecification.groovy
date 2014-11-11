@@ -31,7 +31,7 @@ import org.junit.experimental.categories.Category
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getPinnedBinding
+import static com.mongodb.ClusterFixture.getSingleConnectionBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -132,7 +132,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def operation = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
 
         when:
-        def binding = getPinnedBinding()
+        def binding = getSingleConnectionBinding()
         def result = operation.execute(binding)
         new InsertOperation(namespace, true, ACKNOWLEDGED,
                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]).execute(binding);
