@@ -55,7 +55,7 @@ public class DBObjectCodecProvider implements CodecProvider {
             return (Codec<T>) new BSONTimestampCodec();
         }
 
-        if (clazz == DBObject.class) {
+        if (DBObject.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new DBObjectCodec(registry, bsonTypeClassMap);
         }
 

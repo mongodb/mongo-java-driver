@@ -21,6 +21,7 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.client.FindFluent;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
@@ -57,14 +58,12 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
-import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
 import org.bson.BsonArray;
@@ -77,11 +76,9 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
-import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -161,34 +158,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<T> find() {
-        return find(new Document(), new FindOptions());
+    public FindFluent<T> find() {
+        return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public <C> MongoIterable<C> find(final Class<C> clazz) {
-        return find(new Document(), new FindOptions(), clazz);
+    public <C> FindFluent<C> find(final Class<C> clazz) {
+        return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public MongoIterable<T> find(final Object filter) {
-        return find(filter, new FindOptions());
+    public FindFluent<T> find(final Object filter) {
+        return find(filter, clazz);
     }
 
     @Override
-    public <C> MongoIterable<C> find(final Object filter, final Class<C> clazz) {
-        return find(filter, new FindOptions(), clazz);
-    }
-
-    @Override
-    public MongoIterable<T> find(final Object filter, final FindOptions findOptions) {
-        return find(filter, findOptions, clazz);
-    }
-
-    @Override
-    public <C> MongoIterable<C> find(final Object filter, final FindOptions findOptions, final Class<C> clazz) {
-        return new OperationIterable<C>(createQueryOperation(namespace, filter, findOptions, getCodec(clazz)),
-                                        options.getReadPreference());
+    public <C> FindFluent<C> find(final Object filter, final Class<C> clazz) {
+        return new FindFluentImpl<C>(namespace, options, executor, filter, new FindOptions(), clazz);
     }
 
     @Override
@@ -217,17 +203,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                            .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                            .allowDiskUse(options.getAllowDiskUse());
             executor.execute(operation);
-            return new OperationIterable<C>(new FindOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
-                                                                                    outCollection.asString().getValue()),
-                                                                 getCodec(clazz)),
-                                            this.options.getReadPreference());
+            return new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
+                                         this.options, executor, new BsonDocument(), new FindOptions(), clazz);
         } else {
             return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, getCodec(clazz))
                                             .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                             .allowDiskUse(options.getAllowDiskUse())
                                             .batchSize(options.getBatchSize())
                                             .useCursor(options.getUseCursor()),
-                                            this.options.getReadPreference());
+                                            this.options.getReadPreference(),
+                                            executor);
         }
     }
 
@@ -265,7 +250,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (options.getFinalizeFunction() != null) {
                 operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
             }
-            return new MapReduceResultsIterable<C>(operation, this.options.getReadPreference(), executor);
+            return new OperationIterable<C>(operation, this.options.getReadPreference(), executor);
         } else {
             MapReduceToCollectionOperation operation =
                 new MapReduceToCollectionOperation(getNamespace(),
@@ -290,9 +275,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             executor.execute(operation);
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
-            FindOperation<C> findOperation = createQueryOperation(new MongoNamespace(databaseName, options.getCollectionName()),
-                                                                  new Document(), new FindOptions(), getCodec(clazz));
-            return new OperationIterable<C>(findOperation, this.options.getReadPreference());
+            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), this.options, executor,
+                                         new BsonDocument(), new FindOptions(), clazz);
         }
     }
 
@@ -575,107 +559,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
-    private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final Object criteria, final FindOptions options,
-                                                      final Decoder<C> decoder) {
-        return new FindOperation<C>(namespace, decoder)
-                   .filter(asBson(criteria))
-                   .batchSize(options.getBatchSize())
-                   .skip(options.getSkip())
-                   .limit(options.getLimit())
-                   .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(options.getModifiers()))
-                   .projection(asBson(options.getProjection()))
-                   .sort(asBson(options.getSort()))
-                   .awaitData(options.isAwaitData())
-                   .noCursorTimeout(options.isNoCursorTimeout())
-                   .oplogReplay(options.isOplogReplay())
-                   .partial(options.isPartial())
-                   .tailableCursor(options.isTailable());
-    }
-
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (D obj : pipeline) {
             aggregateList.add(asBson(obj));
         }
         return aggregateList;
-    }
-
-    private final class OperationIterable<D> implements MongoIterable<D> {
-        private final ReadOperation<? extends MongoCursor<D>> operation;
-        private final ReadPreference readPreference;
-
-        private OperationIterable(final ReadOperation<? extends MongoCursor<D>> operation, final ReadPreference readPreference) {
-            this.operation = operation;
-            this.readPreference = readPreference;
-        }
-
-        @Override
-        public <U> MongoIterable<U> map(final Function<D, U> mapper) {
-            return new MappingIterable<D, U>(this, mapper);
-        }
-
-        @Override
-        public MongoCursor<D> iterator() {
-            return executor.execute(operation, readPreference);
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public D first() {
-            if (operation instanceof FindOperation) {
-                FindOperation<D> findOp = (FindOperation<D>) operation;
-                FindOperation<D> findFirstOperation = new FindOperation<D>(findOp.getNamespace(), findOp.getDecoder())
-                                                          .filter(findOp.getFilter())
-                                                          .modifiers(findOp.getModifiers())
-                                                          .projection(findOp.getProjection())
-                                                          .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                          .skip(findOp.getSkip())
-                                                          .sort(findOp.getSort())
-                                                          .tailableCursor(findOp.isTailableCursor())
-                                                          .slaveOk(findOp.isSlaveOk())
-                                                          .oplogReplay(findOp.isOplogReplay())
-                                                          .noCursorTimeout(findOp.isNoCursorTimeout())
-                                                          .awaitData(findOp.isAwaitData())
-                                                          .partial(findOp.isPartial())
-                                                          .batchSize(0)
-                                                          .limit(-1);
-                return new OperationIterable<D>(findFirstOperation, readPreference).getFirstOrNull();
-            } else {
-                return getFirstOrNull();
-            }
-        }
-
-        @Override
-        public void forEach(final Block<? super D> block) {
-            MongoCursor<D> cursor = iterator();
-            try {
-                while (cursor.hasNext()) {
-                    block.apply(cursor.next());
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-
-        @Override
-        public <A extends Collection<? super D>> A into(final A target) {
-            forEach(new Block<D>() {
-                @Override
-                public void apply(final D document) {
-                    target.add(document);
-                }
-            });
-            return target;
-        }
-
-        private D getFirstOrNull() {
-            MongoCursor<D> iterator = iterator();
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            return iterator.next();
-        }
     }
 
 }

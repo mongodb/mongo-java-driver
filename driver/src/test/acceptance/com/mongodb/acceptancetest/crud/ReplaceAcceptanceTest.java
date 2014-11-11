@@ -18,7 +18,6 @@ package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.WriteConcernException;
 import com.mongodb.client.DatabaseTestCase;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.replaceOne(filter, newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(filter, new FindOptions()).first();
+        Document document = collection.find(filter).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
@@ -58,7 +57,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3), new FindOptions()).iterator().next(), is(replacement));
+        assertThat(collection.find(new Document("_id", 3)).iterator().next(), is(replacement));
     }
 
     @Test
@@ -74,7 +73,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3), new FindOptions()).iterator().next(),  is(replacement));
+        assertThat(collection.find(new Document("_id", 3)).iterator().next(),  is(replacement));
     }
 
     @Test

@@ -27,7 +27,6 @@ import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
@@ -113,29 +112,29 @@ public interface MongoCollection<T> {
     /**
      * Finds all documents in the collection.
      *
-     * @return an iterable containing the result of the find operation
+     * @return the fluent find interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    MongoIterable<T> find();
+    FindFluent<T> find();
 
     /**
      * Finds all documents in the collection.
      *
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
-     * @return an iterable containing the result of the find operation
+     * @return the fluent find interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(Class<C> clazz);
+    <C> FindFluent<C> find(Class<C> clazz);
 
     /**
      * Finds all documents in the collection.
      *
      * @param filter the query filter
-     * @return an iterable containing the result of the find operation
+     * @return the fluent find interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    MongoIterable<T> find(Object filter);
+    FindFluent<T> find(Object filter);
 
     /**
      * Finds all documents in the collection.
@@ -143,32 +142,10 @@ public interface MongoCollection<T> {
      * @param filter the query filter
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
-     * @return an iterable containing the result of the find operation
+     * @return the fluent find interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(Object filter, Class<C> clazz);
-
-    /**
-     * Finds documents in the collection according to the specified options.
-     *
-     * @param filter the query filter
-     * @param findOptions the options to apply to the find operation
-     * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual tutorial/query-documents/ Find
-     */
-    MongoIterable<T> find(Object filter, FindOptions findOptions);
-
-    /**
-     * Finds documents according to the specified query filter.
-     *
-     * @param filter the query filter
-     * @param findOptions the options describing the find operation
-     * @param clazz the class to decode each document into
-     * @param <C> the target document type of the iterable.
-     * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual tutorial/query-documents/ Find
-     */
-    <C> MongoIterable<C> find(Object filter, FindOptions findOptions, Class<C> clazz);
+    <C> FindFluent<C> find(Object filter, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.

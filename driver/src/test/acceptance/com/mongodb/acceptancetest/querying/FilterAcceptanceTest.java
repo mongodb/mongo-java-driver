@@ -19,7 +19,6 @@ package com.mongodb.acceptancetest.querying;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoQueryFailureException;
 import com.mongodb.client.DatabaseTestCase;
-import com.mongodb.client.model.FindOptions;
 import org.bson.Document;
 import org.junit.Test;
 
@@ -38,8 +37,8 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        List<Document> filteredCollection = collection.find(new Document("_id", 3), new FindOptions())
-                                                               .into(new ArrayList<Document>());
+        List<Document> filteredCollection = collection.find().filter(new Document("_id", 3))
+                                                             .into(new ArrayList<Document>());
         assertEquals(1, filteredCollection.size());
         assertThat((Integer) filteredCollection.get(0).get("_id"), is(3));
     }
@@ -48,9 +47,8 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
     public void shouldSortDescending() {
         initialiseCollectionWithDocuments(10);
 
-        //TODO: I think we can make this prettier
-        MongoCursor<Document> filteredAndSortedCollection = collection.find(new Document(),
-                                                                            new FindOptions().sort(new Document("_id", -1)))
+        MongoCursor<Document> filteredAndSortedCollection = collection.find()
+                                                                      .sort(new Document("_id", -1))
                                                                       .iterator();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(9));
@@ -73,8 +71,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("name", "Bob"));
 
         // When
-        MongoCursor<Document> sortedCollection = collection.find(new Document(),
-                                                                 new FindOptions().sort(new Document("$natural", 1))).iterator();
+        MongoCursor<Document> sortedCollection = collection.find().sort(new Document("$natural", 1)).iterator();
 
         // Then
         assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
@@ -90,8 +87,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("name", "Bob"));
 
         // When
-        MongoCursor<Document> sortedCollection = collection.find(new Document(), new FindOptions().sort(new Document("$natural",
-                                                                                                                     -1))).iterator();
+        MongoCursor<Document> sortedCollection = collection.find().sort(new Document("$natural", -1)).iterator();
 
         // Then
         assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
@@ -104,11 +100,11 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        MongoCursor<Document> filteredAndSortedCollection = collection.find(new Document(),
-                                                                            new FindOptions()
-                                                                                .skip(3)
-                                                                                .limit(2)
-                                                                                .sort(new Document("_id", -1))).iterator();
+        MongoCursor<Document> filteredAndSortedCollection = collection.find()
+                                                                      .skip(3)
+                                                                      .limit(2)
+                                                                      .sort(new Document("_id", -1))
+                                                                      .iterator();
 
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(6));
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(5));
@@ -120,8 +116,10 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 6;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        MongoCursor<Document> filterResults = collection.find(new Document("_id", new Document("$gt", 2)), new FindOptions()
-                                                                  .sort(new Document("_id", 1))).iterator();
+        MongoCursor<Document> filterResults = collection.find()
+                                                        .filter(new Document("_id", new Document("$gt", 2)))
+                                                        .sort(new Document("_id", 1))
+                                                        .iterator();
 
         assertThat((Integer) filterResults.next().get("_id"), is(3));
         assertThat((Integer) filterResults.next().get("_id"), is(4));
@@ -132,8 +130,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
     public void shouldReturnASingleDocumentFromTheCollection() {
         int numberOfDocuments = 6;
         initialiseCollectionWithDocuments(numberOfDocuments);
-        List<Document> documents = collection.find(new Document(),
-                                                   new FindOptions().limit(1)).into(new ArrayList<Document>());
+        List<Document> documents = collection.find().limit(1).into(new ArrayList<Document>());
 
         assertEquals(1, documents.size());
         assertThat((Integer) documents.get(0).get("_id"), is(0));
@@ -142,14 +139,14 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
     @Test(expected = MongoQueryFailureException.class)
     public void shouldThrowQueryFailureException() {
         collection.insertOne(new Document("loc", asList(0.0, 0.0)));
-        collection.find(new Document("loc", new Document("$near", asList(0.0, 0.0))), new FindOptions()).first();
+        collection.find().filter(new Document("loc", new Document("$near", asList(0.0, 0.0)))).first();
     }
 
     @Test
     public void shouldReturnTheExpectedFirstDocument() {
         int numberOfDocuments = 6;
         initialiseCollectionWithDocuments(numberOfDocuments);
-        Document document = collection.find(new Document(), new FindOptions().skip(3)).first();
+        Document document = collection.find().skip(3).first();
 
         assertThat((Integer) document.get("_id"), is(3));
     }

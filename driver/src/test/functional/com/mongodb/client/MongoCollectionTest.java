@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.DBRef;
 import com.mongodb.Function;
-import com.mongodb.client.model.FindOptions;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
@@ -74,7 +73,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         concreteCollection.insertOne(secondItem);
 
         // when
-        List<String> listOfStringObjectIds = concreteCollection.find(new Document("i", 1), new FindOptions())
+        List<String> listOfStringObjectIds = concreteCollection.find(new Document("i", 1))
                                                                .map(new Function<Concrete, ObjectId>() {
                                                                    @Override
                                                                    public ObjectId apply(final Concrete concrete) {
@@ -93,7 +92,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         assertThat(listOfStringObjectIds.get(0), is(firstItem.getId().toString()));
 
         // when
-        List<ObjectId> listOfObjectIds = concreteCollection.find(new Document("i", 1), new FindOptions())
+        List<ObjectId> listOfObjectIds = concreteCollection.find(new Document("i", 1))
                                                            .map(new Function<Concrete, ObjectId>() {
                                                                @Override
                                                                public ObjectId apply(final Concrete concrete) {

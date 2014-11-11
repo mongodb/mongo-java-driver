@@ -18,7 +18,6 @@ package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Test;
@@ -75,7 +74,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(filter, new FindOptions()).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(filter).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -91,7 +90,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(filter, new FindOptions()).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(filter).iterator().next(), is(expectedDocument));
     }
 
     @Test

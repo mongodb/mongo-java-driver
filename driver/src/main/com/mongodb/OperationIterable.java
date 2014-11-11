@@ -17,37 +17,37 @@
 package com.mongodb;
 
 import com.mongodb.client.MongoIterable;
-import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.OperationExecutor;
+import com.mongodb.operation.ReadOperation;
 
 import java.util.Collection;
 
 /**
  * MongoIterable implementation that aids iteration over the results of results of an inline map-reduce operation.
  *
- * @param <V> the return type of the map reduce
+ * @param <T> the return type of the map reduce
  * @since 3.0
  */
-class MapReduceResultsIterable<V> implements MongoIterable<V> {
-    private final MapReduceWithInlineResultsOperation<V> operation;
+class OperationIterable<T> implements MongoIterable<T> {
+    private final ReadOperation<? extends MongoCursor<T>> operation;
     private final ReadPreference readPreference;
-    private final OperationExecutor operationExecutor;
+    private final OperationExecutor executor;
 
-    MapReduceResultsIterable(final MapReduceWithInlineResultsOperation<V> operation, final ReadPreference readPreference,
-                             final OperationExecutor operationExecutor) {
+    OperationIterable(final ReadOperation<? extends MongoCursor<T>> operation, final ReadPreference readPreference,
+                      final OperationExecutor executor) {
         this.operation = operation;
         this.readPreference = readPreference;
-        this.operationExecutor = operationExecutor;
+        this.executor = executor;
     }
 
     @Override
-    public MongoCursor<V> iterator() {
-        return operationExecutor.execute(operation, readPreference);
+    public MongoCursor<T> iterator() {
+        return executor.execute(operation, readPreference);
     }
 
     @Override
-    public V first() {
-        MongoCursor<V> iterator = iterator();
+    public T first() {
+        MongoCursor<T> iterator = iterator();
         if (!iterator.hasNext()) {
             return null;
         }
@@ -55,27 +55,27 @@ class MapReduceResultsIterable<V> implements MongoIterable<V> {
     }
 
     @Override
-    public void forEach(final Block<? super V> block) {
-        MongoCursor<V> cursor = iterator();
+    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
+        return new MappingIterable<T, U>(this, mapper);
+    }
+
+    @Override
+    public void forEach(final Block<? super T> block) {
+        MongoCursor<T> cursor = iterator();
         while (cursor.hasNext()) {
             block.apply(cursor.next());
         }
     }
 
     @Override
-    public <A extends Collection<? super V>> A into(final A target) {
-        forEach(new Block<V>() {
+    public <A extends Collection<? super T>> A into(final A target) {
+        forEach(new Block<T>() {
             @Override
-            public void apply(final V t) {
+            public void apply(final T t) {
                 target.add(t);
             }
         });
         return target;
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<V, U> mapper) {
-        return new MappingIterable<V, U>(this, mapper);
     }
 
 }
