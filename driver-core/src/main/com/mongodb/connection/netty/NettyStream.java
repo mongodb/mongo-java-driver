@@ -84,7 +84,7 @@ final class NettyStream implements Stream {
             b.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
         }
         if (settings.getSendBufferSize() > 0) {
-            b.option(ChannelOption.SO_SNDBUF, settings.getReceiveBufferSize());
+            b.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
         }
         b.option(ChannelOption.ALLOCATOR, allocator);
 
