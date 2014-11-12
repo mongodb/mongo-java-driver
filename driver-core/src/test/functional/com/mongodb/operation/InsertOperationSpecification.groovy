@@ -126,39 +126,39 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count() == 1001
     }
 
-    def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern'() {
+    def 'should execute unacknowledged write'() {
         given:
-        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def operation = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
+        def binding = getSingleConnectionBinding()
 
         when:
-        def binding = getSingleConnectionBinding()
-        def result = operation.execute(binding)
-        new InsertOperation(namespace, true, ACKNOWLEDGED,
-                            [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]).execute(binding);
+        def result = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED,
+                                         [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
+                .execute(getBinding())
 
         then:
         !result.wasAcknowledged()
+        getCollectionHelper().count(binding) == 1
 
         cleanup:
-        acknowledgeWrite(binding)
+        binding.release()
     }
 
     @Category(Async)
-    def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern asynchronously'() {
+    def 'should execute unacknowledged write asynchronously'() {
         given:
-        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def operation = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
+        def binding = getAsyncSingleConnectionBinding()
 
         when:
-        def binding = getAsyncSingleConnectionBinding()
-        def result = operation.executeAsync(binding).get()
+        def result = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED,
+                                         [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
+                .executeAsync(binding).get()
 
         then:
         !result.wasAcknowledged()
+        getCollectionHelper().count(binding) == 1
 
         cleanup:
-        acknowledgeWrite(binding)
+        binding.release()
     }
 
     @Category(Slow)

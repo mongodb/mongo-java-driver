@@ -20,6 +20,8 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ReadBinding;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.CountOperation;
@@ -137,7 +139,15 @@ public final class CollectionHelper<T> {
     }
 
     public long count() {
-        return new CountOperation(namespace).execute(getBinding());
+        return count(getBinding());
+    }
+
+    public long count(final ReadBinding binding) {
+        return new CountOperation(namespace).execute(binding);
+    }
+
+    public long count(final AsyncReadBinding binding) {
+        return new CountOperation(namespace).executeAsync(binding).get();
     }
 
     public long count(final Document filter) {
