@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.AggregateOptions;
@@ -30,7 +31,6 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
-import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -267,8 +267,9 @@ public interface MongoCollection<T> {
      * @param document the document to insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
+     * @return the result of the insert
      */
-    void insertOne(T document);
+    WriteConcernResult insertOne(T document);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
@@ -279,8 +280,9 @@ public interface MongoCollection<T> {
      * @param documents the documents to insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
+     * @return the result of the insert
      */
-    void insertMany(List<? extends T> documents);
+    WriteConcernResult insertMany(List<? extends T> documents);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
@@ -292,8 +294,9 @@ public interface MongoCollection<T> {
      * @param options the options to apply to the operation
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
+     * @return the result of the insert
      */
-    void insertMany(List<? extends T> documents, InsertManyOptions options);
+    WriteConcernResult insertMany(List<? extends T> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match,
@@ -331,9 +334,9 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
-     * @param options the options to apply to the replace operation
+     * @param updateOptions the options to apply to the replace operation
      */
-    UpdateResult replaceOne(Object filter, T replacement, UpdateOptions options);
+    UpdateResult replaceOne(Object filter, T replacement, UpdateOptions updateOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -355,22 +358,12 @@ public interface MongoCollection<T> {
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
-     * @param options the options to apply to the update operation
+     * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object filter, Object update, UpdateOptions options);
-
-    /**
-     * Update a single document in the collection according to the specified arguments.
-     *
-     * @param model the model describing the update
-     * @return the result of the update one operation
-     * @mongodb.driver.manual tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual reference/operator/update/ Update Operators
-     */
-    UpdateResult updateOne(UpdateOneModel<T> model);
+    UpdateResult updateOne(Object filter, Object update, UpdateOptions updateOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -392,12 +385,12 @@ public interface MongoCollection<T> {
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
-     * @param options the options to apply to the update operation
+     * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object filter, Object update, UpdateOptions options);
+    UpdateResult updateMany(Object filter, Object update, UpdateOptions updateOptions);
 
     /**
      * Atomically find a document and remove it.

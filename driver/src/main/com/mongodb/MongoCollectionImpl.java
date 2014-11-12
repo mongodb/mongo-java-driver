@@ -288,7 +288,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     @SuppressWarnings("unchecked")
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
+        List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
         for (WriteModel<? extends T> writeModel : requests) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
@@ -332,46 +332,40 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void insertOne(final T document) {
+    public WriteConcernResult insertOne(final T document) {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        List<InsertRequest> requests = new ArrayList<InsertRequest>();
+        List<InsertRequest> requests = new ArrayList<InsertRequest>(1);
         requests.add(new InsertRequest(asBson(document)));
-        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
+        return executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents) {
-        insertMany(documents, new InsertManyOptions());
+    public WriteConcernResult insertMany(final List<? extends T> documents) {
+        return insertMany(documents, new InsertManyOptions());
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        List<InsertRequest> requests = new ArrayList<InsertRequest>();
+    public WriteConcernResult insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+        List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
+        return executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
     }
 
     @Override
     public DeleteResult deleteOne(final Object filter) {
-        WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                                                       asList(new DeleteRequest(asBson(filter))
-                                                                                  .multi(false))));
-        return new DeleteResult(writeConcernResult.getCount());
+        return delete(filter, false);
     }
 
     @Override
     public DeleteResult deleteMany(final Object filter) {
-        WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                                                       asList(new DeleteRequest(asBson(filter))
-                                                                                  .multi(true))));
-        return new DeleteResult(writeConcernResult.getCount());
+        return delete(filter, true);
     }
 
     @Override
@@ -380,16 +374,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public UpdateResult replaceOne(final Object filter, final T replacement, final UpdateOptions options) {
-        return replaceOne(new ReplaceOneModel<T>(filter, replacement, options));
-    }
-
-    private UpdateResult replaceOne(final ReplaceOneModel<T> model) {
-        List<UpdateRequest> requests = new ArrayList<UpdateRequest>();
-        requests.add(new UpdateRequest(asBson(model.getFilter()), asBson(model.getReplacement()), WriteRequest.Type.REPLACE)
-                         .upsert(model.getOptions().isUpsert()));
-        WriteConcernResult writeConcernResult = executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests));
-        return createUpdateResult(writeConcernResult);
+    public UpdateResult replaceOne(final Object filter, final T replacement, final UpdateOptions updateOptions) {
+        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
+        requests.add(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()));
+        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests)));
     }
 
     @Override
@@ -398,20 +386,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public UpdateResult updateOne(final Object filter, final Object update, final UpdateOptions options) {
-        return updateOne(new UpdateOneModel<T>(filter, update, options));
-    }
-
-    @Override
-    public UpdateResult updateOne(final UpdateOneModel<T> model) {
-        WriteConcernResult writeConcernResult = executor
-                                      .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                                   asList(new UpdateRequest(asBson(model.getFilter()),
-                                                                                            asBson(model.getUpdate()),
-                                                                                            WriteRequest.Type.UPDATE)
-                                                                              .multi(false)
-                                                                              .upsert(model.getOptions().isUpsert()))));
-        return createUpdateResult(writeConcernResult);
+    public UpdateResult updateOne(final Object filter, final Object update, final UpdateOptions updateOptions) {
+        return update(filter, update, updateOptions, false);
     }
 
     @Override
@@ -420,19 +396,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public UpdateResult updateMany(final Object filter, final Object update, final UpdateOptions options) {
-        return updateMany(new UpdateManyModel<T>(filter, update, options));
-    }
-
-    private UpdateResult updateMany(final UpdateManyModel<T> model) {
-        WriteConcernResult writeConcernResult = executor
-                                      .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                                   asList(new UpdateRequest(asBson(model.getFilter()),
-                                                                                            asBson(model.getUpdate()),
-                                                                                            WriteRequest.Type.UPDATE)
-                                                                              .multi(true)
-                                                                              .upsert(model.getOptions().isUpsert()))));
-        return createUpdateResult(writeConcernResult);
+    public UpdateResult updateMany(final Object filter, final Object update, final UpdateOptions updateOptions) {
+        return update(filter, update, updateOptions, true);
     }
 
     @Override
@@ -446,11 +411,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                   .filter(asBson(filter))
                                                   .projection(asBson(options.getProjection()))
                                                   .sort(asBson(options.getSort())));
-    }
-
-    // TODO modifiedCount
-    private UpdateResult createUpdateResult(final WriteConcernResult writeConcernResult) {
-        return new UpdateResult(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
     }
 
     @Override
@@ -537,6 +497,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
         executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace)
                              .dropTarget(renameCollectionOptions.isDropTarget()));
+    }
+
+    private DeleteResult delete(final Object filter, final boolean multi) {
+        WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
+                                                                                     asList(new DeleteRequest(asBson(filter))
+                                                                                            .multi(multi))));
+        return new DeleteResult(writeConcernResult.getCount());
+    }
+
+    private UpdateResult update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi) {
+        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
+        requests.add(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
+                     .upsert(updateOptions.isUpsert()).multi(multi));
+        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests)));
+    }
+
+    // TODO modifiedCount
+    private UpdateResult createUpdateResult(final WriteConcernResult writeConcernResult) {
+        return new UpdateResult(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
     }
 
     private Codec<T> getCodec() {
