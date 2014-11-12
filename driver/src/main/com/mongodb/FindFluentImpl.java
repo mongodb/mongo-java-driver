@@ -34,7 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class FindFluentImpl<T> implements FindFluent<T> {
+final class FindFluentImpl<T> implements FindFluent<T> {
     private final MongoNamespace namespace;
     private final MongoCollectionOptions options;
     private final OperationExecutor executor;
