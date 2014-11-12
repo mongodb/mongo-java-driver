@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.operation.BatchCursor
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 
@@ -305,9 +306,9 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     def 'DBCursor options should set the correct read preference'() {
         given:
         def tailableCursor =
-                new MongoCursor<DBObject>() {
+                new BatchCursor<DBObject>() {
                     @Override
-                    DBObject tryNext() { null  }
+                    List<DBObject> tryNext() { null  }
 
                     @Override
                     void close() { }
@@ -316,7 +317,16 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
                     boolean hasNext() { true }
 
                     @Override
-                    DBObject next() { null }
+                    List<DBObject> next() { null }
+
+                    @Override
+                    void setBatchSize(final int batchSize) {
+                    }
+
+                    @Override
+                    int getBatchSize() {
+                        0
+                    }
 
                     @Override
                     void remove() { }

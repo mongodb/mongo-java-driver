@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoAsyncCursor;
@@ -57,7 +56,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @since 3.0
  */
 public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<MongoAsyncCursor<T>>>,
-                                                               ReadOperation<List<MongoCursor<T>>> {
+                                                               ReadOperation<List<BatchCursor<T>>> {
     private final MongoNamespace namespace;
     private final int numCursors;
     private int batchSize = 0;
@@ -111,10 +110,10 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
     }
 
     @Override
-    public List<MongoCursor<T>> execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnectionAndSource<List<MongoCursor<T>>>() {
+    public List<BatchCursor<T>> execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnectionAndSource<List<BatchCursor<T>>>() {
             @Override
-            public List<MongoCursor<T>> call(final ConnectionSource source, final Connection connection) {
+            public List<BatchCursor<T>> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
                                                      binding.getReadPreference(), transformer(source));
@@ -134,13 +133,13 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         });
     }
 
-    private Function<BsonDocument, List<MongoCursor<T>>> transformer(final ConnectionSource source) {
-        return new Function<BsonDocument, List<MongoCursor<T>>>() {
+    private Function<BsonDocument, List<BatchCursor<T>>> transformer(final ConnectionSource source) {
+        return new Function<BsonDocument, List<BatchCursor<T>>>() {
             @Override
-            public List<MongoCursor<T>> apply(final BsonDocument result) {
-                List<MongoCursor<T>> cursors = new ArrayList<MongoCursor<T>>();
+            public List<BatchCursor<T>> apply(final BsonDocument result) {
+                List<BatchCursor<T>> cursors = new ArrayList<BatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
-                    cursors.add(new MongoQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
+                    cursors.add(new QueryBatchCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                      source.getServerDescription().getAddress()),
                                                         0, getBatchSize(), decoder, source));
                 }

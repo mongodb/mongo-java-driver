@@ -48,7 +48,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding());
 
         then:
-        result.toList().first().name == ['Pete', 'Sam']
+        result.next()[0].name == ['Pete', 'Sam']
     }
 
     def 'should be able to group by name'() {
@@ -66,7 +66,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding());
 
         then:
-        List<String> results = result.iterator()*.getString('name')
+        List<String> results = result.iterator().next()*.getString('name')
         results.containsAll(['Pete', 'Sam'])
     }
 
@@ -85,7 +85,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding());
 
         then:
-        List<String> results = result.iterator()*.getString('name')
+        List<String> results = result.iterator().next()*.getString('name')
         results.containsAll(['Pete', 'Sam'])
     }
 
@@ -106,7 +106,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding());
 
         then:
-        List<String> results = result.iterator()*.getString('name')
+        List<String> results = result.iterator().next()*.getString('name')
         results == ['Pete']
     }
 

@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.MongoIterable;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 
@@ -29,11 +30,11 @@ import java.util.Collection;
  * @since 3.0
  */
 class OperationIterable<T> implements MongoIterable<T> {
-    private final ReadOperation<? extends MongoCursor<T>> operation;
+    private final ReadOperation<? extends BatchCursor<T>> operation;
     private final ReadPreference readPreference;
     private final OperationExecutor executor;
 
-    OperationIterable(final ReadOperation<? extends MongoCursor<T>> operation, final ReadPreference readPreference,
+    OperationIterable(final ReadOperation<? extends BatchCursor<T>> operation, final ReadPreference readPreference,
                       final OperationExecutor executor) {
         this.operation = operation;
         this.readPreference = readPreference;
@@ -42,7 +43,7 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public MongoCursor<T> iterator() {
-        return executor.execute(operation, readPreference);
+        return new MongoBatchCursorAdapter<T>(executor.execute(operation, readPreference));
     }
 
     @Override

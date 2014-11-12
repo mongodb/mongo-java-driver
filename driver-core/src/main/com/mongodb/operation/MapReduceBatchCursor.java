@@ -16,8 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoCursor;
-
 /**
  * Represents the results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
  * statistics about the operation.
@@ -25,7 +23,7 @@ import com.mongodb.MongoCursor;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public interface MapReduceCursor<T> extends MongoCursor<T> {
+public interface MapReduceBatchCursor<T> extends BatchCursor<T> {
     /**
      * Get the statistics for this map-reduce operation
      *

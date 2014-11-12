@@ -55,7 +55,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def cursor = findOperation.execute(getBinding())
 
         then:
-        cursor.next() == document
+        cursor.next()[0] == document
     }
 
     def 'should apply filter'() {
@@ -67,9 +67,11 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         def cursor = findOperation.execute(getBinding())
+        def nextBatch = cursor.next()
 
         then:
-        cursor.next() == document
+        nextBatch.size() == 1
+        nextBatch[0] == document
         !cursor.hasNext()
     }
 
@@ -102,9 +104,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         def cursor = findOperation.execute(getBinding())
+        def nextBatch = cursor.next()
 
         then:
-        cursor.next() == new Document('x', 5)
+        nextBatch[0] == new Document('x', 5)
     }
 
     @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
@@ -158,7 +161,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         findOperation.execute(getBinding()).each {
-            count++
+            it.each {
+                count++
+            }
         }
 
         then:
@@ -177,7 +182,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         findOperation.execute(getBinding()).each {
-            count++
+            it.each {
+                count++
+            }
         }
 
         then:
@@ -195,7 +202,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         findOperation.execute(getBinding()).each {
-            count++
+            it.each {
+                count++
+            }
         }
 
         then:
@@ -217,9 +226,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def cursor = findOperation.execute(getBinding())
 
         then:
-        def foundItem = cursor.next()
-        foundItem.keySet().size() == 1
-        foundItem['x'] == 7
+        def batch = cursor.next()
+        batch[0].keySet().size() == 1
+        batch[0]['x'] == 7
     }
 
     def '$showDiskLoc should return disk locations'() {

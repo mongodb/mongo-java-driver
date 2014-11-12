@@ -16,7 +16,7 @@
 
 package com.mongodb
 
-import com.mongodb.operation.MapReduceCursor
+import com.mongodb.operation.MapReduceBatchCursor
 import com.mongodb.operation.MapReduceStatistics
 import spock.lang.Subject
 
@@ -61,7 +61,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
     def 'should return null for the name of the collection if it is inline'() {
         given:
-        MapReduceCursor mongoCursor = Mock();
+        MapReduceBatchCursor mongoCursor = Mock();
 
         @Subject
         def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor);
@@ -109,7 +109,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         given:
         def expectedDuration = 2774
 
-        MapReduceCursor mongoCursor = Mock();
+        MapReduceBatchCursor mongoCursor = Mock();
         mongoCursor.getStatistics() >> new MapReduceStatistics(5, 10, 5, expectedDuration)
 
         @Subject
@@ -143,7 +143,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         def expectedEmitCount = 6
         def expectedDuration = 10
 
-        MapReduceCursor mapReduceCursor = Mock();
+        MapReduceBatchCursor mapReduceCursor = Mock();
         mapReduceCursor.getStatistics() >> new MapReduceStatistics(expectedInputCount, expectedOutputCount, expectedEmitCount,
                                                                    expectedDuration)
 

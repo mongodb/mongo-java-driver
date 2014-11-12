@@ -16,67 +16,24 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.ServerAddress;
-import com.mongodb.ServerCursor;
-
-import java.util.Iterator;
-import java.util.List;
+import com.mongodb.MongoNamespace;
+import com.mongodb.binding.ConnectionSource;
+import com.mongodb.connection.QueryResult;
+import org.bson.codecs.Decoder;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
  * from the operation, and also provides access to the statistics returned in the results.
  *
  * @param <T> the operations result type.
- * @since 3.0
  */
-class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
-    private final Iterator<T> iterator;
+class MapReduceInlineResultsCursor<T> extends QueryBatchCursor<T> implements MapReduceBatchCursor<T> {
     private final MapReduceStatistics statistics;
-    private final ServerAddress serverAddress;
 
-    @SuppressWarnings("unchecked")
-    MapReduceInlineResultsCursor(final List<T> results, final MapReduceStatistics statistics, final ServerAddress serverAddress) {
+    MapReduceInlineResultsCursor(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
+                                 final ConnectionSource connectionSource, final MapReduceStatistics statistics) {
+        super(namespace, queryResult, 0, 0, decoder, connectionSource);
         this.statistics = statistics;
-        this.serverAddress = serverAddress;
-        iterator = results.iterator();
-    }
-
-    @Override
-    public void close() {
-    }
-
-    @Override
-    public boolean hasNext() {
-        return iterator.hasNext();
-    }
-
-    @Override
-    public T next() {
-        return iterator.next();
-    }
-
-    @Override
-    public T tryNext() {
-        if (hasNext()) {
-            return next();
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public ServerCursor getServerCursor() {
-        return null;
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException("Inline map reduce operations don't support remove operations.");
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        return serverAddress;
     }
 
     @Override

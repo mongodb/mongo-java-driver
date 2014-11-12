@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.operation.MapReduceCursor;
+import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class MapReduceOutput {
     /**
      * Constructor for use with inline map reduce.  Collection will always be null.
      */
-    MapReduceOutput(final DBObject command, final MapReduceCursor<DBObject> results) {
+    MapReduceOutput(final DBObject command, final MapReduceBatchCursor<DBObject> results) {
 
         this.command = command;
         this.mapReduceStatistics = results.getStatistics();
@@ -48,8 +48,9 @@ public class MapReduceOutput {
         this.resultsFromCollection = null;
         this.inlineResults = new ArrayList<DBObject>();
         while (results.hasNext()) {
-            this.inlineResults.add(results.next());
+            this.inlineResults.addAll(results.next());
         }
+        results.close();
     }
 
     /**

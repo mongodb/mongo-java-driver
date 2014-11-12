@@ -17,14 +17,14 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
@@ -43,7 +43,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
+public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BsonJavaScript reduceFunction;
@@ -176,13 +176,13 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<MongoCursor<T>>() {
+    public BatchCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
-            public MongoCursor<T> call(final Connection connection) {
+            public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
-                                                     connection, transformer(connection.getDescription().getServerAddress()));
+                                                     connection, transformer(connectionSource));
             }
         });
     }
@@ -201,13 +201,16 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                                                   binding, asyncTransformer());
     }
 
-    private Function<BsonDocument, MongoCursor<T>> transformer(final ServerAddress serverAddress) {
-        return new Function<BsonDocument, MongoCursor<T>>() {
+    private Function<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource connectionSource) {
+        return new Function<BsonDocument, BatchCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoCursor<T> apply(final BsonDocument result) {
-                return new InlineMongoCursor<T>(serverAddress,
-                                                BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")));
+            public BatchCursor<T> apply(final BsonDocument result) {
+                return new QueryBatchCursor<T>(namespace,
+                                               new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")), 0,
+                                                                  connectionSource.getServerDescription().getAddress(), 0),
+                                               0, 0, decoder, connectionSource);
+
             }
         };
     }

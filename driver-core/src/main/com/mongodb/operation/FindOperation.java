@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.Block;
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
@@ -52,7 +51,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
+public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument filter;
@@ -427,10 +426,10 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     @Override
-    public MongoCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoCursor<T>>() {
+    public BatchCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
-            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
+            public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = connection.query(namespace,
                                                               asDocument(connection.getDescription(), binding.getReadPreference()),
                                                               projection,
@@ -443,7 +442,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                                               isPartial(),
                                                               isOplogReplay(),
                                                               decoder);
-                return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize, decoder, source);
+                return new QueryBatchCursor<T>(namespace, queryResult, limit, batchSize, decoder, source);
             }
         });
     }
@@ -495,7 +494,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return new ReadOperation<BsonDocument>() {
             @Override
             public BsonDocument execute(final ReadBinding binding) {
-                return explainableFindOperation.execute(binding).next();
+                return explainableFindOperation.execute(binding).next().iterator().next();
             }
         };
     }

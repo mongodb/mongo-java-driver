@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -485,7 +486,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             explainOptions.batchSize(explainOptions.getLimit() * -1);
             explainOptions.limit(0);
         }
-        return executor.execute(getQueryOperation(explainOptions, collection.getObjectCodec()), getReadPreference()).next();
+        return toDBObject(executor.execute(getQueryOperation(explainOptions, collection.getObjectCodec())
+                                           .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER),
+                                           getReadPreference()));
     }
 
     private FindOperation<DBObject> getQueryOperation(final FindOptions options, final Decoder<DBObject> decoder) {
@@ -683,7 +686,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBObject one() {
         return collection.findOne(getQuery(), getKeysWanted(),
                                   findOptions.getSort() == null
-                                  ? null : DBObjects.toDBObject((BsonDocument) findOptions.getSort()),
+                                  ? null : toDBObject((BsonDocument) findOptions.getSort()),
                                   getReadPreferenceForCursor(), findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
@@ -738,7 +741,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBObject getKeysWanted() {
         return findOptions.getProjection() == null
-               ? null : DBObjects.toDBObject((BsonDocument) findOptions.getProjection());
+               ? null : toDBObject((BsonDocument) findOptions.getProjection());
     }
 
     /**
@@ -747,7 +750,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the query that cursor used
      */
     public DBObject getQuery() {
-        return DBObjects.toDBObject(filter);
+        return toDBObject(filter);
     }
 
     /**
@@ -821,7 +824,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = executor.execute(operation, getReadPreferenceForCursor());
+        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreferenceForCursor()));
         if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
             optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo());
         }

@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
@@ -55,7 +54,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.server.release 2.2
  * @since 3.0
  */
-public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
+public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String RESULT = "result";
     private static final String FIRST_BATCH = "firstBatch";
 
@@ -188,10 +187,10 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     }
 
     @Override
-    public MongoCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
+    public BatchCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
-            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
+            public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(connection),
                                                      CommandResultDocumentCodec.create(decoder,
                                                                                        getFieldNameWithResults(connection)),
@@ -281,16 +280,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
                                   0);
     }
 
-    private Function<BsonDocument, MongoCursor<T>> transformer(final ConnectionSource source, final Connection connection) {
-        return new Function<BsonDocument, MongoCursor<T>>() {
+    private Function<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source, final Connection connection) {
+        return new Function<BsonDocument, BatchCursor<T>>() {
             @Override
-            public MongoCursor<T> apply(final BsonDocument result) {
+            public BatchCursor<T> apply(final BsonDocument result) {
                 QueryResult<T> queryResult = createQueryResult(result, connection);
-                if (isInline(connection)) {
-                    return new InlineMongoCursor<T>(source.getServerDescription().getAddress(), queryResult.getResults());
-                } else {
-                    return new MongoQueryCursor<T>(namespace, queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
-                }
+                return new QueryBatchCursor<T>(namespace, queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
             }
         };
     }

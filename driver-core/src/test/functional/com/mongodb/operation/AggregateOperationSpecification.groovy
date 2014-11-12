@@ -81,7 +81,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def result = operation.execute(getBinding());
 
         then:
-        List<String> results = result.iterator()*.getString('name')
+        List<String> results = result.iterator().next()*.getString('name')
         results.size() == 3
         results.containsAll(['Pete', 'Sam'])
 
@@ -122,7 +122,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def result = operation.execute(getBinding());
 
         then:
-        List<String> results = result.iterator()*.getString('name')
+        List<String> results = result.iterator().next()*.getString('name')
         results.size() == 1
         results == ['Sam']
 
@@ -164,7 +164,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def cursor = operation.execute(getBinding())
 
         then:
-        cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
+        cursor.next()*.getString('name') == ['Pete', 'Sam', 'Pete']
 
         where:
         allowDiskUse << [null, true, false]
@@ -177,7 +177,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def cursor = operation.execute(getBinding())
 
         then:
-        cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
+        cursor.next()*.getString('name') == ['Pete', 'Sam', 'Pete']
 
         where:
         batchSize << [null, 0, 10]

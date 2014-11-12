@@ -40,6 +40,7 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
+import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DeleteOperation
@@ -286,7 +287,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'find iteration should use FindOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         cursor.hasNext() >>> [true, false]
         def executor = new TestOperationExecutor([cursor, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -340,7 +341,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'fluent find should use FindOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         cursor.hasNext() >>> [true, false]
         def executor = new TestOperationExecutor([cursor, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -401,8 +402,11 @@ class MongoCollectionSpecification extends Specification {
 
     def 'find with first() should temporarily set limit to -1 and batchSize to 0'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def document = new Document()
+        def cursor = Stub(BatchCursor)
         cursor.hasNext() >>> [true, false]
+        cursor.next() >> [document]
+
         def executor = new TestOperationExecutor([cursor, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def fluentFind = collection.find(new Document('cold', true))
@@ -415,11 +419,12 @@ class MongoCollectionSpecification extends Specification {
                                    .sort(new Document('y', 1))
 
         when:
-        fluentFind.first()
+        def first = fluentFind.first()
         def operation = executor.getReadOperation() as FindOperation
         def readPreference = executor.getReadPreference()
 
         then:
+        first.is(document)
         operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
@@ -583,7 +588,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'aggregate should use AggregationOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         def executor = new TestOperationExecutor([cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
@@ -605,7 +610,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'aggregate should use AggregationToCollectionOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         def executor = new TestOperationExecutor([null, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
@@ -616,9 +621,10 @@ class MongoCollectionSpecification extends Specification {
                                             .useCursor(true)
 
         when:
-        collection.aggregate(pipeline, options).first()
+        def first = collection.aggregate(pipeline, options).first()
 
         then:
+        first == null
         def aggregateToCollectionOperation = executor.getWriteOperation() as AggregateToCollectionOperation
         aggregateToCollectionOperation != null
         aggregateToCollectionOperation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
@@ -635,14 +641,15 @@ class MongoCollectionSpecification extends Specification {
 
     def 'mapReduce should use the MapReduceWithInlineResultsOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         def executor = new TestOperationExecutor([cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        collection.mapReduce('map', 'reduce').first()
+        def first = collection.mapReduce('map', 'reduce').first()
 
         then:
+        first == null
         def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
         operation.getFilter() == null
         operation.getFinalizeFunction() == null
@@ -659,7 +666,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'mapReduce with options should use the MapReduceWithInlineResultsOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         def executor = new TestOperationExecutor([cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def options = new MapReduceOptions()
@@ -693,7 +700,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'mapReduce with options should use the MapReduceToCollectionOperation properly'() {
         given:
-        def cursor = Stub(MongoCursor)
+        def cursor = Stub(BatchCursor)
         def executor = new TestOperationExecutor([cursor, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def options = new MapReduceOptions('out')

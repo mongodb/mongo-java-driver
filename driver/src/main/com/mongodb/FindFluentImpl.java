@@ -20,6 +20,7 @@ import com.mongodb.client.FindFluent;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
@@ -198,7 +199,8 @@ final class FindFluentImpl<T> implements FindFluent<T> {
         @Override
         public T first() {
             FindOperation<T> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
-            return new OperationIterable<T>(findFirstOperation, readPreference, executor).first();
+            BatchCursor<T> batchCursor = executor.execute(findFirstOperation, readPreference);
+            return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         }
     }
 }

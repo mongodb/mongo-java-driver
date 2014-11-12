@@ -50,10 +50,10 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Operati
 
     def 'should return the correct results'() {
         when:
-        MapReduceCursor<Document> results = mapReduceOperation.execute(getBinding())
+        MapReduceBatchCursor<Document> results = mapReduceOperation.execute(getBinding())
 
         then:
-        results.iterator().toList() == expectedResults
+        results.iterator().next() == expectedResults
     }
 
     @Category(Async)

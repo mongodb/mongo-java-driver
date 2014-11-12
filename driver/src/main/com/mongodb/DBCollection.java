@@ -24,6 +24,7 @@ import com.mongodb.connection.BufferProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BaseWriteOperation;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexOperation;
 import com.mongodb.operation.DeleteOperation;
@@ -36,7 +37,7 @@ import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
-import com.mongodb.operation.MapReduceCursor;
+import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
@@ -147,10 +148,10 @@ public class DBCollection {
         this(name, database, database.getExecutor());
     }
 
-    private static BasicDBList toDBList(final MongoCursor<DBObject> source) {
+    private static BasicDBList toDBList(final BatchCursor<DBObject> source) {
         BasicDBList dbList = new BasicDBList();
         while (source.hasNext()) {
-            dbList.add(source.next());
+            dbList.addAll(source.next());
         }
         return dbList;
     }
@@ -690,8 +691,8 @@ public class DBCollection {
         if (query != null) {
             operation.filter(wrap(query));
         }
-        MongoCursor<DBObject> cursor = executor.execute(operation, readPreference);
-        return cursor.hasNext() ? cursor.next() : null;
+        BatchCursor<DBObject> cursor = executor.execute(operation, readPreference);
+        return cursor.hasNext() ? cursor.next().iterator().next() : null;
     }
 
     /**
@@ -1121,7 +1122,7 @@ public class DBCollection {
             if (command.getFinalize() != null) {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
             }
-            MapReduceCursor<DBObject> executionResult = executor.execute(operation, readPreference);
+            MapReduceBatchCursor<DBObject> executionResult = executor.execute(operation, readPreference);
             return new MapReduceOutput(command.toDBObject(), executionResult);
         } else {
             String action;
@@ -1282,8 +1283,8 @@ public class DBCollection {
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .batchSize(options.getBatchSize())
                                                          .useCursor(options.getOutputMode() == CURSOR);
-            MongoCursor<DBObject> cursor = executor.execute(operation, readPreference);
-            return new MongoCursorAdapter(cursor);
+            BatchCursor<DBObject> cursor = executor.execute(operation, readPreference);
+            return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
         }
     }
 
@@ -1335,12 +1336,12 @@ public class DBCollection {
                                                                                                             options.getNumCursors(),
                                                                                                             objectCodec)
                                                                   .batchSize(options.getBatchSize());
-        List<MongoCursor<DBObject>> mongoCursors = executor.execute(operation,
+        List<BatchCursor<DBObject>> mongoCursors = executor.execute(operation,
                                                                     options.getReadPreference() != null ? options.getReadPreference()
                                                                                                         : getReadPreference());
 
-        for (MongoCursor<DBObject> mongoCursor : mongoCursors) {
-            cursors.add(new MongoCursorAdapter(mongoCursor));
+        for (BatchCursor<DBObject> mongoCursor : mongoCursors) {
+            cursors.add(new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(mongoCursor)));
         }
         return cursors;
     }

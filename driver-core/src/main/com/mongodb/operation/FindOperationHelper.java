@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -37,13 +36,15 @@ final class FindOperationHelper {
     static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
                                             final ConnectionSource source,
                                             final Function<T, V> block) {
-        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult, 0, 0, decoder, source);
+        BatchCursor<T> cursor = new QueryBatchCursor<T>(namespace, queryResult, 0, 0, decoder, source);
         try {
             List<V> retVal = new ArrayList<V>();
             while (cursor.hasNext()) {
-                V value = block.apply(cursor.next());
-                if (value != null) {
-                    retVal.add(value);
+                for (T cur : cursor.next()) {
+                    V value = block.apply(cur);
+                    if (value != null) {
+                        retVal.add(value);
+                    }
                 }
             }
             return retVal;

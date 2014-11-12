@@ -19,7 +19,6 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.Block
-import com.mongodb.MongoCursor
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoAsyncCursor
 import org.bson.Document
@@ -48,17 +47,18 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
 
     def 'should visit all documents'() {
         when:
-        List<MongoCursor<Document>> cursors = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
+        def cursors = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
                 .batchSize(500).execute(getBinding())
 
         then:
         cursors.size() <= 3
 
         when:
-        for (MongoCursor<Document> cursor : cursors) {
+        for (BatchCursor<Document> cursor : cursors) {
             while (cursor.hasNext()) {
-                Integer id = (Integer) cursor.next().get('_id')
-                assertTrue(ids.remove(id))
+                for (Document cur: cursor.next()) {
+                    assertTrue(ids.remove(cur.getInteger('_id')))
+                }
             }
         }
 
