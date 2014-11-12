@@ -62,6 +62,24 @@ public class JSONCallbackTest extends com.mongodb.util.TestCase {
         assertEquals(
                 parsedDate.compareTo(format.parse(format.format(rightNow), new ParsePosition(0))), 0);
 
+        // Test formatted dates with ms granularity and timezone offset
+        format = new SimpleDateFormat(JSONCallback._msDateFormat_TZ);
+        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(1, "GMT")));
+
+        parsedDate = (Date) JSON.parse("{ \"$date\" : \"" + format.format(rightNow) + "\"}");
+        assertEquals(
+                parsedDate.compareTo(format.parse(format.format(rightNow), new ParsePosition(0))), 0);
+
+        // Test formatted dates with sec granularity
+        format = new SimpleDateFormat(JSONCallback._secDateFormat_TZ);
+        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(1, "GMT")));
+
+        parsedDate = (Date) JSON.parse("{ \"$date\" : \"" + format.format(rightNow) + "\"}");
+        assertEquals(
+                parsedDate.compareTo(format.parse(format.format(rightNow), new ParsePosition(0))), 0);
+
+        
+        
     }
 
     @Test
