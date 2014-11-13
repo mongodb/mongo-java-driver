@@ -160,6 +160,9 @@ members:
   - ensureIndex(com.mongodb.DBObject,com.mongodb.DBObject)
   - genIndexName(com.mongodb.DBObject)                  # JAVA-881
   - resetIndexCache()
+  - apply(com.mongodb.DBObject)                         # JAVA-1538
+  - apply(com.mongodb.DBObject,boolean)
+  - doapply(com.mongodb.DBObject)
 
   com.mongodb.DBCursor:
   - getSizes()
