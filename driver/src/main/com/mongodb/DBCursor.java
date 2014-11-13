@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;

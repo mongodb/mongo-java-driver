@@ -16,10 +16,10 @@
 
 package com.mongodb.acceptancetest.querying;
 
-import com.mongodb.MongoCursor;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.QueryBuilder;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;

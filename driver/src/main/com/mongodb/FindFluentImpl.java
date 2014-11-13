@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.client.FindFluent;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.BatchCursor;

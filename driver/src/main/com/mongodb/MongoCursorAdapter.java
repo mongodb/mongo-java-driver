@@ -17,6 +17,8 @@
 package com.mongodb;
 
 
+import com.mongodb.client.MongoCursor;
+
 class MongoCursorAdapter implements Cursor {
     private final MongoCursor<DBObject> cursor;
 

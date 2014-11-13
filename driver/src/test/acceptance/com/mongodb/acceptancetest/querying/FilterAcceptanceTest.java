@@ -16,9 +16,9 @@
 
 package com.mongodb.acceptancetest.querying;
 
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoQueryFailureException;
 import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.junit.Test;
 

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.client;
 
-
+import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
 
 import java.io.Closeable;

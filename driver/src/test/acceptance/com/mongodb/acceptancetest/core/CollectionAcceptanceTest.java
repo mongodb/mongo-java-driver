@@ -18,12 +18,12 @@ package com.mongodb.acceptancetest.core;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.RenameCollectionOptions;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;

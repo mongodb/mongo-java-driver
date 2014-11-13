@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoCursor;
 
 import java.util.Collection;
 
