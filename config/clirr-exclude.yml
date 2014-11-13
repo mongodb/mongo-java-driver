@@ -140,6 +140,9 @@ members:
   - command(com.mongodb.DBObject,int,com.mongodb.ReadPreference,com.mongodb.DBEncoder)      # JAVA-1063 Deprecate command methods that take options
   - cleanCursors(boolean)
   - resetError()
+  - requestStart()                                               # JAVA-1544
+  - requestDone()
+  - requestEnsureConnection()
 
 
   com.mongodb.DBCollection:
