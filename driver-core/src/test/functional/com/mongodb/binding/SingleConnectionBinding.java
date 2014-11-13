@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.binding;
 
-import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.ReadPreference;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
@@ -25,11 +24,16 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A binding that ensures that all reads use the same connection, and all writes use the same connection.
+ *
+ * <p>If the readPreference is {#link ReadPreference.primary()} then all reads and writes will use the same connection.</p>
  */
 public class SingleConnectionBinding implements ReadWriteBinding {
     private final ReadPreference readPreference;
@@ -41,18 +45,33 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private int count = 1;
 
     /**
-     * Create a new session with the given cluster.
+     * Create a new binding with the given cluster.
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param maxWaitTime the maximum time to wait for a connection to become available.
      * @param timeUnit    a non-null TimeUnit for the maxWaitTime
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
-        this.readPreference = readPreference;
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), 1, SECONDS);
-        readConnection = readServer.getConnection();
-        writeServer = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS);
+    public SingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
+        this(cluster, primary(), maxWaitTime, timeUnit);
+    }
+
+    /**
+     * Create a new binding with the given cluster.
+     *
+     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
+     * @param maxWaitTime the maximum time to wait for a connection to become available
+     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
+     */
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
+                                   final long maxWaitTime, final TimeUnit timeUnit) {
+        notNull("cluster", cluster);
+        notNull("timeUnit", timeUnit);
+        this.readPreference = notNull("readPreference", readPreference);
+        writeServer = cluster.selectServer(new PrimaryServerSelector(), maxWaitTime, timeUnit);
         writeConnection = writeServer.getConnection();
+        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTime, timeUnit);
+        readConnection = readServer.getConnection();
     }
 
     @Override
@@ -70,8 +89,8 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     public void release() {
         count--;
         if (count == 0) {
-            readConnection.release();
             writeConnection.release();
+            readConnection.release();
         }
     }
 
@@ -84,7 +103,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     @Override
     public ConnectionSource getReadConnectionSource() {
         isTrue("open", getCount() > 0);
-        return new SingleConnectionSource(readServer, readConnection);
+        if (readPreference == primary()) {
+            return getWriteConnectionSource();
+        } else {
+            return new SingleConnectionSource(readServer, readConnection);
+        }
     }
 
     @Override

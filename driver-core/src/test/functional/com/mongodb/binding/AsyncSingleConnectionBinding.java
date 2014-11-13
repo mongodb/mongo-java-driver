@@ -23,36 +23,56 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * An asynchronous factory of providing a single connection source for servers that can be read from or written to.
+ * An asynchronous binding that ensures that all reads use the same connection, and all writes use the same connection.
  *
- * @since 3.0
+ * <p>If the readPreference is {#link ReadPreference.primary()} then all reads and writes will use the same connection.</p>
+ *
  */
 public class AsyncSingleConnectionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
-    private final Server server;
-    private Connection connection;
+    private final ReadPreference readPreference;
+    private final Connection readConnection;
+    private final Connection writeConnection;
+    private final Server readServer;
+    private final Server writeServer;
 
     /**
-     * Creates an instance.
+     * Create a new binding with the given cluster.
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param maxWaitTime the maximum time to wait for a connection to become available.
      * @param timeUnit    a non-null TimeUnit for the maxWaitTime
      */
     public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
+        this(cluster, primary(), maxWaitTime, timeUnit);
+    }
+
+    /**
+     * Create a new binding with the given cluster.
+     *
+     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
+     * @param maxWaitTime the maximum time to wait for a connection to become available
+     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
+     */
+    public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
+                                   final long maxWaitTime, final TimeUnit timeUnit) {
         notNull("cluster", cluster);
         notNull("timeUnit", timeUnit);
-
-        long maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
-        this.server = cluster.selectServer(new ReadPreferenceServerSelector(getReadPreference()), maxWaitTimeMS, MILLISECONDS);
+        this.readPreference = notNull("readPreference", readPreference);
+        writeServer = cluster.selectServer(new PrimaryServerSelector(), maxWaitTime, timeUnit);
+        writeConnection = writeServer.getConnection();
+        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTime, timeUnit);
+        readConnection = readServer.getConnection();
     }
 
     @Override
@@ -63,40 +83,42 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
     @Override
     public ReadPreference getReadPreference() {
-        return ReadPreference.primary();
+        return readPreference;
     }
 
     @Override
     public MongoFuture<AsyncConnectionSource> getReadConnectionSource() {
-        return getConnectionSource();
+        isTrue("open", getCount() > 0);
+        if (readPreference == primary()) {
+            return getWriteConnectionSource();
+        } else {
+            return new SingleResultFuture<AsyncConnectionSource>(new SingleAsyncConnectionSource(readServer, readConnection));
+        }
     }
 
     @Override
     public MongoFuture<AsyncConnectionSource> getWriteConnectionSource() {
-        return getConnectionSource();
+        isTrue("open", getCount() > 0);
+        return new SingleResultFuture<AsyncConnectionSource>(new SingleAsyncConnectionSource(writeServer, writeConnection));
     }
 
     @Override
     public void release() {
         super.release();
-        if (getCount() == 0 && connection != null) {
-            connection.release();
+        if (getCount() == 0) {
+            readConnection.release();
+            writeConnection.release();
         }
     }
 
-    private MongoFuture<AsyncConnectionSource> getConnectionSource() {
-        isTrue("open", getCount() > 0);
-        if (connection == null) {
-            connection = server.getConnection();
-        }
-        return new SingleResultFuture<AsyncConnectionSource>(new MyConnectionSource(connection));
-    }
-
-    private final class MyConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
+    private final class SingleAsyncConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
+        private final Server server;
         private final Connection connection;
 
-        private MyConnectionSource(final Connection connection) {
-            this.connection = connection.retain();
+        private SingleAsyncConnectionSource(final Server server, final Connection connection) {
+            this.server = server;
+            this.connection = connection;
+            AsyncSingleConnectionBinding.this.retain();
         }
 
         @Override
@@ -119,7 +141,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         public void release() {
             super.release();
             if (super.getCount() == 0) {
-                connection.release();
+                AsyncSingleConnectionBinding.this.release();
             }
         }
     }

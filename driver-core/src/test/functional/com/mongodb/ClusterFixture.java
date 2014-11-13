@@ -21,6 +21,7 @@ import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.SingleConnectionBinding;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
@@ -131,7 +132,7 @@ public final class ClusterFixture {
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary());
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {

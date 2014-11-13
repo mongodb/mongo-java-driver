@@ -17,6 +17,7 @@
 package com.mongodb
 
 import com.mongodb.binding.AsyncSingleConnectionBinding
+import com.mongodb.binding.SingleConnectionBinding
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker

@@ -24,8 +24,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;
+import static com.mongodb.ReadPreference.secondary;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 @Category(ReplicaSet.class)
 public class AsyncSingleConnectionBindingTest  {
@@ -60,7 +62,7 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     @Test
-    public void shouldHaveTheSameConnectionForReadsAndWrites() throws InterruptedException {
+    public void shouldHaveTheSameConnectionForReadsAndWritesWithPrimaryReadPreference() throws InterruptedException {
         AsyncConnectionSource writeSource = binding.getWriteConnectionSource().get();
         Connection writeConnection = writeSource.getConnection().get();
 
@@ -78,6 +80,37 @@ public class AsyncSingleConnectionBindingTest  {
     public void shouldNotDevourAllConnections() {
         for (int i = 0; i < 250; i++) {
             AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            binding.release();
+        }
+    }
+
+    @Test
+    public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws InterruptedException {
+        AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
+        AsyncConnectionSource writeSource = binding.getWriteConnectionSource().get();
+        Connection writeConnection = writeSource.getConnection().get();
+
+        AsyncConnectionSource readSource = binding.getReadConnectionSource().get();
+        Connection readConnection = readSource.getConnection().get();
+        assertNotEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
+
+        writeConnection.release();
+        readConnection.release();
+        writeSource.release();
+        readSource.release();
+        binding.release();
+    }
+
+    @Test
+    public void shouldNotDevourAllConnectionsWhenUsingNonPrimaryReadPreference() {
+        for (int i = 0; i < 500; i++) {
+            AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
             getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
