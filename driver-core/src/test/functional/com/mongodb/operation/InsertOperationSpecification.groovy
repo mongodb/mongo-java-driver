@@ -133,7 +133,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         when:
         def result = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED,
                                          [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
-                .execute(getBinding())
+                .execute(binding)
 
         then:
         !result.wasAcknowledged()
