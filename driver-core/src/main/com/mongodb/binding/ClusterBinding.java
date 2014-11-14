@@ -70,18 +70,18 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new MyConnectionSource(new ReadPreferenceServerSelector(readPreference));
+        return new ClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference));
     }
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new MyConnectionSource(new PrimaryServerSelector());
+        return new ClusterBindingConnectionSource(new PrimaryServerSelector());
     }
 
-    private final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+    private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Server server;
 
-        private MyConnectionSource(final ServerSelector serverSelector) {
+        private ClusterBindingConnectionSource(final ServerSelector serverSelector) {
             this.server = cluster.selectServer(serverSelector, maxWaitTimeMS, MILLISECONDS);
             ClusterBinding.this.retain();
         }

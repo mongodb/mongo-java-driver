@@ -73,18 +73,19 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     @Override
     public MongoFuture<AsyncConnectionSource> getReadConnectionSource() {
-        return new SingleResultFuture<AsyncConnectionSource>(new MyConnectionSource(new ReadPreferenceServerSelector(readPreference)));
+        ReadPreferenceServerSelector serverSelector = new ReadPreferenceServerSelector(readPreference);
+        return new SingleResultFuture<AsyncConnectionSource>(new AsyncClusterBindingConnectionSource(serverSelector));
     }
 
     @Override
     public MongoFuture<AsyncConnectionSource> getWriteConnectionSource() {
-        return new SingleResultFuture<AsyncConnectionSource>(new MyConnectionSource(new PrimaryServerSelector()));
+        return new SingleResultFuture<AsyncConnectionSource>(new AsyncClusterBindingConnectionSource(new PrimaryServerSelector()));
     }
 
-    private final class MyConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
+    private final class AsyncClusterBindingConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
 
-        private MyConnectionSource(final ServerSelector serverSelector) {
+        private AsyncClusterBindingConnectionSource(final ServerSelector serverSelector) {
             this.server = cluster.selectServer(serverSelector, maxWaitTimeMS, MILLISECONDS);
             AsyncClusterBinding.this.retain();
         }

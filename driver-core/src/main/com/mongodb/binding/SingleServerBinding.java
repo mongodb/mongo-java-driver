@@ -72,7 +72,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new MyConnectionSource();
+        return new SingleServerBindingConnectionSource();
     }
 
     @Override
@@ -82,7 +82,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new MyConnectionSource();
+        return new SingleServerBindingConnectionSource();
     }
 
     @Override
@@ -91,10 +91,10 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         return this;
     }
 
-    private final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+    private final class SingleServerBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Server server;
 
-        private MyConnectionSource() {
+        private SingleServerBindingConnectionSource() {
             SingleServerBinding.this.retain();
             server = cluster.selectServer(new ServerAddressSelector(serverAddress), maxWaitTimeMS, MILLISECONDS);
         }
