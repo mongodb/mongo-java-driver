@@ -38,7 +38,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -272,9 +271,9 @@ public class BSONOldTest {
 
     @Test
     public void testEquals() {
-        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L));
-        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D));
-        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
+        assertThat(new BasicBSONObject("a", 1111111111111111111L), is(not(new BasicBSONObject("a", 1111111111111111112L))));
+        assertThat(new BasicBSONObject("a", 100.1D), is(not(new BasicBSONObject("a", 100.2D))));
+        assertThat(new BasicBSONObject("a", 100.1F), is(not(new BasicBSONObject("a", 100.2F))));
         assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
         assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
         assertEquals(new BasicBSONObject("a", 100L), new BasicBSONObject("a", 100L));

@@ -27,9 +27,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class BasicDBObjectTest {
@@ -119,8 +120,6 @@ public class BasicDBObjectTest {
 
     @Test
     public void testEqualsAndHashCode() {
-        assertNotEquals(new BasicDBObject(), new Object());
-
         assertEquality(new BasicDBObject(), new BasicDBObject());
 
         assertEquality(new BasicDBObject("x", 1), new BasicDBObject("x", 1));
@@ -168,8 +167,8 @@ public class BasicDBObjectTest {
     }
 
     void assertInequality(final BasicBSONObject x, final BasicBSONObject y) {
-        assertNotEquals(x, y);
-        assertNotEquals(y, x);
-        assertNotEquals(x.hashCode(), y.hashCode());
+        assertThat(x, not(y));
+        assertThat(y, not(x));
+        assertThat(x.hashCode(), not(y.hashCode()));
     }
 }

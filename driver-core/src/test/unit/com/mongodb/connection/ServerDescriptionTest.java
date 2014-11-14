@@ -34,10 +34,11 @@ import static com.mongodb.connection.ServerDescription.builder;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ServerDescriptionTest {
@@ -186,14 +187,14 @@ public class ServerDescriptionTest {
                                              .address(new ServerAddress());
 
 
-        assertNotEquals(builder1.build(), builder2.build());
-        assertNotEquals(builder1.build().hashCode(), builder2.build().hashCode());
-        assertNotEquals(builder1.build(), builder3.build());
-        assertNotEquals(builder1.build().hashCode(), builder3.build().hashCode());
-        assertNotEquals(builder1.build(), builder4.build());
-        assertNotEquals(builder1.build().hashCode(), builder4.build().hashCode());
-        assertNotEquals(builder4.build(), builder3.build());
-        assertNotEquals(builder4.build().hashCode(), builder3.build().hashCode());
+        assertThat(builder1.build(), not(builder2.build()));
+        assertThat(builder1.build().hashCode(), not(builder2.build().hashCode()));
+        assertThat(builder1.build(), not(builder3.build()));
+        assertThat(builder1.build().hashCode(), not(builder3.build().hashCode()));
+        assertThat(builder1.build(), not(builder4.build()));
+        assertThat(builder1.build().hashCode(), not(builder4.build().hashCode()));
+        assertThat(builder4.build(), not(builder3.build()));
+        assertThat(builder4.build().hashCode(), not(builder3.build().hashCode()));
     }
 
     @Test

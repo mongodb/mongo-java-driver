@@ -31,15 +31,14 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeThat;
 
 public class DBCursorTest extends DatabaseTestCase {
     private static final int NUMBER_OF_DOCUMENTS = 10;
@@ -210,7 +209,7 @@ public class DBCursorTest extends DatabaseTestCase {
         DBCursor cursor = collection.find().limit(2);
         assertEquals(0, cursor.getCursorId());
         cursor.hasNext();
-        assertNotEquals(0, cursor.getCursorId());
+        assertThat(cursor.getCursorId(), is(not(0L)));
     }
 
     @Test
@@ -390,7 +389,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSettingACommentInsertsCommentIntoProfileCollectionWhenProfilingIsTurnedOn() {
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
 
         // given
         database.command(new BasicDBObject("profile", 2));
@@ -436,7 +435,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForIterator() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -452,8 +451,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForIterable() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -469,8 +468,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForOne() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -486,8 +485,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForCount() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -503,8 +502,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForSize() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);

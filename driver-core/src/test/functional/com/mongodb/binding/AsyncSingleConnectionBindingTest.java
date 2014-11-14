@@ -26,8 +26,10 @@ import org.junit.experimental.categories.Category;
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 
 @Category(ReplicaSet.class)
 public class AsyncSingleConnectionBindingTest  {
@@ -98,7 +100,7 @@ public class AsyncSingleConnectionBindingTest  {
 
         AsyncConnectionSource readSource = binding.getReadConnectionSource().get();
         Connection readConnection = readSource.getConnection().get();
-        assertNotEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
+        assertThat(writeConnection.getDescription().getConnectionId(), is(not(readConnection.getDescription().getConnectionId())));
 
         writeConnection.release();
         readConnection.release();

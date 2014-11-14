@@ -26,8 +26,10 @@ import org.junit.experimental.categories.Category;
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 
 @Category(ReplicaSet.class)
 public class SingleConnectionBindingTest  {
@@ -92,14 +94,18 @@ public class SingleConnectionBindingTest  {
 
     @Test
     public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws InterruptedException {
+        // given
         SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), secondary(), 1, SECONDS);
         ConnectionSource writeSource = binding.getWriteConnectionSource();
         Connection writeConnection = writeSource.getConnection();
 
         ConnectionSource readSource = binding.getReadConnectionSource();
         Connection readConnection = readSource.getConnection();
-        assertNotEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
+        
+        // expect
+        assertThat(writeConnection.getDescription().getConnectionId(), is(not(readConnection.getDescription().getConnectionId())));
 
+        // cleanup
         writeConnection.release();
         readConnection.release();
         writeSource.release();
