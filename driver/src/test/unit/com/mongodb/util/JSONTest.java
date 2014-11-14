@@ -229,7 +229,7 @@ public class JSONTest {
         assertEquals(JSON.parse(x.toString()), x);
     }
 
-    void _escapeChar(final String s) {
+    private void escapeChar(final String s) {
         String thingy = "va" + s + "lue";
         DBObject x = new BasicDBObject("name", thingy);
         x = (DBObject) JSON.parse(x.toString());
@@ -269,13 +269,13 @@ public class JSONTest {
         assertEquals("value", JSON.parse("\"va\\lue\""));
         assertEquals("va\\lue", JSON.parse("\"va\\\\lue\""));
 
-        _escapeChar("\t");
-        _escapeChar("\b");
-        _escapeChar("\n");
-        _escapeChar("\r");
-        _escapeChar("\'");
-        _escapeChar("\"");
-        _escapeChar("\\");
+        escapeChar("\t");
+        escapeChar("\b");
+        escapeChar("\n");
+        escapeChar("\r");
+        escapeChar("\'");
+        escapeChar("\"");
+        escapeChar("\\");
     }
 
     // This is not correct behavior, but adding the test here to document it.  It should probably throw a JSONParseException due to the

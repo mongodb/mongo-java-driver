@@ -21,6 +21,7 @@ buildscript {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         jcenter()
         mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
@@ -51,6 +52,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     dependencies {

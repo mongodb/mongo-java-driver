@@ -51,10 +51,6 @@ clirr {
     baseline 'org.mongodb:mongo-java-driver:2.12.0'
 }
 
-checkstyle {
-    configFile = new File("$configDir/checkstyle-lite.xml")
-}
-
 tasks.withType(Checkstyle) {
     // needed so the Javadoc checks can find the code in other modules
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);

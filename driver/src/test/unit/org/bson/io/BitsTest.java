@@ -27,11 +27,11 @@ import static org.junit.Assert.assertEquals;
 
 public class BitsTest {
 
-    private final byte[] BYTES = {41, 0, 0, 0, 16, 105, 49, 0, -12,
-                                  -1, -1, -1, 16, 105, 50, 0, 0, 0,
-                                  0, -128, 18, 105, 51, 0, -1, -1, -1,
-                                  -1, -1, -1, -1, 127, 16, 105, 52, 0,
-                                  0, 0, 0, 0, 0};
+    private static final byte[] BYTES = {41, 0, 0, 0, 16, 105, 49, 0, -12,
+                                         -1, -1, -1, 16, 105, 50, 0, 0, 0,
+                                         0, -128, 18, 105, 51, 0, -1, -1, -1,
+                                         -1, -1, -1, -1, 127, 16, 105, 52, 0,
+                                         0, 0, 0, 0, 0};
 
     @Test
     public void testReadFullyWithBufferLargerThanExpected() throws IOException {

@@ -67,7 +67,10 @@ public class DBObjectCodecReflectionTest extends DatabaseTestCase {
 
     public static class Inner extends ReflectionDBObject {
 
+        //CHECKSTYLE:OFF
+        @SuppressWarnings("PublicField")
         public int number;
+        //CHECKSTYLE:ON
 
         public Inner() {
         }
