@@ -19,10 +19,12 @@ def configDir = new File(rootDir, 'config')
 buildscript {
     repositories {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        jcenter()
         mavenCentral()
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
+        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
     }
 }
 
@@ -31,13 +33,14 @@ buildscript {
 //////////////////////////////////////////
 
 configure(subprojects.findAll { it.name != 'util' }) {
-    apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
     apply plugin: 'eclipse'
+    apply plugin: 'idea'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
+    apply plugin: 'provided-base'
 
     evaluationDependsOn(':util')
 
@@ -48,12 +51,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     repositories {
         mavenCentral()
-        mavenLocal()
-    }
-
-    configurations {
-        provided
-        provided.extendsFrom(compile)
     }
 
     dependencies {
@@ -71,12 +68,10 @@ configure(subprojects.findAll { it.name != 'util' }) {
         testCompile project(':util') //Adding categories to classpath
     }
 
-    javadoc {
-        classpath += configurations.provided
-    }
-
     sourceSets {
-        main { java.srcDirs = ['src/main'] }
+        main {
+            java.srcDirs = ['src/main']
+        }
         test {
             groovy.srcDirs = ['src/test/functional', 'src/test/unit']
             java.srcDirs = ['src/test/functional', 'src/test/unit']
@@ -194,6 +189,15 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.docEncoding 'UTF-8'
     }
 
+    idea {
+        module {
+            scopes.PROVIDED.plus += [configurations.provided]
+        }
+    }
+
+    eclipse {
+        classpath.plusConfigurations += [configurations.provided]
+    }
 }
 
 //////////////////////////////////////////
