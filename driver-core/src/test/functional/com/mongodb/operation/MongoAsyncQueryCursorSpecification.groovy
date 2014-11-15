@@ -183,5 +183,5 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
             iterations
         }
     }
-
 }
+
