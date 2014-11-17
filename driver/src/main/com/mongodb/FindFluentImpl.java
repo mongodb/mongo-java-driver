@@ -25,13 +25,11 @@ import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecConfigurationException;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class FindFluentImpl<T> implements FindFluent<T> {
@@ -190,12 +188,7 @@ final class FindFluentImpl<T> implements FindFluent<T> {
         if (document instanceof BsonDocument) {
             return (BsonDocument) document;
         } else {
-            try {
-                Codec<? extends Object> codec = getCodec(document.getClass());
-                return new BsonDocumentWrapper(document, codec);
-            } catch (CodecConfigurationException e) {
-                throw new CodecConfigurationException(format("%s %s", e.getMessage(), document));
-            }
+            return new BsonDocumentWrapper(document, getCodec(document.getClass()));
         }
     }
 

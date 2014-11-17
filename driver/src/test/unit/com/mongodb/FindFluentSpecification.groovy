@@ -15,10 +15,8 @@
  */
 
 package com.mongodb
-
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.FindOptions
-import com.mongodb.client.test.Worker
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -26,7 +24,6 @@ import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -141,19 +138,4 @@ class FindFluentSpecification extends Specification {
         operation.modifiers == new BsonDocument('modifier', new BsonInt32(1))
     }
 
-    def 'should give a nice error message if there is no codec to encode a value'() {
-        given:
-        def executor = new TestOperationExecutor([null, null]);
-        def findOptions = new FindOptions()
-        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), options, executor, new Document('filter', 1),
-                                                      findOptions, Document)
-        def worker = new Worker('Pete', 'DBA', new Date(), 1);
-
-        when:
-        fluentFind.filter(worker).iterator()
-
-        then:
-        def exception = thrown(CodecConfigurationException)
-        exception.getMessage().contains(worker.toString())
-    }
 }
