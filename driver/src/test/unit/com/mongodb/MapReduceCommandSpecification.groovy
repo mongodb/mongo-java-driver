@@ -16,19 +16,22 @@
 
 package com.mongodb
 
+import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.mongodb.Fixture.getDefaultDatabase
 import static com.mongodb.MapReduceCommand.OutputType
 import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class MapReduceCommandSpecification extends FunctionalSpecification {
+class MapReduceCommandSpecification extends Specification {
     private static MapReduceCommand cmd
+    private static final String COLLECTION_NAME = 'collectionName'
 
     def mapReduceCommand() {
-        new MapReduceCommand(getDefaultDatabase().getCollection(getClass().getName()),
-                             'map', 'reduce', 'test', OutputType.REDUCE, new BasicDBObject())
+        def collection = Mock(DBCollection) {
+            getName() >> { COLLECTION_NAME }
+        }
+        new MapReduceCommand(collection, 'map', 'reduce', 'test', OutputType.REDUCE, new BasicDBObject())
     }
 
     def sort() { ['a': 1] as BasicDBObject }
@@ -46,7 +49,7 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         where:
         field            | value                   | expected
         'finalize'       | cmd.getFinalize()       | null
-        'input'          | cmd.getInput()          | getClass().getName()
+        'input'          | cmd.getInput()          | COLLECTION_NAME
         'jsMode'         | cmd.getJsMode()         | null
         'limit'          | cmd.getLimit()          | 0
         'map'            | cmd.getMap()            | 'map'
@@ -96,7 +99,7 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         }
 
         when:
-        def expected = [mapreduce: getClass().getName(), map: 'map', reduce: 'reduce', verbose: false,
+        def expected = [mapreduce: COLLECTION_NAME, map: 'map', reduce: 'reduce', verbose: false,
                         out      : [reduce: 'test', db: 'outDB'] as BasicDBObject, query: [:] as BasicDBObject,
                         finalize : 'final', sort: sort(), limit: 100, scope: scope(), jsMode: true,
                         maxTimeMS: 1000] as BasicDBObject

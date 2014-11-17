@@ -17,8 +17,9 @@
 package com.mongodb
 
 import org.bson.types.ObjectId
+import spock.lang.Specification
 
-class LazyDBObjectSpecification extends FunctionalSpecification {
+class LazyDBObjectSpecification extends Specification {
 
     def 'should understand DBRefs'() {
         given:
@@ -29,11 +30,10 @@ class LazyDBObjectSpecification extends FunctionalSpecification {
         ]
 
         when:
-        LazyDBObject document = new LazyDBObject(bytes, new LazyDBCallback(collection))
+        LazyDBObject document = new LazyDBObject(bytes, new LazyDBCallback(null))
 
         then:
         document.get('f') instanceof DBRef
         document.get('f') == new DBRef('a.b', new ObjectId('123456789012345678901234'))
-
     }
 }
