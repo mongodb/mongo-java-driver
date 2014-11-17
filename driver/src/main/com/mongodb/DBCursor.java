@@ -480,14 +480,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
-        FindOptions explainOptions = new FindOptions(findOptions);
-        ((BsonDocument) findOptions.getModifiers()).append("$explain", BsonBoolean.TRUE);
-        if (explainOptions.getLimit() > 0) {
-            // need to pass a negative batchSize as limit for explain
-            explainOptions.batchSize(explainOptions.getLimit() * -1);
-            explainOptions.limit(0);
-        }
-        return toDBObject(executor.execute(getQueryOperation(explainOptions, collection.getObjectCodec())
+        return toDBObject(executor.execute(getQueryOperation(findOptions, collection.getObjectCodec())
                                            .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER),
                                            getReadPreference()));
     }

@@ -544,7 +544,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                              .projection(projection)
                              .sort(sort)
                              .skip(skip)
-                             .limit(limit)
+                             .limit(Math.abs(limit) * -1)
                              .modifiers(explainModifiers);
 
     }
