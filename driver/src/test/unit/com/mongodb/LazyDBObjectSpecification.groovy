@@ -16,10 +16,34 @@
 
 package com.mongodb
 
+import org.bson.BSONEncoder
+import org.bson.io.BasicOutputBuffer
+import org.bson.io.OutputBuffer
+import org.bson.types.BSONTimestamp
+import org.bson.types.Binary
+import org.bson.types.Code
+import org.bson.types.MaxKey
+import org.bson.types.MinKey
 import org.bson.types.ObjectId
+import org.bson.types.Symbol
 import spock.lang.Specification
 
+import static java.util.regex.Pattern.CASE_INSENSITIVE
+import static java.util.regex.Pattern.compile
+
 class LazyDBObjectSpecification extends Specification {
+    BSONEncoder encoder = new DefaultDBEncoder()
+    OutputBuffer buf = new BasicOutputBuffer()
+    ByteArrayOutputStream bios;
+    LazyDBDecoder lazyDBDecoder;
+    DefaultDBDecoder defaultDBDecoder;
+
+    def setup() {
+        encoder.set(buf);
+        bios = new ByteArrayOutputStream();
+        lazyDBDecoder = new LazyDBDecoder();
+        defaultDBDecoder = new DefaultDBDecoder();
+    }
 
     def 'should understand DBRefs'() {
         given:
@@ -33,7 +57,227 @@ class LazyDBObjectSpecification extends Specification {
         LazyDBObject document = new LazyDBObject(bytes, new LazyDBCallback(null))
 
         then:
-        document.get('f') instanceof DBRef
-        document.get('f') == new DBRef('a.b', new ObjectId('123456789012345678901234'))
+        document['f'] instanceof DBRef
+        document['f'] == new DBRef('a.b', new ObjectId('123456789012345678901234'))
+    }
+
+    def testDecodeAllTypes() throws IOException {
+        given:
+        DBObject origDoc = getTestDocument();
+        encoder.putObject(origDoc);
+        buf.pipe(bios);
+
+        when:
+        DBObject doc = defaultDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        assertDocsSame(origDoc, doc);
+    }
+
+    def testLazyDecodeAllTypes() throws InterruptedException, IOException {
+        given:
+        DBObject origDoc = getTestDocument();
+        encoder.putObject(origDoc);
+        buf.pipe(bios);
+
+        when:
+        DBObject doc = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        assertDocsSame(origDoc, doc);
+    }
+
+    def testMissingKey() throws IOException {
+        given:
+        encoder.putObject(getSimpleTestDocument());
+        buf.pipe(bios);
+
+        when:
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        decodedObj['missingKey'] == null
+    }
+
+    def testKeySet() throws IOException {
+        given:
+        DBObject obj = getSimpleTestDocument();
+        encoder.putObject(obj);
+        buf.pipe(bios);
+
+        when:
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        decodedObj != null
+        decodedObj instanceof LazyDBObject
+        Set<String> keySet = decodedObj.keySet();
+
+        keySet.size() == 5
+        !keySet.isEmpty()
+
+        keySet.toArray().length == 5
+
+        def typedArray = keySet.toArray(new String[0]);
+        typedArray.length == 5
+
+        def array = keySet.toArray(new String[6]);
+        array.length == 6
+        array[5] == null
+
+        keySet.contains('first')
+        !keySet.contains('x')
+
+        keySet.containsAll(['first', 'second', '_id', 'third', 'fourth'])
+        !keySet.containsAll(['first', 'notFound'])
+
+        obj['_id'] == decodedObj['_id']
+        obj['first'] == decodedObj['first']
+        obj['second'] == decodedObj['second']
+        obj['third'] == decodedObj['third']
+        obj['fourth'] == decodedObj['fourth']
+    }
+
+    def testEntrySet() throws IOException {
+        given:
+        DBObject obj = getSimpleTestDocument();
+        encoder.putObject(obj);
+        buf.pipe(bios);
+
+        when:
+        DBObject decodedObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        Set<Map.Entry<String, Object>> entrySet = decodedObj.entrySet();
+        entrySet.size() == 5
+        !entrySet.isEmpty()
+
+        entrySet.toArray().length == 5   // kind of a lame test
+
+        Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[entrySet.size()]);
+        typedArray.length == 5
+
+        def array = entrySet.toArray(new Map.Entry[6]);
+        array.length == 6
+        array[5] == null
+    }
+
+    def testPipe() throws IOException {
+        given:
+        DBObject obj = getSimpleTestDocument();
+        encoder.putObject(obj);
+        buf.pipe(bios);
+
+        when:
+        LazyDBObject lazyDBObj = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+        bios.reset();
+        int byteCount = lazyDBObj.pipe(bios);
+
+        then:
+        lazyDBObj.getBSONSize() == byteCount
+
+        when:
+        LazyDBObject lazyDBObjectFromPipe = lazyDBDecoder.decode(new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        then:
+        lazyDBObj == lazyDBObjectFromPipe
+    }
+
+    def testLazyDBEncoder() throws IOException {
+        // this is all set up just to get a lazy db object that can be encoded
+        given:
+        DBObject obj = getSimpleTestDocument();
+        encoder.putObject(obj);
+        buf.pipe(bios);
+        LazyDBObject lazyDBObj = (LazyDBObject) lazyDBDecoder.decode(
+                new ByteArrayInputStream(bios.toByteArray()), (DBCollection) null);
+
+        // now to the actual test
+        when:
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
+        int size = new LazyDBEncoder().writeObject(outputBuffer, lazyDBObj);
+
+        then:
+        lazyDBObj.getBSONSize() == size
+        lazyDBObj.getBSONSize() == outputBuffer.size()
+
+        // this is just asserting that the encoder actually piped the correct bytes
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        lazyDBObj.pipe(baos);
+        baos.toByteArray() == outputBuffer.toByteArray()
+    }
+
+    def getSimpleTestDocument() {
+        [_id   : new ObjectId(),
+         first : 1,
+         second: 'str1',
+         third : true,
+         fourth: [firstNested: 1] as BasicDBObject] as BasicDBObject;
+    }
+
+    def getTestDocument() {
+        [_id           : new ObjectId(),
+         null          : null,
+         max           : new MaxKey(),
+         min           : new MinKey(),
+         booleanTrue   : true,
+         booleanFalse  : false,
+         int1          : 1,
+         int1500       : 1500,
+         int3753       : 3753,
+         tsp           : new BSONTimestamp(),
+         date          : new Date(),
+         long5         : 5L,
+         long3254525   : 3254525L,
+         float324_582  : 324.582f,
+         double245_6289: 245.6289 as double,
+         oid           : new ObjectId(),
+         // Symbol wonky
+         symbol        : new Symbol('foobar'),
+         // Code wonky
+         code          : new Code('var x = 12345;'),
+         // TODO - Shell doesn't work with Code W/ Scope, return to this test later
+         /*
+         b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
+         str           : 'foobarbaz',
+         ref           : new DBRef('testRef', new ObjectId()),
+         object        : ['abc', '12345'] as BasicDBObject,
+         array         : ['foo', 'bar', 'baz', 'x', 'y', 'z'],
+         binary        : new Binary('scott'.getBytes()),
+         uuid          : UUID.randomUUID(),
+         regex         : compile('^test.*regex.*xyz$', CASE_INSENSITIVE)] as BasicDBObject
+    }
+
+    void assertDocsSame(final DBObject origDoc, final DBObject doc) {
+        assert doc['str'] == origDoc['str']
+        assert doc['_id'] == origDoc['_id']
+        assert doc['null'] == null
+        assert doc['max'] == origDoc['max']
+        assert doc['min'] == origDoc['min']
+        assert doc['booleanTrue']
+        assert !doc['booleanFalse']
+        assert doc['int1'] == origDoc['int1']
+        assert doc['int1500'] == origDoc['int1500']
+        assert doc['int3753'] == origDoc['int3753']
+        assert doc['tsp'] == origDoc['tsp']
+        assert doc['date'] == doc['date']
+        assert doc['long5'] == 5L
+        assert doc['long3254525'] == 3254525L
+        assert doc['float324_582'] == 324.5820007324219f
+        assert doc['double245_6289'] == 245.6289 as double
+        assert doc['oid'] == origDoc['oid']
+        assert doc['str'] == 'foobarbaz'
+        assert doc['ref'] == origDoc['ref']
+        assert doc['object']['abc'] == origDoc['object']['abc']
+        assert doc['array'][0] == 'foo'
+        assert doc['array'][1] == 'bar'
+        assert doc['array'][2] == 'baz'
+        assert doc['array'][3] == 'x'
+        assert doc['array'][4] == 'y'
+        assert doc['array'][5] == 'z'
+        assert doc['binary'] == origDoc['binary'].getData()
+        assert doc['uuid'] == origDoc['uuid']
+        assert doc['regex'].pattern() == origDoc['regex'].pattern()
+        assert doc['regex'].flags() == origDoc['regex'].flags()
     }
 }

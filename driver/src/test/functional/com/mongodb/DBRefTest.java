@@ -16,17 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.BSONDecoder;
-import org.bson.BasicBSONDecoder;
-import org.bson.io.BasicOutputBuffer;
-import org.bson.io.OutputBuffer;
-import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,43 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-public class DBRefOldTest extends DatabaseTestCase {
-
-    @Test
-    public void testEqualsAndHashCode() {
-        DBRef referenceA = new DBRef("foo.bar", 4);
-        DBRef referenceB = new DBRef("foo.bar", 4);
-        assertEquals(referenceA, referenceA);
-        assertEquals(referenceA, referenceB);
-        assertEquals(referenceA.hashCode(), referenceB.hashCode());
-    }
-
-    @Test
-    public void testToString() {
-        ObjectId id = new ObjectId("123456789012345678901234");
-        DBRef ref = new DBRef("foo.bar", id);
-
-        assertEquals("{ \"$ref\" : \"foo.bar\", \"$id\" : \"123456789012345678901234\" }", ref.toString());
-    }
-
-    @Test
-    public void testDBRef() {
-        DBRef reference = new DBRef("hello", "world");
-        DBObject document = new BasicDBObject("!", reference);
-
-        DBEncoder encoder = DefaultDBEncoder.FACTORY.create();
-        OutputBuffer buffer = new BasicOutputBuffer();
-
-        encoder.writeObject(buffer, document);
-
-        DefaultDBCallback cb = new DefaultDBCallback(null);
-        BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode(buffer.toByteArray(), cb);
-        DBObject read = (DBObject) cb.get();
-
-        assertEquals("{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}", read.toString().replaceAll(" +", ""));
-    }
-
+public class DBRefTest extends DatabaseTestCase {
 
     @SuppressWarnings("unchecked")
     @Test
@@ -93,7 +48,6 @@ public class DBRefOldTest extends DatabaseTestCase {
         assertEquals(16, refsLoaded.get(2).getId());
 
     }
-
 
     @Test
     public void testRoundTrip() {
@@ -178,21 +132,5 @@ public class DBRefOldTest extends DatabaseTestCase {
         DBObject fetchedRefs = (DBObject) fetched.get("refs");
         assertFalse(fetchedRefs.keySet().contains("$id"));
         assertEquals(fetched, entity);
-    }
-
-    @Test
-    public void testSerialization() throws Exception {
-        DBRef dbRef = new DBRef("col", 42);
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-        objectOutputStream.writeObject(dbRef);
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        DBRef dbRef2 = (DBRef) objectInputStream.readObject();
-
-        assertEquals(dbRef, dbRef2);
     }
 }

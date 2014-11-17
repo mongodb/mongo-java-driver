@@ -31,7 +31,7 @@ jar {
 }
 
 sourceSets {
-    test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
+    test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
 }
 
 test {
