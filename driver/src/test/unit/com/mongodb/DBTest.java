@@ -339,7 +339,7 @@ public class DBTest extends DatabaseTestCase {
 
         // Then
         assertThat(commandResult.ok(), is(false));
-        assertThat(commandResult.getErrorMessage(), is("no such cmd: NotRealCommandName"));
+        assertThat(commandResult.getErrorMessage(), containsString("no such"));
     }
 
     @Test
