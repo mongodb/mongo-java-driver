@@ -29,7 +29,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 final class Helpers {
 
     public static <T> T get(final Observable<T> observable) {
-        return observable.timeout(90, SECONDS).first().toBlocking().first();
+        return observable.timeout(90, SECONDS).toBlocking().firstOrDefault(null);
     }
 
     public static <T> List<T> toList(final Observable<T> observable) {
