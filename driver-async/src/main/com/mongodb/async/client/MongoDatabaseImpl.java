@@ -19,21 +19,21 @@ package com.mongodb.async.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ListCollectionNamesOperation;
-import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.BsonDocumentWrapper.asBsonDocument;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final OperationOptions options;
@@ -101,7 +101,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoFuture<Document> executeCommand(final Object command) {
         return executor.execute(new CommandWriteOperation<Document>(getName(),
-                                                                    BsonDocumentWrapper.asBsonDocument(command, options.getCodecRegistry()),
+                                                                    asBsonDocument(command, options.getCodecRegistry()),
                                                                     options.getCodecRegistry().get(Document.class)));
     }
 
@@ -109,7 +109,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     public MongoFuture<Document> executeCommand(final Object command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
         return executor.execute(new CommandReadOperation<Document>(getName(),
-                                                                   BsonDocumentWrapper.asBsonDocument(command, options.getCodecRegistry()),
+                                                                   asBsonDocument(command, options.getCodecRegistry()),
                                                                    options.getCodecRegistry().get(Document.class)),
                                 readPreference);
     }

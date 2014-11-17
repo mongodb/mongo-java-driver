@@ -258,8 +258,8 @@ project(':driver-async') {
 project(':driver-rx') {
     sourceSets {
         test {
-            groovy { srcDirs = ['src/test/functional'] }
-            java { srcDirs = ['src/test/functional'] }
+            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
+            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
         }
     }
 

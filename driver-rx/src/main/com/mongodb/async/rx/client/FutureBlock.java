@@ -16,17 +16,18 @@
 
 package com.mongodb.async.rx.client;
 
-import rx.Observable;
+import com.mongodb.async.MongoFuture;
 
 /**
- * All the commands that can be run without needing a specific database.
+ * Apply a function yielding a future for an appropriate result object.
  *
- * @since 3.0
+ * @param <R> the type of result objects from the {@code apply} operation.
  */
-public interface ClientAdministration {
+interface FutureBlock<R> {
     /**
-     * @return an Observable containing the names of all the databases on the server
-     * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     * Yield an appropriate result object
+     *
+     * @return the function result
      */
-    Observable<String> getDatabaseNames();
+    MongoFuture<R> apply();
 }

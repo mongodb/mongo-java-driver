@@ -27,11 +27,17 @@ import rx.Observable;
 public interface MongoIterable<T> {
 
     /**
-     * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
-     * have been iterated, or an exception has occurred.
+     * A special helper to return the first item in the iterator or null.
      *
-     * @return an Observable representing the documents in the view.  It will send a notification for each document in the view before
-     * completing.
+     * @return T the first item or null.
      */
-    Observable<T> forEach();
+    Observable<T> first();
+
+    /**
+     * Helper to return an Observable of T
+     *
+     * @return T the type of Observable
+     */
+    Observable<T> toObservable();
+
 }

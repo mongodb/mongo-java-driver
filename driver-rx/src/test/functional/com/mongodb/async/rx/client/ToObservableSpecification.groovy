@@ -18,33 +18,38 @@ package com.mongodb.async.rx.client
 
 import org.bson.Document
 
-import static Fixture.get
-import static Fixture.getAsList
+import static com.mongodb.async.rx.client.Helpers.get
+import static com.mongodb.async.rx.client.Helpers.toList
 
-class ForEachSpecification extends FunctionalSpecification {
+class ToObservableSpecification extends FunctionalSpecification {
     def 'should complete with no results'() {
         expect:
-        getAsList(collection.find(new Document()).forEach()) == []
+        toList(collection.find(new Document()).toObservable()) == []
     }
 
-    def 'should call onNext for a document and then complete'() {
+    def 'should apply block and complete'() {
         given:
         def document = new Document()
-        get(collection.insert(document))
+        get(collection.insertOne(document))
 
-        expect:
-        getAsList(collection.find(new Document()).forEach()) == [document]
+        when:
+        def queriedDocuments = toList(collection.find(new Document()).toObservable())
+
+        then:
+        queriedDocuments == [document]
     }
 
-    def 'should call onNext for each document and then complete'() {
+    def 'should apply block for each document and then complete'() {
         given:
-
         def documents = [new Document(), new Document()]
-        get(collection.insert(documents[0]))
-        sleep(1000)
-        get(collection.insert(documents[1]))
+        get(collection.insertOne(documents[0]))
+        get(collection.insertOne(documents[1]))
 
-        expect:
-        getAsList(collection.find(new Document()).forEach()) == documents
+        when:
+        def queriedDocuments = toList(collection.find(new Document()).toObservable())
+
+        then:
+        queriedDocuments == documents
     }
+
 }

@@ -16,12 +16,17 @@
 
 package com.mongodb.async.rx.client;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.client.MongoCollectionOptions;
-import com.mongodb.async.client.MongoDatabaseOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.options.OperationOptions;
 import org.bson.Document;
-import org.bson.codecs.Codec;
 import rx.Observable;
+import rx.functions.Func1;
+
+import java.util.List;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final com.mongodb.async.client.MongoDatabase wrapped;
@@ -36,37 +41,94 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String name) {
-        return getCollection(name, MongoCollectionOptions.builder().build());
+    public MongoCollection<Document> getCollection(final String collectionName) {
+        return getCollection(collectionName, OperationOptions.builder().build());
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String name, final MongoCollectionOptions mongoCollectionOptions) {
-        return new MongoCollectionImpl<Document>(wrapped.getCollection(name, mongoCollectionOptions));
+    public MongoCollection<Document> getCollection(final String collectionName, final OperationOptions operationOptions) {
+        return getCollection(collectionName, Document.class, operationOptions);
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec, final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(wrapped.getCollection(name, codec, options));
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
+        return getCollection(collectionName, clazz, OperationOptions.builder().build());
     }
 
     @Override
-    public Observable<Document> executeCommand(final Document commandDocument) {
-        return Observable.create(new OnSubscribeAdapter<Document>(new OnSubscribeAdapter.FutureFunction<Document>() {
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz,
+                                                final OperationOptions operationOptions) {
+        return new MongoCollectionImpl<T>(wrapped.getCollection(collectionName, clazz, operationOptions));
+    }
+
+    @Override
+    public Observable<Void> dropDatabase() {
+        return Observable.create(new OnSubscribeAdapter<Void>(new FutureBlock<Void>() {
             @Override
-            public MongoFuture<Document> apply() {
-                return wrapped.executeCommand(commandDocument);
+            public MongoFuture<Void> apply() {
+                return wrapped.dropDatabase();
             }
         }));
     }
 
     @Override
-    public MongoDatabaseOptions getOptions() {
-        return wrapped.getOptions();
+    public Observable<String> getCollectionNames() {
+        return Observable.concat(
+                                Observable.create(
+                                                 new OnSubscribeAdapter<List<String>>(
+                                                                                     new FutureBlock<List<String>>() {
+                                                                                         @Override
+                                                                                         public MongoFuture<List<String>> apply() {
+                                                                                             return wrapped.getCollectionNames();
+                                                                                         }
+                                                                                     })
+                                                 ).map(new Func1<List<String>, Observable<String>>() {
+                                    @Override
+                                    public Observable<String> call(final List<String> strings) {
+                                        return Observable.from(strings);
+                                    }
+                                }));
     }
 
     @Override
-    public DatabaseAdministration tools() {
-        return new DatabaseAdministrationImpl(wrapped.tools());
+    public Observable<Void> createCollection(final String collectionName) {
+        return createCollection(collectionName, new CreateCollectionOptions());
     }
+
+    @Override
+    public Observable<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
+        return Observable.create(new OnSubscribeAdapter<Void>(new FutureBlock<Void>() {
+            @Override
+            public MongoFuture<Void> apply() {
+                return wrapped.createCollection(collectionName, createCollectionOptions);
+            }
+        }));
+    }
+
+    @Override
+    public Observable<Document> executeCommand(final Object command) {
+        return Observable.create(new OnSubscribeAdapter<Document>(new FutureBlock<Document>() {
+            @Override
+            public MongoFuture<Document> apply() {
+                return wrapped.executeCommand(command);
+            }
+        }));
+    }
+
+    @Override
+    public Observable<Document> executeCommand(final Object command, final ReadPreference readPreference) {
+        notNull("readPreference", readPreference);
+        return Observable.create(new OnSubscribeAdapter<Document>(new FutureBlock<Document>() {
+            @Override
+            public MongoFuture<Document> apply() {
+                return wrapped.executeCommand(command, readPreference);
+            }
+        }));
+    }
+
+    @Override
+    public OperationOptions getOptions() {
+        return wrapped.getOptions();
+    }
+
 }

@@ -17,15 +17,14 @@
 package com.mongodb.async.rx.client;
 
 import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import rx.Observable;
 import rx.Subscriber;
 
 class OnSubscribeAdapter<R> implements Observable.OnSubscribe<R> {
-    private final FutureFunction<R> func;
+    private final FutureBlock<R> func;
 
-    public OnSubscribeAdapter(final FutureFunction<R> func) {
+    public OnSubscribeAdapter(final FutureBlock<R> func) {
         this.func = func;
     }
 
@@ -44,17 +43,4 @@ class OnSubscribeAdapter<R> implements Observable.OnSubscribe<R> {
         });
     }
 
-    /**
-     * Apply a function yielding a future for an appropriate result object.
-     *
-     * @param <R> the type of result objects from the {@code apply} operation.
-     */
-    interface FutureFunction<R> {
-        /**
-         * Yield an appropriate result object
-         *
-         * @return the function result
-         */
-        MongoFuture<R> apply();
-    }
 }

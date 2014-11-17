@@ -18,11 +18,6 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.MongoNamespace;
 import org.bson.Document;
-import rx.Observable;
-
-import java.util.List;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Helper class for asynchronous tests.
@@ -54,19 +49,7 @@ public final class Fixture {
         return getMongoClient().getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName());
     }
 
-    public static void dropDatabase(final String name) {
-        com.mongodb.async.client.Fixture.dropDatabase(name);
-    }
-
     public static void drop(final MongoNamespace namespace) {
         com.mongodb.async.client.Fixture.drop(namespace);
-    }
-
-    public static <T> T get(final Observable<T> observable) {
-        return observable.timeout(90, SECONDS).toBlocking().first();
-    }
-
-    public static <T> List<T> getAsList(final Observable<T> observable) {
-        return observable.timeout(90, SECONDS).toList().toBlocking().first();
     }
 }

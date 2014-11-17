@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.rx.client
+package com.mongodb.async.rx.client;
 
 import com.mongodb.MongoNamespace
 import org.bson.Document
@@ -44,7 +44,7 @@ class FunctionalSpecification extends Specification {
     }
 
     String getCollectionName() {
-        collection.getName();
+        collection.getNamespace().getCollectionName();
     }
 
     MongoNamespace getNamespace() {

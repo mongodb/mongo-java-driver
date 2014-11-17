@@ -16,80 +16,122 @@
 
 package com.mongodb.async.rx.client;
 
-import com.mongodb.annotations.Immutable;
-import com.mongodb.async.client.MongoCollectionOptions;
-import com.mongodb.async.client.MongoDatabaseOptions;
+import com.mongodb.ReadPreference;
+import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.options.OperationOptions;
 import org.bson.Document;
-import org.bson.codecs.Codec;
 import rx.Observable;
 
 /**
- * A representation of a logical MongoDB database, which contains zero or more collections.  Instances of this class serve as factories
- * for representations of MongoDB collections contained in this database.
- * <p>
- * All methods on this class either complete immediately (without any I/O) or else execute asynchronously. The asynchronous operations
- * are adapted to work <a href="https://github.com/Netflix/RxJava">RxJava</a> and return {@code rx.Observable<T>}.
- * </p>
+ * The MongoDatabase interface.
+ *
+ * <p>Note: Additions to this interface will not be considered to break binary compatibility.</p>
  *
  * @since 3.0
  */
-@Immutable
+@ThreadSafe
 public interface MongoDatabase {
+
     /**
      * Gets the name of the database.
      *
-     * @return the name
+     * @return the database name
      */
     String getName();
 
     /**
-     * Gets a collection with the given name
+     * Executes command in the context of the current database.
      *
-     * @param name the collection name
-     * @return the collection
+     * @param command the command to be run
+     * @return the command result
      */
-    MongoCollection<Document> getCollection(String name);
+    Observable<Document> executeCommand(Object command);
 
     /**
-     * Gets a collection with the given name and options
+     * Executes command in the context of the current database.
      *
-     * @param name                   the collection name
-     * @param mongoCollectionOptions the options to apply
-     * @return the collection
+     * @param command        the command to be run
+     * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
+     * @return the command result
      */
-    MongoCollection<Document> getCollection(String name, MongoCollectionOptions mongoCollectionOptions);
-
-    /**
-     * Gets a collection with the given name, codec, and options.
-     *
-     * @param name the collection name
-     * @param codec the codec to use to encode and decode documents in the collection
-     * @param options the options to apply
-     * @param <T> the document type
-     * @return the collection
-     */
-    <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
-
-    /**
-     * Asynchronously execute the command described by the given document.
-     *
-     * @param commandDocument the document describing the command to execute.
-     * @return an Observable representing the completion of the command. It will report exactly one event when the command completes
-     * successfully.
-     */
-    Observable<Document> executeCommand(Document commandDocument);
+    Observable<Document> executeCommand(Object command, ReadPreference readPreference);
 
     /**
      * Gets the options that are used with the database.
      *
-     * <p>Note: {@link com.mongodb.async.client.MongoDatabaseOptions} is immutable.</p>
+     * <p>Note: {@link OperationOptions} is immutable.</p>
      *
      * @return the options
      */
-    MongoDatabaseOptions getOptions();
+    OperationOptions getOptions();
 
     /**
-     * @return the DatabaseAdministration that provides admin methods that can be performed
+     * Gets a collection.
+     *
+     * @param collectionName the name of the collection to return
+     * @return the collection
      */
-    DatabaseAdministration tools();
+    MongoCollection<Document> getCollection(String collectionName);
+
+    /**
+     * Gets a collection, with the specific {@code OperationOptions}.
+     *
+     * @param collectionName   the name of the collection to return
+     * @param operationOptions the options to be used with the {@code MongoCollection}
+     * @return the collection
+     */
+    MongoCollection<Document> getCollection(String collectionName, OperationOptions operationOptions);
+
+    /**
+     * Gets a collection, with a specific document class.
+     *
+     * @param collectionName the name of the collection to return
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @return the collection
+     */
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
+
+    /**
+     * Gets a collection, with a specific document class and {@code OperationOptions}.
+     *
+     * @param collectionName   the name of the collection to return
+     * @param clazz            the default class to cast any documents returned from the database into
+     * @param operationOptions the options to be used with the {@code MongoCollection}
+     * @param <T>              the type of the class to use instead of {@code Document}
+     * @return the collection
+     */
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, OperationOptions operationOptions);
+
+    /**
+     * Drops this database.
+     *
+     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
+     */
+    Observable<Void> dropDatabase();
+
+    /**
+     * Gets the names of all the collections in this database.
+     *
+     * @return a observable of the names of all the collections in this database
+     */
+    Observable<String> getCollectionNames();
+
+    /**
+     * Create a new collection with the given name.
+     *
+     * @param collectionName the name for the new collection to create
+     * @mongodb.driver.manual reference/commands/create Create Command
+     */
+    Observable<Void> createCollection(String collectionName);
+
+    /**
+     * Create a new collection with the selected options
+     *
+     * @param collectionName the name for the new collection to create
+     * @param options        various options for creating the collection
+     * @mongodb.driver.manual reference/commands/create Create Command
+     */
+    Observable<Void> createCollection(String collectionName, CreateCollectionOptions options);
 }

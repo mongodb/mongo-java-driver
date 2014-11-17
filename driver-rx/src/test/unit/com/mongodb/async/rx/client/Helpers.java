@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.rx.client
+package com.mongodb.async.rx.client;
 
-import org.bson.Document
+import rx.Observable;
 
-import static Fixture.get
+import java.util.ArrayList;
+import java.util.List;
 
-class ReplaceSpecification extends FunctionalSpecification {
-     def 'should replace a document'() {
-         given:
-         get(collection.insert([new Document('_id', 1), new Document('_id', 2)]))
-         def filter = new Document('_id', 2)
-         def replacement = new Document('_id', 2).append('x', 1)
+import static java.util.concurrent.TimeUnit.SECONDS;
 
-         when:
-         get(collection.find(filter).replace(replacement))
+/**
+ * Helper class for asynchronous tests.
+ */
+final class Helpers {
 
-         then:
-         get(collection.find(filter).one()) == replacement
-     }
+    public static <T> T get(final Observable<T> observable) {
+        return observable.timeout(90, SECONDS).first().toBlocking().first();
+    }
+
+    public static <T> List<T> toList(final Observable<T> observable) {
+        return observable.timeout(90, SECONDS).toList().toBlocking().firstOrDefault(new ArrayList<T>());
+    }
+
+    private Helpers() {
+    }
 }

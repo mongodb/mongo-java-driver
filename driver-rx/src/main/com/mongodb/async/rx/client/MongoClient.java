@@ -18,14 +18,15 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.client.MongoClientOptions;
-import com.mongodb.async.client.MongoDatabaseOptions;
+import com.mongodb.client.options.OperationOptions;
+import rx.Observable;
 
 import java.io.Closeable;
 
 /**
  * A client-side representation of a MongoDB cluster, whose API is adapted to work with
- * <a href="https://github.com/Netflix/RxJava">RxJava</a>.  Instances can represent either a standalone MongoDB instance,
- * a replica set, or a sharded cluster.  Instance of this class are responsible for maintaining an up-to-date state of the cluster,
+ * <a href="https://github.com/Netflix/RxJava">RxJava</a>. Instances can represent either a standalone MongoDB instance, a replica set,
+ * or a sharded cluster.  Instance of this class are responsible for maintaining an up-to-date state of the cluster,
  * and possibly cache resources related to this, including background threads for monitoring, and connection pools.
  * <p>
  * Instance of this class server as factories for {@code MongoDatabase} instances.
@@ -46,10 +47,10 @@ public interface MongoClient extends Closeable {
      * Gets the database with the given name.
      *
      * @param name                 the name of the database
-     * @param mongoDatabaseOptions the database options
+     * @param options the database options
      * @return the database
      */
-    MongoDatabase getDatabase(String name, MongoDatabaseOptions mongoDatabaseOptions);
+    MongoDatabase getDatabase(String name, OperationOptions options);
 
     /**
      * Close the client, which will close all underlying cached resources, including, for example,
@@ -60,14 +61,16 @@ public interface MongoClient extends Closeable {
     /**
      * Gets the options that this client uses to connect to server.
      *
-     * <p>Note: {@link com.mongodb.async.client.MongoClientOptions} is immutable.</p>
+     * <p>Note: {@link MongoClientOptions} is immutable.</p>
      *
      * @return the options
      */
     MongoClientOptions getOptions();
 
     /**
-     * @return the ClientAdministration that provides admin methods that can be performed
+     * @return a List of the names of all the databases on the server
+     * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */
-    ClientAdministration tools();
+    Observable<String> getDatabaseNames();
+
 }

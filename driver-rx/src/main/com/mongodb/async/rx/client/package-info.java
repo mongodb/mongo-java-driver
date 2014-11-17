@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.rx.client
-
-import org.bson.Document
-
-import static Fixture.getAsList
-import static Fixture.getMongoClient
-import static com.mongodb.async.rx.client.Fixture.get
-
-class ClientAdministrationSpecification extends FunctionalSpecification {
-
-    def 'should return the database name in getDatabaseNames'() {
-        when:
-        get(collection.insert(['_id': 1] as Document))
-        def client = getMongoClient()
-
-        then:
-        getAsList(client.tools().getDatabaseNames()).contains(databaseName)
-    }
-
-}
+/**
+ * This packages contains classes for the new rx client
+ */
+package com.mongodb.async.rx.client;

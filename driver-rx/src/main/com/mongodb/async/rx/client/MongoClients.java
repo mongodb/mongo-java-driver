@@ -33,8 +33,7 @@ public final class MongoClients {
      * @return the client
      * @throws java.net.UnknownHostException
      */
-    public static MongoClient create(final MongoClientOptions settings)
-    throws UnknownHostException {
+    public static MongoClient create(final MongoClientOptions settings) throws UnknownHostException {
         return new MongoClientImpl(com.mongodb.async.client.MongoClients.create(settings));
     }
 
