@@ -14,25 +14,7 @@
  * limitations under the License.
  */
 
+/**
+ * This packages contains classes for the new async client
+ */
 package com.mongodb.async.client;
-
-import com.mongodb.async.MongoFuture;
-import com.mongodb.operation.GetDatabaseNamesOperation;
-
-import java.util.List;
-
-import static com.mongodb.ReadPreference.primary;
-
-public class ClientAdministrationImpl implements ClientAdministration {
-
-    private final MongoClientImpl client;
-
-    ClientAdministrationImpl(final MongoClientImpl client) {
-        this.client = client;
-    }
-
-    @Override
-    public MongoFuture<List<String>> getDatabaseNames() {
-        return client.execute(new GetDatabaseNamesOperation(), primary());
-    }
-}

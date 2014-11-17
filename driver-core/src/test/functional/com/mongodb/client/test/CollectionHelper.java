@@ -97,19 +97,20 @@ public final class CollectionHelper<T> {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    public void insertDocuments(final Document... documents) {
+        insertDocuments(new DocumentCodec(), asList(documents));
+    }
+
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
-        for (I document : documents) {
-            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
-        }
+        insertDocuments(iCodec, asList(documents));
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
+        List<BsonDocument> bsonDocuments = new ArrayList<BsonDocument>(documents.size());
         for (I document : documents) {
-            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
+            bsonDocuments.add(new BsonDocumentWrapper<I>(document, iCodec));
         }
+        insertDocuments(bsonDocuments);
     }
 
     public List<T> find() {

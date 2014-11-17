@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.async.client;
 
-import com.mongodb.client.FindFluent;
-import com.mongodb.client.MongoCollectionOptions;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.Block;
+import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
+import com.mongodb.async.MongoFuture;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.FindOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -32,15 +35,15 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class FindFluentImpl<T> implements FindFluent<T> {
+class FindFluentImpl<T> implements FindFluent<T> {
     private final MongoNamespace namespace;
-    private final MongoCollectionOptions options;
-    private final OperationExecutor executor;
+    private final OperationOptions options;
+    private final AsyncOperationExecutor executor;
     private final FindOptions findOptions;
     private Object filter;
     private final Class<T> clazz;
 
-    FindFluentImpl(final MongoNamespace namespace, final MongoCollectionOptions options, final OperationExecutor executor,
+    FindFluentImpl(final MongoNamespace namespace, final OperationOptions options, final AsyncOperationExecutor executor,
                    final Object filter, final FindOptions findOptions, final Class<T> clazz) {
         this.namespace = notNull("namespace", namespace);
         this.options = notNull("options", options);
@@ -130,28 +133,23 @@ final class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     @Override
-    public MongoCursor<T> iterator() {
-        return execute().iterator();
+    public MongoFuture<T> first() {
+        return execute().first();
     }
 
     @Override
-    public T first() {
-        return execute().first();
+    public MongoFuture<Void> forEach(final Block<? super T> block) {
+        return execute().forEach(block);
+    }
+
+    @Override
+    public <A extends Collection<? super T>> MongoFuture<A> into(final A target) {
+        return execute().into(target);
     }
 
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
         return execute().map(mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super T> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super T>> A into(final A target) {
-        return execute().into(target);
     }
 
     private MongoIterable<T> execute() {
@@ -164,20 +162,20 @@ final class FindFluentImpl<T> implements FindFluent<T> {
 
     private FindOperation<T> createQueryOperation() {
         return new FindOperation<T>(namespace, getCodec(clazz))
-                   .filter(asBson(filter))
-                   .batchSize(findOptions.getBatchSize())
-                   .skip(findOptions.getSkip())
-                   .limit(findOptions.getLimit())
-                   .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(findOptions.getModifiers()))
-                   .projection(asBson(findOptions.getProjection()))
-                   .sort(asBson(findOptions.getSort()))
-                   .awaitData(findOptions.isAwaitData())
-                   .noCursorTimeout(findOptions.isNoCursorTimeout())
-                   .oplogReplay(findOptions.isOplogReplay())
-                   .partial(findOptions.isPartial())
-                   .tailableCursor(findOptions.isTailable())
-                   .slaveOk(options.getReadPreference().isSlaveOk());
+               .filter(asBson(filter))
+               .batchSize(findOptions.getBatchSize())
+               .skip(findOptions.getSkip())
+               .limit(findOptions.getLimit())
+               .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+               .modifiers(asBson(findOptions.getModifiers()))
+               .projection(asBson(findOptions.getProjection()))
+               .sort(asBson(findOptions.getSort()))
+               .awaitData(findOptions.isAwaitData())
+               .noCursorTimeout(findOptions.isNoCursorTimeout())
+               .oplogReplay(findOptions.isOplogReplay())
+               .partial(findOptions.isPartial())
+               .tailableCursor(findOptions.isTailable())
+               .slaveOk(options.getReadPreference().isSlaveOk());
     }
 
     private BsonDocument asBson(final Object document) {
@@ -186,17 +184,17 @@ final class FindFluentImpl<T> implements FindFluent<T> {
 
     private final class FindOperationIterable extends OperationIterable<T> {
         private final ReadPreference readPreference;
-        private final OperationExecutor executor;
+        private final AsyncOperationExecutor executor;
 
         FindOperationIterable(final FindOperation<T> operation, final ReadPreference readPreference,
-                              final OperationExecutor executor) {
+                               final AsyncOperationExecutor executor) {
             super(operation, readPreference, executor);
             this.readPreference = readPreference;
             this.executor = executor;
         }
 
         @Override
-        public T first() {
+        public MongoFuture<T> first() {
             FindOperation<T> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
             return new OperationIterable<T>(findFirstOperation, readPreference, executor).first();
         }

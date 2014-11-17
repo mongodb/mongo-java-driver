@@ -26,7 +26,7 @@ class MapSpecification extends FunctionalSpecification {
     def documents = [new Document('_id', new ObjectId()).append('x', 42), new Document('_id', new ObjectId()).append('x', 43)]
 
     def setup() {
-        collection.insert(documents).get()
+        collection.insertMany(documents).get()
     }
 
     def 'should map source document into target document with into'() {

@@ -29,7 +29,7 @@ class ForEachSpecification extends FunctionalSpecification {
     def 'should apply block and complete'() {
         given:
         def document = new Document()
-        collection.insert(document).get()
+        collection.insertOne(document).get()
 
         when:
         def queriedDocuments = []
@@ -42,8 +42,8 @@ class ForEachSpecification extends FunctionalSpecification {
     def 'should apply block for each document and then complete'() {
         given:
         def documents = [new Document(), new Document()]
-        collection.insert(documents[0]).get()
-        collection.insert(documents[1]).get()
+        collection.insertOne(documents[0]).get()
+        collection.insertOne(documents[1]).get()
 
         when:
         def queriedDocuments = []
@@ -56,7 +56,7 @@ class ForEachSpecification extends FunctionalSpecification {
     def 'should throw MongoInternalException if apply throws'() {
         given:
         def document = new Document()
-        collection.insert(document).get()
+        collection.insertOne(document).get()
 
         when:
         collection.find(new Document()).forEach( { doc -> throw new IllegalArgumentException() } as Block).get()

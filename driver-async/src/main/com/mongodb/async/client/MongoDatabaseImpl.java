@@ -17,22 +17,33 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.client.options.OperationOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.operation.AsyncOperationExecutor;
+import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
+import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.DropDatabaseOperation;
+import com.mongodb.operation.ListCollectionNamesOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DocumentCodec;
+
+import java.util.List;
+
+import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
+    private final OperationOptions options;
     private final String name;
-    private final MongoClientImpl client;
-    private final MongoDatabaseOptions options;
+    private final AsyncOperationExecutor executor;
 
-    public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
+    MongoDatabaseImpl(final String name, final OperationOptions options, final AsyncOperationExecutor executor) {
         this.name = name;
-        this.client = client;
         this.options = options;
+        this.executor = executor;
     }
 
     @Override
@@ -41,37 +52,71 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String name) {
-        return getCollection(name, MongoCollectionOptions.builder().build());
+    public MongoCollection<Document> getCollection(final String collectionName) {
+        return getCollection(collectionName, OperationOptions.builder().build());
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String name,
-                                                   final MongoCollectionOptions mongoCollectionOptions) {
-        return getCollection(name, new DocumentCodec(), mongoCollectionOptions.withDefaults(options));
-    }
-
-
-    @Override
-    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec,
-                                                final MongoCollectionOptions mongoCollectionOptions) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(this.name, name), codec, mongoCollectionOptions.withDefaults(options), client);
+    public MongoCollection<Document> getCollection(final String collectionName, final OperationOptions options) {
+        return getCollection(collectionName, Document.class, options);
     }
 
     @Override
-    public MongoFuture<Document> executeCommand(final Document commandDocument) {
-        return client.execute(new CommandWriteOperation<Document>(name, new BsonDocumentWrapper<Document>(commandDocument,
-                                                                                                          options.getDocumentCodec()),
-                                                                  new DocumentCodec()));
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
+        return getCollection(collectionName, clazz, OperationOptions.builder().build());
     }
 
     @Override
-    public MongoDatabaseOptions getOptions() {
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz,
+                                                final OperationOptions options) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
+                                          executor);
+    }
+
+    @Override
+    public MongoFuture<Void> dropDatabase() {
+        return executor.execute(new DropDatabaseOperation(name));
+    }
+
+    @Override
+    public MongoFuture<List<String>> getCollectionNames() {
+        return executor.execute(new ListCollectionNamesOperation(name), primary());
+    }
+
+    @Override
+    public MongoFuture<Void> createCollection(final String collectionName) {
+        return createCollection(collectionName, new CreateCollectionOptions());
+    }
+
+    @Override
+    public MongoFuture<Void> createCollection(final String collectionName, final CreateCollectionOptions options) {
+        return executor.execute(new CreateCollectionOperation(name, collectionName)
+                                .capped(options.isCapped())
+                                .sizeInBytes(options.getSizeInBytes())
+                                .autoIndex(options.isAutoIndex())
+                                .maxDocuments(options.getMaxDocuments())
+                                .usePowerOf2Sizes(options.isUsePowerOf2Sizes()));
+    }
+
+    @Override
+    public MongoFuture<Document> executeCommand(final Object command) {
+        return executor.execute(new CommandWriteOperation<Document>(getName(),
+                                                                    BsonDocumentWrapper.asBsonDocument(command, options.getCodecRegistry()),
+                                                                    options.getCodecRegistry().get(Document.class)));
+    }
+
+    @Override
+    public MongoFuture<Document> executeCommand(final Object command, final ReadPreference readPreference) {
+        notNull("readPreference", readPreference);
+        return executor.execute(new CommandReadOperation<Document>(getName(),
+                                                                   BsonDocumentWrapper.asBsonDocument(command, options.getCodecRegistry()),
+                                                                   options.getCodecRegistry().get(Document.class)),
+                                readPreference);
+    }
+
+    @Override
+    public OperationOptions getOptions() {
         return options;
     }
 
-    @Override
-    public DatabaseAdministration tools() {
-        return new DatabaseAdministrationImpl(name, client);
-    }
 }

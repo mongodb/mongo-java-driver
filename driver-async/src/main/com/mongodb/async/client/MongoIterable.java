@@ -31,6 +31,13 @@ import java.util.Collection;
 public interface MongoIterable<T> {
 
     /**
+     * Helper to return the first item in the iterator or null.
+     *
+     * @return T the first item or null.
+     */
+    MongoFuture<T> first();
+
+    /**
      * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
      * have been iterated, or an exception has occurred.
      *

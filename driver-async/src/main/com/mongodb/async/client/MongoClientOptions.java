@@ -25,6 +25,7 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.SSLSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +40,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class MongoClientOptions {
-
+    private final String description;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final List<MongoCredential> credentialList;
+
+    private final CodecRegistry codecRegistry;
 
     private final ClusterSettings clusterSettings;
     private final SocketSettings socketSettings;
@@ -64,9 +67,10 @@ public final class MongoClientOptions {
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      */
     public static final class Builder {
-
+        private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private CodecRegistry codecRegistry = MongoClientImpl.getDefaultCodecRegistry();
 
         private ClusterSettings clusterSettings;
         private SocketSettings socketSettings = SocketSettings.builder().build();
@@ -80,6 +84,18 @@ public final class MongoClientOptions {
         private List<MongoCredential> credentialList = Collections.emptyList();
 
         private Builder() {
+        }
+
+        /**
+         * Sets the description.
+         *
+         * @param description the description of this MongoClient
+         * @return {@code this}
+         * @see MongoClientOptions#getDescription()
+         */
+        public Builder description(final String description) {
+            this.description = description;
+            return this;
         }
 
         /**
@@ -192,6 +208,19 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets the codec registry
+         *
+         * @param codecRegistry the codec registry
+         * @return {@code this}
+         * @see MongoClientOptions#getCodecRegistry()
+         * @since 3.0
+         */
+        public Builder codecRegistry(final CodecRegistry codecRegistry) {
+            this.codecRegistry = notNull("codecRegistry", codecRegistry);
+            return this;
+        }
+
+        /**
          * Build an instance of MongoClientOptions.
          *
          * @return the options from this builder
@@ -201,9 +230,19 @@ public final class MongoClientOptions {
         }
     }
 
+    /**
+     * Gets the description for this MongoClient, which is used in various places like logging and JMX.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
     /**
-     * <p>The read preference to use for queries, map-reduce, aggregation, and count. </p>
+     * The read preference to use for queries, map-reduce, aggregation, and count.
      *
      * <p>Default is {@code ReadPreference.primary()}.</p>
      *
@@ -224,7 +263,7 @@ public final class MongoClientOptions {
     }
 
     /**
-     * <p>The write concern to use. </p>
+     * The write concern to use.
      *
      * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
@@ -233,6 +272,20 @@ public final class MongoClientOptions {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * The codec registry to use.  By default, a {@code MongoClient} will be able to encode and decode instances of {@code
+     * Document}.
+     *
+     * <p>Default is {@code RootCodecRegistry}</p>
+     *
+     * @return the codec registry
+     * @see MongoClient#getDatabase
+     * @since 3.0
+     */
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     /**
@@ -299,11 +352,14 @@ public final class MongoClientOptions {
     }
 
     private MongoClientOptions(final Builder builder) {
+        description = builder.description;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         credentialList = builder.credentialList;
 
-        clusterSettings = notNull("clusterSettings", builder.clusterSettings);
+        codecRegistry = builder.codecRegistry;
+
+        clusterSettings = builder.clusterSettings;
         serverSettings = builder.serverSettings;
         socketSettings = builder.socketSettings;
         heartbeatSocketSettings = builder.heartbeatSocketSettings;

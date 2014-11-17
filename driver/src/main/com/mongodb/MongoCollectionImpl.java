@@ -526,16 +526,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return options.getCodecRegistry().get(clazz);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private BsonDocument asBson(final Object document) {
-        if (document == null) {
-            return null;
-        }
-        if (document instanceof BsonDocument) {
-            return (BsonDocument) document;
-        } else {
-            return new BsonDocumentWrapper(document, options.getCodecRegistry().get(document.getClass()));
-        }
+        return BsonDocumentWrapper.asBsonDocument(document, options.getCodecRegistry());
     }
 
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {

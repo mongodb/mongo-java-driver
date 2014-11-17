@@ -53,6 +53,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public MongoDatabaseOptions getOptions() {
+        return options;
+    }
+
+    @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
         return getCollection(collectionName, MongoCollectionOptions.builder().build());
     }
@@ -101,24 +106,19 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public Document executeCommand(final Document command) {
-        return executor.execute(new CommandWriteOperation<Document>(getName(), wrap(command),
+        return executor.execute(new CommandWriteOperation<Document>(getName(), asBson(command),
                                                                     options.getCodecRegistry().get(Document.class)));
     }
 
     @Override
     public Document executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return executor.execute(new CommandReadOperation<Document>(getName(), wrap(command),
+        return executor.execute(new CommandReadOperation<Document>(getName(), asBson(command),
                                                                    options.getCodecRegistry().get(Document.class)),
                                 readPreference);
     }
 
-    @Override
-    public MongoDatabaseOptions getOptions() {
-        return options;
-    }
-
-    private BsonDocument wrap(final Document command) {
-        return new BsonDocumentWrapper<Document>(command, options.getCodecRegistry().get(Document.class));
+    private BsonDocument asBson(final Object document) {
+        return BsonDocumentWrapper.asBsonDocument(document, options.getCodecRegistry());
     }
 }

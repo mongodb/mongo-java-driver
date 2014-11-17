@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
 import java.util.Map;
@@ -40,6 +41,27 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
     private final transient T wrappedDocument;
     private final transient Encoder<T> encoder;
     private BsonDocument unwrapped;
+
+    /**
+     * A helper to convert an document of type Object to a BsonDocument
+     *
+     * <p>If not already a BsonDocument it looks up the documents' class in the codecRegistry and wraps it into a BsonDocumentWrapper</p>
+     *
+     * @param document      the document to convert
+     * @param codecRegistry the codecRegistry that can be used in the conversion of the Object
+     * @return a BsonDocument
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static BsonDocument asBsonDocument(final Object document, final CodecRegistry codecRegistry) {
+        if (document == null) {
+            return null;
+        }
+        if (document instanceof BsonDocument) {
+            return (BsonDocument) document;
+        } else {
+            return new BsonDocumentWrapper(document, codecRegistry.get(document.getClass()));
+        }
+    }
 
     /**
      * Construct a new instance with the given document and encoder for the document.

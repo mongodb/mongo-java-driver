@@ -35,6 +35,22 @@ class MappingIterable<T, U> implements MongoIterable<U> {
     }
 
     @Override
+    public MongoFuture<U> first() {
+        final SingleResultFuture<U> future = new SingleResultFuture<U>();
+        iterable.first().register(new SingleResultCallback<T>() {
+            @Override
+            public void onResult(final T result, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else {
+                    future.init(mapper.apply(result), null);
+                }
+            }
+        });
+        return future;
+    }
+
+    @Override
     public MongoFuture<Void> forEach(final Block<? super U> block) {
         final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         iterable.forEach(new Block<T>() {
