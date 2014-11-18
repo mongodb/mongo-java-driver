@@ -24,10 +24,22 @@ import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
 import com.mongodb.binding.ClusterBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
+import com.mongodb.connection.ClusterId
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.QueryResult
+import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerType
+import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -283,7 +295,38 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
-    @Category(Async)
+    def 'should call query on Connection with correct arguments for an explain'() {
+        given:
+        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .limit(20)
+                .batchSize(2)
+                .projection(new BsonDocument('x', new BsonInt32(1)))
+                .sort(new BsonDocument('y', new BsonInt32(-1)))
+                .filter(new BsonDocument('z', new BsonString('val')))
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        source.connection >> connection
+        source.retain() >> source
+
+        when:
+        findOperation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                                                                new ServerVersion(2, 6), ServerType.STANDALONE, 1000, 100000, 100000)
+
+        1 * connection.query(getNamespace(),
+                             new BsonDocument('$query', findOperation.filter).append('$explain', BsonBoolean.TRUE)
+                                                                             .append('$orderby', findOperation.sort),
+                             findOperation.projection, -20, 0, false, false, false, false, false, false, _) >>
+        new QueryResult([new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress(), 42)
+
+        1 * connection.release()
+    }
+
     def 'should explain'() {
         given:
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -295,6 +338,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         result
     }
 
+    @Category(Async)
     def 'should explain asynchronously'() {
         given:
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
