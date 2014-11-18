@@ -100,20 +100,19 @@ final class FindOperationHelper {
                     } else if (results == null) {
                         future.init(mappedResults, null);
                     } else {
-                        for (T result : results) {
-                            try {
+                        try {
+                            for (T result : results) {
                                 mappedResults.add(mapper.apply(result));
-                            } catch (MongoException err) {
-                                future.init(null, err);
-                                break;
-                            } catch (Throwable t) {
-                                future.init(null, new MongoInternalException(t.getMessage(), t));
-                                break;
                             }
-                        }
-                        if (!future.isDone()) {
                             loopCursor(batchCursor, mappedResults);
+                        } catch (MongoException err) {
+                            future.init(null, err);
+                        } catch (Throwable t) {
+                            future.init(null, new MongoInternalException(t.getMessage(), t));
                         }
+                    }
+                    if (future.isDone()) {
+                        batchCursor.close();
                     }
                 }
             });

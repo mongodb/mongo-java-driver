@@ -98,20 +98,19 @@ class OperationFunctionalSpecification extends Specification {
                 } else if (results == null) {
                     future.init(null, null);
                 } else {
-                    for (Document result: results) {
-                        try {
+                    try {
+                        for (Document result: results) {
                             block.apply(result);
-                        } catch (MongoException err) {
-                            future.init(null, err);
-                            break;
-                        } catch (Throwable t) {
-                            future.init(null, new MongoInternalException(t.getMessage(), t));
-                            break;
                         }
-                    }
-                    if (!future.isDone()) {
                         loopCursor(future, batchCursor, block);
+                    } catch (MongoException err) {
+                        future.init(null, err);
+                    } catch (Throwable t) {
+                        future.init(null, new MongoInternalException(t.getMessage(), t));
                     }
+                }
+                if (future.isDone()) {
+                    batchCursor.close();
                 }
             }
         });
