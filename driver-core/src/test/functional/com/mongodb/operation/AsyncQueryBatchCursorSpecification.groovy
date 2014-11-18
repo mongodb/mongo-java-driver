@@ -16,6 +16,7 @@
 
 package com.mongodb.operation
 
+import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
@@ -136,7 +137,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        latch?.await(5, TimeUnit.SECONDS)
+        if (!latch.await(10, TimeUnit.SECONDS)) {
+            throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
+        }
     }
 
     def 'should block waiting for next batch on a tailable cursor'() {
@@ -168,7 +171,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        latch?.await(5, TimeUnit.SECONDS)
+        if (!latch.await(10, TimeUnit.SECONDS)) {
+            throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
+        }
     }
 
     def 'should respect limit'() {
@@ -187,7 +192,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         def nextBatch
         def exception
         cursor.next { r, e -> nextBatch = r; exception = e; latch.countDown() }
-        latch.await(1, TimeUnit.SECONDS)
+        if (!latch.await(10, TimeUnit.SECONDS)) {
+            throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
+        }
         if (exception != null) {
             throw exception
         }

@@ -2,6 +2,7 @@ package com.mongodb.operation
 
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
+import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
@@ -191,7 +192,9 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         cursor.next().iterator().next().get('_id') == 2
 
         cleanup:
-        latch.await(5, TimeUnit.SECONDS)
+        if (!latch.await(10, TimeUnit.SECONDS)) {
+            throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
+        }
     }
 
     def 'test try next with tailable'() {
