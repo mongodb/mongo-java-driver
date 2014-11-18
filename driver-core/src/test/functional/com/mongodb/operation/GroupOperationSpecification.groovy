@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.Block
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.SingleResultFuture
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -30,6 +31,7 @@ import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class GroupOperationSpecification extends OperationFunctionalSpecification {
 
@@ -120,20 +122,21 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         List<Document> docList = []
-        def result = new GroupOperation(getNamespace(),
+        def cursor = new GroupOperation(getNamespace(),
                                         new BsonJavaScript('function ( curr, result ) {}'),
                                         new BsonDocument(), new DocumentCodec())
                 .key(new BsonDocument('name', new BsonInt32(1)))
-                .executeAsync(getAsyncBinding()).get()
+                .executeAsync(getAsyncBinding()).get(1, SECONDS)
 
-         result.forEach(new Block<Document>() {
-            @Override
-            void apply(final Document value) {
-                if (value != null) {
-                    docList += value
-                }
-            }
-        }).get()
+        loopCursor(new SingleResultFuture<Void>(), cursor,
+                   new Block<Document>() {
+                       @Override
+                       void apply(final Document value) {
+                           if (value != null) {
+                               docList += value
+                           }
+                       }
+                   }).get(1, SECONDS)
 
         then:
         docList.iterator()*.getString('name') containsAll(['Pete', 'Sam'])

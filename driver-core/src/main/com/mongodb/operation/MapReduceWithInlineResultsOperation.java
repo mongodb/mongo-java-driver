@@ -19,8 +19,8 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MapReduceAsyncCursor;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
@@ -57,7 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncCursor<T>>,
+public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
     private final MongoNamespace namespace;
     private final BsonJavaScript mapFunction;
@@ -303,16 +303,21 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
-                                                     connection, transformer(source));
+                                                     connection, transformer(source, connection));
             }
         });
     }
 
     @Override
-    public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                  CommandResultDocumentCodec.create(decoder, "results"),
-                                                  binding, asyncTransformer());
+    public MongoFuture<MapReduceAsyncBatchCursor<T>> executeAsync(final AsyncReadBinding binding) {
+        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<MapReduceAsyncBatchCursor<T>>() {
+            @Override
+            public MongoFuture<MapReduceAsyncBatchCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
+                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                          CommandResultDocumentCodec.create(decoder, "results"),
+                                                          binding, asyncTransformer(source, connection));
+            }
+        });
     }
 
     /**
@@ -341,25 +346,22 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                                                       new BsonDocumentCodec());
     }
 
-    private Function<BsonDocument, MapReduceBatchCursor<T>> transformer(final ConnectionSource connection) {
+    private Function<BsonDocument, MapReduceBatchCursor<T>> transformer(final ConnectionSource source, final Connection connection) {
         return new Function<BsonDocument, MapReduceBatchCursor<T>>() {
-            @SuppressWarnings("unchecked")
             @Override
             public MapReduceBatchCursor<T> apply(final BsonDocument result) {
-                QueryResult<T> queryResult = new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")), 0,
-                                                                connection.getServerDescription().getAddress(), 0);
-                return new MapReduceInlineResultsCursor<T>(namespace, queryResult, decoder, connection,
+                return new MapReduceInlineResultsCursor<T>(namespace, createQueryResult(result, connection), decoder, source,
                                                            MapReduceHelper.createStatistics(result));
             }
         };
     }
 
-    private Function<BsonDocument, MapReduceAsyncCursor<T>> asyncTransformer() {
-        return new Function<BsonDocument, MapReduceAsyncCursor<T>>() {
-            @SuppressWarnings("unchecked")
+    private Function<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
+                                                                                  final Connection connection) {
+        return new Function<BsonDocument, MapReduceAsyncBatchCursor<T>>() {
             @Override
-            public MapReduceAsyncCursor<T> apply(final BsonDocument result) {
-                return new MapReduceInlineResultsAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")),
+            public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result) {
+                return new MapReduceInlineResultsAsyncCursor<T>(namespace, createQueryResult(result, connection), decoder, source,
                                                                 MapReduceHelper.createStatistics(result));
             }
         };
@@ -379,6 +381,12 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());
         return commandDocument;
+    }
+
+    @SuppressWarnings("unchecked")
+    private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
+        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")), 0,
+                                  connection.getDescription().getServerAddress(), 0);
     }
 
     private static BsonValue asValueOrNull(final BsonValue value) {

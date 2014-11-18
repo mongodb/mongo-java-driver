@@ -21,6 +21,7 @@ import com.mongodb.Block
 import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.SingleResultFuture
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -95,14 +96,15 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
         def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        cursor.forEach(new Block<Document>() {
-            @Override
-            void apply(final Document value) {
-                if (value != null) {
-                    docList += value
-                }
-            }
-        }).get(1, SECONDS)
+        loopCursor(new SingleResultFuture<Void>(), cursor,
+                   new Block<Document>() {
+                       @Override
+                       void apply(final Document value) {
+                           if (value != null) {
+                               docList += value
+                           }
+                       }
+                   }).get(1, SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -139,14 +141,15 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                                                                  new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
         def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        cursor.forEach(new Block<Document>() {
-            @Override
-            void apply(final Document value) {
-                if (value != null) {
-                    docList += value
-                }
-            }
-        }).get(1, SECONDS)
+        loopCursor(new SingleResultFuture<Void>(), cursor,
+                   new Block<Document>() {
+                       @Override
+                       void apply(final Document value) {
+                           if (value != null) {
+                               docList += value
+                           }
+                       }
+                   }).get(1, SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')

@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -68,44 +67,45 @@ final class FindOperationHelper {
         private MongoNamespace namespace;
         private Decoder<T> decoder;
         private AsyncConnectionSource connectionSource;
-        private Function<T, V> block;
+        private Function<T, V> mapper;
 
         public QueryResultToListCallback(final SingleResultFuture<List<V>> future,
                                          final MongoNamespace namespace,
                                          final Decoder<T> decoder,
                                          final AsyncConnectionSource connectionSource,
-                                         final Function<T, V> block) {
+                                         final Function<T, V> mapper) {
             this.future = future;
             this.namespace = namespace;
             this.decoder = decoder;
             this.connectionSource = connectionSource;
-            this.block = block;
+            this.mapper = mapper;
         }
 
         @Override
-        public void onResult(final QueryResult<T> result, final MongoException e) {
+        public void onResult(final QueryResult<T> results, final MongoException e) {
             if (e != null) {
                 future.init(null, e);
             } else {
-                final List<V> results = new ArrayList<V>();
-                new MongoAsyncQueryCursor<T>(namespace, result, 0, 0, decoder, connectionSource).forEach(new Block<T>() {
-                    public void apply(final T v) {
-                        V value = block.apply(v);
-                        if (value != null) {
-                            results.add(value);
-                        }
-                    }
-                }).register(new SingleResultCallback<Void>() {
-                    @Override
-                    public void onResult(final Void result, final MongoException e) {
-                        if (e != null) {
-                            future.init(null, e);
-                        } else {
-                            future.init(results, null);
-                        }
-                    }
-                });
+                loopCursor(new AsyncQueryBatchCursor<T>(namespace, results, 0, 0, decoder, connectionSource), new ArrayList<V>());
             }
+        }
+
+        private void loopCursor(final AsyncBatchCursor<T> batchCursor, final List<V> mappedResults) {
+            batchCursor.next(new SingleResultCallback<List<T>>() {
+                @Override
+                public void onResult(final List<T> results, final MongoException e) {
+                    if (e != null) {
+                        future.init(null, e);
+                    } else if (results == null) {
+                        future.init(mappedResults, null);
+                    } else {
+                        for (T result : results) {
+                            mappedResults.add(mapper.apply(result));
+                        }
+                        loopCursor(batchCursor, mappedResults);
+                    }
+                }
+            });
         }
     }
 

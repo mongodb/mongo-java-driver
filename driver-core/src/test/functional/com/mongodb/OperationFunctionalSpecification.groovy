@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.SingleResultFuture
 import com.mongodb.binding.AsyncSingleConnectionBinding
 import com.mongodb.binding.SingleConnectionBinding
 import com.mongodb.bulk.InsertRequest
@@ -23,6 +25,7 @@ import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
 import com.mongodb.connection.ServerHelper
+import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.InsertOperation
 import org.bson.BsonDocument
 import org.bson.Document
@@ -83,5 +86,28 @@ class OperationFunctionalSpecification extends Specification {
 
     CollectionHelper<Worker> getWorkerCollectionHelper() {
         new CollectionHelper<Worker>(new WorkerCodec(), getNamespace())
+    }
+
+    def loopCursor(final SingleResultFuture<Void> future, final AsyncBatchCursor<Document> batchCursor, final Block<Document> block) {
+        batchCursor.next(new SingleResultCallback<List<Document>>() {
+            @Override
+            void onResult(final List<Document> results, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else if (results == null) {
+                    future.init(null, null);
+                } else {
+                    for (Document result: results) {
+                        try {
+                            block.apply(result);
+                        } catch (MongoException err) {
+                            future.init(null, err);
+                        }
+                    }
+                    loopCursor(future, batchCursor, block);
+                }
+            }
+        });
+        future;
     }
 }

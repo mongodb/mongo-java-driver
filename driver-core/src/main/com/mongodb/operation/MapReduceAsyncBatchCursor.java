@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package com.mongodb.async;
-
-import com.mongodb.Block;
+package com.mongodb.operation;
 
 /**
- * An asynchronous cursor of documents.
+ * Represents the future results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
+ * statistics about the operation.
  *
- * @param <T> the document type
- *
+ * @param <T> the type of each result, usually some sort of document.
  * @since 3.0
  */
-public interface MongoAsyncCursor<T> {
+public interface MapReduceAsyncBatchCursor<T> extends AsyncBatchCursor<T> {
     /**
-     * Asynchronously iterate through the cursor results.
+     * Get the statistics for this map-reduce operation
      *
-     * @param block the block to execute for each document
-     * @return A future that indicates when iteration is complete
+     * @return the statistics
      */
-    MongoFuture<Void> forEach(Block<? super T> block);
+    MapReduceStatistics getStatistics();
 }

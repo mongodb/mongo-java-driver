@@ -16,12 +16,11 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.Block;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
@@ -38,6 +37,7 @@ import org.bson.BsonInt64;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
@@ -51,7 +51,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument filter;
@@ -448,11 +448,11 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     @Override
-    public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<MongoAsyncCursor<T>>() {
+    public MongoFuture<AsyncBatchCursor<T>> executeAsync(final AsyncReadBinding binding) {
+        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<AsyncBatchCursor<T>>() {
             @Override
-            public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
+            public MongoFuture<AsyncBatchCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
+                final SingleResultFuture<AsyncBatchCursor<T>> future = new SingleResultFuture<AsyncBatchCursor<T>>();
                 connection.queryAsync(namespace,
                                       asDocument(connection.getDescription(), binding.getReadPreference()),
                                       projection,
@@ -471,7 +471,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                             if (e != null) {
                                                 future.init(null, e);
                                             } else {
-                                                future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit, batchSize, decoder,
+                                                future.init(new AsyncQueryBatchCursor<T>(namespace, queryResult, limit, batchSize, decoder,
                                                                                          source), null);
                                             }
                                         }
@@ -511,16 +511,22 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             @Override
             public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
                 final SingleResultFuture<BsonDocument> retVal = new SingleResultFuture<BsonDocument>();
-                explainableFindOperation.executeAsync(binding).register(new SingleResultCallback<MongoAsyncCursor<BsonDocument>>() {
+                explainableFindOperation.executeAsync(binding).register(new SingleResultCallback<AsyncBatchCursor<BsonDocument>>() {
                     @Override
-                    public void onResult(final MongoAsyncCursor<BsonDocument> cursor, final MongoException e) {
+                    public void onResult(final AsyncBatchCursor<BsonDocument> cursor, final MongoException e) {
                         if (e != null) {
                             retVal.init(null, e);
                         } else {
-                            cursor.forEach(new Block<BsonDocument>() {
+                            cursor.next(new SingleResultCallback<List<BsonDocument>>() {
                                 @Override
-                                public void apply(final BsonDocument explainDocument) {
-                                    retVal.init(explainDocument, null);
+                                public void onResult(final List<BsonDocument> result, final MongoException e) {
+                                    if (e != null) {
+                                        retVal.init(null, e);
+                                    } else if (result.size() == 0) {
+                                        retVal.init(null, new MongoInternalException("Unexpected explain result size"));
+                                    } else {
+                                        retVal.init(result.get(0), null);
+                                    }
                                 }
                             });
                         }

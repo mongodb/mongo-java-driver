@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.rx.client;
+package com.mongodb.async.rx.client
 
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
-import com.mongodb.async.MongoAsyncCursor
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.async.client.TestOperationExecutor
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
@@ -41,6 +39,7 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.options.OperationOptions
 import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
+import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DeleteOperation
@@ -74,10 +73,10 @@ import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.async.client.CustomMatchers.isTheSameAs
+import static com.mongodb.async.rx.client.Helpers.get
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static spock.util.matcher.HamcrestSupport.expect
-import static com.mongodb.async.rx.client.Helpers.get
 
 class MongoCollectionSpecification extends Specification {
 
@@ -186,8 +185,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use FindOperation correctly'() {
         given:
-        def asyncCursor = Stub(MongoAsyncCursor) {
-            forEach(_) >> { new SingleResultFuture<Void>(null) }
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
         }
         def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
         def collection = getCollection(namespace, Document, options, executor)
@@ -225,8 +224,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use AggregateOperation correctly'() {
         given:
-        def asyncCursor = Stub(MongoAsyncCursor) {
-            forEach(_) >> { new SingleResultFuture<Void>(null) }
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
         }
         def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor])
         def collection = getCollection(namespace, Document, options, executor)
@@ -278,8 +277,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use MapReduceWithInlineResultsOperation correctly'() {
         given:
-        def asyncCursor = Stub(MongoAsyncCursor) {
-            forEach(_) >> { new SingleResultFuture<Void>(null) }
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
         }
         def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
         def collection = getCollection(namespace, Document, options, executor)
@@ -321,8 +320,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use MapReduceToCollectionOperation correctly'() {
         given:
-        def asyncCursor = Stub(MongoAsyncCursor) {
-            forEach(_) >> { new SingleResultFuture<Void>(null) }
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
         }
         def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
         def collection = getCollection(namespace, Document, options, executor)

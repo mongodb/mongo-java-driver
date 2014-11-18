@@ -19,23 +19,24 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.operation.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 class OperationIterable<T> implements MongoIterable<T> {
-    private final AsyncReadOperation<? extends MongoAsyncCursor<T>> operation;
+    private final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation;
     private final ReadPreference readPreference;
     private final AsyncOperationExecutor executor;
 
-    OperationIterable(final AsyncReadOperation<? extends MongoAsyncCursor<T>> operation, final ReadPreference readPreference,
+    OperationIterable(final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation, final ReadPreference readPreference,
                       final AsyncOperationExecutor executor) {
         this.operation = operation;
         this.readPreference = readPreference;
@@ -45,15 +46,26 @@ class OperationIterable<T> implements MongoIterable<T> {
     @Override
     public MongoFuture<T> first() {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        into(new ArrayList<T>(1)).register(new SingleResultCallback<ArrayList<T>>() {
+        execute().register(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
-            public void onResult(final ArrayList<T> result, final MongoException e) {
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final MongoException e) {
                 if (e != null) {
                     future.init(null, e);
-                } else if (result.size() == 0) {
-                    future.init(null, null);
                 } else {
-                    future.init(result.get(0), null);
+                    batchCursor.setBatchSize(1);
+                    batchCursor.next(new SingleResultCallback<List<T>>() {
+                        @Override
+                        public void onResult(final List<T> results, final MongoException e) {
+                            if (e != null) {
+                                future.init(null, e);
+                            } else if (results == null) {
+                                future.init(null, null);
+                            } else {
+                                future.init(results.get(0), null);
+                            }
+                            batchCursor.close();
+                        }
+                    });
                 }
             }
         });
@@ -63,31 +75,16 @@ class OperationIterable<T> implements MongoIterable<T> {
     @Override
     public MongoFuture<Void> forEach(final Block<? super T> block) {
         final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        execute().register(new
-                           SingleResultCallback<MongoAsyncCursor<T>>() {
-                               @Override
-                               public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
-                                   if (e != null) {
-                                       future.init(null, e);
-                                   } else {
-                                       cursor.forEach(new Block<T>() {
-                                           @Override
-                                           public void apply(final T t) {
-                                               block.apply(t);
-                                           }
-                                       }).register(new SingleResultCallback<Void>() {
-                                           @Override
-                                           public void onResult(final Void result, final MongoException e) {
-                                               if (e != null) {
-                                                   future.init(null, e);
-                                               } else {
-                                                   future.init(null, null);
-                                               }
-                                           }
-                                       });
-                                   }
-                               }
-                           });
+        execute().register(new SingleResultCallback<AsyncBatchCursor<T>>() {
+            @Override
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else {
+                    loopCursor(future, batchCursor, block);
+                }
+            }
+        });
         return future;
     }
 
@@ -118,8 +115,31 @@ class OperationIterable<T> implements MongoIterable<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private MongoFuture<MongoAsyncCursor<T>> execute() {
-        return (MongoFuture<MongoAsyncCursor<T>>) executor.execute(operation, readPreference);
+    private MongoFuture<AsyncBatchCursor<T>> execute() {
+        return (MongoFuture<AsyncBatchCursor<T>>) executor.execute(operation, readPreference);
     }
 
+    private void loopCursor(final SingleResultFuture<Void> future, final AsyncBatchCursor<T> batchCursor, final Block<? super T> block) {
+        batchCursor.next(new SingleResultCallback<List<T>>() {
+            @Override
+            public void onResult(final List<T> results, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else if (results == null) {
+                    future.init(null, null);
+                } else {
+                    for (T result: results) {
+                        try {
+                            block.apply(result);
+                        } catch (MongoException err) {
+                            future.init(null, err);
+                        } catch (Throwable t) {
+                            future.init(null, new MongoInternalException(t.getMessage(), t));
+                        }
+                    }
+                    loopCursor(future, batchCursor, block);
+                }
+            }
+        });
+    }
 }

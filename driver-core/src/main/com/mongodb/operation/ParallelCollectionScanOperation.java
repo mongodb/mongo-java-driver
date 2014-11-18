@@ -19,7 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -55,7 +54,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.server.release 2.6
  * @since 3.0
  */
-public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<MongoAsyncCursor<T>>>,
+public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatchCursor<T>>>,
                                                                ReadOperation<List<BatchCursor<T>>> {
     private final MongoNamespace namespace;
     private final int numCursors;
@@ -122,10 +121,10 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
     }
 
     @Override
-    public MongoFuture<List<MongoAsyncCursor<T>>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnectionAndSource<List<MongoAsyncCursor<T>>>() {
+    public MongoFuture<List<AsyncBatchCursor<T>>> executeAsync(final AsyncReadBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnectionAndSource<List<AsyncBatchCursor<T>>>() {
             @Override
-            public MongoFuture<List<MongoAsyncCursor<T>>> call(final AsyncConnectionSource source, final Connection connection) {
+            public MongoFuture<List<AsyncBatchCursor<T>>> call(final AsyncConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
                                                           CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
                                                           binding.getReadPreference(), asyncTransformer(source));
@@ -148,13 +147,13 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         };
     }
 
-    private Function<BsonDocument, List<MongoAsyncCursor<T>>> asyncTransformer(final AsyncConnectionSource source) {
-        return new Function<BsonDocument, List<MongoAsyncCursor<T>>>() {
+    private Function<BsonDocument, List<AsyncBatchCursor<T>>> asyncTransformer(final AsyncConnectionSource source) {
+        return new Function<BsonDocument, List<AsyncBatchCursor<T>>>() {
             @Override
-            public List<MongoAsyncCursor<T>> apply(final BsonDocument result) {
-                List<MongoAsyncCursor<T>> cursors = new ArrayList<MongoAsyncCursor<T>>();
+            public List<AsyncBatchCursor<T>> apply(final BsonDocument result) {
+                List<AsyncBatchCursor<T>> cursors = new ArrayList<AsyncBatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
-                    cursors.add(new MongoAsyncQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
+                    cursors.add(new AsyncQueryBatchCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           source.getServerDescription().getAddress()),
                                                              0, getBatchSize(), decoder, source
                     ));

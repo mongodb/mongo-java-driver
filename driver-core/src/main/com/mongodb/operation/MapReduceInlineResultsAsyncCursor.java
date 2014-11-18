@@ -16,9 +16,10 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.async.MapReduceAsyncCursor;
-
-import java.util.List;
+import com.mongodb.MongoNamespace;
+import com.mongodb.binding.AsyncConnectionSource;
+import com.mongodb.connection.QueryResult;
+import org.bson.codecs.Decoder;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
@@ -27,12 +28,13 @@ import java.util.List;
  * @param <T> the operations result type.
  * @since 3.0
  */
-class MapReduceInlineResultsAsyncCursor<T> extends InlineMongoAsyncCursor<T> implements MapReduceAsyncCursor<T> {
+class MapReduceInlineResultsAsyncCursor<T> extends AsyncQueryBatchCursor<T> implements MapReduceAsyncBatchCursor<T> {
 
     private final MapReduceStatistics statistics;
 
-    public MapReduceInlineResultsAsyncCursor(final List<T> results, final MapReduceStatistics statistics) {
-        super(results);
+    public MapReduceInlineResultsAsyncCursor(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
+                                             final AsyncConnectionSource connectionSource, final MapReduceStatistics statistics) {
+        super(namespace, queryResult, 0, 0, decoder, connectionSource);
         this.statistics = statistics;
     }
 
