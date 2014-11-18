@@ -128,19 +128,19 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary(), 1, SECONDS);
+        return new ClusterBinding(cluster, ReadPreference.primary(), 10, SECONDS);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 10, SECONDS);
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
-        return new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
+        return new AsyncSingleConnectionBinding(getAsyncCluster(), 10, SECONDS);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return new AsyncClusterBinding(getAsyncCluster(), ReadPreference.primary(), 1, SECONDS);
+        return new AsyncClusterBinding(getAsyncCluster(), ReadPreference.primary(), 10, SECONDS);
     }
 
     public static Cluster getCluster() {
