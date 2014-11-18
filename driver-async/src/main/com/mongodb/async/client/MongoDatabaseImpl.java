@@ -100,18 +100,27 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoFuture<Document> executeCommand(final Object command) {
-        return executor.execute(new CommandWriteOperation<Document>(getName(),
-                                                                    asBsonDocument(command, options.getCodecRegistry()),
-                                                                    options.getCodecRegistry().get(Document.class)));
+        return executeCommand(command, Document.class);
     }
 
     @Override
     public MongoFuture<Document> executeCommand(final Object command, final ReadPreference readPreference) {
+        return executeCommand(command, readPreference, Document.class);
+    }
+
+    @Override
+    public <T> MongoFuture<T> executeCommand(final Object command, final Class<T> clazz) {
+        notNull("command", command);
+        return executor.execute(new CommandWriteOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
+                                                             options.getCodecRegistry().get(clazz)));
+    }
+
+    @Override
+    public <T> MongoFuture<T> executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz) {
+        notNull("command", command);
         notNull("readPreference", readPreference);
-        return executor.execute(new CommandReadOperation<Document>(getName(),
-                                                                   asBsonDocument(command, options.getCodecRegistry()),
-                                                                   options.getCodecRegistry().get(Document.class)),
-                                readPreference);
+        return executor.execute(new CommandReadOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
+                                                            options.getCodecRegistry().get(clazz)), readPreference);
     }
 
     @Override

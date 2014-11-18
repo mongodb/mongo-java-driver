@@ -65,7 +65,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should be able to executeCommand correctly'() {
         given:
         def command = new BsonDocument('command', new BsonInt32(1))
-        def executor = new TestOperationExecutor([null, null])
+        def executor = new TestOperationExecutor([null, null, null, null])
         def database = getDatabase(name, options, executor)
 
         when:
@@ -78,6 +78,21 @@ class MongoDatabaseSpecification extends Specification {
         when:
         get(database.executeCommand(command, primaryPreferred()))
         operation = executor.getReadOperation() as CommandReadOperation<Document>
+
+        then:
+        operation.command == command
+        executor.getReadPreference() == primaryPreferred()
+
+        when:
+        get(database.executeCommand(command, BsonDocument))
+        operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
+
+        then:
+        operation.command == command
+
+        when:
+        get(database.executeCommand(command, primaryPreferred(), BsonDocument))
+        operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
         operation.command == command

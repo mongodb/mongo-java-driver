@@ -46,7 +46,7 @@ public interface MongoDatabase {
      * @param command the command to be run
      * @return the command result
      */
-    Document executeCommand(Document command);
+    Document executeCommand(Object command);
 
     /**
      * Executes command in the context of the current database.
@@ -55,7 +55,28 @@ public interface MongoDatabase {
      * @param readPreference the {@link ReadPreference} to be used when executing the command
      * @return the command result
      */
-    Document executeCommand(Document command, ReadPreference readPreference);
+    Document executeCommand(Object command, ReadPreference readPreference);
+
+    /**
+     * Executes command in the context of the current database.
+     *
+     * @param command        the command to be run
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @return the command result
+     */
+    <T> T executeCommand(Object command, Class<T> clazz);
+
+    /**
+     * Executes command in the context of the current database.
+     *
+     * @param command        the command to be run
+     * @param readPreference the {@link ReadPreference} to be used when executing the command
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @return the command result
+     */
+    <T> T executeCommand(Object command, ReadPreference readPreference, Class<T> clazz);
 
     /**
      * Gets the options that are used with the database.

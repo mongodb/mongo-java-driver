@@ -107,21 +107,33 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public Observable<Document> executeCommand(final Object command) {
-        return Observable.create(new OnSubscribeAdapter<Document>(new FutureBlock<Document>() {
+        return executeCommand(command, Document.class);
+    }
+
+    @Override
+    public Observable<Document> executeCommand(final Object command, final ReadPreference readPreference) {
+        return executeCommand(command, readPreference, Document.class);
+    }
+
+    @Override
+    public <T> Observable<T> executeCommand(final Object command, final Class<T> clazz) {
+        notNull("command", command);
+        return Observable.create(new OnSubscribeAdapter<T>(new FutureBlock<T>() {
             @Override
-            public MongoFuture<Document> apply() {
-                return wrapped.executeCommand(command);
+            public MongoFuture<T> apply() {
+                return wrapped.executeCommand(command, clazz);
             }
         }));
     }
 
     @Override
-    public Observable<Document> executeCommand(final Object command, final ReadPreference readPreference) {
+    public <T> Observable<T> executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz) {
+        notNull("command", command);
         notNull("readPreference", readPreference);
-        return Observable.create(new OnSubscribeAdapter<Document>(new FutureBlock<Document>() {
+        return Observable.create(new OnSubscribeAdapter<T>(new FutureBlock<T>() {
             @Override
-            public MongoFuture<Document> apply() {
-                return wrapped.executeCommand(command, readPreference);
+            public MongoFuture<T> apply() {
+                return wrapped.executeCommand(command, readPreference, clazz);
             }
         }));
     }
