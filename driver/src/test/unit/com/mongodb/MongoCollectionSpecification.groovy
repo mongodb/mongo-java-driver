@@ -66,6 +66,7 @@ import org.bson.BsonJavaScript
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
@@ -86,7 +87,8 @@ class MongoCollectionSpecification extends Specification {
     def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
                                         .readPreference(secondary())
                                         .codecRegistry(new RootCodecRegistry([new ValueCodecProvider(),
-                                                                              new DocumentCodecProvider()]))
+                                                                              new DocumentCodecProvider(),
+                                                                              new BsonValueCodecProvider()]))
                                         .build()
 
     def 'should get namespace'() {
@@ -917,7 +919,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'getIndexes should use GetIndexesOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([null])
+        def executor = new TestOperationExecutor([null, null])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -925,6 +927,12 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         executor.getReadOperation() instanceof ListIndexesOperation<Document>
+
+        when:
+        collection.getIndexes(BsonDocument)
+
+        then:
+        executor.getReadOperation() instanceof ListIndexesOperation<BsonDocument>
     }
 
     def 'dropIndex should use DropIndexOperation properly'() {

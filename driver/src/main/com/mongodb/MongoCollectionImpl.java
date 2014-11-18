@@ -475,7 +475,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public List<Document> getIndexes() {
-        return executor.execute(new ListIndexesOperation<Document>(namespace, getCodec(Document.class)), options.getReadPreference());
+        return getIndexes(Document.class);
+    }
+
+    @Override
+    public <C> List<C> getIndexes(final Class<C> clazz) {
+        return executor.execute(new ListIndexesOperation<C>(namespace, getCodec(clazz)), options.getReadPreference());
     }
 
     @Override

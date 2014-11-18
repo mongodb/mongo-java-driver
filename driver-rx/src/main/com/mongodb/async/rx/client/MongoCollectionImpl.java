@@ -341,18 +341,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public Observable<Document> getIndexes() {
+        return getIndexes(Document.class);
+    }
+
+    @Override
+    public <C> Observable<C> getIndexes(final Class<C> clazz) {
         return Observable.concat(
                                 Observable.create(
-                                                 new OnSubscribeAdapter<List<Document>>(
-                                                                                     new FutureBlock<List<Document>>() {
-                                                                                         @Override
-                                                                                         public MongoFuture<List<Document>> apply() {
-                                                                                             return wrapped.getIndexes();
-                                                                                         }
-                                                                                     })
-                                                 ).map(new Func1<List<Document>, Observable<Document>>() {
+                                                 new OnSubscribeAdapter<List<C>>(
+                                                                                new FutureBlock<List<C>>() {
+                                                                                    @Override
+                                                                                    public MongoFuture<List<C>> apply() {
+                                                                                        return wrapped.getIndexes(clazz);
+                                                                                    }
+                                                                                })
+                                                 ).map(new Func1<List<C>, Observable<C>>() {
                                     @Override
-                                    public Observable<Document> call(final List<Document> indexes) {
+                                    public Observable<C> call(final List<C> indexes) {
                                         return Observable.from(indexes);
                                     }
                                 }));

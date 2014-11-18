@@ -668,16 +668,22 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use ListIndexesOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([[]])
+        def executor = new TestOperationExecutor([[], []])
         def collection = getCollection(namespace, Document, options, executor)
-        def expectedOperation = new ListIndexesOperation(namespace, new DocumentCodec())
 
         when:
         get(collection.getIndexes())
         def operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
+        expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
+
+        when:
+        get(collection.getIndexes(BsonDocument))
+        operation = executor.getReadOperation() as ListIndexesOperation
+
+        then:
+        expect operation, isTheSameAs(new ListIndexesOperation(namespace, new BsonDocumentCodec()))
     }
 
     def 'should use DropIndexOperation correctly for dropIndex'() {

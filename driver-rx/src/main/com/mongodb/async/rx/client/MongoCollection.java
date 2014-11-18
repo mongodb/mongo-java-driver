@@ -19,9 +19,7 @@ package com.mongodb.async.rx.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
-import rx.Observable;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -35,9 +33,11 @@ import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import rx.Observable;
 
 import java.util.List;
 
@@ -471,6 +471,14 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
      */
     Observable<Document> getIndexes();
+
+    /**
+     * @param clazz the class to decode each document into
+     * @param <C>   the target document type of the iterable.
+     * @return all the indexes on this collection
+     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     */
+    <C> Observable<C> getIndexes(Class<C> clazz);
 
     /**
      * Drops the given index.
