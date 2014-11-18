@@ -180,6 +180,25 @@ public class JSONTest extends com.mongodb.util.TestCase {
         }
         assertEquals(threw, true);
         threw = false;
+
+        try {
+            JSON.parse("{ a\": 1 }");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+
+        try {
+            JSON.parse("{ a: { b\":1 } }");
+        }
+        catch(JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
+
     }
 
     @Test
