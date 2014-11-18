@@ -208,19 +208,11 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         !cursor.tryNext()
 
         when:
-        def latch = new CountDownLatch(1)
-        Thread.start {
-            latch.await(5, TimeUnit.SECONDS)
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
-        }
-
-        latch.countDown()
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
         def nextBatch = cursor.tryNext()
-        while (nextBatch == null) {
-            nextBatch = cursor.tryNext()
-        }
 
         then:
+        nextBatch
         nextBatch.iterator().next().get('_id') == 2
     }
 

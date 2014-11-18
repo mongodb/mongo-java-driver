@@ -130,9 +130,11 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 1
 
         when:
+        def latch = new CountDownLatch(1)
         Thread.start {
             sleep(500)
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
+            latch.countDown()
         }
 
         batch = nextBatch()
@@ -140,6 +142,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         then:
         batch.size() == 1
         batch[0].get('_id') == 2
+
+        cleanup:
+        latch?.await(5, TimeUnit.SECONDS)
     }
 
     def 'should respect limit'() {
