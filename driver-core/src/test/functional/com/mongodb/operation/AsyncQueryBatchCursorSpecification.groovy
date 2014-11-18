@@ -115,6 +115,30 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         connectionSource.count == 1
     }
 
+    def 'should block waiting for first batch on a tailable cursor'() {
+        collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(4, 0)))
+        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, false);
+
+        when:
+        cursor = new AsyncQueryBatchCursor<Document>(getNamespace(), firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        def latch = new CountDownLatch(1)
+        Thread.start {
+            sleep(500)
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(5, 0)))
+            latch.countDown()
+        }
+
+        def batch = nextBatch()
+
+        then:
+        batch.size() == 1
+        batch[0].get('_id') == 2
+
+        cleanup:
+        latch?.await(5, TimeUnit.SECONDS)
+    }
+
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))

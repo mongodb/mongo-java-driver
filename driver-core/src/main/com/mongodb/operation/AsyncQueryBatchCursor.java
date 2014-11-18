@@ -69,7 +69,8 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
         isTrue("open", !closed);
-        if (firstBatch != null) {
+        // may be empty for a tailable cursor
+        if (firstBatch  != null && !firstBatch.getResults().isEmpty()) {
             List<T> results = firstBatch.getResults();
             firstBatch = null;
             callback.onResult(results, null);
