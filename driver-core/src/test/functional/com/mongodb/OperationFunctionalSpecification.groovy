@@ -88,6 +88,7 @@ class OperationFunctionalSpecification extends Specification {
         new CollectionHelper<Worker>(new WorkerCodec(), getNamespace())
     }
 
+    @SuppressWarnings('CatchThrowable')
     def loopCursor(final SingleResultFuture<Void> future, final AsyncBatchCursor<Document> batchCursor, final Block<Document> block) {
         batchCursor.next(new SingleResultCallback<List<Document>>() {
             @Override
@@ -102,9 +103,15 @@ class OperationFunctionalSpecification extends Specification {
                             block.apply(result);
                         } catch (MongoException err) {
                             future.init(null, err);
+                            break;
+                        } catch (Throwable t) {
+                            future.init(null, new MongoInternalException(t.getMessage(), t));
+                            break;
                         }
                     }
-                    loopCursor(future, batchCursor, block);
+                    if (!future.isDone()) {
+                        loopCursor(future, batchCursor, block);
+                    }
                 }
             }
         });

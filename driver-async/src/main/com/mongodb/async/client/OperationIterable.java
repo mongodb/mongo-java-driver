@@ -133,11 +133,15 @@ class OperationIterable<T> implements MongoIterable<T> {
                             block.apply(result);
                         } catch (MongoException err) {
                             future.init(null, err);
+                            break;
                         } catch (Throwable t) {
                             future.init(null, new MongoInternalException(t.getMessage(), t));
+                            break;
                         }
                     }
-                    loopCursor(future, batchCursor, block);
+                    if (!future.isDone()) {
+                        loopCursor(future, batchCursor, block);
+                    }
                 }
             }
         });

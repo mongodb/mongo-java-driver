@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
@@ -100,9 +101,19 @@ final class FindOperationHelper {
                         future.init(mappedResults, null);
                     } else {
                         for (T result : results) {
-                            mappedResults.add(mapper.apply(result));
+                            try {
+                                mappedResults.add(mapper.apply(result));
+                            } catch (MongoException err) {
+                                future.init(null, err);
+                                break;
+                            } catch (Throwable t) {
+                                future.init(null, new MongoInternalException(t.getMessage(), t));
+                                break;
+                            }
                         }
-                        loopCursor(batchCursor, mappedResults);
+                        if (!future.isDone()) {
+                            loopCursor(batchCursor, mappedResults);
+                        }
                     }
                 }
             });
