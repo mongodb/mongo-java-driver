@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-
 def nettyVersion = '4.0.19.Final'
+
+apply plugin: 'osgi'
 
 jar {
     manifest.attributes(

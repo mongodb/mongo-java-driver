@@ -16,13 +16,11 @@
 
 def nettyVersion = '4.0.19.Final'
 
+apply plugin: 'osgi'
+
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
-
-    provided "io.netty:netty-all:$nettyVersion"
-
-    testCompile "io.netty:netty-all:$nettyVersion"
 }
 
 task uberJar(type: Jar) {

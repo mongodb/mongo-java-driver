@@ -16,6 +16,8 @@
 
 def nettyVersion = '4.0.19.Final'
 
+apply plugin: 'osgi'
+
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
@@ -23,11 +25,7 @@ dependencies {
 
     compile "com.netflix.rxjava:rxjava-core:0.19.6"
 
-    provided "io.netty:netty-all:$nettyVersion"
-
     testCompile project(':driver-async').sourceSets.test.output
-
-    testCompile "io.netty:netty-all:$nettyVersion"
 }
 
 task uberJar(type: Jar) {
