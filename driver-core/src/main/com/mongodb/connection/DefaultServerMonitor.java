@@ -50,8 +50,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private volatile Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private int count;
-    private long roundTripTimeSum;
+    private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings settings,
@@ -226,8 +225,7 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     private void reset() {
-        count = 0;
-        roundTripTimeSum = 0;
+        averageRoundTripTime.reset();
         connectionPool.invalidate();
     }
 
@@ -261,11 +259,10 @@ class DefaultServerMonitor implements ServerMonitor {
         }
         long start = System.nanoTime();
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
-        count++;
-        roundTripTimeSum += System.nanoTime() - start;
+        averageRoundTripTime.addSample(System.nanoTime() - start);
 
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, roundTripTimeSum / count);
+        return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, averageRoundTripTime.getAverage());
     }
 
     private ServerDescription getConnectingServerDescription(final Throwable exception) {
