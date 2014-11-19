@@ -25,11 +25,11 @@ import static com.mongodb.MongoCredential.createMongoCRCredential
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
     def 'should delete user without error'() {
         given:
-        def credential = createMongoCRCredential('jeff', databaseName, '123'.toCharArray())
+        def credential = createMongoCRCredential('userToDrop', databaseName, '123'.toCharArray())
         new CreateUserOperation(credential, true).execute(getBinding())
 
         when:
-        DropUserOperation operation = new DropUserOperation(databaseName, 'jeff')
+        DropUserOperation operation = new DropUserOperation(databaseName, credential.userName)
         operation.execute(getBinding())
 
         then:

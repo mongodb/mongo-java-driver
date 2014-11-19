@@ -48,7 +48,7 @@ import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class UserOperationsSpecification extends OperationFunctionalSpecification {
-    def credential = createCredential('jeff', databaseName, '123'.toCharArray())
+    def credential = createCredential('newUser', databaseName, '123'.toCharArray())
 
     def 'an added user should be found'() {
         given:
