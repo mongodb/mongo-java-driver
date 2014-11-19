@@ -32,11 +32,12 @@ import java.util.concurrent.TimeoutException;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 
 public class DBCursorOldTest extends DatabaseTestCase {
 
@@ -256,7 +257,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeFalse(serverVersionAtLeast(asList(2, 7, 0)));
+        assumeThat(serverVersionAtLeast(asList(2, 7, 0)), is(false));
         insertTestData(collection, 100);
 
         DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();

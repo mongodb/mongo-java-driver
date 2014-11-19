@@ -24,7 +24,7 @@ import org.bson.BsonString
 
 import static com.mongodb.Fixture.getMongoClient
 
-class DBSpecification extends FunctionalSpecification {
+class DBFunctionalSpecification extends FunctionalSpecification {
 
     def 'DB addUser should work around localhost exception issues'() {
         given:

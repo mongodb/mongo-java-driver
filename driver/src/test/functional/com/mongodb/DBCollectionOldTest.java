@@ -31,6 +31,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @SuppressWarnings({"rawtypes"})
+// DBCollection is tested a lot, however little analysis has been done to see if the tests overlap. Some of the tests in this class 
+// almost definitely overlap either with DBCollectionTest or DBCollectionSpecification.  If they do not overlap, 
+// they should be moved into one of those test files and this test case ultimately removed.
 public class DBCollectionOldTest extends DatabaseTestCase {
     @Test
     public void testMultiInsert() {
@@ -295,28 +298,4 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         DBObject obj = BasicDBObjectBuilder.start().add("x", 1).add("y", 2).add("foo.bar", "baz").get();
         c.insert(obj);
     }
-
-    //    @Test
-    //    public void testLazyDocKeysPass() {
-    //        final DBCollection c = collection;
-    //
-    //        final DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x", 1).add("y", 2)
-    //                                           .add("foo.bar", "baz").get();
-    //
-    //        //convert to a lazydbobject
-    //        DefaultDBEncoder encoder = new DefaultDBEncoder();
-    //        byte[] encodedBytes = encoder.encode(obj);
-    //
-    //        LazyDBDecoder lazyDecoder = new LazyDBDecoder();
-    //        DBObject lazyObj = lazyDecoder.decode(encodedBytes, c);
-    //
-    //        c.insert(lazyObj);
-    //
-    //        DBObject insertedObj = c.findOne();
-    //        assertEquals("lazydottest1", insertedObj.get("_id"));
-    //        assertEquals(1, insertedObj.get("x"));
-    //        assertEquals(2, insertedObj.get("y"));
-    //        assertEquals("baz", insertedObj.get("foo.bar"));
-    //    }
-
 }

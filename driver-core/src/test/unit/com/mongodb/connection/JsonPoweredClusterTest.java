@@ -161,7 +161,7 @@ public class JsonPoweredClusterTest {
         factory.sendNotification(serverAddress, serverDescription);
     }
 
-    @Parameters(name = "{1}")
+    @Parameters
     public static Collection<Object[]> data() throws URISyntaxException {
         List<File> files = getTestFiles();
         List<Object[]> data = new ArrayList<Object[]>();

@@ -19,10 +19,13 @@ def configDir = new File(rootDir, 'config')
 buildscript {
     repositories {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+        jcenter()
         mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
+        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
     }
 }
 
@@ -31,13 +34,14 @@ buildscript {
 //////////////////////////////////////////
 
 configure(subprojects.findAll { it.name != 'util' }) {
-    apply plugin: 'java'
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
     apply plugin: 'eclipse'
+    apply plugin: 'idea'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
+    apply plugin: 'provided-base'
 
     evaluationDependsOn(':util')
 
@@ -51,19 +55,11 @@ configure(subprojects.findAll { it.name != 'util' }) {
         mavenLocal()
     }
 
-    configurations {
-        provided
-        provided.extendsFrom(compile)
-    }
-
     dependencies {
         provided 'org.slf4j:slf4j-api:1.7.6'
 
-        testCompile 'junit:junit:4.11'
         testCompile 'org.codehaus.groovy:groovy-all:2.3.6'
-        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-            exclude group: 'junit', module: 'junit-dep'
-        }
+        testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
         testCompile 'cglib:cglib-nodep:2.2.2'
         testCompile 'org.objenesis:objenesis:1.3'
         testCompile 'org.hamcrest:hamcrest-all:1.3'
@@ -71,15 +67,13 @@ configure(subprojects.findAll { it.name != 'util' }) {
         testCompile project(':util') //Adding categories to classpath
     }
 
-    javadoc {
-        classpath += configurations.provided
-    }
-
     sourceSets {
-        main { java.srcDirs = ['src/main'] }
+        main {
+            java.srcDirs = ['src/main']
+        }
         test {
-            java { srcDirs = ['src/test'] }
-            groovy { srcDirs = ['src/test'] }
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
+            java.srcDirs = ['src/test/functional', 'src/test/unit']
         }
     }
 
@@ -93,8 +87,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
 
-    project.ext.buildingWith = { n ->
-        project.hasProperty(n) && project.property(n).toBoolean()
+    project.ext.buildingWith = { propertyName ->
+        project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
     }
 
     /* Testing */
@@ -194,140 +188,14 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.docEncoding 'UTF-8'
     }
 
-}
-
-//////////////////////////////////////////
-// Project specific behavior            //
-//////////////////////////////////////////
-
-def nettyVersion = '4.0.19.Final'
-
-project(':driver-core') {
-    sourceSets {
-        test {
-            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
-            //Note: no groovy/spock tests in acceptance, these are Java tests
-            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
+    idea {
+        module {
+            scopes.PROVIDED.plus += [configurations.provided]
         }
     }
 
-    dependencies {
-        compile project(':bson')
-
-        provided "io.netty:netty-all:$nettyVersion"
-
-        testCompile "io.netty:netty-all:$nettyVersion"
-    }
-
-    sourceSets.main.compileClasspath += configurations.provided
-
-    task uberJar(type: Jar) {
-        classifier = 'all'
-        from project(':bson').sourceSets.main.output
-        from sourceSets.main.output
-    }
-}
-
-project(':driver-async') {
-    sourceSets {
-        test {
-            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
-            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
-        }
-    }
-
-    dependencies {
-        compile project(':bson')
-        compile project(':driver-core')
-
-        provided "io.netty:netty-all:$nettyVersion"
-
-        testCompile "io.netty:netty-all:$nettyVersion"
-    }
-
-    sourceSets.main.compileClasspath += configurations.provided
-
-    task uberJar(type: Jar) {
-        classifier = 'all'
-        from project(':bson').sourceSets.main.output
-        from project(':driver-core').sourceSets.main.output
-        from sourceSets.main.output
-    }
-}
-
-project(':driver-rx') {
-    sourceSets {
-        test {
-            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
-            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
-        }
-    }
-
-    dependencies {
-        compile project(':bson')
-        compile project(':driver-core')
-        compile project(':driver-async')
-
-        compile "com.netflix.rxjava:rxjava-core:0.19.6"
-
-        provided "io.netty:netty-all:$nettyVersion"
-
-        testCompile project(':driver-async').sourceSets.test.output
-
-        testCompile "io.netty:netty-all:$nettyVersion"
-    }
-
-    sourceSets.main.compileClasspath += configurations.provided
-
-    task uberJar(type: Jar) {
-        classifier = 'all'
-        from project(':bson').sourceSets.main.output
-        from project(':driver-core').sourceSets.main.output
-        from project(':driver-async').sourceSets.main.output
-        from sourceSets.main.output
-    }
-}
-
-project(':driver') {
-    apply plugin: 'clirr'
-
-    sourceSets {
-        test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
-            java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
-        }
-    }
-
-    test {
-        exclude 'tour/**'
-    }
-
-    dependencies {
-        compile project(':bson')
-        compile project(':driver-core')
-
-        testCompile project(':driver-core').sourceSets.test.output
-    }
-
-    clirr {
-        ignoreFailures = true
-        excludeFilter = new File("$configDir/clirr-exclude.yml")
-        baseline 'org.mongodb:mongo-java-driver:2.12.0'
-    }
-
-    checkstyle {
-        configFile = new File("$configDir/checkstyle-lite.xml")
-    }
-
-    tasks.withType(Checkstyle) {
-        classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
-    }
-
-    task uberJar(type: Jar) {
-        classifier = 'all'
-        from project(':bson').sourceSets.main.output
-        from project(':driver-core').sourceSets.main.output
-        from sourceSets.main.output
+    eclipse {
+        classpath.plusConfigurations += [configurations.provided]
     }
 }
 
@@ -346,4 +214,3 @@ gradle.buildFinished { BuildResult result ->
 }
 
 apply from: 'gradle/maven-deployment.gradle'
-apply from: 'gradle/osgi-compatibility.gradle'

@@ -54,6 +54,8 @@ import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assume.assumeThat;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
@@ -214,7 +216,7 @@ public final class ClusterFixture {
     }
 
     public static void enableMaxTimeFailPoint() {
-        org.junit.Assume.assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         new CommandWriteOperation<BsonDocument>("admin",
                                                 new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                                                   .append("mode", "alwaysOn"),
@@ -224,7 +226,7 @@ public final class ClusterFixture {
     }
 
     public static void disableMaxTimeFailPoint() {
-        org.junit.Assume.assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
             new CommandWriteOperation<BsonDocument>("admin",
                                                     new BsonDocumentWrapper<Document>(new Document("configureFailPoint",

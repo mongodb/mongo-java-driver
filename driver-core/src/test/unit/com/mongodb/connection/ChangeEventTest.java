@@ -18,8 +18,9 @@ package com.mongodb.connection;
 
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ChangeEventTest {
@@ -33,8 +34,7 @@ public class ChangeEventTest {
 
         assertEquals(event, event);
         assertEquals(new ChangeEvent<Integer>(1, 2), event);
-        assertNotEquals(new ChangeEvent<Integer>(2, 3), event);
-        assertNotEquals(new Object(), event);
+        assertThat(new ChangeEvent<Integer>(2, 3), not(event));
         assertEquals(33, event.hashCode());
     }
 }

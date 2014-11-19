@@ -21,7 +21,9 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public class DBObjectMatchers {
+public final class DBObjectMatchers {
+
+    private DBObjectMatchers() { }
 
     @Factory
     public static Matcher<DBObject> hasFields(final String[] fields) {

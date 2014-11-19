@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-
 package com.mongodb;
-
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,16 +34,16 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-
-public class JavaClientOldTest extends DatabaseTestCase {
+public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testAggregation() {
@@ -221,7 +219,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTime() {
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");

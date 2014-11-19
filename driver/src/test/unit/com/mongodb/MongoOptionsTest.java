@@ -28,7 +28,7 @@ import static org.junit.Assert.assertNull;
 /**
  * The mongo options test.
  */
-public class MongoOptionsOldTest extends DatabaseTestCase {
+public class MongoOptionsTest {
 
     @Test
     @SuppressWarnings("deprecation")

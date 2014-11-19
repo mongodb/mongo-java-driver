@@ -66,8 +66,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeThat;
 
 public class DBCollectionTest extends DatabaseTestCase {
 
@@ -228,7 +227,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = CommandFailureException.class)
     public void testCreateIndexWithInvalidIndexType() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         DBObject index = new BasicDBObject("x", "funny");
         collection.createIndex(index);
     }
@@ -290,7 +289,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAs2dsphere() {
-        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
+        assumeThat(serverVersionAtLeast(asList(2, 4, 0)), is(true));
+        
         // when
         DBObject index = new BasicDBObject("x", "2dsphere");
         collection.createIndex(index);
@@ -302,7 +302,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAsText() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 5)), is(true));
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
@@ -430,8 +430,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndUpdateTimeout() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(ClusterFixture.isAuthenticated(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -444,8 +444,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndReplaceTimeout() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -458,8 +458,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndRemoveTimeout() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -835,7 +835,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
+        assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
             WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
@@ -846,7 +846,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
+        assumeThat(isDiscoverableReplicaSet(), is(true));
         ObjectId id = new ObjectId();
         collection.insert(new BasicDBObject("_id", id));
         try {
@@ -862,7 +862,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testWriteConcernExceptionOnUpsert() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
+        assumeThat(isDiscoverableReplicaSet(), is(true));
         ObjectId id = new ObjectId();
         try {
             WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
@@ -877,7 +877,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
+        assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
             collection.insert(new BasicDBObject());
             WriteResult res = collection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
@@ -889,7 +889,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testBulkWriteConcernException() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
+        assumeThat(isDiscoverableReplicaSet(), is(true));
         try {
             BulkWriteOperation bulkWriteOperation = collection.initializeUnorderedBulkOperation();
             bulkWriteOperation.insert(new BasicDBObject());
@@ -903,8 +903,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 5)), is(true));
 
         Set<Integer> ids = new HashSet<Integer>();
 

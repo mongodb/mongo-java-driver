@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2008-2014 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+def nettyVersion = '4.0.19.Final'
+def configDir = new File(rootDir, 'config')
+
+apply plugin: 'clirr'
+apply plugin: 'osgi'
+
+jar {
+    manifest.attributes(
+            'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+            'Bundle-Name': 'MongoDB Java Driver',
+            'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
+            'Import-Package': 'javax.management, javax.net, javax.net.ssl, javax.security.sasl, javax.security.auth.login, ' +
+                              'javax.security.auth, org.ietf.jgss',
+            )
+}
+
+sourceSets {
+    test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
+}
+
+test {
+    exclude 'tour/**'
+}
+
+dependencies {
+    compile project(':bson')
+    compile project(':driver-core')
+
+    testCompile project(':driver-core').sourceSets.test.output
+}
+
+clirr {
+    ignoreFailures = true
+    excludeFilter = new File("$configDir/clirr-exclude.yml")
+    baseline 'org.mongodb:mongo-java-driver:2.12.0'
+}
+
+tasks.withType(Checkstyle) {
+    // needed so the Javadoc checks can find the code in other modules
+    classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
+}
+
+task uberJar(type: Jar) {
+    classifier = 'all'
+    from project(':bson').sourceSets.main.output
+    from project(':driver-core').sourceSets.main.output
+    from sourceSets.main.output
+}
+
+uberJar {
+    manifest = jar.manifest
+}
+

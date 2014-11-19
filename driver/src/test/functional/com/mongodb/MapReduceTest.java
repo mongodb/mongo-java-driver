@@ -45,8 +45,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeThat;
 
 public class MapReduceTest extends DatabaseTestCase {
 
@@ -86,8 +85,8 @@ public class MapReduceTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testMapReduceExecutionTimeout() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
         enableMaxTimeFailPoint();
         try {
             MapReduceCommand command = new MapReduceCommand(collection,

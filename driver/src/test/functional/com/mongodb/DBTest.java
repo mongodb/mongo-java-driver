@@ -45,7 +45,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 @SuppressWarnings("deprecation")
@@ -175,7 +175,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDoEval() {
-        assumeFalse(ClusterFixture.isAuthenticated());
+        assumeThat(isAuthenticated(), is(false));
         String code = "function(name, incAmount) {\n"
                       + "var doc = db.myCollection.findOne( { name : name } );\n"
                       + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"
@@ -203,7 +203,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldInsertDocumentsUsingEval() {
-        assumeFalse(isAuthenticated());
+        assumeThat(isAuthenticated(), is(false));
         // when
         database.eval("db." + collectionName + ".insert({name: 'Bob'})");
 
@@ -213,7 +213,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetStats() {
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         assertThat(database.getStats(), hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
 
@@ -225,7 +225,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
         try {
@@ -238,7 +238,7 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
-        assumeFalse(isSharded());
+        assumeThat(isSharded(), is(false));
         CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }

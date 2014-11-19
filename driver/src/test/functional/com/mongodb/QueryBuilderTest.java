@@ -28,7 +28,6 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class QueryBuilderTest extends DatabaseTestCase {
 
@@ -306,26 +305,21 @@ public class QueryBuilderTest extends DatabaseTestCase {
         points.add(new Double[]{(double) 70, (double) 30});
         queryTrue = QueryBuilder.start(key).withinPolygon(points).get();
         assertTrue(testQuery(collection, queryTrue));
+    }
 
-        try {
-            QueryBuilder.start(key).withinPolygon(null);
-            fail("IllegalArgumentException should have been thrown");
-        } catch (IllegalArgumentException e) {
-        }
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionNoPolygonGivenForWithinQuery() {
+        QueryBuilder.start("loc").withinPolygon(null);
+    }
 
-        try {
-            QueryBuilder.start(key).withinPolygon(new ArrayList<Double[]>());
-            fail("IllegalArgumentException should have been thrown");
-        } catch (IllegalArgumentException e) {
-        }
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionIfNoVerticesDefinedForPolygon() {
+        QueryBuilder.start("loc").withinPolygon(new ArrayList<Double[]>());
+    }
 
-        try {
-            ArrayList<Double[]> tooFew = new ArrayList<Double[]>();
-            tooFew.add(new Double[]{(double) 30, (double) 30});
-            QueryBuilder.start(key).withinPolygon(tooFew);
-            fail("IllegalArgumentException should have been thrown");
-        } catch (IllegalArgumentException e) {
-        }
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionIfInsufficientVerticesDefinedForPolygon() {
+        QueryBuilder.start("loc").withinPolygon(Arrays.<Double[]>asList(new Double[]{30.0, 30.0}));
     }
 
     @Test
@@ -343,11 +337,6 @@ public class QueryBuilderTest extends DatabaseTestCase {
         BasicDBObject doc = new BasicDBObject("comments", "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
                 .append("meaning", 42);
         collection.save(doc);
-
-        try {
-            QueryBuilder.start("x").text("funny");
-            fail("QueryBuilderException should have been thrown.");
-        } catch (QueryBuilderException e) { }
 
         DBObject queryTrue = QueryBuilder.start().text("dolor").get();
         DBObject expected = new BasicDBObject("$text", new BasicDBObject("$search", "dolor"));
@@ -368,6 +357,11 @@ public class QueryBuilderTest extends DatabaseTestCase {
                         new BasicDBObject("meaning", new BasicDBObject("$gt", 21))));
         assertEquals(expected, queryTrue);
         assertTrue(testQuery(collection, queryTrue));
+    }
+
+    @Test(expected = QueryBuilderException.class)
+    public void shouldThrowAnExceptionIfTetIsNotAtTheTopLevelOfTheQuery() {
+        QueryBuilder.start("x").text("funny");
     }
 
     @Test
