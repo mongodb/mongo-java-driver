@@ -21,12 +21,12 @@ import com.mongodb.ClusterFixture
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteException
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
-import com.mongodb.connection.AcknowledgedBulkWriteResult
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -95,7 +95,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(DELETE, 1, [])
+        result == BulkWriteResult.acknowledged(DELETE, 1, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -115,7 +115,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(DELETE, 2, [])
+        result == BulkWriteResult.acknowledged(DELETE, 2, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -136,7 +136,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
@@ -157,7 +157,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
@@ -178,7 +178,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
@@ -199,7 +199,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
@@ -221,7 +221,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
@@ -242,7 +242,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
@@ -284,7 +284,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', id).append('x', 2)
 
         where:
@@ -313,7 +313,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
                                                                                         new BulkWriteUpsert(1, new BsonInt32(1)),
                                                                                         new BulkWriteUpsert(2, new BsonInt32(2))])
         getCollectionHelper().count() == 3
@@ -345,7 +345,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 4))
 
         then:
-        !result.acknowledged
+        !result.wasAcknowledged()
         getCollectionHelper().count() == 4
 
         where:
@@ -367,7 +367,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('x', false)) == 1
 
         where:
@@ -390,7 +390,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count() == 1
     }
 
@@ -413,7 +413,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count() == 2
     }
 
@@ -428,7 +428,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def result = op.execute(getBinding())
 
         then:
-        result.acknowledged
+        result.wasAcknowledged()
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)
         getCollectionHelper().find(new Document('_id', 3)).isEmpty()
@@ -456,7 +456,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 .execute(binding);
 
         then:
-        !result.acknowledged
+        !result.wasAcknowledged()
         acknowledgeWrite(binding)
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)

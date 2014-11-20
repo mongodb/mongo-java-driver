@@ -207,9 +207,9 @@ public class BulkWriteBatchCombiner {
 
     private BulkWriteResult createResult() {
         return writeConcern.isAcknowledged()
-               ? new AcknowledgedBulkWriteResult(insertedCount, matchedCount, removedCount, modifiedCount,
-                                                 new ArrayList<BulkWriteUpsert>(writeUpserts))
-               : new UnacknowledgedBulkWriteResult();
+               ? BulkWriteResult.acknowledged(insertedCount, matchedCount, removedCount, modifiedCount,
+                                              new ArrayList<BulkWriteUpsert>(writeUpserts))
+               : BulkWriteResult.unacknowledged();
     }
 
     private boolean hasWriteErrors() {

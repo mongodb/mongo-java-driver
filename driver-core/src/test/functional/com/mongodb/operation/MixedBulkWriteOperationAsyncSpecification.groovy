@@ -22,12 +22,12 @@ import com.mongodb.ClusterFixture
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteException
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
-import com.mongodb.connection.AcknowledgedBulkWriteResult
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -39,11 +39,11 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static ClusterFixture.getAsyncBinding
-import static ClusterFixture.getAsyncSingleConnectionBinding
-import static ClusterFixture.serverVersionAtLeast
-import static WriteConcern.ACKNOWLEDGED
-import static WriteConcern.UNACKNOWLEDGED
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
@@ -97,7 +97,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(DELETE, 1, [])
+        result == BulkWriteResult.acknowledged(DELETE, 1, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -119,7 +119,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(DELETE, 2, [])
+        result == BulkWriteResult.acknowledged(DELETE, 2, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -140,7 +140,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
@@ -161,7 +161,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
@@ -182,7 +182,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
@@ -203,7 +203,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
@@ -225,7 +225,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
@@ -246,7 +246,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
@@ -287,7 +287,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', id).append('x', 2)
 
         where:
@@ -316,7 +316,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
+        result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
                                                                                         new BulkWriteUpsert(1, new BsonInt32(1)),
                                                                                         new BulkWriteUpsert(2, new BsonInt32(2))])
         getCollectionHelper().count() == 3
@@ -348,7 +348,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(binding).get()
 
         then:
-        !result.acknowledged
+        !result.wasAcknowledged()
         acknowledgeWrite(binding)
         getCollectionHelper().count() == 4
 
@@ -371,7 +371,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('x', false)) == 1
 
         where:
@@ -394,7 +394,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 1, expectedModifiedCount(1), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count() == 1
     }
 
@@ -417,22 +417,20 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 2, expectedModifiedCount(2), [])
+        result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count() == 2
     }
 
     def 'should handle multi-length runs of ordered insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             getTestWrites(), ordered,
-                                             ACKNOWLEDGED)
+        def op = new MixedBulkWriteOperation(getNamespace(), getTestWrites(), ordered, ACKNOWLEDGED)
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result.acknowledged
+        result.wasAcknowledged()
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)
         getCollectionHelper().find(new Document('_id', 3)).isEmpty()
@@ -449,16 +447,14 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
     def 'should handle multi-length runs of unacknowledged insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             getTestWrites(), ordered,
-                                             UNACKNOWLEDGED)
+        def op = new MixedBulkWriteOperation(getNamespace(), getTestWrites(), ordered, UNACKNOWLEDGED)
 
         when:
         def binding = getAsyncSingleConnectionBinding()
         def result = op.executeAsync(binding).get()
 
         then:
-        !result.acknowledged
+        !result.wasAcknowledged()
         acknowledgeWrite(binding)
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)

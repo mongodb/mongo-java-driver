@@ -46,7 +46,7 @@ final class WriteCommandResultHelper {
     static BulkWriteResult getBulkWriteResult(final WriteRequest.Type type, final BsonDocument result) {
         int count = getCount(result);
         List<BulkWriteUpsert> upsertedItems = getUpsertedItems(result);
-        return new AcknowledgedBulkWriteResult(type, count - upsertedItems.size(), getModifiedCount(type, result), upsertedItems);
+        return BulkWriteResult.acknowledged(type, count - upsertedItems.size(), getModifiedCount(type, result), upsertedItems);
     }
 
     static BulkWriteException getBulkWriteException(final WriteRequest.Type type, final BsonDocument result,

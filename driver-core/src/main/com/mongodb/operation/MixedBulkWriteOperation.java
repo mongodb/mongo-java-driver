@@ -35,7 +35,6 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.connection.AcknowledgedBulkWriteResult;
 import com.mongodb.connection.BulkWriteBatchCombiner;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -146,7 +145,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 for (Run run : getRunGenerator(connection.getDescription())) {
                     try {
                         BulkWriteResult result = run.execute(connection);
-                        if (result.isAcknowledged()) {
+                        if (result.wasAcknowledged()) {
                             bulkWriteBatchCombiner.addResult(result, run.indexMap);
                         }
                     } catch (BulkWriteException e) {
@@ -204,7 +203,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                            future.init(null, e);
                            return;
                        }
-                   } else if (result.isAcknowledged()) {
+                   } else if (result.wasAcknowledged()) {
                        bulkWriteBatchCombiner.addResult(result, run.indexMap);
                    }
 
@@ -614,7 +613,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             BulkWriteResult getResult(final WriteConcernResult writeConcernResult, final List<BulkWriteUpsert> upsertedItems) {
                 int count = getCount(writeConcernResult);
                 Integer modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? null : 0;
-                return new AcknowledgedBulkWriteResult(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
+                return BulkWriteResult.acknowledged(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
             }
 
             List<BulkWriteUpsert> getUpsertedItems(final WriteConcernResult writeConcernResult) {

@@ -15,7 +15,6 @@
  */
 
 package com.mongodb
-
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -67,6 +66,7 @@ import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.MongoClient.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.secondary
 import static java.util.Arrays.asList
@@ -378,7 +378,7 @@ class MongoCollectionSpecification extends Specification {
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        result.isAcknowledged() == writeConcern.isAcknowledged()
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
@@ -386,17 +386,15 @@ class MongoCollectionSpecification extends Specification {
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        result.isAcknowledged() == writeConcern.isAcknowledged()
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(
-                                                                        WriteRequest.Type.INSERT, 0 , []),
-                                                                 new com.mongodb.connection.AcknowledgedBulkWriteResult(
-                                                                         WriteRequest.Type.INSERT, 0 , [])])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new com.mongodb.connection.UnacknowledgedBulkWriteResult(),
-                                                                 new com.mongodb.connection.UnacknowledgedBulkWriteResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([com.mongodb.bulk.BulkWriteResult.acknowledged(INSERT, 0, []),
+                                                                 com.mongodb.bulk.BulkWriteResult.acknowledged(INSERT, 0, [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([com.mongodb.bulk.BulkWriteResult.unacknowledged(),
+                                                                 com.mongodb.bulk.BulkWriteResult.unacknowledged()])
     }
 
     def 'should handle exceptions in bulkWrite correctly'() {

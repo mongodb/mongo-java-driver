@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.client.TestOperationExecutor
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -38,8 +39,6 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.options.OperationOptions
-import com.mongodb.connection.AcknowledgedBulkWriteResult
-import com.mongodb.connection.UnacknowledgedBulkWriteResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
@@ -399,7 +398,7 @@ class MongoCollectionSpecification extends Specification {
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        result.isAcknowledged() == writeConcern.isAcknowledged()
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
@@ -407,15 +406,15 @@ class MongoCollectionSpecification extends Specification {
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        result.isAcknowledged() == writeConcern.isAcknowledged()
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedBulkWriteResult(WriteRequest.Type.INSERT, 0 , []),
-                                                                 new AcknowledgedBulkWriteResult(WriteRequest.Type.INSERT, 0 , [])])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedBulkWriteResult(),
-                                                                 new UnacknowledgedBulkWriteResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([BulkWriteResult.acknowledged(WriteRequest.Type.INSERT, 0, []),
+                                                                 BulkWriteResult.acknowledged(WriteRequest.Type.INSERT, 0, [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([BulkWriteResult.unacknowledged(),
+                                                                 BulkWriteResult.unacknowledged()])
     }
 
     def 'should handle exceptions in bulkWrite correctly'() {

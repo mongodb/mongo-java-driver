@@ -19,6 +19,7 @@ package com.mongodb.connection
 import com.mongodb.MongoInternalException
 import com.mongodb.ServerAddress
 import com.mongodb.bulk.BulkWriteError
+import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.WriteConcernError
 import org.bson.BsonArray
@@ -39,7 +40,7 @@ class WriteCommandHelperSpecification extends Specification {
 
     def 'should get bulk write result from with a count matching the n field'() {
         expect:
-        getBulkWriteResult(INSERT, new BsonDocument('n', new BsonInt32(1))) == new AcknowledgedBulkWriteResult(INSERT, 1, [])
+        getBulkWriteResult(INSERT, new BsonDocument('n', new BsonInt32(1))) == BulkWriteResult.acknowledged(INSERT, 1, [])
     }
 
 
