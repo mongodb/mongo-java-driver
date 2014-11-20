@@ -27,7 +27,6 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -48,6 +47,7 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.operation.AggregateOperation;
@@ -534,7 +534,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 if (e != null) {
                     future.init(null, e);
                 } else {
-                    future.init(new DeleteResult(result.getCount()), null);
+                    DeleteResult deleteResult = result.wasAcknowledged() ? DeleteResult.acknowledged(result.getCount())
+                                                                         : DeleteResult.unacknowledged();
+                    future.init(deleteResult, null);
                 }
             }
         });
@@ -558,7 +560,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 if (e != null) {
                     future.init(null, e);
                 } else {
-                    future.init(new UpdateResult(result.getCount(), 0, result.getUpsertedId()), null);
+                    UpdateResult updateResult = result.wasAcknowledged() ? UpdateResult.acknowledged(result.getCount(), 0,
+                                                                                                     result.getUpsertedId())
+                                                                         : UpdateResult.unacknowledged();
+                    future.init(updateResult, null);
                 }
             }
         });

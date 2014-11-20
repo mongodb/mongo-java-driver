@@ -16,55 +16,109 @@
 
 package com.mongodb.client.result;
 
+import com.mongodb.UnacknowledgedWriteException;
 import org.bson.BsonValue;
 
 /**
- * The result of a replace operation.
+ * The result of an update operation.  If the update was unacknowledged, then {@code wasAcknowledged} will return false and all other
+ * methods with throw {@code MongoUnacknowledgedWriteException}.
  *
+ * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0
  */
-public class UpdateResult {
-    private final long matchedCount;
-    private final long modifiedCount;
-    private final BsonValue upsertedId;
+public abstract class UpdateResult {
 
     /**
-     * Construct an instance
+     * Returns true if the write was acknowledged.
      *
-     * @param matchedCount  the number of documents matched
-     * @param modifiedCount the number of documents modified
-     * @param upsertedId    if the replace resulted in an inserted document, the id of the inserted document
+     * @return true if the write was acknowledged
      */
-    public UpdateResult(final long matchedCount, final long modifiedCount, final BsonValue upsertedId) {
-        this.matchedCount = matchedCount;
-        this.modifiedCount = modifiedCount;
-        this.upsertedId = upsertedId;
-    }
+    public abstract boolean wasAcknowledged();
 
     /**
      * Gets the number of documents matched by the query.
      *
      * @return the number of documents matched
      */
-    public long getMatchedCount() {
-        return matchedCount;
-    }
+    public abstract long getMatchedCount();
 
     /**
      * Gets he number of documents modified by the update.
      *
      * @return the number of documents modified
      */
-    public long getModifiedCount() {
-        return modifiedCount;
-    }
+    public abstract long getModifiedCount();
 
     /**
      * If the replace resulted in an inserted document, gets the _id of the inserted document, otherwise null.
      *
      * @return if the replace resulted in an inserted document, the _id of the inserted document, otherwise null
      */
-    public BsonValue getUpsertedId() {
-        return upsertedId;
+    public abstract BsonValue getUpsertedId();
+
+    /**
+     * Create an acknowledged UpdateResult
+     *
+     * @param matchedCount  the number of documents matched
+     * @param modifiedCount the number of documents modified
+     * @param upsertedId    if the replace resulted in an inserted document, the id of the inserted document
+     * @return an acknowledged UpdateResult
+     */
+    public static UpdateResult acknowledged(final long matchedCount, final long modifiedCount, final BsonValue upsertedId) {
+        return new UpdateResult() {
+            @Override
+            public boolean wasAcknowledged() {
+                return true;
+            }
+
+            @Override
+            public long getMatchedCount() {
+                return matchedCount;
+            }
+
+            @Override
+            public long getModifiedCount() {
+                return modifiedCount;
+            }
+
+            @Override
+            public BsonValue getUpsertedId() {
+                return upsertedId;
+            }
+        };
     }
+
+    /**
+     * Create an unacknowledged UpdateResult
+     *
+     * @return an unacknowledged UpdateResult
+     */
+    public static UpdateResult unacknowledged() {
+        return new UpdateResult() {
+            @Override
+            public boolean wasAcknowledged() {
+                return false;
+            }
+
+            @Override
+            public long getMatchedCount() {
+                throw getUnacknowledgedWriteException();
+            }
+
+            @Override
+            public long getModifiedCount() {
+                throw getUnacknowledgedWriteException();
+            }
+
+            @Override
+            public BsonValue getUpsertedId() {
+               throw getUnacknowledgedWriteException();
+            }
+
+            private UnacknowledgedWriteException getUnacknowledgedWriteException() {
+                return new UnacknowledgedWriteException("Cannot get information about an unacknowledged update");
+            }
+        };
+    }
+
 }

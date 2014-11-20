@@ -34,6 +34,7 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.connection.AcknowledgedWriteConcernResult
+import com.mongodb.connection.UnacknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
@@ -81,6 +82,9 @@ class MongoCollectionSpecification extends Specification {
                                         .writeConcern(WriteConcern.ACKNOWLEDGED)
                                         .readPreference(secondary())
                                         .codecRegistry(getDefaultCodecRegistry()).build()
+    def getOptions = { WriteConcern writeConcern ->
+        MongoCollectionOptions.builder().writeConcern(writeConcern).build().withDefaults(options)
+    }
 
 
     def 'should return the correct name from getName'() {
@@ -365,26 +369,36 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use MixedBulkWriteOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { boolean ordered ->
             new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                        ordered, WriteConcern.ACKNOWLEDGED)
+                                        ordered, writeConcern)
         }
 
         when:
-        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
+        def result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
+        result.isAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true))
+        result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
+        result.isAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(
+                                                                        WriteRequest.Type.INSERT, 0 , []),
+                                                                 new com.mongodb.connection.AcknowledgedBulkWriteResult(
+                                                                         WriteRequest.Type.INSERT, 0 , [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new com.mongodb.connection.UnacknowledgedBulkWriteResult(),
+                                                                 new com.mongodb.connection.UnacknowledgedBulkWriteResult()])
     }
 
     def 'should handle exceptions in bulkWrite correctly'() {
@@ -403,126 +417,155 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use InsertOneOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([null])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
-        def expectedOperation = new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
+        def expectedOperation = new InsertOperation(namespace, true, writeConcern,
                                                     [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
 
         when:
-        collection.insertOne(new Document('_id', 1))
+        def result = collection.insertOne(new Document('_id', 1))
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation)
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use InsertManyOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { ordered ->
-            new InsertOperation(namespace, ordered, WriteConcern.ACKNOWLEDGED,
+            new InsertOperation(namespace, ordered,writeConcern,
                                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                  new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
         }
 
         when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
+        def result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
+        result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
         operation = executor.getWriteOperation() as InsertOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null),
+                                                                 new AcknowledgedWriteConcernResult(1, false, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use DeleteOneOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
-        def expectedOperation = new DeleteOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                    [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))).multi(false)])
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
 
         when:
-        collection.deleteOne(new Document('_id', 1))
+        def result = collection.deleteOne(new Document('_id', 1))
         def operation = executor.getWriteOperation() as DeleteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
+        expect operation, isTheSameAs(new DeleteOperation(namespace, true, writeConcern,
+                                                          [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))).multi(false)]))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use DeleteManyOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
-        def expectedOperation = new DeleteOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                    [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])
-
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
 
         when:
-        collection.deleteMany(new Document('_id', 1))
+        def result = collection.deleteMany(new Document('_id', 1))
         def operation = executor.getWriteOperation() as DeleteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
+        expect operation, isTheSameAs(new DeleteOperation(namespace, true, writeConcern,
+                                                          [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))]))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use UpdateOperation correctly for replaceOne'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
-        def expectedOperation = new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                    [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                                                                       new BsonDocument('a', new BsonInt32(10)),
-                                                                       WriteRequest.Type.REPLACE)])
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
 
         when:
-        collection.replaceOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10))
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
+        expect operation, isTheSameAs(new UpdateOperation(namespace, true, writeConcern,
+                                                          [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
+                                                                             new BsonDocument('a', new BsonInt32(10)),
+                                                                             WriteRequest.Type.REPLACE)]))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use UpdateOperation correctly for updateOne'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                  new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { boolean upsert ->
-            new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new UpdateOperation(namespace, true, writeConcern,
                                 [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
                                                    new BsonDocument('a', new BsonInt32(10)),
                                                    WriteRequest.Type.UPDATE).multi(false).upsert(upsert)])
         }
 
         when:
-        collection.updateOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateOne(new Document('a', 1), new Document('a', 10))
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
+        result.wasAcknowledged()  == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as UpdateOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use UpdateOperation correctly for updateMany'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                  new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { boolean upsert ->
-            new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new UpdateOperation(namespace, true, writeConcern,
                                 [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
                                                    new BsonDocument('a', new BsonInt32(10)),
                                                    WriteRequest.Type.UPDATE)
@@ -530,25 +573,32 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        collection.updateMany(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateMany(new Document('a', 1), new Document('a', 10))
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as UpdateOperation
 
         then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use FindOneAndDeleteOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                  new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
@@ -564,13 +614,18 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use FindOneAndReplaceOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                  new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndReplaceOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
@@ -588,13 +643,18 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use FindAndUpdateOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                  new AcknowledgedWriteConcernResult(1, true, null)])
-        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndUpdateOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
@@ -612,6 +672,13 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
+                                                                 new UnacknowledgedWriteConcernResult()])
     }
 
     def 'should use DropCollectionOperation correctly'() {

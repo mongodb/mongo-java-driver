@@ -20,7 +20,10 @@ import com.mongodb.UnacknowledgedWriteException;
 import com.mongodb.WriteConcernResult;
 import org.bson.BsonValue;
 
-class UnacknowledgedWriteConcernResult implements WriteConcernResult {
+/**
+ * This class is not part of the public API.  It may change or be removed at any time.
+ */
+public class UnacknowledgedWriteConcernResult implements WriteConcernResult {
     @Override
     public boolean wasAcknowledged() {
         return false;
@@ -28,17 +31,17 @@ class UnacknowledgedWriteConcernResult implements WriteConcernResult {
 
     @Override
     public int getCount() {
-        throw new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
+        throw new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
     }
 
     @Override
     public boolean isUpdateOfExisting() {
-        throw new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
+        throw new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
     }
 
     @Override
     public BsonValue getUpsertedId() {
-        throw new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
+        throw new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
     }
 
     @Override

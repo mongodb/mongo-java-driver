@@ -16,29 +16,69 @@
 
 package com.mongodb.client.result;
 
+import com.mongodb.UnacknowledgedWriteException;
+
 /**
- * The result of a delete operation.
+ * The result of a delete operation. If the delete was unacknowledged, then {@code wasAcknowledged} will return false and all other methods
+ * with throw {@code MongoUnacknowledgedWriteException}.
  *
+ * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0
  */
-public class DeleteResult {
-    private final long deletedCount;
+public abstract class DeleteResult {
 
     /**
-     * Construct an instance.
+     * Returns true if the write was acknowledged.
      *
-     * @param deletedCount the number of documents deleted
+     * @return true if the write was acknowledged
      */
-    public DeleteResult(final long deletedCount) {
-        this.deletedCount = deletedCount;
-    }
+    public abstract boolean wasAcknowledged();
 
     /**
      * Gets the number of documents deleted.
      *
      * @return the number of documents deleted
      */
-    public long getDeletedCount() {
-        return deletedCount;
+    public abstract long getDeletedCount();
+
+
+    /**
+     * Create an acknowledged DeleteResult
+     *
+     * @param deletedCount  the number of documents deleted
+     * @return an acknowledged DeleteResult
+     */
+    public static DeleteResult acknowledged(final long deletedCount) {
+        return new DeleteResult() {
+            @Override
+            public boolean wasAcknowledged() {
+                return true;
+            }
+
+            @Override
+            public long getDeletedCount() {
+                return deletedCount;
+            }
+        };
     }
+
+    /**
+     * Create an unacknowledged DeleteResult
+     *
+     * @return an unacknowledged DeleteResult
+     */
+    public static DeleteResult unacknowledged() {
+        return new DeleteResult() {
+            @Override
+            public boolean wasAcknowledged() {
+                return false;
+            }
+
+            @Override
+            public long getDeletedCount() {
+                throw new UnacknowledgedWriteException("Cannot get information about an unacknowledged delete");
+            }
+        };
+    }
+
 }

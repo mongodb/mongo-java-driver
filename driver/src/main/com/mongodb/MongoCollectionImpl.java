@@ -413,9 +413,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public T findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options) {
         return executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
-                                                  .filter(asBson(filter))
-                                                  .projection(asBson(options.getProjection()))
-                                                  .sort(asBson(options.getSort())));
+                                .filter(asBson(filter))
+                                .projection(asBson(options.getProjection()))
+                                .sort(asBson(options.getSort())));
     }
 
     @Override
@@ -426,11 +426,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public T findOneAndReplace(final Object filter, final T replacement, final FindOneAndReplaceOptions options) {
         return executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
-                                                   .filter(asBson(filter))
-                                                   .projection(asBson(options.getProjection()))
-                                                   .sort(asBson(options.getSort()))
-                                                   .returnOriginal(options.getReturnOriginal())
-                                                   .upsert(options.isUpsert()));
+                                .filter(asBson(filter))
+                                .projection(asBson(options.getProjection()))
+                                .sort(asBson(options.getSort()))
+                                .returnOriginal(options.getReturnOriginal())
+                                .upsert(options.isUpsert()));
     }
 
     @Override
@@ -441,11 +441,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public T findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options) {
         return executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
-                                                  .filter(asBson(filter))
-                                                  .projection(asBson(options.getProjection()))
-                                                  .sort(asBson(options.getSort()))
-                                                  .returnOriginal(options.getReturnOriginal())
-                                                  .upsert(options.isUpsert()));
+                                .filter(asBson(filter))
+                                .projection(asBson(options.getProjection()))
+                                .sort(asBson(options.getSort()))
+                                .returnOriginal(options.getReturnOriginal())
+                                .upsert(options.isUpsert()));
     }
 
     @Override
@@ -461,21 +461,21 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public void createIndex(final Object key, final CreateIndexOptions createIndexOptions) {
         executor.execute(new CreateIndexOperation(getNamespace(), asBson(key))
-                             .name(createIndexOptions.getName())
-                             .background(createIndexOptions.isBackground())
-                             .unique(createIndexOptions.isUnique())
-                             .sparse(createIndexOptions.isSparse())
-                             .expireAfterSeconds(createIndexOptions.getExpireAfterSeconds())
-                             .version(createIndexOptions.getVersion())
-                             .weights(asBson(createIndexOptions.getWeights()))
-                             .defaultLanguage(createIndexOptions.getDefaultLanguage())
-                             .languageOverride(createIndexOptions.getLanguageOverride())
-                             .textIndexVersion(createIndexOptions.getTextIndexVersion())
-                             .twoDSphereIndexVersion(createIndexOptions.getTwoDSphereIndexVersion())
-                             .bits(createIndexOptions.getBits())
-                             .min(createIndexOptions.getMin())
-                             .max(createIndexOptions.getMax())
-                             .bucketSize(createIndexOptions.getBucketSize()));
+                         .name(createIndexOptions.getName())
+                         .background(createIndexOptions.isBackground())
+                         .unique(createIndexOptions.isUnique())
+                         .sparse(createIndexOptions.isSparse())
+                         .expireAfterSeconds(createIndexOptions.getExpireAfterSeconds())
+                         .version(createIndexOptions.getVersion())
+                         .weights(asBson(createIndexOptions.getWeights()))
+                         .defaultLanguage(createIndexOptions.getDefaultLanguage())
+                         .languageOverride(createIndexOptions.getLanguageOverride())
+                         .textIndexVersion(createIndexOptions.getTextIndexVersion())
+                         .twoDSphereIndexVersion(createIndexOptions.getTwoDSphereIndexVersion())
+                         .bits(createIndexOptions.getBits())
+                         .min(createIndexOptions.getMin())
+                         .max(createIndexOptions.getMax())
+                         .bucketSize(createIndexOptions.getBucketSize()));
     }
 
     @Override
@@ -513,7 +513,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
                                                                                      asList(new DeleteRequest(asBson(filter))
                                                                                             .multi(multi))));
-        return new DeleteResult(writeConcernResult.getCount());
+        if (writeConcernResult.wasAcknowledged()) {
+            return DeleteResult.acknowledged(writeConcernResult.getCount());
+        } else {
+            return DeleteResult.unacknowledged();
+        }
     }
 
     private UpdateResult update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi) {
@@ -525,7 +529,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     // TODO modifiedCount
     private UpdateResult createUpdateResult(final WriteConcernResult writeConcernResult) {
-        return new UpdateResult(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
+        if (writeConcernResult.wasAcknowledged()) {
+            return UpdateResult.acknowledged(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
+        } else {
+            return UpdateResult.unacknowledged();
+        }
     }
 
     private Codec<T> getCodec() {

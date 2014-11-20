@@ -22,7 +22,10 @@ import com.mongodb.bulk.BulkWriteUpsert;
 
 import java.util.List;
 
-class UnacknowledgedBulkWriteResult extends BulkWriteResult {
+/**
+ * This class is not part of the public API.
+ */
+public class UnacknowledgedBulkWriteResult extends BulkWriteResult {
 
     @Override
     public boolean isAcknowledged() {
@@ -60,7 +63,7 @@ class UnacknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     private UnacknowledgedWriteException getUnacknowledgedWriteException() {
-        return new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
+        return new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
     }
 
     @Override
