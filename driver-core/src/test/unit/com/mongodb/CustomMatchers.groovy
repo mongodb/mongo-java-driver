@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.client
+package com.mongodb
 
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description

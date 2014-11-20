@@ -21,6 +21,8 @@ apply plugin: 'osgi'
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
+
+    testCompile project(':driver-core').sourceSets.test.output
 }
 
 task uberJar(type: Jar) {

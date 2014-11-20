@@ -19,154 +19,172 @@ package com.mongodb
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.MongoDatabaseOptions
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.client.test.Worker
+import com.mongodb.operation.CommandReadOperation
+import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
 import com.mongodb.operation.ListCollectionNamesOperation
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.Document
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.ReadPreference.secondaryPreferred
+import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoDatabaseSpecification extends Specification {
 
-    def database;
-    def options = MongoDatabaseOptions.builder().codecRegistry(new RootCodecRegistry([new DocumentCodecProvider()]))
+    def name = 'databaseName'
+    def options = MongoDatabaseOptions.builder().codecRegistry(new RootCodecRegistry([new DocumentCodecProvider(),
+                                                                                      new BsonValueCodecProvider()]))
                                       .writeConcern(WriteConcern.ACKNOWLEDGED)
                                       .readPreference(primary())
                                       .build()
-    def collectionOptions = MongoCollectionOptions.builder().build().withDefaults(options)
-    def customCollectionOptions = MongoCollectionOptions.builder()
-                                                        .writeConcern(WriteConcern.JOURNALED)
-                                                        .readPreference(secondary())
-                                                        .build().withDefaults(options)
 
-    def 'should get name'() {
-        when:
-        database = new MongoDatabaseImpl('name', options, new TestOperationExecutor([]))
+    def 'should return the correct name from getName'() {
+        given:
+        def database = new MongoDatabaseImpl(name, options, new TestOperationExecutor([]))
 
-        then:
-        database.getName() == 'name'
+        expect:
+        database.getName() == name
     }
 
-    def 'should get options'() {
-        when:
-        database = new MongoDatabaseImpl('name', options, new TestOperationExecutor([]))
+    def 'should return the correct options'() {
+        given:
+        def database = new MongoDatabaseImpl(name, options, new TestOperationExecutor([]))
 
-        then:
+        expect:
         database.getOptions() == options
     }
 
-    def 'should get collection'() {
+    def 'should be able to executeCommand correctly'() {
         given:
-        def myCollectionOptions;
-        def namespace = new MongoNamespace('databaseName', 'collectionName')
-        database = new MongoDatabaseImpl('databaseName', options, new TestOperationExecutor([]))
-
-
-        when:
-        def defaultCollection = database.getCollection('collectionName')
-        myCollectionOptions = defaultCollection.getOptions()
-
-        then:
-        defaultCollection.getNamespace() == namespace
-        myCollectionOptions.getReadPreference() == collectionOptions.getReadPreference()
-        myCollectionOptions.getWriteConcern() == collectionOptions.getWriteConcern()
+        def command = new BsonDocument('command', new BsonInt32(1))
+        def executor = new TestOperationExecutor([null, null, null, null])
+        def database = new MongoDatabaseImpl(name, options, executor)
 
         when:
-        def customCollection = database.getCollection('collectionName', customCollectionOptions)
-        myCollectionOptions = customCollection.getOptions()
+        database.executeCommand(command)
+        def operation = executor.getWriteOperation() as CommandWriteOperation<Document>
 
         then:
-        customCollection.getNamespace() == namespace
-        myCollectionOptions.getReadPreference() == customCollectionOptions.getReadPreference()
-        myCollectionOptions.getWriteConcern() == customCollectionOptions.getWriteConcern()
+        operation.command == command
 
         when:
-        def workerCollection = database.getCollection('collectionName', Worker)
-        myCollectionOptions = workerCollection.getOptions()
+        database.executeCommand(command, primaryPreferred())
+        operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
-        workerCollection.getNamespace() == namespace
-        myCollectionOptions.getReadPreference() == collectionOptions.getReadPreference()
-        myCollectionOptions.getWriteConcern() == collectionOptions.getWriteConcern()
-        workerCollection.clazz == Worker
+        operation.command == command
+        executor.getReadPreference() == primaryPreferred()
 
         when:
-        def workerCollectionCustomOptions = database.getCollection('collectionName', Worker, customCollectionOptions)
-        myCollectionOptions = workerCollectionCustomOptions.getOptions()
+        database.executeCommand(command, BsonDocument)
+        operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
 
         then:
-        workerCollectionCustomOptions.getNamespace() == namespace
-        myCollectionOptions.getReadPreference() == customCollectionOptions.getReadPreference()
-        myCollectionOptions.getWriteConcern() == customCollectionOptions.getWriteConcern()
-        workerCollectionCustomOptions.clazz == Worker
+        operation.command == command
+
+        when:
+        database.executeCommand(command, primaryPreferred(), BsonDocument)
+        operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
+
+        then:
+        operation.command == command
+        executor.getReadPreference() == primaryPreferred()
     }
 
-    def 'should use DropDatabaseOperation properly'() {
+    def 'should use DropDatabaseOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
-        database = new MongoDatabaseImpl('name', options, executor)
 
         when:
-        database.dropDatabase()
-
-        then:
+        new MongoDatabaseImpl(name, options, executor).dropDatabase()
         def operation = executor.getWriteOperation() as DropDatabaseOperation
-        operation.databaseName == 'name'
-    }
-
-    def 'should use GetCollectionNamesOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([['collection1', 'collection2']])
-        database = new MongoDatabaseImpl('name', options, executor)
-
-        when:
-        def result = database.getCollectionNames()
 
         then:
+        expect operation, isTheSameAs(new DropDatabaseOperation(name))
+    }
+
+    def 'should use ListCollectionNamesOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([['collectionName']])
+
+        when:
+        new MongoDatabaseImpl(name, options, executor).getCollectionNames()
         def operation = executor.getReadOperation() as ListCollectionNamesOperation
-        operation.databaseName == 'name'
-        result == ['collection1', 'collection2']
-    }
-
-    def 'should use CreateCollectionOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([null, null])
-        database = new MongoDatabaseImpl('databaseName', options, executor)
-
-        when:
-        database.createCollection('collectionName')
 
         then:
-        def operation = executor.getWriteOperation() as CreateCollectionOperation
-        operation.databaseName == 'databaseName'
-        operation.collectionName == 'collectionName'
-        operation.isAutoIndex()
-        !operation.isCapped()
-        operation.isUsePowerOf2Sizes() == null
-        operation.getMaxDocuments() == 0
-        operation.getSizeInBytes() == 0
+        expect operation, isTheSameAs(new ListCollectionNamesOperation(name))
+        executor.getReadPreference() == primary()
+    }
+
+    def 'should use CreateCollectionOperation correctly'() {
+        given:
+        def collectionName = 'collectionName'
+        def executor = new TestOperationExecutor([null, null])
+        def database = new MongoDatabaseImpl(name, options, executor)
 
         when:
-        database.createCollection('collectionName', new CreateCollectionOptions()
+        database.createCollection(collectionName)
+        def operation = executor.getWriteOperation() as CreateCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName))
+
+        when:
+        def createCollectionOptions = new CreateCollectionOptions()
                 .autoIndex(false)
                 .capped(true)
                 .usePowerOf2Sizes(true)
                 .maxDocuments(100)
-                .sizeInBytes(1024)
-        )
+                .sizeInBytes(1000)
+        database.createCollection(collectionName, createCollectionOptions)
+        operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        def operation2 = executor.getWriteOperation() as CreateCollectionOperation
-        operation2.databaseName == 'databaseName'
-        operation2.collectionName == 'collectionName'
-        !operation2.isAutoIndex()
-        operation2.isCapped()
-        operation2.isUsePowerOf2Sizes()
-        operation2.getMaxDocuments() == 100
-        operation2.getSizeInBytes() == 1024
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName)
+                                              .autoIndex(false)
+                                              .capped(true)
+                                              .usePowerOf2Sizes(true)
+                                              .maxDocuments(100)
+                                              .sizeInBytes(1000))
     }
+
+    def 'should pass the correct options to getCollection'() {
+        given:
+        def options = MongoDatabaseOptions.builder()
+                                      .readPreference(secondary())
+                                      .writeConcern(WriteConcern.ACKNOWLEDGED)
+                                      .codecRegistry(codecRegistry)
+                                      .build()
+        def executor = new TestOperationExecutor([])
+        def database = new MongoDatabaseImpl(name, options, executor)
+
+        when:
+        def collectionOptions = customOptions ? database.getCollection('name', customOptions).getOptions()
+                                              : database.getCollection('name').getOptions()
+        then:
+        collectionOptions.getReadPreference() == readPreference
+        collectionOptions.getWriteConcern() == writeConcern
+        collectionOptions.getCodecRegistry() == codecRegistry
+
+        where:
+        customOptions                                        | readPreference       | writeConcern              | codecRegistry
+        null                                                 | secondary()          | WriteConcern.ACKNOWLEDGED | new RootCodecRegistry([])
+        MongoCollectionOptions.builder().build()             | secondary()          | WriteConcern.ACKNOWLEDGED | new RootCodecRegistry([])
+        MongoCollectionOptions.builder()
+                              .readPreference(secondaryPreferred())
+                              .writeConcern(WriteConcern.MAJORITY)
+                              .build()                       | secondaryPreferred() | WriteConcern.MAJORITY     | new RootCodecRegistry([])
+
+    }
+
 }

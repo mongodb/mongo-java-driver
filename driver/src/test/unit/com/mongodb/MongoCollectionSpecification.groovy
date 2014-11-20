@@ -17,29 +17,24 @@
 package com.mongodb
 
 import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
+import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.CreateIndexOptions
-import com.mongodb.client.model.DeleteManyModel
-import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.DistinctOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
-import com.mongodb.client.model.RenameCollectionOptions
-import com.mongodb.client.model.ReplaceOneModel
-import com.mongodb.client.model.UpdateManyModel
-import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
-import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
@@ -59,932 +54,661 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.operation.UpdateOperation
 import org.bson.BsonArray
-import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
-import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
-import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
+import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.RootCodecRegistry
-import org.bson.types.ObjectId
 import spock.lang.Specification
 
-import java.util.concurrent.TimeUnit
-
+import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.MongoClient.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoCollectionSpecification extends Specification {
 
-    def namespace = new MongoNamespace('db', 'coll')
-    def collection;
-    def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
+    def namespace = new MongoNamespace('databaseName', 'collectionName')
+    def options = MongoCollectionOptions.builder()
+                                        .writeConcern(WriteConcern.ACKNOWLEDGED)
                                         .readPreference(secondary())
-                                        .codecRegistry(new RootCodecRegistry([new ValueCodecProvider(),
-                                                                              new DocumentCodecProvider(),
-                                                                              new BsonValueCodecProvider()]))
-                                        .build()
+                                        .codecRegistry(getDefaultCodecRegistry()).build()
 
-    def 'should get namespace'() {
+
+    def 'should return the correct name from getName'() {
         given:
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
+        def collection = new MongoCollectionImpl(namespace, Document, options, new TestOperationExecutor([null]))
 
         expect:
         collection.getNamespace() == namespace
     }
 
-    def 'should get options'() {
+    def 'should return the correct options'() {
         given:
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
+        def collection = new MongoCollectionImpl(namespace, Document, options, new TestOperationExecutor([null]))
 
         expect:
         collection.getOptions() == options
     }
 
-    def 'insertOne should use InsertOperation properly'() {
+    def 'should use CountOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([1L, 2L, 3L])
+        def filter = new BsonDocument()
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new CountOperation(namespace).filter(filter)
+
+        when:
+        collection.count()
+        def operation = executor.getReadOperation() as CountOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        filter = new BsonDocument('a', new BsonInt32(1))
+        collection.count(filter)
+        operation = executor.getReadOperation() as CountOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.filter(filter))
+
+        when:
+        def hint = new BsonDocument('hint', new BsonInt32(1))
+        collection.count(filter, new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
+        operation = executor.getReadOperation() as CountOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.filter(filter).hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
+    }
+
+    def 'should use DistinctOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([new BsonArray([new BsonString('a')]), new BsonArray([new BsonString('b')])])
+        def filter = new BsonDocument()
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when:
+        collection.distinct('test', filter)
+        def operation = executor.getReadOperation() as DistinctOperation
+
+        then:
+        expect operation, isTheSameAs(new DistinctOperation(namespace, 'test').filter(new BsonDocument()))
+
+        when:
+        filter = new BsonDocument('a', new BsonInt32(1))
+        collection.distinct('test', filter, new DistinctOptions().maxTime(100, MILLISECONDS))
+        operation = executor.getReadOperation() as DistinctOperation
+
+        then:
+        expect operation, isTheSameAs(new DistinctOperation(namespace, 'test').filter(filter).maxTime(100, MILLISECONDS))
+    }
+
+    def 'should handle exceptions in distinct correctly'() {
+        given:
+        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                            new BsonValueCodecProvider()))).build()
+        def executor = new TestOperationExecutor([new MongoException('failure')])
+        def filter = new BsonDocument()
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when: 'A failed operation'
+        collection.distinct('test', filter)
+
+        then:
+        thrown(MongoException)
+
+        when: 'A missing codec'
+        collection.distinct('test', new Document())
+
+        then:
+        thrown(CodecConfigurationException)
+    }
+
+    def 'should use FindOperation correctly'() {
+        given:
+        def batchCursor = Stub(BatchCursor)
+        def executor = new TestOperationExecutor([batchCursor, batchCursor, batchCursor, batchCursor])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def documentOperation = new FindOperation(namespace, new DocumentCodec()).filter(new BsonDocument()).slaveOk(true)
+        def bsonOperation = new FindOperation(namespace, new BsonDocumentCodec()).filter(new BsonDocument()).slaveOk(true)
+
+        when:
+        collection.find().into([])
+        def operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(documentOperation)
+
+        when:
+        collection.find(BsonDocument).into([])
+        operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(bsonOperation)
+
+        when:
+        collection.find(new Document('filter', 1)).into([])
+        operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(documentOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
+
+        when:
+        collection.find(new Document('filter', 1), BsonDocument).into([])
+        operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(bsonOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
+    }
+
+    def 'should use AggregateOperation correctly'() {
+        given:
+        def batchCursor = Stub(BatchCursor)
+        def executor = new TestOperationExecutor([batchCursor, batchCursor, batchCursor])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when:
+        collection.aggregate([new Document('$match', 1)]).into([])
+        def operation = executor.getReadOperation() as AggregateOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
+                                                             new DocumentCodec()))
+
+        when:
+        collection.aggregate([new Document('$match', 1)], new AggregateOptions().maxTime(100, MILLISECONDS)).into([])
+        operation = executor.getReadOperation() as AggregateOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
+                                                             new DocumentCodec()).maxTime(100, MILLISECONDS))
+
+        when:
+        collection.aggregate([new Document('$match', 1)], BsonDocument).into([])
+        operation = executor.getReadOperation() as AggregateOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
+                                                             new BsonDocumentCodec()))
+    }
+
+    def 'should handle exceptions in aggregate correctly'() {
+        given:
+        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                            new BsonValueCodecProvider()))).build()
+        def executor = new TestOperationExecutor([new MongoException('failure')])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when: 'The operation fails with an exception'
+        collection.aggregate([new BsonDocument('$match', new BsonInt32(1))], BsonDocument).into([])
+
+        then: 'the future should handle the exception'
+        thrown(MongoException)
+
+        when: 'a codec is missing its acceptable to immediately throw'
+        collection.aggregate([new Document('$match', 1)])
+
+        then:
+        thrown(CodecConfigurationException)
+    }
+
+    def 'should use MapReduceWithInlineResultsOperation correctly'() {
+        given:
+        def batchCursor = Stub(BatchCursor)
+        def executor = new TestOperationExecutor([batchCursor, batchCursor, batchCursor, batchCursor])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def documentOperation = new MapReduceWithInlineResultsOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                                                                        new DocumentCodec()).verbose(true)
+        def bsonOperation = new MapReduceWithInlineResultsOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                                                                    new BsonDocumentCodec()).verbose(true)
+
+        when:
+        collection.mapReduce('map', 'reduce').into([])
+        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
+
+        then:
+        expect operation, isTheSameAs(documentOperation)
+
+        when:
+        def mapReduceOptions = new MapReduceOptions().finalizeFunction('final')
+        collection.mapReduce('map', 'reduce', mapReduceOptions).into([])
+        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
+
+        then:
+        expect operation, isTheSameAs(documentOperation.finalizeFunction(new BsonJavaScript('final')))
+
+        when:
+        collection.mapReduce('map', 'reduce', BsonDocument).into([])
+        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
+
+        then:
+        expect operation, isTheSameAs(bsonOperation)
+
+        when:
+        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([])
+        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
+
+        then:
+        expect operation, isTheSameAs(bsonOperation.finalizeFunction(new BsonJavaScript('final')))
+
+    }
+
+    def 'should use MapReduceToCollectionOperation correctly'() {
+        given:
+        def batchCursor = Stub(BatchCursor)
+        def executor = new TestOperationExecutor([batchCursor, batchCursor, batchCursor, batchCursor])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                                                                   'collectionName').filter(new BsonDocument('filter', new BsonInt32(1)))
+                                                                                    .finalizeFunction(new BsonJavaScript('final'))
+                                                                                    .verbose(true)
+        def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
+
+        when:
+        collection.mapReduce('map', 'reduce', mapReduceOptions).into([])
+        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+
+        when: 'The following read operation'
+        operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'), new DocumentCodec())
+                                              .filter(new BsonDocument()))
+
+        when:
+        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([])
+        operation = executor.getWriteOperation() as MapReduceToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+
+        when: 'The following read operation'
+        operation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'),
+                                                        new BsonDocumentCodec())
+                                              .filter(new BsonDocument()))
+    }
+
+    def 'should handle exceptions in mapReduce correctly'() {
+        given:
+        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                            new BsonValueCodecProvider()))).build()
+        def executor = new TestOperationExecutor([new MongoException('failure')])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when: 'The operation fails with an exception'
+        collection.mapReduce('map', 'reduce', BsonDocument).into([])
+
+        then: 'the future should handle the exception'
+        thrown(MongoException)
+
+        when: 'a codec is missing its acceptable to immediately throw'
+        collection.mapReduce('map', 'reduce').into([])
+
+        then:
+        thrown(CodecConfigurationException)
+    }
+
+    def 'should use MixedBulkWriteOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = { boolean ordered ->
+            new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
+                                        ordered, WriteConcern.ACKNOWLEDGED)
+        }
+
+        when:
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(false))
+
+        when:
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true))
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(true))
+    }
+
+    def 'should handle exceptions in bulkWrite correctly'() {
+        given:
+        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                            new BsonValueCodecProvider()))).build()
+        def executor = new TestOperationExecutor([new MongoException('failure')])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when: 'a codec is missing its acceptable to immediately throw'
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
+
+        then:
+        thrown(CodecConfigurationException)
+    }
+
+    def 'should use InsertOneOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                    [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
 
         when:
         collection.insertOne(new Document('_id', 1))
-
-        then:
         def operation = executor.getWriteOperation() as InsertOperation
-        operation.insertRequests[0].document == new BsonDocument('_id', new BsonInt32(1))
-    }
-
-    def 'insert should add _id to document'() {
-        given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-
-        def document = new Document()
-        when:
-        collection.insertOne(document)
 
         then:
-        document.containsKey('_id')
-        document.get('_id') instanceof ObjectId
-        executor.getWriteOperation() as InsertOperation
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    def 'insertMany should use InsertOperation properly'() {
+    def 'should use InsertManyOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(2, false, null),
-                                                  new AcknowledgedWriteConcernResult(2, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([null, null])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = { ordered ->
+            new InsertOperation(namespace, ordered, WriteConcern.ACKNOWLEDGED,
+                                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
+        }
 
         when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false));
-
-        then:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
         def operation = executor.getWriteOperation() as InsertOperation
-        operation.insertRequests[0].document == new BsonDocument('_id', new BsonInt32(1))
-        operation.insertRequests[1].document == new BsonDocument('_id', new BsonInt32(2))
-        !operation.ordered
-
-        when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false));
 
         then:
-        def operation2 = executor.getWriteOperation() as InsertOperation
-        !operation2.ordered
+        expect operation, isTheSameAs(expectedOperation(false))
+
+        when:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
+        operation = executor.getWriteOperation() as InsertOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(true))
     }
 
-    def 'insertMany should add _id to documents'() {
+    def 'should use DeleteOneOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(2, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        def documents = [new Document(), new Document()]
-        when:
-        collection.insertMany(documents);
-
-        then:
-        documents[0].containsKey('_id')
-        documents[0].get('_id') instanceof ObjectId
-        documents[1].containsKey('_id')
-        documents[1].get('_id') instanceof ObjectId
-        executor.getWriteOperation() as InsertOperation
-    }
-
-    def 'replace should use ReplaceOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new DeleteOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                    [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1))).multi(false)])
 
         when:
-        def result = collection.replaceOne(new Document('_id', 1),
-                                           new Document('color', 'blue'),
-                                           new UpdateOptions().upsert(true))
-
-        then:
-        def operation = executor.getWriteOperation() as UpdateOperation
-
-        def replaceRequest = operation.updateRequests[0]
-        replaceRequest.type == REPLACE
-        !replaceRequest.multi
-        replaceRequest.upsert
-        replaceRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        replaceRequest.update == new BsonDocument('color', new BsonString('blue'))
-
-        result.modifiedCount == 0
-        result.matchedCount == 1
-        !result.upsertedId
-    }
-
-    def 'updateOne should use UpdateOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.updateOne(new Document('_id', 1),
-                                          new Document('$set', new Document('color', 'blue')),
-                                          new UpdateOptions().upsert(true))
-
-        then:
-        def operation = executor.getWriteOperation() as UpdateOperation
-
-        def updateRequest = operation.updateRequests[0]
-        updateRequest.type == UPDATE
-        !updateRequest.multi
-        updateRequest.upsert
-        updateRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
-
-        result.modifiedCount == 0
-        result.matchedCount == 1
-        !result.upsertedId
-    }
-
-    def 'updateMany should use UpdateOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.updateMany(new Document('_id', 1),
-                                           new Document('$set', new Document('color', 'blue')),
-                                           new UpdateOptions().upsert(true))
-
-        then:
-        def operation = executor.getWriteOperation() as UpdateOperation
-
-        def updateRequest = operation.updateRequests[0]
-        updateRequest.type == UPDATE
-        updateRequest.multi
-        updateRequest.upsert
-        updateRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
-
-        result.modifiedCount == 0
-        result.matchedCount == 1
-        !result.upsertedId
-    }
-
-    def 'deleteOne should use RemoveOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.deleteOne(new Document('_id', 1));
-
-        then:
+        collection.deleteOne(new Document('_id', 1))
         def operation = executor.getWriteOperation() as DeleteOperation
 
-        def removeRequest = operation.deleteRequests[0]
-        !removeRequest.multi
-        removeRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-
-        result.deletedCount == 1
+        then:
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    def 'deleteMany should use RemoveOperation properly'() {
+    def 'should use DeleteManyOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new DeleteOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                    [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])
+
 
         when:
-        def result = collection.deleteMany(new Document('_id', 1));
-
-        then:
+        collection.deleteMany(new Document('_id', 1))
         def operation = executor.getWriteOperation() as DeleteOperation
 
-        def deleteRequest = operation.deleteRequests[0]
-        deleteRequest.multi
-        deleteRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-
-        result.deletedCount == 1
+        then:
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    def 'find iteration should use FindOperation properly'() {
+    def 'should use UpdateOperation correctly for replaceOne'() {
         given:
-        def cursor = Stub(BatchCursor)
-        cursor.hasNext() >>> [true, false]
-        def executor = new TestOperationExecutor([cursor, cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def fluentFind = collection.find(new Document('cold', true))
-                                   .batchSize(4)
-                                   .maxTime(1, TimeUnit.SECONDS)
-                                   .skip(5)
-                                   .limit(100)
-                                   .modifiers(new Document('$hint', 'i1'))
-                                   .projection(new Document('x', 1))
-                                   .sort(new Document('y', 1))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                    [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
+                                                                       new BsonDocument('a', new BsonInt32(10)),
+                                                                       WriteRequest.Type.REPLACE)])
 
         when:
-        fluentFind.iterator()
-        def operation = executor.getReadOperation() as FindOperation
+        collection.replaceOne(new Document('a', 1), new Document('a', 10))
+        def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.batchSize == 4
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
-        !operation.isTailableCursor()
-        !operation.isOplogReplay()
-        !operation.isNoCursorTimeout()
-        !operation.isAwaitData()
-        !operation.isPartial()
-        operation.isSlaveOk()
-        executor.readPreference == secondary()
-
-        when: 'all the boolean properties are enabled'
-        fluentFind.awaitData(true)
-                  .noCursorTimeout(true)
-                  .partial(true)
-                  .tailable(true)
-                  .oplogReplay(true)
-
-        fluentFind.iterator()
-        operation = executor.getReadOperation() as FindOperation
-
-        then: 'cursor flags contains all flags'
-        operation.isTailableCursor()
-        operation.isOplogReplay()
-        operation.isNoCursorTimeout()
-        operation.isAwaitData()
-        operation.isPartial()
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    def 'fluent find should use FindOperation properly'() {
+    def 'should use UpdateOperation correctly for updateOne'() {
         given:
-        def cursor = Stub(BatchCursor)
-        cursor.hasNext() >>> [true, false]
-        def executor = new TestOperationExecutor([cursor, cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                  new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = { boolean upsert ->
+            new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
+                                                   new BsonDocument('a', new BsonInt32(10)),
+                                                   WriteRequest.Type.UPDATE).multi(false).upsert(upsert)])
+        }
 
         when:
-        collection.find()
-                  .filter(new Document('cold', true))
-                  .batchSize(4)
-                  .maxTime(1, TimeUnit.SECONDS)
-                  .skip(5)
-                  .limit(100)
-                  .modifiers(new Document('$hint', 'i1'))
-                  .projection(new Document('x', 1))
-                  .sort(new Document('y', 1))
-                  .iterator()
-        def operation = executor.getReadOperation() as FindOperation
+        collection.updateOne(new Document('a', 1), new Document('a', 10))
+        def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.batchSize == 4
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
-        !operation.isTailableCursor()
-        !operation.isOplogReplay()
-        !operation.isNoCursorTimeout()
-        !operation.isAwaitData()
-        !operation.isPartial()
-        operation.isSlaveOk()
-        executor.readPreference == secondary()
+        expect operation, isTheSameAs(expectedOperation(false))
 
-        when: 'all the boolean properties are enabled'
-        options = new FindOptions().awaitData(true)
-                                   .noCursorTimeout(true)
-                                   .partial(true)
-                                   .tailable(true)
-                                   .oplogReplay(true)
+        when:
+        collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        operation = executor.getWriteOperation() as UpdateOperation
 
-        collection.find()
-                  .awaitData(true)
-                  .noCursorTimeout(true)
-                  .partial(true)
-                  .tailable(true)
-                  .oplogReplay(true)
-                  .iterator()
-        operation = executor.getReadOperation() as FindOperation
-
-        then: 'cursor flags contains all flags'
-        operation.isTailableCursor()
-        operation.isOplogReplay()
-        operation.isNoCursorTimeout()
-        operation.isAwaitData()
-        operation.isPartial()
+        then:
+        expect operation, isTheSameAs(expectedOperation(true))
     }
 
-    def 'find with first() should temporarily set limit to -1 and batchSize to 0'() {
+    def 'should use UpdateOperation correctly for updateMany'() {
         given:
-        def document = new Document()
-        def cursor = Stub(BatchCursor)
-        cursor.hasNext() >>> [true, false]
-        cursor.next() >> [document]
-
-        def executor = new TestOperationExecutor([cursor, cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def fluentFind = collection.find(new Document('cold', true))
-                                   .batchSize(4)
-                                   .maxTime(1, TimeUnit.SECONDS)
-                                   .skip(5)
-                                   .limit(100)
-                                   .modifiers(new Document('$hint', 'i1'))
-                                   .projection(new Document('x', 1))
-                                   .sort(new Document('y', 1))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                  new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = { boolean upsert ->
+            new UpdateOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
+                                                   new BsonDocument('a', new BsonInt32(10)),
+                                                   WriteRequest.Type.UPDATE)
+                                         .multi(true).upsert(upsert)])
+        }
 
         when:
-        def first = fluentFind.first()
-        def operation = executor.getReadOperation() as FindOperation
-        def readPreference = executor.getReadPreference()
+        collection.updateMany(new Document('a', 1), new Document('a', 10))
+        def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
-        first.is(document)
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
-        operation.skip == 5
-        !operation.isTailableCursor()
-        !operation.isOplogReplay()
-        !operation.isNoCursorTimeout()
-        !operation.isAwaitData()
-        !operation.isPartial()
-        operation.batchSize == 0
-        operation.limit == -1
-        operation.isSlaveOk()
-        readPreference == secondary()
+        expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        fluentFind.iterator()
-        operation = executor.getReadOperation() as FindOperation
+        collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        operation = executor.getWriteOperation() as UpdateOperation
 
-        then: 'cursor flags contains all flags'
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
-        operation.skip == 5
-        !operation.isTailableCursor()
-        !operation.isOplogReplay()
-        !operation.isNoCursorTimeout()
-        !operation.isAwaitData()
-        !operation.isPartial()
-        operation.isSlaveOk()
-        operation.batchSize == 4
-        operation.limit == 100
+        then:
+        expect operation, isTheSameAs(expectedOperation(true))
     }
 
-    def 'count should use CountOperation properly'() {
+    def 'should use FindOneAndDeleteOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([42L])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                  new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.count(new Document('cold', true), new CountOptions()
-                                           .maxTime(1, TimeUnit.SECONDS)
-                                           .skip(5)
-                                           .limit(100)
-                                           .hint(new Document('x', 1)))
-
-        then:
-        def operation = executor.getReadOperation() as CountOperation
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.hint == new BsonDocument('x', new BsonInt32(1))
-        executor.readPreference == secondary()
-    }
-
-    def 'count should use CountOperation properly with hint string'() {
-        given:
-        def executor = new TestOperationExecutor([42L])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, this.options, executor)
-
-        when:
-        collection.count(new Document(), new CountOptions().hintString('idx1'))
-
-        then:
-        def operation = executor.getReadOperation() as CountOperation
-        operation.hint == new BsonString('idx1')
-    }
-
-    def 'distinct should use DistinctOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42)))])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        collection.distinct('fieldName1', new Document('cold', true), new DistinctOptions().maxTime(1, TimeUnit.SECONDS))
-
-        then:
-        def operation = executor.getReadOperation() as DistinctOperation
-        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        executor.readPreference == secondary()
-    }
-
-    def 'bulk insert should use BulkWriteOperation properly'() {
-        given:
-        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def document = new Document();
-
-        when:
-        collection.bulkWrite([new InsertOneModel<>(document),
-                              new UpdateOneModel<>(new Document('_id', 1),
-                                                   new Document('$set', new Document('color', 'blue')),
-                                                   new UpdateOptions().upsert(true)),
-                              new UpdateManyModel<>(new Document('_id', 1),
-                                                    new Document('$set', new Document('color', 'blue')),
-                                                    new UpdateOptions().upsert(true)),
-                              new ReplaceOneModel<>(new Document('_id', 1),
-                                                    new Document('color', 'blue'),
-                                                    new UpdateOptions().upsert(true)),
-                              new DeleteOneModel<>(new Document('_id', 1)),
-                              new DeleteManyModel<>(new Document('_id', 1))],
-                             new BulkWriteOptions().ordered(false))
-
-
-        then:
-        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
-
-        def insertRequest = operation.writeRequests[0] as com.mongodb.bulk.InsertRequest
-        insertRequest.document == new BsonDocument('_id', new BsonObjectId(document.getObjectId('_id')))
-
-        def updateOneRequest = operation.writeRequests[1] as com.mongodb.bulk.UpdateRequest
-        updateOneRequest.type == UPDATE
-        !updateOneRequest.multi
-        updateOneRequest.upsert
-        updateOneRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        updateOneRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
-
-        def updateManyRequest = operation.writeRequests[2] as com.mongodb.bulk.UpdateRequest
-        updateManyRequest.type == UPDATE
-        updateManyRequest.multi
-        updateManyRequest.upsert
-        updateManyRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        updateManyRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
-
-        def replaceRequest = operation.writeRequests[3] as com.mongodb.bulk.UpdateRequest
-        replaceRequest.type == REPLACE
-        !replaceRequest.multi
-        replaceRequest.upsert
-        replaceRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-        replaceRequest.update == new BsonDocument('color', new BsonString('blue'))
-
-        def deleteOneRequest = operation.writeRequests[4] as DeleteRequest
-        !deleteOneRequest.multi
-        deleteOneRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-
-        def deleteManyRequest = operation.writeRequests[5] as DeleteRequest
-        deleteManyRequest.multi
-        deleteManyRequest.filter == new BsonDocument('_id', new BsonInt32(1))
-
-        document.containsKey('_id')
-    }
-
-    def 'bulk insert should generate _id'() {
-        given:
-        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def document = new Document();
-
-        when:
-        collection.bulkWrite([new InsertOneModel<>(document)])
-
-
-        then:
-        document.containsKey('_id')
-    }
-
-    def 'aggregate should use AggregationOperation properly'() {
-        given:
-        def cursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        collection.aggregate([new Document('$match', new Document('job', 'plumber'))],
-                             new AggregateOptions().allowDiskUse(true)
-                                                   .batchSize(10)
-                                                   .maxTime(1, TimeUnit.SECONDS)
-                                                   .useCursor(true)).first()
-
-        then:
-        def operation = executor.getReadOperation() as AggregateOperation
-        operation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))]
-        operation.batchSize == 10
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.useCursor
-        executor.readPreference == secondary()
-    }
-
-    def 'aggregate should use AggregationToCollectionOperation properly'() {
-        given:
-        def cursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([null, cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        def pipeline = [new Document('$match', new Document('job', 'plumber')), new Document('$out', 'outCollection')]
-        def options = new AggregateOptions().allowDiskUse(true)
-                                            .batchSize(10)
-                                            .maxTime(1, TimeUnit.SECONDS)
-                                            .useCursor(true)
-
-        when:
-        def first = collection.aggregate(pipeline, options).first()
-
-        then:
-        first == null
-        def aggregateToCollectionOperation = executor.getWriteOperation() as AggregateToCollectionOperation
-        aggregateToCollectionOperation != null
-        aggregateToCollectionOperation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString('outCollection'))]
-        aggregateToCollectionOperation.getMaxTime(TimeUnit.SECONDS) == 1
-
-        def findOperation = executor.getReadOperation() as FindOperation
-        findOperation != null
-        findOperation.namespace == new MongoNamespace(namespace.getDatabaseName(), 'outCollection')
-        findOperation.decoder instanceof DocumentCodec
-
-        executor.readPreference == secondary()
-    }
-
-    def 'mapReduce should use the MapReduceWithInlineResultsOperation properly'() {
-        given:
-        def cursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def first = collection.mapReduce('map', 'reduce').first()
-
-        then:
-        first == null
-        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
-        operation.getFilter() == null
-        operation.getFinalizeFunction() == null
-        operation.getLimit() == 0
-        operation.getMapFunction() == new BsonJavaScript('map')
-        operation.getReduceFunction() == new BsonJavaScript('reduce')
-        operation.getScope() == null
-        operation.getSort() == null
-        operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
-        !operation.isJsMode()
-        operation.isVerbose()
-        executor.readPreference == secondary()
-    }
-
-    def 'mapReduce with options should use the MapReduceWithInlineResultsOperation properly'() {
-        given:
-        def cursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def options = new MapReduceOptions()
-                .finalizeFunction('finalize')
-                .filter([filter: 1] as Document)
-                .limit(10)
-                .scope([scope: 1] as Document)
-                .sort([sort: 1] as Document)
-                .maxTime(10, TimeUnit.MILLISECONDS)
-                .jsMode(true)
-                .verbose(false)
-
-        when:
-        collection.mapReduce('map', 'reduce', options).first()
-
-        then:
-        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
-        operation.getMapFunction() == new BsonJavaScript('map')
-        operation.getReduceFunction() == new BsonJavaScript('reduce')
-        operation.getFinalizeFunction() == new BsonJavaScript('finalize')
-        operation.getFilter() == new BsonDocument('filter', new BsonInt32(1))
-        operation.getLimit() == 10
-        operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
-        operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
-        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
-        operation.isJsMode()
-        !operation.isVerbose()
-        executor.readPreference == secondary()
-    }
-
-
-    def 'mapReduce with options should use the MapReduceToCollectionOperation properly'() {
-        given:
-        def cursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([cursor, cursor])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def options = new MapReduceOptions('out')
-                .action(MapReduceOptions.Action.MERGE)
-                .databaseName('db')
-                .sharded(true)
-                .nonAtomic(true)
-                .finalizeFunction('finalize')
-                .filter([filter: 1] as Document)
-                .limit(10)
-                .scope([scope: 1] as Document)
-                .sort([sort: 1] as Document)
-                .maxTime(10, TimeUnit.MILLISECONDS)
-                .jsMode(true)
-                .verbose(false)
-
-        when:
-        collection.mapReduce('map', 'reduce', options).first()
-
-        then:
-        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-        operation.getMapFunction() == new BsonJavaScript('map')
-        operation.getReduceFunction() == new BsonJavaScript('reduce')
-        operation.getFinalizeFunction() == new BsonJavaScript('finalize')
-        operation.getFilter() == new BsonDocument('filter', new BsonInt32(1))
-        operation.getLimit() == 10
-        operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
-        operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
-        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
-        operation.isJsMode()
-        !operation.isVerbose()
-        operation.isJsMode()
-        operation.action == 'merge'
-        operation.getDatabaseName() == 'db'
-        operation.isSharded()
-        operation.isNonAtomic()
-
-        when:
-        def findOperation = executor.getReadOperation() as FindOperation<Document>
-
-        then:
-        findOperation.getNamespace() == new MongoNamespace('db', 'out')
-        executor.readPreference == secondary()
-    }
-
-    def 'findOneAndDelete should use FindAndDeleteOperation correctly'() {
-        given:
-        def returnedDocument = new Document('_id', 1).append('cold', true)
-        def executor = new TestOperationExecutor([returnedDocument])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.findOneAndDelete(new Document('cold', true),
-                                                 new FindOneAndDeleteOptions().projection(new Document('field', 1))
-                                                                              .sort(new Document('sort', -1)))
-
-        then:
+        collection.findOneAndDelete(new Document('a', 1))
         def operation = executor.getWriteOperation() as FindAndDeleteOperation
-        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
-        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
-        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
-
-        result == returnedDocument
-    }
-
-    def 'findOneAndReplace should use FindOneAndReplaceOperation correctly'() {
-        given:
-        def returnedDocument = new Document('_id', 1).append('cold', true)
-        def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.findOneAndReplace(new Document('cold', true), new Document('hot', false),
-                                                  new FindOneAndReplaceOptions().projection(new Document('field', 1))
-                                                                                .sort(new Document('sort', -1)))
 
         then:
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
+        operation = executor.getWriteOperation() as FindAndDeleteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+    }
+
+    def 'should use FindOneAndReplaceOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                  new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new FindAndReplaceOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
+
+        when:
+        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
-        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
-        operation.getReplacement() == new BsonDocument('hot', new BsonBoolean(false))
-        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
-        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
-        operation.isReturnOriginal()
-        !operation.isUpsert()
-
-        result == returnedDocument
-
-        when:
-        collection.findOneAndReplace(new Document('cold', true), new Document('hot', false),
-                                     new FindOneAndReplaceOptions().projection(new Document('field', 1))
-                                                                   .sort(new Document('sort', -1))
-                                                                   .upsert(true)
-                                                                   .returnOriginal(false))
 
         then:
-        def operation2 = executor.getWriteOperation() as FindAndReplaceOperation
-        operation2.isUpsert()
-        !operation2.isReturnOriginal()
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
+                                     new FindOneAndReplaceOptions().projection(new Document('projection', 1)))
+        operation = executor.getWriteOperation() as FindAndReplaceOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
     }
 
-    def 'findOneAndUpdate should use FindOneAndUpdateOperation correctly'() {
+    def 'should use FindAndUpdateOperation correctly'() {
         given:
-        def returnedDocument = new Document('_id', 1).append('cold', true)
-        def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
+                                                  new AcknowledgedWriteConcernResult(1, true, null)])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new FindAndUpdateOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        def result = collection.findOneAndUpdate(new Document('cold', true), new Document('hot', false),
-                                                 new FindOneAndUpdateOptions().projection(new Document('field', 1))
-                                                                              .sort(new Document('sort', -1)))
-
-        then:
+        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
-        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
-        operation.getUpdate() == new BsonDocument('hot', new BsonBoolean(false))
-        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
-        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
-        operation.isReturnOriginal()
-        !operation.isUpsert()
-
-        result == returnedDocument
-
-        when:
-        collection.findOneAndUpdate(new Document('cold', true), new Document('hot', false),
-                                    new FindOneAndUpdateOptions().projection(new Document('field', 1))
-                                                                 .sort(new Document('sort', -1))
-                                                                 .upsert(true)
-                                                                 .returnOriginal(false))
 
         then:
-        def operation2 = executor.getWriteOperation() as FindAndUpdateOperation
-        operation2.isUpsert()
-        !operation2.isReturnOriginal()
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
+                                    new FindOneAndUpdateOptions().projection(new Document('projection', 1)))
+        operation = executor.getWriteOperation() as FindAndUpdateOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
     }
 
-    def 'dropCollection should use DropCollectionOperation properly'() {
+    def 'should use DropCollectionOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new DropCollectionOperation(namespace)
 
         when:
         collection.dropCollection()
+        def operation = executor.getWriteOperation() as DropCollectionOperation
 
         then:
-        executor.getWriteOperation() instanceof DropCollectionOperation
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    @SuppressWarnings(['FactoryMethodName'])
-    def 'createIndex should use CreateIndexOperation properly'() {
+    def 'should use CreateIndexOperations correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new CreateIndexOperation(namespace, new BsonDocument('key', new BsonInt32(1)))
         when:
-        collection.createIndex(new Document('a', 1))
-
-        then:
+        collection.createIndex(new Document('key', 1))
         def operation = executor.getWriteOperation() as CreateIndexOperation
-        operation.getKey() == new BsonDocument('a', new BsonInt32(1))
-        !operation.isBackground()
-        !operation.isUnique()
-        !operation.isSparse()
-        operation.getName() == null
-        operation.getExpireAfterSeconds() == null
-        operation.getVersion() == null
-        operation.getWeights() == null
-        operation.getDefaultLanguage() == null
-        operation.getLanguageOverride() == null
-        operation.getTextIndexVersion() == null
-        operation.getTwoDSphereIndexVersion() == null
-        operation.getBits() == null
-        operation.getMin() == null
-        operation.getMax() == null
-        operation.getBucketSize() == null
-
-        when:
-        collection.createIndex(new Document('a', 1), new CreateIndexOptions()
-                .background(true)
-                .unique(true)
-                .sparse(true)
-                .name('aIndex')
-                .expireAfterSeconds(100)
-                .version(1)
-                .weights(new Document('a', 1000))
-                .defaultLanguage('es')
-                .languageOverride('language')
-                .textIndexVersion(1)
-                .twoDSphereIndexVersion(1)
-                .bits(1)
-                .min(-180.0)
-                .max(180.0)
-                .bucketSize(200.0)
-        )
 
         then:
-        def operation2 = executor.getWriteOperation() as CreateIndexOperation
-        operation2.getKey() == new BsonDocument('a', new BsonInt32(1))
-        operation2.isBackground()
-        operation2.isUnique()
-        operation2.isSparse()
-        operation2.getName() == 'aIndex'
-        operation2.getExpireAfterSeconds() == 100
-        operation2.getVersion() == 1
-        operation2.getWeights() == new BsonDocument('a', new BsonInt32(1000))
-        operation2.getDefaultLanguage() == 'es'
-        operation2.getLanguageOverride() == 'language'
-        operation2.getTextIndexVersion() == 1
-        operation2.getTwoDSphereIndexVersion() == 1
-        operation2.getBits() == 1
-        operation2.getMin() == -180.0
-        operation2.getMax() == 180.0
-        operation2.getBucketSize() == 200.0
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        collection.createIndex(new Document('key', 1), new CreateIndexOptions().background(true))
+        operation = executor.getWriteOperation() as CreateIndexOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.background(true))
     }
 
-    def 'getIndexes should use GetIndexesOperation properly'() {
+    def 'should use ListIndexesOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def executor = new TestOperationExecutor([[], []])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
 
         when:
         collection.getIndexes()
+        def operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
-        executor.getReadOperation() instanceof ListIndexesOperation<Document>
+        expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
 
         when:
         collection.getIndexes(BsonDocument)
+        operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
-        executor.getReadOperation() instanceof ListIndexesOperation<BsonDocument>
+        expect operation, isTheSameAs(new ListIndexesOperation(namespace, new BsonDocumentCodec()))
     }
 
-    def 'dropIndex should use DropIndexOperation properly'() {
+    def 'should use DropIndexOperation correctly for dropIndex'() {
         given:
         def executor = new TestOperationExecutor([null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new DropIndexOperation(namespace, 'indexName')
 
         when:
-        collection.dropIndex('index_name')
+        collection.dropIndex('indexName')
+        def operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
-        def operation = executor.getWriteOperation() as DropIndexOperation
-        operation.indexName == 'index_name'
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-    def 'dropIndexes should use DropIndexOperation properly'() {
+    def 'should use DropIndexOperation correctly for dropIndexes'() {
         given:
         def executor = new TestOperationExecutor([null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def expectedOperation = new DropIndexOperation(namespace, '*')
 
         when:
         collection.dropIndexes()
+        def operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
-        def operation = executor.getWriteOperation() as DropIndexOperation
-        operation.indexName == '*'
+        expect operation, isTheSameAs(expectedOperation)
     }
 
-
-    def 'should use RenameCollectionOperation properly'() {
+    def 'should use RenameCollectionOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
-        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'anotherCollection')
+        def executor = new TestOperationExecutor([null])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
+        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace)
 
         when:
         collection.renameCollection(newNamespace)
-
-        then:
         def operation = executor.getWriteOperation() as RenameCollectionOperation
-        operation.originalNamespace == namespace
-        operation.newNamespace == newNamespace
-        !operation.isDropTarget()
-
-        when:
-        collection.renameCollection(newNamespace, new RenameCollectionOptions().dropTarget(true))
 
         then:
-        def operation2 = executor.getWriteOperation() as RenameCollectionOperation
-        operation2.originalNamespace == namespace
-        operation2.newNamespace == newNamespace
-        operation2.isDropTarget()
+        expect operation, isTheSameAs(expectedOperation)
     }
 
 }

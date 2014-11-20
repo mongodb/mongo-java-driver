@@ -71,8 +71,8 @@ import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.async.client.CustomMatchers.isTheSameAs
 import static com.mongodb.async.rx.client.Helpers.get
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -104,7 +104,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use CountOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([1, 2, 3])
+        def executor = new TestOperationExecutor([1L, 2L, 3L])
         def filter = new BsonDocument()
         def collection = getCollection(namespace, Document, options, executor)
         def expectedOperation = new CountOperation(namespace).filter(filter)

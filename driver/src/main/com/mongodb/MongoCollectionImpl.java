@@ -81,6 +81,7 @@ import org.bson.codecs.DecoderContext;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -275,7 +276,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             executor.execute(operation);
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
-            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), this.options, executor,
+            MongoCollectionOptions readOptions = MongoCollectionOptions.builder()
+                                                                       .readPreference(primary())
+                                                                       .build()
+                                                                       .withDefaults(this.options);
+            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), readOptions, executor,
                                          new BsonDocument(), new FindOptions(), clazz);
         }
     }

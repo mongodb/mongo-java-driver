@@ -35,7 +35,7 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.ReadPreference.secondaryPreferred
-import static com.mongodb.async.client.CustomMatchers.isTheSameAs
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 import static com.mongodb.async.rx.client.Helpers.get
 
