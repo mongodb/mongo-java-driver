@@ -19,7 +19,9 @@ package com.mongodb.operation
 import category.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
+import com.mongodb.binding.SingleConnectionBinding
 import com.mongodb.bulk.BulkWriteException
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
@@ -38,11 +40,14 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
+import java.util.concurrent.TimeUnit
+
 import static ClusterFixture.getBinding
 import static ClusterFixture.getSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
+import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
@@ -324,6 +329,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'unacknowledged upserts with custom _id should not error'() {
         given:
+        def binding = new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 10, TimeUnit.SECONDS)
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),
@@ -341,12 +347,15 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, UNACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 4))
+        def result = op.execute(binding)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), binding, new Document('_id', 4))
 
         then:
         !result.wasAcknowledged()
         getCollectionHelper().count() == 4
+
+        cleanup:
+        binding?.release()
 
         where:
         ordered << [true, false]

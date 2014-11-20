@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.BatchCursor;
@@ -91,9 +92,14 @@ public final class CollectionHelper<T> {
 
     @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents) {
+        insertDocuments(documents, getBinding());
+    }
+
+    @SuppressWarnings("unchecked")
+    public void insertDocuments(final List<BsonDocument> documents, final WriteBinding binding) {
         for (BsonDocument document : documents) {
             new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                asList(new InsertRequest(document))).execute(getBinding());
+                                asList(new InsertRequest(document))).execute(binding);
         }
     }
 
@@ -105,12 +111,20 @@ public final class CollectionHelper<T> {
         insertDocuments(iCodec, asList(documents));
     }
 
+    public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final I... documents) {
+        insertDocuments(iCodec, binding, asList(documents));
+    }
+
     public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
+        insertDocuments(iCodec, getBinding(), documents);
+    }
+
+    public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final List<I> documents) {
         List<BsonDocument> bsonDocuments = new ArrayList<BsonDocument>(documents.size());
         for (I document : documents) {
             bsonDocuments.add(new BsonDocumentWrapper<I>(document, iCodec));
         }
-        insertDocuments(bsonDocuments);
+        insertDocuments(bsonDocuments, binding);
     }
 
     public List<T> find() {
