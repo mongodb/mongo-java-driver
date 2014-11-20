@@ -113,7 +113,7 @@ public class ClusterDescription {
      */
     public ServerDescription getByServerAddress(final ServerAddress serverAddress) {
         for (final ServerDescription cur : getAll()) {
-            if (cur.getAddress().equals(serverAddress)) {
+            if (cur.isOk() && cur.getAddress().equals(serverAddress)) {
                 return cur;
             }
         }

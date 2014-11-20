@@ -42,6 +42,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class ClusterDescriptionTest {
@@ -112,6 +113,12 @@ public class ClusterDescriptionTest {
         assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
         assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new TagSet(asList(new Tag("foo", "1"),
                                                                                                     new Tag("bar", "2")))));
+    }
+
+    @Test
+    public void getByServerAddress() throws UnknownHostException {
+        assertEquals(primary, cluster.getByServerAddress(primary.getAddress()));
+        assertNull(cluster.getByServerAddress(notOkMember.getAddress()));
     }
 
     @Test
