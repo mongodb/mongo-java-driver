@@ -21,7 +21,26 @@ import com.mongodb.ServerAddress
 import com.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 class ClusterSettingsSpecification extends Specification {
+    def 'should set all default values'() {
+        def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
+        def serverSelector = new PrimaryServerSelector()
+        when:
+        def settings = ClusterSettings.builder()
+                                      .hosts(hosts)
+                                      .build();
+
+        then:
+        settings.hosts == hosts
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
+        settings.serverSelector == null
+        settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
+    }
+
     def 'should set all properties'() {
         def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
         def serverSelector = new PrimaryServerSelector()
@@ -32,6 +51,7 @@ class ClusterSettingsSpecification extends Specification {
                                       .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo')
                                       .serverSelector(serverSelector)
+                                      .serverSelectionTimeout(1, TimeUnit.SECONDS)
                                       .build();
 
         then:
@@ -40,6 +60,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
         settings.serverSelector == serverSelector
+        settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
     }
 
     def 'when connection string is applied to builder, all properties should be set'() {

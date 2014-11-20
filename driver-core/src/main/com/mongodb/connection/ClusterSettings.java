@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -43,6 +44,7 @@ public final class ClusterSettings {
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
     private final String description;
+    private final long serverSelectionTimeoutMS;
 
     /**
      * Get a builder for this class.
@@ -63,6 +65,7 @@ public final class ClusterSettings {
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
         private String description;
+        private long serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
 
         private Builder() {
         }
@@ -138,6 +141,19 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets the timeout to apply when selecting a server.  If the timeout expires before a server is found to handle a request, a
+         * {@link com.mongodb.MongoTimeoutException} will be thrown.  The default value is 30 seconds.
+         *
+         * @param serverSelectionTimeout the timeout
+         * @param timeUnit the time unit
+         * @return this
+         */
+        public Builder serverSelectionTimeout(final long serverSelectionTimeout, final TimeUnit timeUnit) {
+            this.serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(serverSelectionTimeout, timeUnit);
+            return this;
+        }
+
+        /**
          * Take the settings from the given ConnectionString and add them to the builder
          *
          * @param connectionString a URI containing details of how to connect to MongoDB
@@ -166,6 +182,7 @@ public final class ClusterSettings {
         public ClusterSettings build() {
             return new ClusterSettings(this);
         }
+
     }
 
     /**
@@ -224,6 +241,18 @@ public final class ClusterSettings {
         return serverSelector;
     }
 
+    /**
+     * Gets the timeout to apply when selecting a server.  If the timeout expires before a server is found to
+     * handle a request, a {@link com.mongodb.MongoTimeoutException} will be thrown.  The default value is 30 seconds.
+     *
+     * @param timeUnit the time unit
+     * @return the timeout in the given time unit
+     */
+    public long getServerSelectionTimeout(final TimeUnit timeUnit) {
+        return timeUnit.convert(serverSelectionTimeoutMS, TimeUnit.MILLISECONDS);
+    }
+
+
     @Override
     public String toString() {
         return "{"
@@ -232,6 +261,7 @@ public final class ClusterSettings {
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", serverSelector='" + serverSelector + '\''
+               + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", description='" + description + '\''
                + '}';
     }
@@ -246,6 +276,7 @@ public final class ClusterSettings {
                + "hosts=" + hosts
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
+               + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
                + (description == null ? "" : ", description='" + description + '\'')
                + '}';
@@ -278,5 +309,6 @@ public final class ClusterSettings {
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
         serverSelector = builder.serverSelector;
+        serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
     }
 }
