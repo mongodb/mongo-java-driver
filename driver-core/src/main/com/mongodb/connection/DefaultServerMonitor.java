@@ -50,7 +50,6 @@ class DefaultServerMonitor implements ServerMonitor {
     private volatile Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings settings,
@@ -105,6 +104,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     class ServerMonitorRunnable implements Runnable {
         private volatile boolean monitorIsClosed;
+        private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
 
         public void close() {
             monitorIsClosed = true;
@@ -133,7 +133,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         try {
                             currentServerDescription = lookupServerDescription(connection);
                         } catch (MongoSocketException e) {
-                            reset();
+                            connectionPool.invalidate();
                             connection.close();
                             connection = null;
                             connection = internalConnectionFactory.create(serverId);
@@ -152,6 +152,7 @@ class DefaultServerMonitor implements ServerMonitor {
                             }
                         }
                     } catch (Throwable t) {
+                        averageRoundTripTime.reset();
                         currentException = t;
                         currentServerDescription = getConnectingServerDescription(t);
                     }
@@ -171,6 +172,22 @@ class DefaultServerMonitor implements ServerMonitor {
                     connection.close();
                 }
             }
+        }
+
+        private ServerDescription getConnectingServerDescription(final Throwable exception) {
+            return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).exception(exception).build();
+        }
+
+        private ServerDescription lookupServerDescription(final InternalConnection connection) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
+            }
+            long start = System.nanoTime();
+            BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+            averageRoundTripTime.addSample(System.nanoTime() - start);
+
+            BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
+            return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, averageRoundTripTime.getAverage());
         }
 
         private void sendStateChangedEvent(final ServerDescription previousServerDescription,
@@ -224,11 +241,6 @@ class DefaultServerMonitor implements ServerMonitor {
         }
     }
 
-    private void reset() {
-        averageRoundTripTime.reset();
-        connectionPool.invalidate();
-    }
-
     static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
                                          final ServerDescription currentServerDescription) {
         return !previousServerDescription.equals(currentServerDescription);
@@ -251,21 +263,5 @@ class DefaultServerMonitor implements ServerMonitor {
         } else {
             return !currentException.getMessage().equals(previousException.getMessage());
         }
-    }
-
-    private ServerDescription lookupServerDescription(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
-        }
-        long start = System.nanoTime();
-        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
-        averageRoundTripTime.addSample(System.nanoTime() - start);
-
-        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, averageRoundTripTime.getAverage());
-    }
-
-    private ServerDescription getConnectingServerDescription(final Throwable exception) {
-        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).exception(exception).build();
     }
 }
