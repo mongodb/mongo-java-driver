@@ -27,7 +27,6 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
-import com.mongodb.connection.AcknowledgedWriteConcernResult;
 import com.mongodb.connection.Connection;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -562,7 +561,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     private MongoException checkForDuplicateKeyError(final CommandFailureException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getCode())) {
             return new MongoException.DuplicateKey(e.getResponse(), e.getServerAddress(),
-                                                   new AcknowledgedWriteConcernResult(0, false, null));
+                                                   WriteConcernResult.acknowledged(0, false, null));
         } else {
             return e;
         }

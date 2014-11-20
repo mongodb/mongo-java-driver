@@ -19,6 +19,7 @@ package com.mongodb.connection
 import com.mongodb.CommandFailureException
 import com.mongodb.MongoException
 import com.mongodb.ServerAddress
+import com.mongodb.WriteConcernResult
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -39,7 +40,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def writeResult = ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        writeResult == new AcknowledgedWriteConcernResult(0, false, null)
+        writeResult == WriteConcernResult.acknowledged(0, false, null)
 
     }
 
@@ -53,7 +54,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def writeResult = ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        writeResult == new AcknowledgedWriteConcernResult(1, false, new BsonObjectId(id))
+        writeResult == WriteConcernResult.acknowledged(1, false, new BsonObjectId(id))
 
     }
 

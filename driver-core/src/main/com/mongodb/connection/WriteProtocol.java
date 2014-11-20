@@ -139,7 +139,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
 
     private WriteConcernResult receiveMessage(final InternalConnection connection, final RequestMessage requestMessage) {
         if (requestMessage == null) {
-            return new UnacknowledgedWriteConcernResult();
+            return WriteConcernResult.unacknowledged();
         }
         ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
         try {

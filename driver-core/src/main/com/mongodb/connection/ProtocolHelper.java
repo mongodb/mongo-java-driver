@@ -53,8 +53,8 @@ final class ProtocolHelper {
     private static WriteConcernResult createWriteResult(final BsonDocument result) {
         BsonBoolean updatedExisting = result.getBoolean("updatedExisting", BsonBoolean.FALSE);
 
-        return new AcknowledgedWriteConcernResult(result.getNumber("n", new BsonInt32(0)).intValue(),
-                                           updatedExisting.getValue(), result.get("upserted"));
+        return WriteConcernResult.acknowledged(result.getNumber("n", new BsonInt32(0)).intValue(),
+                                               updatedExisting.getValue(), result.get("upserted"));
     }
 
 

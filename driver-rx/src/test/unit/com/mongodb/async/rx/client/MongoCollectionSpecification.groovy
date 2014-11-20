@@ -19,6 +19,7 @@ package com.mongodb.async.rx.client
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
+import com.mongodb.WriteConcernResult
 import com.mongodb.async.client.TestOperationExecutor
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
@@ -38,9 +39,7 @@ import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.options.OperationOptions
 import com.mongodb.connection.AcknowledgedBulkWriteResult
-import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.connection.UnacknowledgedBulkWriteResult
-import com.mongodb.connection.UnacknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
@@ -449,8 +448,8 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, false, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged()])
 
     }
 
@@ -481,10 +480,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null),
-                                                                 new AcknowledgedWriteConcernResult(1, false, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, false, null),
+                                                                 WriteConcernResult.acknowledged(1, false, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use DeleteOneOperation correctly'() {
@@ -502,8 +501,8 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged()])
     }
 
     def 'should use DeleteManyOperation correctly'() {
@@ -521,8 +520,8 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged()])
     }
 
     def 'should use UpdateOperation correctly for replaceOne'() {
@@ -542,8 +541,8 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged()])
     }
 
     def 'should use UpdateOperation correctly for updateOne'() {
@@ -574,10 +573,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use UpdateOperation correctly for updateMany'() {
@@ -609,10 +608,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use FindOneAndDeleteOperation correctly'() {
@@ -636,10 +635,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use FindOneAndReplaceOperation correctly'() {
@@ -665,10 +664,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use FindAndUpdateOperation correctly'() {
@@ -694,10 +693,10 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, true, null),
-                                                                 new AcknowledgedWriteConcernResult(1, true, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([new UnacknowledgedWriteConcernResult(),
-                                                                 new UnacknowledgedWriteConcernResult()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null)])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged()])
     }
 
     def 'should use DropCollectionOperation correctly'() {

@@ -30,7 +30,6 @@ import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.connection.AcknowledgedWriteConcernResult;
 import com.mongodb.connection.Connection;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -247,9 +246,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     private WriteConcernResult translateBulkWriteResult(final BulkWriteResult bulkWriteResult) {
-        return new AcknowledgedWriteConcernResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
-                                           bulkWriteResult.getUpserts().isEmpty()
-                                           ? null : bulkWriteResult.getUpserts().get(0).getId());
+        return WriteConcernResult.acknowledged(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
+                                               bulkWriteResult.getUpserts().isEmpty()
+                                               ? null : bulkWriteResult.getUpserts().get(0).getId());
     }
 
     protected abstract WriteRequest.Type getType();

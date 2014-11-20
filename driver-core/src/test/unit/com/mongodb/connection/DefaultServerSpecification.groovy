@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException
 import com.mongodb.MongoSocketException
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernException
+import com.mongodb.WriteConcernResult
 import com.mongodb.async.MongoFuture
 import com.mongodb.async.SingleResultFuture
 import com.mongodb.bulk.InsertRequest
@@ -98,7 +99,7 @@ class DefaultServerSpecification extends Specification {
         testConnection.enqueueProtocol(new ThrowingProtocol(
                 new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
                                                   .append('err', new BsonString('server is not master')),
-                                          new ServerAddress(), new AcknowledgedWriteConcernResult(0, false, null))))
+                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -144,7 +145,7 @@ class DefaultServerSpecification extends Specification {
         testConnection.enqueueProtocol(new ThrowingProtocol(
                 new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
                                                   .append('err', new BsonString('the node is recovering')),
-                                          new ServerAddress(), new AcknowledgedWriteConcernResult(0, false, null))))
+                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -173,7 +174,7 @@ class DefaultServerSpecification extends Specification {
                 new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
                                                   .append('err', new BsonString('error'))
                                                   .append('code', new BsonInt32(10107)),
-                                          new ServerAddress(), new AcknowledgedWriteConcernResult(0, false, null))))
+                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
