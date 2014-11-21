@@ -44,7 +44,7 @@ public class ServerSettings {
      */
     public static class Builder {
         private long heartbeatFrequencyMS = 5000;
-        private long minHeartbeatFrequency = 1000;
+        private long minHeartbeatFrequencyMS = 10;
 
         /**
          * Sets the frequency that the cluster monitor attempts to reach each server.
@@ -67,7 +67,7 @@ public class ServerSettings {
          * @return this
          */
         public Builder minHeartbeatFrequency(final long minHeartbeatFrequency, final TimeUnit timeUnit) {
-            this.minHeartbeatFrequency = TimeUnit.MILLISECONDS.convert(minHeartbeatFrequency, timeUnit);
+            this.minHeartbeatFrequencyMS = TimeUnit.MILLISECONDS.convert(minHeartbeatFrequency, timeUnit);
             return this;
         }
 
@@ -103,6 +103,34 @@ public class ServerSettings {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ServerSettings that = (ServerSettings) o;
+
+        if (heartbeatFrequencyMS != that.heartbeatFrequencyMS) {
+            return false;
+        }
+        if (minHeartbeatFrequencyMS != that.minHeartbeatFrequencyMS) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (heartbeatFrequencyMS ^ (heartbeatFrequencyMS >>> 32));
+        result = 31 * result + (int) (minHeartbeatFrequencyMS ^ (minHeartbeatFrequencyMS >>> 32));
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "ServerSettings{"
                + "heartbeatFrequencyMS=" + heartbeatFrequencyMS
@@ -112,7 +140,7 @@ public class ServerSettings {
 
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
-        minHeartbeatFrequencyMS = builder.minHeartbeatFrequency;
+        minHeartbeatFrequencyMS = builder.minHeartbeatFrequencyMS;
     }
 
 }

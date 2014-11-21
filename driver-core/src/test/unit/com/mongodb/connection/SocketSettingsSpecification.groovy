@@ -70,4 +70,55 @@ class SocketSettingsSpecification extends Specification {
         settings.receiveBufferSize == 0
     }
 
+    def 'identical settings should be equal'() {
+        expect:
+        SocketSettings.builder().build() == SocketSettings.builder().build()
+        SocketSettings.builder()
+                      .connectTimeout(5000, MILLISECONDS)
+                      .readTimeout(2000, MILLISECONDS)
+                      .keepAlive(true)
+                      .sendBufferSize(1000)
+                      .receiveBufferSize(1500)
+                      .keepAlive(true)
+                      .build() ==
+        SocketSettings.builder()
+                      .connectTimeout(5000, MILLISECONDS)
+                      .readTimeout(2000, MILLISECONDS)
+                      .keepAlive(true)
+                      .sendBufferSize(1000)
+                      .receiveBufferSize(1500)
+                      .keepAlive(true)
+                      .build()
+    }
+
+    def 'different settings should not be equal'() {
+        expect:
+        SocketSettings.builder().keepAlive(true).build() != SocketSettings.builder().keepAlive(false).build()
+    }
+
+    def 'identical settings should have same hash code'() {
+        expect:
+        SocketSettings.builder().build().hashCode() == SocketSettings.builder().build().hashCode()
+        SocketSettings.builder()
+                      .connectTimeout(5000, MILLISECONDS)
+                      .readTimeout(2000, MILLISECONDS)
+                      .keepAlive(true)
+                      .sendBufferSize(1000)
+                      .receiveBufferSize(1500)
+                      .keepAlive(true)
+                      .build().hashCode() ==
+        SocketSettings.builder()
+                      .connectTimeout(5000, MILLISECONDS)
+                      .readTimeout(2000, MILLISECONDS)
+                      .keepAlive(true)
+                      .sendBufferSize(1000)
+                      .receiveBufferSize(1500)
+                      .keepAlive(true)
+                      .build().hashCode()
+    }
+
+    def 'different settings should have different hash codes'() {
+        expect:
+        SocketSettings.builder().keepAlive(true).build().hashCode() != SocketSettings.builder().keepAlive(false).build().hashCode()
+    }
 }

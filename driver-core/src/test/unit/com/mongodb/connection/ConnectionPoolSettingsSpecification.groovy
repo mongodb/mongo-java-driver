@@ -139,4 +139,37 @@ class ConnectionPoolSettingsSpecification extends Specification {
         then:
         settings.toString().startsWith('ConnectionPoolSettings')
     }
+
+    def 'identical settings should be equal'() {
+        expect:
+        ConnectionPoolSettings.builder().build() == ConnectionPoolSettings.builder().build()
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+                maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
+                              .build() ==
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+                maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
+                              .build()
+    }
+
+    def 'different settings should not be equal'() {
+        expect:
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).build() != ConnectionPoolSettings.builder().maxWaitTime(2, SECONDS).build()
+    }
+
+    def 'identical settings should have same hash code'() {
+        expect:
+        ConnectionPoolSettings.builder().build().hashCode() == ConnectionPoolSettings.builder().build().hashCode()
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+                maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
+                              .build().hashCode() ==
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).maxSize(75).maxWaitQueueSize(11).maxConnectionLifeTime(101, SECONDS).
+                maxConnectionIdleTime(51, SECONDS).minSize(1).maintenanceInitialDelay(5, SECONDS).maintenanceFrequency(1000, SECONDS)
+                              .build().hashCode()
+    }
+
+    def 'different settings should have different hash codes'() {
+        expect:
+        ConnectionPoolSettings.builder().maxWaitTime(5, SECONDS).build().hashCode() !=
+        ConnectionPoolSettings.builder().maxWaitTime(3, SECONDS).build().hashCode()
+    }
 }

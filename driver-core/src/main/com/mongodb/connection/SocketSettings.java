@@ -185,6 +185,46 @@ public class SocketSettings {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SocketSettings that = (SocketSettings) o;
+
+        if (connectTimeoutMS != that.connectTimeoutMS) {
+            return false;
+        }
+        if (keepAlive != that.keepAlive) {
+            return false;
+        }
+        if (readTimeoutMS != that.readTimeoutMS) {
+            return false;
+        }
+        if (receiveBufferSize != that.receiveBufferSize) {
+            return false;
+        }
+        if (sendBufferSize != that.sendBufferSize) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (connectTimeoutMS ^ (connectTimeoutMS >>> 32));
+        result = 31 * result + (int) (readTimeoutMS ^ (readTimeoutMS >>> 32));
+        result = 31 * result + (keepAlive ? 1 : 0);
+        result = 31 * result + receiveBufferSize;
+        result = 31 * result + sendBufferSize;
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "SocketSettings{"
                + "connectTimeoutMS=" + connectTimeoutMS

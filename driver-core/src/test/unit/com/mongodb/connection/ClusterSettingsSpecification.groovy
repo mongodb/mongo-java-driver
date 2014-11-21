@@ -24,9 +24,10 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 class ClusterSettingsSpecification extends Specification {
+    def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
+    def serverSelector = new PrimaryServerSelector()
+
     def 'should set all default values'() {
-        def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
-        def serverSelector = new PrimaryServerSelector()
         when:
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
@@ -43,8 +44,6 @@ class ClusterSettingsSpecification extends Specification {
     }
 
     def 'should set all properties'() {
-        def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
-        def serverSelector = new PrimaryServerSelector()
         when:
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
@@ -206,5 +205,77 @@ class ClusterSettingsSpecification extends Specification {
 
         then:
         settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
+    }
+
+    def 'identical settings should be equal'() {
+        expect:
+        ClusterSettings.builder().hosts(hosts).build() == ClusterSettings.builder().hosts(hosts).build()
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build() ==
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build()
+    }
+
+    def 'different settings should not be equal'() {
+        expect:
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build() != ClusterSettings.builder().hosts(hosts).build()
+    }
+
+    def 'identical settings should have same hash code'() {
+        expect:
+        ClusterSettings.builder().hosts(hosts).build().hashCode() == ClusterSettings.builder().hosts(hosts).build().hashCode()
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build().hashCode() ==
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build().hashCode()
+    }
+
+    def 'different settings should have different hash codes'() {
+        expect:
+        ClusterSettings.builder()
+                       .hosts(hosts)
+                       .mode(ClusterConnectionMode.MULTIPLE)
+                       .requiredClusterType(ClusterType.REPLICA_SET)
+                       .requiredReplicaSetName('foo')
+                       .serverSelector(serverSelector)
+                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                       .maxWaitQueueSize(100)
+                       .build().hashCode() != ClusterSettings.builder().hosts(hosts).build().hashCode()
     }
 }

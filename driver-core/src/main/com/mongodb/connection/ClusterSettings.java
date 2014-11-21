@@ -285,6 +285,59 @@ public final class ClusterSettings {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ClusterSettings that = (ClusterSettings) o;
+
+        if (maxWaitQueueSize != that.maxWaitQueueSize) {
+            return false;
+        }
+        if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (!hosts.equals(that.hosts)) {
+            return false;
+        }
+        if (mode != that.mode) {
+            return false;
+        }
+        if (requiredClusterType != that.requiredClusterType) {
+            return false;
+        }
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
+                                           : that.requiredReplicaSetName != null) {
+            return false;
+        }
+        if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hosts.hashCode();
+        result = 31 * result + mode.hashCode();
+        result = 31 * result + requiredClusterType.hashCode();
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
+        result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
+        result = 31 * result + maxWaitQueueSize;
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "{"
                + "hosts=" + hosts

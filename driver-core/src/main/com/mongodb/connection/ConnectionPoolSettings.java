@@ -90,7 +90,7 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * <p>This is the maximum number of waiters for a connection to become available from the pool. All further threads will get an
+         * <p>This is the maximum number of waiters for a connection to become available from the pool. All further operations will get an
          * exception immediately.</p>
          *
          * <p>Default is 500.</p>
@@ -230,8 +230,8 @@ public class ConnectionPoolSettings {
     }
 
     /**
-     * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further threads
-     * will get an exception immediately.</p>
+     * <p>This is the maximum number of operations that may be waiting for a connection to become available from the pool. All further
+     * operations will get an exception immediately.</p>
      *
      * <p>Default is 500.</p>
      *
