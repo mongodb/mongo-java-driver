@@ -111,10 +111,7 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (!selectionFailureLogged) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                           serverSelector, curDescription, MILLISECONDS.convert(maxWaitTime, timeUnit)));
-                    }
+                    logServerSelectionFailure(serverSelector, maxWaitTime, timeUnit, curDescription);
                     selectionFailureLogged = true;
                 }
 
@@ -262,10 +259,8 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
                 if (prevPhase == null) {
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                                           request.originalSelector, description, settings.getServerSelectionTimeout(MILLISECONDS)));
-                    }
+                    logServerSelectionFailure(request.originalSelector, settings.getServerSelectionTimeout(MILLISECONDS), MILLISECONDS,
+                                              description);
                 }
             }
 
@@ -280,6 +275,15 @@ abstract class BaseCluster implements Cluster {
             return true;
         }
     }
+
+    private void logServerSelectionFailure(final ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit,
+                                           final ClusterDescription curDescription) {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
+                               serverSelector, curDescription, MILLISECONDS.convert(maxWaitTime, timeUnit)));
+        }
+    }
+
 
     private Server selectRandomServer(final ServerSelector serverSelector, final ClusterDescription clusterDescription) {
         List<ServerDescription> serverDescriptions = serverSelector.select(clusterDescription);
@@ -407,11 +411,11 @@ abstract class BaseCluster implements Cluster {
             return;
         }
 
-        if (waitQueue.size() >= settings.getMaxWaitQueueSize()) {
+        if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
+            waitQueueSize.decrementAndGet();
             request.onResult(null, createWaitQueueFullException());
         } else {
             waitQueue.add(request);
-            waitQueueSize.incrementAndGet();
 
             if (waitQueueHandler == null) {
                 waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
