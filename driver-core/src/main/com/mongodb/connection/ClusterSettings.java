@@ -45,6 +45,7 @@ public final class ClusterSettings {
     private final ServerSelector serverSelector;
     private final String description;
     private final long serverSelectionTimeoutMS;
+    private final int maxWaitQueueSize;
 
     /**
      * Get a builder for this class.
@@ -66,6 +67,7 @@ public final class ClusterSettings {
         private ServerSelector serverSelector;
         private String description;
         private long serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
+        private int maxWaitQueueSize = 500;
 
         private Builder() {
         }
@@ -154,6 +156,20 @@ public final class ClusterSettings {
         }
 
         /**
+         * <p>This is the maximum number of concurrent operations allowed to wait for a server to become available. All further operations
+         * will get an exception immediately.</p>
+         *
+         * <p>Default is 500.</p>
+         *
+         * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
+         * @return this
+         */
+        public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
+            this.maxWaitQueueSize = maxWaitQueueSize;
+            return this;
+        }
+
+        /**
          * Take the settings from the given ConnectionString and add them to the builder
          *
          * @param connectionString a URI containing details of how to connect to MongoDB
@@ -171,6 +187,11 @@ public final class ClusterSettings {
                 mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
+
+            int maxSize = connectionString.getMaxConnectionPoolSize() != null ? connectionString.getMaxConnectionPoolSize() : 100;
+            int waitQueueMultiple = connectionString.getThreadsAllowedToBlockForConnectionMultiplier() != null
+                                    ? connectionString.getThreadsAllowedToBlockForConnectionMultiplier() : 5;
+            maxWaitQueueSize(waitQueueMultiple * maxSize);
             return this;
         }
 
@@ -182,7 +203,6 @@ public final class ClusterSettings {
         public ClusterSettings build() {
             return new ClusterSettings(this);
         }
-
     }
 
     /**
@@ -252,6 +272,17 @@ public final class ClusterSettings {
         return timeUnit.convert(serverSelectionTimeoutMS, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further threads
+     * will get an exception immediately.</p>
+     *
+     * <p>Default is 500.</p>
+     *
+     * @return the number of threads that are allowed to be waiting for a connection.
+     */
+    public int getMaxWaitQueueSize() {
+        return maxWaitQueueSize;
+    }
 
     @Override
     public String toString() {
@@ -262,6 +293,7 @@ public final class ClusterSettings {
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", serverSelector='" + serverSelector + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + ", description='" + description + '\''
                + '}';
     }
@@ -277,6 +309,7 @@ public final class ClusterSettings {
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
                + (description == null ? "" : ", description='" + description + '\'')
                + '}';
@@ -310,5 +343,6 @@ public final class ClusterSettings {
         requiredClusterType = builder.requiredClusterType;
         serverSelector = builder.serverSelector;
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
+        maxWaitQueueSize = builder.maxWaitQueueSize;
     }
 }

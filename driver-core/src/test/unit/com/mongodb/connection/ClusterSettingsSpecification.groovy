@@ -39,6 +39,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredReplicaSetName == null
         settings.serverSelector == null
         settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
+        settings.maxWaitQueueSize == 500
     }
 
     def 'should set all properties'() {
@@ -52,6 +53,7 @@ class ClusterSettingsSpecification extends Specification {
                                       .requiredReplicaSetName('foo')
                                       .serverSelector(serverSelector)
                                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                                      .maxWaitQueueSize(100)
                                       .build();
 
         then:
@@ -61,6 +63,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredReplicaSetName == 'foo'
         settings.serverSelector == serverSelector
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
+        settings.maxWaitQueueSize == 100
     }
 
     def 'when connection string is applied to builder, all properties should be set'() {
@@ -84,6 +87,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'test'
+        settings.maxWaitQueueSize == 500
 
         when:
         settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,example.com:27019'))
@@ -94,6 +98,39 @@ class ClusterSettingsSpecification extends Specification {
         settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
+        settings.maxWaitQueueSize == 500
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                                                                                        'waitQueueMultiple=3'))
+                                  .build()
+
+        then:
+        settings.maxWaitQueueSize == 300
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                                                                                        'waitQueueMultiple=3'))
+                                  .build()
+
+        then:
+        settings.maxWaitQueueSize == 300
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                                                                                        'maxPoolSize=50'))
+                                  .build()
+
+        then:
+        settings.maxWaitQueueSize == 250
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                                                                                        'waitQueueMultiple=3&maxPoolSize=50'))
+                                  .build()
+
+        then:
+        settings.maxWaitQueueSize == 150
     }
 
     def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {
