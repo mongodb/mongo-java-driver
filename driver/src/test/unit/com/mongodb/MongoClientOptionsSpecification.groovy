@@ -16,12 +16,16 @@
 
 package com.mongodb
 
+import com.mongodb.connection.ConnectionPoolSettings
+import com.mongodb.connection.ServerSettings
+import com.mongodb.connection.SocketSettings
 import spock.lang.Specification
 
 import javax.net.SocketFactory
 import javax.net.ssl.SSLSocketFactory
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class MongoClientOptionsSpecification extends Specification {
 
@@ -46,6 +50,11 @@ class MongoClientOptionsSpecification extends Specification {
         options.getAcceptableLatencyDifference() == 15
         options.isCursorFinalizerEnabled()
         options.getMinHeartbeatFrequency() == 10
+
+        options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
+        options.socketSettings == SocketSettings.builder().build()
+        options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(20, SECONDS).readTimeout(20, SECONDS).build()
+        options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(10, MILLISECONDS).build()
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -109,28 +118,29 @@ class MongoClientOptionsSpecification extends Specification {
         given:
         def encoderFactory = new MyDBEncoderFactory()
         def options = MongoClientOptions.builder()
-            .description('test')
-            .readPreference(ReadPreference.secondary())
-            .writeConcern(WriteConcern.JOURNAL_SAFE)
-            .minConnectionsPerHost(30)
-            .connectionsPerHost(500)
-            .connectTimeout(100)
-            .maxWaitTime(200)
-            .maxConnectionIdleTime(300)
-            .maxConnectionLifeTime(400)
-            .threadsAllowedToBlockForConnectionMultiplier(1)
-            .socketKeepAlive(true)
-            .sslEnabled(true)
-            .dbDecoderFactory(LazyDBDecoder.FACTORY)
-            .heartbeatFrequency(5)
-            .minHeartbeatFrequency(11)
-            .heartbeatConnectTimeout(15)
-            .heartbeatSocketTimeout(20)
-            .acceptableLatencyDifference(25)
-            .requiredReplicaSetName('test')
-            .cursorFinalizerEnabled(false)
-            .dbEncoderFactory(encoderFactory)
-            .build()
+                                        .description('test')
+                                        .readPreference(ReadPreference.secondary())
+                                        .writeConcern(WriteConcern.JOURNAL_SAFE)
+                                        .minConnectionsPerHost(30)
+                                        .connectionsPerHost(500)
+                                        .connectTimeout(100)
+                                        .socketTimeout(700)
+                                        .maxWaitTime(200)
+                                        .maxConnectionIdleTime(300)
+                                        .maxConnectionLifeTime(400)
+                                        .threadsAllowedToBlockForConnectionMultiplier(2)
+                                        .socketKeepAlive(true)
+                                        .sslEnabled(true)
+                                        .dbDecoderFactory(LazyDBDecoder.FACTORY)
+                                        .heartbeatFrequency(5)
+                                        .minHeartbeatFrequency(11)
+                                        .heartbeatConnectTimeout(15)
+                                        .heartbeatSocketTimeout(20)
+                                        .acceptableLatencyDifference(25)
+                                        .requiredReplicaSetName('test')
+                                        .cursorFinalizerEnabled(false)
+                                        .dbEncoderFactory(encoderFactory)
+                                        .build()
 
         expect:
         options.getDescription() == 'test'
@@ -142,7 +152,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMinConnectionsPerHost() == 30
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 1
+        options.getSocketTimeout() == 700
+        options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
         options.isSocketKeepAlive()
         options.isSslEnabled()
         options.getDbDecoderFactory() == LazyDBDecoder.FACTORY
@@ -156,6 +167,16 @@ class MongoClientOptionsSpecification extends Specification {
         !options.isCursorFinalizerEnabled()
         options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
         options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
+
+        options.connectionPoolSettings == ConnectionPoolSettings.builder().maxSize(500).minSize(30).maxWaitQueueSize(1000)
+                                                                .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
+                                                                .maxConnectionIdleTime(300, MILLISECONDS).build()
+        options.socketSettings == SocketSettings.builder().connectTimeout(100, MILLISECONDS).readTimeout(700, MILLISECONDS)
+                                                .keepAlive(true).build()
+        options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(15, MILLISECONDS).readTimeout(20, MILLISECONDS)
+                                                         .keepAlive(true).build()
+        options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
+                                                .build()
     }
 
     def 'should sslEnabled based on socketFactory'() {

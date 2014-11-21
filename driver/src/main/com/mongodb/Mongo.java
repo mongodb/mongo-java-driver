@@ -647,6 +647,7 @@ public class Mongo {
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
                                             .build(),
                              credentialsList, options);
     }
@@ -659,6 +660,7 @@ public class Mongo {
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
                                             .build(),
                              credentialsList, options);
     }
