@@ -21,6 +21,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.operation.OrderBy;
 import org.bson.Document;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.mongodb.operation.OrderBy.ASC;
@@ -199,6 +200,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore("Ingore until SERVER-16274 if resolved")
     public void shouldCreateABackgroundIndex() {
         collection.createIndex(new Document("theField", 1), new CreateIndexOptions().background(true));
 
