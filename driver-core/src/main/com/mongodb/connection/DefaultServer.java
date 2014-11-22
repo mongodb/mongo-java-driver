@@ -68,6 +68,24 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
+    public void getConnectionAsync(final SingleResultCallback<Connection> callback) {
+        isTrue("open", !isClosed());
+        connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
+            @Override
+            public void onResult(final InternalConnection result, final MongoException e) {
+                if (e instanceof MongoSecurityException) {
+                    invalidate();
+                }
+                if (e != null) {
+                    callback.onResult(null, e);
+                } else {
+                    callback.onResult(connectionFactory.create(result, new DefaultServerProtocolExecutor()), null);
+                }
+            }
+        });
+    }
+
+    @Override
     public ServerDescription getDescription() {
         isTrue("open", !isClosed());
 

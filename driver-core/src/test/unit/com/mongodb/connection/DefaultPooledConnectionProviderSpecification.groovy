@@ -17,14 +17,18 @@
 package com.mongodb.connection
 
 import category.Slow
+import com.mongodb.MongoException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
+import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ConnectionPoolListener
 import org.bson.ByteBuf
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
+
+import java.util.concurrent.CountDownLatch
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
@@ -302,4 +306,101 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         0 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
         0 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
+
+    def 'should select connection asynchronously if one is immediately available'() {
+        given:
+        provider = new DefaultConnectionPool(SERVER_ID,
+                                             connectionFactory,
+                                             ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                             new NoOpConnectionPoolListener())
+
+        expect:
+        selectConnectionAsyncAndGet(provider)
+    }
+
+    def 'should select connection asynchronously if one is not immediately available'() {
+        given:
+        provider = new DefaultConnectionPool(SERVER_ID,
+                                             connectionFactory,
+                                             ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                             new NoOpConnectionPoolListener())
+
+        when:
+        def connection = provider.get()
+        def connectionLatch = selectConnectionAsync(provider)
+        connection.close()
+
+        then:
+        connectionLatch.get()
+    }
+
+    def 'when getting a connection asynchronously should send MongoTimeoutException to callback after timeout period'() {
+        given:
+        provider = new DefaultConnectionPool(SERVER_ID,
+                                             connectionFactory,
+                                             ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(2).maxWaitTime(5, MILLISECONDS)
+                                                                   .build(),
+                                             new NoOpConnectionPoolListener())
+
+        provider.get()
+        def firstConnectionLatch = selectConnectionAsync(provider)
+        def secondConnectionLatch = selectConnectionAsync(provider)
+
+        when:
+        firstConnectionLatch.get()
+
+        then:
+        thrown(MongoTimeoutException)
+
+        when:
+        secondConnectionLatch.get()
+
+        then:
+        thrown(MongoTimeoutException)
+    }
+
+    def 'when getting a connection asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
+        given:
+        provider = new DefaultConnectionPool(SERVER_ID,
+                                             connectionFactory,
+                                             ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                             new NoOpConnectionPoolListener())
+
+        when:
+        provider.get()
+        selectConnectionAsync(provider)
+        selectConnectionAsyncAndGet(provider)
+
+        then:
+        thrown(MongoWaitQueueFullException)
+    }
+
+    def selectConnectionAsyncAndGet(DefaultConnectionPool pool) {
+        selectConnectionAsync(pool).get()
+    }
+
+    def selectConnectionAsync(DefaultConnectionPool pool) {
+        def serverLatch = new ConnectionLatch()
+        pool.getAsync { InternalConnection result, MongoException e ->
+            serverLatch.connection = result
+            serverLatch.throwable = e
+            serverLatch.latch.countDown()
+        }
+        serverLatch
+    }
+
+    class ConnectionLatch {
+        CountDownLatch latch = new CountDownLatch(1)
+        InternalConnection connection
+        Throwable throwable
+
+        def get() {
+            latch.await()
+            if (throwable != null) {
+                throw throwable
+            }
+            connection
+        }
+    }
+
 }

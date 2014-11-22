@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
@@ -76,6 +77,11 @@ public class TestServer implements ClusterableServer {
 
     @Override
     public Connection getConnection() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void getConnectionAsync(final SingleResultCallback<Connection> callback) {
         throw new UnsupportedOperationException();
     }
 

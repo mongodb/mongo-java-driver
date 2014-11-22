@@ -31,11 +31,55 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
 class DefaultServerSpecification extends Specification {
+
+    def 'should get a connection'() {
+        given:
+        def connectionPool = Stub(ConnectionPool)
+        def connectionFactory = Stub(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Stub(ServerMonitor)
+        def internalConnection = Stub(InternalConnection)
+        def connection = Stub(Connection)
+
+        serverMonitorFactory.create(_) >> { serverMonitor }
+        connectionPool.get() >> { internalConnection }
+        connectionFactory.create(_, _) >> connection
+        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+
+        expect:
+        server.getConnection()
+    }
+
+    def 'should get a connection asynchronously'() {
+        given:
+        def connectionFactory = Stub(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Stub(ServerMonitor)
+        def connection = Stub(Connection)
+
+        serverMonitorFactory.create(_) >> { serverMonitor }
+        connectionFactory.create(_, _) >> connection
+
+        def server = new DefaultServer(new ServerAddress(), new TestConnectionPool(), connectionFactory, serverMonitorFactory)
+
+        when:
+        def latch = new CountDownLatch(1)
+        def receivedConnection
+        def receivedThrowable
+        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        latch.await()
+
+        then:
+        receivedConnection
+        !receivedThrowable
+    }
 
     def 'invalidate should invoke change listeners'() {
         given:
@@ -78,6 +122,32 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSecurityException)
         1 * connectionPool.invalidate()
+        1 * serverMonitor.invalidate()
+    }
+
+    def 'failed open should invalidate the server asychronously'() {
+        given:
+        def connectionFactory = Mock(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        def exceptionToThrow = new MongoSecurityException(createCredential('jeff', 'admin',
+                                                                           '123'.toCharArray()),
+                                                          'Auth failed')
+        def server = new DefaultServer(new ServerAddress(), new TestConnectionPool(exceptionToThrow), connectionFactory,
+                                       serverMonitorFactory)
+
+        when:
+        def latch = new CountDownLatch(1)
+        def receivedConnection
+        def receivedThrowable
+        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        latch.await()
+
+        then:
+        !receivedConnection
+        receivedThrowable.is(exceptionToThrow)
         1 * serverMonitor.invalidate()
     }
 

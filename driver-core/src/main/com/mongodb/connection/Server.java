@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.async.SingleResultCallback;
 
 /**
  * A logical connection to a MongoDB server.
@@ -34,14 +35,24 @@ public interface Server {
     ServerDescription getDescription();
 
     /**
-     * <p>Gets a connection to this server.  The connection should be closed after the caller is done with it.</p>
-     * 
+     * <p>Gets a connection to this server.  The connection should be released after the caller is done with it.</p>
+     *
      * <p> Implementations of this method are allowed to block while waiting for a free connection from a pool of available connection.</p>
-     * 
+     *
      * <p> Implementations of this method will likely pool the underlying connection, so the effect of closing the returned connection will
      * be to return the connection to the pool. </p>
      *
      * @return a connection this server
      */
     Connection getConnection();
+
+    /**
+     * <p>Gets a connection to this server asynchronously.  The connection should be released after the caller is done with it.</p>
+     *
+     * <p> Implementations of this method will likely pool the underlying connection, so the effect of closing the returned connection will
+     * be to return the connection to the pool. </p>
+     *
+     * @param callback the callback to execute when the connection is available or an error occurs
+     */
+    void getConnectionAsync(SingleResultCallback<Connection> callback);
 }
