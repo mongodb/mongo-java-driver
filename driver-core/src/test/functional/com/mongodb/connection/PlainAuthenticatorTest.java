@@ -31,6 +31,7 @@ import static com.mongodb.ClusterFixture.getSSLSettings;
 @Ignore
 public class PlainAuthenticatorTest {
     private InternalConnection internalConnection;
+    private ConnectionDescription connectionDescription;
     private String userName;
     private String source;
     private String password;
@@ -45,6 +46,7 @@ public class PlainAuthenticatorTest {
         internalConnection = new InternalStreamConnectionFactory(streamFactory, Collections.<MongoCredential>emptyList(),
                                                                  new NoOpConnectionListener())
                              .create(new ServerId(new ClusterId(), new ServerAddress(host)));
+        connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }
 
     @After
@@ -55,16 +57,16 @@ public class PlainAuthenticatorTest {
     @Test
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
-                                                                                                        password.toCharArray()),
-                                                                                                        internalConnection);
-        authenticator.authenticate();
+                                                                                                        password.toCharArray())
+        );
+        authenticator.authenticate(internalConnection, connectionDescription);
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
-                                                                                                        "wrong".toCharArray()),
-                                                                                                         internalConnection);
-        authenticator.authenticate();
+                                                                                                        "wrong".toCharArray())
+        );
+        authenticator.authenticate(internalConnection, connectionDescription);
     }
 }

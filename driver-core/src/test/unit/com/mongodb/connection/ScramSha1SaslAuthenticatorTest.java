@@ -16,17 +16,17 @@
 
 package com.mongodb.connection;
 
-import category.Slow;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.connection.MessageHelper.buildSuccessfulReply;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -34,10 +34,12 @@ public class ScramSha1SaslAuthenticatorTest {
     private TestInternalConnection connection;
     private MongoCredential credential;
     private ScramSha1Authenticator subject;
+    private ConnectionDescription connectionDescription;
 
     @Before
     public void before() {
         this.connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
+        connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         this.credential = MongoCredential.createScramSha1Credential("user", "database", "pencil".toCharArray());
         ScramSha1Authenticator.RandomStringGenerator randomStringGenerator = new ScramSha1Authenticator.RandomStringGenerator() {
             @Override
@@ -45,46 +47,53 @@ public class ScramSha1SaslAuthenticatorTest {
                 return "fyko+d2lbbFgONRv9qkxdawL";
             }
         };
-        this.subject = new ScramSha1Authenticator(this.credential, this.connection, randomStringGenerator);
+        this.subject = new ScramSha1Authenticator(this.credential, randomStringGenerator);
     }
 
     @Test
     public void testAuthenticateThrowsWhenServerProvidesAnInvalidRValue() {
-        ResponseBuffers invalidRValueReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "payload: BinData(0,cj1meWtvLWQybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0t"
-                        + "Vd3VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
-                        + "done: false, "
-                        + "ok: 1}");
-        this.connection.enqueueReply(invalidRValueReply);
+        enqueueInvalidRValueReply();
 
         try {
-            this.subject.authenticate();
+            this.subject.authenticate(connection, connectionDescription);
             fail();
         } catch (MongoSecurityException e) {
             // all good
         }
+    }
+
+    @Test
+    public void testAuthenticateThrowsWhenServerProvidesAnInvalidRValueAsync() throws InterruptedException {
+        enqueueInvalidRValueReply();
+
+        try {
+            FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+            this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
+            futureCallback.get();
+            fail();
+        } catch (ExecutionException e) {
+            if (!(e.getCause() instanceof MongoSecurityException)) {
+                fail();
+            }
+        }
+    }
+
+    private void enqueueInvalidRValueReply() {
+        ResponseBuffers invalidRValueReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "payload: BinData(0,cj1meWtvLWQybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0t"
+                             + "Vd3VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
+                             + "done: false, "
+                             + "ok: 1}");
+        this.connection.enqueueReply(invalidRValueReply);
     }
 
     @Test
     public void testAuthenticateThrowsWhenServerProvidesInvalidServerSignature() {
-        ResponseBuffers firstReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "payload: BinData(0,cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3"
-                        + "VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
-                        + "done: false, "
-                        + "ok: 1}");
-        ResponseBuffers invalidServerSignatureReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTBh), "
-                        + "done: false, "
-                        + "ok: 1}");
-
-        this.connection.enqueueReply(firstReply);
-        this.connection.enqueueReply(invalidServerSignatureReply);
+        enqueueInvalidServerSignature();
 
         try {
-            this.subject.authenticate();
+            this.subject.authenticate(connection, connectionDescription);
             fail();
         } catch (MongoSecurityException e) {
             // all good
@@ -92,30 +101,59 @@ public class ScramSha1SaslAuthenticatorTest {
     }
 
     @Test
-    @Category(Slow.class)
-    public void testSuccessfulAuthentication() {
-        ResponseBuffers firstReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "payload: BinData(0,cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3VXTE"
-                        + "lXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
-                        + "done: false, "
-                        + "ok: 1}");
-        ResponseBuffers secondReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9), "
-                        + "done: false, "
-                        + "ok: 1}");
-        ResponseBuffers thirdReply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "done: true, "
-                        + "ok: 1}");
+    public void testAuthenticateThrowsWhenServerProvidesInvalidServerSignatureAsync() throws InterruptedException {
+        enqueueInvalidServerSignature();
+
+        try {
+            FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+            this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
+            futureCallback.get();
+            fail();
+        } catch (ExecutionException e) {
+            if (!(e.getCause() instanceof MongoSecurityException)) {
+                fail();
+            }
+        }
+    }
+
+    private void enqueueInvalidServerSignature() {
+        ResponseBuffers firstReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "payload: BinData(0,cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3"
+                             + "VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
+                             + "done: false, "
+                             + "ok: 1}");
+        ResponseBuffers invalidServerSignatureReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTBh), "
+                             + "done: false, "
+                             + "ok: 1}");
 
         this.connection.enqueueReply(firstReply);
-        this.connection.enqueueReply(secondReply);
-        this.connection.enqueueReply(thirdReply);
+        this.connection.enqueueReply(invalidServerSignatureReply);
+    }
 
-        this.subject.authenticate();
+    @Test
+    public void testSuccessfulAuthentication() {
+        enqueueSuccessfulReplies();
 
+        this.subject.authenticate(connection, connectionDescription);
+
+        validateMessages();
+    }
+
+    @Test
+    public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
+        enqueueSuccessfulReplies();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
+        futureCallback.get();
+
+        validateMessages();
+    }
+
+    private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String firstCommand = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedFirstCommand = "{ \"saslStart\" : 1, "
@@ -137,5 +175,28 @@ public class ScramSha1SaslAuthenticatorTest {
         assertEquals(expectedFirstCommand, firstCommand);
         assertEquals(expectedSecondCommand, secondCommand);
         assertEquals(expectedThirdCommand, thirdCommand);
+    }
+
+    private void enqueueSuccessfulReplies() {
+        ResponseBuffers firstReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "payload: BinData(0,"
+                             + "cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3VXTE"
+                             + "lXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
+                             + "done: false, "
+                             + "ok: 1}");
+        ResponseBuffers secondReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9), "
+                             + "done: false, "
+                             + "ok: 1}");
+        ResponseBuffers thirdReply =
+        buildSuccessfulReply("{conversationId: 1, "
+                             + "done: true, "
+                             + "ok: 1}");
+
+        connection.enqueueReply(firstReply);
+        connection.enqueueReply(secondReply);
+        connection.enqueueReply(thirdReply);
     }
 }

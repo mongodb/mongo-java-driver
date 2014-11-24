@@ -24,7 +24,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.connection.MessageHelper.buildSuccessfulReply;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -32,26 +34,22 @@ public class NativeAuthenticatorUnitTest {
     private TestInternalConnection connection;
     private MongoCredential credential;
     private NativeAuthenticator subject;
+    private ConnectionDescription connectionDescription;
 
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
+        connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createMongoCRCredential("user", "database", "pencil".toCharArray());
-        subject = new NativeAuthenticator(this.credential, this.connection);
+        subject = new NativeAuthenticator(this.credential);
     }
 
     @Test
-    public void testFailedAuthentication() {
-        ResponseBuffers nonceReply = MessageHelper.buildSuccessfulReply(
-                "{nonce: \"2375531c32080ae8\", ok: 1}");
-        ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                "{ok: 0}");
-
-        connection.enqueueReply(nonceReply);
-        connection.enqueueReply(authenticateReply);
+    public void testFailedAuthentication()  {
+        enqueueUnsuccessfulReplies();
 
         try {
-            subject.authenticate();
+            subject.authenticate(connection, connectionDescription);
             fail();
         } catch (MongoSecurityException e) {
             // all good
@@ -59,27 +57,64 @@ public class NativeAuthenticatorUnitTest {
     }
 
     @Test
+    public void testFailedAuthenticationAsync() throws InterruptedException {
+        enqueueUnsuccessfulReplies();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+
+        try {
+            futureCallback.get();
+            fail();
+        } catch (ExecutionException e) {
+            if (!(e.getCause() instanceof MongoSecurityException)) {
+                fail();
+            }
+        }
+    }
+
+    private void enqueueUnsuccessfulReplies() {
+        connection.enqueueReply(buildSuccessfulReply("{nonce: \"2375531c32080ae8\", ok: 1}"));
+        connection.enqueueReply(buildSuccessfulReply("{ok: 0}"));
+    }
+
+
+    @Test
     public void testSuccessfulAuthentication() {
-        ResponseBuffers nonceReply = MessageHelper.buildSuccessfulReply(
-                "{nonce: \"2375531c32080ae8\", ok: 1}");
-        ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                "{ok: 1}");
+        enqueueSuccessfulReplies();
+        subject.authenticate(connection, connectionDescription);
 
-        connection.enqueueReply(nonceReply);
-        connection.enqueueReply(authenticateReply);
+        validateMessages();
+    }
 
-        subject.authenticate();
 
+    @Test
+    public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
+        enqueueSuccessfulReplies();
+        enqueueSuccessfulReplies();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+
+        futureCallback.get();
+
+        validateMessages();
+    }
+
+    private void enqueueSuccessfulReplies() {
+        connection.enqueueReply(buildSuccessfulReply("{nonce: \"2375531c32080ae8\", ok: 1}"));
+        connection.enqueueReply(buildSuccessfulReply("{ok: 1}"));
+    }
+
+    private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String firstCommand = MessageHelper.decodeCommandAsJson(sent.get(0));
-        String expectedFirstCommand = "{ \"getnonce\" : 1 }";
 
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
-        String expectedSecondCommand = "{ \"authenticate\" : 1, \"user\" : \"user\", "
-                + "\"nonce\" : \"2375531c32080ae8\", "
-                + "\"key\" : \"21742f26431831d5cfca035a08c5bdf6\" }";
 
-        assertEquals(expectedFirstCommand, firstCommand);
-        assertEquals(expectedSecondCommand, secondCommand);
+        assertEquals("{ \"getnonce\" : 1 }", firstCommand);
+        assertEquals("{ \"authenticate\" : 1, \"user\" : \"user\", "
+                     + "\"nonce\" : \"2375531c32080ae8\", "
+                     + "\"key\" : \"21742f26431831d5cfca035a08c5bdf6\" }", secondCommand);
     }
 }

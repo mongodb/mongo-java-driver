@@ -19,26 +19,45 @@ package com.mongodb.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
+import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 
 class X509Authenticator extends Authenticator {
-    X509Authenticator(final MongoCredential credential, final InternalConnection internalConnection) {
-        super(credential, internalConnection);
+    X509Authenticator(final MongoCredential credential) {
+        super(credential);
     }
 
     @Override
-    void authenticate() {
+    void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         try {
             BsonDocument authCommand = getAuthCommand(getCredential().getUserName());
-            executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
+            executeCommand(getCredential().getSource(), authCommand, connection);
         } catch (CommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }
+    }
+
+    @Override
+    void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                           final SingleResultCallback<Void> callback) {
+        executeCommandAsync(getCredential().getSource(), getAuthCommand(getCredential().getUserName()), connection,
+                            new SingleResultCallback<BsonDocument>() {
+                                @Override
+                                public void onResult(final BsonDocument nonceResult, final MongoException e) {
+                                    if (e != null) {
+                                        callback.onResult(null, translateException(e));
+                                    } else {
+                                        callback.onResult(null, null);
+                                    }
+                                }
+                            });
     }
 
     private BsonDocument getAuthCommand(final String userName) {
@@ -49,5 +68,13 @@ class X509Authenticator extends Authenticator {
         cmd.put("mechanism", new BsonString(AuthenticationMechanism.MONGODB_X509.getMechanismName()));
 
         return cmd;
+    }
+
+    private MongoException translateException(final MongoException e) {
+        if (e instanceof CommandFailureException) {
+            return new MongoSecurityException(getCredential(), "Exception authenticating", e);
+        } else {
+            return e;
+        }
     }
 }

@@ -17,7 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
@@ -40,17 +40,12 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
     private final RandomStringGenerator randomStringGenerator;
 
-    ScramSha1Authenticator(final MongoCredential credential, final InternalConnection internalConnection) {
-        this(credential, internalConnection, new DefaultRandomStringGenerator());
+    ScramSha1Authenticator(final MongoCredential credential) {
+        this(credential, new DefaultRandomStringGenerator());
     }
 
-    ScramSha1Authenticator(final MongoCredential credential, final InternalConnection internalConnection,
-                           final RandomStringGenerator randomStringGenerator) {
-        super(credential, internalConnection);
-
-        if (getCredential().getAuthenticationMechanism() != SCRAM_SHA_1) {
-            throw new MongoException("Incorrect mechanism: " + getCredential().getMechanism());
-        }
+    ScramSha1Authenticator(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
+        super(credential);
 
         this.randomStringGenerator = randomStringGenerator;
     }
@@ -61,7 +56,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient() {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
         return new ScramSha1SaslClient(getCredential(), randomStringGenerator);
     }
 

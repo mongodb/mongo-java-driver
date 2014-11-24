@@ -17,28 +17,21 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
 
 abstract class Authenticator {
     private final MongoCredential credential;
-    private final InternalConnection internalConnection;
 
-    Authenticator(final MongoCredential credential, final InternalConnection internalConnection) {
+    Authenticator(final MongoCredential credential) {
         this.credential = credential;
-        this.internalConnection = internalConnection;
     }
 
     MongoCredential getCredential() {
         return credential;
     }
 
-    InternalConnection getInternalConnection() {
-        return internalConnection;
-    }
+    abstract void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription);
 
-    ServerAddress getServerAddress() {
-        return internalConnection.getDescription().getServerAddress();
-    }
-
-    abstract void authenticate();
+    abstract void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                                    SingleResultCallback<Void> callback);
 }

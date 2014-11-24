@@ -16,123 +16,195 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.CommandHelper.executeCommand;
+import static com.mongodb.connection.CommandHelper.executeCommandAsync;
+import static com.mongodb.connection.CommandHelper.executeCommandWithoutCheckingForFailure;
 import static com.mongodb.connection.DescriptionHelper.createConnectionDescription;
 
 class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
-    private final List<MongoCredential> credentialList;
+    private final List<Authenticator> authenticators;
 
-    InternalStreamConnectionInitializer(final List<MongoCredential> credentialList) {
-        this.credentialList = notNull("credentialList", credentialList);
+    InternalStreamConnectionInitializer(final List<Authenticator> authenticators) {
+        this.authenticators = notNull("authenticators", authenticators);
     }
 
     @Override
     public ConnectionDescription initialize(final InternalConnection internalConnection) {
         notNull("internalConnection", internalConnection);
 
-        ConnectionDescription connectionDescription;
-        try {
-            connectionDescription = initializeServerDescription(internalConnection, initializeConnectionId(internalConnection));
-            authenticateAll(internalConnection, connectionDescription);
+        ConnectionDescription connectionDescription = initializeConnectionDescription(internalConnection);
+        authenticateAll(internalConnection, connectionDescription);
 
-            // try again if there was an exception calling getlasterror before authenticating
-            if (connectionDescription.getConnectionId().getServerValue() == null) {
-                connectionDescription = new ConnectionDescription(initializeConnectionId(internalConnection),
-                                                                  connectionDescription.getServerVersion(),
-                                                                  connectionDescription.getServerType(),
-                                                                  connectionDescription.getMaxBatchCount(),
-                                                                  connectionDescription.getMaxDocumentSize(),
-                                                                  connectionDescription.getMaxMessageSize());
-            }
-        } catch (Throwable t) {
-            internalConnection.close();
-            if (t instanceof MongoException) {
-                throw (MongoException) t;
-            } else {
-                throw new MongoException(t.toString(), t);
-            }
-        }
-        return connectionDescription;
+        return completeConnectionDescriptionInitialization(internalConnection, connectionDescription);
     }
 
     @Override
-    public MongoFuture<ConnectionDescription> initializeAsync(final InternalConnection internalConnection) {
-        SingleResultFuture<ConnectionDescription> future = new SingleResultFuture<ConnectionDescription>();
-        try {
-            future.init(initialize(internalConnection), null);
-        } catch (MongoException e) {
-            future.init(null, e);
-        }
-        return future;
+    public void initializeAsync(final InternalConnection internalConnection, final SingleResultCallback<ConnectionDescription> callback) {
+        initializeConnectionDescriptionAsync(internalConnection,
+                                             createConnectionDescriptionCallback(internalConnection, callback));
     }
 
-    private ConnectionId initializeConnectionId(final InternalConnection internalConnection) {
-        BsonDocument response = CommandHelper.executeCommandWithoutCheckingForFailure("admin",
-                                                                                      new BsonDocument("getlasterror", new BsonInt32(1)),
-                                                                                      internalConnection);
-        if (response.containsKey("connectionId")) {
-            return new ConnectionId(internalConnection.getDescription().getConnectionId().getServerId(),
-                                    internalConnection.getDescription().getConnectionId().getLocalValue(),
-                                    response.getNumber("connectionId").intValue());
-        } else {
-            return internalConnection.getDescription().getConnectionId();
-        }
+    private SingleResultCallback<ConnectionDescription>
+    createConnectionDescriptionCallback(final InternalConnection internalConnection,
+                                        final SingleResultCallback<ConnectionDescription> callback) {
+        return new SingleResultCallback<ConnectionDescription>() {
+            @Override
+            public void onResult(final ConnectionDescription connectionDescription,
+                                 final MongoException e) {
+                if (e != null) {
+                    callback.onResult(null, e);
+                } else {
+                    new CompoundAuthenticator(internalConnection, connectionDescription,
+                                              new SingleResultCallback<Void>() {
+                                                  @Override
+                                                  public void onResult(final Void result,
+                                                                       final MongoException e) {
+                                                      if (e != null) {
+                                                          callback.onResult(null, e);
+                                                      } else {
+                                                          completeConnectionDescriptionInitializationAsync(internalConnection,
+                                                                                                           connectionDescription,
+                                                                                                           callback);
+                                                      }
+                                                  }
+                                              })
+                    .start();
+                }
+            }
+        };
     }
 
-    private ConnectionDescription initializeServerDescription(final InternalConnection internalConnection,
-                                                              final ConnectionId connectionId) {
+    private ConnectionDescription initializeConnectionDescription(final InternalConnection internalConnection) {
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection);
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
-        return createConnectionDescription(connectionId, isMasterResult,
-                                           buildInfoResult);
+        return createConnectionDescription(internalConnection.getDescription().getConnectionId(), isMasterResult, buildInfoResult);
+    }
+
+    private ConnectionDescription completeConnectionDescriptionInitialization(final InternalConnection internalConnection,
+                                                                              final ConnectionDescription connectionDescription) {
+        return applyGetLastErrorResult(executeCommandWithoutCheckingForFailure("admin",
+                                                                               new BsonDocument("getlasterror", new BsonInt32(1)),
+                                                                               internalConnection),
+                                       connectionDescription);
     }
 
     private void authenticateAll(final InternalConnection internalConnection, final ConnectionDescription connectionDescription) {
         if (connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER) {
-            for (final MongoCredential cur : credentialList) {
-                createAuthenticator(internalConnection, connectionDescription, cur).authenticate();
+            for (final Authenticator cur : authenticators) {
+                cur.authenticate(internalConnection, connectionDescription);
             }
         }
     }
 
-    private Authenticator createAuthenticator(final InternalConnection internalConnection,
-                                              final ConnectionDescription connectionDescription, final MongoCredential credential) {
-        MongoCredential actualCredential;
-        if (credential.getAuthenticationMechanism() == null) {
-            if (connectionDescription.getServerVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
-                actualCredential = MongoCredential.createScramSha1Credential(credential.getUserName(), credential.getSource(),
-                                                                             credential.getPassword());
-            } else {
-                actualCredential = MongoCredential.createMongoCRCredential(credential.getUserName(), credential.getSource(),
-                                                                           credential.getPassword());
+    private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
+                                                      final SingleResultCallback<ConnectionDescription> callback) {
+        executeCommandAsync("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection,
+                            new SingleResultCallback<BsonDocument>() {
+                                @Override
+                                public void onResult(final BsonDocument isMasterResult, final MongoException e) {
+                                    if (e != null) {
+                                        callback.onResult(null, e);
+                                    } else {
+                                        executeCommandAsync("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection,
+                                                            new SingleResultCallback<BsonDocument>() {
+                                                                @Override
+                                                                public void onResult(final BsonDocument buildInfoResult,
+                                                                                     final MongoException e) {
+                                                                    if (e != null) {
+                                                                        callback.onResult(null, e);
+                                                                    } else {
+                                                                        ConnectionId connectionId = internalConnection.getDescription()
+                                                                                                                      .getConnectionId();
+                                                                        callback.onResult(createConnectionDescription(connectionId,
+                                                                                                                      isMasterResult,
+                                                                                                                      buildInfoResult),
+                                                                                          null);
+                                                                    }
+                                                                }
+                                                            });
+                                    }
+                                }
+                            });
+    }
 
-            }
+    private void completeConnectionDescriptionInitializationAsync(final InternalConnection internalConnection,
+                                                                  final ConnectionDescription connectionDescription,
+                                                                  final SingleResultCallback<ConnectionDescription> callback) {
+        executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)),
+                            internalConnection,
+                            new SingleResultCallback<BsonDocument>() {
+                                @Override
+                                public void onResult(final BsonDocument result, final MongoException e) {
+                                    if (result == null) {
+                                        callback.onResult(connectionDescription, null);
+                                    } else {
+                                        callback.onResult(applyGetLastErrorResult(result, connectionDescription), null);
+                                    }
+                                }
+                            });
+    }
+
+    private ConnectionDescription applyGetLastErrorResult(final BsonDocument getLastErrorResult,
+                                                          final ConnectionDescription connectionDescription) {
+        ConnectionId connectionId;
+        if (getLastErrorResult.containsKey("connectionId")) {
+            connectionId = connectionDescription.getConnectionId().withServerValue(getLastErrorResult.getNumber("connectionId").intValue());
         } else {
-            actualCredential = credential;
+            connectionId =  connectionDescription.getConnectionId();
         }
-        switch (actualCredential.getAuthenticationMechanism()) {
-            case MONGODB_CR:
-                return new NativeAuthenticator(actualCredential, internalConnection);
-            case GSSAPI:
-                return new GSSAPIAuthenticator(actualCredential, internalConnection);
-            case PLAIN:
-                return new PlainAuthenticator(actualCredential, internalConnection);
-            case MONGODB_X509:
-                return new X509Authenticator(actualCredential, internalConnection);
-            case SCRAM_SHA_1:
-                return new ScramSha1Authenticator(actualCredential, internalConnection);
-            default:
-                throw new IllegalArgumentException("Unsupported authentication protocol: " + actualCredential.getMechanism());
+
+        return connectionDescription.withConnectionId(connectionId);
+    }
+
+    private class CompoundAuthenticator implements SingleResultCallback<Void> {
+        private final InternalConnection internalConnection;
+        private final ConnectionDescription connectionDescription;
+        private final SingleResultCallback<Void> callback;
+        private final AtomicInteger currentAuthenticatorIndex = new AtomicInteger(-1);
+
+        public CompoundAuthenticator(final InternalConnection internalConnection, final ConnectionDescription connectionDescription,
+                                     final SingleResultCallback<Void> callback) {
+            this.internalConnection = internalConnection;
+            this.connectionDescription = connectionDescription;
+            this.callback = callback;
         }
+
+        @Override
+        public void onResult(final Void result, final MongoException e) {
+            if (e != null) {
+                callback.onResult(null, e);
+            } else if (completedAuthentication()) {
+                callback.onResult(null, null);
+            } else {
+                authenticateNext();
+            }
+        }
+
+        public void start() {
+            if (connectionDescription.getServerType() == ServerType.REPLICA_SET_ARBITER || authenticators.isEmpty()) {
+                callback.onResult(null, null);
+            } else {
+                authenticateNext();
+            }
+        }
+
+        private boolean completedAuthentication() {
+            return currentAuthenticatorIndex.get() == authenticators.size() - 1;
+        }
+
+        private void authenticateNext() {
+            authenticators.get(currentAuthenticatorIndex.incrementAndGet())
+                          .authenticateAsync(internalConnection, connectionDescription, this);
+        }
+
     }
 }

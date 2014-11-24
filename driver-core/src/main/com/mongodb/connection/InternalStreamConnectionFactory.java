@@ -19,26 +19,51 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.event.ConnectionListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
-    private final List<MongoCredential> credentialList;
     private final ConnectionListener connectionListener;
+    private final List<Authenticator> authenticators;
 
     public InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener) {
         this.streamFactory = notNull("streamFactory", streamFactory);
-        this.credentialList = notNull("credentialList", credentialList);
         this.connectionListener = notNull("connectionListener", connectionListener);
+        notNull("credentialList", credentialList);
+        this.authenticators = new ArrayList<Authenticator>(credentialList.size());
+        for (MongoCredential credential : credentialList) {
+            authenticators.add(createAuthenticator(credential));
+        }
     }
 
     @Override
     public InternalConnection create(final ServerId serverId) {
         return new InternalStreamConnection(serverId, streamFactory,
-                                            new InternalStreamConnectionInitializer(credentialList), connectionListener);
+                                            new InternalStreamConnectionInitializer(authenticators), connectionListener);
     }
 
+    private Authenticator createAuthenticator(final MongoCredential credential) {
+        if (credential.getAuthenticationMechanism() == null) {
+            return new DefaultAuthenticator(credential);
+        }
+
+        switch (credential.getAuthenticationMechanism()) {
+            case GSSAPI:
+                return new GSSAPIAuthenticator(credential);
+            case PLAIN:
+                return new PlainAuthenticator(credential);
+            case MONGODB_X509:
+                return new X509Authenticator(credential);
+            case SCRAM_SHA_1:
+                return new ScramSha1Authenticator(credential);
+            case MONGODB_CR:
+                return new NativeAuthenticator(credential);
+            default:
+                throw new IllegalArgumentException("Unsupported authentication mechanism " + credential.getAuthenticationMechanism());
+        }
+    }
 }

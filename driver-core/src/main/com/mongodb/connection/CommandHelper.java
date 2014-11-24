@@ -17,8 +17,10 @@
 package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -29,6 +31,35 @@ import static java.lang.String.format;
 final class CommandHelper {
     static BsonDocument executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
         return receiveCommandResult(internalConnection, sendMessage(database, command, internalConnection));
+    }
+
+    static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
+                                    final SingleResultCallback<BsonDocument> callback) {
+        sendMessageAsync(database, command, internalConnection, new SingleResultCallback<CommandMessage>() {
+            @Override
+            public void onResult(final CommandMessage result, final MongoException e) {
+                  if (e != null) {
+                      callback.onResult(null, e);
+                  } else {
+                      receiveReplyAsync(internalConnection, result, new SingleResultCallback<ReplyMessage<BsonDocument>>() {
+                          @Override
+                          public void onResult(final ReplyMessage<BsonDocument> result, final MongoException e) {
+                              if (e != null) {
+                                  callback.onResult(null, e);
+                              } else {
+                                  BsonDocument reply = result.getDocuments().get(0);
+                                  if (!isCommandOk(reply)) {
+                                      callback.onResult(null,
+                                                        createCommandFailureException(reply, internalConnection));
+                                  } else {
+                                      callback.onResult(reply, null);
+                                  }
+                              }
+                          }
+                      });
+                  }
+            }
+        });
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
@@ -64,10 +95,34 @@ final class CommandHelper {
         }
     }
 
+    private static void sendMessageAsync(final String database, final BsonDocument command,
+                                         final InternalConnection internalConnection,
+                                         final SingleResultCallback<CommandMessage> callback) {
+        final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
+        try {
+            final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
+                                                              command, false, MessageSettings.builder().build());
+            message.encode(bsonOutput);
+            internalConnection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final MongoException e) {
+                    bsonOutput.close();
+                    if (e != null) {
+                        callback.onResult(null, e);
+                    } else {
+                        callback.onResult(message, null);
+                    }
+                }
+            });
+        } catch (Throwable e) {
+            callback.onResult(null, wrapThrowable(e));
+        }
+    }
+
     private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
         BsonDocument result = receiveReply(internalConnection, message).getDocuments().get(0);
         if (!isCommandOk(result)) {
-            throw new CommandFailureException(result, internalConnection.getDescription().getServerAddress());
+            throw createCommandFailureException(result, internalConnection);
         }
 
         return result;
@@ -86,6 +141,41 @@ final class CommandHelper {
             return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId());
         } finally {
             responseBuffers.close();
+        }
+    }
+
+    private static void receiveReplyAsync(final InternalConnection internalConnection, final CommandMessage message,
+                                          final SingleResultCallback<ReplyMessage<BsonDocument>> callback) {
+        internalConnection.receiveMessageAsync(message.getId(),
+                                               new SingleResultCallback<ResponseBuffers>() {
+                                                   @Override
+                                                   public void onResult(final ResponseBuffers result, final MongoException e) {
+                                                       try {
+                                                           if (e != null) {
+                                                               callback.onResult(null, e);
+                                                           } else {
+                                                               callback.onResult(new ReplyMessage<BsonDocument>(result,
+                                                                                                                new BsonDocumentCodec(),
+                                                                                                                message.getId()), null);
+                                                           }
+                                                       } finally {
+                                                          result.close();
+                                                       }
+                                                   }
+                                               });
+    }
+
+    private static CommandFailureException createCommandFailureException(final BsonDocument reply,
+                                                                         final InternalConnection internalConnection) {
+        return new CommandFailureException(reply, internalConnection.getDescription().getServerAddress());
+    }
+
+    // TODO: ditch this once callback takes a Throwable
+    private static MongoException wrapThrowable(final Throwable t) {
+        if (t instanceof MongoException) {
+            return (MongoException) t;
+        } else {
+            return new MongoInternalException("Internal exception", t);
         }
     }
 

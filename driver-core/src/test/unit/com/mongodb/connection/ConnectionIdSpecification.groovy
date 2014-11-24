@@ -19,7 +19,6 @@ package com.mongodb.connection
 import com.mongodb.ServerAddress
 import spock.lang.Specification
 
-
 class ConnectionIdSpecification extends Specification {
 
     def serverId = new ServerId(new ClusterId(), new ServerAddress('host1'))
@@ -48,13 +47,34 @@ class ConnectionIdSpecification extends Specification {
         id2.localValue == id1.localValue + 1
     }
 
-    def 'ids with equivalent local value and serverId should be equal and have same hash code'() {
+
+    def 'withServerValue should return a new instance with the given server value and preserve the rest'() {
+        def id = new ConnectionId(serverId)
+
+        expect:
+        !id.withServerValue(124).is(id)
+        id.withServerValue(123).serverValue == 123
+        id.withServerValue(123).localValue == id.localValue
+        id.withServerValue(123).serverId == serverId
+    }
+
+    def 'equivalent ids should be equal and have same hash code'() {
         given:
-        def id1 = new ConnectionId(serverId)
-        def id2 = new ConnectionId(serverId, id1.localValue, 42)
+        def id1 = new ConnectionId(serverId, 100, 42)
+        def id2 = new ConnectionId(serverId, 100, 42)
 
         expect:
         id2 == id1
         id2.hashCode() == id1.hashCode()
+    }
+
+    def 'different ids should be equal and have same hash code'() {
+        given:
+        def id1 = new ConnectionId(serverId, 100, 43)
+        def id2 = new ConnectionId(serverId, 100, 42)
+
+        expect:
+        id2 != id1
+        id2.hashCode() != id1.hashCode()
     }
 }

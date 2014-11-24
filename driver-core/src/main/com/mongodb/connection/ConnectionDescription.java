@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 
 /**
@@ -65,6 +66,12 @@ public class ConnectionDescription {
         this.maxDocumentSize = maxDocumentSize;
         this.maxMessageSize = maxMessageSize;
         this.serverVersion = serverVersion;
+    }
+
+
+    ConnectionDescription withConnectionId(final ConnectionId connectionId) {
+        notNull("connectionId", connectionId);
+        return new ConnectionDescription(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize);
     }
 
     /**
@@ -147,6 +154,50 @@ public class ConnectionDescription {
      */
     public static int getDefaultMaxWriteBatchSize() {
         return DEFAULT_MAX_WRITE_BATCH_SIZE;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ConnectionDescription that = (ConnectionDescription) o;
+
+        if (maxBatchCount != that.maxBatchCount) {
+            return false;
+        }
+        if (maxDocumentSize != that.maxDocumentSize) {
+            return false;
+        }
+        if (maxMessageSize != that.maxMessageSize) {
+            return false;
+        }
+        if (!connectionId.equals(that.connectionId)) {
+            return false;
+        }
+        if (serverType != that.serverType) {
+            return false;
+        }
+        if (!serverVersion.equals(that.serverVersion)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = connectionId.hashCode();
+        result = 31 * result + serverVersion.hashCode();
+        result = 31 * result + serverType.hashCode();
+        result = 31 * result + maxBatchCount;
+        result = 31 * result + maxDocumentSize;
+        result = 31 * result + maxMessageSize;
+        return result;
     }
 }
 

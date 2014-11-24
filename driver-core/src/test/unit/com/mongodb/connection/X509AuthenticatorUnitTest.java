@@ -24,32 +24,33 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+import static com.mongodb.connection.MessageHelper.buildSuccessfulReply;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class X509AuthenticatorUnitTest {
     private TestInternalConnection connection;
+    private ConnectionDescription connectionDescription;
     private MongoCredential credential;
     private X509Authenticator subject;
 
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
+        connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createMongoX509Credential(
                 "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(this.credential, this.connection);
+        subject = new X509Authenticator(this.credential);
     }
 
     @Test
-    public void testFailedAuthentication() {
-        ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                "{ok: 0}");
-
-        connection.enqueueReply(authenticateReply);
+    public void testFailedAuthentication() throws InterruptedException {
+        enqueueFailedAuthenticationReply();
 
         try {
-            subject.authenticate();
+            subject.authenticate(connection, connectionDescription);
             fail();
         } catch (MongoSecurityException e) {
             // all good
@@ -57,14 +58,55 @@ public class X509AuthenticatorUnitTest {
     }
 
     @Test
-    public void testSuccessfulAuthentication() {
-        ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                "{ok: 1}");
+    public void testFailedAuthenticationAsync() throws InterruptedException {
+        enqueueFailedAuthenticationReply();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+
+        try {
+            futureCallback.get();
+            fail();
+        } catch (ExecutionException e) {
+            if (!(e.getCause() instanceof MongoSecurityException)) {
+                fail();
+            }
+        }
+    }
+
+    private void enqueueFailedAuthenticationReply() {
+        ResponseBuffers authenticateReply = buildSuccessfulReply("{ok: 0}");
 
         connection.enqueueReply(authenticateReply);
+    }
 
-        subject.authenticate();
 
+    @Test
+    public void testSuccessfulAuthentication() {
+        enqueueSuccessfulAuthenticationReply();
+
+        subject.authenticate(connection, connectionDescription);
+
+        validateMessages();
+    }
+
+    @Test
+    public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
+        enqueueSuccessfulAuthenticationReply();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+
+        futureCallback.get();
+
+        validateMessages();
+    }
+
+    private void enqueueSuccessfulAuthenticationReply() {
+       connection.enqueueReply(buildSuccessfulReply("{ok: 1}"));
+    }
+
+    private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{ \"authenticate\" : 1, "

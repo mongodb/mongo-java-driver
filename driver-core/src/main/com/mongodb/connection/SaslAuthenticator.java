@@ -17,9 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonBinary;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -28,32 +30,32 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
+import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 
 abstract class SaslAuthenticator extends Authenticator {
 
-    SaslAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
-        super(credential, internalConnection);
+    SaslAuthenticator(final MongoCredential credential) {
+        super(credential);
     }
 
-    public void authenticate() {
-        SaslClient saslClient = createSaslClient();
+    public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
+        SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
         try {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
-            BsonDocument res = sendSaslStart(response);
+            BsonDocument res = sendSaslStart(response, connection);
 
-            BsonInt32 conversationId = (BsonInt32) res.get("conversationId");
+            BsonInt32 conversationId = res.getInt32("conversationId");
 
-            while (!((BsonBoolean) res.get("done")).getValue()) {
-                response = saslClient.evaluateChallenge(((BsonBinary) res.get("payload")).getData());
+            while (!(res.getBoolean("done")).getValue()) {
+                response = saslClient.evaluateChallenge((res.getBinary("payload")).getData());
 
                 if (response == null) {
                     throw new MongoSecurityException(getCredential(),
                                                      "SASL protocol error: no client response to challenge for credential "
-                                                     + getCredential()
-                    );
+                                                     + getCredential());
                 }
 
-                res = sendSaslContinue(conversationId, response);
+                res = sendSaslContinue(conversationId, response, connection);
             }
         } catch (Exception e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating " + getCredential(), e);
@@ -62,16 +64,51 @@ abstract class SaslAuthenticator extends Authenticator {
         }
     }
 
-    public abstract String getMechanismName();
-
-    protected abstract SaslClient createSaslClient();
-
-    private BsonDocument sendSaslStart(final byte[] outToken) {
-        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), getInternalConnection());
+    @Override
+    void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+                           final SingleResultCallback<Void> callback) {
+        try {
+            final SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+            byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
+            sendSaslStartAsync(response, connection, new SingleResultCallback<BsonDocument>() {
+                @Override
+                public void onResult(final BsonDocument result, final MongoException e) {
+                    if (e != null) {
+                        callback.onResult(null, translateException(e));
+                    } else if (result.getBoolean("done").getValue()) {
+                         callback.onResult(null, null);
+                    } else {
+                        new Continuator(saslClient, result, connection, callback).start();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            callback.onResult(null, translateException(e));
+        }
     }
 
-    private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken) {
-        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getInternalConnection());
+    public abstract String getMechanismName();
+
+    protected abstract SaslClient createSaslClient(final ServerAddress serverAddress);
+
+    private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
+        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), connection);
+    }
+
+    private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
+        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection);
+    }
+
+    private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
+                                    final SingleResultCallback<BsonDocument> callback) {
+        executeCommandAsync(getCredential().getSource(), createSaslStartCommandDocument(outToken), connection,
+                            callback);
+    }
+
+    private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
+                                       final SingleResultCallback<BsonDocument> callback) {
+        executeCommandAsync(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection,
+                            callback);
     }
 
     private BsonDocument createSaslStartCommandDocument(final byte[] outToken) {
@@ -91,5 +128,53 @@ abstract class SaslAuthenticator extends Authenticator {
             // ignore
         }
     }
+
+    private MongoException translateException(final Exception e) {
+        return new MongoSecurityException(getCredential(), "Exception authenticating", e);
+    }
+
+    private final class Continuator implements SingleResultCallback<BsonDocument> {
+        private final SaslClient saslClient;
+        private final BsonDocument saslStartDocument;
+        private final InternalConnection connection;
+        private final SingleResultCallback<Void> callback;
+
+        public Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
+                           final SingleResultCallback<Void> callback) {
+            this.saslClient = saslClient;
+            this.saslStartDocument = saslStartDocument;
+            this.connection = connection;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onResult(final BsonDocument result, final MongoException e) {
+            if (e != null) {
+                callback.onResult(null, translateException(e));
+                disposeOfSaslClient(saslClient);
+            } else if (result.getBoolean("done").getValue()) {
+                callback.onResult(null, null);
+                disposeOfSaslClient(saslClient);
+            } else {
+                continueConversation(result);
+            }
+        }
+
+        public void start() {
+            continueConversation(saslStartDocument);
+        }
+
+        private void continueConversation(final BsonDocument result) {
+            try {
+                sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
+                                      saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, this);
+            } catch (SaslException e) {
+                callback.onResult(null, translateException(e));
+                disposeOfSaslClient(saslClient);
+            }
+        }
+
+    }
+
 }
 

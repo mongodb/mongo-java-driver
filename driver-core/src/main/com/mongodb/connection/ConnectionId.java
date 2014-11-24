@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
@@ -45,14 +46,7 @@ public final class ConnectionId {
         this(serverId, INCREMENTING_ID.incrementAndGet(), null);
     }
 
-    /**
-     * Construct an instance with the given local value, server value, and server id.
-     *
-     * @param serverId the server id
-     * @param localValue the local, client-generated value that identifies this connection
-     * @param serverValue the server-generated value that identifies this connection, or null if it can't be determined
-     */
-    ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
+    private ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
@@ -61,6 +55,11 @@ public final class ConnectionId {
         } else {
             stringValue = format("connectionId{localValue:%s, serverValue:%s}", localValue, serverValue);
         }
+    }
+
+    ConnectionId withServerValue(final int serverValue) {
+        isTrue("server value is null", this.serverValue == null);
+        return new ConnectionId(serverId, localValue, serverValue);
     }
 
     /**
@@ -107,6 +106,9 @@ public final class ConnectionId {
         if (!serverId.equals(that.serverId)) {
             return false;
         }
+        if (serverValue != null ? !serverValue.equals(that.serverValue) : that.serverValue != null) {
+            return false;
+        }
 
         return true;
     }
@@ -115,6 +117,7 @@ public final class ConnectionId {
     public int hashCode() {
         int result = serverId.hashCode();
         result = 31 * result + localValue;
+        result = 31 * result + (serverValue != null ? serverValue.hashCode() : 0);
         return result;
     }
 

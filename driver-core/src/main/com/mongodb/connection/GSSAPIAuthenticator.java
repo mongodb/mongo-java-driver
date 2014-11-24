@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.ServerAddress;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
@@ -43,8 +44,8 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
     public static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
 
-    GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
-        super(credential, internalConnection);
+    GSSAPIAuthenticator(final MongoCredential credential) {
+        super(credential);
 
         if (getCredential().getAuthenticationMechanism() != GSSAPI) {
             throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());
@@ -57,7 +58,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient() {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
         MongoCredential credential = getCredential();
         try {
             Map<String, Object> props = new HashMap<String, Object>();
@@ -65,7 +66,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
 
             SaslClient saslClient = Sasl.createSaslClient(new String[]{GSSAPI.getMechanismName()}, credential.getUserName(),
                                                           credential.getMechanismProperty(SERVICE_NAME_KEY, SERVICE_NAME_DEFAULT_VALUE),
-                                                          getHostName(), props, null);
+                                                          getHostName(serverAddress), props, null);
             if (saslClient == null) {
                 throw new MongoSecurityException(credential, String.format("No platform support for %s mechanism", GSSAPI));
             }
@@ -76,7 +77,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         } catch (GSSException e) {
             throw new MongoSecurityException(credential, "Exception initializing GSSAPI credentials", e);
         } catch (UnknownHostException e) {
-            throw new MongoSecurityException(credential, "Unable to canonicalize host name + " + getServerAddress());
+            throw new MongoSecurityException(credential, "Unable to canonicalize host name + " + serverAddress);
         }
     }
 
@@ -87,9 +88,9 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
         return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME, krb5Mechanism, GSSCredential.INITIATE_ONLY);
     }
 
-    private String getHostName() throws UnknownHostException {
+    private String getHostName(final ServerAddress serverAddress) throws UnknownHostException {
         return getCredential().getMechanismProperty(CANONICALIZE_HOST_NAME_KEY, CANONICALIZE_HOST_NAME_DEFAULT_VALUE)
-               ? InetAddress.getByName(getServerAddress().getHost()).getCanonicalHostName()
-               : getServerAddress().getHost();
+               ? InetAddress.getByName(serverAddress.getHost()).getCanonicalHostName()
+               : serverAddress.getHost();
     }
 }

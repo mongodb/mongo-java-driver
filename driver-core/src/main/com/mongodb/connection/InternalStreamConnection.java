@@ -117,8 +117,7 @@ class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null);
         final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         stream = streamFactory.create(serverId.getAddress());
-        connectionInitializer.initializeAsync(this)
-                             .register(new SingleResultCallback<ConnectionDescription>() {
+        connectionInitializer.initializeAsync(this, new SingleResultCallback<ConnectionDescription>() {
                                  @Override
                                  public void onResult(final ConnectionDescription result, final MongoException e) {
                                      if (e != null) {

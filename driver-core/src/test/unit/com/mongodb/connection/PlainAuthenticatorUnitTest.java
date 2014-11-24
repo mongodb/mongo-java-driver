@@ -23,38 +23,60 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 
 public class PlainAuthenticatorUnitTest {
     private TestInternalConnection connection;
+    private ConnectionDescription connectionDescription;
     private MongoCredential credential;
     private PlainAuthenticator subject;
 
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
+        connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createPlainCredential("user", "$external", "pencil".toCharArray());
-        subject = new PlainAuthenticator(this.credential, this.connection);
+        subject = new PlainAuthenticator(this.credential);
     }
 
     @Test
     public void testSuccessfulAuthentication() {
-        ResponseBuffers reply = MessageHelper.buildSuccessfulReply(
-                "{conversationId: 1, "
-                        + "done: true, "
-                        + "ok: 1}");
+        enqueueSuccessfulReply();
 
-        connection.enqueueReply(reply);
+        subject.authenticate(connection, connectionDescription);
 
-        subject.authenticate();
+        validateMessages();
+    }
 
+    @Test
+    public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
+        enqueueSuccessfulReply();
+
+        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        subject.authenticateAsync(connection, connectionDescription, futureCallback);
+        futureCallback.get();
+
+        validateMessages();
+    }
+
+    private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{ \"saslStart\" : 1, "
-                + "\"mechanism\" : \"PLAIN\", "
-                + "\"payload\" : { \"$binary\" : \"dXNlcgB1c2VyAHBlbmNpbA==\", \"$type\" : \"0\" } }";
+                                 + "\"mechanism\" : \"PLAIN\", "
+                                 + "\"payload\" : { \"$binary\" : \"dXNlcgB1c2VyAHBlbmNpbA==\", \"$type\" : \"0\" } }";
 
         assertEquals(expectedCommand, command);
+    }
+
+    private void enqueueSuccessfulReply() {
+        ResponseBuffers reply = MessageHelper.buildSuccessfulReply(
+                                                                  "{conversationId: 1, "
+                                                                  + "done: true, "
+                                                                  + "ok: 1}");
+
+        connection.enqueueReply(reply);
     }
 }
