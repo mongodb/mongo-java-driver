@@ -23,6 +23,7 @@ import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
+import java.io.Closeable;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -72,7 +73,7 @@ import static java.util.Arrays.asList;
  * @see MongoClientURI
  * @since 2.10.0
  */
-public class MongoClient extends Mongo {
+public class MongoClient extends Mongo implements Closeable {
 
     private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY =
     new RootCodecRegistry(asList(new ValueCodecProvider(),
