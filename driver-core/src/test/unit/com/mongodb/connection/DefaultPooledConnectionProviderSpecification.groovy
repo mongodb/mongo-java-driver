@@ -315,7 +315,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
                                              new NoOpConnectionPoolListener())
 
         expect:
-        selectConnectionAsyncAndGet(provider)
+        selectConnectionAsyncAndGet(provider).opened()
     }
 
     def 'should select connection asynchronously if one is not immediately available'() {

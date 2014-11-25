@@ -86,7 +86,21 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw createWaitQueueFullException();
             }
             connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
-            return getPooledConnection(timeout, timeUnit);
+            PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
+            if (!pooledConnection.opened()) {
+                try {
+                    pooledConnection.open();
+                } catch (Throwable t) {
+                    pool.release(pooledConnection.wrapped, true);
+                    if (t instanceof MongoException) {
+                        throw (MongoException) t;
+                    } else {
+                        throw new MongoInternalException(t.toString(), t);
+                    }
+                }
+            }
+
+            return pooledConnection;
         } finally {
             waitQueueSize.decrementAndGet();
             connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
@@ -95,7 +109,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void getAsync(final SingleResultCallback<InternalConnection> callback) {
-        InternalConnection connection = null;
+        PooledConnection connection = null;
 
         try {
             connection = getPooledConnection(0, MILLISECONDS);
@@ -104,7 +118,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         if (connection != null) {
-            callCallback(connection, callback);
+            openAsync(connection, callback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
             callback.onResult(null, createWaitQueueFullException());
@@ -118,7 +132,8 @@ class DefaultConnectionPool implements ConnectionPool {
                         if (getRemainingWaitTime() <= 0) {
                             callCallback(createTimeoutException(), callback);
                         } else {
-                            callCallback(getPooledConnection(getRemainingWaitTime(), MILLISECONDS), callback);
+                            PooledConnection connection = getPooledConnection(getRemainingWaitTime(), MILLISECONDS);
+                            openAsync(connection, callback);
                         }
                     } catch (Throwable t) {
                         callCallback(t, callback);
@@ -130,6 +145,24 @@ class DefaultConnectionPool implements ConnectionPool {
 
                 private long getRemainingWaitTime() {
                     return startTimeMillis + settings.getMaxWaitTime(MILLISECONDS) - System.currentTimeMillis();
+                }
+            });
+        }
+    }
+
+    private void openAsync(final PooledConnection pooledConnection,
+                           final SingleResultCallback<InternalConnection> callback) {
+        if (pooledConnection.opened()) {
+            callCallback(pooledConnection, callback);
+        } else {
+            pooledConnection.openAsync().register(new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final MongoException e) {
+                    if (e != null) {
+                        callCallback(e, callback);
+                    } else {
+                        callCallback(pooledConnection, callback);
+                    }
                 }
             });
         }
@@ -200,23 +233,11 @@ class DefaultConnectionPool implements ConnectionPool {
         }
     }
 
-    private InternalConnection getPooledConnection(final long timeout, final TimeUnit timeUnit) {
+    private PooledConnection getPooledConnection(final long timeout, final TimeUnit timeUnit) {
         UsageTrackingInternalConnection internalConnection = pool.get(timeout, timeUnit);
         while (shouldPrune(internalConnection)) {
             pool.release(internalConnection, true);
             internalConnection = pool.get(timeout, timeUnit);
-        }
-        if (!internalConnection.opened()) {
-            try {
-                internalConnection.open();
-            } catch (Throwable t) {
-                pool.release(internalConnection, true);
-                if (t instanceof MongoException) {
-                    throw (MongoException) t;
-                } else {
-                    throw new MongoInternalException(t.toString(), t);
-                }
-            }
         }
         connectionPoolListener.connectionCheckedOut(new ConnectionEvent(internalConnection.getDescription().getConnectionId()));
         LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
