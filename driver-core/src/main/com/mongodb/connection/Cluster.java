@@ -20,6 +20,7 @@ package com.mongodb.connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.selector.ServerSelector;
 
+import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @since 3.0
  */
-public interface Cluster {
+public interface Cluster extends Closeable{
 
     /**
      * Get the description of this cluster.  This method will return the current cluster description even if the cluster type is not yet
