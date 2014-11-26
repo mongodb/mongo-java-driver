@@ -24,6 +24,7 @@ import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
+import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -43,10 +44,9 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
     InternalStreamConnection connection;
 
     def setup() {
-        connection = new InternalStreamConnection(new ServerId(new ClusterId(), getPrimary()),
-                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
-                                                  new InternalStreamConnectionInitializer(getCredentialList()),
-                                                  new NoOpConnectionListener());
+        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                                         getCredentialList(), new NoOpConnectionListener())
+                .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
 

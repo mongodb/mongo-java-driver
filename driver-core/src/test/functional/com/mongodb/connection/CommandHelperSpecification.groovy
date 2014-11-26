@@ -3,7 +3,7 @@ package com.mongodb.connection
 import category.Async
 import com.mongodb.CommandFailureException
 import com.mongodb.MongoException
-import com.mongodb.ServerAddress
+import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
@@ -12,6 +12,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.connection.CommandHelper.executeCommandAsync
 
@@ -19,11 +20,9 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
-        connection = new InternalStreamConnection(new ServerId(new ClusterId(), new ServerAddress()),
-                                                  new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(),
-                                                                                             getSSLSettings()),
-                                                  new InternalStreamConnectionInitializer(getCredentialList()),
-                                                  new NoOpConnectionListener())
+        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                                         getCredentialList(), new NoOpConnectionListener())
+                .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
     }
     def cleanup() {
