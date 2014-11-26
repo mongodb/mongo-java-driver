@@ -31,6 +31,9 @@ class ByteBufSpecification extends Specification {
         then:
         buffer.get() == 42
 
+        cleanup:
+        buffer.release()
+
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
@@ -51,6 +54,9 @@ class ByteBufSpecification extends Specification {
         buffer.get() == 42
         buffer.get() == 43
         buffer.get() == 44
+
+        cleanup:
+        buffer.release()
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
@@ -83,6 +89,9 @@ class ByteBufSpecification extends Specification {
         buffer.get() == 43
         buffer.get() == 44
 
+        cleanup:
+        buffer.release()
+
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
@@ -99,6 +108,9 @@ class ByteBufSpecification extends Specification {
 
         then:
         buffer.remaining() == 1023
+
+        cleanup:
+        buffer.release()
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
@@ -123,6 +135,9 @@ class ByteBufSpecification extends Specification {
         then:
         !buffer.hasRemaining()
 
+        cleanup:
+        buffer.release()
+
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
@@ -138,6 +153,9 @@ class ByteBufSpecification extends Specification {
         nioBuffer.limit() == 36
         nioBuffer.position() == 0
         nioBuffer.remaining() == 36
+
+        cleanup:
+        buffer.release()
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
@@ -171,6 +189,9 @@ class ByteBufSpecification extends Specification {
         nioBuffer.get() == 46
         nioBuffer.get() == 47
         nioBuffer.remaining() == 0
+
+        cleanup:
+        buffer.release()
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
