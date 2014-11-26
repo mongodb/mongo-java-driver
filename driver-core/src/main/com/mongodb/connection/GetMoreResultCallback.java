@@ -63,10 +63,15 @@ class GetMoreResultCallback<T> extends ResponseCallback {
         } catch (Throwable t) {
             exceptionResult = new MongoInternalException("Internal exception", t);
         } finally {
-            if (responseBuffers != null) {
-                responseBuffers.close();
+            try {
+                if (responseBuffers != null) {
+                    responseBuffers.close();
+                }
+            } catch (Throwable e1) {
+                LOGGER.debug("GetMore ResponseBuffer close exception", e1);
             }
         }
+        LOGGER.debug("GetMore results about to be delivered");
         callback.onResult(result, exceptionResult);
         return true;
     }

@@ -23,6 +23,8 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
@@ -33,6 +35,8 @@ import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
 class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
+    private static final Logger LOGGER = Loggers.getLogger("operation.cursor");
+
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
@@ -157,6 +161,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                                         decoder)
                           .register(this);
             } else {
+                LOGGER.debug("Received results");
                 cursor = result.getCursor();
                 count += result.getResults().size();
                 if (limitReached()) {
@@ -164,8 +169,10 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                 }
                 connection.release();
                 if (result.getResults().isEmpty()) {
+                    LOGGER.debug("Calling user callback with null batch");
                     callback.onResult(null, null);
                 } else {
+                    LOGGER.debug("Calling user callback with next batch");
                     callback.onResult(result.getResults(), null);
                 }
             }
