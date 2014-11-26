@@ -192,9 +192,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         def nextBatch
         def exception
         cursor.next { r, e -> nextBatch = r; exception = e; latch.countDown() }
-        if (!latch.await(10, TimeUnit.SECONDS)) {
-            throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
-        }
+        latch.await()
         if (exception != null) {
             throw exception
         }
