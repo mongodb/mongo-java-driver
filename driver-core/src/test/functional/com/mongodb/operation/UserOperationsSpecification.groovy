@@ -171,8 +171,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         connection?.release()
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding(cluster))
         cluster?.close()
+        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
     }
 
     @Category(Async)
