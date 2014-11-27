@@ -17,9 +17,12 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.codecs.Decoder;
 
 abstract class CommandResultBaseCallback<T> extends ResponseCallback {
+    public static final Logger LOGGER = Loggers.getLogger("protocol.command");
     private final Decoder<T> decoder;
 
     CommandResultBaseCallback(final Decoder<T> decoder, final long requestId, final ServerAddress serverAddress) {
@@ -27,20 +30,24 @@ abstract class CommandResultBaseCallback<T> extends ResponseCallback {
         this.decoder = decoder;
     }
 
-    protected boolean callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
+    protected void callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
         try {
             if (t != null || responseBuffers == null) {
-                return callCallback((T) null, t);
+                callCallback((T) null, t);
             } else {
                 ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, getRequestId());
-                return callCallback(replyMessage.getDocuments().get(0), null);
+                callCallback(replyMessage.getDocuments().get(0), null);
             }
         } finally {
-            if (responseBuffers != null) {
-                responseBuffers.close();
+            try {
+                if (responseBuffers != null) {
+                    responseBuffers.close();
+                }
+            } catch (Throwable t1) {
+                LOGGER.debug("GetMore ResponseBuffer close exception", t1);
             }
         }
     }
 
-    protected abstract boolean callCallback(T response, Throwable t);
+    protected abstract void callCallback(T response, Throwable t);
 }

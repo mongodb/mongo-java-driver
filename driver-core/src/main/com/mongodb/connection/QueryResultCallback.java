@@ -16,8 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -43,34 +41,34 @@ class QueryResultCallback<T> extends ResponseCallback {
     }
 
     @Override
-    protected boolean callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
-        QueryResult<T> result = null;
-        MongoException exceptionResult = null;
+    protected void callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
         try {
             if (t != null) {
-                throw t;
+                callback.onResult(null, t);
             } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
                                                                     getRequestId()).getDocuments().get(0);
-                throw getQueryFailureException(getServerAddress(), errorDocument);
+                callback.onResult(null, getQueryFailureException(getServerAddress(), errorDocument));
             } else {
-                result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
+                QueryResult<T> result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
+                                                           getServerAddress());
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Query results received %s documents with cursor %s",
                                         result.getResults().size(),
                                         result.getCursor()));
                 }
+                callback.onResult(result, null);
             }
-        } catch (MongoException me) {
-            exceptionResult = me;
-        } catch (Throwable tr) {
-            exceptionResult = new MongoInternalException("Internal exception", tr);
+        } catch (Throwable t1) {
+            callback.onResult(null, t1);
         } finally {
-            if (responseBuffers != null) {
-                responseBuffers.close();
+            try {
+                if (responseBuffers != null) {
+                    responseBuffers.close();
+                }
+            } catch (Throwable t1) {
+                LOGGER.debug("GetMore ResponseBuffer close exception", t1);
             }
         }
-        callback.onResult(result, exceptionResult);
-        return true;
     }
 }

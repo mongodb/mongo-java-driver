@@ -51,5 +51,5 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
         }
     }
 
-    protected abstract boolean callCallback(ResponseBuffers responseBuffers, Throwable t);
+    protected abstract void callCallback(ResponseBuffers responseBuffers, Throwable t);
 }

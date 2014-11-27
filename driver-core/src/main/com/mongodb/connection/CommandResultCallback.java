@@ -40,7 +40,7 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
     }
 
     @Override
-    protected boolean callCallback(final BsonDocument response, final Throwable t) {
+    protected void callCallback(final BsonDocument response, final Throwable t) {
         if (t != null) {
             callback.onResult(null, t);
         } else {
@@ -53,6 +53,5 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
                 callback.onResult(decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build()), null);
             }
         }
-        return true;
     }
 }

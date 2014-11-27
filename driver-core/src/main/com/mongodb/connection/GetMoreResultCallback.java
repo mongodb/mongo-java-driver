@@ -17,8 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCursorNotFoundException;
-import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -42,37 +40,32 @@ class GetMoreResultCallback<T> extends ResponseCallback {
     }
 
     @Override
-    protected boolean callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
-        QueryResult<T> result = null;
-        MongoException exceptionResult = null;
+    protected void callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
         try {
             if (t != null) {
-                throw t;
+                callback.onResult(null, t);
             } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(cursorId, getServerAddress());
+                callback.onResult(null, new MongoCursorNotFoundException(cursorId, getServerAddress()));
             } else {
-                result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
+                QueryResult<T> result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
+                                                           getServerAddress());
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("GetMore results received %s documents with cursor %s",
                                         result.getResults().size(),
                                         result.getCursor()));
                 }
+                callback.onResult(result, null);
             }
-        } catch (MongoException me) {
-            exceptionResult = me;
-        } catch (Throwable tr) {
-            exceptionResult = new MongoInternalException("Internal exception", tr);
+        } catch (Throwable t1) {
+            callback.onResult(null, t1);
         } finally {
             try {
                 if (responseBuffers != null) {
                     responseBuffers.close();
                 }
-            } catch (Throwable e1) {
-                LOGGER.debug("GetMore ResponseBuffer close exception", e1);
+            } catch (Throwable t1) {
+                LOGGER.debug("GetMore ResponseBuffer close exception", t1);
             }
         }
-        LOGGER.debug("GetMore results about to be delivered");
-        callback.onResult(result, exceptionResult);
-        return true;
     }
 }

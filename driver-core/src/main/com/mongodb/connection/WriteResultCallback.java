@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
@@ -48,8 +47,7 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     }
 
     @Override
-    protected boolean callCallback(final BsonDocument result, final Throwable t) {
-        boolean done = true;
+    protected void callCallback(final BsonDocument result, final Throwable t) {
         if (t != null) {
             callback.onResult(null, t);
         } else {
@@ -58,14 +56,12 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
                                                                                       connection.getDescription().getServerAddress());
                 if (nextMessage != null) {
                     new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern).executeAsync(connection, callback);
-                    done = false;
                 } else {
                     callback.onResult(writeConcernResult, null);
                 }
-            } catch (MongoException writeException) {
-                callback.onResult(null, writeException);
+            } catch (Throwable t1) {
+                callback.onResult(null, t1);
             }
         }
-        return done;
     }
 }
