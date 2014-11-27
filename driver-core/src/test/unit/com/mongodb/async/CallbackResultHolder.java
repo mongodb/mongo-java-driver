@@ -78,4 +78,12 @@ class CallbackResultHolder<T> implements SingleResultCallback<T> {
         return isDone;
     }
 
+    @Override
+    public String toString() {
+        return "CallbackResultHolder{"
+               + "result=" + result
+               + ", error=" + error
+               + ", isDone=" + isDone
+               + '}';
+    }
 }

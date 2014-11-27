@@ -18,6 +18,8 @@ package com.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +37,7 @@ import java.util.concurrent.TimeoutException;
  * @since 3.0
  */
 public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<T> {
+    private static final Logger LOGGER = Loggers.getLogger("async.futureResultCallback");
     private final CountDownLatch latch;
     private final CallbackResultHolder<T> result;
 
@@ -61,6 +64,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     @Override
     public T get() throws InterruptedException, ExecutionException {
         latch.await();
+        LOGGER.debug("Got the following result: " + result);
         if (result.hasError()) {
             throw MongoException.fromThrowable(result.getError());
         } else {
@@ -72,7 +76,8 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (!latch.await(timeout, unit)) {
             throw new MongoTimeoutException("Callback timed out");
-        } else if (result.hasError()) {
+        }
+        if (result.hasError()) {
             throw MongoException.fromThrowable(result.getError());
         } else {
             return result.getResult();

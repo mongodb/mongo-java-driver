@@ -20,6 +20,8 @@ import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.operation.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
@@ -28,6 +30,8 @@ import java.util.Collection;
 import java.util.List;
 
 class OperationIterable<T> implements MongoIterable<T> {
+    private static final Logger LOGGER = Loggers.getLogger("async.client");
+
     private final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation;
     private final ReadPreference readPreference;
     private final AsyncOperationExecutor executor;
@@ -124,6 +128,7 @@ class OperationIterable<T> implements MongoIterable<T> {
             @Override
             public void onResult(final List<T> results, final Throwable t) {
                 if (t != null || results == null) {
+                    LOGGER.debug("Closing batch cursor - no results: " + t);
                     batchCursor.close();
                     callback.onResult(null, t);
                 } else {
@@ -133,6 +138,7 @@ class OperationIterable<T> implements MongoIterable<T> {
                         }
                         loopCursor(batchCursor, block, callback);
                     } catch (Throwable tr) {
+                        LOGGER.debug("Closing batch cursor - failure block: " + tr);
                         batchCursor.close();
                         callback.onResult(null, tr);
                     }

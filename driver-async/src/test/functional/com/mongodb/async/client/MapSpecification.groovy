@@ -37,7 +37,7 @@ class MapSpecification extends FunctionalSpecification {
 
     def 'should map source document into target document with into'() {
         expect:
-        def futureResultCallback = new FutureResultCallback();
+        def futureResultCallback = new FutureResultCallback<List<TargetDocument>>();
         collection.find(new Document())
                   .map(new MappingFunction())
                   .into([], futureResultCallback)
