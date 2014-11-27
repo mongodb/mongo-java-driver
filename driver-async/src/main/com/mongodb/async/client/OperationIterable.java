@@ -128,7 +128,6 @@ class OperationIterable<T> implements MongoIterable<T> {
             @Override
             public void onResult(final List<T> results, final Throwable t) {
                 if (t != null || results == null) {
-                    LOGGER.debug("Closing batch cursor - no results: " + t);
                     batchCursor.close();
                     callback.onResult(null, t);
                 } else {
@@ -138,7 +137,6 @@ class OperationIterable<T> implements MongoIterable<T> {
                         }
                         loopCursor(batchCursor, block, callback);
                     } catch (Throwable tr) {
-                        LOGGER.debug("Closing batch cursor - failure block: " + tr);
                         batchCursor.close();
                         callback.onResult(null, tr);
                     }

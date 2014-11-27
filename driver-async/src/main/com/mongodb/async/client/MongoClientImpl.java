@@ -137,7 +137,7 @@ class MongoClientImpl implements MongoClient {
                     @Override
                     public void onResult(final T result, final Throwable t) {
                         try {
-                            callback.onResult(result, t);
+                            wrapCallback(callback).onResult(result, t);
                         } finally {
                             binding.release();
                         }
