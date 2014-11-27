@@ -27,7 +27,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -55,7 +55,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         )
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         getCollectionHelper().count() == 0
@@ -90,7 +90,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         )
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         getCollectionHelper().count() == 0

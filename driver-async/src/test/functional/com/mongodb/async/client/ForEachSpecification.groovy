@@ -17,23 +17,33 @@
 package com.mongodb.async.client
 
 import com.mongodb.Block
-import com.mongodb.MongoInternalException
+import com.mongodb.MongoException
+import com.mongodb.WriteConcernResult
+import com.mongodb.async.FutureResultCallback
 import org.bson.Document
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class ForEachSpecification extends FunctionalSpecification {
     def 'should complete with no results'() {
         expect:
-        collection.find(new Document()).forEach( { } as Block).get() == null
+        def futureResultCallback = new FutureResultCallback<Void>();
+        collection.find(new Document()).forEach({ } as Block, futureResultCallback)
+        futureResultCallback.get(10, SECONDS) == null
     }
 
     def 'should apply block and complete'() {
         given:
         def document = new Document()
-        collection.insertOne(document).get()
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
+        collection.insertOne(document, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         when:
         def queriedDocuments = []
-        collection.find(new Document()).forEach( { doc -> queriedDocuments += doc } as Block).get()
+        futureResultCallback = new FutureResultCallback<Void>();
+        collection.find(new Document()).forEach({ doc -> queriedDocuments += doc } as Block, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         queriedDocuments == [document]
@@ -42,12 +52,15 @@ class ForEachSpecification extends FunctionalSpecification {
     def 'should apply block for each document and then complete'() {
         given:
         def documents = [new Document(), new Document()]
-        collection.insertOne(documents[0]).get()
-        collection.insertOne(documents[1]).get()
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
+        collection.insertMany([documents[0], documents[1]], futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         when:
         def queriedDocuments = []
-        collection.find(new Document()).forEach( { doc -> queriedDocuments += doc } as Block).get()
+        futureResultCallback = new FutureResultCallback<Void>();
+        collection.find(new Document()).forEach({ doc -> queriedDocuments += doc } as Block, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         queriedDocuments == documents
@@ -56,12 +69,17 @@ class ForEachSpecification extends FunctionalSpecification {
     def 'should throw MongoInternalException if apply throws'() {
         given:
         def document = new Document()
-        collection.insertOne(document).get()
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
+        collection.insertOne(document, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         when:
-        collection.find(new Document()).forEach( { doc -> throw new IllegalArgumentException() } as Block).get()
+        futureResultCallback = new FutureResultCallback<Void>();
+        collection.find(new Document()).forEach({ doc -> throw new IllegalArgumentException() } as Block, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
-        thrown(MongoInternalException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
     }
 }

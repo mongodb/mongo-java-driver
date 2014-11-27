@@ -19,7 +19,11 @@ package com.mongodb.async.client;
 import com.mongodb.CommandFailureException;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoNamespace;
+import com.mongodb.async.FutureResultCallback;
 import org.bson.Document;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -65,10 +69,13 @@ public final class Fixture {
         return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
-    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
+    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace)
+    throws InterruptedException, ExecutionException, TimeoutException {
         MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
-            database.executeCommand(new Document("drop", namespace.getCollectionName())).get();
+            FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
+            database.executeCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
+            futureResultCallback.get(10, SECONDS);
         } catch (CommandFailureException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
@@ -82,13 +89,15 @@ public final class Fixture {
         return mongoClient.getCluster().getDescription(10, SECONDS).getType() == SHARDED;
     }
 
-    public static void dropDatabase(final String name) {
+    public static void dropDatabase(final String name) throws InterruptedException, ExecutionException, TimeoutException {
         if (name == null) {
             return;
         }
         try {
+            FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(name)
-                            .executeCommand(new Document("dropDatabase", 1)).get();
+                            .executeCommand(new Document("dropDatabase", 1), futureResultCallback);
+            futureResultCallback.get(10, SECONDS);
         } catch (CommandFailureException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
@@ -96,10 +105,12 @@ public final class Fixture {
         }
     }
 
-    public static void drop(final MongoNamespace namespace) {
+    public static void drop(final MongoNamespace namespace) throws ExecutionException, InterruptedException {
         try {
+            FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(namespace.getDatabaseName())
-                            .executeCommand(new Document("drop", namespace.getCollectionName())).get();
+                            .executeCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
+            futureResultCallback.get();
         } catch (CommandFailureException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
@@ -112,7 +123,7 @@ public final class Fixture {
         public void run() {
             try {
                 dropDatabase(getDefaultDatabaseName());
-            } catch (CommandFailureException e) {
+            } catch (Exception e) {
                 // ignore
             }
             mongoClient.close();

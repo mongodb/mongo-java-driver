@@ -30,7 +30,7 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
@@ -148,7 +148,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
                                                               WriteRequest.Type.UPDATE)))
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.wasAcknowledged()
@@ -197,7 +197,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
                                                     upsert(true)))
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.wasAcknowledged()

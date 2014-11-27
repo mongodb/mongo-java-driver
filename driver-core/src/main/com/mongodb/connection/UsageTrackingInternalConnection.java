@@ -16,15 +16,13 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 
 /**
  * A connection that tracks when it was opened and when it was last used.
@@ -51,22 +49,20 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public MongoFuture<Void> openAsync() {
+    public void openAsync(final SingleResultCallback<Void> callback) {
         isTrue("open", wrapped != null);
-        final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        wrapped.openAsync().register(new SingleResultCallback<Void>() {
+        wrapped.openAsync(new SingleResultCallback<Void>() {
             @Override
-            public void onResult(final Void result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final Void result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
-                    future.init(null, null);
                     openedAt = System.currentTimeMillis();
                     lastUsedAt = openedAt;
+                    callback.onResult(null, null);
                 }
             }
         });
-        return future;
     }
 
     @Override
@@ -111,26 +107,26 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<Void> wrappedCallback = new SingleResultCallback<Void>() {
+        SingleResultCallback<Void> wrappedCallback = wrapCallback(new SingleResultCallback<Void>() {
             @Override
-            public void onResult(final Void result, final MongoException e) {
+            public void onResult(final Void result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
-                callback.onResult(result, e);
+                callback.onResult(result, t);
             }
-        };
+        });
         wrapped.sendMessageAsync(byteBuffers, lastRequestId, wrappedCallback);
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<ResponseBuffers> wrappedCallback = new SingleResultCallback<ResponseBuffers>() {
+        SingleResultCallback<ResponseBuffers> wrappedCallback = wrapCallback(new SingleResultCallback<ResponseBuffers>() {
             @Override
-            public void onResult(final ResponseBuffers result, final MongoException e) {
+            public void onResult(final ResponseBuffers result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
-                callback.onResult(result, e);
+                callback.onResult(result, t);
             }
-        };
+        });
         wrapped.receiveMessageAsync(responseTo, wrappedCallback);
     }
 

@@ -16,14 +16,11 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteException;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
@@ -52,6 +49,7 @@ import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
@@ -133,7 +131,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      * @param binding the WriteBinding        for the operation
      * @return the bulk write result.
      * @throws com.mongodb.bulk.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
-     * @throws MongoException     for general failures
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
@@ -160,63 +157,52 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
-    /**
-     * Executes a bulk write operation asynchronously.
-     *
-     * @param binding the AsyncWriteBinding   for the operation
-     * @return the future bulk write result.
-     * @throws com.mongodb.bulk.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
-     * @throws MongoException     for general failures
-     */
     @Override
-    public MongoFuture<BulkWriteResult> executeAsync(final AsyncWriteBinding binding) {
-        final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
-        return withConnection(binding, new AsyncCallableWithConnection<BulkWriteResult>() {
-
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
+        final SingleResultCallback<BulkWriteResult> wrappedCallback = wrapCallback(callback);
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<BulkWriteResult> call(final Connection connection) {
-                final BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
-                                                                                                           .getServerAddress(),
-                                                                                                 ordered,
-                                                                                                 writeConcern
-                );
-                Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
-                executeRunsAsync(runs, connection, bulkWriteBatchCombiner, future);
-                return future;
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrappedCallback.onResult(null, t);
+                } else {
+                    Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
+                    executeRunsAsync(runs, connection, new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
+                                                                                  writeConcern), wrappedCallback);
+                }
             }
         });
     }
 
     private void executeRunsAsync(final Iterator<Run> runs, final Connection connection,
                                   final BulkWriteBatchCombiner bulkWriteBatchCombiner,
-                                  final SingleResultFuture<BulkWriteResult> future) {
+                                  final SingleResultCallback<BulkWriteResult> callback) {
 
         final Run run = runs.next();
-        run.executeAsync(connection)
-           .register(new SingleResultCallback<BulkWriteResult>() {
-               @Override
-               public void onResult(final BulkWriteResult result, final MongoException e) {
-                   if (e != null) {
-                       if (e instanceof BulkWriteException) {
-                           bulkWriteBatchCombiner.addErrorResult((BulkWriteException) e, run.indexMap);
-                       } else {
-                           future.init(null, e);
-                           return;
-                       }
-                   } else if (result.wasAcknowledged()) {
-                       bulkWriteBatchCombiner.addResult(result, run.indexMap);
-                   }
+        run.executeAsync(connection, new SingleResultCallback<BulkWriteResult>() {
+            @Override
+            public void onResult(final BulkWriteResult result, final Throwable t) {
+                if (t != null) {
+                    if (t instanceof BulkWriteException) {
+                        bulkWriteBatchCombiner.addErrorResult((BulkWriteException) t, run.indexMap);
+                    } else {
+                        callback.onResult(null, t);
+                        return;
+                    }
+                } else if (result.wasAcknowledged()) {
+                    bulkWriteBatchCombiner.addResult(result, run.indexMap);
+                }
 
-                   // Execute next run or complete
-                   if (runs.hasNext() && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
-                       executeRunsAsync(runs, connection, bulkWriteBatchCombiner, future);
-                   } else if (bulkWriteBatchCombiner.hasErrors()) {
-                       future.init(null, bulkWriteBatchCombiner.getError());
-                   } else {
-                       future.init(bulkWriteBatchCombiner.getResult(), null);
-                   }
-               }
-           });
+                // Execute next run or complete
+                if (runs.hasNext() && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
+                    executeRunsAsync(runs, connection, bulkWriteBatchCombiner, callback);
+                } else if (bulkWriteBatchCombiner.hasErrors()) {
+                    callback.onResult(null, bulkWriteBatchCombiner.getError());
+                } else {
+                    callback.onResult(bulkWriteBatchCombiner.getResult(), null);
+                }
+            }
+        });
     }
 
     private boolean shouldUseWriteCommands(final Connection connection) {
@@ -377,19 +363,16 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         @SuppressWarnings("unchecked")
-        MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
-            final MongoFuture<BulkWriteResult> nextWriteResult;
-
+        void executeAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
             if (type == UPDATE || type == REPLACE) {
-                nextWriteResult = getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).executeAsync();
+                getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).executeAsync(callback);
             } else if (type == INSERT) {
-                nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync();
+                getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync(callback);
             } else if (type == DELETE) {
-                nextWriteResult = getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).executeAsync();
+                getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).executeAsync(callback);
             } else {
-                throw new UnsupportedOperationException(format("Unsupported write of type %s", type));
+                callback.onResult(null, new UnsupportedOperationException(format("Unsupported write of type %s", type)));
             }
-            return nextWriteResult;
         }
 
         RunExecutor getDeletesRunExecutor(final List<DeleteRequest> deleteRequests, final Connection connection) {
@@ -401,8 +384,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<WriteConcernResult> executeWriteProtocolAsync(final int index) {
-                    return connection.deleteAsync(namespace, ordered, writeConcern, asList(deleteRequests.get(index)));
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.deleteAsync(namespace, ordered, writeConcern, asList(deleteRequests.get(index)), callback);
                 }
 
                 @Override
@@ -411,8 +394,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<BulkWriteResult> executeWriteCommandProtocolAsync() {
-                    return connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests);
+                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
+                    connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests, callback);
                 }
 
                 @Override
@@ -432,8 +415,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<WriteConcernResult> executeWriteProtocolAsync(final int index) {
-                    return connection.insertAsync(namespace, ordered, writeConcern, asList(insertRequests.get(index)));
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.insertAsync(namespace, ordered, writeConcern, asList(insertRequests.get(index)), callback);
                 }
 
                 @Override
@@ -442,8 +425,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<BulkWriteResult> executeWriteCommandProtocolAsync() {
-                    return connection.insertCommandAsync(namespace, ordered, writeConcern, insertRequests);
+                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
+                    connection.insertCommandAsync(namespace, ordered, writeConcern, insertRequests, callback);
                 }
 
                 @Override
@@ -466,8 +449,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<WriteConcernResult> executeWriteProtocolAsync(final int index) {
-                    return connection.updateAsync(namespace, ordered, writeConcern, asList(updates.get(index)));
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.updateAsync(namespace, ordered, writeConcern, asList(updates.get(index)), callback);
                 }
 
                 @Override
@@ -476,8 +459,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                MongoFuture<BulkWriteResult> executeWriteCommandProtocolAsync() {
-                    return connection.updateCommandAsync(namespace, ordered, writeConcern, updates);
+                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
+                    connection.updateCommandAsync(namespace, ordered, writeConcern, updates, callback);
                 }
 
                 @Override
@@ -497,11 +480,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
             abstract WriteConcernResult executeWriteProtocol(int index);
 
-            abstract MongoFuture<WriteConcernResult> executeWriteProtocolAsync(int index);
+            abstract void executeWriteProtocolAsync(int index, SingleResultCallback<WriteConcernResult> callback);
 
             abstract BulkWriteResult executeWriteCommandProtocol();
 
-            abstract MongoFuture<BulkWriteResult> executeWriteCommandProtocolAsync();
+            abstract void executeWriteCommandProtocolAsync(SingleResultCallback<BulkWriteResult> callback);
 
             abstract WriteRequest.Type getType();
 
@@ -545,39 +528,37 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
             }
 
-            MongoFuture<BulkWriteResult> executeAsync() {
+            void executeAsync(final SingleResultCallback<BulkWriteResult> callback) {
                 if (shouldUseWriteCommands(connection)) {
-                    return executeWriteCommandProtocolAsync();
+                    executeWriteCommandProtocolAsync(callback);
                 } else {
                     BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
                                                                                                          .getServerAddress(),
                                                                                                ordered, writeConcern);
-                    SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
-                    executeRunWritesAsync(runWrites.size(), 0, bulkWriteBatchCombiner, future);
-                    return future;
+                    executeRunWritesAsync(runWrites.size(), 0, bulkWriteBatchCombiner, callback);
                 }
             }
 
             private void executeRunWritesAsync(final int numberOfRuns, final int currentPosition,
                                                final BulkWriteBatchCombiner bulkWriteBatchCombiner,
-                                               final SingleResultFuture<BulkWriteResult> future) {
+                                               final SingleResultCallback<BulkWriteResult> callback) {
 
                 final IndexMap indexMap = IndexMap.create(currentPosition, 1).add(0, currentPosition);
-                executeWriteProtocolAsync(currentPosition).register(new SingleResultCallback<WriteConcernResult>() {
+                executeWriteProtocolAsync(currentPosition, new SingleResultCallback<WriteConcernResult>() {
 
                     @Override
-                    public void onResult(final WriteConcernResult result, final MongoException e) {
+                    public void onResult(final WriteConcernResult result, final Throwable t) {
                         final int nextRunPosition = currentPosition + 1;
-                        if (e != null) {
-                            if (e instanceof MongoWriteException) {
-                                MongoWriteException writeException = (MongoWriteException) e;
+                        if (t != null) {
+                            if (t instanceof MongoWriteException) {
+                                MongoWriteException writeException = (MongoWriteException) t;
                                 if (writeException.getResponse().get("wtimeout") != null) {
                                     bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                                 } else {
                                     bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
                                 }
                             } else {
-                                future.init(null, e);
+                                callback.onResult(null, t);
                                 return;
                             }
                         } else if (result.wasAcknowledged()) {
@@ -592,11 +573,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                         // Execute next run or complete
                         if (numberOfRuns != nextRunPosition && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
-                            executeRunWritesAsync(numberOfRuns, nextRunPosition, bulkWriteBatchCombiner, future);
+                            executeRunWritesAsync(numberOfRuns, nextRunPosition, bulkWriteBatchCombiner, callback);
                         } else if (bulkWriteBatchCombiner.hasErrors()) {
-                            future.init(null, bulkWriteBatchCombiner.getError());
+                            callback.onResult(null, bulkWriteBatchCombiner.getError());
                         } else {
-                            future.init(bulkWriteBatchCombiner.getResult(), null);
+                            callback.onResult(bulkWriteBatchCombiner.getResult(), null);
                         }
                     }
                 });

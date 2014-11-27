@@ -22,7 +22,6 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -42,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -109,6 +109,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void getAsync(final SingleResultCallback<InternalConnection> callback) {
+        final SingleResultCallback<InternalConnection> wrappedCallback = wrapCallback(callback);
         PooledConnection connection = null;
 
         try {
@@ -118,7 +119,7 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         if (connection != null) {
-            openAsync(connection, callback);
+            openAsync(connection, wrappedCallback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
             callback.onResult(null, createWaitQueueFullException());
@@ -130,13 +131,13 @@ class DefaultConnectionPool implements ConnectionPool {
                 public void run() {
                     try {
                         if (getRemainingWaitTime() <= 0) {
-                            callCallback(createTimeoutException(), callback);
+                            wrappedCallback.onResult(null, createTimeoutException());
                         } else {
                             PooledConnection connection = getPooledConnection(getRemainingWaitTime(), MILLISECONDS);
-                            openAsync(connection, callback);
+                            openAsync(connection, wrappedCallback);
                         }
                     } catch (Throwable t) {
-                        callCallback(t, callback);
+                        wrappedCallback.onResult(null, t);
                     } finally {
                         waitQueueSize.decrementAndGet();
                         connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
@@ -153,15 +154,15 @@ class DefaultConnectionPool implements ConnectionPool {
     private void openAsync(final PooledConnection pooledConnection,
                            final SingleResultCallback<InternalConnection> callback) {
         if (pooledConnection.opened()) {
-            callCallback(pooledConnection, callback);
+            callback.onResult(pooledConnection, null);
         } else {
-            pooledConnection.openAsync().register(new SingleResultCallback<Void>() {
+            pooledConnection.openAsync(new SingleResultCallback<Void>() {
                 @Override
-                public void onResult(final Void result, final MongoException e) {
-                    if (e != null) {
-                        callCallback(e, callback);
+                public void onResult(final Void result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
                     } else {
-                        callCallback(pooledConnection, callback);
+                        callback.onResult(pooledConnection, null);
                     }
                 }
             });
@@ -178,31 +179,6 @@ class DefaultConnectionPool implements ConnectionPool {
     private synchronized void shutdownAsyncGetter() {
         if (asyncGetter != null) {
             asyncGetter.shutdownNow();
-        }
-    }
-
-    private void callCallback(final InternalConnection connection, final SingleResultCallback<InternalConnection> callback) {
-        try {
-            callback.onResult(connection, null);
-        } catch (Exception e) {
-            // swallow any exception thrown by the callback.  there is nothing we can do with it
-        }
-    }
-
-    private void callCallback(final Throwable throwable, final SingleResultCallback<InternalConnection> callback) {
-        try {
-            callback.onResult(null, wrapThrowable(throwable));
-        } catch (Exception e) {
-            // swallow any exception thrown by the callback.  there is nothing we can do with it
-        }
-    }
-
-    // TODO: ditch this once callback takes a Throwable
-    private MongoException wrapThrowable(final Throwable t) {
-        if (t instanceof MongoException) {
-            return (MongoException) t;
-        } else {
-            return new MongoInternalException("Internal exception", t);
         }
     }
 
@@ -357,9 +333,9 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public MongoFuture<Void> openAsync() {
+        public void openAsync(final SingleResultCallback<Void> callback) {
             isTrue("open", wrapped != null);
-            return wrapped.openAsync();
+            wrapped.openAsync(callback);
         }
 
         @Override

@@ -25,7 +25,6 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.binding.ClusterBinding
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
@@ -48,10 +47,11 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -153,7 +153,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        findOperation.executeAsync(getAsyncBinding()).get();
+        executeAsync(findOperation);
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -283,15 +283,12 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         def count = 0;
-
-        def cursor = findOperation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        loopCursor(new SingleResultFuture<Void>(), cursor,
-                   new Block<Document>() {
-                       @Override
-                       void apply(final Document value) {
-                           count++;
-                       }
-                   }).get(1, SECONDS)
+        loopCursor(findOperation, new Block<Document>() {
+            @Override
+            void apply(final Document value) {
+                count++
+            }
+        });
 
         then:
         count == 500
@@ -346,8 +343,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
-        BsonDocument result = findOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())
-                                            .get()
+        BsonDocument result = executeAsync(findOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER))
 
         then:
         result

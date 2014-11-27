@@ -21,7 +21,6 @@ import com.mongodb.Block
 import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.async.SingleResultFuture
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
@@ -32,8 +31,9 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -95,16 +95,14 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        loopCursor(new SingleResultFuture<Void>(), cursor,
-                   new Block<Document>() {
-                       @Override
-                       void apply(final Document value) {
-                           if (value != null) {
-                               docList += value
-                           }
-                       }
-                   }).get(1, SECONDS)
+        loopCursor(operation, new Block<Document>() {
+            @Override
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
+            }
+        });
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -140,16 +138,14 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
                                                                  new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        loopCursor(new SingleResultFuture<Void>(), cursor,
-                   new Block<Document>() {
-                       @Override
-                       void apply(final Document value) {
-                           if (value != null) {
-                               docList += value
-                           }
-                       }
-                   }).get(1, SECONDS)
+        loopCursor(operation, new Block<Document>() {
+            @Override
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
+            }
+        });
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -210,7 +206,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER))
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -238,7 +234,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
 
         when:
-        def result = operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding()).get();
+        def result = executeAsync(operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER));
 
         then:
         result.containsKey('stages')

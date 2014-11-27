@@ -16,10 +16,8 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -40,27 +38,28 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
     }
 
     @Override
-    public <T> MongoFuture<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference) {
+    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
+                            final SingleResultCallback<T> callback) {
         readOperations.add(operation);
         readPreferences.add(readPreference);
-        return toFuture(responses.remove(0));
+        callResult(callback);
     }
 
+
     @Override
-    public <T> MongoFuture<T> execute(final AsyncWriteOperation<T> operation) {
+    public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
         writeOperations.add(operation);
-        return toFuture(responses.remove(0));
+        callResult(callback);
     }
 
     @SuppressWarnings("unchecked")
-    <T> MongoFuture<T> toFuture(final Object response) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        if (response instanceof MongoException) {
-            future.init(null, (MongoException) response);
+    <T> void callResult(final SingleResultCallback<T> callback) {
+        Object response = responses.remove(0);
+        if (response instanceof Throwable) {
+            callback.onResult(null, (Throwable) response);
         } else {
-            future.init((T) response, null);
+            callback.onResult((T) response, null);
         }
-        return future;
     }
 
     AsyncReadOperation getReadOperation() {

@@ -30,7 +30,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
@@ -113,7 +113,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.executeAsync(getAsyncBinding()).get();
+        executeAsync(operation);
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
@@ -140,7 +140,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.executeAsync(getAsyncBinding()).get();
+        executeAsync(operation);
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
@@ -179,7 +179,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         enableMaxTimeFailPoint()
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation)
 
         then:
         thrown(MongoExecutionTimeoutException)

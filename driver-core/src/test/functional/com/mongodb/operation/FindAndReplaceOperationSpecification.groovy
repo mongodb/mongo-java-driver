@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
@@ -28,7 +29,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class FindAndReplaceOperationSpecification extends OperationFunctionalSpecification {
@@ -78,7 +79,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Document returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.getString('name') == 'Pete'
@@ -90,7 +91,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                                                           new BsonDocumentWrapper<Document>(pete, documentCodec))
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
-        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.getString('name') == 'Pete'
@@ -140,7 +141,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Worker returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument == pete
@@ -151,7 +152,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
-        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument == pete
@@ -174,7 +175,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Document returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument == null
@@ -193,9 +194,10 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw an exception if replacement contains update operators asynchronously'() {
         when:
         def replacement = new BsonDocumentWrapper<Document>(['$inc': 1] as Document, documentCodec)
-        new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement).executeAsync(getAsyncBinding()).get()
+        executeAsync(new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement))
 
         then:
-        thrown(IllegalArgumentException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
     }
 }

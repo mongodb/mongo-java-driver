@@ -18,8 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.Document;
@@ -71,29 +70,29 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
-                                namespace, cursorId, connection.getDescription().getConnectionId(),
-                                connection.getDescription().getServerAddress()));
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<QueryResult<T>> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server "
+                                    + "%s", namespace, cursorId, connection.getDescription().getConnectionId(),
+                                    connection.getDescription().getServerAddress()));
+            }
+            ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
+            ProtocolHelper.encodeMessage(message, bsonOutput);
+            SingleResultCallback<ResponseBuffers> receiveCallback = new GetMoreResultCallback<T>(callback,
+                                                                                                 resultDecoder,
+                                                                                                 cursorId,
+                                                                                                 message.getId(),
+                                                                                                 connection.getDescription()
+                                                                                                           .getServerAddress());
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
+                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), callback,
+                                                                                receiveCallback));
+        } catch (Throwable t) {
+            callback.onResult(null, t);
         }
-        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
-        ProtocolHelper.encodeMessage(message, bsonOutput);
-        GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
-                                                                                resultDecoder,
-                                                                                cursorId,
-                                                                                message.getId(),
-                                                                                connection.getDescription().getServerAddress());
-        connection.sendMessageAsync(bsonOutput.getByteBuffers(),
-                                    message.getId(),
-                                    new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), retVal,
-                                                                            receiveCallback));
-        return retVal;
     }
-
 
     private GetMoreMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);

@@ -17,7 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.options.OperationOptions;
 
 import java.io.Closeable;
@@ -67,9 +67,11 @@ public interface MongoClient extends Closeable {
     MongoClientOptions getOptions();
 
     /**
-     * @return a List of the names of all the databases on the server
+     * Get a list of the database names
+     *
+     * @param  callback a callback that is passed the list of the names of all the databases on the server
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */
-    MongoFuture<List<String>> getDatabaseNames();
+    void getDatabaseNames(SingleResultCallback<List<String>> callback);
 
 }

@@ -19,12 +19,13 @@ package com.mongodb.operation;
 import com.mongodb.CommandFailureException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.QueryResult;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -38,10 +39,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.operation.FindOperationHelper.queryResultToList;
 import static com.mongodb.operation.FindOperationHelper.queryResultToListAsync;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -92,23 +96,42 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
     }
 
     @Override
-    public MongoFuture<List<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<List<T>>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<List<T>> callback) {
+        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public MongoFuture<List<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotEight(connection)) {
-                    return CommandOperationHelper.rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
-                                                                                                                getCommand(),
-                                                                                                                connection,
-                                                                                                                transformer()),
-                                                                             new ArrayList<T>());
+            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
+                } else if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
+                                                       getCommand(),
+                                                       connection,
+                                                       transformer(),
+                                                       new SingleResultCallback<List<T>>() {
+                                                           @Override
+                                                           public void onResult(final List<T> result,
+                                                                                final Throwable t) {
+                                                               if (t != null && !isNamespaceError(t)) {
+                                                                   callback.onResult(null, t);
+                                                               } else {
+                                                                   callback.onResult(result != null ? result : new ArrayList<T>(),
+                                                                                     null);
+                                                               }
+                                                           }
+                                                       });
                 } else {
-                    return queryResultToListAsync(getIndexNamespace(),
-                                                  connection.queryAsync(getIndexNamespace(), asQueryDocument(), null, 0, 0,
-                                                                        binding.getReadPreference().isSlaveOk(), false,
-                                                                        false, false, false, false,
-                                                                        decoder),
-                                                  decoder, source, new IdentityTransformer<T>());
+                    connection.queryAsync(getIndexNamespace(), new BsonDocument(), null, 0, 0, binding.getReadPreference().isSlaveOk(),
+                                          false, false, false, false, false, decoder, new SingleResultCallback<QueryResult<T>>() {
+                        @Override
+                        public void onResult(final QueryResult<T> result, final Throwable t) {
+                            if (t != null && !isNamespaceError(t)) {
+                                callback.onResult(null, t);
+                            } else {
+                                queryResultToListAsync(getIndexNamespace(), result, decoder, source, new IdentityTransformer<T>(),
+                                                       callback);
+                            }
+                        }
+                    });
                 }
             }
         });

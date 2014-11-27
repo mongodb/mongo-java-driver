@@ -23,8 +23,8 @@ import com.mongodb.MongoSocketException
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernException
 import com.mongodb.WriteConcernResult
-import com.mongodb.async.MongoFuture
-import com.mongodb.async.SingleResultFuture
+import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -33,6 +33,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -179,8 +180,10 @@ class DefaultServerSpecification extends Specification {
         1 * serverMonitor.invalidate()
 
         when:
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
-                      .get()
+        def futureResultCallback = new FutureResultCallback()
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+                                   futureResultCallback);
+        futureResultCallback.get(10, SECONDS)
 
         then:
         thrown(WriteConcernException)
@@ -188,8 +191,10 @@ class DefaultServerSpecification extends Specification {
         1 * serverMonitor.invalidate()
 
         when:
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
-                      .get()
+        futureResultCallback = new FutureResultCallback()
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+                                   futureResultCallback);
+        futureResultCallback.get(10, SECONDS)
 
         then:
         thrown(WriteConcernException)
@@ -254,8 +259,10 @@ class DefaultServerSpecification extends Specification {
         1 * serverMonitor.invalidate()
 
         when:
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
-                      .get()
+        def futureResultCallback = new FutureResultCallback()
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+                                   futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         thrown(WriteConcernException)
@@ -288,8 +295,10 @@ class DefaultServerSpecification extends Specification {
         1 * serverMonitor.invalidate()
 
         when:
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
-                      .get()
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+                                   futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         thrown(MongoSocketException)
@@ -310,8 +319,8 @@ class DefaultServerSpecification extends Specification {
         }
 
         @Override
-        MongoFuture executeAsync(final InternalConnection connection) {
-            new SingleResultFuture(null, mongoException)
+        void executeAsync(final InternalConnection connection, final SingleResultCallback callback) {
+            callback.onResult(null, mongoException);
         }
     }
 }

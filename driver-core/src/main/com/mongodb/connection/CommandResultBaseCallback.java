@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import org.bson.codecs.Decoder;
 
@@ -28,10 +27,10 @@ abstract class CommandResultBaseCallback<T> extends ResponseCallback {
         this.decoder = decoder;
     }
 
-    protected boolean callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
+    protected boolean callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
         try {
-            if (e != null || responseBuffers == null) {
-                return callCallback((T) null, e);
+            if (t != null || responseBuffers == null) {
+                return callCallback((T) null, t);
             } else {
                 ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, getRequestId());
                 return callCallback(replyMessage.getDocuments().get(0), null);
@@ -43,5 +42,5 @@ abstract class CommandResultBaseCallback<T> extends ResponseCallback {
         }
     }
 
-    protected abstract boolean callCallback(T response, MongoException e);
+    protected abstract boolean callCallback(T response, Throwable t);
 }

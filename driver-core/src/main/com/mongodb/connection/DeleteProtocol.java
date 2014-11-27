@@ -16,13 +16,10 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -67,24 +64,27 @@ class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously deleting documents in namespace %s on connection [%s] to server %s", getNamespace(),
-                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
-        }
-        final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
-        super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
-            @Override
-            public void onResult(final WriteConcernResult result, final MongoException e) {
-                if (e == null) {
-                    LOGGER.debug("Asynchronous delete completed");
-                }
-                future.init(result, e);
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously deleting documents in namespace %s on connection [%s] to server %s", getNamespace(),
+                                    connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
             }
-        });
-        return future;
+            super.executeAsync(connection, new SingleResultCallback<WriteConcernResult>() {
+                @Override
+                public void onResult(final WriteConcernResult result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        LOGGER.debug("Asynchronous delete completed");
+                        callback.onResult(result, null);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
     }
-
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {

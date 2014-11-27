@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
@@ -56,7 +56,7 @@ public class CommandWriteOperation<T> implements AsyncWriteOperation<T>, WriteOp
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding);
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding, callback);
     }
 }

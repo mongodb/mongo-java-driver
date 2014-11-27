@@ -17,13 +17,10 @@
 package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -43,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -448,36 +446,27 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     }
 
     @Override
-    public MongoFuture<AsyncBatchCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<AsyncBatchCursor<T>>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public MongoFuture<AsyncBatchCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                final SingleResultFuture<AsyncBatchCursor<T>> future = new SingleResultFuture<AsyncBatchCursor<T>>();
-                connection.queryAsync(namespace,
-                                      asDocument(connection.getDescription(), binding.getReadPreference()),
-                                      projection,
-                                      getNumberToReturn(),
-                                      skip,
-                                      isSlaveOk() || binding.getReadPreference().isSlaveOk(),
-                                      isTailableCursor(),
-                                      isAwaitData(),
-                                      isNoCursorTimeout(),
-                                      isPartial(),
-                                      isOplogReplay(),
-                                      decoder)
-                          .register(new SingleResultCallback<QueryResult<T>>() {
-                                        @Override
-                                        public void onResult(final QueryResult<T> queryResult, final MongoException e) {
-                                            if (e != null) {
-                                                future.init(null, e);
-                                            } else {
-                                                future.init(new AsyncQueryBatchCursor<T>(namespace, queryResult, limit, batchSize, decoder,
-                                                                                         source), null);
-                                            }
-                                        }
-                                    }
-                                   );
-                return future;
+            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()), projection,
+                                          getNumberToReturn(), skip, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                          isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
+                                          decoder, new SingleResultCallback<QueryResult<T>>() {
+                        @Override
+                        public void onResult(final QueryResult<T> result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                callback.onResult(new AsyncQueryBatchCursor<T>(namespace, result, limit, batchSize, decoder, source), null);
+                            }
+                        }
+                    });
+                }
             }
         });
     }
@@ -509,30 +498,28 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         final FindOperation<BsonDocument> explainableFindOperation = createExplainableQueryOperation();
         return new AsyncReadOperation<BsonDocument>() {
             @Override
-            public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
-                final SingleResultFuture<BsonDocument> retVal = new SingleResultFuture<BsonDocument>();
-                explainableFindOperation.executeAsync(binding).register(new SingleResultCallback<AsyncBatchCursor<BsonDocument>>() {
+            public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
+                explainableFindOperation.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<BsonDocument>>() {
                     @Override
-                    public void onResult(final AsyncBatchCursor<BsonDocument> cursor, final MongoException e) {
-                        if (e != null) {
-                            retVal.init(null, e);
+                    public void onResult(final AsyncBatchCursor<BsonDocument> result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
                         } else {
-                            cursor.next(new SingleResultCallback<List<BsonDocument>>() {
+                            result.next(new SingleResultCallback<List<BsonDocument>>() {
                                 @Override
-                                public void onResult(final List<BsonDocument> result, final MongoException e) {
-                                    if (e != null) {
-                                        retVal.init(null, e);
+                                public void onResult(final List<BsonDocument> result, final Throwable t) {
+                                    if (t != null) {
+                                        callback.onResult(null, t);
                                     } else if (result.size() == 0) {
-                                        retVal.init(null, new MongoInternalException("Unexpected explain result size"));
+                                        callback.onResult(null, new MongoInternalException("Unexpected explain result size"));
                                     } else {
-                                        retVal.init(result.get(0), null);
+                                        callback.onResult(result.get(0), null);
                                     }
                                 }
                             });
                         }
                     }
                 });
-                return retVal;
             }
         };
     }

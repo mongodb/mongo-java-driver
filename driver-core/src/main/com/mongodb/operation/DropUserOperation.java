@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.DeleteRequest;
@@ -28,14 +28,14 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
-import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static java.util.Arrays.asList;
 
 /**
@@ -51,7 +51,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
      * Construct a new instance.
      *
      * @param databaseName the name of the database for the operation.
-     * @param userName the name of the user to be dropped.
+     * @param userName     the name of the user to be dropped.
      */
     public DropUserOperation(final String databaseName, final String userName) {
         this.databaseName = notNull("databaseName", databaseName);
@@ -74,15 +74,25 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<Void>() {
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<Void> call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>());
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
                 } else {
-                    return transformFuture(connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,
-                                                                  asList(getDeleteRequest())), new VoidTransformer<WriteConcernResult>());
+                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>(),
+                                                           callback);
+                    } else {
+                        connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()),
+                                               new SingleResultCallback<WriteConcernResult>() {
+                                                   @Override
+                                                   public void onResult(final WriteConcernResult result, final Throwable t) {
+                                                       callback.onResult(null, t);
+                                                   }
+                                               });
+                    }
                 }
             }
         });

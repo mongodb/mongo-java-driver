@@ -18,11 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.Function;
-import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -38,6 +35,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 
@@ -185,119 +183,132 @@ final class CommandOperationHelper {
 
     /* Async Read Binding Helpers */
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
-                                                                        final BsonDocument command,
-                                                                        final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
+    static void executeWrappedCommandProtocolAsync(final String database,
+                                                   final BsonDocument command,
+                                                   final AsyncReadBinding binding,
+                                                   final SingleResultCallback<BsonDocument> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final Decoder<T> decoder,
-                                                                 final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>());
+    static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                       final Decoder<T> decoder,
+                                                       final AsyncReadBinding binding,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>(), callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final AsyncReadBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
+    static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                       final AsyncReadBinding binding,
+                                                       final Function<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer, callback);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncReadBinding binding,
-                                                                    final Function<D, T> transformer) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getReadConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command,
-                new NoOpFieldNameValidator(), decoder, primary(), future, transformer));
-
-        return future;
+    static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                          final Decoder<D> decoder,
+                                                          final AsyncReadBinding binding,
+                                                          final Function<D, T> transformer,
+                                                          final SingleResultCallback<T> callback) {
+        binding.getReadConnectionSource(wrapCallback(new CommandProtocolExecutingCallback<D, T>(database, command,
+                                                                                                new NoOpFieldNameValidator(), decoder,
+                                                                                                primary(), transformer,
+                                                                                                wrapCallback(callback))));
     }
 
     /* Async Write Binding Helpers */
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
-                                                                        final BsonDocument command,
-                                                                        final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
+    static void executeWrappedCommandProtocolAsync(final String database,
+                                                   final BsonDocument command,
+                                                   final AsyncWriteBinding binding,
+                                                   final SingleResultCallback<BsonDocument> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final Decoder<T> decoder,
-                                                                 final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>());
+    static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                       final Decoder<T> decoder,
+                                                       final AsyncWriteBinding binding,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>(), callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final AsyncWriteBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
+    static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                       final AsyncWriteBinding binding,
+                                                       final Function<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer, callback);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncWriteBinding binding,
-                                                                    final Function<D, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding,
-                                                  transformer);
+    static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                          final Decoder<D> decoder,
+                                                          final AsyncWriteBinding binding,
+                                                          final Function<D, T> transformer,
+                                                          final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding,
+                                           transformer, callback);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final FieldNameValidator fieldNameValidator,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncWriteBinding binding,
-                                                                    final Function<D, T> transformer) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getWriteConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command,
-                                                                                               fieldNameValidator,
-                                                                                               decoder, primary(),
-                                                                                               future,
-                                                                                               transformer));
-        return future;
+    static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                          final FieldNameValidator fieldNameValidator,
+                                                          final Decoder<D> decoder,
+                                                          final AsyncWriteBinding binding,
+                                                          final Function<D, T> transformer,
+                                                          final SingleResultCallback<T> callback) {
+        binding.getWriteConnectionSource(wrapCallback(new CommandProtocolExecutingCallback<D, T>(database, command, fieldNameValidator,
+                                                                                                 decoder, primary(), transformer,
+                                                                                                 wrapCallback(callback))));
     }
 
     /* Async Connection Helpers */
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
-                                                                        final BsonDocument command,
-                                                                        final Connection connection) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection);
+    static void executeWrappedCommandProtocolAsync(final String database,
+                                                   final BsonDocument command,
+                                                   final Connection connection,
+                                                   final SingleResultCallback<BsonDocument> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final Connection connection,
-                                                                    final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(),
-                                                  transformer);
+    static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                       final Connection connection,
+                                                       final Function<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(), transformer, callback);
     }
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database,
-                                                                 final BsonDocument command,
-                                                                 final Decoder<T> decoder,
-                                                                 final Connection connection) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, connection, primary(),
-                                                  new IdentityTransformer<T>());
+    static <T> void executeWrappedCommandProtocolAsync(final String database,
+                                                       final BsonDocument command,
+                                                       final Decoder<T> decoder,
+                                                       final Connection connection,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, decoder, connection, primary(), new IdentityTransformer<T>(), callback);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final Connection connection,
-                                                                    final ReadPreference readPreference,
-                                                                    final Function<D, T> transformer) {
-        final SingleResultFuture<T> future = new SingleResultFuture<T>();
+    static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                          final Decoder<D> decoder,
+                                                          final Connection connection,
+                                                          final ReadPreference readPreference,
+                                                          final Function<D, T> transformer,
+                                                          final SingleResultCallback<T> callback) {
+        final SingleResultCallback<T> wrappedCallback = wrapCallback(callback);
         connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
-                                readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder)
-                  .register(new SingleResultCallback<D>() {
-                      @Override
-                      public void onResult(final D result, final MongoException e) {
-                          if (e != null) {
-                              future.init(null, e);
-                          } else {
-                              future.init(transformer.apply(result), null);
-                          }
-                      }
-                  });
-        return future;
+                                readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder, new SingleResultCallback<D>() {
+            @Override
+            public void onResult(final D result, final Throwable t) {
+                try {
+                    if (t != null) {
+                        wrappedCallback.onResult(null, t);
+                    } else {
+                        try {
+                            T transformedResult = transformer.apply(result);
+                            wrappedCallback.onResult(transformedResult, null);
+                        } catch (Exception e) {
+                            wrappedCallback.onResult(null, e);
+                        }
+                    }
+                } finally {
+                    connection.release();
+                }
+            }
+        });
     }
 
     /* Misc operation helpers */
@@ -307,39 +318,19 @@ final class CommandOperationHelper {
     }
 
     static <T> T rethrowIfNotNamespaceError(final CommandFailureException e, final T defaultValue) {
-        if (!e.getErrorMessage().contains("ns not found") && e.getErrorCode() != 26) {
+        if (!isNamespaceError(e)) {
             throw e;
         }
         return defaultValue;
     }
 
-    static <T> MongoFuture<T> rethrowIfNotNamespaceError(final MongoFuture<T> future) {
-        return rethrowIfNotNamespaceError(future, null);
-    }
-
-    static <T> MongoFuture<T> rethrowIfNotNamespaceError(final MongoFuture<T> future, final T defaultValue) {
-        final SingleResultFuture<T> ignoringFuture = new SingleResultFuture<T>();
-        future.register(new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final MongoException e) {
-                MongoException checkedError = e;
-                // Check for a namespace error which we can safely ignore
-                if (e instanceof CommandFailureException) {
-                    try {
-                        checkedError = null;
-                        rethrowIfNotNamespaceError((CommandFailureException) e);
-                    } catch (CommandFailureException error) {
-                        checkedError = error;
-                    }
-                }
-                if (result != null) {
-                    ignoringFuture.init(result, checkedError);
-                } else {
-                    ignoringFuture.init(defaultValue, checkedError);
-                }
-            }
-        });
-        return ignoringFuture;
+    static boolean isNamespaceError(final Throwable t) {
+        if (t instanceof CommandFailureException) {
+            CommandFailureException e = (CommandFailureException) t;
+            return (e.getErrorMessage().contains("ns not found") || e.getErrorCode() == 26);
+        } else {
+            return false;
+        }
     }
 
     static BsonDocument wrapCommand(final BsonDocument command, final ReadPreference readPreference,
@@ -357,45 +348,44 @@ final class CommandOperationHelper {
         private final Decoder<D> decoder;
         private final ReadPreference readPreference;
         private final FieldNameValidator fieldNameValidator;
-        private final SingleResultFuture<R> future;
         private final Function<D, R> transformer;
+        private final SingleResultCallback<R> callback;
 
         public CommandProtocolExecutingCallback(final String database, final BsonDocument command,
                                                 final FieldNameValidator fieldNameValidator,
                                                 final Decoder<D> decoder,
                                                 final ReadPreference readPreference,
-                                                final SingleResultFuture<R> future,
-                                                final Function<D, R> transformer) {
-            this.fieldNameValidator = fieldNameValidator;
-            this.future = future;
-            this.transformer = transformer;
+                                                final Function<D, R> transformer,
+                                                final SingleResultCallback<R> callback) {
             this.database = database;
             this.command = command;
+            this.fieldNameValidator = fieldNameValidator;
             this.decoder = decoder;
             this.readPreference = readPreference;
+            this.transformer = transformer;
+            this.callback = callback;
         }
 
         @Override
-        public void onResult(final AsyncConnectionSource source, final MongoException e) {
-            if (e != null) {
-                future.init(null, e);
+        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+            if (t != null) {
+                callback.onResult(null, t);
             } else {
-                source.getConnection().register(new SingleResultCallback<Connection>() {
+                source.getConnection(new SingleResultCallback<Connection>() {
                     @Override
-                    public void onResult(final Connection connection, final MongoException e) {
-                        if (e != null) {
-                            future.init(null, e);
+                    public void onResult(final Connection connection, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
                         } else {
                             connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
-                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder)
-                                      .register(new SingleResultCallback<D>() {
+                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder, new SingleResultCallback<D>() {
                                           @Override
-                                          public void onResult(final D response, final MongoException e) {
+                                          public void onResult(final D response, final Throwable t) {
                                               try {
-                                                  if (e != null) {
-                                                      future.init(null, e);
+                                                  if (t != null) {
+                                                      callback.onResult(null, t);
                                                   } else {
-                                                      future.init(transformer.apply(response), null);
+                                                      callback.onResult(transformer.apply(response), null);
                                                   }
                                               } finally {
                                                   connection.release();

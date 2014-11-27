@@ -19,16 +19,14 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.Block
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonJavaScript
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static java.util.concurrent.TimeUnit.SECONDS
+import static com.mongodb.ClusterFixture.loopCursor
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends OperationFunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -62,16 +60,14 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Operati
     def 'should return the correct results asynchronously'() {
         when:
         List<Document> docList = []
-        def cursor = mapReduceOperation.executeAsync(getAsyncBinding()).get(1, SECONDS)
-        loopCursor(new SingleResultFuture<Void>(), cursor,
-                   new Block<Document>() {
-                       @Override
-                       void apply(final Document value) {
-                           if (value != null) {
-                               docList += value
-                           }
-                       }
-                   }).get(1, SECONDS)
+        loopCursor(mapReduceOperation, new Block<Document>() {
+            @Override
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
+            }
+        });
 
         then:
         docList.iterator().toList() == expectedResults

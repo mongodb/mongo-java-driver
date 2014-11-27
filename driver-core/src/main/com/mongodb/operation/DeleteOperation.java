@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.WriteRequest;
@@ -40,9 +40,9 @@ public class DeleteOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param namespace the database and collection namespace for the operation.
-     * @param ordered whether the writes are ordered.
-     * @param writeConcern the write concern for the operation.
+     * @param namespace      the database and collection namespace for the operation.
+     * @param ordered        whether the writes are ordered.
+     * @param writeConcern   the write concern for the operation.
      * @param deleteRequests the remove requests.
      */
     public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
@@ -66,8 +66,9 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected MongoFuture<WriteConcernResult> executeProtocolAsync(final Connection connection) {
-        return connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    protected void executeProtocolAsync(final Connection connection,
+                                        final SingleResultCallback<WriteConcernResult> callback) {
+        connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
     }
 
     @Override
@@ -76,8 +77,8 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected MongoFuture<BulkWriteResult> executeCommandProtocolAsync(final Connection connection) {
-        return connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    protected void executeCommandProtocolAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
+        connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
     }
 
     @Override
@@ -89,4 +90,5 @@ public class DeleteOperation extends BaseWriteOperation {
     protected int getCount(final BulkWriteResult bulkWriteResult) {
         return bulkWriteResult.getRemovedCount();
     }
+
 }

@@ -17,9 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoIncompatibleDriverException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
@@ -379,21 +377,11 @@ abstract class BaseCluster implements Cluster {
             this.callback = callback;
         }
 
-        void onResult(final Server server, final Throwable exception) {
+        void onResult(final Server server, final Throwable t) {
             try {
-                callback.onResult(server, wrapException(exception));
-            } catch (Throwable t) {
+                callback.onResult(server, t);
+            } catch (Throwable tr) {
                 // ignore
-            }
-        }
-
-        private MongoException wrapException(final Throwable exception) {
-            if (exception == null) {
-                return null;
-            } else if (exception instanceof MongoException) {
-                return (MongoException) exception;
-            } else {
-                return new MongoInternalException("Internal exception", exception);  // TODO: remove once callback takes a Throwable
             }
         }
 

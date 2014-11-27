@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
@@ -66,8 +66,8 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected MongoFuture<WriteConcernResult> executeProtocolAsync(final Connection connection) {
-        return connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    protected void executeProtocolAsync(final Connection connection, final SingleResultCallback<WriteConcernResult> callback) {
+        connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected MongoFuture<BulkWriteResult> executeCommandProtocolAsync(final Connection connection) {
-        return connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    protected void executeCommandProtocolAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
+        connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
     }
 
     @Override

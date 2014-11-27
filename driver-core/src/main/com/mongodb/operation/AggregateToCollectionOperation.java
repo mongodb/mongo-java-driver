@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonArray;
@@ -133,9 +133,9 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
-                                                  new VoidTransformer<BsonDocument>());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
+                                           new VoidTransformer<BsonDocument>(), callback);
     }
 
     private BsonDocument getCommand() {

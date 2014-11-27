@@ -18,7 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
@@ -45,29 +45,29 @@ public interface MongoDatabase {
     /**
      * Executes command in the context of the current database.
      *
-     * @param command the command to be run
-     * @return the command result
+     * @param command  the command to be run
+     * @param callback the callback that is passed the command result
      */
-    MongoFuture<Document> executeCommand(Object command);
+    void executeCommand(Object command, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
      *
      * @param command        the command to be run
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
-     * @return the command result
+     * @param callback       the callback that is passed the command result
      */
-    MongoFuture<Document> executeCommand(Object command, ReadPreference readPreference);
+    void executeCommand(Object command, ReadPreference readPreference, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
      *
-     * @param command the command to be run
-     * @param clazz   the default class to cast any documents returned from the database into.
-     * @param <T>     the type of the class to use instead of {@code Document}.
-     * @return the command result
+     * @param command  the command to be run
+     * @param clazz    the default class to cast any documents returned from the database into.
+     * @param <T>      the type of the class to use instead of {@code Document}.
+     * @param callback the callback that is passed the command result
      */
-    <T> MongoFuture<T> executeCommand(Object command, Class<T> clazz);
+    <T> void executeCommand(Object command, Class<T> clazz, SingleResultCallback<T> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -76,9 +76,9 @@ public interface MongoDatabase {
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
      * @param clazz          the default class to cast any documents returned from the database into.
      * @param <T>            the type of the class to use instead of {@code Document}.
-     * @return the command result
+     * @param callback       the callback that is passed the command result
      */
-    <T> MongoFuture<T> executeCommand(Object command, ReadPreference readPreference, Class<T> clazz);
+    <T> void executeCommand(Object command, ReadPreference readPreference, Class<T> clazz, SingleResultCallback<T> callback);
 
     /**
      * Gets the options that are used with the database.
@@ -130,31 +130,34 @@ public interface MongoDatabase {
     /**
      * Drops this database.
      *
+     * @param callback the callback that is completed once the database has been dropped
      * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
      */
-    MongoFuture<Void> dropDatabase();
+    void dropDatabase(SingleResultCallback<Void> callback);
 
     /**
      * Gets the names of all the collections in this database.
      *
-     * @return a future set of the names of all the collections in this database
+     * @param callback the callback that is passed the names of all the collections in this database
      */
-    MongoFuture<List<String>> getCollectionNames();
+    void getCollectionNames(SingleResultCallback<List<String>> callback);
 
     /**
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create
+     * @param callback       the callback that is completed once the collection has been created
      * @mongodb.driver.manual reference/commands/create Create Command
      */
-    MongoFuture<Void> createCollection(String collectionName);
+    void createCollection(String collectionName, SingleResultCallback<Void> callback);
 
     /**
      * Create a new collection with the selected options
      *
      * @param collectionName the name for the new collection to create
      * @param options        various options for creating the collection
+     * @param callback       the callback that is completed once the collection has been created
      * @mongodb.driver.manual reference/commands/create Create Command
      */
-    MongoFuture<Void> createCollection(String collectionName, CreateCollectionOptions options);
+    void createCollection(String collectionName, CreateCollectionOptions options, SingleResultCallback<Void> callback);
 }

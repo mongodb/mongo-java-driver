@@ -16,28 +16,53 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.MongoInterruptedException;
+
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-    private final SingleResultFuture<T> future;
-
-    public FutureAsyncCompletionHandler(final SingleResultFuture<T> future) {
-        this.future = future;
-    }
+    private final CountDownLatch latch = new CountDownLatch(1);;
+    private T result;
+    private Throwable error;
 
     @Override
-    public void completed(final T t) {
-        future.init(t, null);
+    public void completed(final T result) {
+        latch.countDown();
+        this.result = result;
     }
 
     @Override
     public void failed(final Throwable t) {
-        if (t instanceof MongoException) {
-            future.init(null, (MongoException) t);
-        } else {
-            future.init(null, new MongoInternalException("Unexpected exception", t));
-        }
+        latch.countDown();
+        this.error = t;
     }
+
+    public void getWrite() throws IOException {
+        get(false);
+    }
+
+    public T getRead() throws IOException {
+        return get(true);
+    }
+
+    private T get(final boolean reading) throws IOException {
+        String prefix = reading ? "Reading from" : "Writing to";
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException(prefix + " the AsynchronousSocketChannelStream failed", e);
+
+        }
+        if (error != null) {
+            if (error instanceof IOException) {
+                throw (IOException) error;
+            } else {
+                throw new MongoInternalException(prefix + " the AsynchronousSocketChannelStream failed", error);
+            }
+        }
+        return result;
+    }
+
 }

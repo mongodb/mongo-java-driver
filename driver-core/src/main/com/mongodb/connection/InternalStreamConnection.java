@@ -24,9 +24,7 @@ import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionEvent;
@@ -50,6 +48,7 @@ import java.util.concurrent.Semaphore;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static java.lang.String.format;
 
@@ -113,30 +112,30 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public MongoFuture<Void> openAsync() {
+    public void openAsync(final SingleResultCallback<Void> callback) {
         isTrue("Open already called", stream == null);
-        final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         stream = streamFactory.create(serverId.getAddress());
         connectionInitializer.initializeAsync(this, new SingleResultCallback<ConnectionDescription>() {
-                                 @Override
-                                 public void onResult(final ConnectionDescription result, final MongoException e) {
-                                     if (e != null) {
-                                         close();
-                                         future.init(null, e);
-                                     } else {
-                                         description = result;
-                                         future.init(null, null);
-                                         LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-                                         try {
-                                             connectionListener.connectionOpened(new ConnectionEvent(getId()));
-                                         } catch (Throwable t) {
-                                             LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
-                                         }
-                                         opened = true;
-                                     }
-                                 }
-                             });
-        return future;
+            @Override
+            public void onResult(final ConnectionDescription result, final Throwable t) {
+                if (t != null) {
+                    close();
+                    callback.onResult(null, t);
+                } else {
+                    description = result;
+                    callback.onResult(null, null);
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+                    }
+                    try {
+                        connectionListener.connectionOpened(new ConnectionEvent(getId()));
+                    } catch (Throwable tr) {
+                        LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", tr);
+                    }
+                    opened = true;
+                }
+            }
+        });
     }
 
     @Override
@@ -219,7 +218,12 @@ class InternalStreamConnection implements InternalConnection {
             }
             Response response = messages.remove(responseTo);
             if (response.hasError()) {
-                throw response.getError();
+                Throwable t = response.getError();
+                if (t instanceof MongoException) {
+                    throw (MongoException) t;
+                } else {
+                    throw MongoException.fromThrowable(t);
+                }
             }
             return response.getResult();
         }
@@ -228,14 +232,14 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         notNull("open", stream);
-        writeQueue.add(new SendMessageAsync(byteBuffers, lastRequestId, callback));
+        writeQueue.add(new SendMessageAsync(byteBuffers, lastRequestId, wrapCallback(callback, LOGGER)));
         processPendingWrites();
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         notNull("open", stream);
-        readQueue.put(responseTo, callback);
+        readQueue.put(responseTo, wrapCallback(callback, LOGGER));
         processPendingReads();
     }
 
@@ -331,9 +335,9 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         @Override
-        public void onResult(final ByteBuf result, final MongoException e) {
-            if (e != null) {
-                callback.onResult(null, e);
+        public void onResult(final ByteBuf result, final Throwable t) {
+            if (t != null) {
+                callback.onResult(null, t);
             } else {
                 ReplyHeader replyHeader;
                 ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(result);
@@ -382,12 +386,12 @@ class InternalStreamConnection implements InternalConnection {
             }
 
             @Override
-            public void onResult(final ByteBuf result, final MongoException e) {
-                if (e != null) {
+            public void onResult(final ByteBuf result, final Throwable t) {
+                if (t != null) {
                     try {
-                        callback.onResult(new ResponseBuffers(replyHeader, result), e);
-                    } catch (Throwable t) {
-                        LOGGER.warn("Exception calling callback", t);
+                        callback.onResult(new ResponseBuffers(replyHeader, result), t);
+                    } catch (Throwable tr) {
+                        LOGGER.warn("Exception calling callback", tr);
                     }
                 } else {
                     onSuccess(new ResponseBuffers(replyHeader, result));
@@ -430,20 +434,20 @@ class InternalStreamConnection implements InternalConnection {
                     reading.release();
                 }
             } else {
-                fillAndFlipBuffer(REPLY_HEADER_LENGTH,
-                                  new ResponseHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
-                                      @Override
-                                      public void onResult(final ResponseBuffers result, final MongoException e) {
-                                          if (result == null) {
-                                              reading.release();
-                                              processUnknownFailedRead(e);
-                                          } else {
-                                              reading.release();
-                                              messages.put(result.getReplyHeader().getResponseTo(), new Response(result, e));
-                                          }
-                                          processPendingReads();
-                                      }
-                                  }));
+                fillAndFlipBuffer(REPLY_HEADER_LENGTH, wrapCallback(new ResponseHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
+                    @Override
+                    public void onResult(final ResponseBuffers result, final Throwable t) {
+                        if (result == null) {
+                            reading.release();
+                            processUnknownFailedRead(t);
+                        } else {
+                            reading.release();
+                            messages.put(result.getReplyHeader().getResponseTo(),
+                                         new Response(result, t));
+                        }
+                        processPendingReads();
+                    }
+                }), LOGGER));
             }
         }
     }
@@ -458,12 +462,8 @@ class InternalStreamConnection implements InternalConnection {
                 try {
                     while (!writeQueue.isEmpty()) {
                         SendMessageAsync message = writeQueue.poll();
-                        try {
-                            message.callback.onResult(null, new MongoSocketClosedException("Cannot write to a closed stream",
-                                                                                           getServerAddress()));
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception calling callback", t);
-                        }
+                        wrapCallback(message.getCallback(), LOGGER).onResult(null,
+                                  new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress()));
                     }
                 } finally {
                     writing.release();
@@ -482,11 +482,7 @@ class InternalStreamConnection implements InternalConnection {
                         } catch (Throwable t) {
                             LOGGER.warn("Exception when trying to signal messagesSent to the connectionListener", t);
                         }
-                        try {
-                            message.getCallback().onResult(null, null);
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception calling callback", t);
-                        }
+                        wrapCallback(message.getCallback(), LOGGER).onResult(null, null);
                         processPendingWrites();
                     }
 
@@ -494,11 +490,7 @@ class InternalStreamConnection implements InternalConnection {
                     public void failed(final Throwable t) {
                         writing.release();
                         close();
-                        try {
-                            message.getCallback().onResult(null, translateWriteException(t));
-                        } catch (Throwable e) {
-                            LOGGER.warn("Exception calling callback", e);
-                        }
+                        wrapCallback(message.getCallback(), LOGGER).onResult(null, translateWriteException(t));
                         processPendingWrites();
                     }
                 });
@@ -513,7 +505,7 @@ class InternalStreamConnection implements InternalConnection {
             int messageId = pairs.getKey();
             SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
             if (callback != null) {
-                if (pairs.getValue().getError() != null) {
+                if (pairs.getValue().hasError()) {
                     try {
                         callback.onResult(null, pairs.getValue().getError());
                     } catch (Throwable t) {
@@ -531,7 +523,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void processUnknownFailedRead(final MongoException e) {
+    private void processUnknownFailedRead(final Throwable t) {
         processPendingResults();
         close();
         Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
@@ -540,9 +532,9 @@ class InternalStreamConnection implements InternalConnection {
             SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
             it.remove();
             try {
-                callback.onResult(null, e);
-            } catch (Throwable t) {
-                LOGGER.warn("Exception calling callback", t);
+                callback.onResult(null, t);
+            } catch (Throwable tr) {
+                LOGGER.warn("Exception calling callback", tr);
             }
         }
     }
@@ -581,23 +573,23 @@ class InternalStreamConnection implements InternalConnection {
 
     private static class Response {
         private final ResponseBuffers result;
-        private final MongoException error;
+        private final Throwable t;
 
-        public Response(final ResponseBuffers result, final MongoException error) {
+        public Response(final ResponseBuffers result, final Throwable t) {
             this.result = result;
-            this.error = error;
+            this.t = t;
         }
 
         public ResponseBuffers getResult() {
             return result;
         }
 
-        public MongoException getError() {
-            return error;
+        public Throwable getError() {
+            return t;
         }
 
         public boolean hasError() {
-            return error != null;
+            return t != null;
         }
     }
 }

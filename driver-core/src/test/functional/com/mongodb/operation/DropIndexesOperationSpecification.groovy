@@ -25,7 +25,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class DropIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -41,7 +41,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     @Category(Async)
     def 'should not error when dropping non-existent index on non-existent collection asynchronously'() {
         when:
-        new DropIndexOperation(getNamespace(), 'made_up_index_1').executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropIndexOperation(getNamespace(), 'made_up_index_1'))
 
         then:
         getIndexes().size() == 0
@@ -64,7 +64,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        new DropIndexOperation(getNamespace(), 'made_up_index_1').executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropIndexOperation(getNamespace(), 'made_up_index_1'))
 
         then:
         thrown(MongoException)
@@ -90,7 +90,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new DropIndexOperation(getNamespace(), 'theField_1');
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation)
         List<Document> indexes = getIndexes()
 
         then:
@@ -119,7 +119,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
         collectionHelper.createIndex(new BsonDocument('theOtherField', new BsonInt32(1)))
 
         when:
-        new DropIndexOperation(getNamespace(), '*').executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropIndexOperation(getNamespace(), '*'))
         List<Document> indexes = getIndexes()
 
         then:

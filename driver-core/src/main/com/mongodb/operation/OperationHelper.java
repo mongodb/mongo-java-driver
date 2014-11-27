@@ -17,10 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -32,6 +29,7 @@ import com.mongodb.connection.ServerVersion;
 
 import java.util.List;
 
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static java.util.Arrays.asList;
 
 final class OperationHelper {
@@ -48,12 +46,12 @@ final class OperationHelper {
         T call(ConnectionSource source, Connection connection);
     }
 
-    interface AsyncCallableWithConnection<T> {
-        MongoFuture<T> call(Connection connection);
+    interface AsyncCallableWithConnection {
+        void call(Connection connection, Throwable t);
     }
 
-    interface AsyncCallableWithConnectionAndSource<T> {
-        MongoFuture<T> call(AsyncConnectionSource source, Connection connection);
+    interface AsyncCallableWithConnectionAndSource {
+        void call(AsyncConnectionSource source, Connection connection, Throwable t);
     }
 
     static class IdentityTransformer<T> implements Function<T, T> {
@@ -83,29 +81,6 @@ final class OperationHelper {
         return connection.getDescription().getServerVersion().compareTo(serverVersion) >= 0;
     }
 
-    static <T, R> MongoFuture<R> transformFuture(final MongoFuture<T> future, final Function<T, R> transformer) {
-        final SingleResultFuture<R> transformedFuture = new SingleResultFuture<R>();
-        future.register(new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final MongoException e) {
-                if (e != null) {
-                    transformedFuture.init(null, e);
-                } else {
-                    try {
-                        transformedFuture.init(transformer.apply(result), null);
-                    } catch (MongoException e1) {
-                        transformedFuture.init(null, e1);
-                    }
-                }
-            }
-        });
-        return transformedFuture;
-    }
-
-    static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
-        return transformFuture(future, new VoidTransformer<T>());
-    }
-
     static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
@@ -133,24 +108,6 @@ final class OperationHelper {
         }
     }
 
-    static <T> MongoFuture<T> withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection<T> callable) {
-        final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getWriteConnectionSource().register(new AsyncCallableWithConnectionCallback<T>(future, callable));
-        return future;
-    }
-
-    static <T> MongoFuture<T> withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnection<T> callable) {
-        final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getReadConnectionSource().register(new AsyncCallableWithConnectionCallback<T>(future, callable));
-        return future;
-    }
-
-    static <T> MongoFuture<T> withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource<T> callable) {
-        final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getReadConnectionSource().register(new AsyncCallableWithConnectionAndSourceCallback<T>(future, callable));
-        return future;
-    }
-
     static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnection<T> callable) {
         Connection connection = source.getConnection();
         try {
@@ -169,102 +126,75 @@ final class OperationHelper {
         }
     }
 
-    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection<T> callable,
-                                         final SingleResultFuture<T> future) {
-        source.getConnection().register(new SingleResultCallback<Connection>() {
+    static void withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
+        binding.getWriteConnectionSource(wrapCallback(new AsyncCallableWithConnectionCallback(callable)));
+    }
+
+
+    static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnection callable) {
+        binding.getReadConnectionSource(wrapCallback(new AsyncCallableWithConnectionCallback(callable)));
+    }
+
+    static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
+        binding.getReadConnectionSource(wrapCallback(new AsyncCallableWithConnectionAndSourceCallback(callable)));
+    }
+
+    private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
+        private final AsyncCallableWithConnection callable;
+        public AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable) {
+            this.callable = callable;
+        }
+        @Override
+        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+            if (t != null) {
+                callable.call(null, t);
+            } else {
+                withConnectionSource(source, callable);
+            }
+        }
+    }
+
+    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection callable) {
+        source.getConnection(new SingleResultCallback<Connection>() {
             @Override
-            public void onResult(final Connection connection, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final Connection connection, final Throwable t) {
+                if (source != null) {
+                    source.release();
+                }
+                if (t != null) {
+                    callable.call(null, t);
                 } else {
-                    callable.call(connection).register(new SingleResultCallback<T>() {
-                        @Override
-                        public void onResult(final T result, final MongoException e) {
-                            try {
-                                if (e != null) {
-                                    future.init(null, e);
-                                } else {
-                                    future.init(result, null);
-                                }
-                            } finally {
-                                connection.release();
-                                source.release();
-                            }
-                        }
-                    });
+                    callable.call(connection, null);
                 }
             }
         });
     }
 
-    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource<T> callable,
-                                         final SingleResultFuture<T> future) {
-        source.getConnection().register(new SingleResultCallback<Connection>() {
+    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
+        source.getConnection(new SingleResultCallback<Connection>() {
             @Override
-            public void onResult(final Connection connection, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    callable.call(source, connection).register(new SingleResultCallback<T>() {
-                        @Override
-                        public void onResult(final T result, final MongoException e) {
-                            try {
-                                if (e != null) {
-                                    future.init(null, e);
-                                } else {
-                                    future.init(result, null);
-                                }
-                            } finally {
-                                connection.release();
-                                source.release();
-                            }
-                        }
-                    });
-                }
+            public void onResult(final Connection result, final Throwable t) {
+                callable.call(source, result, t);
             }
         });
     }
 
-    private static class AsyncCallableWithConnectionCallback<T> implements SingleResultCallback<AsyncConnectionSource> {
-        private final SingleResultFuture<T> future;
-        private final AsyncCallableWithConnection<T> callable;
+    private static class AsyncCallableWithConnectionAndSourceCallback implements SingleResultCallback<AsyncConnectionSource> {
+        private final AsyncCallableWithConnectionAndSource callable;
 
-        public AsyncCallableWithConnectionCallback(final SingleResultFuture<T> future, final AsyncCallableWithConnection<T> callable) {
-            this.future = future;
+        public AsyncCallableWithConnectionAndSourceCallback(final AsyncCallableWithConnectionAndSource callable) {
             this.callable = callable;
         }
 
         @Override
-        public void onResult(final AsyncConnectionSource source, final MongoException e) {
-            if (e != null) {
-                future.init(null, e);
+        public void onResult(final AsyncConnectionSource source, final Throwable t) {
+            if (t != null) {
+                callable.call(null, null, t);
             } else {
-                withConnectionSource(source, callable, future);
+                withConnectionSource(source, callable);
             }
         }
     }
-
-
-    private static class AsyncCallableWithConnectionAndSourceCallback<T> implements SingleResultCallback<AsyncConnectionSource> {
-        private final SingleResultFuture<T> future;
-        private final AsyncCallableWithConnectionAndSource<T> callable;
-
-        public AsyncCallableWithConnectionAndSourceCallback(final SingleResultFuture<T> future,
-                                                            final AsyncCallableWithConnectionAndSource<T> callable) {
-            this.future = future;
-            this.callable = callable;
-        }
-
-        @Override
-        public void onResult(final AsyncConnectionSource source, final MongoException e) {
-            if (e != null) {
-                future.init(null, e);
-            } else {
-                withConnectionSource(source, callable, future);
-            }
-        }
-    }
-
 
     private OperationHelper() {
     }

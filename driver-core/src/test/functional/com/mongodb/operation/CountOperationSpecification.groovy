@@ -31,7 +31,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -61,7 +61,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should get the count asynchronously'() {
         expect:
-        new CountOperation(getNamespace()).executeAsync(getAsyncBinding()).get() ==
+        executeAsync(new CountOperation(getNamespace())) ==
         documents.size()
     }
 
@@ -91,7 +91,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.executeAsync(getAsyncBinding()).get()
+        executeAsync(countOperation)
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -115,13 +115,12 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .limit(1)
 
         then:
-        countOperation.executeAsync(getAsyncBinding()).get() == 1
+        executeAsync(countOperation) == 1
     }
 
     def 'should use skip with the count'() {
         when:
-        def countOperation = new CountOperation(getNamespace())
-                .skip(documents.size() - 2)
+        def countOperation = new CountOperation(getNamespace()).skip(documents.size() - 2)
 
         then:
         countOperation.execute(getBinding()) == 2
@@ -130,11 +129,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should use skip with the count asynchronously'() {
         when:
-        def countOperation = new CountOperation(getNamespace())
-                .skip(documents.size() - 2)
+        def countOperation = new CountOperation(getNamespace()).skip(documents.size() - 2)
 
         then:
-        countOperation.executeAsync(getAsyncBinding()).get() == 2
+        executeAsync(countOperation)  == 2
     }
 
     def 'should use hint with the count'() {
@@ -156,10 +154,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
 
         when:
-        createIndexOperation.executeAsync(getAsyncBinding()).get()
+        executeAsync(createIndexOperation)
 
         then:
-        countOperation.executeAsync(getAsyncBinding()).get() == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
+        executeAsync(countOperation) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
@@ -185,7 +183,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .hint(new BsonString('BAD HINT'))
 
         when:
-        countOperation.executeAsync(getAsyncBinding()).get()
+        executeAsync(countOperation)
 
         then:
         thrown(MongoException)
@@ -214,7 +212,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .hint(new BsonString('BAD HINT'))
 
         when:
-        countOperation.executeAsync(getAsyncBinding()).get()
+        executeAsync(countOperation)
 
         then:
         notThrown(MongoException)
@@ -241,8 +239,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        BsonDocument result = countOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())
-                                            .get()
+        BsonDocument result = executeAsync(countOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER))
 
         then:
         result.getNumber('ok').intValue() == 1

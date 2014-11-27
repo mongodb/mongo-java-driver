@@ -16,9 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import org.bson.io.OutputBuffer;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
@@ -26,23 +24,23 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
     private final InternalConnection connection;
     private final SingleResultCallback<ResponseBuffers> receiveMessageCallback;
     private final int requestId;
-    private final SingleResultFuture<T> future;
+    private final SingleResultCallback<T> callback;
 
     SendMessageCallback(final InternalConnection connection, final OutputBuffer buffer,
-                        final int requestId, final SingleResultFuture<T> future,
+                        final int requestId, final SingleResultCallback<T> callback,
                         final SingleResultCallback<ResponseBuffers> receiveMessageCallback) {
         this.buffer = buffer;
         this.connection = connection;
-        this.future = future;
+        this.callback = callback;
         this.receiveMessageCallback = receiveMessageCallback;
         this.requestId = requestId;
     }
 
     @Override
-    public void onResult(final Void result, final MongoException e) {
+    public void onResult(final Void result, final Throwable t) {
         buffer.close();
-        if (e != null) {
-            future.init(null, e);
+        if (t != null) {
+            callback.onResult(null, t);
         } else {
             connection.receiveMessageAsync(requestId, receiveMessageCallback);
         }

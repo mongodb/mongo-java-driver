@@ -18,12 +18,8 @@ package com.mongodb.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
@@ -44,69 +40,72 @@ class OperationIterable<T> implements MongoIterable<T> {
     }
 
     @Override
-    public MongoFuture<T> first() {
-        final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        execute().register(new SingleResultCallback<AsyncBatchCursor<T>>() {
+    public void forEach(final Block<? super T> block, final SingleResultCallback<Void> callback) {
+        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
-            public void onResult(final AsyncBatchCursor<T> batchCursor, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
-                    batchCursor.setBatchSize(1);
-                    batchCursor.next(new SingleResultCallback<List<T>>() {
+                    loopCursor(batchCursor, block, callback);
+                }
+            }
+        });
+    }
+
+    @Override
+    public <A extends Collection<? super T>> void into(final A target, final SingleResultCallback<A> callback) {
+        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
+            @Override
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    loopCursor(batchCursor, new Block<T>() {
                         @Override
-                        public void onResult(final List<T> results, final MongoException e) {
-                            if (e != null) {
-                                future.init(null, e);
-                            } else if (results == null) {
-                                future.init(null, null);
+                        public void apply(final T t) {
+                            target.add(t);
+                        }
+                    }, new SingleResultCallback<Void>() {
+                        @Override
+                        public void onResult(final Void result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
                             } else {
-                                future.init(results.get(0), null);
+                                callback.onResult(target, null);
                             }
-                            batchCursor.close();
                         }
                     });
                 }
             }
         });
-        return future;
     }
 
     @Override
-    public MongoFuture<Void> forEach(final Block<? super T> block) {
-        final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        execute().register(new SingleResultCallback<AsyncBatchCursor<T>>() {
+    public void first(final SingleResultCallback<T> callback) {
+        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
-            public void onResult(final AsyncBatchCursor<T> batchCursor, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
-                    loopCursor(future, batchCursor, block);
+                    batchCursor.setBatchSize(1);
+                    batchCursor.next(new SingleResultCallback<List<T>>() {
+                        @Override
+                        public void onResult(final List<T> results, final Throwable t) {
+                            batchCursor.close();
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else if (results == null) {
+                                callback.onResult(null, null);
+                            } else {
+                                callback.onResult(results.get(0), null);
+                            }
+                        }
+                    });
                 }
             }
         });
-        return future;
-    }
-
-    @Override
-    public <A extends Collection<? super T>> MongoFuture<A> into(final A target) {
-        final SingleResultFuture<A> future = new SingleResultFuture<A>();
-        forEach(new Block<T>() {
-            @Override
-            public void apply(final T t) {
-                target.add(t);
-            }
-        }).register(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    future.init(target, null);
-                }
-            }
-        });
-        return future;
     }
 
     @Override
@@ -115,34 +114,31 @@ class OperationIterable<T> implements MongoIterable<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private MongoFuture<AsyncBatchCursor<T>> execute() {
-        return (MongoFuture<AsyncBatchCursor<T>>) executor.execute(operation, readPreference);
+    private void execute(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executor.execute((AsyncReadOperation<AsyncBatchCursor<T>>) operation, readPreference, callback);
     }
 
-    private void loopCursor(final SingleResultFuture<Void> future, final AsyncBatchCursor<T> batchCursor, final Block<? super T> block) {
+    private void loopCursor(final AsyncBatchCursor<T> batchCursor, final Block<? super T> block,
+                            final SingleResultCallback<Void> callback) {
         batchCursor.next(new SingleResultCallback<List<T>>() {
             @Override
-            public void onResult(final List<T> results, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else if (results == null) {
-                    future.init(null, null);
+            public void onResult(final List<T> results, final Throwable t) {
+                if (t != null || results == null) {
+                    batchCursor.close();
+                    callback.onResult(null, t);
                 } else {
                     try {
                         for (T result : results) {
                             block.apply(result);
                         }
-                        loopCursor(future, batchCursor, block);
-                    } catch (MongoException err) {
-                        future.init(null, err);
-                    } catch (Throwable t) {
-                        future.init(null, new MongoInternalException(t.getMessage(), t));
+                        loopCursor(batchCursor, block, callback);
+                    } catch (Throwable tr) {
+                        batchCursor.close();
+                        callback.onResult(null, tr);
                     }
-                }
-                if (future.isDone()) {
-                    batchCursor.close();
                 }
             }
         });
     }
+
 }

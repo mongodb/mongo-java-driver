@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import category.Slow
+import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -28,7 +29,7 @@ import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
@@ -57,7 +58,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.wasAcknowledged()
@@ -99,7 +100,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
 
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.wasAcknowledged()
@@ -131,7 +132,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
@@ -175,10 +176,11 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
                                               REPLACE)]
 
         when:
-        new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements).executeAsync(getAsyncBinding()).get()
+        executeAsync(new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements))
 
         then:
-        thrown(BsonSerializationException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof BsonSerializationException
     }
 
     def 'should move _id to the beginning'() {

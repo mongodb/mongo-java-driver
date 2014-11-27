@@ -16,7 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.async.FutureResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.ClusterBinding;
@@ -27,6 +30,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SSLSettings;
@@ -38,6 +42,9 @@ import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
+import com.mongodb.operation.AsyncBatchCursor;
+import com.mongodb.operation.AsyncReadOperation;
+import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
@@ -46,6 +53,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -138,11 +146,19 @@ public final class ClusterFixture {
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
-        return new AsyncSingleConnectionBinding(getAsyncCluster(), 10, SECONDS);
+        return getAsyncSingleConnectionBinding(getAsyncCluster());
+    }
+
+    public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding(final Cluster cluster) {
+        return new AsyncSingleConnectionBinding(cluster, 10, SECONDS);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return new AsyncClusterBinding(getAsyncCluster(), ReadPreference.primary(), 10, SECONDS);
+        return getAsyncBinding(getAsyncCluster());
+    }
+
+    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
+        return new AsyncClusterBinding(cluster, ReadPreference.primary());
     }
 
     public static Cluster getCluster() {
@@ -236,5 +252,84 @@ public final class ClusterFixture {
                                                     new BsonDocumentCodec())
             .execute(getBinding());
         }
+    }
+
+    public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
+        return executeAsync(op, getAsyncBinding());
+    }
+
+    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+        final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
+        op.executeAsync(binding, futureResultCallback);
+        return futureResultCallback.get(10, SECONDS);
+    }
+
+    public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
+        return executeAsync(op, getAsyncBinding());
+    }
+
+    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+        final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
+        op.executeAsync(binding, futureResultCallback);
+        return futureResultCallback.get(10, SECONDS);
+    }
+
+    public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
+        List<FutureResultCallback<Void>> futures = new ArrayList<FutureResultCallback<Void>>();
+        for (AsyncBatchCursor<T> batchCursor : batchCursors) {
+            FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+            futures.add(futureResultCallback);
+            loopCursor(batchCursor, block, futureResultCallback);
+        }
+        for (int i = 0; i < batchCursors.size(); i++) {
+            futures.get(i).get(10, SECONDS);
+        }
+    }
+
+    public static <T> void loopCursor(final AsyncReadOperation<AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
+        final FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+        loopCursor(executeAsync(op), block, futureResultCallback);
+        futureResultCallback.get(10, SECONDS);
+    }
+
+    public static <T> void loopCursor(final AsyncBatchCursor<T> batchCursor, final Block<T> block,
+                                      final SingleResultCallback<Void> callback) {
+        batchCursor.next(new SingleResultCallback<List<T>>() {
+            @Override
+            public void onResult(final List<T> results, final Throwable t) {
+                    if (t != null || results == null) {
+                        batchCursor.close();
+                        callback.onResult(null, t);
+                    } else {
+                        try {
+                            for (T result : results) {
+                                block.apply(result);
+                            }
+                            loopCursor(batchCursor, block, callback);
+                        } catch (Throwable tr) {
+                            batchCursor.close();
+                            callback.onResult(null, tr);
+                        }
+                    }
+            }
+        });
+    }
+
+    public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
+        final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
+        binding.getWriteConnectionSource(futureResultCallback);
+        return futureResultCallback.get(10, SECONDS);
+    }
+
+    public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
+        final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
+        binding.getReadConnectionSource(futureResultCallback);
+        return futureResultCallback.get(10, SECONDS);
+    }
+
+    public static Connection getConnection(final AsyncConnectionSource source) throws Throwable {
+        final FutureResultCallback<Connection> futureResultCallback = new FutureResultCallback<Connection>();
+        source.getConnection(futureResultCallback);
+        return futureResultCallback.get(10, SECONDS);
     }
 }

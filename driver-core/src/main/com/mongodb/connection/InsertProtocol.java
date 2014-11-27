@@ -20,9 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -71,23 +69,27 @@ class InsertProtocol extends WriteProtocol {
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
-                                insertRequestList.size(), getNamespace(), connection.getDescription().getConnectionId(),
-                                connection.getDescription().getServerAddress()));
-        }
-        final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
-        super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
-            @Override
-            public void onResult(final WriteConcernResult result, final MongoException e) {
-                if (e == null) {
-                    LOGGER.debug("Asynchronous insert completed");
-                }
-                future.init(result, e);
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
+                                    insertRequestList.size(), getNamespace(), connection.getDescription().getConnectionId(),
+                                    connection.getDescription().getServerAddress()));
             }
-        });
-        return future;
+            super.executeAsync(connection, new SingleResultCallback<WriteConcernResult>() {
+                @Override
+                public void onResult(final WriteConcernResult result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, MongoException.fromThrowable(t));
+                    } else {
+                        LOGGER.debug("Asynchronous insert completed");
+                        callback.onResult(result, null);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {

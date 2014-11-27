@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
@@ -56,7 +56,7 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding);
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding, callback);
     }
 }

@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.FutureResultCallback;
 import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,14 +62,13 @@ public class X509AuthenticatorUnitTest {
     public void testFailedAuthenticationAsync() throws InterruptedException {
         enqueueFailedAuthenticationReply();
 
-        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         try {
             futureCallback.get();
-            fail();
-        } catch (ExecutionException e) {
-            if (!(e.getCause() instanceof MongoSecurityException)) {
+        } catch (Throwable t) {
+            if (!(t instanceof MongoSecurityException)) {
                 fail();
             }
         }
@@ -94,7 +94,7 @@ public class X509AuthenticatorUnitTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulAuthenticationReply();
 
-        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
         subject.authenticateAsync(connection, connectionDescription, futureCallback);
 
         futureCallback.get();

@@ -18,7 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.options.OperationOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
@@ -74,53 +74,55 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoFuture<Void> dropDatabase() {
-        return executor.execute(new DropDatabaseOperation(name));
+    public void dropDatabase(final SingleResultCallback<Void> callback) {
+        executor.execute(new DropDatabaseOperation(name), callback);
     }
 
     @Override
-    public MongoFuture<List<String>> getCollectionNames() {
-        return executor.execute(new ListCollectionNamesOperation(name), primary());
+    public void getCollectionNames(final SingleResultCallback<List<String>> callback) {
+        executor.execute(new ListCollectionNamesOperation(name), primary(), callback);
     }
 
     @Override
-    public MongoFuture<Void> createCollection(final String collectionName) {
-        return createCollection(collectionName, new CreateCollectionOptions());
+    public void createCollection(final String collectionName, final SingleResultCallback<Void> callback) {
+        createCollection(collectionName, new CreateCollectionOptions(), callback);
     }
 
     @Override
-    public MongoFuture<Void> createCollection(final String collectionName, final CreateCollectionOptions options) {
-        return executor.execute(new CreateCollectionOperation(name, collectionName)
-                                .capped(options.isCapped())
-                                .sizeInBytes(options.getSizeInBytes())
-                                .autoIndex(options.isAutoIndex())
-                                .maxDocuments(options.getMaxDocuments())
-                                .usePowerOf2Sizes(options.isUsePowerOf2Sizes()));
+    public void createCollection(final String collectionName, final CreateCollectionOptions options,
+                                 final SingleResultCallback<Void> callback) {
+        executor.execute(new CreateCollectionOperation(name, collectionName)
+                         .capped(options.isCapped())
+                         .sizeInBytes(options.getSizeInBytes())
+                         .autoIndex(options.isAutoIndex())
+                         .maxDocuments(options.getMaxDocuments())
+                         .usePowerOf2Sizes(options.isUsePowerOf2Sizes()), callback);
     }
 
     @Override
-    public MongoFuture<Document> executeCommand(final Object command) {
-        return executeCommand(command, Document.class);
+    public void executeCommand(final Object command, final SingleResultCallback<Document> callback) {
+        executeCommand(command, Document.class, callback);
     }
 
     @Override
-    public MongoFuture<Document> executeCommand(final Object command, final ReadPreference readPreference) {
-        return executeCommand(command, readPreference, Document.class);
+    public void executeCommand(final Object command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
+        executeCommand(command, readPreference, Document.class, callback);
     }
 
     @Override
-    public <T> MongoFuture<T> executeCommand(final Object command, final Class<T> clazz) {
+    public <T> void executeCommand(final Object command, final Class<T> clazz, final SingleResultCallback<T> callback) {
         notNull("command", command);
-        return executor.execute(new CommandWriteOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
-                                                             options.getCodecRegistry().get(clazz)));
+        executor.execute(new CommandWriteOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
+                                                      options.getCodecRegistry().get(clazz)), callback);
     }
 
     @Override
-    public <T> MongoFuture<T> executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz) {
+    public <T> void executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz,
+                                   final SingleResultCallback<T> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
-        return executor.execute(new CommandReadOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
-                                                            options.getCodecRegistry().get(clazz)), readPreference);
+        executor.execute(new CommandReadOperation<T>(getName(), asBsonDocument(command, options.getCodecRegistry()),
+                                                     options.getCodecRegistry().get(clazz)), readPreference, callback);
     }
 
     @Override

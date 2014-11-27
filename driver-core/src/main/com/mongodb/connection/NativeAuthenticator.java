@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
@@ -56,9 +55,9 @@ class NativeAuthenticator extends Authenticator {
         executeCommandAsync(getCredential().getSource(), getNonceCommand(), connection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
-                                public void onResult(final BsonDocument nonceResult, final MongoException e) {
-                                    if (e != null) {
-                                        callback.onResult(null, translateException(e));
+                                public void onResult(final BsonDocument nonceResult, final Throwable t) {
+                                    if (t != null) {
+                                        callback.onResult(null, translateThrowable(t));
                                     } else {
                                         executeCommandAsync(getCredential().getSource(),
                                                             getAuthCommand(getCredential().getUserName(), getCredential().getPassword(),
@@ -66,9 +65,9 @@ class NativeAuthenticator extends Authenticator {
                                                             connection,
                                                             new SingleResultCallback<BsonDocument>() {
                                                                 @Override
-                                                                public void onResult(final BsonDocument result, final MongoException e) {
-                                                                    if (e != null) {
-                                                                        callback.onResult(null, translateException(e));
+                                                                public void onResult(final BsonDocument result, final Throwable t) {
+                                                                    if (t != null) {
+                                                                        callback.onResult(null, translateThrowable(t));
                                                                     } else {
                                                                         callback.onResult(null, null);
                                                                     }
@@ -79,11 +78,11 @@ class NativeAuthenticator extends Authenticator {
                             });
     }
 
-    private MongoException translateException(final MongoException e) {
-        if (e instanceof CommandFailureException) {
-            return new MongoSecurityException(getCredential(), "Exception authenticating", e);
+    private Throwable translateThrowable(final Throwable t) {
+        if (t instanceof CommandFailureException) {
+            return new MongoSecurityException(getCredential(), "Exception authenticating", t);
         } else {
-            return e;
+            return t;
         }
     }
 }

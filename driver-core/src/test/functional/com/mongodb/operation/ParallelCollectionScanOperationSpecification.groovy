@@ -20,17 +20,17 @@ import category.Async
 import category.Slow
 import com.mongodb.Block
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.async.SingleResultFuture
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.ConcurrentHashMap
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
@@ -38,11 +38,11 @@ import static org.junit.Assert.assertTrue
 @IgnoreIf({ isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) })
 @Category(Slow)
 class ParallelCollectionScanOperationSpecification extends OperationFunctionalSpecification {
-    Set<Integer> ids = [] as Set
+    Map<Integer, Boolean> ids = [] as ConcurrentHashMap
 
     def 'setup'() {
         (1..2000).each {
-            ids.add(it)
+            ids.put(it, true)
             getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
     }
@@ -71,23 +71,18 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
     @Category(Async)
     def 'should visit all documents asynchronously'() {
         when:
-        List<AsyncBatchCursor<Document>> cursors = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
-                .batchSize(500).executeAsync(getAsyncBinding()).get()
+        def cursors = executeAsync(new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec()).batchSize(500))
 
         then:
         cursors.size() <= 3
 
         when:
-        for (AsyncBatchCursor<Document> cursor : cursors) {
-            loopCursor(new SingleResultFuture<Void>(), cursor,
-                       new Block<Document>() {
-                           @Override
-                           void apply(final Document document) {
-                               Integer id = (Integer) document.get('_id')
-                               assertTrue(ids.remove(id))
-                           }
-                       }).get(10, TimeUnit.SECONDS)
-        }
+        loopCursor(cursors, new Block<Document>() {
+            @Override
+            void apply(final Document document) {
+                assertTrue(ids.remove((Integer) document.get('_id')))
+            }
+        })
 
         then:
         ids.isEmpty()

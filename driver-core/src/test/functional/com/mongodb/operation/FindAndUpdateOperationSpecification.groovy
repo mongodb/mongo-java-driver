@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
@@ -28,7 +29,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class FindAndUpdateOperationSpecification extends OperationFunctionalSpecification {
@@ -80,7 +81,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
                 .returnOriginal(true)
-        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Document returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
@@ -92,7 +93,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
                 .returnOriginal(false)
-        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 5
@@ -141,7 +142,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Worker returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.numberOfJobs == 3
@@ -153,7 +154,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
                 .returnOriginal(false)
-        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument.numberOfJobs == 5
@@ -176,7 +177,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Document returnedDocument = executeAsync(operation)
 
         then:
         returnedDocument == null
@@ -195,10 +196,11 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
     def 'should throw an exception if update contains fields that are not update operators asynchronously'() {
         when:
         def update = new BsonDocument('x', new BsonInt32(1))
-        new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update).executeAsync(getAsyncBinding()).get()
+        executeAsync(new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update))
 
         then:
-        thrown(IllegalArgumentException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
     }
 
 }

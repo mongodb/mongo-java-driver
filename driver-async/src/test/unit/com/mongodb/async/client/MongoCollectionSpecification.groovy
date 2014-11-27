@@ -20,6 +20,7 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernResult
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
@@ -38,6 +39,8 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.options.OperationOptions
+import com.mongodb.client.result.DeleteResult
+import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
@@ -52,6 +55,7 @@ import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.ListIndexesOperation
+import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
@@ -110,25 +114,31 @@ class MongoCollectionSpecification extends Specification {
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new CountOperation(namespace).filter(filter)
+        def futureResultCallback = new FutureResultCallback<Long>()
 
         when:
-        collection.count().get()
+        collection.count(futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as CountOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
+        futureResultCallback = new FutureResultCallback<Long>()
         filter = new BsonDocument('a', new BsonInt32(1))
-        collection.count(filter).get()
+        collection.count(filter, futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as CountOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation.filter(filter))
 
         when:
+        futureResultCallback = new FutureResultCallback<Long>()
         def hint = new BsonDocument('hint', new BsonInt32(1))
-        collection.count(filter, new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS)).get()
+        collection.count(filter, new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS), futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as CountOperation
 
         then:
@@ -140,17 +150,21 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([new BsonArray([new BsonString('a')]), new BsonArray([new BsonString('b')])])
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<Object>>()
 
         when:
-        collection.distinct('test', filter).get()
+        collection.distinct('test', filter, futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as DistinctOperation
 
         then:
         expect operation, isTheSameAs(new DistinctOperation(namespace, 'test').filter(new BsonDocument()))
 
         when:
+        futureResultCallback = new FutureResultCallback<List<Object>>()
         filter = new BsonDocument('a', new BsonInt32(1))
-        collection.distinct('test', filter, new DistinctOptions().maxTime(100, MILLISECONDS)).get()
+        collection.distinct('test', filter, new DistinctOptions().maxTime(100, MILLISECONDS), futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as DistinctOperation
 
         then:
@@ -165,21 +179,26 @@ class MongoCollectionSpecification extends Specification {
                                                   new BsonArray([new BsonString('no document codec')])])
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<Object>>()
 
         when: 'A failed operation'
-        collection.distinct('test', filter).get()
+        collection.distinct('test', filter, futureResultCallback)
+        futureResultCallback.get()
 
         then:
         thrown(MongoException)
 
         when: 'An unexpected result'
-        collection.distinct('test', filter).get()
+        futureResultCallback = new FutureResultCallback<List<Object>>()
+        collection.distinct('test', filter, futureResultCallback)
+        futureResultCallback.get()
 
         then:
         thrown(MongoException)
 
         when: 'A missing codec should throw immediately'
-        collection.distinct('test', new Document())
+        futureResultCallback = new FutureResultCallback<List<Object>>()
+        collection.distinct('test', new Document(), futureResultCallback)
 
         then:
         thrown(CodecConfigurationException)
@@ -194,30 +213,38 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def documentOperation = new FindOperation(namespace, new DocumentCodec()).filter(new BsonDocument()).slaveOk(true)
         def bsonOperation = new FindOperation(namespace, new BsonDocumentCodec()).filter(new BsonDocument()).slaveOk(true)
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.find().into([]).get()
+        collection.find().into([], futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as FindOperation
 
         then:
         expect operation, isTheSameAs(documentOperation)
 
         when:
-        collection.find(BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.find(BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as FindOperation
 
         then:
         expect operation, isTheSameAs(bsonOperation)
 
         when:
-        collection.find(new Document('filter', 1)).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.find(new Document('filter', 1)).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as FindOperation
 
         then:
         expect operation, isTheSameAs(documentOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
 
         when:
-        collection.find(new Document('filter', 1), BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.find(new Document('filter', 1), BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as FindOperation
 
         then:
@@ -231,9 +258,11 @@ class MongoCollectionSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.aggregate([new Document('$match', 1)]).into([]).get()
+        collection.aggregate([new Document('$match', 1)]).into([], futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as AggregateOperation
 
         then:
@@ -241,7 +270,9 @@ class MongoCollectionSpecification extends Specification {
                                                              new DocumentCodec()))
 
         when:
-        collection.aggregate([new Document('$match', 1)], new AggregateOptions().maxTime(100, MILLISECONDS)).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.aggregate([new Document('$match', 1)], new AggregateOptions().maxTime(100, MILLISECONDS)).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as AggregateOperation
 
         then:
@@ -249,12 +280,14 @@ class MongoCollectionSpecification extends Specification {
                                                              new DocumentCodec()).maxTime(100, MILLISECONDS))
 
         when:
-        collection.aggregate([new Document('$match', 1)], BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.aggregate([new Document('$match', 1)], BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as AggregateOperation
 
         then:
         expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                                                           new BsonDocumentCodec()))
+                                                             new BsonDocumentCodec()))
     }
 
     def 'should handle exceptions in aggregate correctly'() {
@@ -263,9 +296,11 @@ class MongoCollectionSpecification extends Specification {
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
         when: 'The operation fails with an exception'
-        collection.aggregate([new BsonDocument('$match', new BsonInt32(1))], BsonDocument).into([]).get()
+        collection.aggregate([new BsonDocument('$match', new BsonInt32(1))], BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
 
         then: 'the future should handle the exception'
         thrown(MongoException)
@@ -288,9 +323,11 @@ class MongoCollectionSpecification extends Specification {
                                                                         new DocumentCodec()).verbose(true)
         def bsonOperation = new MapReduceWithInlineResultsOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
                                                                     new BsonDocumentCodec()).verbose(true)
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.mapReduce('map', 'reduce').into([]).get()
+        collection.mapReduce('map', 'reduce').into([], futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
 
         then:
@@ -298,43 +335,51 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def mapReduceOptions = new MapReduceOptions().finalizeFunction('final')
-        collection.mapReduce('map', 'reduce', mapReduceOptions).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.mapReduce('map', 'reduce', mapReduceOptions).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
 
         then:
         expect operation, isTheSameAs(documentOperation.finalizeFunction(new BsonJavaScript('final')))
 
         when:
-        collection.mapReduce('map', 'reduce', BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        collection.mapReduce('map', 'reduce', BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
 
         then:
         expect operation, isTheSameAs(bsonOperation)
 
         when:
-        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
 
         then:
         expect operation, isTheSameAs(bsonOperation.finalizeFunction(new BsonJavaScript('final')))
-
     }
 
     def 'should use MapReduceToCollectionOperation correctly'() {
         given:
+        def stats = Stub(MapReduceStatistics)
         def asyncCursor = Stub(AsyncBatchCursor) {
             next(_) >> { args -> args[0].onResult(null, null) }
         }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
+        def executor = new TestOperationExecutor([stats, asyncCursor, stats, asyncCursor, stats, asyncCursor, stats, asyncCursor])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
                                                                    'collectionName').filter(new BsonDocument('filter', new BsonInt32(1)))
                                                                                     .finalizeFunction(new BsonJavaScript('final'))
                                                                                     .verbose(true)
         def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.mapReduce('map', 'reduce', mapReduceOptions).into([]).get()
+        collection.mapReduce('map', 'reduce', mapReduceOptions).into([], futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
 
         then:
@@ -345,10 +390,12 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'), new DocumentCodec())
-                                            .filter(new BsonDocument()))
+                                              .filter(new BsonDocument()))
 
         when:
-        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([]).get()
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as MapReduceToCollectionOperation
 
         then:
@@ -360,7 +407,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'),
                                                         new BsonDocumentCodec())
-                                            .filter(new BsonDocument()))
+                                              .filter(new BsonDocument()))
     }
 
     def 'should handle exceptions in mapReduce correctly'() {
@@ -369,15 +416,18 @@ class MongoCollectionSpecification extends Specification {
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
         when: 'The operation fails with an exception'
-        collection.mapReduce('map', 'reduce', BsonDocument).into([]).get()
+        collection.mapReduce('map', 'reduce', BsonDocument).into([], futureResultCallback)
+        futureResultCallback.get()
 
         then: 'the future should handle the exception'
         thrown(MongoException)
 
         when: 'a codec is missing its acceptable to immediately throw'
-        collection.mapReduce('map', 'reduce').into([])
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        collection.mapReduce('map', 'reduce').into([], futureResultCallback)
 
         then:
         thrown(CodecConfigurationException)
@@ -390,9 +440,11 @@ class MongoCollectionSpecification extends Specification {
             new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                         ordered, writeConcern)
         }
+        def futureResultCallback = new FutureResultCallback<BulkWriteResult>()
 
         when:
-        def result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))]).get()
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -400,7 +452,9 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true)).get()
+        futureResultCallback = new FutureResultCallback<BulkWriteResult>()
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true), futureResultCallback)
+        result = futureResultCallback.get()
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -423,7 +477,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
 
         when: 'a codec is missing its acceptable to immediately throw'
-        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new FutureResultCallback<BulkWriteResult>())
 
         then:
         thrown(CodecConfigurationException)
@@ -434,9 +488,11 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new InsertOperation(namespace, true, writeConcern,
                                                     [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
 
         when:
-        def result = collection.insertOne(new Document('_id', 1)).get()
+        collection.insertOne(new Document('_id', 1), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
@@ -454,13 +510,15 @@ class MongoCollectionSpecification extends Specification {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { ordered ->
-            new InsertOperation(namespace, ordered,writeConcern,
+            new InsertOperation(namespace, ordered, writeConcern,
                                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                  new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
         }
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
 
         when:
-        def result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)]).get()
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
@@ -468,7 +526,10 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true)).get()
+        futureResultCallback = new FutureResultCallback<WriteConcernResult>()
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true),
+                              futureResultCallback)
+        result = futureResultCallback.get()
         operation = executor.getWriteOperation() as InsertOperation
 
         then:
@@ -486,9 +547,11 @@ class MongoCollectionSpecification extends Specification {
     def 'should use DeleteOneOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
+        def futureResultCallback = new FutureResultCallback<DeleteResult>()
 
         when:
-        def result = collection.deleteOne(new Document('_id', 1)).get()
+        collection.deleteOne(new Document('_id', 1), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as DeleteOperation
 
         then:
@@ -505,9 +568,11 @@ class MongoCollectionSpecification extends Specification {
     def 'should use DeleteManyOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
+        def futureResultCallback = new FutureResultCallback<DeleteResult>()
 
         when:
-        def result = collection.deleteMany(new Document('_id', 1)).get()
+        collection.deleteMany(new Document('_id', 1), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as DeleteOperation
 
         then:
@@ -524,9 +589,11 @@ class MongoCollectionSpecification extends Specification {
     def 'should use UpdateOperation correctly for replaceOne'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
+        def futureResultCallback = new FutureResultCallback<UpdateResult>()
 
         when:
-        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10)).get()
+        collection.replaceOne(new Document('a', 1), new Document('a', 10), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
@@ -551,17 +618,21 @@ class MongoCollectionSpecification extends Specification {
                                                    new BsonDocument('a', new BsonInt32(10)),
                                                    WriteRequest.Type.UPDATE).multi(false).upsert(upsert)])
         }
+        def futureResultCallback = new FutureResultCallback<UpdateResult>()
 
         when:
-        def result = collection.updateOne(new Document('a', 1), new Document('a', 10)).get()
+        collection.updateOne(new Document('a', 1), new Document('a', 10), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
-        result.wasAcknowledged()  == writeConcern.isAcknowledged()
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        result = collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true)).get()
+        futureResultCallback = new FutureResultCallback<UpdateResult>()
+        collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true), futureResultCallback)
+        result = futureResultCallback.get()
         operation = executor.getWriteOperation() as UpdateOperation
 
         then:
@@ -586,9 +657,11 @@ class MongoCollectionSpecification extends Specification {
                                                    WriteRequest.Type.UPDATE)
                                          .multi(true).upsert(upsert)])
         }
+        def futureResultCallback = new FutureResultCallback<UpdateResult>()
 
         when:
-        def result = collection.updateMany(new Document('a', 1), new Document('a', 10)).get()
+        collection.updateMany(new Document('a', 1), new Document('a', 10), futureResultCallback)
+        def result = futureResultCallback.get()
         def operation = executor.getWriteOperation() as UpdateOperation
 
         then:
@@ -596,7 +669,9 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        result = collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true)).get()
+        futureResultCallback = new FutureResultCallback<UpdateResult>()
+        collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true), futureResultCallback)
+        result = futureResultCallback.get()
         operation = executor.getWriteOperation() as UpdateOperation
 
         then:
@@ -615,16 +690,21 @@ class MongoCollectionSpecification extends Specification {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
+        def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
-        collection.findOneAndDelete(new Document('a', 1)).get()
+        collection.findOneAndDelete(new Document('a', 1), futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1))).get()
+        futureResultCallback = new FutureResultCallback<Document>()
+        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)),
+                                    futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
@@ -643,17 +723,21 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndReplaceOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
                 .filter(new BsonDocument('a', new BsonInt32(1)))
+        def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
-        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10)).get()
+        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10), futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
+        futureResultCallback = new FutureResultCallback<Document>()
         collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
-                                     new FindOneAndReplaceOptions().projection(new Document('projection', 1))).get()
+                                     new FindOneAndReplaceOptions().projection(new Document('projection', 1)), futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
@@ -672,17 +756,21 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = new FindAndUpdateOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
                 .filter(new BsonDocument('a', new BsonInt32(1)))
+        def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
-        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10)).get()
+        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10), futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
+        futureResultCallback = new FutureResultCallback<Document>()
         collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
-                                    new FindOneAndUpdateOptions().projection(new Document('projection', 1))).get()
+                                    new FindOneAndUpdateOptions().projection(new Document('projection', 1)), futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
@@ -701,9 +789,11 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new DropCollectionOperation(namespace)
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        collection.dropCollection().get()
+        collection.dropCollection(futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as DropCollectionOperation
 
         then:
@@ -715,15 +805,20 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new CreateIndexOperation(namespace, new BsonDocument('key', new BsonInt32(1)))
+        def futureResultCallback = new FutureResultCallback<Void>()
+
         when:
-        collection.createIndex(new Document('key', 1)).get()
+        collection.createIndex(new Document('key', 1), futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as CreateIndexOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.createIndex(new Document('key', 1), new CreateIndexOptions().background(true)).get()
+        futureResultCallback = new FutureResultCallback<Void>()
+        collection.createIndex(new Document('key', 1), new CreateIndexOptions().background(true), futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as CreateIndexOperation
 
         then:
@@ -734,16 +829,20 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([[], []])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.getIndexes().get()
+        collection.getIndexes(futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
 
         when:
-        collection.getIndexes(BsonDocument).get()
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        collection.getIndexes(BsonDocument, futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
@@ -755,9 +854,11 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new DropIndexOperation(namespace, 'indexName')
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        collection.dropIndex('indexName').get()
+        collection.dropIndex('indexName', futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
@@ -769,9 +870,11 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def expectedOperation = new DropIndexOperation(namespace, '*')
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        collection.dropIndexes().get()
+        collection.dropIndexes(futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
@@ -784,9 +887,11 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
         def expectedOperation = new RenameCollectionOperation(namespace, newNamespace)
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        collection.renameCollection(newNamespace).get()
+        collection.renameCollection(newNamespace, futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as RenameCollectionOperation
 
         then:

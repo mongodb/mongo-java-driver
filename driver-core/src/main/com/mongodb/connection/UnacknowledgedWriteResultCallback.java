@@ -16,29 +16,26 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import org.bson.io.OutputBuffer;
 
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
-    private final SingleResultFuture<WriteConcernResult> future;
+    private final SingleResultCallback<WriteConcernResult> callback;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
     private final boolean ordered;
     private final InternalConnection connection;
 
-    UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteConcernResult> future,
+    UnacknowledgedWriteResultCallback(final SingleResultCallback<WriteConcernResult> callback,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final boolean ordered, final OutputBuffer writtenBuffer,
                                       final InternalConnection connection) {
-        this.future = future;
+        this.callback = callback;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.ordered = ordered;
@@ -47,16 +44,14 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     }
 
     @Override
-    public void onResult(final Void result, final MongoException e) {
+    public void onResult(final Void result, final Throwable t) {
         writtenBuffer.close();
-        if (e != null) {
-            future.init(null, e);
+        if (t != null) {
+            callback.onResult(null, t);
         } else if (nextMessage != null) {
-            MongoFuture<WriteConcernResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED)
-                                                 .executeAsync(connection);
-            newFuture.register(new SingleResultFutureCallback<WriteConcernResult>(future));
+            new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED).executeAsync(connection, callback);
         } else {
-            future.init(WriteConcernResult.unacknowledged(), null);
+            callback.onResult(WriteConcernResult.unacknowledged(), null);
         }
     }
 }

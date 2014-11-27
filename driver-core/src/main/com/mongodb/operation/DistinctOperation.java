@@ -18,7 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonArray;
@@ -34,7 +34,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 
 /**
- * <p>Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.</p>
+ * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
  * 
  * <p>When possible, the distinct command uses an index to find documents and return values.</p>
  *
@@ -110,8 +110,8 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
     }
 
     @Override
-    public MongoFuture<BsonArray> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonArray> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer(), callback);
     }
 
     @SuppressWarnings("unchecked")

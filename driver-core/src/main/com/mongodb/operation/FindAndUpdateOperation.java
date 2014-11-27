@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.MappedFieldNameValidator;
@@ -237,10 +237,10 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
-                                                  CommandResultDocumentCodec.create(decoder, "value"), binding,
-                                                  FindAndModifyHelper.<T>transformer());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
+                                           CommandResultDocumentCodec.create(decoder, "value"), binding,
+                                           FindAndModifyHelper.<T>transformer(), callback);
     }
 
     private BsonDocument getCommand() {

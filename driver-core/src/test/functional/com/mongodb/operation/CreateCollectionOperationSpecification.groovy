@@ -25,7 +25,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
@@ -77,7 +77,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), getCollectionName()).executeAsync(getAsyncBinding()).get()
+        executeAsync(new CreateCollectionOperation(getDatabaseName(), getCollectionName()))
 
         then:
         collectionNameExists(getCollectionName())
@@ -105,7 +105,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.execute(getBinding())
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation)
 
         then:
         thrown(MongoServerException)

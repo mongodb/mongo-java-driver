@@ -18,15 +18,14 @@ package com.mongodb.connection
 
 import category.Async
 import category.Slow
-import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ServerAddress
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.event.ConnectionListener
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
@@ -126,7 +125,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessageAsync(buffers1, messageId1, new SingleResultCallback<Void>() {
             @Override
-            void onResult(final Void result, final MongoException e) {
+            void onResult(final Void result, final Throwable t) {
                 latch.countDown();
             }
         })
@@ -166,7 +165,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.receiveMessageAsync(messageId1, new SingleResultCallback<ResponseBuffers>() {
             @Override
-            void onResult(final ResponseBuffers result, final MongoException e) {
+            void onResult(final ResponseBuffers result, final Throwable t) {
                 latch.countDown();
             }
         })
@@ -200,13 +199,15 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should change the connection description when opened asynchronously'() {
         when:
         def connection = getConnection()
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         then:
         connection.getDescription().getServerType() == ServerType.UNKNOWN
         connection.getDescription().getConnectionId().getServerValue() == null
 
         when:
-        connection.openAsync().get(10, SECONDS)
+        connection.openAsync(futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         connection.opened()
@@ -243,11 +244,9 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream asynchronously'() {
         // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
         given:
-        def sndLatch = new CountDownLatch(3)
-        def rcvdLatch = new CountDownLatch(3)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
         def headers = helper.generateHeaders([messageId1, messageId2, messageId3], ordered)
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -267,20 +266,14 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
         connection.sendMessageAsync(buffers3, messageId3, sndCallbck3)
-
-        then:
-        sndLatch.await(10, SECONDS)
-
-        when:
         connection.receiveMessageAsync(messageId3, rcvdCallbck3)
         connection.receiveMessageAsync(messageId2, rcvdCallbck2)
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-        rcvdLatch.await(10, SECONDS)
 
         then:
-        fRespBuffers1.get().replyHeader.responseTo == messageId1
-        fRespBuffers2.get().replyHeader.responseTo == messageId2
-        fRespBuffers3.get().replyHeader.responseTo == messageId3
+        rcvdCallbck1.get().replyHeader.responseTo == messageId1
+        rcvdCallbck2.get().replyHeader.responseTo == messageId2
+        rcvdCallbck3.get().replyHeader.responseTo == messageId3
 
         where:
         ordered << [true, false]
@@ -291,11 +284,9 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream mixed synchronicity'() {
         // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
         given:
-        def sndLatch = new CountDownLatch(1)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
         def headers = helper.generateHeaders([messageId1, messageId2, messageId3])
 
         stream.read(36) >> { helper.header(messageId2) }
@@ -316,20 +307,14 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessage(buffers1, messageId1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
         connection.sendMessage(buffers3, messageId3)
-
-        then:
-        sndLatch.await(10, SECONDS)
-
-        when:
         connection.receiveMessageAsync(messageId3, rcvdCallbck3)
         ResponseBuffers responseBuffers2 = connection.receiveMessage(messageId2)
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-        rcvdLatch.await(10, SECONDS)
 
         then:
-        fRespBuffers1.get().replyHeader.responseTo == messageId1
+        rcvdCallbck1.get().replyHeader.responseTo == messageId1
         responseBuffers2.replyHeader.responseTo == messageId2
-        fRespBuffers3.get().replyHeader.responseTo == messageId3
+        rcvdCallbck3.get().replyHeader.responseTo == messageId3
     }
 
     def 'should close the stream when initialization throws an exception'() {
@@ -352,14 +337,14 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
-            initializeAsync(_, _) >> {
-                it[1].onResult(null, new MongoInternalException('Something went wrong'));
-            }
+            initializeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')); }
         }
         def connection = new InternalStreamConnection(SERVER_ID, streamFactory, failedInitializer, listener)
 
         when:
-        connection.openAsync().get(10, SECONDS)
+        def futureResultCallback = new FutureResultCallback<Void>()
+        connection.openAsync(futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         thrown MongoInternalException
@@ -392,10 +377,8 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when writing a message throws an exception asynchronously'() {
         given:
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
         def headers = helper.generateHeaders([messageId1, messageId2])
         int seen = 0
 
@@ -406,31 +389,20 @@ class InternalStreamConnectionSpecification extends Specification {
             }
             callback.completed(null)
         }
-        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(headers.pop())
-        }
-        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.body())
-        }
 
         def connection = getOpenedConnection()
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
-        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        sndLatch.await(10, SECONDS)
-
-        then:
-        connection.isClosed()
-
-        when:
-        fSndResult1.get(10, SECONDS)
+        sndCallbck1.get(10, SECONDS)
 
         then:
         thrown MongoSocketWriteException
+        connection.isClosed()
 
         when:
-        fSndResult2.get(10, SECONDS)
+        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
+        sndCallbck2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -466,10 +438,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:
         int seen = 0
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
         def headers = helper.generateHeaders([messageId1, messageId2])
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -490,26 +460,16 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-
-        then:
-        sndLatch.await(10, SECONDS)
-
-        when:
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
         connection.receiveMessageAsync(messageId2, rcvdCallbck2)
-        rcvdLatch.await(10, SECONDS)
-
-        then:
-        connection.isClosed()
-
-        when:
-        fRespBuffers1.get(10, SECONDS)
+        rcvdCallbck1.get(10, SECONDS)
 
         then:
         thrown MongoSocketReadException
+        connection.isClosed()
 
         when:
-        fRespBuffers2.get(10, SECONDS)
+        rcvdCallbck2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -546,11 +506,8 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when reading the message body throws an exception asynchronously'() {
         given:
-        int seen = 0
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
         def headers = helper.generateHeaders([messageId1, messageId2])
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -567,21 +524,16 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-
-        then:
-        sndLatch.await(10, SECONDS)
-
-        when:
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-        fRespBuffers1.get(10, SECONDS)
+        rcvdCallbck1.get(10, SECONDS)
 
         then:
-        connection.isClosed()
         thrown MongoSocketReadException
+        connection.isClosed()
 
         when:
         connection.receiveMessageAsync(messageId2, rcvdCallbck2)
-        fRespBuffers2.get(10, SECONDS)
+        rcvdCallbck2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -628,15 +580,8 @@ class InternalStreamConnectionSpecification extends Specification {
         int numberOfOperations = 100000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
 
-        def messages = (1..numberOfOperations).collect {
-            def sndLatch = new CountDownLatch(1)
-            def rcvLatch = new CountDownLatch(1)
-
-            helper.isMasterAsync(sndLatch, rcvLatch) + sndLatch + rcvLatch
-        }
-        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers, sndLatch,
-                                         rcvLatch -> helper.header(messageId)
-        }
+        def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
+        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.header(messageId) }
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
@@ -654,13 +599,13 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         (1..numberOfOperations).each { n ->
             def conds = new AsyncConditions()
-            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers, sndLatch, rcvLatch) = messages.pop()
+            def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
 
             pool.submit({ connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable)
             pool.submit({
                             connection.receiveMessageAsync(messageId, rcvdCallbck)
                             conds.evaluate {
-                                assert fRespBuffers.get().replyHeader.responseTo == messageId
+                                assert rcvdCallbck.get().replyHeader.responseTo == messageId
                             }
                         } as Runnable
             )
@@ -733,23 +678,8 @@ class InternalStreamConnectionSpecification extends Specification {
             [buffer.byteBuffers, nextMessageId]
         }
 
-        def isMasterAsync(CountDownLatch sndLatch, CountDownLatch rcvdLatch) {
-            SingleResultFuture<Void> futureSendResult = new SingleResultFuture<Void>()
-            SingleResultFuture<ResponseBuffers> futureResponseBuffers = new SingleResultFuture<ResponseBuffers>()
-            isMaster() + [new SingleResultCallback<Void>() {
-                @Override
-                void onResult(final Void result, final MongoException e) {
-                    sndLatch.countDown()
-                    futureSendResult.init(result, e)
-                }
-            }, new SingleResultCallback<ResponseBuffers>() {
-                @Override
-                void onResult(final ResponseBuffers result, final MongoException e) {
-                    rcvdLatch.countDown()
-                    futureResponseBuffers.init(result, e)
-                }
-            }, futureSendResult, futureResponseBuffers]
-
+        def isMasterAsync() {
+            isMaster() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
         }
     }
 }

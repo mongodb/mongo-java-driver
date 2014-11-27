@@ -19,7 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -55,16 +54,16 @@ final class AsynchronousSocketChannelStream implements Stream {
 
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
-        SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        writeAsync(buffers, new FutureAsyncCompletionHandler<Void>(future));
-        future.get();
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        writeAsync(buffers, handler);
+        handler.getWrite();
     }
 
     @Override
     public ByteBuf read(final int numBytes) throws IOException {
-        SingleResultFuture<ByteBuf> future = new SingleResultFuture<ByteBuf>();
-        readAsync(numBytes, new FutureAsyncCompletionHandler<ByteBuf>(future));
-        return future.get();
+        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
+        readAsync(numBytes, handler);
+        return handler.getRead();
     }
 
     @Override

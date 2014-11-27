@@ -17,6 +17,7 @@
 package com.mongodb.async.client
 
 import com.mongodb.WriteConcern
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.options.OperationOptions
 import com.mongodb.operation.CommandReadOperation
@@ -30,11 +31,11 @@ import org.bson.Document
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.ReadPreference.secondaryPreferred
-import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoDatabaseSpecification extends Specification {
@@ -63,32 +64,42 @@ class MongoDatabaseSpecification extends Specification {
         def command = new BsonDocument('command', new BsonInt32(1))
         def executor = new TestOperationExecutor([null, null, null, null])
         def database = new MongoDatabaseImpl(name, options, executor)
+        def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
-        database.executeCommand(command).get()
+        database.executeCommand(command, futureResultCallback)
+        futureResultCallback.get()
+
+        then:
         def operation = executor.getWriteOperation() as CommandWriteOperation<Document>
 
         then:
         operation.command == command
 
         when:
-        database.executeCommand(command, primaryPreferred()).get()
+        futureResultCallback = new FutureResultCallback<Document>()
+        database.executeCommand(command, primaryPreferred(), futureResultCallback)
         operation = executor.getReadOperation() as CommandReadOperation<Document>
+        futureResultCallback.get()
 
         then:
         operation.command == command
         executor.getReadPreference() == primaryPreferred()
 
         when:
-        database.executeCommand(command, BsonDocument).get()
+        futureResultCallback = new FutureResultCallback<BsonDocument>()
+        database.executeCommand(command, BsonDocument, futureResultCallback)
         operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
+        futureResultCallback.get()
 
         then:
         operation.command == command
 
         when:
-        database.executeCommand(command, primaryPreferred(), BsonDocument).get()
+        futureResultCallback = new FutureResultCallback<BsonDocument>()
+        database.executeCommand(command, primaryPreferred(), BsonDocument, futureResultCallback)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
+        futureResultCallback.get()
 
         then:
         operation.command == command
@@ -98,10 +109,12 @@ class MongoDatabaseSpecification extends Specification {
     def 'should use DropDatabaseOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        new MongoDatabaseImpl(name, options, executor).dropDatabase().get()
+        new MongoDatabaseImpl(name, options, executor).dropDatabase(futureResultCallback)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
+        futureResultCallback.get()
 
         then:
         expect operation, isTheSameAs(new DropDatabaseOperation(name))
@@ -110,10 +123,12 @@ class MongoDatabaseSpecification extends Specification {
     def 'should use ListCollectionNamesOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([['collectionName']])
+        def futureResultCallback = new FutureResultCallback<List<String>>()
 
         when:
-        new MongoDatabaseImpl(name, options, executor).getCollectionNames().get()
+        new MongoDatabaseImpl(name, options, executor).getCollectionNames(futureResultCallback)
         def operation = executor.getReadOperation() as ListCollectionNamesOperation
+        futureResultCallback.get()
 
         then:
         expect operation, isTheSameAs(new ListCollectionNamesOperation(name))
@@ -125,22 +140,26 @@ class MongoDatabaseSpecification extends Specification {
         def collectionName = 'collectionName'
         def executor = new TestOperationExecutor([null, null])
         def database = new MongoDatabaseImpl(name, options, executor)
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        database.createCollection(collectionName).get()
+        database.createCollection(collectionName, futureResultCallback)
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName))
 
         when:
+        futureResultCallback = new FutureResultCallback<Void>()
         def createCollectionOptions = new CreateCollectionOptions()
                 .autoIndex(false)
                 .capped(true)
                 .usePowerOf2Sizes(true)
                 .maxDocuments(100)
                 .sizeInBytes(1000)
-        database.createCollection(collectionName, createCollectionOptions).get()
+        database.createCollection(collectionName, createCollectionOptions, futureResultCallback)
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:

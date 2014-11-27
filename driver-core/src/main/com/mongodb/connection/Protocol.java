@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 
 /**
  * An interface for the execution of a MongoDB wire protocol conversation
@@ -36,7 +36,7 @@ interface Protocol<T> {
      * Execute the protocol asynchronously.
      *
      * @param connection the connection to execute the protocol on
-     * @return a future for the response from execution of the protocol
+     * @param callback   the callback that is passed the result of the execution
      */
-    MongoFuture<T> executeAsync(final InternalConnection connection);
+    void executeAsync(final InternalConnection connection, SingleResultCallback<T> callback);
 }

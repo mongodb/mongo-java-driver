@@ -16,10 +16,10 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 
 interface ProtocolExecutor {
     <T> T execute(final Protocol<T> protocol, InternalConnection connection);
 
-    <T> MongoFuture<T> executeAsync(final Protocol<T> protocol, InternalConnection connection);
+    <T> void executeAsync(final Protocol<T> protocol, InternalConnection connection, SingleResultCallback<T> callback);
 }

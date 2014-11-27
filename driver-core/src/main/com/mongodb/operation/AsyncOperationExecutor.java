@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 
 /**
  * An interface describing the execution of a read or a write operation.
@@ -30,17 +30,17 @@ public interface AsyncOperationExecutor {
      *
      * @param operation the read operation.
      * @param readPreference the read preference.
+     * @param callback the callback to be called when the operation has been executed
      * @param <T> the operations result type.
-     * @return the result of executing the operation.
      */
-    <T> MongoFuture<T> execute(AsyncReadOperation<T> operation, ReadPreference readPreference);
+    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, SingleResultCallback<T> callback);
 
     /**
      * Execute the write operation.
      *
      * @param operation the write operation.
+     * @param callback the callback to be called when the operation has been executed
      * @param <T> the operations result type.
-     * @return the result of executing the operation.
      */
-    <T> MongoFuture<T> execute(AsyncWriteOperation<T> operation);
+    <T> void execute(AsyncWriteOperation<T> operation, SingleResultCallback<T> callback);
 }

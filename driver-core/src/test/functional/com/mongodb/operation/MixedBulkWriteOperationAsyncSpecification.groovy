@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.ClusterFixture
+import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteException
@@ -39,7 +40,7 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
@@ -57,7 +58,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.insertedCount == 1
@@ -72,11 +73,10 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(document)
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered,
-                                             ACKNOWLEDGED)
+        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered, ACKNOWLEDGED)
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         def ex = thrown(BulkWriteException)
@@ -94,7 +94,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(DELETE, 1, [])
@@ -116,7 +116,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(DELETE, 2, [])
@@ -137,7 +137,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
@@ -158,7 +158,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
@@ -179,7 +179,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
@@ -200,7 +200,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
@@ -222,7 +222,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
@@ -243,7 +243,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
@@ -264,10 +264,11 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              true, ACKNOWLEDGED)
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
-        thrown(IllegalArgumentException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
 
         where:
         ordered << [true, false]
@@ -284,7 +285,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
@@ -313,7 +314,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
@@ -345,7 +346,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
 
         when:
         def binding = getAsyncSingleConnectionBinding()
-        def result = op.executeAsync(binding).get()
+        def result = executeAsync(op, binding)
 
         then:
         !result.wasAcknowledged()
@@ -368,7 +369,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
@@ -391,7 +392,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              true, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
@@ -414,7 +415,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              true, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
@@ -427,7 +428,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def op = new MixedBulkWriteOperation(getNamespace(), getTestWrites(), ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.wasAcknowledged()
@@ -451,7 +452,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
 
         when:
         def binding = getAsyncSingleConnectionBinding()
-        def result = op.executeAsync(binding).get()
+        def result = executeAsync(op, binding)
 
         then:
         !result.wasAcknowledged()
@@ -478,9 +479,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         }
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, ordered, ACKNOWLEDGED)
-                .executeAsync(getAsyncBinding())
-                .get()
+        executeAsync(new MixedBulkWriteOperation(getNamespace(), writes, ordered, ACKNOWLEDGED))
 
         then:
         getCollectionHelper().count() == 2001
@@ -499,7 +498,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(1))) // this should fail with index 2
                                              ], true, ACKNOWLEDGED)
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         def ex = thrown(BulkWriteException)
@@ -519,7 +518,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(3))) // this should fail with index 2
                                              ], false, ACKNOWLEDGED)
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         def ex = thrown(BulkWriteException)
@@ -539,7 +538,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              false, new WriteConcern(5, 1)
         )
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         def ex = thrown(BulkWriteException)
@@ -556,7 +555,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                              ], ordered, new WriteConcern(4, 1))
 
         when:
-        op.executeAsync(getAsyncBinding()).get()  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
+        executeAsync(op)  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
 
         then:
         def ex = thrown(BulkWriteException)

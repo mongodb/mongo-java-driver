@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonArray;
@@ -84,8 +84,8 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     }
 
     @Override
-    public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding);
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, callback);
     }
 
     private BsonDocument getCommand() {

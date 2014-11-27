@@ -29,6 +29,22 @@ public class MongoException extends RuntimeException {
     private final int code;
 
     /**
+     * Static helper to create or cast a MongoException from a throwable
+     *
+     * @param t a throwable
+     * @return and MongoException
+     */
+    public static MongoException fromThrowable(final Throwable t) {
+        if (t == null) {
+            return null;
+        } else if (t instanceof MongoException) {
+            return (MongoException) t;
+        } else {
+            return new MongoException(t.getMessage(), t);
+        }
+    }
+
+    /**
      * @param msg the message
      */
     public MongoException(final String msg) {

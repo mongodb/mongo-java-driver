@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
@@ -85,17 +85,9 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<BsonDocument>());
     }
 
-    /**
-     * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
-     *
-     * @param binding the binding
-     * @return a future for a void result
-     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
-     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
-     */
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<BsonDocument>());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<BsonDocument>(), callback);
     }
 
     private BsonDocument getCommand() {

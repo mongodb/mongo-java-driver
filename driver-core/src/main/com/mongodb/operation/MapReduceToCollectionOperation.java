@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
@@ -43,8 +43,8 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will
- * be output into the collection represented by the MongoNamespace provided.</p>
+ * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will
+ * be output into the collection represented by the MongoNamespace provided.
  *
  * <p>To run a map reduce operation and receive the results inline (i.e. as a response to running the command) use {@code
  * MapReduceToCollectionOperation}.</p>
@@ -400,8 +400,8 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     @Override
-    public MongoFuture<MapReduceStatistics> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer(), callback);
     }
 
     /**

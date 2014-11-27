@@ -26,7 +26,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
@@ -64,7 +64,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         when:
         FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+        Document returnedDocument = executeAsync(operation)
 
         then:
         getCollectionHelper().find().size() == 1;

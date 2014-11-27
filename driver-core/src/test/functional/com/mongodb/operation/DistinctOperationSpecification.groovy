@@ -30,7 +30,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
@@ -63,7 +63,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(op)
 
         then:
         result.sort() == new BsonArray([new BsonString('Pete'), new BsonString('Sam')])
@@ -78,7 +78,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        op.filter = new BsonDocument('age', new BsonInt32(25))
+        op.filter(new BsonDocument('age', new BsonInt32(25)))
         def result = op.execute(getBinding());
 
         then:
@@ -95,8 +95,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        op.filter = new BsonDocument('age', new BsonInt32(25))
-        def result = op.executeAsync(getAsyncBinding()).get()
+        op.filter(new BsonDocument('age', new BsonInt32(25)))
+        def result = executeAsync(op)
 
         then:
         result == new BsonArray([new BsonString('Pete')])
@@ -128,7 +128,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        executeAsync(op)
 
         then:
         thrown(MongoExecutionTimeoutException)

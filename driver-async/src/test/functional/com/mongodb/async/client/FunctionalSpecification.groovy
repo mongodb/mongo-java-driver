@@ -44,7 +44,7 @@ class FunctionalSpecification extends Specification {
     }
 
     String getCollectionName() {
-        collection.getName();
+        collection.getNamespace().getCollectionName()
     }
 
     MongoNamespace getNamespace() {

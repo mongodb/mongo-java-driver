@@ -20,7 +20,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
@@ -28,13 +28,13 @@ import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
-import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -53,7 +53,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
      * Construct a new instance.
      *
      * @param credential the users credentials.
-     * @param readOnly true if the user is a readOnly user.
+     * @param readOnly   true if the user is a readOnly user.
      */
     public CreateUserOperation(final MongoCredential credential, final boolean readOnly) {
         this.credential = notNull("credential", credential);
@@ -94,17 +94,25 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<Void>() {
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<Void> call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
-                                                              new VoidTransformer<BsonDocument>());
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
                 } else {
-                    return transformFuture(connection.insertAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,
-                                                                  asList(getInsertRequest())),
-                                           new VoidTransformer<WriteConcernResult>());
+                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                        executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
+                                                           new VoidTransformer<BsonDocument>(), callback);
+                    } else {
+                        connection.insertAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,
+                                               asList(getInsertRequest()), new SingleResultCallback<WriteConcernResult>() {
+                            @Override
+                            public void onResult(final WriteConcernResult result, final Throwable t) {
+                                callback.onResult(null, t);
+                            }
+                        });
+                    }
                 }
             }
         });

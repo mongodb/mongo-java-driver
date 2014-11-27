@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -49,8 +48,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
 
     @Override
     public void initializeAsync(final InternalConnection internalConnection, final SingleResultCallback<ConnectionDescription> callback) {
-        initializeConnectionDescriptionAsync(internalConnection,
-                                             createConnectionDescriptionCallback(internalConnection, callback));
+        initializeConnectionDescriptionAsync(internalConnection, createConnectionDescriptionCallback(internalConnection, callback));
     }
 
     private SingleResultCallback<ConnectionDescription>
@@ -58,18 +56,16 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                                         final SingleResultCallback<ConnectionDescription> callback) {
         return new SingleResultCallback<ConnectionDescription>() {
             @Override
-            public void onResult(final ConnectionDescription connectionDescription,
-                                 final MongoException e) {
-                if (e != null) {
-                    callback.onResult(null, e);
+            public void onResult(final ConnectionDescription connectionDescription, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
                     new CompoundAuthenticator(internalConnection, connectionDescription,
                                               new SingleResultCallback<Void>() {
                                                   @Override
-                                                  public void onResult(final Void result,
-                                                                       final MongoException e) {
-                                                      if (e != null) {
-                                                          callback.onResult(null, e);
+                                                  public void onResult(final Void result, final Throwable t) {
+                                                      if (t != null) {
+                                                          callback.onResult(null, t);
                                                       } else {
                                                           completeConnectionDescriptionInitializationAsync(internalConnection,
                                                                                                            connectionDescription,
@@ -110,17 +106,17 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
         executeCommandAsync("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
-                                public void onResult(final BsonDocument isMasterResult, final MongoException e) {
-                                    if (e != null) {
-                                        callback.onResult(null, e);
+                                public void onResult(final BsonDocument isMasterResult, final Throwable t) {
+                                    if (t != null) {
+                                        callback.onResult(null, t);
                                     } else {
                                         executeCommandAsync("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection,
                                                             new SingleResultCallback<BsonDocument>() {
                                                                 @Override
                                                                 public void onResult(final BsonDocument buildInfoResult,
-                                                                                     final MongoException e) {
-                                                                    if (e != null) {
-                                                                        callback.onResult(null, e);
+                                                                                     final Throwable t) {
+                                                                    if (t != null) {
+                                                                        callback.onResult(null, t);
                                                                     } else {
                                                                         ConnectionId connectionId = internalConnection.getDescription()
                                                                                                                       .getConnectionId();
@@ -143,7 +139,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                             internalConnection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
-                                public void onResult(final BsonDocument result, final MongoException e) {
+                                public void onResult(final BsonDocument result, final Throwable t) {
                                     if (result == null) {
                                         callback.onResult(connectionDescription, null);
                                     } else {
@@ -179,9 +175,9 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
         }
 
         @Override
-        public void onResult(final Void result, final MongoException e) {
-            if (e != null) {
-                callback.onResult(null, e);
+        public void onResult(final Void result, final Throwable t) {
+            if (t != null) {
+                callback.onResult(null, t);
             } else if (completedAuthentication()) {
                 callback.onResult(null, null);
             } else {

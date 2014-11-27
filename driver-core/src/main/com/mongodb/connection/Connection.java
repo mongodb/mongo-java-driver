@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
@@ -70,10 +70,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param inserts      the inserts
-     * @return the write concern result future
+     * @param callback     the callback to be passed the write result
      */
-    MongoFuture<WriteConcernResult> insertAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                List<InsertRequest> inserts);
+    void insertAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
+                                                List<InsertRequest> inserts, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Update the documents using the update wire protocol and apply the write concern.
@@ -94,10 +94,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param updates      the updates
-     * @return the write concern result future
+     * @param callback     the callback to be passed the write result
      */
-    MongoFuture<WriteConcernResult> updateAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                List<UpdateRequest> updates);
+    void updateAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates,
+                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Delete the documents using the delete wire protocol and apply the write concern.
@@ -118,11 +118,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param deletes      the deletes
-     * @return the write concern result future
+     * @param callback     the callback to be passed the write result
      */
-    MongoFuture<WriteConcernResult> deleteAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                List<DeleteRequest> deletes);
-
+    void deleteAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Insert the documents using the insert command.
@@ -135,7 +134,6 @@ public interface Connection extends ReferenceCounted {
      */
     BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts);
 
-
     /**
      * Insert the documents using the insert command asynchronously.
      *
@@ -143,10 +141,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param inserts      the inserts
-     * @return the bulk write result future
+     * @param callback     the callback to be passed the bulk write result
      */
-    MongoFuture<BulkWriteResult> insertCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                    List<InsertRequest> inserts);
+    void insertCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
      * Update the documents using the update command.
@@ -166,10 +164,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param updates      the updates
-     * @return the bulk write result future
+     * @param callback     the callback to be passed the BulkWriteResult
      */
-    MongoFuture<BulkWriteResult> updateCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                    List<UpdateRequest> updates);
+    void updateCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
      * Delete the documents using the delete command.
@@ -189,10 +187,10 @@ public interface Connection extends ReferenceCounted {
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param deletes      the deletes
-     * @return the bulk write result future
+     * @param callback     the callback to be passed the BulkWriteResult
      */
-    MongoFuture<BulkWriteResult> deleteCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                                                    List<DeleteRequest> deletes);
+    void deleteCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
      * Execute the command.
@@ -216,11 +214,11 @@ public interface Connection extends ReferenceCounted {
      * @param slaveOk              whether the command can run on a secondary
      * @param fieldNameValidator   the field name validator for the command document
      * @param commandResultDecoder the decoder for the result
+     * @param callback             the callback to be passed the command result
      * @param <T>                  the type of the result
-     * @return the command result future
      */
-    <T> MongoFuture<T> commandAsync(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
-                                    Decoder<T> commandResultDecoder);
+    <T> void commandAsync(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
+                                    Decoder<T> commandResultDecoder, SingleResultCallback<T> callback);
 
     /**
      * Execute the query.
@@ -262,13 +260,11 @@ public interface Connection extends ReferenceCounted {
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
      * @param <T>             the query result document type
-     * @return the query results
+     * @param callback     the callback to be passed the write result
      */
-    <T> MongoFuture<QueryResult<T>> queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-                                               int numberToReturn, int skip,
-                                               boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                                               boolean partial, boolean oplogReplay,
-                                               Decoder<T> resultDecoder);
+    <T> void queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
+                        int numberToReturn, int skip, boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
+                        boolean partial, boolean oplogReplay, Decoder<T> resultDecoder, SingleResultCallback<QueryResult<T>> callback);
 
     /**
      * Get more result documents from a cursor.
@@ -289,10 +285,11 @@ public interface Connection extends ReferenceCounted {
      * @param cursorId       the cursor id
      * @param numberToReturn the number of documents to return
      * @param resultDecoder  the decoder for the query result documents
+     * @param callback       the callback to be passed the query result
      * @param <T>            the type of the query result documents
-     * @return the query results
      */
-    <T> MongoFuture<QueryResult<T>> getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
+    <T> void getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
+                                                 SingleResultCallback<QueryResult<T>> callback);
 
     /**
      * Kills the given list of cursors.
@@ -304,8 +301,8 @@ public interface Connection extends ReferenceCounted {
     /**
      * Asynchronously Kills the given list of cursors.
      *
-     * @param cursors the cursors
-     * @return the future
+     * @param cursors   the cursors
+     * @param callback  the callback that is called once the cursors have been killed
      */
-    MongoFuture<Void> killCursorAsync(List<Long> cursors);
+    void killCursorAsync(List<Long> cursors, SingleResultCallback<Void> callback);
 }

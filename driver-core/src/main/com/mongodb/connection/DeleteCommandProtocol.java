@@ -16,12 +16,9 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.WriteRequest;
@@ -70,22 +67,26 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
-        }
-        final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
-        super.executeAsync(connection).register(new SingleResultCallback<BulkWriteResult>() {
-            @Override
-            public void onResult(final BulkWriteResult result, final MongoException e) {
-                if (e != null) {
-                    LOGGER.debug("Asynchronous delete completed");
-                }
-                future.init(result, e);
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                                    connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
             }
-        });
-        return future;
+            super.executeAsync(connection, new SingleResultCallback<BulkWriteResult>() {
+                @Override
+                public void onResult(final BulkWriteResult result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        LOGGER.debug("Asynchronous delete completed");
+                        callback.onResult(result, null);
+                    }
+                }
+            });
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
     }
 
     @Override

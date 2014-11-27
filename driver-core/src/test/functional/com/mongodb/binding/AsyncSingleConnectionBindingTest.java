@@ -17,6 +17,7 @@
 package com.mongodb.binding;
 
 import category.ReplicaSet;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
@@ -24,6 +25,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;
+import static com.mongodb.ClusterFixture.getConnection;
+import static com.mongodb.ClusterFixture.getReadConnectionSource;
+import static com.mongodb.ClusterFixture.getWriteConnectionSource;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
@@ -46,14 +50,14 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     @Test
-    public void shouldReturnTheSameConnection() throws InterruptedException {
-        AsyncConnectionSource asyncConnectionSource = binding.getReadConnectionSource().get();
-        Connection asyncConnection = asyncConnectionSource.getConnection().get();
+    public void shouldReturnTheSameConnection() throws Throwable {
+        AsyncConnectionSource asyncConnectionSource = getReadConnectionSource(binding);
+        Connection asyncConnection = getConnection(asyncConnectionSource);
 
         // Check we get the same connection
         for (int i = 0; i < 100; i++) {
-            AsyncConnectionSource connectionSource = binding.getReadConnectionSource().get();
-            Connection connection = connectionSource.getConnection().get();
+            AsyncConnectionSource connectionSource = getReadConnectionSource(binding);
+            Connection connection = getConnection(connectionSource);
             assertEquals(connection.getDescription().getConnectionId(), asyncConnection.getDescription().getConnectionId());
             connection.release();
             connectionSource.release();
@@ -64,12 +68,12 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     @Test
-    public void shouldHaveTheSameConnectionForReadsAndWritesWithPrimaryReadPreference() throws InterruptedException {
-        AsyncConnectionSource writeSource = binding.getWriteConnectionSource().get();
-        Connection writeConnection = writeSource.getConnection().get();
+    public void shouldHaveTheSameConnectionForReadsAndWritesWithPrimaryReadPreference() throws Throwable {
+        AsyncConnectionSource writeSource = getWriteConnectionSource(binding);
+        Connection writeConnection = getConnection(writeSource);
 
-        AsyncConnectionSource readSource = binding.getReadConnectionSource().get();
-        Connection readConnection = readSource.getConnection().get();
+        AsyncConnectionSource readSource = getReadConnectionSource(binding);
+        Connection readConnection = getConnection(readSource);
         assertEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
 
         writeConnection.release();
@@ -79,27 +83,27 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     @Test
-    public void shouldNotDevourAllConnections() {
+    public void shouldNotDevourAllConnections() throws Throwable {
         for (int i = 0; i < 250; i++) {
             AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             binding.release();
         }
     }
 
     @Test
-    public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws InterruptedException {
+    public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws Throwable {
         AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
-        AsyncConnectionSource writeSource = binding.getWriteConnectionSource().get();
-        Connection writeConnection = writeSource.getConnection().get();
+        AsyncConnectionSource writeSource = getWriteConnectionSource(binding);
+        Connection writeConnection = getConnection(writeSource);
 
-        AsyncConnectionSource readSource = binding.getReadConnectionSource().get();
-        Connection readConnection = readSource.getConnection().get();
+        AsyncConnectionSource readSource = getReadConnectionSource(binding);
+        Connection readConnection = getConnection(readSource);
         assertThat(writeConnection.getDescription().getConnectionId(), is(not(readConnection.getDescription().getConnectionId())));
 
         writeConnection.release();
@@ -110,21 +114,26 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     @Test
-    public void shouldNotDevourAllConnectionsWhenUsingNonPrimaryReadPreference() {
+    public void shouldNotDevourAllConnectionsWhenUsingNonPrimaryReadPreference() throws Throwable {
         for (int i = 0; i < 500; i++) {
             AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
-            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource().get());
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
+            getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             binding.release();
         }
     }
 
     private void getAndReleaseConnectionSourceAndConnection(final AsyncConnectionSource connectionSource) {
-        connectionSource.getConnection().get().release();
-        connectionSource.release();
+        connectionSource.getConnection(new SingleResultCallback<Connection>() {
+            @Override
+            public void onResult(final Connection connection, final Throwable t) {
+                connection.release();
+                connectionSource.release();
+            }
+        });
     }
 }

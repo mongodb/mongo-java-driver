@@ -19,7 +19,7 @@ package com.mongodb.client.test;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
@@ -42,6 +42,7 @@ import org.bson.codecs.DocumentCodec;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
 
@@ -161,8 +162,8 @@ public final class CollectionHelper<T> {
         return new CountOperation(namespace).execute(binding);
     }
 
-    public long count(final AsyncReadBinding binding) {
-        return new CountOperation(namespace).executeAsync(binding).get();
+    public long count(final AsyncReadWriteBinding binding) throws Throwable {
+        return executeAsync(new CountOperation(namespace), binding);
     }
 
     public long count(final Document filter) {

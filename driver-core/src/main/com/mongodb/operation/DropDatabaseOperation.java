@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
@@ -52,7 +52,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>(), callback);
     }
 }

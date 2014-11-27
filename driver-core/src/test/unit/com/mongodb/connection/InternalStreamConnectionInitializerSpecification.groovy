@@ -1,6 +1,7 @@
 package com.mongodb.connection
 
 import com.mongodb.ServerAddress
+import com.mongodb.async.FutureResultCallback
 import spock.lang.Specification
 
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
@@ -29,7 +30,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, null)
-        def futureCallback = new FutureCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<ConnectionDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
 
@@ -55,7 +56,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
         when:
         enqueueSuccessfulReplies(false, 123)
-        def futureCallback = new FutureCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<ConnectionDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
 
@@ -89,7 +90,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(false, null)
 
-        def futureCallback = new FutureCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<ConnectionDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
 
@@ -122,7 +123,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         when:
         enqueueSuccessfulReplies(true, null)
 
-        def futureCallback = new FutureCallback<ConnectionDescription>()
+        def futureCallback = new FutureResultCallback<ConnectionDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
 

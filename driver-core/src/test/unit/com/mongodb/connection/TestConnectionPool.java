@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
@@ -76,8 +75,8 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public MongoFuture<Void> openAsync() {
-                throw new UnsupportedOperationException("Not implemented yet");
+            public void openAsync(final SingleResultCallback<Void> callback) {
+                callback.onResult(null, new UnsupportedOperationException("Not implemented yet"));
             }
 
             @Override
@@ -102,7 +101,6 @@ public class TestConnectionPool implements ConnectionPool {
         if (exceptionToThrow != null) {
             throw exceptionToThrow;
         }
-
         return get();
     }
 

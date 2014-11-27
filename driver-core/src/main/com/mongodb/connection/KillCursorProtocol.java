@@ -16,10 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 
@@ -64,23 +61,25 @@ class KillCursorProtocol implements Protocol<Void> {
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(),
-                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
-        }
-        final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        KillCursorsMessage message = new KillCursorsMessage(cursors);
-        message.encode(bsonOutput);
-        connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException e) {
-                bsonOutput.close();
-                retVal.init(result, e);
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(),
+                                    connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
             }
-        });
-        return retVal;
+            final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            KillCursorsMessage message = new KillCursorsMessage(cursors);
+            message.encode(bsonOutput);
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    bsonOutput.close();
+                    callback.onResult(result, t);
+                }
+            });
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
     }
 
     private String getCursorIdListAsString() {

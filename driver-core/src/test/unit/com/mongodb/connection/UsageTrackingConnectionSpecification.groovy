@@ -17,10 +17,8 @@
 package com.mongodb.connection
 
 import category.Async
-import com.mongodb.MongoException
 import com.mongodb.ServerAddress
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.SingleResultFuture
+import com.mongodb.async.FutureResultCallback
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -56,13 +54,15 @@ class UsageTrackingConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'openAt should be set on open asynchronously'() {
         when:
+        def futureResultCallback = new FutureResultCallback<Void>()
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.openedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync().get(10, SECONDS)
+        connection.openAsync(futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -86,13 +86,15 @@ class UsageTrackingConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'lastUsedAt should be set on open asynchronously'() {
         when:
+        def futureResultCallback = new FutureResultCallback<Void>()
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.lastUsedAt == Long.MAX_VALUE
 
         when:
-        connection.openAsync().get(10, SECONDS)
+        connection.openAsync(futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -119,17 +121,11 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
-        def future = new SingleResultFuture<Void>()
-        def callback = new SingleResultCallback<Void>() {
-            @Override
-            void onResult(final Void result, final MongoException e) {
-                future.init(null, null)
-            }
-        }
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.sendMessageAsync(Arrays.asList(), 1, callback)
-        future.get(10, SECONDS)
+        connection.sendMessageAsync(Arrays.asList(), 1, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -154,17 +150,11 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
-        def future = new SingleResultFuture<Void>()
-        def callback = new SingleResultCallback<Void>() {
-            @Override
-            void onResult(final Void result, final MongoException e) {
-                future.init(result, e)
-            }
-        }
+        def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.receiveMessageAsync(1, callback)
-        future.get(10, SECONDS)
+        connection.receiveMessageAsync(1, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt

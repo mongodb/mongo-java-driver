@@ -23,4 +23,5 @@ interface InternalConnectionInitializer {
     ConnectionDescription initialize(InternalConnection internalConnection);
 
     void initializeAsync(InternalConnection internalConnection, SingleResultCallback<ConnectionDescription> callback);
+
 }

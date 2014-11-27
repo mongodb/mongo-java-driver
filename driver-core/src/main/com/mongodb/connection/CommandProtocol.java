@@ -18,8 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
@@ -80,6 +79,31 @@ class CommandProtocol<T> implements Protocol<T> {
         return retval;
     }
 
+    @Override
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
+                                    command.keySet().iterator().next(), command.values().iterator().next(),
+                                    namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
+                                    connection.getDescription().getServerAddress()));
+            }
+            ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
+                                                        ProtocolHelper.getMessageSettings(connection.getDescription()));
+            ProtocolHelper.encodeMessage(message, bsonOutput);
+
+            SingleResultCallback<ResponseBuffers> receiveCallback = new CommandResultCallback<T>(callback, commandResultDecoder,
+                                                                                                 message.getId(),
+                                                                                                 connection.getDescription()
+                                                                                                           .getServerAddress());
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
+                                        new SendMessageCallback<T>(connection, bsonOutput, message.getId(), callback, receiveCallback));
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+        }
+    }
+
     private CommandMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
@@ -101,31 +125,6 @@ class CommandProtocol<T> implements Protocol<T> {
         } finally {
             responseBuffers.close();
         }
-    }
-
-    @Override
-    public MongoFuture<T> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
-                                command.keySet().iterator().next(), command.values().iterator().next(),
-                                namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
-                                connection.getDescription().getServerAddress()));
-        }
-        SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
-                                                    ProtocolHelper.getMessageSettings(connection.getDescription()));
-        ProtocolHelper.encodeMessage(message, bsonOutput);
-
-        CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(new SingleResultFutureCallback<T>(retVal),
-                                                                                commandResultDecoder,
-                                                                                message.getId(),
-                                                                                connection.getDescription().getServerAddress());
-        connection.sendMessageAsync(bsonOutput.getByteBuffers(),
-                                    message.getId(),
-                                    new SendMessageCallback<T>(connection, bsonOutput, message.getId(), retVal, receiveCallback));
-        return retVal;
     }
 
     private T createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {

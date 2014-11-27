@@ -17,9 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.io.BsonInput;
@@ -65,9 +63,9 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public MongoFuture<Void> openAsync() {
+    public void openAsync(final SingleResultCallback<Void> callback) {
         opened = true;
-        return new SingleResultFuture<Void>(null);
+        callback.onResult(null, null);
     }
 
     @Override

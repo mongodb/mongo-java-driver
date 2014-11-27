@@ -17,6 +17,7 @@
 package com.mongodb.async.client
 
 import com.mongodb.WriteConcern
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.options.OperationOptions
 import com.mongodb.connection.Cluster
 import com.mongodb.operation.GetDatabaseNamesOperation
@@ -26,6 +27,7 @@ import spock.lang.Specification
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.ReadPreference.secondaryPreferred
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class MongoClientSpecification extends Specification {
 
@@ -34,11 +36,13 @@ class MongoClientSpecification extends Specification {
         def options = MongoClientOptions.builder().build()
         def cluster = Stub(Cluster)
         def executor = new TestOperationExecutor([['databaseName']])
+        def futureResultCallback = new FutureResultCallback<List<String>>();
 
         when:
-        new MongoClientImpl(options, cluster, executor).getDatabaseNames()
+        new MongoClientImpl(options, cluster, executor).getDatabaseNames(futureResultCallback)
 
         then:
+        futureResultCallback.get(10, SECONDS);
         executor.getReadOperation() instanceof GetDatabaseNamesOperation
         executor.getReadPreference() == primary()
     }

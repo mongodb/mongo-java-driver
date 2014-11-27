@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
@@ -177,10 +177,10 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                                  CommandResultDocumentCodec.create(decoder, "value"),
-                                                  binding, FindAndModifyHelper.<T>transformer());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getFindAndRemoveDocument(),
+                                           CommandResultDocumentCodec.create(decoder, "value"),
+                                           binding, FindAndModifyHelper.<T>transformer(), callback);
     }
 
     private BsonDocument getFindAndRemoveDocument() {

@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -38,6 +38,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
@@ -55,7 +56,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @since 3.0
  */
 public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatchCursor<T>>>,
-                                                               ReadOperation<List<BatchCursor<T>>> {
+                                                           ReadOperation<List<BatchCursor<T>>> {
     private final MongoNamespace namespace;
     private final int numCursors;
     private int batchSize = 0;
@@ -121,13 +122,17 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
     }
 
     @Override
-    public MongoFuture<List<AsyncBatchCursor<T>>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnectionAndSource<List<AsyncBatchCursor<T>>>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<List<AsyncBatchCursor<T>>> callback) {
+        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public MongoFuture<List<AsyncBatchCursor<T>>> call(final AsyncConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                          CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
-                                                          binding.getReadPreference(), asyncTransformer(source));
+            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                       CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
+                                                       binding.getReadPreference(), asyncTransformer(source), callback);
+                }
             }
         });
     }

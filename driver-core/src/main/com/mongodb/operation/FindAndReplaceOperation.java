@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.CollectibleDocumentFieldNameValidator;
@@ -60,8 +60,8 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     /**
      * Construct a new instance.
      *
-     * @param namespace the database and collection namespace for the operation.
-     * @param decoder the decoder for the result documents.
+     * @param namespace   the database and collection namespace for the operation.
+     * @param decoder     the decoder for the result documents.
      * @param replacement the document that will replace the found document.
      */
     public FindAndReplaceOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument replacement) {
@@ -237,10 +237,10 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
-                                                  CommandResultDocumentCodec.create(decoder, "value"), binding,
-                                                  FindAndModifyHelper.<T>transformer());
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
+                                           CommandResultDocumentCodec.create(decoder, "value"), binding,
+                                           FindAndModifyHelper.<T>transformer(), callback);
     }
 
     private BsonDocument getCommand() {

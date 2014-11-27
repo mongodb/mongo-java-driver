@@ -17,8 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
@@ -87,19 +86,19 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
-    public MongoFuture<AsyncConnectionSource> getReadConnectionSource() {
+    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
-            return getWriteConnectionSource();
+            getWriteConnectionSource(callback);
         } else {
-            return new SingleResultFuture<AsyncConnectionSource>(new SingleAsyncConnectionSource(readServer, readConnection));
+            callback.onResult(new SingleAsyncConnectionSource(readServer, readConnection), null);
         }
     }
 
     @Override
-    public MongoFuture<AsyncConnectionSource> getWriteConnectionSource() {
+    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
-        return new SingleResultFuture<AsyncConnectionSource>(new SingleAsyncConnectionSource(writeServer, writeConnection));
+        callback.onResult(new SingleAsyncConnectionSource(writeServer, writeConnection), null);
     }
 
     @Override
@@ -127,9 +126,9 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
-        public MongoFuture<Connection> getConnection() {
+        public void getConnection(final SingleResultCallback<Connection> callback) {
             isTrue("open", super.getCount() > 0);
-            return new SingleResultFuture<Connection>(connection.retain());
+            callback.onResult(connection.retain(), null);
         }
 
         public AsyncConnectionSource retain() {

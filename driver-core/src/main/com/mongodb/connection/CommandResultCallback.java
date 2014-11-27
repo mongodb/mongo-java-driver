@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -41,9 +40,9 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
     }
 
     @Override
-    protected boolean callCallback(final BsonDocument response, final MongoException e) {
-        if (e != null) {
-            callback.onResult(null, e);
+    protected boolean callCallback(final BsonDocument response, final Throwable t) {
+        if (t != null) {
+            callback.onResult(null, t);
         } else {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Command execution completed with status " + ProtocolHelper.isCommandOk(response));

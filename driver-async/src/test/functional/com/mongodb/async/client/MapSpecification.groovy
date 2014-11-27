@@ -18,30 +18,40 @@ package com.mongodb.async.client
 
 import com.mongodb.Block
 import com.mongodb.Function
+import com.mongodb.WriteConcernResult
+import com.mongodb.async.FutureResultCallback
 import org.bson.Document
 import org.bson.types.ObjectId
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class MapSpecification extends FunctionalSpecification {
 
     def documents = [new Document('_id', new ObjectId()).append('x', 42), new Document('_id', new ObjectId()).append('x', 43)]
 
     def setup() {
-        collection.insertMany(documents).get()
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
+        collection.insertMany(documents, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
     }
 
     def 'should map source document into target document with into'() {
         expect:
+        def futureResultCallback = new FutureResultCallback();
         collection.find(new Document())
                   .map(new MappingFunction())
-                  .into([]).get() == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
+                  .into([], futureResultCallback)
+        futureResultCallback.get(10, SECONDS) == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
     }
 
     def 'should map source document into target document with forEach'() {
         when:
         def targetDocuments = []
+        def futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document())
                   .map(new MappingFunction())
-                  .forEach( { TargetDocument document -> targetDocuments += document } as Block<TargetDocument>).get()
+                  .forEach({ TargetDocument document -> targetDocuments += document } as Block<TargetDocument>, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
         then:
         targetDocuments == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
     }
@@ -49,6 +59,7 @@ class MapSpecification extends FunctionalSpecification {
     def 'should map when already mapped'() {
         when:
         def targetIdStrings = []
+        def futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document())
                   .map(new MappingFunction())
                   .map(new Function<TargetDocument, ObjectId>() {
@@ -56,7 +67,8 @@ class MapSpecification extends FunctionalSpecification {
             ObjectId apply(final TargetDocument targetDocument) {
                 targetDocument.getId()
             }
-        }).forEach( { ObjectId id -> targetIdStrings += id.toString() } as Block<TargetDocument>).get()
+        }).forEach({ ObjectId id -> targetIdStrings += id.toString() } as Block<ObjectId>, futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
 
         then:
         targetIdStrings == [new TargetDocument(documents[0]).getId().toString(), new TargetDocument(documents[1]).getId().toString()]

@@ -25,7 +25,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class MapReduceToCollectionOperationFunctionalSpecification extends OperationFunctionalSpecification {
@@ -68,7 +68,7 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
     def 'should return the correct statistics and save the results asynchronously'() {
 
         when:
-        MapReduceStatistics results = mapReduceOperation.executeAsync(getAsyncBinding()).get()
+        MapReduceStatistics results = executeAsync(mapReduceOperation)
 
         then:
         results.emitCount == 3

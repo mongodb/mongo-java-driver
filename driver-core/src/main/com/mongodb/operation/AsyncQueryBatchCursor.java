@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -31,6 +30,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
@@ -105,15 +105,14 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private void getMore(final SingleResultCallback<List<T>> callback) {
-        connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
+        connectionSource.getConnection(new SingleResultCallback<Connection>() {
             @Override
-            public void onResult(final Connection connection, final MongoException e) {
-                if (e != null) {
-                    callback.onResult(null, e);
+            public void onResult(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
                     connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
-                                            decoder)
-                              .register(new QueryResultSingleResultCallback(connection, callback));
+                                            decoder, new QueryResultSingleResultCallback(connection, callback));
                 }
             }
         });
@@ -123,13 +122,12 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         if (cursor != null) {
             final ServerCursor localCursor = cursor;
             cursor = null;
-            connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
+            connectionSource.getConnection(new SingleResultCallback<Connection>() {
                 @Override
-                public void onResult(final Connection connection, final MongoException connectionException) {
-                    connection.killCursorAsync(asList(localCursor.getId()))
-                              .register(new SingleResultCallback<Void>() {
+                public void onResult(final Connection connection, final Throwable connectionException) {
+                    connection.killCursorAsync(asList(localCursor.getId()), new SingleResultCallback<Void>() {
                                   @Override
-                                  public void onResult(final Void result, final MongoException killException) {
+                                  public void onResult(final Void result, final Throwable t) {
                                       connection.release();
                                       connectionSource.release();
                                   }
@@ -147,19 +145,18 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
         public QueryResultSingleResultCallback(final Connection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
-            this.callback = callback;
+            this.callback = wrapCallback(callback);
         }
 
         @Override
-        public void onResult(final QueryResult<T> result, final MongoException e) {
-            if (e != null) {
+        public void onResult(final QueryResult<T> result, final Throwable t) {
+            if (t != null) {
                 connection.release();
                 close();
-                callback.onResult(null, e);
+                callback.onResult(null, t);
             } else if (result.getResults().isEmpty() && result.getCursor() != null) {
                 connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
-                                        decoder)
-                          .register(this);
+                                        decoder, this);
             } else {
                 LOGGER.debug("Received results");
                 cursor = result.getCursor();

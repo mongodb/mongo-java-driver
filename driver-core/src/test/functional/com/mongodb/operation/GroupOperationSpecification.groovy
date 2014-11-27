@@ -19,7 +19,6 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.Block
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.async.SingleResultFuture
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -29,9 +28,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static java.util.concurrent.TimeUnit.SECONDS
+import static com.mongodb.ClusterFixture.loopCursor
 
 class GroupOperationSpecification extends OperationFunctionalSpecification {
 
@@ -121,22 +119,20 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        List<Document> docList = []
-        def cursor = new GroupOperation(getNamespace(),
+        def operation = new GroupOperation(getNamespace(),
                                         new BsonJavaScript('function ( curr, result ) {}'),
                                         new BsonDocument(), new DocumentCodec())
                 .key(new BsonDocument('name', new BsonInt32(1)))
-                .executeAsync(getAsyncBinding()).get(1, SECONDS)
 
-        loopCursor(new SingleResultFuture<Void>(), cursor,
-                   new Block<Document>() {
-                       @Override
-                       void apply(final Document value) {
-                           if (value != null) {
-                               docList += value
-                           }
-                       }
-                   }).get(1, SECONDS)
+        List<Document> docList = []
+        loopCursor(operation, new Block<Document>() {
+            @Override
+            void apply(final Document value) {
+                if (value != null) {
+                    docList += value
+                }
+            }
+        });
 
         then:
         docList.iterator()*.getString('name') containsAll(['Pete', 'Sam'])

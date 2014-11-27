@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -39,10 +39,13 @@ import org.bson.codecs.Decoder;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -298,7 +301,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
+        return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
@@ -309,13 +312,17 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     @Override
-    public MongoFuture<MapReduceAsyncBatchCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<MapReduceAsyncBatchCursor<T>>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
+        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public MongoFuture<MapReduceAsyncBatchCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                          CommandResultDocumentCodec.create(decoder, "results"),
-                                                          binding, asyncTransformer(source, connection));
+            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                       CommandResultDocumentCodec.create(decoder, "results"),
+                                                       binding, asyncTransformer(source, connection), callback);
+                }
             }
         });
     }

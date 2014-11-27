@@ -20,13 +20,12 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
 class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
-    private final SingleResultFuture<WriteConcernResult> future;
+    private final SingleResultCallback<WriteConcernResult> callback;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private boolean ordered;
@@ -34,13 +33,13 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final InternalConnection connection;
 
     // CHECKSTYLE:OFF
-    public WriteResultCallback(final SingleResultFuture<WriteConcernResult> future, final Decoder<BsonDocument> decoder,
+    public WriteResultCallback(final SingleResultCallback<WriteConcernResult> callback, final Decoder<BsonDocument> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
                                final InternalConnection connection) {
         // CHECKSTYLE:ON
         super(decoder, requestId, connection.getDescription().getServerAddress());
-        this.future = future;
+        this.callback = callback;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.ordered = ordered;
@@ -49,24 +48,22 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     }
 
     @Override
-    protected boolean callCallback(final BsonDocument result, final MongoException e) {
+    protected boolean callCallback(final BsonDocument result, final Throwable t) {
         boolean done = true;
-        if (e != null) {
-            future.init(null, e);
+        if (t != null) {
+            callback.onResult(null, t);
         } else {
             try {
                 WriteConcernResult writeConcernResult = ProtocolHelper.getWriteResult(result,
                                                                                       connection.getDescription().getServerAddress());
                 if (nextMessage != null) {
-                    MongoFuture<WriteConcernResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
-                                                         .executeAsync(connection);
-                    newFuture.register(new SingleResultFutureCallback<WriteConcernResult>(future));
+                    new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern).executeAsync(connection, callback);
                     done = false;
                 } else {
-                    future.init(writeConcernResult, null);
+                    callback.onResult(writeConcernResult, null);
                 }
             } catch (MongoException writeException) {
-                future.init(null, writeException);
+                callback.onResult(null, writeException);
             }
         }
         return done;

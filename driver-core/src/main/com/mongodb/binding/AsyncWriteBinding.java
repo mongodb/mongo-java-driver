@@ -16,7 +16,7 @@
 
 package com.mongodb.binding;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 
 /**
  * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
@@ -24,12 +24,13 @@ import com.mongodb.async.MongoFuture;
  * @since 3.0
  */
 public interface AsyncWriteBinding extends ReferenceCounted {
+
     /**
      * Supply a connection source to a server that can be written to
      *
-     * @return a connection source
+     * @param callback the to be passed the connection source
      */
-    MongoFuture<AsyncConnectionSource> getWriteConnectionSource();
+    void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override
     AsyncWriteBinding retain();

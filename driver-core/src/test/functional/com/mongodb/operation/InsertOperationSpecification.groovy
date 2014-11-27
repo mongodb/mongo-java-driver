@@ -28,7 +28,7 @@ import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
@@ -59,7 +59,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        def result = operation.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(operation)
 
         then:
         result.wasAcknowledged()
@@ -87,7 +87,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation)
 
         then:
         asList(insert.getDocument()) == getCollectionHelper().find(new BsonDocumentCodec())
@@ -120,7 +120,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
 
 
         when:
-        operation.executeAsync(getAsyncBinding()).get()
+        executeAsync(operation)
 
         then:
         getCollectionHelper().count() == 1001
@@ -149,9 +149,8 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def binding = getAsyncSingleConnectionBinding()
 
         when:
-        def result = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED,
-                                         [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
-                .executeAsync(binding).get()
+        def result = executeAsync(new InsertOperation(getNamespace(), true, UNACKNOWLEDGED,
+                                                      [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))]), binding)
 
         then:
         !result.wasAcknowledged()
@@ -191,7 +190,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents.toList()).executeAsync(getAsyncBinding()).get()
+        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents.toList()))
 
         then:
         getCollectionHelper().count() == 2
@@ -223,7 +222,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
+        executeAsync(new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents))
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -256,7 +255,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
+        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents))
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -281,10 +280,11 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def documents = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
+        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents))
 
         then:
-        thrown(BsonSerializationException)
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof BsonSerializationException
     }
 
     def 'should move _id to the beginning'() {

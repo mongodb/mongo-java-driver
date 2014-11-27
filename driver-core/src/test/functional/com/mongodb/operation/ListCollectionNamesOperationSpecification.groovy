@@ -23,7 +23,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class ListCollectionNamesOperationSpecification extends OperationFunctionalSpecification {
@@ -50,7 +50,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
         def operation = new ListCollectionNamesOperation(madeUpDatabase)
 
         when:
-        List<String> names = operation.executeAsync(getAsyncBinding()).get()
+        List<String> names = executeAsync(operation)
 
         then:
         names.isEmpty()
@@ -86,7 +86,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
         helper2.insertDocuments(codec, ['a': 1] as Document)
 
         when:
-        List<String> names = operation.executeAsync(getAsyncBinding()).get()
+        List<String> names = executeAsync(operation)
 
         then:
         names.containsAll([collectionName, 'collection2'])

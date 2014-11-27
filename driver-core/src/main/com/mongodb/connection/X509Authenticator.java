@@ -19,7 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
@@ -50,9 +49,9 @@ class X509Authenticator extends Authenticator {
         executeCommandAsync(getCredential().getSource(), getAuthCommand(getCredential().getUserName()), connection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
-                                public void onResult(final BsonDocument nonceResult, final MongoException e) {
-                                    if (e != null) {
-                                        callback.onResult(null, translateException(e));
+                                public void onResult(final BsonDocument nonceResult, final Throwable t) {
+                                    if (t != null) {
+                                        callback.onResult(null, translateThrowable(t));
                                     } else {
                                         callback.onResult(null, null);
                                     }
@@ -70,11 +69,11 @@ class X509Authenticator extends Authenticator {
         return cmd;
     }
 
-    private MongoException translateException(final MongoException e) {
-        if (e instanceof CommandFailureException) {
-            return new MongoSecurityException(getCredential(), "Exception authenticating", e);
+    private Throwable translateThrowable(final Throwable t) {
+        if (t instanceof CommandFailureException) {
+            return new MongoSecurityException(getCredential(), "Exception authenticating", t);
         } else {
-            return e;
+            return t;
         }
     }
 }

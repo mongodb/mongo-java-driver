@@ -21,9 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
@@ -37,6 +35,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -466,29 +465,30 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<Void>() {
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<Void> call(final Connection connection) {
-                final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection)
-                        .register(new SingleResultCallback<BsonDocument>() {
-                            @Override
-                            public void onResult(final BsonDocument result, final MongoException e) {
-                                future.init(null, translateException(e));
-                            }
-                        });
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
                 } else {
-                    connection.insertAsync(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(getIndex())))
-                              .register(new SingleResultCallback<WriteConcernResult>() {
-                                  @Override
-                                  public void onResult(final WriteConcernResult result, final MongoException e) {
-                                      future.init(null, translateException(e));
-                                  }
-                              });
+                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection,
+                                                           new SingleResultCallback<BsonDocument>() {
+                                                               @Override
+                                                               public void onResult(final BsonDocument result, final Throwable t) {
+                                                                   callback.onResult(null, translateException(t));
+                                                               }});
+                    } else {
+                        connection.insertAsync(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(getIndex())),
+                                               new SingleResultCallback<WriteConcernResult>() {
+                                                   @Override
+                                                   public void onResult(final WriteConcernResult result, final Throwable t) {
+                                                       callback.onResult(null, translateException(t));
+                                                   }
+                                               });
+                    }
                 }
-                return future;
             }
         });
     }
@@ -553,8 +553,9 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         return command;
     }
 
-    private MongoException translateException(final MongoException e) {
-        return (e instanceof CommandFailureException) ? checkForDuplicateKeyError((CommandFailureException) e) : e;
+    private MongoException translateException(final Throwable t) {
+        return (t instanceof CommandFailureException) ? checkForDuplicateKeyError((CommandFailureException) t)
+                                                      : MongoException.fromThrowable(t);
     }
 
     @SuppressWarnings("deprecation")

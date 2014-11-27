@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.FutureResultCallback;
 import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,12 +68,12 @@ public class ScramSha1SaslAuthenticatorTest {
         enqueueInvalidRValueReply();
 
         try {
-            FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+            FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
             this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
             futureCallback.get();
             fail();
-        } catch (ExecutionException e) {
-            if (!(e.getCause() instanceof MongoSecurityException)) {
+        } catch (Throwable t) {
+            if (!(t instanceof MongoSecurityException)) {
                 fail();
             }
         }
@@ -105,12 +106,12 @@ public class ScramSha1SaslAuthenticatorTest {
         enqueueInvalidServerSignature();
 
         try {
-            FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+            FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
             this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
             futureCallback.get();
             fail();
-        } catch (ExecutionException e) {
-            if (!(e.getCause() instanceof MongoSecurityException)) {
+        } catch (Throwable t) {
+            if (!(t instanceof MongoSecurityException)) {
                 fail();
             }
         }
@@ -146,7 +147,7 @@ public class ScramSha1SaslAuthenticatorTest {
     public void testSuccessfulAuthenticationAsync() throws ExecutionException, InterruptedException {
         enqueueSuccessfulReplies();
 
-        FutureCallback<Void> futureCallback = new FutureCallback<Void>();
+        FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
         this.subject.authenticateAsync(connection, connectionDescription, futureCallback);
         futureCallback.get();
 

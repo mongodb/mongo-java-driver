@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
@@ -40,17 +39,17 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
     }
 
     @Override
-    public void onResult(final ResponseBuffers responseBuffers, final MongoException e) {
+    public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
         if (closed) {
             throw new MongoInternalException("Callback should not be invoked more than once", null);
         }
         closed = true;
         if (responseBuffers != null) {
-            callCallback(responseBuffers, e);
+            callCallback(responseBuffers, t);
         } else {
-            callCallback(null, e);
+            callCallback(null, t);
         }
     }
 
-    protected abstract boolean callCallback(ResponseBuffers responseBuffers, MongoException e);
+    protected abstract boolean callCallback(ResponseBuffers responseBuffers, Throwable t);
 }

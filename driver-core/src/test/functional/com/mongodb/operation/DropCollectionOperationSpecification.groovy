@@ -23,7 +23,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
 class DropCollectionOperationSpecification extends OperationFunctionalSpecification {
@@ -47,7 +47,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(getNamespace()).executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropCollectionOperation(getNamespace()))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -70,7 +70,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(namespace).executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropCollectionOperation(namespace))
 
         then:
         !collectionNameExists('nonExistingCollection')

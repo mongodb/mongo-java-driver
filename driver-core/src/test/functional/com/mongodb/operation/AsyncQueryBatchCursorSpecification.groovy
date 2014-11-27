@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.QueryResult
@@ -30,6 +31,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getConnection
+import static com.mongodb.ClusterFixture.getReadConnectionSource
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecification {
     AsyncConnectionSource connectionSource
@@ -39,7 +43,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         for (int i = 0; i < 10; i++) {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
-        connectionSource = getAsyncBinding().getReadConnectionSource().get()
+        connectionSource = getReadConnectionSource(getAsyncBinding())
     }
 
     def cleanup() {
@@ -188,15 +192,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     List<Document> nextBatch() {
-        def latch = new CountDownLatch(1)
-        def nextBatch
-        def exception
-        cursor.next { r, e -> nextBatch = r; exception = e; latch.countDown() }
-        latch.await()
-        if (exception != null) {
-            throw exception
-        }
-        nextBatch
+        def futureResultCallback = new FutureResultCallback()
+        cursor.next(futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
     }
 
     private QueryResult<Document> executeQuery() {
@@ -208,13 +206,11 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     private QueryResult<Document> executeQueryProtocol(BsonDocument query, int numberToReturn, boolean tailable, boolean awaitData) {
-        def connection = connectionSource.getConnection().get()
-        try {
-            connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
-                                  false, tailable, awaitData, false, false, false,
-                                  new DocumentCodec()).get()
-        } finally {
-            connection.release();
-        }
+        def connection = getConnection(connectionSource)
+        def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
+        connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
+                              false, tailable, awaitData, false, false, false,
+                              new DocumentCodec(), futureResultCallback);
+        futureResultCallback.get(10, SECONDS);
     }
 }

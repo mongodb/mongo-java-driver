@@ -16,11 +16,8 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
@@ -37,10 +34,10 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static java.util.Arrays.asList;
 
 class MongoClientImpl implements MongoClient {
@@ -106,8 +103,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoFuture<List<String>> getDatabaseNames() {
-        return executor.execute(new GetDatabaseNamesOperation(), primary());
+    public void getDatabaseNames(final SingleResultCallback<List<String>> callback) {
+        executor.execute(new GetDatabaseNamesOperation(), primary(), callback);
     }
 
     Cluster getCluster() {
@@ -117,45 +114,35 @@ class MongoClientImpl implements MongoClient {
     private static AsyncOperationExecutor createOperationExecutor(final MongoClientOptions options, final Cluster cluster) {
         return new AsyncOperationExecutor(){
             @Override
-            public <T> MongoFuture<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference) {
-                final SingleResultFuture<T> future = new SingleResultFuture<T>();
+            public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
+                                    final SingleResultCallback<T> callback) {
+                final SingleResultCallback<T> wrappedCallback = wrapCallback(callback);
                 final AsyncReadBinding binding = getReadWriteBinding(readPreference, options, cluster);
-                operation.executeAsync(binding).register(new SingleResultCallback<T>() {
+                operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
-                    public void onResult(final T result, final MongoException e) {
+                    public void onResult(final T result, final Throwable t) {
                         try {
-                            if (e != null) {
-                                future.init(null, e);
-                            } else {
-                                future.init(result, null);
-                            }
+                            wrappedCallback.onResult(result, t);
                         } finally {
                             binding.release();
                         }
                     }
                 });
-                return future;
             }
 
             @Override
-            public <T> MongoFuture<T> execute(final AsyncWriteOperation<T> operation) {
-                final SingleResultFuture<T> future = new SingleResultFuture<T>();
+            public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
                 final AsyncWriteBinding binding = getReadWriteBinding(ReadPreference.primary(), options, cluster);
-                operation.executeAsync(binding).register(new SingleResultCallback<T>() {
+                operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
-                    public void onResult(final T result, final MongoException e) {
+                    public void onResult(final T result, final Throwable t) {
                         try {
-                            if (e != null) {
-                                future.init(null, e);
-                            } else {
-                                future.init(result, null);
-                            }
+                            callback.onResult(result, t);
                         } finally {
                             binding.release();
                         }
                     }
                 });
-                return future;
             }
         };
     }
@@ -163,7 +150,6 @@ class MongoClientImpl implements MongoClient {
     private static AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final MongoClientOptions options,
                                                              final Cluster cluster) {
         notNull("readPreference", readPreference);
-        return new AsyncClusterBinding(cluster, readPreference, options.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS),
-                                       TimeUnit.MILLISECONDS);
+        return new AsyncClusterBinding(cluster, readPreference);
     }
 }

@@ -24,9 +24,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
 
@@ -47,7 +46,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
 
         when:
-        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        List<Document> indexes = executeAsync(operation)
 
         then:
         indexes.size() == 0
@@ -74,7 +73,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        List<Document> indexes = executeAsync(operation)
 
         then:
         indexes.size() == 1
@@ -106,7 +105,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
 
         when:
-        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        List<Document> indexes = executeAsync(operation)
 
         then:
         indexes.size() == 4

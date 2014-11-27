@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
@@ -40,8 +39,10 @@ interface InternalConnection extends BufferProvider {
 
     /**
      * Opens the connection so its ready for use
+     *
+     * @param callback the callback to be called once the connection has been opened
      */
-    MongoFuture<Void> openAsync();
+    void openAsync(SingleResultCallback<Void> callback);
 
     /**
      * Closes the connection.

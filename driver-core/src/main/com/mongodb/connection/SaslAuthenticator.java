@@ -72,9 +72,9 @@ abstract class SaslAuthenticator extends Authenticator {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
             sendSaslStartAsync(response, connection, new SingleResultCallback<BsonDocument>() {
                 @Override
-                public void onResult(final BsonDocument result, final MongoException e) {
-                    if (e != null) {
-                        callback.onResult(null, translateException(e));
+                public void onResult(final BsonDocument result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, translateThrowable(t));
                     } else if (result.getBoolean("done").getValue()) {
                          callback.onResult(null, null);
                     } else {
@@ -83,7 +83,7 @@ abstract class SaslAuthenticator extends Authenticator {
                 }
             });
         } catch (Exception e) {
-            callback.onResult(null, translateException(e));
+            callback.onResult(null, translateThrowable(e));
         }
     }
 
@@ -129,8 +129,8 @@ abstract class SaslAuthenticator extends Authenticator {
         }
     }
 
-    private MongoException translateException(final Exception e) {
-        return new MongoSecurityException(getCredential(), "Exception authenticating", e);
+    private MongoException translateThrowable(final Throwable t) {
+        return new MongoSecurityException(getCredential(), "Exception authenticating", t);
     }
 
     private final class Continuator implements SingleResultCallback<BsonDocument> {
@@ -148,9 +148,9 @@ abstract class SaslAuthenticator extends Authenticator {
         }
 
         @Override
-        public void onResult(final BsonDocument result, final MongoException e) {
-            if (e != null) {
-                callback.onResult(null, translateException(e));
+        public void onResult(final BsonDocument result, final Throwable t) {
+            if (t != null) {
+                callback.onResult(null, translateThrowable(t));
                 disposeOfSaslClient(saslClient);
             } else if (result.getBoolean("done").getValue()) {
                 callback.onResult(null, null);
@@ -169,7 +169,7 @@ abstract class SaslAuthenticator extends Authenticator {
                 sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
                                       saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, this);
             } catch (SaslException e) {
-                callback.onResult(null, translateException(e));
+                callback.onResult(null, translateThrowable(e));
                 disposeOfSaslClient(saslClient);
             }
         }

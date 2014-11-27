@@ -25,7 +25,7 @@ import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 
@@ -56,8 +56,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection'))
-                .executeAsync(getAsyncBinding()).get()
+        executeAsync(new RenameCollectionOperation(getNamespace(), new MongoNamespace(getDatabaseName(), 'newCollection')))
 
         then:
         !collectionNameExists(getCollectionName())
@@ -84,7 +83,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getNamespace(), getNamespace()).execute(getBinding())
+        executeAsync(new RenameCollectionOperation(getNamespace(), getNamespace()))
 
         then:
         thrown(MongoServerException)

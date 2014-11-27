@@ -23,7 +23,7 @@ import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 
@@ -50,7 +50,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         assert databaseNameExists(databaseName)
 
         when:
-        new DropDatabaseOperation(databaseName).executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropDatabaseOperation(databaseName))
 
         then:
         !databaseNameExists(databaseName)
@@ -73,7 +73,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         def dbName = 'nonExistingDatabase'
 
         when:
-        new DropDatabaseOperation(dbName).executeAsync(getAsyncBinding()).get()
+        executeAsync(new DropDatabaseOperation(dbName))
 
         then:
         !databaseNameExists(dbName)

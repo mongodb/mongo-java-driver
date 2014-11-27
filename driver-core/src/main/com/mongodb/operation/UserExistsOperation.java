@@ -18,7 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
@@ -28,12 +28,12 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
-import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -76,19 +76,36 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
     }
 
     @Override
-    public MongoFuture<Boolean> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<Boolean>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Boolean> callback) {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<Boolean> call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer());
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
                 } else {
-                    return transformFuture(connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
-                                                                 new BsonDocument("user", new BsonString(userName)), null, 1, 0,
-                                                                 binding.getReadPreference().isSlaveOk(), false,
-                                                                 false, false, false, false,
-                                                                 new BsonDocumentCodec()),
-                                           transformQueryResult());
+                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer(), callback);
+                    } else {
+                         connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
+                                                                     new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                                                     binding.getReadPreference().isSlaveOk(), false,
+                                                                     false, false, false, false,
+                                                                     new BsonDocumentCodec(),
+                         new SingleResultCallback<QueryResult<BsonDocument>>() {
+                             @Override
+                             public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
+                                 if (t != null) {
+                                     callback.onResult(null, t);
+                                 } else {
+                                     try {
+                                         callback.onResult(transformQueryResult().apply(result), null);
+                                     } catch (Throwable tr) {
+                                         callback.onResult(null, tr);
+                                     }
+                                 }
+                             }
+                         });
+                    }
                 }
             }
         });

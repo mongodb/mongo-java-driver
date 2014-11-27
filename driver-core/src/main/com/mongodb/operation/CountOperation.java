@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
@@ -173,9 +173,9 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     @Override
-    public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
-                                                  transformer());
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
+        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding, transformer(),
+                                           callback);
     }
 
     /**

@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 
 /**
@@ -27,11 +27,12 @@ import com.mongodb.binding.AsyncWriteBinding;
  * @since 3.0
  */
 public interface AsyncWriteOperation<T> {
+
     /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
-     * @return a future for the result
+     * @param callback the callback to be called when the operation has been executed
      */
-    MongoFuture<T> executeAsync(AsyncWriteBinding binding);
+    void executeAsync(AsyncWriteBinding binding, SingleResultCallback<T> callback);
 }

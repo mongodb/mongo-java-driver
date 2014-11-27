@@ -17,8 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
@@ -234,25 +233,26 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace,
-                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+    public void executeAsync(final InternalConnection connection, final SingleResultCallback<QueryResult<T>> callback) {
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace,
+                                    connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+            }
+            ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            QueryMessage message = createQueryMessage(connection.getDescription());
+            encodeMessage(message, bsonOutput);
+            SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback<T>(callback,
+                                                                                               resultDecoder,
+                                                                                               message.getId(),
+                                                                                               connection.getDescription()
+                                                                                                         .getServerAddress());
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
+                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), callback,
+                                                                                receiveCallback));
+        } catch (Throwable t) {
+            callback.onResult(null, t);
         }
-        SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
-
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        QueryMessage message = createQueryMessage(connection.getDescription());
-        encodeMessage(message, bsonOutput);
-        QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
-                                                                            resultDecoder,
-                                                                            message.getId(),
-                                                                            connection.getDescription().getServerAddress());
-        connection.sendMessageAsync(bsonOutput.getByteBuffers(),
-                                    message.getId(),
-                                    new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), retVal,
-                                                                            receiveCallback));
-        return retVal;
     }
 
     private QueryMessage createQueryMessage(final ConnectionDescription connectionDescription) {

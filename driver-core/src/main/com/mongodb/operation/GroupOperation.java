@@ -18,7 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -31,8 +31,11 @@ import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -176,7 +179,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
      */
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
+        return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
@@ -186,20 +189,19 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         });
     }
 
-    /**
-     * Will return a cursor of Documents containing the results of the group operation.
-     *
-     * @param binding the binding
-     * @return a Future MongoCursor of T, the results of the group operation in a form to be iterated over
-     */
     @Override
-    public MongoFuture<AsyncBatchCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<AsyncBatchCursor<T>>() {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public MongoFuture<AsyncBatchCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                          CommandResultDocumentCodec.create(decoder, "retval"),
-                                                          binding, asyncTransformer(source, connection));
+            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                       CommandResultDocumentCodec.create(decoder, "retval"),
+                                                       binding, asyncTransformer(source, connection),
+                                                       callback);
+                }
             }
         });
     }

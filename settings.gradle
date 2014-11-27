@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver-core', 'driver', 'driver-async', 'driver-rx'
+include 'util','bson', 'driver-core', 'driver', 'driver-async'
 

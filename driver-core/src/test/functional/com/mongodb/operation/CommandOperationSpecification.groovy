@@ -30,7 +30,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -57,7 +57,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
                                                                       new BsonDocumentCodec())
         when:
-        def result = commandOperation.executeAsync(getAsyncBinding()).get()
+        def result = executeAsync(commandOperation)
 
         then:
         result.getNumber('n').intValue() == 0
@@ -83,14 +83,13 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should execute write command asynchronously'() {
         when:
-        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
+        def result = executeAsync(new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
                                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                                      .append('update',
                                                                              new BsonDocument('_id', new BsonInt32(42))
                                                                                      .append('b', new BsonInt32(42))),
-                                                             new BsonDocumentCodec())
-                .executeAsync(getAsyncBinding()).get()
+                                                             new BsonDocumentCodec()))
 
         then:
         result.containsKey('value')
@@ -143,7 +142,7 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.executeAsync(getAsyncBinding()).get()
+        executeAsync(commandOperation)
 
         then:
         thrown(MongoExecutionTimeoutException)

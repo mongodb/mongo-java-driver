@@ -22,9 +22,8 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class GetDatabaseNamesOperationSpecification extends OperationFunctionalSpecification {
 
@@ -47,7 +46,7 @@ class GetDatabaseNamesOperationSpecification extends OperationFunctionalSpecific
         def operation = new GetDatabaseNamesOperation()
 
         when:
-        List<String> names = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        List<String> names = executeAsync(operation)
 
         then:
         names.contains(getDatabaseName())

@@ -17,7 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
@@ -33,9 +33,9 @@ public interface AsyncReadBinding extends ReferenceCounted {
 
     /**
      * Returns a connection source to a server that satisfies the specified read preference.
-     * @return the connection source
+     * @param callback the to be passed the connection source
      */
-    MongoFuture<AsyncConnectionSource> getReadConnectionSource();
+    void getReadConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override
     AsyncReadBinding retain();

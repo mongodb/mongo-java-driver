@@ -21,9 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
@@ -37,6 +35,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
@@ -61,8 +60,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     /**
      * Construct an instance
-     * @param namespace the database and collection namespace for the operation.
-     * @param ordered whether the writes are ordered.
+     *
+     * @param namespace    the database and collection namespace for the operation.
+     * @param ordered      whether the writes are ordered.
      * @param writeConcern the write concern for the operation.
      */
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
@@ -117,37 +117,35 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<WriteConcernResult>() {
-
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<WriteConcernResult> callback) {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public MongoFuture<WriteConcernResult> call(final Connection connection) {
-                final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
-                if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeCommandProtocolAsync(connection)
-                                        .register(new SingleResultCallback<BulkWriteResult>() {
-                                            @Override
-                                            public void onResult(final BulkWriteResult result, final MongoException e) {
-                                                if (e != null) {
-                                                    future.init(null, translateException(e));
-                                                } else {
-                                                    future.init(translateBulkWriteResult(result), null);
-                                                }
-                                            }
-                                        });
-                } else {
-                    executeProtocolAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
+            public void call(final Connection connection, final Throwable t) {
+                if (t != null) {
+                    wrapCallback(callback).onResult(null, t);
+                } else if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
+                    executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
                         @Override
-                        public void onResult(final WriteConcernResult result, final MongoException e) {
-                            if (e != null) {
-                                future.init(null, translateException(e));
+                        public void onResult(final BulkWriteResult result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, translateException(t));
                             } else {
-                                future.init(result, null);
+                                callback.onResult(translateBulkWriteResult(result), null);
+                            }
+                        }
+                    });
+                } else {
+                    executeProtocolAsync(connection, new SingleResultCallback<WriteConcernResult>() {
+                        @Override
+                        public void onResult(final WriteConcernResult result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, translateException(t));
+                            } else {
+                                callback.onResult(result, null);
                             }
                         }
                     });
                 }
-                return future;
             }
         });
     }
@@ -164,9 +162,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
      * Asynchronously executes the write protocol
      *
      * @param connection the connection
-     * @return the write protocol
+     * @param callback   the callback to be passed the WriteConcernResult
      */
-    protected abstract MongoFuture<WriteConcernResult> executeProtocolAsync(Connection connection);
+    protected abstract void executeProtocolAsync(Connection connection, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Executes the write command protocol.
@@ -174,20 +172,20 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
      * @param connection the connection
      * @return the result
      */
-    protected abstract BulkWriteResult executeCommandProtocol(final Connection connection);
+    protected abstract BulkWriteResult executeCommandProtocol(Connection connection);
 
     /**
      * Asynchronously executes the write command protocol.
      *
      * @param connection the connection
-     * @return the result
+     * @param callback   the callback to be passed the BulkWriteResult
      */
-    protected abstract MongoFuture<BulkWriteResult> executeCommandProtocolAsync(final Connection connection);
+    protected abstract void executeCommandProtocolAsync(Connection connection, SingleResultCallback<BulkWriteResult> callback);
 
-    private MongoException translateException(final MongoException e) {
-        MongoException checkedError = e;
-        if (e instanceof BulkWriteException) {
-            checkedError = convertBulkWriteException((BulkWriteException) e);
+    private MongoException translateException(final Throwable t) {
+        MongoException checkedError = MongoException.fromThrowable(t);
+        if (t instanceof BulkWriteException) {
+            checkedError = convertBulkWriteException((BulkWriteException) t);
         }
         return checkedError;
     }

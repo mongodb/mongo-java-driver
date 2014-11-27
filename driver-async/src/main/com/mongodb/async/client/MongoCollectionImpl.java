@@ -19,9 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
@@ -64,6 +62,7 @@ import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
+import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
@@ -86,6 +85,7 @@ import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -115,48 +115,46 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoFuture<Long> count() {
-        return count(new BsonDocument(), new CountOptions());
+    public void count(final SingleResultCallback<Long> callback) {
+        count(new BsonDocument(), new CountOptions(), callback);
     }
 
     @Override
-    public MongoFuture<Long> count(final Object filter) {
-        return count(filter, new CountOptions());
+    public void count(final Object filter, final SingleResultCallback<Long> callback) {
+        count(filter, new CountOptions(), callback);
     }
 
     @Override
-    public MongoFuture<Long> count(final Object filter, final CountOptions options) {
+    public void count(final Object filter, final CountOptions options, final SingleResultCallback<Long> callback) {
         CountOperation operation = new CountOperation(namespace)
-                                          .filter(asBson(filter))
-                                          .skip(options.getSkip())
-                                          .limit(options.getLimit())
-                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                   .filter(asBson(filter))
+                                   .skip(options.getSkip())
+                                   .limit(options.getLimit())
+                                   .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
         if (options.getHint() != null) {
             operation.hint(asBson(options.getHint()));
         } else if (options.getHintString() != null) {
             operation.hint(new BsonString(options.getHintString()));
         }
-        return executor.execute(operation, this.options.getReadPreference());
+        executor.execute(operation, this.options.getReadPreference(), callback);
     }
 
     @Override
-    public MongoFuture<List<Object>> distinct(final String fieldName, final Object filter) {
-        return distinct(fieldName, filter, new DistinctOptions());
+    public void distinct(final String fieldName, final Object filter, final SingleResultCallback<List<Object>> callback) {
+        distinct(fieldName, filter, new DistinctOptions(), callback);
     }
 
     @Override
-    public MongoFuture<List<Object>> distinct(final String fieldName, final Object filter, final DistinctOptions options) {
-
+    public void distinct(final String fieldName, final Object filter, final DistinctOptions options,
+                         final SingleResultCallback<List<Object>> callback) {
         DistinctOperation operation = new DistinctOperation(namespace, fieldName)
                                       .filter(asBson(filter))
                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
-
-        final SingleResultFuture<List<Object>> future = new SingleResultFuture<List<Object>>();
-        executor.execute(operation, this.options.getReadPreference()).register(new SingleResultCallback<BsonArray>() {
+        executor.execute(operation, this.options.getReadPreference(), wrapCallback(new SingleResultCallback<BsonArray>() {
             @Override
-            public void onResult(final BsonArray result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final BsonArray result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, MongoException.fromThrowable(t));
                 } else {
                     try {
                         List<Object> distinctList = new ArrayList<Object>();
@@ -167,17 +165,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                     DecoderContext.builder().build());
                             distinctList.add(document.get("value"));
                         }
-                        future.init(distinctList, null);
-                    } catch (MongoException err) {
-                        future.init(null, err);
-                    } catch (Throwable t) {
-                        future.init(null, new MongoException("Error when decoding distinct results", t));
+                        callback.onResult(distinctList, null);
+                    } catch (Throwable tr) {
+                        callback.onResult(null, new MongoException("Error when decoding distinct results", tr));
                     }
                 }
             }
-        });
-
-        return future;
+        }));
     }
 
     @Override
@@ -200,18 +194,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new FindFluentImpl<C>(namespace, options, executor, filter, new FindOptions(), clazz);
     }
 
+    @Override
     public MongoIterable<Document> aggregate(final List<?> pipeline) {
         return aggregate(pipeline, new AggregateOptions(), Document.class);
     }
 
+    @Override
     public <C> MongoIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
         return aggregate(pipeline, new AggregateOptions(), clazz);
     }
 
+    @Override
     public MongoIterable<Document> aggregate(final List<?> pipeline, final AggregateOptions options) {
         return aggregate(pipeline, options, Document.class);
     }
 
+    @Override
     public <C> MongoIterable<C> aggregate(final List<?> pipeline, final AggregateOptions options, final Class<C> clazz) {
         List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
         BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
@@ -220,7 +218,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse());
-            executor.execute(operation);
+            executor.execute(operation, new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    // NoOp
+                    // Todo - review api - this is a race.
+                }
+            });
             return new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
                                          this.options, executor, new BsonDocument(), new FindOptions(), clazz);
         } else {
@@ -233,6 +237,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                             executor);
         }
     }
+
 
     @Override
     public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
@@ -290,7 +295,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (options.getFinalizeFunction() != null) {
                 operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
             }
-            executor.execute(operation);
+            executor.execute(operation, new SingleResultCallback<MapReduceStatistics>() {
+                @Override
+                public void onResult(final MapReduceStatistics result, final Throwable t) {
+                    // Noop
+                    // Todo - this is a race
+                }
+            });
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
             OperationOptions readOptions = OperationOptions.builder().readPreference(primary()).build().withDefaults(this.options);
@@ -300,13 +311,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
-        return bulkWrite(requests, new BulkWriteOptions());
+    public void bulkWrite(final List<? extends WriteModel<? extends T>> requests, final SingleResultCallback<BulkWriteResult> callback) {
+        bulkWrite(requests, new BulkWriteOptions(), callback);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public MongoFuture<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
+    public void bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options,
+                          final SingleResultCallback<BulkWriteResult> callback) {
         List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
         for (WriteModel<? extends T> writeModel : requests) {
             WriteRequest writeRequest;
@@ -346,27 +358,28 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             writeRequests.add(writeRequest);
         }
 
-        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(),
-                                                            this.options.getWriteConcern()));
+        executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), this.options.getWriteConcern()),
+                         callback);
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> insertOne(final T document) {
+    public void insertOne(final T document, final SingleResultCallback<WriteConcernResult> callback) {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         requests.add(new InsertRequest(asBson(document)));
-        return executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
+        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests), callback);
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> insertMany(final List<? extends T> documents) {
-        return insertMany(documents, new InsertManyOptions());
+    public void insertMany(final List<? extends T> documents, final SingleResultCallback<WriteConcernResult> callback) {
+        insertMany(documents, new InsertManyOptions(), callback);
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+    public void insertMany(final List<? extends T> documents, final InsertManyOptions options,
+                           final SingleResultCallback<WriteConcernResult> callback) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
@@ -374,200 +387,202 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        return executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
+        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests),
+                         wrapCallback(callback));
     }
 
     @Override
-    public MongoFuture<DeleteResult> deleteOne(final Object filter) {
-        return delete(filter, false);
+    public void deleteOne(final Object filter, final SingleResultCallback<DeleteResult> callback) {
+        delete(filter, false, callback);
     }
 
     @Override
-    public MongoFuture<DeleteResult> deleteMany(final Object filter) {
-        return delete(filter, true);
+    public void deleteMany(final Object filter, final SingleResultCallback<DeleteResult> callback) {
+        delete(filter, true, callback);
     }
 
     @Override
-    public MongoFuture<UpdateResult> replaceOne(final Object filter, final T replacement) {
-        return replaceOne(filter, replacement, new UpdateOptions());
+    public void replaceOne(final Object filter, final T replacement, final SingleResultCallback<UpdateResult> callback) {
+        replaceOne(filter, replacement, new UpdateOptions(), callback);
     }
 
     @Override
-    public MongoFuture<UpdateResult> replaceOne(final Object filter, final T replacement, final UpdateOptions options) {
+    public void replaceOne(final Object filter, final T replacement, final UpdateOptions options,
+                           final SingleResultCallback<UpdateResult> callback) {
         List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
         requests.add(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE).upsert(options.isUpsert()));
-        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, this.options.getWriteConcern(), requests)));
+        executor.execute(new UpdateOperation(namespace, true, this.options.getWriteConcern(), requests), createUpdateResult(callback));
     }
 
     @Override
-    public MongoFuture<UpdateResult> updateOne(final Object filter, final Object update) {
-        return updateOne(filter, update, new UpdateOptions());
+    public void updateOne(final Object filter, final Object update, final SingleResultCallback<UpdateResult> callback) {
+        updateOne(filter, update, new UpdateOptions(), callback);
     }
 
     @Override
-    public MongoFuture<UpdateResult> updateOne(final Object filter, final Object update, final UpdateOptions options) {
-        return update(filter, update, options, false);
+    public void updateOne(final Object filter, final Object update, final UpdateOptions options,
+                          final SingleResultCallback<UpdateResult> callback) {
+        update(filter, update, options, false, callback);
     }
 
     @Override
-    public MongoFuture<UpdateResult> updateMany(final Object filter, final Object update) {
-        return updateMany(filter, update, new UpdateOptions());
+    public void updateMany(final Object filter, final Object update, final SingleResultCallback<UpdateResult> callback) {
+        updateMany(filter, update, new UpdateOptions(), callback);
     }
 
     @Override
-    public MongoFuture<UpdateResult> updateMany(final Object filter, final Object update, final UpdateOptions options) {
-        return update(filter, update, options, true);
+    public void updateMany(final Object filter, final Object update, final UpdateOptions options,
+                           final SingleResultCallback<UpdateResult> callback) {
+        update(filter, update, options, true, callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndDelete(final Object filter) {
-        return findOneAndDelete(filter, new FindOneAndDeleteOptions());
+    public void findOneAndDelete(final Object filter, final SingleResultCallback<T> callback) {
+        findOneAndDelete(filter, new FindOneAndDeleteOptions(), callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options) {
-        return executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
-                                .filter(asBson(filter))
-                                .projection(asBson(options.getProjection()))
-                                .sort(asBson(options.getSort())));
+    public void findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options, final SingleResultCallback<T> callback) {
+        executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
+                         .filter(asBson(filter))
+                         .projection(asBson(options.getProjection()))
+                         .sort(asBson(options.getSort())), callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndReplace(final Object filter, final T replacement) {
-        return findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions());
+    public void findOneAndReplace(final Object filter, final T replacement, final SingleResultCallback<T> callback) {
+        findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions(), callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndReplace(final Object filter, final T replacement, final FindOneAndReplaceOptions options) {
-        return executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
-                                .filter(asBson(filter))
-                                .projection(asBson(options.getProjection()))
-                                .sort(asBson(options.getSort()))
-                                .returnOriginal(options.getReturnOriginal())
-                                .upsert(options.isUpsert()));
+    public void findOneAndReplace(final Object filter, final T replacement, final FindOneAndReplaceOptions options,
+                                  final SingleResultCallback<T> callback) {
+        executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
+                         .filter(asBson(filter))
+                         .projection(asBson(options.getProjection()))
+                         .sort(asBson(options.getSort()))
+                         .returnOriginal(options.getReturnOriginal())
+                         .upsert(options.isUpsert()), callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndUpdate(final Object filter, final Object update) {
-        return findOneAndUpdate(filter, update, new FindOneAndUpdateOptions());
+    public void findOneAndUpdate(final Object filter, final Object update, final SingleResultCallback<T> callback) {
+        findOneAndUpdate(filter, update, new FindOneAndUpdateOptions(), callback);
     }
 
     @Override
-    public MongoFuture<T> findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options) {
-        return executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
-                                .filter(asBson(filter))
-                                .projection(asBson(options.getProjection()))
-                                .sort(asBson(options.getSort()))
-                                .returnOriginal(options.getReturnOriginal())
-                                .upsert(options.isUpsert()));
+    public void findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options,
+                                 final SingleResultCallback<T> callback) {
+        executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
+                         .filter(asBson(filter))
+                         .projection(asBson(options.getProjection()))
+                         .sort(asBson(options.getSort()))
+                         .returnOriginal(options.getReturnOriginal())
+                         .upsert(options.isUpsert()), callback);
     }
 
     @Override
-    public MongoFuture<Void> dropCollection() {
-        return executor.execute(new DropCollectionOperation(namespace));
+    public void dropCollection(final SingleResultCallback<Void> callback) {
+        executor.execute(new DropCollectionOperation(namespace), callback);
     }
 
     @Override
-    public MongoFuture<Void> createIndex(final Object key) {
-        return createIndex(key, new CreateIndexOptions());
+    public void createIndex(final Object key, final SingleResultCallback<Void> callback) {
+        createIndex(key, new CreateIndexOptions(), callback);
     }
 
     @Override
-    public MongoFuture<Void> createIndex(final Object key, final CreateIndexOptions options) {
-        return executor.execute(new CreateIndexOperation(getNamespace(), asBson(key))
-                                .name(options.getName())
-                                .background(options.isBackground())
-                                .unique(options.isUnique())
-                                .sparse(options.isSparse())
-                                .expireAfterSeconds(options.getExpireAfterSeconds())
-                                .version(options.getVersion())
-                                .weights(asBson(options.getWeights()))
-                                .defaultLanguage(options.getDefaultLanguage())
-                                .languageOverride(options.getLanguageOverride())
-                                .textIndexVersion(options.getTextIndexVersion())
-                                .twoDSphereIndexVersion(options.getTwoDSphereIndexVersion())
-                                .bits(options.getBits())
-                                .min(options.getMin())
-                                .max(options.getMax())
-                                .bucketSize(options.getBucketSize()));
+    public void createIndex(final Object key, final CreateIndexOptions options, final SingleResultCallback<Void> callback) {
+        executor.execute(new CreateIndexOperation(getNamespace(), asBson(key))
+                         .name(options.getName())
+                         .background(options.isBackground())
+                         .unique(options.isUnique())
+                         .sparse(options.isSparse())
+                         .expireAfterSeconds(options.getExpireAfterSeconds())
+                         .version(options.getVersion())
+                         .weights(asBson(options.getWeights()))
+                         .defaultLanguage(options.getDefaultLanguage())
+                         .languageOverride(options.getLanguageOverride())
+                         .textIndexVersion(options.getTextIndexVersion())
+                         .twoDSphereIndexVersion(options.getTwoDSphereIndexVersion())
+                         .bits(options.getBits())
+                         .min(options.getMin())
+                         .max(options.getMax())
+                         .bucketSize(options.getBucketSize()), callback);
     }
 
     @Override
-    public MongoFuture<List<Document>> getIndexes() {
-        return getIndexes(Document.class);
+    public void getIndexes(final SingleResultCallback<List<Document>> callback) {
+        getIndexes(Document.class, callback);
     }
 
     @Override
-    public <C> MongoFuture<List<C>> getIndexes(final Class<C> clazz) {
-        return executor.execute(new ListIndexesOperation<C>(namespace, getCodec(clazz)), options.getReadPreference());
+    public <C> void getIndexes(final Class<C> clazz, final SingleResultCallback<List<C>> callback) {
+        executor.execute(new ListIndexesOperation<C>(namespace, getCodec(clazz)), options.getReadPreference(), callback);
     }
 
     @Override
-    public MongoFuture<Void> dropIndex(final String indexName) {
-        return executor.execute(new DropIndexOperation(namespace, indexName));
+    public void dropIndex(final String indexName, final SingleResultCallback<Void> callback) {
+        executor.execute(new DropIndexOperation(namespace, indexName), callback);
     }
 
     @Override
-    public MongoFuture<Void> dropIndexes() {
-        return dropIndex("*");
+    public void dropIndexes(final SingleResultCallback<Void> callback) {
+        dropIndex("*", callback);
     }
 
     @Override
-    public MongoFuture<Void> renameCollection(final MongoNamespace newCollectionNamespace) {
-        return renameCollection(newCollectionNamespace, new RenameCollectionOptions());
+    public void renameCollection(final MongoNamespace newCollectionNamespace, final SingleResultCallback<Void> callback) {
+        renameCollection(newCollectionNamespace, new RenameCollectionOptions(), callback);
     }
 
     @Override
-    public MongoFuture<Void> renameCollection(final MongoNamespace newCollectionNamespace,
-                                              final RenameCollectionOptions options) {
-        return executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace)
-                                .dropTarget(options.isDropTarget()));
+    public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions options,
+                                 final SingleResultCallback<Void> callback) {
+        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace)
+                         .dropTarget(options.isDropTarget()), callback);
     }
 
-    private MongoFuture<DeleteResult> delete(final Object filter, final boolean multi) {
-        final SingleResultFuture<DeleteResult> future = new SingleResultFuture<DeleteResult>();
+    private void delete(final Object filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
         executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                             asList(new DeleteRequest(asBson(filter)).multi(multi)))
-                        ).register(new SingleResultCallback<WriteConcernResult>() {
-            @Override
-            public void onResult(final WriteConcernResult result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    DeleteResult deleteResult = result.wasAcknowledged() ? DeleteResult.acknowledged(result.getCount())
-                                                                         : DeleteResult.unacknowledged();
-                    future.init(deleteResult, null);
-                }
-            }
-        });
-        return future;
+                                             asList(new DeleteRequest(asBson(filter)).multi(multi))),
+                         new SingleResultCallback<WriteConcernResult>() {
+                             @Override
+                             public void onResult(final WriteConcernResult result, final Throwable t) {
+                                 if (t != null) {
+                                     callback.onResult(null, t);
+                                 } else {
+                                     DeleteResult deleteResult = result.wasAcknowledged() ? DeleteResult.acknowledged(result.getCount())
+                                                                                          : DeleteResult.unacknowledged();
+                                     callback.onResult(deleteResult, null);
+                                 }
+                             }
+                         });
     }
 
-    private MongoFuture<UpdateResult> update(final Object filter, final Object update,
-                                             final UpdateOptions updateOptions, final boolean multi) {
+    private void update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi,
+                        final SingleResultCallback<UpdateResult> callback) {
         List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
         requests.add(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
                      .upsert(updateOptions.isUpsert()).multi(multi));
-        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests)));
+        executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests), createUpdateResult(callback));
     }
 
     // TODO modifiedCount
-    private MongoFuture<UpdateResult> createUpdateResult(final MongoFuture<WriteConcernResult> writeConcernResult) {
-        final SingleResultFuture<UpdateResult> future = new SingleResultFuture<UpdateResult>();
-        writeConcernResult.register(new SingleResultCallback<WriteConcernResult>() {
+    private SingleResultCallback<WriteConcernResult> createUpdateResult(final SingleResultCallback<UpdateResult> callback) {
+        return new SingleResultCallback<WriteConcernResult>() {
             @Override
-            public void onResult(final WriteConcernResult result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
+            public void onResult(final WriteConcernResult result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
                 } else {
                     UpdateResult updateResult = result.wasAcknowledged() ? UpdateResult.acknowledged(result.getCount(), 0,
                                                                                                      result.getUpsertedId())
                                                                          : UpdateResult.unacknowledged();
-                    future.init(updateResult, null);
+                    callback.onResult(updateResult, null);
                 }
             }
-        });
-        return future;
+        };
     }
 
     private Codec<T> getCodec() {

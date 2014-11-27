@@ -19,9 +19,8 @@ package com.mongodb.async.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -35,6 +34,7 @@ import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
@@ -69,36 +69,36 @@ public interface MongoCollection<T> {
     /**
      * Counts the number of documents in the collection.
      *
-     * @return the number of documents in the collection
+     * @param callback the callback passed the number of documents in the collection
      */
-    MongoFuture<Long> count();
+    void count(SingleResultCallback<Long> callback);
 
     /**
      * Counts the number of documents in the collection according to the given options.
      *
-     * @param filter the query filter
-     * @return the number of documents in the collection
+     * @param filter   the query filter
+     * @param callback the callback passed the number of documents in the collection
      */
-    MongoFuture<Long> count(Object filter);
+    void count(Object filter, SingleResultCallback<Long> callback);
 
     /**
      * Counts the number of documents in the collection according to the given options.
      *
-     * @param filter  the query filter
-     * @param options the options describing the count
-     * @return the number of documents in the collection
+     * @param filter   the query filter
+     * @param options  the options describing the count
+     * @param callback the callback passed the number of documents in the collection
      */
-    MongoFuture<Long> count(Object filter, CountOptions options);
+    void count(Object filter, CountOptions options, SingleResultCallback<Long> callback);
 
     /**
      * Gets the distinct values of the specified field name.
      *
      * @param fieldName the field name
      * @param filter    the query filter
-     * @return a non-null list of distinct values
+     * @param callback  the callback passed a non-null list of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    MongoFuture<List<Object>> distinct(String fieldName, Object filter);
+    void distinct(String fieldName, Object filter, SingleResultCallback<List<Object>> callback);
 
     /**
      * Gets the distinct values of the specified field name.
@@ -106,10 +106,10 @@ public interface MongoCollection<T> {
      * @param fieldName the field name
      * @param filter    the query filter
      * @param options   the options to apply to the distinct operation
-     * @return a non-null list of distinct values
+     * @param callback  the callback passed a non-null list of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    MongoFuture<List<Object>> distinct(String fieldName, Object filter, DistinctOptions options);
+    void distinct(String fieldName, Object filter, DistinctOptions options, SingleResultCallback<List<Object>> callback);
 
     /**
      * Finds all documents in the collection.
@@ -241,18 +241,19 @@ public interface MongoCollection<T> {
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
      * @param requests the writes to execute
-     * @return the result of the bulk write
+     * @param callback the callback passed the result of the bulk write
      */
-    MongoFuture<BulkWriteResult> bulkWrite(List<? extends WriteModel<? extends T>> requests);
+    void bulkWrite(List<? extends WriteModel<? extends T>> requests, SingleResultCallback<BulkWriteResult> callback);
 
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
      * @param requests the writes to execute
      * @param options  the options to apply to the bulk write operation
-     * @return the result of the bulk write
+     * @param callback the callback passed the result of the bulk write
      */
-    MongoFuture<BulkWriteResult> bulkWrite(List<? extends WriteModel<? extends T>> requests, BulkWriteOptions options);
+    void bulkWrite(List<? extends WriteModel<? extends T>> requests, BulkWriteOptions options,
+                   SingleResultCallback<BulkWriteResult> callback);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -261,7 +262,7 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    MongoFuture<WriteConcernResult> insertOne(T document);
+    void insertOne(T document, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
@@ -271,7 +272,7 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    MongoFuture<WriteConcernResult> insertMany(List<? extends T> documents);
+    void insertMany(List<? extends T> documents, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
@@ -282,36 +283,36 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    MongoFuture<WriteConcernResult> insertMany(List<? extends T> documents, InsertManyOptions options);
+    void insertMany(List<? extends T> documents, InsertManyOptions options, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
-     * @param filter the query filter to apply the the delete operation
-     * @return the result of the remove one operation
+     * @param filter   the query filter to apply the the delete operation
+     * @param callback the callback passed the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-    MongoFuture<DeleteResult> deleteOne(Object filter);
+    void deleteOne(Object filter, SingleResultCallback<DeleteResult> callback);
 
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply the the delete operation
-     * @return the result of the remove many operation
+     * @param filter   the query filter to apply the the delete operation
+     * @param callback the callback passed the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-    MongoFuture<DeleteResult> deleteMany(Object filter);
+    void deleteMany(Object filter, SingleResultCallback<DeleteResult> callback);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
-     * @return the result of the replace one operation
+     * @param callback    the callback passed the result of the replace one operation
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
-    MongoFuture<UpdateResult> replaceOne(Object filter, T replacement);
+    void replaceOne(Object filter, T replacement, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -319,92 +320,94 @@ public interface MongoCollection<T> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
-     * @return the result of the replace one operation
+     * @param callback    the callback passed the result of the replace one operation
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
-    MongoFuture<UpdateResult> replaceOne(Object filter, T replacement, UpdateOptions options);
+    void replaceOne(Object filter, T replacement, UpdateOptions options, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *               registered
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *               can be of any type for which a {@code Codec} is registered
-     * @return the result of the update one operation
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param callback the callback passed the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    MongoFuture<UpdateResult> updateOne(Object filter, Object update);
+    void updateOne(Object filter, Object update, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *                registered
-     * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *                can be of any type for which a {@code Codec} is registered
-     * @param options the options to apply to the update operation
-     * @return the result of the update one operation
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param options  the options to apply to the update operation
+     * @param callback the callback passed the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    MongoFuture<UpdateResult> updateOne(Object filter, Object update, UpdateOptions options);
+    void updateOne(Object filter, Object update, UpdateOptions options, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *               registered
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *               can be of any type for which a {@code Codec} is registered
-     * @return the result of the update one operation
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param callback the callback passed the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    MongoFuture<UpdateResult> updateMany(Object filter, Object update);
+    void updateMany(Object filter, Object update, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *                registered
-     * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *                can be of any type for which a {@code Codec} is registered
-     * @param options the options to apply to the update operation
-     * @return the result of the update one operation
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param options  the options to apply to the update operation
+     * @param callback the callback passed the result of the update one operation
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    MongoFuture<UpdateResult> updateMany(Object filter, Object update, UpdateOptions options);
+    void updateMany(Object filter, Object update, UpdateOptions options, SingleResultCallback<UpdateResult> callback);
 
     /**
      * Atomically find a document and remove it.
      *
-     * @param filter the query filter to find the document with
-     * @return the document that was removed.  If no documents matched the query filter, then null will be returned
+     * @param filter   the query filter to find the document with
+     * @param callback the callback passed the document that was removed.  If no documents matched the query filter, then null will be
+     *                 returned
      */
-    MongoFuture<T> findOneAndDelete(Object filter);
+    void findOneAndDelete(Object filter, SingleResultCallback<T> callback);
 
     /**
      * Atomically find a document and remove it.
      *
-     * @param filter  the query filter to find the document with
-     * @param options the options to apply to the operation
-     * @return the document that was removed.  If no documents matched the query filter, then null will be returned
+     * @param filter   the query filter to find the document with
+     * @param options  the options to apply to the operation
+     * @param callback the callback passed the document that was removed.  If no documents matched the query filter, then null will be
+     *                 returned
      */
-    MongoFuture<T> findOneAndDelete(Object filter, FindOneAndDeleteOptions options);
+    void findOneAndDelete(Object filter, FindOneAndDeleteOptions options, SingleResultCallback<T> callback);
 
     /**
      * Atomically find a document and replace it.
      *
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
-     * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
-     * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
-     * returned
+     * @param callback    the callback passed the document that was replaced.  Depending on the value of the {@code returnOriginal}
+     *                    property, this will either be the document as it was before the update or as it is after the update.  If no
+     *                    documents matched the query filter, then null will be returned
      */
-    MongoFuture<T> findOneAndReplace(Object filter, T replacement);
+    void findOneAndReplace(Object filter, T replacement, SingleResultCallback<T> callback);
 
     /**
      * Atomically find a document and replace it.
@@ -412,51 +415,51 @@ public interface MongoCollection<T> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
-     * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
-     * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
-     * returned
+     * @param callback    the callback passed the document that was replaced.  Depending on the value of the {@code returnOriginal}
+     *                    property, this will either be the document as it was before the update or as it is after the update.  If no
+     *                    documents matched the query filter, then null will be returned
      */
-    MongoFuture<T> findOneAndReplace(Object filter, T replacement, FindOneAndReplaceOptions options);
+    void findOneAndReplace(Object filter, T replacement, FindOneAndReplaceOptions options, SingleResultCallback<T> callback);
 
     /**
      * Atomically find a document and update it.
      *
-     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *               registered
-     * @param update a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *               can be of any type for which a {@code Codec} is registered
-     * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
-     * returned
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param callback the callback passed the document that was updated before the update was applied.  If no documents matched the query
+     *                 filter, then null will be returned
      */
-    MongoFuture<T> findOneAndUpdate(Object filter, Object update);
+    void findOneAndUpdate(Object filter, Object update, SingleResultCallback<T> callback);
 
     /**
      * Atomically find a document and update it.
      *
-     * @param filter  a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
-     *                registered
-     * @param update  a document describing the update, which may not be null. The update to apply must include only update operators. This
-     *                can be of any type for which a {@code Codec} is registered
-     * @param options the options to apply to the operation
-     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property, this will either be the
-     * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
-     * returned
+     * @param filter   a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param options  the options to apply to the operation
+     * @param callback the callback passed the document that was updated.  Depending on the value of the {@code returnOriginal} property,
+     *                 this will either be the document as it was before the update or as it is after the update.  If no documents matched
+     *                 the query filter, then null will be returned
      */
-    MongoFuture<T> findOneAndUpdate(Object filter, Object update, FindOneAndUpdateOptions options);
+    void findOneAndUpdate(Object filter, Object update, FindOneAndUpdateOptions options, SingleResultCallback<T> callback);
 
     /**
      * Drops this collection from the Database.
      *
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    MongoFuture<Void> dropCollection();
+    void dropCollection(SingleResultCallback<Void> callback);
 
     /**
      * @param key an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
      *            registered
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
-    MongoFuture<Void> createIndex(Object key);
+    void createIndex(Object key, SingleResultCallback<Void> callback);
 
     /**
      * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
@@ -464,56 +467,60 @@ public interface MongoCollection<T> {
      * @param options the options for the index
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
-    MongoFuture<Void> createIndex(Object key, CreateIndexOptions options);
+    void createIndex(Object key, CreateIndexOptions options, SingleResultCallback<Void> callback);
 
     /**
-     * @return all the indexes on this collection
+     * @param callback the callback passed all the indexes on this collection
      * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
      */
-    MongoFuture<List<Document>> getIndexes();
+    void getIndexes(SingleResultCallback<List<Document>> callback);
 
     /**
-     * @param clazz the class to decode each document into
-     * @param <C>   the target document type of the iterable.
-     * @return all the indexes on this collection
+     * @param clazz    the class to decode each document into
+     * @param <C>      the target document type of the iterable.
+     * @param callback the callback passed all the indexes on this collection
      * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
      */
-    <C> MongoFuture<List<C>> getIndexes(Class<C> clazz);
+    <C> void getIndexes(Class<C> clazz, SingleResultCallback<List<C>> callback);
 
     /**
      * Drops the given index.
      *
      * @param indexName the name of the index to remove
+     * @param callback  the callback that is completed once the index has been dropped
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    MongoFuture<Void> dropIndex(String indexName);
+    void dropIndex(String indexName, SingleResultCallback<Void> callback);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
+     * @param callback the callback that is completed once all the indexes have been dropped
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    MongoFuture<Void> dropIndexes();
+    void dropIndexes(SingleResultCallback<Void> callback);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
      *
      * @param newCollectionNamespace the namespace the collection will be renamed to
+     * @param callback               the callback that is completed once the collection has been renamed
      * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection, or if the
      *                                          oldCollectionName is the name of a collection that doesn't exist
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
-    MongoFuture<Void> renameCollection(MongoNamespace newCollectionNamespace);
+    void renameCollection(MongoNamespace newCollectionNamespace, SingleResultCallback<Void> callback);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
      *
      * @param newCollectionNamespace the name the collection will be renamed to
      * @param options                the options for renaming a collection
+     * @param callback               the callback that is completed once the collection has been renamed
      * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
      *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
-    MongoFuture<Void> renameCollection(MongoNamespace newCollectionNamespace, RenameCollectionOptions options);
+    void renameCollection(MongoNamespace newCollectionNamespace, RenameCollectionOptions options, SingleResultCallback<Void> callback);
 
 }

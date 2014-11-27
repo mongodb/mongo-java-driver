@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
@@ -30,7 +30,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "unchecked"})
 class TestConnection implements Connection {
     private final InternalConnection internalConnection;
     private final ProtocolExecutor executor;
@@ -68,10 +68,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> insertAsync(final MongoNamespace namespace, final boolean ordered,
-                                                       final WriteConcern writeConcern,
-                                                       final List<InsertRequest> inserts) {
-        return executeEnqueuedProtocolAsync();
+    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                            final List<InsertRequest> inserts,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -81,10 +81,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> updateAsync(final MongoNamespace namespace, final boolean ordered,
-                                                       final WriteConcern writeConcern,
-                                                       final List<UpdateRequest> updates) {
-        return executeEnqueuedProtocolAsync();
+    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                            final List<UpdateRequest> updates,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -94,10 +94,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> deleteAsync(final MongoNamespace namespace, final boolean ordered,
-                                                       final WriteConcern writeConcern,
-                                                       final List<DeleteRequest> deletes) {
-        return executeEnqueuedProtocolAsync();
+    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                            final List<DeleteRequest> deletes,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -107,10 +107,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> insertCommandAsync(final MongoNamespace namespace, final boolean ordered,
-                                                           final WriteConcern writeConcern,
-                                                           final List<InsertRequest> inserts) {
-        return executeEnqueuedProtocolAsync();
+    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final List<InsertRequest> inserts,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -120,10 +120,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> updateCommandAsync(final MongoNamespace namespace, final boolean ordered,
-                                                           final WriteConcern writeConcern,
-                                                           final List<UpdateRequest> updates) {
-        return executeEnqueuedProtocolAsync();
+    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final List<UpdateRequest> updates,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -133,10 +133,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> deleteCommandAsync(final MongoNamespace namespace, final boolean ordered,
-                                                           final WriteConcern writeConcern,
-                                                           final List<DeleteRequest> deletes) {
-        return executeEnqueuedProtocolAsync();
+    public void deleteCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final List<DeleteRequest> deletes,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -147,10 +147,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public <T> MongoFuture<T> commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
-                                           final FieldNameValidator fieldNameValidator,
-                                           final Decoder<T> commandResultDecoder) {
-        return executeEnqueuedProtocolAsync();
+    public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
+                                 final FieldNameValidator fieldNameValidator,
+                                 final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -163,14 +163,13 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public <T> MongoFuture<QueryResult<T>> queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument,
-                                                      final BsonDocument fields,
-                                                      final int numberToReturn, final int skip, final boolean slaveOk,
-                                                      final boolean tailableCursor,
-                                                      final boolean awaitData, final boolean noCursorTimeout,
-                                                      final boolean partial,
-                                                      final boolean oplogReplay, final Decoder<T> resultDecoder) {
-        return executeEnqueuedProtocolAsync();
+    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
+                               final int numberToReturn, final int skip,
+                               final boolean slaveOk, final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
+                               final boolean partial,
+                               final boolean oplogReplay, final Decoder<T> resultDecoder,
+                               final SingleResultCallback<QueryResult<T>> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -180,9 +179,10 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
-                                                        final Decoder<T> resultDecoder) {
-        return executeEnqueuedProtocolAsync();
+    public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
+                                 final Decoder<T> resultDecoder,
+                                 final SingleResultCallback<QueryResult<T>> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @Override
@@ -191,8 +191,8 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public MongoFuture<Void> killCursorAsync(final List<Long> cursors) {
-        return executeEnqueuedProtocolAsync();
+    public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
+        executeEnqueuedProtocolAsync(callback);
     }
 
     @SuppressWarnings("unchecked")
@@ -201,8 +201,8 @@ class TestConnection implements Connection {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T executeEnqueuedProtocolAsync() {
-        return (T) executor.executeAsync(enqueuedProtocol, internalConnection);
+    private <T> void executeEnqueuedProtocolAsync(final SingleResultCallback<T> callback) {
+        executor.executeAsync(enqueuedProtocol, internalConnection, callback);
     }
 
     void enqueueProtocol(final Protocol protocol) {

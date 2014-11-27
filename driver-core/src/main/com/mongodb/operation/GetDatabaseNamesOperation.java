@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonArray;
@@ -48,15 +48,9 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
         return executeWrappedCommandProtocol("admin", getCommand(), binding, transformer());
     }
 
-    /**
-     * Executing this will return a Future list of all the databases names in the MongoDB instance.
-     *
-     * @param binding the binding
-     * @return a Future List of Strings of the names of all the databases in the MongoDB instance
-     */
     @Override
-    public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, transformer());
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<List<String>> callback) {
+        executeWrappedCommandProtocolAsync("admin", getCommand(), binding, transformer(), callback);
     }
 
     private Function<BsonDocument, List<String>> transformer() {

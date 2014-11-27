@@ -42,12 +42,12 @@ class GetMoreResultCallback<T> extends ResponseCallback {
     }
 
     @Override
-    protected boolean callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
+    protected boolean callCallback(final ResponseBuffers responseBuffers, final Throwable t) {
         QueryResult<T> result = null;
         MongoException exceptionResult = null;
         try {
-            if (e != null) {
-                throw e;
+            if (t != null) {
+                throw t;
             } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                 throw new MongoCursorNotFoundException(cursorId, getServerAddress());
             } else {
@@ -60,8 +60,8 @@ class GetMoreResultCallback<T> extends ResponseCallback {
             }
         } catch (MongoException me) {
             exceptionResult = me;
-        } catch (Throwable t) {
-            exceptionResult = new MongoInternalException("Internal exception", t);
+        } catch (Throwable tr) {
+            exceptionResult = new MongoInternalException("Internal exception", tr);
         } finally {
             try {
                 if (responseBuffers != null) {
