@@ -45,6 +45,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.ClusterFixture.isAuthenticated
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -230,7 +231,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         cluster?.close()
     }
 
-    @IgnoreIf({ !isAuthenticated() })
+    @IgnoreIf({ !isAuthenticated() || isSharded()  })
     def 'a read only user should not be able to write'() {
         given:
         new CreateUserOperation(credential, true).execute(getBinding())
@@ -267,7 +268,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         cluster?.close()
     }
 
-    @IgnoreIf({ !isAuthenticated() })
+    @IgnoreIf({ !isAuthenticated() || isSharded() })
     def 'a read only admin user should not be able to write to a different database'() {
         given:
         def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
