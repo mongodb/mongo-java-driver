@@ -94,15 +94,15 @@ public final class ClusterFixture {
     }
 
     public static boolean clusterIsType(final ClusterType clusterType) {
-        return getCluster().getDescription(10, SECONDS).getType() == clusterType;
+        return getCluster().getDescription(20, SECONDS).getType() == clusterType;
     }
 
     public static ServerVersion getServerVersion() {
-        return getCluster().getDescription(10, SECONDS).getAny().get(0).getVersion();
+        return getCluster().getDescription(20, SECONDS).getAny().get(0).getVersion();
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        ClusterDescription clusterDescription = getCluster().getDescription(10, SECONDS);
+        ClusterDescription clusterDescription = getCluster().getDescription(20, SECONDS);
         int retries = 0;
         while (clusterDescription.getAny().isEmpty() && retries <= 3) {
             try {
@@ -111,7 +111,7 @@ public final class ClusterFixture {
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interrupted", e);
             }
-            clusterDescription = getCluster().getDescription(10, SECONDS);
+            clusterDescription = getCluster().getDescription(20, SECONDS);
         }
         if (clusterDescription.getAny().isEmpty()) {
             throw new RuntimeException("There are no servers available in " + clusterDescription);
@@ -138,11 +138,11 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary(), 10, SECONDS);
+        return new ClusterBinding(cluster, ReadPreference.primary(), 20, SECONDS);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 10, SECONDS);
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 20, SECONDS);
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
@@ -150,7 +150,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding(final Cluster cluster) {
-        return new AsyncSingleConnectionBinding(cluster, 10, SECONDS);
+        return new AsyncSingleConnectionBinding(cluster, 20, SECONDS);
     }
 
     public static AsyncReadWriteBinding getAsyncBinding() {
@@ -206,10 +206,10 @@ public final class ClusterFixture {
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription(10, SECONDS).getPrimaries();
+        List<ServerDescription> serverDescriptions = getCluster().getDescription(20, SECONDS).getPrimaries();
         while (serverDescriptions.isEmpty()) {
             sleep(100);
-            serverDescriptions = getCluster().getDescription(10, SECONDS).getPrimaries();
+            serverDescriptions = getCluster().getDescription(20, SECONDS).getPrimaries();
         }
         return serverDescriptions.get(0).getAddress();
     }
@@ -219,12 +219,12 @@ public final class ClusterFixture {
     }
 
     public static boolean isDiscoverableReplicaSet() {
-        return getCluster().getDescription(10, SECONDS).getType() == REPLICA_SET
-               && getCluster().getDescription(10, SECONDS).getConnectionMode() == MULTIPLE;
+        return getCluster().getDescription(20, SECONDS).getType() == REPLICA_SET
+               && getCluster().getDescription(20, SECONDS).getConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
-        return getCluster().getDescription(10, SECONDS).getType() == SHARDED;
+        return getCluster().getDescription(20, SECONDS).getType() == SHARDED;
     }
 
     public static boolean isAuthenticated() {
@@ -261,7 +261,7 @@ public final class ClusterFixture {
     public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
-        return futureResultCallback.get(10, SECONDS);
+        return futureResultCallback.get(20, SECONDS);
     }
 
     public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
@@ -271,7 +271,7 @@ public final class ClusterFixture {
     public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
-        return futureResultCallback.get(10, SECONDS);
+        return futureResultCallback.get(20, SECONDS);
     }
 
     public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
@@ -282,14 +282,14 @@ public final class ClusterFixture {
             loopCursor(batchCursor, block, futureResultCallback);
         }
         for (int i = 0; i < batchCursors.size(); i++) {
-            futures.get(i).get(10, SECONDS);
+            futures.get(i).get(20, SECONDS);
         }
     }
 
     public static <T> void loopCursor(final AsyncReadOperation<AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
         final FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
         loopCursor(executeAsync(op), block, futureResultCallback);
-        futureResultCallback.get(10, SECONDS);
+        futureResultCallback.get(20, SECONDS);
     }
 
     public static <T> void loopCursor(final AsyncBatchCursor<T> batchCursor, final Block<T> block,
@@ -318,18 +318,18 @@ public final class ClusterFixture {
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
         binding.getWriteConnectionSource(futureResultCallback);
-        return futureResultCallback.get(10, SECONDS);
+        return futureResultCallback.get(20, SECONDS);
     }
 
     public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
         binding.getReadConnectionSource(futureResultCallback);
-        return futureResultCallback.get(10, SECONDS);
+        return futureResultCallback.get(20, SECONDS);
     }
 
     public static Connection getConnection(final AsyncConnectionSource source) throws Throwable {
         final FutureResultCallback<Connection> futureResultCallback = new FutureResultCallback<Connection>();
         source.getConnection(futureResultCallback);
-        return futureResultCallback.get(10, SECONDS);
+        return futureResultCallback.get(20, SECONDS);
     }
 }

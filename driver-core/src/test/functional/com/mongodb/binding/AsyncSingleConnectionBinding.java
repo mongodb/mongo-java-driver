@@ -16,6 +16,8 @@
 
 package com.mongodb.binding;
 
+import com.mongodb.MongoInternalException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.Cluster;
@@ -25,6 +27,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
@@ -35,14 +38,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * An asynchronous binding that ensures that all reads use the same connection, and all writes use the same connection.
  *
  * <p>If the readPreference is {#link ReadPreference.primary()} then all reads and writes will use the same connection.</p>
- *
  */
 public class AsyncSingleConnectionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final ReadPreference readPreference;
     private final Connection readConnection;
     private final Connection writeConnection;
-    private final Server readServer;
-    private final Server writeServer;
+    private volatile Server readServer;
+    private volatile Server writeServer;
 
     /**
      * Create a new binding with the given cluster.
@@ -58,19 +60,43 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     /**
      * Create a new binding with the given cluster.
      *
-     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
-     * @param maxWaitTime the maximum time to wait for a connection to become available
-     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
+     * @param maxWaitTime    the maximum time to wait for a connection to become available.
+     * @param timeUnit       a non-null TimeUnit for the maxWaitTime
      */
     public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
-                                   final long maxWaitTime, final TimeUnit timeUnit) {
+                                        final long maxWaitTime, final TimeUnit timeUnit) {
         notNull("cluster", cluster);
-        notNull("timeUnit", timeUnit);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new PrimaryServerSelector(), maxWaitTime, timeUnit);
+        final CountDownLatch latch = new CountDownLatch(2);
+        cluster.selectServerAsync(new PrimaryServerSelector(), new SingleResultCallback<Server>() {
+            @Override
+            public void onResult(final Server result, final Throwable t) {
+                if (t == null) {
+                    writeServer = result;
+                    latch.countDown();
+                }
+            }
+        });
+        cluster.selectServerAsync(new ReadPreferenceServerSelector(readPreference), new SingleResultCallback<Server>() {
+            @Override
+            public void onResult(final Server result, final Throwable t) {
+                if (t == null) {
+                    readServer = result;
+                    latch.countDown();
+                }
+            }
+        });
+
+        try {
+            if (!latch.await(maxWaitTime, timeUnit)) {
+                throw new MongoTimeoutException("Failed to get servers");
+            }
+        } catch (InterruptedException e) {
+            throw new MongoInternalException(e.getMessage(), e);
+        }
         writeConnection = writeServer.getConnection();
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTime, timeUnit);
         readConnection = readServer.getConnection();
     }
 
