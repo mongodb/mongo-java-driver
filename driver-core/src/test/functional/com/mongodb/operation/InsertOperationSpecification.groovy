@@ -140,7 +140,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count(binding) == 1
 
         cleanup:
-        binding.release()
+        binding?.release()
     }
 
     @Category(Async)
@@ -157,7 +157,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count(binding) == 1
 
         cleanup:
-        binding.release()
+        binding?.release()
     }
 
     @Category(Slow)
