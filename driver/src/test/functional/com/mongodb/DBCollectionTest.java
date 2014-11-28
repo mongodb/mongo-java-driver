@@ -236,9 +236,13 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testCreateIndexByName() {
         collection.createIndex("x");
         assertEquals(2, collection.getIndexInfo().size());
-        DBObject indexInfo = collection.getIndexInfo().get(1);
 
-        assertEquals("x_1", indexInfo.get("name"));
+        List<String> indexNames = new ArrayList<String>();
+        for (DBObject indexInfo: collection.getIndexInfo()) {
+            indexNames.add((String) indexInfo.get("name"));
+        }
+
+        assertThat(indexNames, hasItem("x_1"));
     }
 
     @Test
