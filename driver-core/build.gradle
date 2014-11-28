@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-def nettyVersion = '4.0.19.Final'
+def nettyVersion = '4.0.24.Final'
 
 apply plugin: 'osgi'
 

@@ -30,6 +30,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -40,8 +41,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
@@ -61,7 +60,6 @@ final class NettyStream implements Stream {
     private final ServerAddress address;
     private final ByteBufAllocator allocator;
     private final ChannelFuture channelFuture;
-    private SocketChannel socketChannel;
     private volatile boolean isClosed;
 
     private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
@@ -91,7 +89,6 @@ final class NettyStream implements Stream {
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
-                socketChannel = ch;
                 if (sslSettings.isEnabled()) {
                     SSLEngine engine = SSLContext.getDefault().createSSLEngine();
                     engine.setUseClientMode(true);
@@ -111,29 +108,6 @@ final class NettyStream implements Stream {
         return new NettyByteBuf(allocator.buffer(size, size));
     }
 
-    private synchronized void ensureOpen(final AsyncCompletionHandler<Void> handler) {
-        if (pendingException != null) {
-            handler.failed(pendingException);
-        } else if (!channelFuture.isDone()) {
-            channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-                @Override
-                public void operationComplete(final Future<? super Void> future) throws Exception {
-                    handleChannelFutureCompletion(handler);
-                }
-            });
-        } else {
-            handleChannelFutureCompletion(handler);
-        }
-    }
-
-    private void handleChannelFutureCompletion(final AsyncCompletionHandler<Void> handler) {
-        if (!channelFuture.isSuccess()) {
-            handler.failed(new MongoSocketOpenException("Exception opening socket", address, channelFuture.cause()));
-        } else {
-            handler.completed(null);
-        }
-    }
-
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         FutureAsyncCompletionHandler<Void> future = new FutureAsyncCompletionHandler<Void>();
@@ -150,62 +124,70 @@ final class NettyStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        ensureOpen(new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void t) {
-                final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
-                for (ByteBuf cur : buffers) {
-                    io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
-                    composite.addComponent(byteBuf.retain());
-                    composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
+        if (checkPendingException(handler)) {
+            final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
+            for (ByteBuf cur : buffers) {
+                io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
+                composite.addComponent(byteBuf.retain());
+                composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
+            }
+
+            final ChannelFutureListener futureListener = new ChannelFutureListener() {
+                @Override
+                public void operationComplete(final ChannelFuture future) throws Exception {
+                    if (!future.isSuccess()) {
+                        handler.failed(future.cause());
+                    } else {
+                        handler.completed(null);
+                    }
                 }
-                socketChannel.writeAndFlush(composite).addListener(new GenericFutureListener<ChannelFuture>() {
+            };
+
+            if (!channelFuture.isDone()) {
+                channelFuture.addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(final ChannelFuture future) throws Exception {
-                        if (!future.isSuccess()) {
-                            handler.failed(future.cause());
+                        if (future.isSuccess()) {
+                            future.channel().writeAndFlush(composite).addListener(futureListener);
                         } else {
-                            handler.completed(null);
+                            handler.failed(future.cause());
                         }
                     }
                 });
+            } else {
+                channelFuture.channel().writeAndFlush(composite).addListener(futureListener);
             }
-
-            @Override
-            public void failed(final Throwable t) {
-                handler.failed(t);
-            }
-        });
+        }
     }
 
     @Override
     public synchronized void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        if (pendingException != null) {
-            handler.failed(pendingException);
-        } else if (!hasBytesAvailable(numBytes)) {
-            pendingReader = new PendingReader(numBytes, handler);
-        } else {
-            CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
-            int bytesNeeded = numBytes;
-            for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
-                io.netty.buffer.ByteBuf next = iter.next();
-                int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
-                if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
-                    composite.addComponent(next);
-                    iter.remove();
-                } else {
-                    next.retain();
-                    composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+        if (checkPendingException(handler)) {
+            if (!hasBytesAvailable(numBytes)) {
+                pendingReader = new PendingReader(numBytes, handler);
+            } else {
+                CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
+                int bytesNeeded = numBytes;
+                for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
+                    io.netty.buffer.ByteBuf next = iter.next();
+                    int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
+                    if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
+                        composite.addComponent(next);
+                        iter.remove();
+                    } else {
+                        next.retain();
+                        composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+                    }
+                    composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
+                    bytesNeeded -= bytesNeededFromCurrentBuffer;
+                    if (bytesNeeded == 0) {
+                        break;
+                    }
                 }
-                composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
-                bytesNeeded -= bytesNeededFromCurrentBuffer;
-                if (bytesNeeded == 0) {
-                    break;
-                }
-            }
-            NettyByteBuf buffer = new NettyByteBuf(composite);
+                NettyByteBuf buffer = new NettyByteBuf(composite);
 
-            handler.completed(buffer.flip());
+                handler.completed(buffer.flip());
+            }
         }
     }
 
@@ -230,6 +212,15 @@ final class NettyStream implements Stream {
         handlePendingReader();
     }
 
+    private boolean checkPendingException(final AsyncCompletionHandler<?> handler) {
+        if (pendingException != null) {
+            handler.failed(pendingException);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     private void handlePendingReader() {
         if (pendingReader != null) {
             PendingReader localPendingReader = pendingReader;
@@ -245,13 +236,9 @@ final class NettyStream implements Stream {
 
     @Override
     public void close() {
-        try {
-            if (socketChannel != null) {
-                socketChannel.close().syncUninterruptibly();   // TODO: not clear whether this should be a synchronous call
-            }
-        } finally {
-            socketChannel = null;
-            isClosed = true;
+        isClosed = true;
+        if (channelFuture.isSuccess()) {
+            channelFuture.channel().close();
         }
     }
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-def nettyVersion = '4.0.19.Final'
 def configDir = new File(rootDir, 'config')
 
 apply plugin: 'clirr'
