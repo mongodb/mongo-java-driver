@@ -142,6 +142,13 @@ configure(subprojects.findAll { it.name != 'util' }) {
         beforeTest { descr ->
             logger.info("[Test ${descr.className} > ${descr.name}]")
         }
+
+        afterTest { descr, result ->
+            logger.info("[Test ${descr.className} > ${descr.name}] ${result.getResultType()} "
+                        + "(${result.getEndTime() - result.getStartTime()} ms)" )
+        }
+
+        testLogging { exceptionFormat = 'full' }
     }
 
     gradle.taskGraph.whenReady { taskGraph ->
