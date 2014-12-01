@@ -237,21 +237,15 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.createIndex("x");
         assertEquals(2, collection.getIndexInfo().size());
 
-        List<String> indexNames = new ArrayList<String>();
-        for (DBObject indexInfo: collection.getIndexInfo()) {
-            indexNames.add((String) indexInfo.get("name"));
-        }
-
-        assertThat(indexNames, hasItem("x_1"));
+        assertNotNull(getIndexInfoForNameStartingWith("x"));
     }
 
     @Test
     public void testCreateIndexAsAscending() {
         collection.createIndex(new BasicDBObject("x", 1));
         assertEquals(2, collection.getIndexInfo().size());
-        DBObject indexInfo = collection.getIndexInfo().get(1);
 
-        assertEquals("x_1", indexInfo.get("name"));
+        assertNotNull(getIndexInfoForNameStartingWith("x_1"));
     }
 
     @Test
@@ -259,7 +253,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", -1);
         collection.createIndex(index);
 
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("x_-1");
         assertEquals(indexInfo.get("key"), index);
     }
 
@@ -267,7 +261,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testCreateIndexByKeysName() {
         collection.createIndex(new BasicDBObject("x", 1), "zulu");
         assertEquals(2, collection.getIndexInfo().size());
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("zulu");
 
         assertEquals("zulu", indexInfo.get("name"));
     }
@@ -276,7 +270,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testCreateIndexByKeysNameUnique() {
         collection.createIndex(new BasicDBObject("x", 1), "zulu", true);
         assertEquals(2, collection.getIndexInfo().size());
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("zulu");
 
         assertEquals("zulu", indexInfo.get("name"));
         assertTrue((Boolean) indexInfo.get("unique"));
@@ -287,7 +281,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", "2d");
         collection.createIndex(index);
 
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("x");
         assertEquals(indexInfo.get("key"), index);
     }
 
@@ -300,7 +294,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.createIndex(index);
 
         // then
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("x");
         assertEquals(indexInfo.get("key"), index);
     }
 
@@ -310,7 +304,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
-        DBObject indexInfo = collection.getIndexInfo().get(1);
+        DBObject indexInfo = getIndexInfoForNameStartingWith("x");
         assertEquals(indexInfo.get("name"), "x_text");
         assertThat(indexInfo.get("weights"), notNullValue());
     }
@@ -1014,5 +1008,14 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     public static class NestedTwoDBObject extends BasicDBObject {
         private static final long serialVersionUID = 5243874721805359328L;
+    }
+
+    private DBObject getIndexInfoForNameStartingWith(final String field) {
+        for (DBObject indexInfo : collection.getIndexInfo()) {
+            if (((String) indexInfo.get("name")).startsWith(field)) {
+                return indexInfo;
+            }
+        }
+        throw new IllegalArgumentException("No index for field " + field);
     }
 }
