@@ -48,7 +48,7 @@ import java.util.concurrent.Semaphore;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static java.lang.String.format;
 
@@ -232,14 +232,14 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         notNull("open", stream);
-        writeQueue.add(new SendMessageAsync(byteBuffers, lastRequestId, wrapCallback(callback, LOGGER)));
+        writeQueue.add(new SendMessageAsync(byteBuffers, lastRequestId, errorHandlingCallback(callback, LOGGER)));
         processPendingWrites();
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         notNull("open", stream);
-        readQueue.put(responseTo, wrapCallback(callback, LOGGER));
+        readQueue.put(responseTo, errorHandlingCallback(callback, LOGGER));
         processPendingReads();
     }
 
@@ -434,20 +434,21 @@ class InternalStreamConnection implements InternalConnection {
                     reading.release();
                 }
             } else {
-                fillAndFlipBuffer(REPLY_HEADER_LENGTH, wrapCallback(new ResponseHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
-                    @Override
-                    public void onResult(final ResponseBuffers result, final Throwable t) {
-                        if (result == null) {
-                            reading.release();
-                            processUnknownFailedRead(t);
-                        } else {
-                            reading.release();
-                            messages.put(result.getReplyHeader().getResponseTo(),
-                                         new Response(result, t));
-                        }
-                        processPendingReads();
-                    }
-                }), LOGGER));
+                fillAndFlipBuffer(REPLY_HEADER_LENGTH,
+                                  errorHandlingCallback(new ResponseHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
+                                      @Override
+                                      public void onResult(final ResponseBuffers result, final Throwable t) {
+                                          if (result == null) {
+                                              reading.release();
+                                              processUnknownFailedRead(t);
+                                          } else {
+                                              reading.release();
+                                              messages.put(result.getReplyHeader().getResponseTo(),
+                                                           new Response(result, t));
+                                          }
+                                          processPendingReads();
+                                      }
+                                  }), LOGGER));
             }
         }
     }
@@ -462,7 +463,7 @@ class InternalStreamConnection implements InternalConnection {
                 try {
                     while (!writeQueue.isEmpty()) {
                         SendMessageAsync message = writeQueue.poll();
-                        wrapCallback(message.getCallback(), LOGGER).onResult(null,
+                        errorHandlingCallback(message.getCallback(), LOGGER).onResult(null,
                                   new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress()));
                     }
                 } finally {
@@ -482,7 +483,7 @@ class InternalStreamConnection implements InternalConnection {
                         } catch (Throwable t) {
                             LOGGER.warn("Exception when trying to signal messagesSent to the connectionListener", t);
                         }
-                        wrapCallback(message.getCallback(), LOGGER).onResult(null, null);
+                        errorHandlingCallback(message.getCallback(), LOGGER).onResult(null, null);
                         processPendingWrites();
                     }
 
@@ -490,7 +491,7 @@ class InternalStreamConnection implements InternalConnection {
                     public void failed(final Throwable t) {
                         writing.release();
                         close();
-                        wrapCallback(message.getCallback(), LOGGER).onResult(null, translateWriteException(t));
+                        errorHandlingCallback(message.getCallback(), LOGGER).onResult(null, translateWriteException(t));
                         processPendingWrites();
                     }
                 });

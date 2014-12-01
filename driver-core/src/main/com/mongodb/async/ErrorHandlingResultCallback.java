@@ -29,11 +29,11 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultCallback<T> wrapped;
     private final Logger logger;
 
-    public static <T> SingleResultCallback<T> wrapCallback(final SingleResultCallback<T> callback) {
-        return wrapCallback(callback, null);
+    public static <T> SingleResultCallback<T> errorHandlingCallback(final SingleResultCallback<T> callback) {
+        return errorHandlingCallback(callback, null);
     }
 
-    public static <T> SingleResultCallback<T> wrapCallback(final SingleResultCallback<T> callback, final Logger logger) {
+    public static <T> SingleResultCallback<T> errorHandlingCallback(final SingleResultCallback<T> callback, final Logger logger) {
         if (callback instanceof ErrorHandlingResultCallback) {
             return callback;
         } else {

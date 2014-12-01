@@ -28,14 +28,15 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.VoidTransformer;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static java.util.Arrays.asList;
 
 /**
@@ -79,17 +80,19 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public void call(final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
+                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
+
                     if (serverIsAtLeastVersionTwoDotSix(connection)) {
                         executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>(),
-                                                           callback);
+                                                           wrappedCallback);
                     } else {
                         connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()),
                                                new SingleResultCallback<WriteConcernResult>() {
                                                    @Override
                                                    public void onResult(final WriteConcernResult result, final Throwable t) {
-                                                       callback.onResult(null, t);
+                                                       wrappedCallback.onResult(null, t);
                                                    }
                                                });
                     }

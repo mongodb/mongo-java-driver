@@ -28,11 +28,12 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -81,26 +82,27 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public void call(final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
+                    final SingleResultCallback<Boolean> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer(), callback);
+                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer(), wrappedCallback);
                     } else {
-                         connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
-                                                                     new BsonDocument("user", new BsonString(userName)), null, 1, 0,
-                                                                     binding.getReadPreference().isSlaveOk(), false,
-                                                                     false, false, false, false,
-                                                                     new BsonDocumentCodec(),
+                        connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
+                                              new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                              binding.getReadPreference().isSlaveOk(), false,
+                                              false, false, false, false,
+                                              new BsonDocumentCodec(),
                          new SingleResultCallback<QueryResult<BsonDocument>>() {
                              @Override
                              public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
                                  if (t != null) {
-                                     callback.onResult(null, t);
+                                     wrappedCallback.onResult(null, t);
                                  } else {
                                      try {
-                                         callback.onResult(transformQueryResult().apply(result), null);
+                                         wrappedCallback.onResult(transformQueryResult().apply(result), null);
                                      } catch (Throwable tr) {
-                                         callback.onResult(null, tr);
+                                         wrappedCallback.onResult(null, tr);
                                      }
                                  }
                              }

@@ -38,11 +38,12 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -127,11 +128,12 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
                                                        CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
-                                                       binding.getReadPreference(), asyncTransformer(source), callback);
+                                                       binding.getReadPreference(), asyncTransformer(source),
+                                                       releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
         });

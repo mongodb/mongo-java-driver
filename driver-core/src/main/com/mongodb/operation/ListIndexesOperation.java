@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
@@ -47,6 +47,7 @@ import static com.mongodb.operation.FindOperationHelper.queryResultToList;
 import static com.mongodb.operation.FindOperationHelper.queryResultToListAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -101,37 +102,39 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
-                } else if (serverIsAtLeastVersionTwoDotEight(connection)) {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
-                                                       getCommand(),
-                                                       connection,
-                                                       transformer(),
-                                                       new SingleResultCallback<List<T>>() {
-                                                           @Override
-                                                           public void onResult(final List<T> result,
-                                                                                final Throwable t) {
-                                                               if (t != null && !isNamespaceError(t)) {
-                                                                   callback.onResult(null, t);
-                                                               } else {
-                                                                   callback.onResult(result != null ? result : new ArrayList<T>(),
-                                                                                     null);
-                                                               }
-                                                           }
-                                                       });
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    connection.queryAsync(getIndexNamespace(), new BsonDocument(), null, 0, 0, binding.getReadPreference().isSlaveOk(),
-                                          false, false, false, false, false, decoder, new SingleResultCallback<QueryResult<T>>() {
-                        @Override
-                        public void onResult(final QueryResult<T> result, final Throwable t) {
-                            if (t != null && !isNamespaceError(t)) {
-                                callback.onResult(null, t);
-                            } else {
-                                queryResultToListAsync(getIndexNamespace(), result, decoder, source, new IdentityTransformer<T>(),
-                                                       callback);
+                    final SingleResultCallback<List<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                                                                                            source, connection);
+                    if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection, transformer(),
+                                                           new SingleResultCallback<List<T>>() {
+                                                               @Override
+                                                               public void onResult(final List<T> result,
+                                                                                    final Throwable t) {
+                                                                   if (t != null && !isNamespaceError(t)) {
+                                                                       wrappedCallback.onResult(null, t);
+                                                                   } else {
+                                                                       wrappedCallback.onResult(result != null
+                                                                                                ? result : new ArrayList<T>(),
+                                                                                                null);
+                                                                   }
+                                                               }
+                                                           });
+                    } else {
+                        connection.queryAsync(getIndexNamespace(), new BsonDocument(), null, 0, 0, binding.getReadPreference().isSlaveOk(),
+                                              false, false, false, false, false, decoder, new SingleResultCallback<QueryResult<T>>() {
+                            @Override
+                            public void onResult(final QueryResult<T> result, final Throwable t) {
+                                if (t != null && !isNamespaceError(t)) {
+                                    wrappedCallback.onResult(null, t);
+                                } else {
+                                    queryResultToListAsync(getIndexNamespace(), result, decoder, source, new IdentityTransformer<T>(),
+                                                           wrappedCallback);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });

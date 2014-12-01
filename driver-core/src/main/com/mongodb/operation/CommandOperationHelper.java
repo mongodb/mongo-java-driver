@@ -35,9 +35,10 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 
 final class CommandOperationHelper {
 
@@ -209,10 +210,9 @@ final class CommandOperationHelper {
                                                           final AsyncReadBinding binding,
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
-        binding.getReadConnectionSource(wrapCallback(new CommandProtocolExecutingCallback<D, T>(database, command,
-                                                                                                new NoOpFieldNameValidator(), decoder,
-                                                                                                primary(), transformer,
-                                                                                                wrapCallback(callback))));
+        binding.getReadConnectionSource(new CommandProtocolExecutingCallback<D, T>(database, command, new NoOpFieldNameValidator(),
+                                                                                   decoder, primary(), transformer,
+                                                                                   errorHandlingCallback(callback)));
     }
 
     /* Async Write Binding Helpers */
@@ -243,8 +243,7 @@ final class CommandOperationHelper {
                                                           final AsyncWriteBinding binding,
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding,
-                                           transformer, callback);
+        executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding, transformer, callback);
     }
 
     static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
@@ -253,9 +252,9 @@ final class CommandOperationHelper {
                                                           final AsyncWriteBinding binding,
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
-        binding.getWriteConnectionSource(wrapCallback(new CommandProtocolExecutingCallback<D, T>(database, command, fieldNameValidator,
-                                                                                                 decoder, primary(), transformer,
-                                                                                                 wrapCallback(callback))));
+        binding.getWriteConnectionSource(new CommandProtocolExecutingCallback<D, T>(database, command, fieldNameValidator, decoder,
+                                                                                    primary(), transformer,
+                                                                                    errorHandlingCallback(callback)));
     }
 
     /* Async Connection Helpers */
@@ -288,24 +287,19 @@ final class CommandOperationHelper {
                                                           final ReadPreference readPreference,
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
-        final SingleResultCallback<T> wrappedCallback = wrapCallback(callback);
         connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
                                 readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder, new SingleResultCallback<D>() {
             @Override
             public void onResult(final D result, final Throwable t) {
-                try {
-                    if (t != null) {
-                        wrappedCallback.onResult(null, t);
-                    } else {
-                        try {
-                            T transformedResult = transformer.apply(result);
-                            wrappedCallback.onResult(transformedResult, null);
-                        } catch (Exception e) {
-                            wrappedCallback.onResult(null, e);
-                        }
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    try {
+                        T transformedResult = transformer.apply(result);
+                        callback.onResult(transformedResult, null);
+                    } catch (Exception e) {
+                        callback.onResult(null, e);
                     }
-                } finally {
-                    connection.release();
                 }
             }
         });
@@ -377,22 +371,18 @@ final class CommandOperationHelper {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
+                            final SingleResultCallback<R> wrappedCallback = releasingCallback(callback, source, connection);
                             connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
                                                     readPreference.isSlaveOk(), fieldNameValidator, decoder, new SingleResultCallback<D>() {
-                                          @Override
-                                          public void onResult(final D response, final Throwable t) {
-                                              try {
-                                                  if (t != null) {
-                                                      callback.onResult(null, t);
-                                                  } else {
-                                                      callback.onResult(transformer.apply(response), null);
-                                                  }
-                                              } finally {
-                                                  connection.release();
-                                                  source.release();
-                                              }
-                                          }
-                                      });
+                                @Override
+                                public void onResult(final D response, final Throwable t) {
+                                    if (t != null) {
+                                        wrappedCallback.onResult(null, t);
+                                    } else {
+                                        wrappedCallback.onResult(transformer.apply(response), null);
+                                    }
+                                }
+                            });
                         }
                     }
                 });

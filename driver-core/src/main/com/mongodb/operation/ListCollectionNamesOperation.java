@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
@@ -45,6 +45,7 @@ import static com.mongodb.operation.FindOperationHelper.queryResultToList;
 import static com.mongodb.operation.FindOperationHelper.queryResultToListAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -97,35 +98,40 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
-                } else if (serverIsAtLeastVersionTwoDotEight(connection)) {
-                    executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, commandTransformer(),
-                                                       new SingleResultCallback<List<String>>() {
-                                                           @Override
-                                                           public void onResult(final List<String> result, final Throwable t) {
-                                                               if (t != null && !isNamespaceError(t)) {
-                                                                   callback.onResult(null, t);
-                                                               } else {
-                                                                   callback.onResult(result != null ? result : new ArrayList<String>(),
-                                                                                     null);
-                                                               }
-                                                           }
-                                                       });
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    connection.queryAsync(getNamespace(), new BsonDocument(), null, 0, 0,
-                                          binding.getReadPreference().isSlaveOk(), false,
-                                          false, false, false, false,
-                                          new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
-                        @Override
-                        public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
-                            if (t != null && !isNamespaceError(t)) {
-                                 callback.onResult(null, t);
-                            } else {
-                                queryResultToListAsync(getNamespace(), result, new BsonDocumentCodec(), source, queryResultTransformer(),
-                                                       callback);
+                    final SingleResultCallback<List<String>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                                                                                                 source, connection);
+                    if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, commandTransformer(),
+                                                           new SingleResultCallback<List<String>>() {
+                                                               @Override
+                                                               public void onResult(final List<String> result, final Throwable t) {
+                                                                   if (t != null && !isNamespaceError(t)) {
+                                                                       wrappedCallback.onResult(null, t);
+                                                                   } else {
+                                                                       wrappedCallback.onResult(result != null
+                                                                                                ? result : new ArrayList<String>(),
+                                                                                         null);
+                                                                   }
+                                                               }
+                                                           });
+                    } else {
+                        connection.queryAsync(getNamespace(), new BsonDocument(), null, 0, 0,
+                                              binding.getReadPreference().isSlaveOk(), false,
+                                              false, false, false, false,
+                                              new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
+                            @Override
+                            public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
+                                if (t != null && !isNamespaceError(t)) {
+                                    wrappedCallback.onResult(null, t);
+                                } else {
+                                    queryResultToListAsync(getNamespace(), result, new BsonDocumentCodec(), source,
+                                                           queryResultTransformer(), wrappedCallback);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         });

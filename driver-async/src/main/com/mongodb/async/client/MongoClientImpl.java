@@ -37,7 +37,7 @@ import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
 
 class MongoClientImpl implements MongoClient {
@@ -116,7 +116,7 @@ class MongoClientImpl implements MongoClient {
             @Override
             public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
                                     final SingleResultCallback<T> callback) {
-                final SingleResultCallback<T> wrappedCallback = wrapCallback(callback);
+                final SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
                 final AsyncReadBinding binding = getReadWriteBinding(readPreference, options, cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
@@ -137,7 +137,7 @@ class MongoClientImpl implements MongoClient {
                     @Override
                     public void onResult(final T result, final Throwable t) {
                         try {
-                            wrapCallback(callback).onResult(result, t);
+                            errorHandlingCallback(callback).onResult(result, t);
                         } finally {
                             binding.release();
                         }

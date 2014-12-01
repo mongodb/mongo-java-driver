@@ -31,8 +31,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
+import static com.mongodb.connection.ServerHelper.waitForLastCheckin
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecification {
@@ -189,6 +191,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         nextBatch().size() == 2
         nextBatch().size() == 1
         !nextBatch()
+
+        cleanup:
+        waitForLastCheckin(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
     }
 
     List<Document> nextBatch() {
@@ -207,10 +212,14 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     private QueryResult<Document> executeQueryProtocol(BsonDocument query, int numberToReturn, boolean tailable, boolean awaitData) {
         def connection = getConnection(connectionSource)
-        def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
-        connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
-                              false, tailable, awaitData, false, false, false,
-                              new DocumentCodec(), futureResultCallback);
-        futureResultCallback.get(10, SECONDS);
+        try {
+            def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
+            connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
+                                  false, tailable, awaitData, false, false, false,
+                                  new DocumentCodec(), futureResultCallback);
+            futureResultCallback.get(10, SECONDS);
+        } finally {
+            connection.release()
+        }
     }
 }

@@ -85,7 +85,7 @@ import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -150,7 +150,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         DistinctOperation operation = new DistinctOperation(namespace, fieldName)
                                       .filter(asBson(filter))
                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
-        executor.execute(operation, this.options.getReadPreference(), wrapCallback(new SingleResultCallback<BsonArray>() {
+        executor.execute(operation, this.options.getReadPreference(), errorHandlingCallback(new SingleResultCallback<BsonArray>() {
             @Override
             public void onResult(final BsonArray result, final Throwable t) {
                 if (t != null) {
@@ -388,7 +388,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             requests.add(new InsertRequest(asBson(document)));
         }
         executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests),
-                         wrapCallback(callback));
+                         errorHandlingCallback(callback));
     }
 
     @Override

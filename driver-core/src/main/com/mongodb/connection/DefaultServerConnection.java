@@ -31,7 +31,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
     private final InternalConnection wrapped;
@@ -208,7 +208,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     }
 
     private <T> void executeProtocolAsync(final Protocol<T> protocol, final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> wrappedCallback = wrapCallback(callback);
+        SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
         try {
             protocolExecutor.executeAsync(protocol, this.wrapped, wrappedCallback);
         } catch (Throwable t) {

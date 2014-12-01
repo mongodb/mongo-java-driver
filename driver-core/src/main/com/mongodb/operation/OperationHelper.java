@@ -29,7 +29,7 @@ import com.mongodb.connection.ServerVersion;
 
 import java.util.List;
 
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
 
 final class OperationHelper {
@@ -65,6 +65,39 @@ final class OperationHelper {
         @Override
         public Void apply(final T t) {
             return null;
+        }
+    }
+
+    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final Connection connection) {
+        return new ConnectionReleasingWrappedCallback<T>(wrapped, null, connection);
+    }
+
+    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
+                                                         final Connection connection) {
+        return new ConnectionReleasingWrappedCallback<T>(wrapped, source, connection);
+    }
+
+    private static class ConnectionReleasingWrappedCallback<T> implements SingleResultCallback<T> {
+        private final SingleResultCallback<T> wrapped;
+        private final AsyncConnectionSource source;
+        private final Connection connection;
+
+        ConnectionReleasingWrappedCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
+                                           final Connection connection) {
+            this.wrapped = wrapped;
+            this.source = source;
+            this.connection = connection;
+        }
+
+        @Override
+        public void onResult(final T result, final Throwable t) {
+            if (connection != null) {
+                connection.release();
+            }
+            if (source != null) {
+                source.release();
+            }
+            wrapped.onResult(result, t);
         }
     }
 
@@ -127,16 +160,15 @@ final class OperationHelper {
     }
 
     static void withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getWriteConnectionSource(wrapCallback(new AsyncCallableWithConnectionCallback(callable)));
+        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable)));
     }
 
-
     static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getReadConnectionSource(wrapCallback(new AsyncCallableWithConnectionCallback(callable)));
+        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable)));
     }
 
     static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
-        binding.getReadConnectionSource(wrapCallback(new AsyncCallableWithConnectionAndSourceCallback(callable)));
+        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable)));
     }
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
@@ -154,13 +186,11 @@ final class OperationHelper {
         }
     }
 
-    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection callable) {
+    private static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection callable) {
         source.getConnection(new SingleResultCallback<Connection>() {
             @Override
             public void onResult(final Connection connection, final Throwable t) {
-                if (source != null) {
-                    source.release();
-                }
+                source.release();
                 if (t != null) {
                     callable.call(null, t);
                 } else {
@@ -170,7 +200,7 @@ final class OperationHelper {
         });
     }
 
-    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
+    private static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
         source.getConnection(new SingleResultCallback<Connection>() {
             @Override
             public void onResult(final Connection result, final Throwable t) {

@@ -35,7 +35,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
@@ -43,6 +43,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -122,29 +123,33 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             @Override
             public void call(final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
-                } else if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
-                        @Override
-                        public void onResult(final BulkWriteResult result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, translateException(t));
-                            } else {
-                                callback.onResult(translateBulkWriteResult(result), null);
-                            }
-                        }
-                    });
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeProtocolAsync(connection, new SingleResultCallback<WriteConcernResult>() {
-                        @Override
-                        public void onResult(final WriteConcernResult result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, translateException(t));
-                            } else {
-                                callback.onResult(result, null);
+                    final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                                                                                                       connection);
+                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
+                        executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
+                            @Override
+                            public void onResult(final BulkWriteResult result, final Throwable t) {
+                                if (t != null) {
+                                    wrappedCallback.onResult(null, translateException(t));
+                                } else {
+                                    wrappedCallback.onResult(translateBulkWriteResult(result), null);
+                                }
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        executeProtocolAsync(connection, new SingleResultCallback<WriteConcernResult>() {
+                            @Override
+                            public void onResult(final WriteConcernResult result, final Throwable t) {
+                                if (t != null) {
+                                    wrappedCallback.onResult(null, translateException(t));
+                                } else {
+                                    wrappedCallback.onResult(result, null);
+                                }
+                            }
+                        });
+                    }
                 }
             }
         });

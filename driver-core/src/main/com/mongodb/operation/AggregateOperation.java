@@ -38,11 +38,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -205,11 +206,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
-                    wrapCallback(callback).onResult(null, t);
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(connection),
                                                        CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection)),
-                                                       binding, asyncTransformer(source, connection), callback);
+                                                       connection, binding.getReadPreference(), asyncTransformer(source, connection),
+                                                       releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
         });

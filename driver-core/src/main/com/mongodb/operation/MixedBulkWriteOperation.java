@@ -49,13 +49,14 @@ import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -159,7 +160,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
-        final SingleResultCallback<BulkWriteResult> wrappedCallback = wrapCallback(callback);
+        final SingleResultCallback<BulkWriteResult> wrappedCallback = errorHandlingCallback(callback);
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final Connection connection, final Throwable t) {
@@ -179,6 +180,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                   final SingleResultCallback<BulkWriteResult> callback) {
 
         final Run run = runs.next();
+        final SingleResultCallback<BulkWriteResult> wrappedCallback = releasingCallback(callback, connection);
         run.executeAsync(connection, new SingleResultCallback<BulkWriteResult>() {
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -186,7 +188,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     if (t instanceof BulkWriteException) {
                         bulkWriteBatchCombiner.addErrorResult((BulkWriteException) t, run.indexMap);
                     } else {
-                        callback.onResult(null, t);
+                        wrappedCallback.onResult(null, t);
                         return;
                     }
                 } else if (result.wasAcknowledged()) {
@@ -196,10 +198,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 // Execute next run or complete
                 if (runs.hasNext() && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
                     executeRunsAsync(runs, connection, bulkWriteBatchCombiner, callback);
-                } else if (bulkWriteBatchCombiner.hasErrors()) {
-                    callback.onResult(null, bulkWriteBatchCombiner.getError());
                 } else {
-                    callback.onResult(bulkWriteBatchCombiner.getResult(), null);
+                    if (bulkWriteBatchCombiner.hasErrors()) {
+                        wrappedCallback.onResult(null, bulkWriteBatchCombiner.getError());
+                    } else {
+                        wrappedCallback.onResult(bulkWriteBatchCombiner.getResult(), null);
+                    }
                 }
             }
         });

@@ -28,13 +28,13 @@ import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static java.util.Arrays.asList
 
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
     def internalConnection = Mock(InternalConnection)
-    def callback = wrapCallback(Mock(SingleResultCallback))
+    def callback = errorHandlingCallback(Mock(SingleResultCallback))
     def executor = Mock(ProtocolExecutor)
     def connection = new DefaultServerConnection(internalConnection, executor)
 

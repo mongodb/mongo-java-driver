@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
 class DefaultServer implements ClusterableServer {
@@ -160,7 +160,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final Protocol<T> protocol, final InternalConnection connection,
                                      final SingleResultCallback<T> callback) {
-            protocol.executeAsync(connection, wrapCallback(new SingleResultCallback<T>() {
+            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     if (t != null) {

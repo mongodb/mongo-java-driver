@@ -39,8 +39,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -451,8 +453,10 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
-                    callback.onResult(null, t);
+                    errorHandlingCallback(callback).onResult(null, t);
                 } else {
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                                                                                                        source, connection);
                     connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()), projection,
                                           getNumberToReturn(), skip, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
                                           isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
@@ -460,9 +464,11 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                         @Override
                         public void onResult(final QueryResult<T> result, final Throwable t) {
                             if (t != null) {
-                                callback.onResult(null, t);
+                                wrappedCallback.onResult(null, t);
                             } else {
-                                callback.onResult(new AsyncQueryBatchCursor<T>(namespace, result, limit, batchSize, decoder, source), null);
+                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(namespace, result, limit, batchSize,
+                                                                                      decoder, source),
+                                                         null);
                             }
                         }
                     });

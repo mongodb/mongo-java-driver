@@ -28,7 +28,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
@@ -45,6 +45,11 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private volatile boolean closed;
 
     AsyncQueryBatchCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+                          final Decoder<T> decoder) {
+        this(namespace, firstBatch, limit, batchSize, decoder, null);
+    }
+
+    AsyncQueryBatchCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource) {
         this.namespace = namespace;
         this.firstBatch = firstBatch;
@@ -52,7 +57,14 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         this.batchSize = batchSize;
         this.decoder = decoder;
         this.cursor = firstBatch.getCursor();
-        this.connectionSource = notNull("connectionSource", connectionSource).retain();
+        if (this.cursor != null) {
+            notNull("connectionSource", connectionSource);
+        }
+        if (connectionSource != null) {
+            this.connectionSource = connectionSource.retain();
+        } else {
+            this.connectionSource = null;
+        }
         this.count += firstBatch.getResults().size();
         if (limitReached()) {
             killCursor();
@@ -131,7 +143,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                               });
                 }
             });
-        } else {
+        } else if (connectionSource != null) {
             connectionSource.release();
         }
     }
@@ -142,7 +154,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
         public QueryResultSingleResultCallback(final Connection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
-            this.callback = wrapCallback(callback);
+            this.callback = errorHandlingCallback(callback);
         }
 
         @Override

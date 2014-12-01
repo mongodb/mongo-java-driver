@@ -22,7 +22,7 @@ import org.bson.ByteBuf;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.async.ErrorHandlingResultCallback.wrapCallback;
+import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
  * A connection that tracks when it was opened and when it was last used.
@@ -107,7 +107,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<Void> wrappedCallback = wrapCallback(new SingleResultCallback<Void>() {
+        SingleResultCallback<Void> wrappedCallback = errorHandlingCallback(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
@@ -120,7 +120,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<ResponseBuffers> wrappedCallback = wrapCallback(new SingleResultCallback<ResponseBuffers>() {
+        SingleResultCallback<ResponseBuffers> wrappedCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
             @Override
             public void onResult(final ResponseBuffers result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
