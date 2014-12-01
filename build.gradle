@@ -26,6 +26,7 @@ buildscript {
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.2'
     }
 }
 
@@ -220,4 +221,6 @@ gradle.buildFinished { BuildResult result ->
     }
 }
 
-apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/publish.gradle'
+apply from: 'gradle/release.gradle'
+

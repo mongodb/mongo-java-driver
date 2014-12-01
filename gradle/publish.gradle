@@ -1,0 +1,102 @@
+// Uses:
+//   maven-publish 
+//    - uploads the artifacts to sonatype nexus
+//    - called using /.gradlew publish
+//    - see http://www.gradle.org/docs/current/userguide/publishing_maven.html for more details.
+//    - specific settings for each project's pom.xml are in the project build.gradle files
+//   shadow
+//    - creates an uberjar of all the classes needed for each release artifact
+//    - i.e. for "driver" this includes classes for driver + driver-core + bson
+//    - called using shadowJar
+//    - see https://github.com/johnrengelman/shadow
+
+configure(subprojects.findAll { it.name != 'util' }) {
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    // check whether this is a real release or a snapshot release. For real releases, call this with a command line option of 
+    // -DreleaseVersion={expectedReleaseVersion}, e.g. -DreleaseVersion=3.0.0
+    // if you don't pass in this parameter, we assume this is a SNAPSHOT release. 
+    def releaseVersion = System.getProperty('releaseVersion')
+
+    if (releaseVersion) {
+        if (version.indexOf('-SNAPSHOT') >= 0) {
+            version = version[0..<version.indexOf('-SNAPSHOT')]
+        }
+        if (version != releaseVersion) {
+            throw new GradleException("The release version you gave does not match the project release version: " +
+                                      "-DreleaseVersion=$releaseVersion, projectReleaseVersion=${version}")
+        }
+    }
+
+    /* Artifacts for publishing */
+    task sourceJar(type: Jar) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar) {
+        classifier = 'javadoc'
+        from javadoc
+    }
+
+    shadowJar {
+        dependencies {
+            // exclude all "provided" dependencies 
+            exclude(project.configurations.provided.allDependencies.collect { dependency("$it.group:$it.name") })
+        }
+        // by default this is 'all', which leads to a jar file will an '-all' suffix. We want this to be the default without '-all'
+        classifier = null
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifact sourceJar
+                artifact javadocJar
+                // shadowJar builds the uberjar of the code from the module and all the modules it's dependent upon
+                // i.e. for "driver" this includes classes for driver + driver-core + bson
+                artifact shadowJar
+                // if you want to only publish the module code and not the uber jar, uncomment the line below
+                // from components.java
+
+                // this adds the following details to the published pom.xml
+                pom.withXml {
+                    def scm = asNode().appendNode('scm')
+                    scm.appendNode('url', 'https://github.com/mongodb/mongo-java-driver')
+                    scm.appendNode('connection', 'scm:git:git://github.com/mongodb/mongo-java-driver')
+
+                    def licence = asNode().appendNode('licenses').appendNode('license')
+                    licence.appendNode('name', 'The Apache Software License, Version 2.0')
+                    licence.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+                    licence.appendNode('distribution', 'repo')
+
+                    def developers = asNode().appendNode('developers').appendNode('developer')
+                    developers.appendNode('name', 'Various')
+                    developers.appendNode('organization', '10gen')
+                }
+            }
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                if (releaseVersion) {
+                    url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                } else {
+                    url 'https://oss.sonatype.org/content/repositories/snapshots'
+                }
+
+                credentials {
+                    username project.properties.sonatypeUsername
+                    password project.properties.sonatypePassword
+                }
+                // this can be used for testing
+//                url "$buildDir/repo"
+            }
+        }
+    }
+
+}

@@ -17,17 +17,8 @@
 def configDir = new File(rootDir, 'config')
 
 apply plugin: 'clirr'
-apply plugin: 'osgi'
 
-jar {
-    manifest.attributes(
-            'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-            'Bundle-Name': 'MongoDB Java Driver',
-            'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
-            'Import-Package': 'javax.management, javax.net, javax.net.ssl, javax.security.sasl, javax.security.auth.login, ' +
-                              'javax.security.auth, org.ietf.jgss',
-            )
-}
+archivesBaseName = 'mongo-java-driver'
 
 sourceSets {
     test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
@@ -55,14 +46,28 @@ tasks.withType(Checkstyle) {
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
 }
 
-task uberJar(type: Jar) {
-    classifier = 'all'
-    from project(':bson').sourceSets.main.output
-    from project(':driver-core').sourceSets.main.output
-    from sourceSets.main.output
+jar {
+    manifest.attributes(
+            'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+            'Bundle-Name': 'MongoDB Java Driver',
+            'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver',
+            'Import-Package': 'javax.management, javax.net, javax.net.ssl, javax.security.sasl, javax.security.auth.login, ' +
+                              'javax.security.auth, org.ietf.jgss',
+            )
 }
 
-uberJar {
-    manifest = jar.manifest
+//
+// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
+//
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom.withXml {
+                asNode().appendNode('name', 'MongoDB Java Driver')
+                asNode().appendNode('description', 'The MongoDB Java Driver.  Includes backwards-compatible compatible API and new ' +
+                                                   'CRUD API')
+                asNode().appendNode('url', 'http://www.mongodb.org')
+            }
+        }
+    }
 }
-

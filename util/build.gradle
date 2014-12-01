@@ -26,3 +26,8 @@ dependencies {
 sourceSets {
     main { java.srcDirs = ['src/main'] }
 }
+
+// we don't want anything to be published for util
+task publish {
+    
+}

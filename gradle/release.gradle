@@ -1,0 +1,14 @@
+apply plugin: 'release'
+
+release {
+    filesToUpdate =[
+        file(project('driver').file('src/main/com/mongodb/Mongo.java')),
+        file(project.file('build.gradle'))
+    ]
+    
+    // define which jar files to attach to the release notes
+    jarFile project(':driver').shadowJar
+    jarFile project(':driver-core').shadowJar
+    jarFile project(':bson').shadowJar
+    // like the publishing plugin, you can also add source or javadoc files
+}

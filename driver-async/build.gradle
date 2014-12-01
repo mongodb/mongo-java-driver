@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-
 dependencies {
     compile project(':bson')
     compile project(':driver-core')
@@ -23,9 +21,18 @@ dependencies {
     testCompile project(':driver-core').sourceSets.test.output
 }
 
-task uberJar(type: Jar) {
-    classifier = 'all'
-    from project(':bson').sourceSets.main.output
-    from project(':driver-core').sourceSets.main.output
-    from sourceSets.main.output
+jar {
+    manifest.attributes(
+            'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
+            'Bundle-Name': 'MongoDB Async Java Driver',
+            'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver-async',
+            'Import-Package': 'javax.management, javax.net, javax.net.ssl, javax.security.sasl, javax.security.auth.login, ' +
+                              'javax.security.auth, org.ietf.jgss',
+            )
+}
+
+shadowJar {
+    dependencies {
+        exclude(dependency('io.netty:netty-all'))
+    }
 }
