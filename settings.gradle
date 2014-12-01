@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver-core', 'driver', 'driver-async'
+include 'util','bson', 'driver-core', 'driver', 'driver-async', 'mongo-java-driver'
 

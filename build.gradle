@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
 def configDir = new File(rootDir, 'config')
+
+ext.nettyVersion = '4.0.24.Final'
 
 buildscript {
     repositories {
@@ -34,14 +39,8 @@ buildscript {
 //////////////////////////////////////////
 
 configure(subprojects.findAll { it.name != 'util' }) {
-    apply plugin: 'checkstyle'
-    apply plugin: 'findbugs'
-    apply plugin: 'jacoco'
-    apply plugin: 'eclipse'
-    apply plugin: 'idea'
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
-    apply plugin: 'provided-base'
+    apply plugin: 'java'
+    apply plugin: 'optional-base'
 
     evaluationDependsOn(':util')
 
@@ -56,8 +55,45 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     dependencies {
-        provided 'org.slf4j:slf4j-api:1.7.6'
+        compile 'org.slf4j:slf4j-api:1.7.6', optional
+    }
 
+    /* Compiling */
+    tasks.withType(AbstractCompile) {
+        options.encoding = 'ISO-8859-1'
+        options.fork = true
+        options.debug = true
+        options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
+
+        onlyIf { JavaVersion.current().isJava7Compatible() }
+    }
+
+    project.ext.buildingWith = { propertyName ->
+        project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
+    }
+
+    javadoc {
+        dependsOn project(':util').compileJava //We need taglets to be compiled
+        options.author = true
+        options.version = true
+        options.links 'http://docs.oracle.com/javase/7/docs/api/'
+        options.tagletPath project(':util').sourceSets.main.output.classesDir
+        options.taglets 'ManualTaglet'
+        options.taglets 'ServerReleaseTaglet'
+        options.encoding = 'UTF-8'
+        options.charSet 'UTF-8'
+        options.docEncoding 'UTF-8'
+    }
+}
+
+configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
+    apply plugin: 'checkstyle'
+    apply plugin: 'findbugs'
+    apply plugin: 'jacoco'
+    apply plugin: 'groovy'
+    apply plugin: 'codenarc'
+
+    dependencies {
         testCompile 'org.codehaus.groovy:groovy-all:2.3.6'
         testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
         testCompile 'cglib:cglib-nodep:2.2.2'
@@ -75,20 +111,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
             groovy.srcDirs = ['src/test/functional', 'src/test/unit']
             java.srcDirs = ['src/test/functional', 'src/test/unit']
         }
-    }
-
-    /* Compiling */
-    tasks.withType(AbstractCompile) {
-        options.encoding = 'ISO-8859-1'
-        options.fork = true
-        options.debug = true
-        options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
-
-        onlyIf { JavaVersion.current().isJava7Compatible() }
-    }
-
-    project.ext.buildingWith = { propertyName ->
-        project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
     }
 
     /* Testing */
@@ -145,7 +167,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
         afterTest { descr, result ->
             logger.info("[Test ${descr.className} > ${descr.name}] ${result.getResultType()} "
-                        + "(${result.getEndTime() - result.getStartTime()} ms)" )
+                                + "(${result.getEndTime() - result.getStartTime()} ms)" )
         }
 
         testLogging { exceptionFormat = 'full' }
@@ -181,29 +203,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
             html.enabled = !project.buildingWith('xmlReports.enabled')
         }
     }
-
-    javadoc {
-        dependsOn project(':util').compileJava //We need taglets to be compiled
-        options.author = true
-        options.version = true
-        options.links 'http://docs.oracle.com/javase/7/docs/api/'
-        options.tagletPath project(':util').sourceSets.main.output.classesDir
-        options.taglets 'ManualTaglet'
-        options.taglets 'ServerReleaseTaglet'
-        options.encoding = 'UTF-8'
-        options.charSet 'UTF-8'
-        options.docEncoding 'UTF-8'
-    }
-
-    idea {
-        module {
-            scopes.PROVIDED.plus += [configurations.provided]
-        }
-    }
-
-    eclipse {
-        classpath.plusConfigurations += [configurations.provided]
-    }
 }
 
 //////////////////////////////////////////
@@ -220,4 +219,5 @@ gradle.buildFinished { BuildResult result ->
     }
 }
 
-apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/publish.gradle'
+

@@ -16,8 +16,20 @@
 
 apply plugin: 'osgi'
 
-jar {
-    manifest.attributes(
-            'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
-            'Bundle-Name': 'BSON')
+archivesBaseName = 'bson'
+
+//
+// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
+//
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = archivesBaseName
+            pom.withXml {
+                asNode().appendNode('name', 'BSON')
+                asNode().appendNode('description', 'The BSON library')
+                asNode().appendNode('url', 'http://bsonspec.org/')
+            }
+        }
+    }
 }

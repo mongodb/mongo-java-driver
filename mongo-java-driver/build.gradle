@@ -16,32 +16,33 @@
 
 def configDir = new File(rootDir, 'config')
 
-apply plugin: 'clirr'
+apply plugin: 'osgi'
 
-sourceSets {
-    test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
-}
+archivesBaseName = 'mongo-java-driver'
 
-test {
-    exclude 'tour/**'
-}
-
+// dependencies copied from driver-core
 dependencies {
-    compile project(':bson')
-    compile project(':driver-core')
-
-    testCompile project(':driver-core').sourceSets.test.output
+    compile "io.netty:netty-buffer:$nettyVersion", optional
+    compile "io.netty:netty-transport:$nettyVersion", optional
+    compile "io.netty:netty-handler:$nettyVersion", optional
 }
 
-clirr {
-    ignoreFailures = true
-    excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongo-java-driver:2.12.0'
+// srcDirs copied as well, so everything is compiled twice
+sourceSets {
+    main {
+        java {
+            srcDirs = ["$rootDir/driver/src/main", "$rootDir/driver-core/src/main", "$rootDir/bson/src/main"]
+        }
+    }
 }
 
-tasks.withType(Checkstyle) {
-    // needed so the Javadoc checks can find the code in other modules
-    classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
+// copied from driver-core
+jar {
+    manifest {
+        instruction 'Import-Package',
+                    'io.netty.*;resolution:=optional',
+                    'org.slf4j;resolution:=optional'
+    }
 }
 
 //
@@ -50,10 +51,10 @@ tasks.withType(Checkstyle) {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = 'mongodb-driver'
+            artifactId = archivesBaseName
             pom.withXml {
                 asNode().appendNode('name', 'MongoDB Driver')
-                asNode().appendNode('description', 'The MongoDB Driver')
+                asNode().appendNode('description', 'The MongoDB Java Driver')
                 asNode().appendNode('url', 'http://www.mongodb.org')
             }
         }
