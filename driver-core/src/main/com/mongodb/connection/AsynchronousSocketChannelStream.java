@@ -225,6 +225,7 @@ final class AsynchronousSocketChannelStream implements Stream {
 
         @Override
         public void failed(final Throwable t, final Void attachment) {
+            dst.release();
             if (t instanceof InterruptedByTimeoutException) {
                 handler.failed(new MongoSocketReadTimeoutException("Timeout while receiving message", serverAddress, t));
             } else {

@@ -240,6 +240,11 @@ final class NettyStream implements Stream {
         if (channelFuture.isSuccess()) {
             channelFuture.channel().close();
         }
+        for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
+            io.netty.buffer.ByteBuf nextByteBuf = iterator.next();
+            iterator.remove();
+            nextByteBuf.release();
+        }
     }
 
     @Override

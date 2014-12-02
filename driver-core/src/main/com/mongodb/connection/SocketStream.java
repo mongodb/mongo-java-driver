@@ -73,6 +73,7 @@ class SocketStream implements Stream {
         while (totalBytesRead < buffer.limit()) {
             int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
             if (bytesRead == -1) {
+                buffer.release();
                 throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }
             totalBytesRead += bytesRead;
