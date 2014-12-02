@@ -28,7 +28,6 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
@@ -51,6 +50,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     def cleanup() {
         if (cursor != null) {
             cursor.close()
+            waitForLastCheckin(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
         }
     }
 
@@ -143,7 +143,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        if (!latch.await(10, TimeUnit.SECONDS)) {
+        if (!latch.await(10, SECONDS)) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
     }
@@ -177,7 +177,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        if (!latch.await(10, TimeUnit.SECONDS)) {
+        if (!latch.await(10, SECONDS)) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
     }
@@ -191,9 +191,6 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         nextBatch().size() == 2
         nextBatch().size() == 1
         !nextBatch()
-
-        cleanup:
-        waitForLastCheckin(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
     }
 
     List<Document> nextBatch() {
