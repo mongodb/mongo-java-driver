@@ -24,19 +24,19 @@ import java.util.concurrent.CountDownLatch;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private final CountDownLatch latch = new CountDownLatch(1);;
-    private T result;
-    private Throwable error;
+    private volatile T result;
+    private volatile Throwable error;
 
     @Override
     public void completed(final T result) {
-        latch.countDown();
         this.result = result;
+        latch.countDown();
     }
 
     @Override
     public void failed(final Throwable t) {
-        latch.countDown();
         this.error = t;
+        latch.countDown();
     }
 
     public void getWrite() throws IOException {
