@@ -115,7 +115,6 @@ public class DBTCPConnector implements DBConnector {
      */
     @Override
     public void requestDone(){
-        isTrue("open", !_closed);
         _myPort.requestDone();
     }
 
@@ -203,8 +202,6 @@ public class DBTCPConnector implements DBConnector {
     }
 
     <T> T doOperation(final DB db, final DBPort port, final DBPort.Operation<T> operation){
-        isTrue("open", !_closed);
-
         try {
             port.checkAuth( db.getMongo() );
             return operation.execute();
@@ -410,7 +407,6 @@ public class DBTCPConnector implements DBConnector {
     }
 
     void releasePort(final DBPort port) {
-        isTrue("open", !_closed);
         _myPort.done(port);
     }
 
