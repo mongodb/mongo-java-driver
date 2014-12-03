@@ -22,6 +22,7 @@ import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoSocketException
+import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
@@ -258,6 +259,43 @@ class DefaultServerSpecification extends Specification {
         thrown(MongoSocketException)
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
+    }
+
+    def 'should not invalidate on MongoSocketReadTimeoutException'() {
+        given:
+        def connectionPool = Mock(ConnectionPool)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        def internalConnection = Mock(InternalConnection)
+        connectionPool.get() >> { internalConnection }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        TestConnectionFactory connectionFactory = new TestConnectionFactory()
+
+        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def testConnection = (TestConnection) server.getConnection()
+
+        when:
+        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
+                                                                                                new IOException())))
+
+        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+
+        then:
+        thrown(MongoSocketReadTimeoutException)
+        0 * connectionPool.invalidate()
+        0 * serverMonitor.invalidate()
+
+        when:
+        def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+                                   futureResultCallback)
+        futureResultCallback.get(10, SECONDS)
+
+        then:
+        thrown(MongoSocketReadTimeoutException)
+        0 * connectionPool.invalidate()
+        0 * serverMonitor.invalidate()
     }
 
     class ThrowingProtocol implements Protocol {

@@ -21,6 +21,7 @@ import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 
@@ -135,7 +136,9 @@ class DefaultServer implements ClusterableServer {
     }
 
     private void handleThrowable(final Throwable t) {
-        if (t instanceof MongoSocketException || t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
+        if ((t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException))
+            || t instanceof MongoNotPrimaryException
+            || t instanceof MongoNodeIsRecoveringException) {
             invalidate();
         }
     }
