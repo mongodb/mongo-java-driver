@@ -163,7 +163,9 @@ public class DBCollection {
      * @param document     {@code DBObject} to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final DBObject document, final WriteConcern writeConcern) {
@@ -176,7 +178,9 @@ public class DBCollection {
      *
      * @param documents {@code DBObject}'s to be inserted
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final DBObject... documents) {
@@ -190,7 +194,9 @@ public class DBCollection {
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
@@ -204,7 +210,9 @@ public class DBCollection {
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final DBObject[] documents, final WriteConcern writeConcern) {
@@ -217,7 +225,9 @@ public class DBCollection {
      *
      * @param documents list of {@code DBObject} to be inserted
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final List<DBObject> documents) {
@@ -231,7 +241,9 @@ public class DBCollection {
      * @param documents     list of {@code DBObject}'s to be inserted
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
@@ -246,7 +258,9 @@ public class DBCollection {
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final DBObject[] documents, final WriteConcern aWriteConcern, final DBEncoder encoder) {
@@ -261,7 +275,9 @@ public class DBCollection {
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param dbEncoder     {@code DBEncoder} to be used
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
@@ -279,7 +295,9 @@ public class DBCollection {
      * @param documents     a list of {@code DBObject}'s to be inserted
      * @param insertOptions the options to use for the insert
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final List<DBObject> documents, final InsertOptions insertOptions) {
@@ -340,7 +358,9 @@ public class DBCollection {
      *
      * @param document {@link DBObject} to save to the collection.
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
     public WriteResult save(final DBObject document) {
@@ -361,7 +381,9 @@ public class DBCollection {
      * @param document     {@link DBObject} to save to the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws MongoException if the operation fails
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
@@ -394,6 +416,9 @@ public class DBCollection {
      *                      one
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
@@ -413,6 +438,9 @@ public class DBCollection {
      * @param aWriteConcern {@code WriteConcern} to be used during operation
      * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     @SuppressWarnings("unchecked")
@@ -448,6 +476,9 @@ public class DBCollection {
      * @param upsert when true, inserts a document if no document matches the update query criteria
      * @param multi  when true, updates all documents in the collection that match the update query criteria, otherwise only updates one
      * @return the result of the operation
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi) {
@@ -460,6 +491,9 @@ public class DBCollection {
      * @param query  the selection criteria for the update
      * @param update the modifications to apply
      * @return the result of the operation
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     public WriteResult update(final DBObject query, final DBObject update) {
@@ -472,6 +506,9 @@ public class DBCollection {
      * @param query  the selection criteria for the update
      * @param update the modifications to apply
      * @return the result of the operation
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     public WriteResult updateMulti(final DBObject query, final DBObject update) {
@@ -484,6 +521,8 @@ public class DBCollection {
      * @param query the deletion criteria using query operators. Omit the query parameter or pass an empty document to delete all documents
      *              in the collection.
      * @return the result of the operation
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
     public WriteResult remove(final DBObject query) {
@@ -497,6 +536,8 @@ public class DBCollection {
      *                     documents in the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
@@ -511,6 +552,8 @@ public class DBCollection {
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {

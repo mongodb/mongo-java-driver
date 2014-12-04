@@ -89,8 +89,8 @@ public class BulkWriteOperation {
      * continueOnError property of the write concern is ignored.
      *
      * @return the result of the bulk write operation.
-     * @throws BulkWriteException
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.BulkWriteException if the write failed due some other failure specific to the write command
+     * @throws MongoException if the operation failed for some other reason
      */
     public BulkWriteResult execute() {
         isTrue("already executed", !closed);
@@ -104,8 +104,8 @@ public class BulkWriteOperation {
      *
      * @param writeConcern the write concern to apply to the bulk operation.
      * @return the result of the bulk write operation.
-     * @throws BulkWriteException
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.BulkWriteException if the write failed due some other failure specific to the write command
+     * @throws MongoException if the operation failed for some other reason
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {
         isTrue("already executed", !closed);
