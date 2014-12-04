@@ -29,16 +29,20 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.isTrue;
 
 class SocketChannelStream implements Stream {
-    private final SocketChannel socketChannel;
     private final ServerAddress address;
     private final SocketSettings settings;
     private final BufferProvider bufferProvider;
+    private volatile SocketChannel socketChannel;
     private volatile boolean isClosed;
 
     public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final BufferProvider bufferProvider) {
         this.address = address;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
+    }
+
+    @Override
+    public void open() throws IOException {
         try {
             socketChannel = SocketChannel.open();
             SocketStreamHelper.initialize(socketChannel.socket(), address, settings);
@@ -85,6 +89,11 @@ class SocketChannelStream implements Stream {
             totalBytesRead += bytesRead;
         }
         return buffer.flip();
+    }
+
+    @Override
+    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override

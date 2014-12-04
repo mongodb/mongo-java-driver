@@ -31,6 +31,7 @@ import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class AsynchronousSocketChannelStream implements Stream {
@@ -50,6 +51,49 @@ final class AsynchronousSocketChannelStream implements Stream {
     @Override
     public ByteBuf getBuffer(final int size) {
         return bufferProvider.getBuffer(size);
+    }
+
+    @Override
+    public void open() throws IOException {
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        openAsync(handler);
+        handler.getOpen();
+    }
+
+    @Override
+    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        isTrue("unopened", channel == null);
+        try {
+            channel = AsynchronousSocketChannel.open();
+            channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+            channel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
+            if (settings.getReceiveBufferSize() > 0) {
+                channel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
+            }
+            if (settings.getSendBufferSize() > 0) {
+                channel.setOption(StandardSocketOptions.SO_SNDBUF, settings.getSendBufferSize());
+            }
+
+            channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
+                @Override
+                public void completed(final Void result, final Object attachment) {
+                    handler.completed(null);
+                }
+
+                @Override
+                public void failed(final Throwable exc, final Object attachment) {
+                    if (exc instanceof ConnectException) {
+                        handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), exc));
+                    } else {
+                        handler.failed(exc);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            handler.failed(new MongoSocketOpenException("Exception opening socket", serverAddress, e));
+        } catch (Throwable t) {
+            handler.failed(t);
+        }
     }
 
     @Override
@@ -121,42 +165,6 @@ final class AsynchronousSocketChannelStream implements Stream {
         return isClosed;
     }
 
-    void ensureOpen(final AsyncCompletionHandler<Void> handler) {
-        try {
-            if (channel != null) {
-                handler.completed(null);
-            } else {
-                channel = AsynchronousSocketChannel.open();
-                channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                channel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
-                if (settings.getReceiveBufferSize() > 0) {
-                    channel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
-                }
-                if (settings.getSendBufferSize() > 0) {
-                    channel.setOption(StandardSocketOptions.SO_SNDBUF, settings.getSendBufferSize());
-                }
-
-                channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
-                    @Override
-                    public void completed(final Void result, final Object attachment) {
-                        handler.completed(null);
-                    }
-
-                    @Override
-                    public void failed(final Throwable exc, final Object attachment) {
-                        if (exc instanceof ConnectException) {
-                            handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), exc));
-                        } else {
-                            handler.failed(exc);
-                        }
-                    }
-                });
-            }
-        } catch (final IOException e) {
-            throw new MongoSocketOpenException("Exception opening socket", serverAddress, e);
-        }
-    }
-
     private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
                                final AsyncCompletionHandler<Void> outerHandler) {
         byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
@@ -179,25 +187,15 @@ final class AsynchronousSocketChannelStream implements Stream {
     private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
         @Override
         public void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
-            ensureOpen(new AsyncCompletionHandler<Void>() {
+            channel.write(src, null, new CompletionHandler<Integer, Object>() {
                 @Override
-                public void completed(final Void t) {
-                    channel.write(src, null, new CompletionHandler<Integer, Object>() {
-                        @Override
-                        public void completed(final Integer result, final Object attachment) {
-                            handler.completed(null);
-                        }
-
-                        @Override
-                        public void failed(final Throwable exc, final Object attachment) {
-                            handler.failed(exc);
-                        }
-                    });
+                public void completed(final Integer result, final Object attachment) {
+                    handler.completed(null);
                 }
 
                 @Override
-                public void failed(final Throwable t) {
-                    handler.failed(t);
+                public void failed(final Throwable exc, final Object attachment) {
+                    handler.failed(exc);
                 }
             });
         }

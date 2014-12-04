@@ -29,6 +29,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -58,35 +59,58 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 final class NettyStream implements Stream {
     private final ServerAddress address;
+    private final SocketSettings settings;
+    private final SSLSettings sslSettings;
+    private final EventLoopGroup workerGroup;
     private final ByteBufAllocator allocator;
-    private final ChannelFuture channelFuture;
+
     private volatile boolean isClosed;
+    private volatile Channel channel;
 
     private final LinkedList<io.netty.buffer.ByteBuf> pendingInboundBuffers = new LinkedList<io.netty.buffer.ByteBuf>();
-    private PendingReader pendingReader;
-    private Throwable pendingException;
+    private volatile PendingReader pendingReader;
+    private volatile Throwable pendingException;
 
     public NettyStream(final ServerAddress address, final SocketSettings settings, final SSLSettings sslSettings,
                        final EventLoopGroup workerGroup, final ByteBufAllocator allocator) {
         this.address = address;
+        this.settings = settings;
+        this.sslSettings = sslSettings;
+        this.workerGroup = workerGroup;
         this.allocator = allocator;
-        Bootstrap b = new Bootstrap();
-        b.group(workerGroup);
-        b.channel(NioSocketChannel.class);
+    }
 
-        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
-        b.option(ChannelOption.TCP_NODELAY, true);
-        b.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
+    @Override
+    public ByteBuf getBuffer(final int size) {
+        return new NettyByteBuf(allocator.buffer(size, size));
+    }
+
+    @Override
+    public void open() throws IOException {
+        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+        openAsync(handler);
+        handler.get();
+    }
+
+    @Override
+    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.group(workerGroup);
+        bootstrap.channel(NioSocketChannel.class);
+
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
+        bootstrap.option(ChannelOption.TCP_NODELAY, true);
+        bootstrap.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
 
         if (settings.getReceiveBufferSize() > 0) {
-            b.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
+            bootstrap.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
         }
         if (settings.getSendBufferSize() > 0) {
-            b.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
+            bootstrap.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
         }
-        b.option(ChannelOption.ALLOCATOR, allocator);
+        bootstrap.option(ChannelOption.ALLOCATOR, allocator);
 
-        b.handler(new ChannelInitializer<SocketChannel>() {
+        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
                 if (sslSettings.isEnabled()) {
@@ -99,13 +123,18 @@ final class NettyStream implements Stream {
                 ch.pipeline().addLast(new InboundBufferHandler());
             }
         });
-
-        this.channelFuture = b.connect(address.getHost(), address.getPort());
-    }
-
-    @Override
-    public ByteBuf getBuffer(final int size) {
-        return new NettyByteBuf(allocator.buffer(size, size));
+        final ChannelFuture channelFuture = bootstrap.connect(address.getHost(), address.getPort());
+        channelFuture.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(final ChannelFuture future) throws Exception {
+                if (future.isSuccess()) {
+                    channel = channelFuture.channel();
+                    handler.completed(null);
+                } else {
+                    handler.failed(future.cause());
+                }
+            }
+        });
     }
 
     @Override
@@ -132,7 +161,7 @@ final class NettyStream implements Stream {
                 composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
             }
 
-            final ChannelFutureListener futureListener = new ChannelFutureListener() {
+            channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(final ChannelFuture future) throws Exception {
                     if (!future.isSuccess()) {
@@ -141,27 +170,12 @@ final class NettyStream implements Stream {
                         handler.completed(null);
                     }
                 }
-            };
-
-            if (!channelFuture.isDone()) {
-                channelFuture.addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(final ChannelFuture future) throws Exception {
-                        if (future.isSuccess()) {
-                            future.channel().writeAndFlush(composite).addListener(futureListener);
-                        } else {
-                            handler.failed(future.cause());
-                        }
-                    }
-                });
-            } else {
-                channelFuture.channel().writeAndFlush(composite).addListener(futureListener);
-            }
+            });
         }
     }
 
     @Override
-    public synchronized void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
+    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
         if (checkPendingException(handler)) {
             if (!hasBytesAvailable(numBytes)) {
                 pendingReader = new PendingReader(numBytes, handler);
@@ -202,12 +216,12 @@ final class NettyStream implements Stream {
         return false;
     }
 
-    private synchronized void handledInboundBuffer(final io.netty.buffer.ByteBuf buffer) {
+    private void handledInboundBuffer(final io.netty.buffer.ByteBuf buffer) {
         pendingInboundBuffers.add(buffer.retain());
         handlePendingReader();
     }
 
-    private synchronized void handleException(final Throwable t) {
+    private void handleException(final Throwable t) {
         pendingException = t;
         handlePendingReader();
     }
@@ -237,8 +251,9 @@ final class NettyStream implements Stream {
     @Override
     public void close() {
         isClosed = true;
-        if (channelFuture.isSuccess()) {
-            channelFuture.channel().close();
+        if (channel != null) {
+            channel.close();
+            channel = null;
         }
         for (Iterator<io.netty.buffer.ByteBuf> iterator = pendingInboundBuffers.iterator(); iterator.hasNext();) {
             io.netty.buffer.ByteBuf nextByteBuf = iterator.next();

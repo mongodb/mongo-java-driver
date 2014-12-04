@@ -29,19 +29,25 @@ import java.net.Socket;
 import java.util.List;
 
 class SocketStream implements Stream {
-    private final Socket socket;
     private final ServerAddress address;
     private final SocketSettings settings;
+    private final SocketFactory socketFactory;
     private final BufferProvider bufferProvider;
-    private final OutputStream outputStream;
-    private final InputStream inputStream;
+    private volatile Socket socket;
+    private volatile OutputStream outputStream;
+    private volatile InputStream inputStream;
     private volatile boolean isClosed;
 
     public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory,
                         final BufferProvider bufferProvider) {
         this.address = address;
         this.settings = settings;
+        this.socketFactory = socketFactory;
         this.bufferProvider = bufferProvider;
+    }
+
+    @Override
+    public void open() throws IOException {
         try {
             socket = socketFactory.createSocket();
             SocketStreamHelper.initialize(socket, address, settings);
@@ -79,6 +85,11 @@ class SocketStream implements Stream {
             totalBytesRead += bytesRead;
         }
         return buffer;
+    }
+
+    @Override
+    public void openAsync(final AsyncCompletionHandler<Void> handler) {
+        throw new UnsupportedOperationException(getClass() + " does not support asynchronous operations.");
     }
 
     @Override

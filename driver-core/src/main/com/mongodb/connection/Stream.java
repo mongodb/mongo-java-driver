@@ -30,6 +30,20 @@ import java.util.List;
 public interface Stream extends BufferProvider{
 
     /**
+     * Open the stream.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    void open() throws IOException;
+
+    /**
+     * Open the stream asynchronously.
+     *
+     * @param handler the completion handler for opening the stream
+     */
+    void openAsync(AsyncCompletionHandler<Void> handler);
+
+    /**
      * Write each buffer in the list to the stream in order, blocking until all are completely written.
      *
      * @param buffers the buffers to write

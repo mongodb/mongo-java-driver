@@ -93,6 +93,7 @@ class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         try {
+            stream.open();
             description = connectionInitializer.initialize(this);
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
             try {
@@ -115,25 +116,35 @@ class InternalStreamConnection implements InternalConnection {
     public void openAsync(final SingleResultCallback<Void> callback) {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
-        connectionInitializer.initializeAsync(this, new SingleResultCallback<ConnectionDescription>() {
+        stream.openAsync(new AsyncCompletionHandler<Void>() {
             @Override
-            public void onResult(final ConnectionDescription result, final Throwable t) {
-                if (t != null) {
-                    close();
-                    callback.onResult(null, t);
-                } else {
-                    description = result;
-                    callback.onResult(null, null);
-                    if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+            public void completed(final Void aVoid) {
+                connectionInitializer.initializeAsync(InternalStreamConnection.this, new SingleResultCallback<ConnectionDescription>() {
+                    @Override
+                    public void onResult(final ConnectionDescription result, final Throwable t) {
+                        if (t != null) {
+                            close();
+                            callback.onResult(null, t);
+                        } else {
+                            description = result;
+                            callback.onResult(null, null);
+                            if (LOGGER.isInfoEnabled()) {
+                                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
+                            }
+                            try {
+                                connectionListener.connectionOpened(new ConnectionEvent(getId()));
+                            } catch (Throwable tr) {
+                                LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", tr);
+                            }
+                            opened = true;
+                        }
                     }
-                    try {
-                        connectionListener.connectionOpened(new ConnectionEvent(getId()));
-                    } catch (Throwable tr) {
-                        LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", tr);
-                    }
-                    opened = true;
-                }
+                });
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                callback.onResult(null, t);
             }
         });
     }

@@ -39,16 +39,19 @@ class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
         latch.countDown();
     }
 
+    public void getOpen() throws IOException {
+        get("Opening");
+    }
+
     public void getWrite() throws IOException {
-        get(false);
+        get("Writing to");
     }
 
     public T getRead() throws IOException {
-        return get(true);
+        return get("Reading from");
     }
 
-    private T get(final boolean reading) throws IOException {
-        String prefix = reading ? "Reading from" : "Writing to";
+    private T get(final String prefix) throws IOException {
         try {
             latch.await();
         } catch (InterruptedException e) {
