@@ -68,7 +68,7 @@ import static java.util.Arrays.asList;
  */
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private final MongoNamespace namespace;
-    private final List<WriteRequest> writeRequests;
+    private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
     private final WriteConcern writeConcern;
 
@@ -80,7 +80,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      * @param ordered       whether the writeRequests must be executed in order.
      * @param writeConcern the write concern for the operation.
      */
-    public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,
+    public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests, final boolean ordered,
                                    final WriteConcern writeConcern) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
@@ -122,7 +122,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      *
      * @return the list of write requests
      */
-    public List<WriteRequest> getWriteRequests() {
+    public List<? extends WriteRequest> getWriteRequests() {
         return writeRequests;
     }
 
