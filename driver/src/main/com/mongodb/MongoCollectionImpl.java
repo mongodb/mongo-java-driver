@@ -337,22 +337,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public WriteConcernResult insertOne(final T document) {
+    public void insertOne(final T document) {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
         List<InsertRequest> requests = new ArrayList<InsertRequest>(1);
         requests.add(new InsertRequest(asBson(document)));
-        return executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
+        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
     }
 
     @Override
-    public WriteConcernResult insertMany(final List<? extends T> documents) {
-        return insertMany(documents, new InsertManyOptions());
+    public void insertMany(final List<? extends T> documents) {
+        insertMany(documents, new InsertManyOptions());
     }
 
     @Override
-    public WriteConcernResult insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+    public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
@@ -360,7 +360,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        return executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
+        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
     }
 
     @Override
@@ -530,6 +530,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     // TODO modifiedCount
     private UpdateResult createUpdateResult(final WriteConcernResult writeConcernResult) {
         if (writeConcernResult.wasAcknowledged()) {
+
             return UpdateResult.acknowledged(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
         } else {
             return UpdateResult.unacknowledged();

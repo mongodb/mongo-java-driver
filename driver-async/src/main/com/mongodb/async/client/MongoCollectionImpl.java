@@ -363,23 +363,29 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void insertOne(final T document, final SingleResultCallback<WriteConcernResult> callback) {
+    public void insertOne(final T document, final SingleResultCallback<Void> callback) {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         requests.add(new InsertRequest(asBson(document)));
-        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests), callback);
+        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests),
+                         new SingleResultCallback<WriteConcernResult>() {
+                             @Override
+                             public void onResult(final WriteConcernResult result, final Throwable t) {
+                                 callback.onResult(null, t);
+                             }
+                         });
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents, final SingleResultCallback<WriteConcernResult> callback) {
+    public void insertMany(final List<? extends T> documents, final SingleResultCallback<Void> callback) {
         insertMany(documents, new InsertManyOptions(), callback);
     }
 
     @Override
     public void insertMany(final List<? extends T> documents, final InsertManyOptions options,
-                           final SingleResultCallback<WriteConcernResult> callback) {
+                           final SingleResultCallback<Void> callback) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
@@ -388,7 +394,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             requests.add(new InsertRequest(asBson(document)));
         }
         executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests),
-                         errorHandlingCallback(callback));
+                         errorHandlingCallback(new SingleResultCallback<WriteConcernResult>() {
+                             @Override
+                             public void onResult(final WriteConcernResult result, final Throwable t) {
+                                 callback.onResult(null, t);
+                             }
+                         }));
     }
 
     @Override

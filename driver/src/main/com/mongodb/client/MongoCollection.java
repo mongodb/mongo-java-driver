@@ -267,9 +267,8 @@ public interface MongoCollection<T> {
      * @param document the document to insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
-     * @return the result of the insert
      */
-    WriteConcernResult insertOne(T document);
+    void insertOne(T document);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
@@ -280,9 +279,8 @@ public interface MongoCollection<T> {
      * @param documents the documents to insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
-     * @return the result of the insert
      */
-    WriteConcernResult insertMany(List<? extends T> documents);
+    void insertMany(List<? extends T> documents);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
@@ -294,9 +292,8 @@ public interface MongoCollection<T> {
      * @param options the options to apply to the operation
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
-     * @return the result of the insert
      */
-    WriteConcernResult insertMany(List<? extends T> documents, InsertManyOptions options);
+    void insertMany(List<? extends T> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match,

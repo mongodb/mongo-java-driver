@@ -492,11 +492,10 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.insertOne(new Document('_id', 1), futureResultCallback)
-        def result = futureResultCallback.get()
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation)
 
         where:
@@ -518,22 +517,20 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], futureResultCallback)
-        def result = futureResultCallback.get()
+        futureResultCallback.get()
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
         futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true),
                               futureResultCallback)
-        result = futureResultCallback.get()
+        futureResultCallback.get()
         operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
 
         where:

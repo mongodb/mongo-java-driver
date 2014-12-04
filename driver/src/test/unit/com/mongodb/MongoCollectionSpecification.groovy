@@ -419,11 +419,10 @@ class MongoCollectionSpecification extends Specification {
                                                     [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))])
 
         when:
-        def result = collection.insertOne(new Document('_id', 1))
+        collection.insertOne(new Document('_id', 1))
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation)
 
         where:
@@ -442,19 +441,17 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        def result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
         def operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(false))
 
         when:
-        result = collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
         operation = executor.getWriteOperation() as InsertOperation
 
         then:
-        result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
 
         where:

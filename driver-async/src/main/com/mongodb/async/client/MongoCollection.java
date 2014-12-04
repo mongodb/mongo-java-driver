@@ -262,7 +262,7 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    void insertOne(T document, SingleResultCallback<WriteConcernResult> callback);
+    void insertOne(T document, SingleResultCallback<Void> callback);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
@@ -272,7 +272,7 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    void insertMany(List<? extends T> documents, SingleResultCallback<WriteConcernResult> callback);
+    void insertMany(List<? extends T> documents, SingleResultCallback<Void> callback);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
@@ -283,7 +283,7 @@ public interface MongoCollection<T> {
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    void insertMany(List<? extends T> documents, InsertManyOptions options, SingleResultCallback<WriteConcernResult> callback);
+    void insertMany(List<? extends T> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
