@@ -124,10 +124,6 @@ public class MongoException extends RuntimeException {
         public DuplicateKey(final CommandResult commandResult) {
             super(commandResult);
         }
-
-        DuplicateKey(final int code, final CommandResult commandResult) {
-            super(code, commandResult);
-        }
     }
 
     /**

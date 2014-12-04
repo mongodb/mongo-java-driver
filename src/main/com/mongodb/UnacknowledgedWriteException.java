@@ -23,8 +23,10 @@ package com.mongodb;
  * @see WriteResult
  * @see BulkWriteResult
  * @since 2.12
+ * @deprecated Catch {@link java.lang.UnsupportedOperationException instead}
  */
-public class UnacknowledgedWriteException extends MongoClientException {
+@Deprecated
+public class UnacknowledgedWriteException extends UnsupportedOperationException {
 
     private static final long serialVersionUID = 6974332938681213965L;
 

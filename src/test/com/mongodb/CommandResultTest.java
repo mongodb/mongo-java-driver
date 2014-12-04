@@ -124,6 +124,7 @@ public class CommandResultTest extends TestCase {
         } catch (CommandFailureException e) {
             assertEquals(commandResult, e.getCommandResult());
             assertEquals(-5, e.getCode());
+            assertEquals(-5, e.getErrorCode());
         }
     }
 
@@ -141,6 +142,7 @@ public class CommandResultTest extends TestCase {
             assertEquals(new ServerAddress("host1"), e.getServerAddress());
             assertEquals(errorMessage, e.getErrorMessage());
             assertEquals(5000, e.getCode());
+            assertEquals(5000, e.getErrorCode());
             assertEquals(commandResult, e.getCommandResult());
         }
     }

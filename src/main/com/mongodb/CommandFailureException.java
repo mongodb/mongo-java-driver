@@ -18,10 +18,11 @@ package com.mongodb;
 
 /**
  * An exception indicating that a command sent to a MongoDB server returned a failure.
+ * @deprecated Use {@link com.mongodb.MongoCommandException instead}.
  */
-public class CommandFailureException extends MongoException {
+@Deprecated
+public class CommandFailureException extends MongoCommandException {
     private static final long serialVersionUID = -1180715413196161037L;
-    private final CommandResult commandResult;
 
     /**
      * Construct a new instance with the CommandResult from a failed command
@@ -31,28 +32,7 @@ public class CommandFailureException extends MongoException {
      */
     @Deprecated
     public CommandFailureException(CommandResult commandResult){
-        super(ServerError.getCode(commandResult), commandResult.toString());
-        this.commandResult = commandResult;
-    }
-
-    /**
-     * Gets the address of the server that the command executed on.
-     *
-     * @return the address of the server that the command executed on
-     * @since 2.13
-     */
-    public ServerAddress getServerAddress() {
-        return commandResult.getServerUsed();
-    }
-
-    /**
-     * Gets the error message from the command failure, typically from the "errmsg" property of the document returned from the failed
-     * command.
-     *
-     * @return the error message
-     */
-    public String getErrorMessage() {
-        return commandResult.getErrorMessage();
+        super(commandResult);
     }
 
     /**
@@ -63,6 +43,6 @@ public class CommandFailureException extends MongoException {
      */
     @Deprecated
     public CommandResult getCommandResult() {
-        return commandResult;
+        return super.getCommandResult();
     }
 }

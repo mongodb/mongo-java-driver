@@ -33,8 +33,4 @@ public class DuplicateKeyException extends WriteConcernException {
     DuplicateKeyException(final CommandResult commandResult) {
         super(commandResult);
     }
-
-    DuplicateKeyException(final int code, final CommandResult commandResult) {
-        super(code, commandResult);
-    }
 }
