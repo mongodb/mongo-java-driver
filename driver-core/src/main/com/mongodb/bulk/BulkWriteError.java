@@ -16,6 +16,7 @@
 
 package com.mongodb.bulk;
 
+import com.mongodb.WriteError;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -25,11 +26,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public class BulkWriteError {
+public class BulkWriteError extends WriteError{
     private final int index;
-    private final int code;
-    private final String message;
-    private final BsonDocument details;
 
     /**
      * Constructs a new instance.
@@ -40,37 +38,8 @@ public class BulkWriteError {
      * @param index   the index of the item in the bulk write operation that had this error
      */
     public BulkWriteError(final int code, final String message, final BsonDocument details, final int index) {
-        this.code = code;
-        this.message = notNull("message", message);
-        this.details = notNull("details", details);
+        super(code, message, details);
         this.index = index;
-    }
-
-    /**
-     * Gets the code associated with this error.
-     *
-     * @return the code
-     */
-    public int getCode() {
-        return code;
-    }
-
-    /**
-     * Gets the message associated with this error.
-     *
-     * @return the message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    /**
-     * Gets the details associated with this error.  This document will not be null, but may be empty.
-     *
-     * @return the details
-     */
-    public BsonDocument getDetails() {
-        return details;
     }
 
     /**
@@ -93,28 +62,17 @@ public class BulkWriteError {
 
         BulkWriteError that = (BulkWriteError) o;
 
-        if (code != that.code) {
-            return false;
-        }
         if (index != that.index) {
             return false;
         }
-        if (!details.equals(that.details)) {
-            return false;
-        }
-        if (!message.equals(that.message)) {
-            return false;
-        }
 
-        return true;
+        return super.equals(that);
     }
 
     @Override
     public int hashCode() {
         int result = index;
-        result = 31 * result + code;
-        result = 31 * result + message.hashCode();
-        result = 31 * result + details.hashCode();
+        result = 31 * super.hashCode();
         return result;
     }
 }
