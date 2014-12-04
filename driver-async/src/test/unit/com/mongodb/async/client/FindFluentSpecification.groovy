@@ -1,23 +1,10 @@
-/*
- * Copyright (c) 2008-2014 MongoDB, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package com.mongodb.async.client
 
-package com.mongodb
-
-import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.CursorType
+import com.mongodb.MongoNamespace
 import com.mongodb.client.model.FindOptions
+import com.mongodb.client.options.OperationOptions
+import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -35,16 +22,20 @@ class FindFluentSpecification extends Specification {
 
     def codecs = [new ValueCodecProvider(),
                   new DocumentCodecProvider(),
-                  new DBObjectCodecProvider(),
                   new BsonValueCodecProvider()]
-    def options = MongoCollectionOptions.builder()
-                                        .codecRegistry(new RootCodecRegistry(codecs))
-                                        .readPreference(secondary())
-                                        .build()
+    def options = OperationOptions.builder()
+                                  .codecRegistry(new RootCodecRegistry(codecs))
+                                  .readPreference(secondary())
+                                  .build()
 
     def 'should build the expected findOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor, cursor]);
         def findOptions = new FindOptions().sort(new Document('sort', 1))
                                            .modifiers(new Document('modifier', 1))
                                            .projection(new Document('projection', 1))
@@ -60,7 +51,7 @@ class FindFluentSpecification extends Specification {
                                                       findOptions, Document)
 
         when: 'default input should be as expected'
-        fluentFind.iterator()
+        fluentFind.into([]) { result, t -> }
 
         def operation = executor.getReadOperation() as FindOperation<Document>
         def readPreference = executor.getReadPreference()
@@ -96,7 +87,7 @@ class FindFluentSpecification extends Specification {
                   .oplogReplay(true)
                   .noCursorTimeout(true)
                   .partial(true)
-                  .iterator()
+                  .into([]) { result, t -> }
 
         operation = executor.getReadOperation() as FindOperation<Document>
 
@@ -118,7 +109,12 @@ class FindFluentSpecification extends Specification {
 
     def 'should handle mixed types'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
         def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), options, executor, new Document('filter', 1),
                                                       findOptions, Document)
@@ -126,8 +122,8 @@ class FindFluentSpecification extends Specification {
         when:
         fluentFind.filter(new Document('filter', 1))
                   .sort(new BsonDocument('sort', new BsonInt32(1)))
-                  .modifiers(new BasicDBObject('modifier', 1))
-                  .iterator()
+                  .modifiers(new Document('modifier', 1))
+                  .into([]) { result, t -> }
 
         def operation = executor.getReadOperation() as FindOperation<Document>
 

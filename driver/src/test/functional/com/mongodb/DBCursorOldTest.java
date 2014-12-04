@@ -241,6 +241,25 @@ public class DBCursorOldTest extends DatabaseTestCase {
         }
     }
 
+    @Test
+    public void shouldSupportTryNextOnTailableAwaitCursors() {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        DBCursor cur = c.find()
+                        .sort(new BasicDBObject("$natural", 1))
+                        .addOption(Bytes.QUERYOPTION_TAILABLE)
+                        .addOption(Bytes.QUERYOPTION_AWAITDATA);
+
+        try {
+            cur.tryNext();
+        } catch (IllegalArgumentException e) {
+            fail();
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionOnTryNextForNonTailableCursors() {
         DBCollection c = database.getCollection("tail1");

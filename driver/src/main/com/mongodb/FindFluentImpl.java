@@ -102,12 +102,6 @@ final class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     @Override
-    public FindFluent<T> awaitData(final boolean awaitData) {
-        findOptions.awaitData(awaitData);
-        return this;
-    }
-
-    @Override
     public FindFluent<T> noCursorTimeout(final boolean noCursorTimeout) {
         findOptions.noCursorTimeout(noCursorTimeout);
         return this;
@@ -126,8 +120,8 @@ final class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     @Override
-    public FindFluent<T> tailable(final boolean tailable) {
-        findOptions.tailable(tailable);
+    public FindFluent<T> cursorType(final CursorType cursorType) {
+        findOptions.cursorType(cursorType);
         return this;
     }
 
@@ -174,11 +168,10 @@ final class FindFluentImpl<T> implements FindFluent<T> {
                    .modifiers(asBson(findOptions.getModifiers()))
                    .projection(asBson(findOptions.getProjection()))
                    .sort(asBson(findOptions.getSort()))
-                   .awaitData(findOptions.isAwaitData())
+                   .cursorType(findOptions.getCursorType())
                    .noCursorTimeout(findOptions.isNoCursorTimeout())
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
-                   .tailableCursor(findOptions.isTailable())
                    .slaveOk(options.getReadPreference().isSlaveOk());
     }
 

@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
@@ -62,11 +63,10 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private long maxTimeMS;
     private int skip;
     private BsonDocument sort;
-    private boolean tailableCursor;
+    private CursorType cursorType = CursorType.NonTailable;
     private boolean slaveOk;
     private boolean oplogReplay;
     private boolean noCursorTimeout;
-    private boolean awaitData;
     private boolean partial;
 
     /**
@@ -278,32 +278,22 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     }
 
     /**
-     * Gets whether the cursor is configured to be a tailable cursor.
+     * Get the cursor type.
      *
-     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
-     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
-     * the cursor may become invalid at some point - for example if the final object it references were deleted.</p>
-     *
-     * @return true if the cursor is configured to be a tailable cursor
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     * @return the cursor type
      */
-    public boolean isTailableCursor() {
-        return tailableCursor;
+    public CursorType getCursorType() {
+        return cursorType;
     }
 
     /**
-     * Sets whether the cursor should be a tailable cursor.
+     * Sets the cursor type.
      *
-     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
-     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
-     * the cursor may become invalid at some point - for example if the final object it references were deleted.</p>
-     *
-     * @param tailableCursor whether the cursor should be a tailable cursor.
+     * @param cursorType the cursor type
      * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public FindOperation<T> tailableCursor(final boolean tailableCursor) {
-        this.tailableCursor = tailableCursor;
+    public FindOperation<T> cursorType(final CursorType cursorType) {
+        this.cursorType = notNull("cursorType", cursorType);
         return this;
     }
 
@@ -372,34 +362,6 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      */
     public FindOperation<T> noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
-        return this;
-    }
-
-    /**
-     * Returns true if the cursor should await for data.
-     *
-     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
-     * timeout period, we do return as normal.</p>
-     *
-     * @return if the cursor should await for data
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
-     */
-    public boolean isAwaitData() {
-        return awaitData;
-    }
-
-    /**
-     * Sets if the cursor should await for data.
-     *
-     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
-     * timeout period, we do return as normal.</p>
-     *
-     * @param awaitData if we should await for data
-     * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
-     */
-    public FindOperation<T> awaitData(final boolean awaitData) {
-        this.awaitData = awaitData;
         return this;
     }
 
@@ -590,5 +552,13 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         }
 
         return document;
+    }
+
+    private boolean isTailableCursor() {
+        return cursorType.isTailable();
+    }
+
+    private boolean isAwaitData() {
+        return cursorType == CursorType.TailableAwait;
     }
 }

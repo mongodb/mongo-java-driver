@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.CursorType;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -35,11 +37,10 @@ public final class FindOptions {
     private long maxTimeMS;
     private int skip;
     private Object sort;
-    private boolean awaitData;
+    private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
     private boolean oplogReplay;
     private boolean partial;
-    private boolean tailable;
 
     /**
      * Construct a new instance.
@@ -59,11 +60,10 @@ public final class FindOptions {
         maxTimeMS = from.maxTimeMS;
         skip = from.skip;
         sort = from.sort;
-        awaitData = from.awaitData;
+        cursorType = from.cursorType;
         noCursorTimeout = from.noCursorTimeout;
         oplogReplay = from.oplogReplay;
         partial = from.partial;
-        tailable = from.tailable;
     }
 
     /**
@@ -227,29 +227,6 @@ public final class FindOptions {
     }
 
     /**
-     * Use with the tailable property. If there are no more matching documents, the server will block for a
-     * while rather than returning no documents.
-     *
-     * @return whether the cursor will wait for more documents that match the filter
-     * @see com.mongodb.client.model.FindOptions#isTailable()
-     */
-    public boolean isAwaitData() {
-        return awaitData;
-    }
-
-    /**
-     * Use with the tailable property. If there are no more matching documents, the server will block for a
-     * while rather than returning no documents.
-     *
-     * @param awaitData whether the cursor will wait for more documents that match the filter
-     * @return this
-     */
-    public FindOptions awaitData(final boolean awaitData) {
-        this.awaitData = awaitData;
-        return this;
-    }
-
-    /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
      * to prevent excess memory use.  If true, that timeout is disabled.
      *
@@ -312,30 +289,22 @@ public final class FindOptions {
     }
 
     /**
-     * Tailable means the cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the final documents's position. You can resume
-     * using the cursor later, from where it was located, if more data were
-     * received. Like any "latent cursor", the cursor may become invalid at
-     * some point - for example if the final document it references is deleted.
+     * Get the cursor type.
      *
-     * @return true if tailable is enabled
+     * @return the cursor type
      */
-    public boolean isTailable() {
-        return tailable;
+    public CursorType getCursorType() {
+        return cursorType;
     }
 
     /**
-     * Tailable means the cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the final documents's position. You can resume
-     * using the cursor later, from where it was located, if more data were
-     * received. Like any "latent cursor", the cursor may become invalid at
-     * some point - for example if the final document it references is deleted.
-     * *
-     * @param tailable if tailable is enabled
+     * Sets the cursor type.
+     *
+     * @param cursorType the cursor type
      * @return this
      */
-    public FindOptions tailable(final boolean tailable) {
-        this.tailable = tailable;
+    public FindOptions cursorType(final CursorType cursorType) {
+        this.cursorType = notNull("cursorType", cursorType);
         return this;
     }
 
@@ -349,11 +318,10 @@ public final class FindOptions {
                + ", maxTimeMS=" + maxTimeMS
                + ", skip=" + skip
                + ", sort=" + sort
-               + ", awaitData=" + awaitData
+               + ", cursorType=" + cursorType
                + ", noCursorTimeout=" + noCursorTimeout
                + ", oplogReplay=" + oplogReplay
                + ", partial=" + partial
-               + ", tailable=" + tailable
                + '}';
     }
 }

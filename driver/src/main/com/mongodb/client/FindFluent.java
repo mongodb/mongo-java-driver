@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.CursorType;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -98,15 +100,6 @@ public interface FindFluent<T> extends MongoIterable<T> {
     FindFluent<T> sort(Object sort);
 
     /**
-     * Use with the tailable property. If there are no more matching documents, the server will block for a
-     * while rather than returning no documents.
-     *
-     * @param awaitData whether the cursor will wait for more documents that match the filter
-     * @return this
-     */
-    FindFluent<T> awaitData(boolean awaitData);
-
-    /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
      * to prevent excess memory use. Set this option to prevent that.
      *
@@ -132,15 +125,10 @@ public interface FindFluent<T> extends MongoIterable<T> {
     FindFluent<T> partial(boolean partial);
 
     /**
-     * Tailable means the cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the documents's position. You can resume
-     * using the cursor later, from where it was located, if more data were
-     * received. Like any "latent cursor", the cursor may become invalid at
-     * some point - for example if the document it references is deleted.
-     * *
-     * @param tailable if tailable is enabled
+     * Sets the cursor type.
+     *
+     * @param cursorType the cursor type
      * @return this
      */
-    FindFluent<T> tailable(boolean tailable);
-    
+    FindFluent<T> cursorType(CursorType cursorType);
 }

@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Block;
+import com.mongodb.CursorType;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
@@ -102,12 +103,6 @@ class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     @Override
-    public FindFluent<T> awaitData(final boolean awaitData) {
-        findOptions.awaitData(awaitData);
-        return this;
-    }
-
-    @Override
     public FindFluent<T> noCursorTimeout(final boolean noCursorTimeout) {
         findOptions.noCursorTimeout(noCursorTimeout);
         return this;
@@ -126,8 +121,8 @@ class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     @Override
-    public FindFluent<T> tailable(final boolean tailable) {
-        findOptions.tailable(tailable);
+    public FindFluent<T> cursorType(final CursorType cursorType) {
+        findOptions.cursorType(cursorType);
         return this;
     }
 
@@ -173,11 +168,10 @@ class FindFluentImpl<T> implements FindFluent<T> {
                .modifiers(asBson(findOptions.getModifiers()))
                .projection(asBson(findOptions.getProjection()))
                .sort(asBson(findOptions.getSort()))
-               .awaitData(findOptions.isAwaitData())
+               .cursorType(findOptions.getCursorType())
                .noCursorTimeout(findOptions.isNoCursorTimeout())
                .oplogReplay(findOptions.isOplogReplay())
                .partial(findOptions.isPartial())
-               .tailableCursor(findOptions.isTailable())
                .slaveOk(options.getReadPreference().isSlaveOk());
     }
 

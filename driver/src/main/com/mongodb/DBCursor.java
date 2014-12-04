@@ -69,7 +69,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private ReadPreference readPreference;
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
-    private CursorType cursorType;
+    private IteratorOrArray iteratorOrArray;
     private DBObject currentObject;
     private int numSeen;
     private boolean closed;
@@ -144,8 +144,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         if (cursor == null) {
             FindOperation<DBObject> operation = getQueryOperation(findOptions, resultDecoder);
-            if (operation.isTailableCursor()) {
-                operation.awaitData(true);
+            if (operation.getCursorType() == CursorType.Tailable) {
+                operation.cursorType(CursorType.TailableAwait);
             }
             initializeCursor(operation);
         }
@@ -166,7 +166,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     @Override
     public DBObject next() {
-        checkCursorType(CursorType.ITERATOR);
+        checkIteratorOrArray(IteratorOrArray.ITERATOR);
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
@@ -187,7 +187,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBObject tryNext() {
         if (cursor == null) {
             FindOperation<DBObject> operation = getQueryOperation(findOptions, resultDecoder);
-            if (!operation.isTailableCursor()) {
+            if (!operation.getCursorType().isTailable()) {
                 throw new IllegalArgumentException("Can only be used with a tailable cursor");
             }
             initializeCursor(operation);
@@ -494,23 +494,22 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .projection((BsonDocument) options.getProjection())
                                                 .skip(options.getSkip())
                                                 .sort((BsonDocument) options.getSort())
-                                                .awaitData(options.isAwaitData())
                                                 .noCursorTimeout(options.isNoCursorTimeout())
                                                 .oplogReplay(options.isOplogReplay())
-                                                .partial(options.isPartial())
-                                                .tailableCursor(options.isTailable());
+                                                .partial(options.isPartial());
 
         if ((this.options & Bytes.QUERYOPTION_TAILABLE) != 0) {
-            operation.tailableCursor(true);
+            if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
+                operation.cursorType(CursorType.TailableAwait);
+            } else {
+                operation.cursorType(CursorType.Tailable);
+            }
         }
         if ((this.options & Bytes.QUERYOPTION_OPLOGREPLAY) != 0) {
             operation.oplogReplay(true);
         }
         if ((this.options & Bytes.QUERYOPTION_NOTIMEOUT) != 0) {
             operation.noCursorTimeout(true);
-        }
-        if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
-            operation.awaitData(true);
         }
         if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
             operation.partial(true);
@@ -652,7 +651,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public List<DBObject> toArray(final int max) {
-        checkCursorType(CursorType.ARRAY);
+        checkIteratorOrArray(IteratorOrArray.ARRAY);
         fillArray(max - 1);
         return all;
     }
@@ -693,7 +692,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see #size()
      */
     public int length() {
-        checkCursorType(CursorType.ARRAY);
+        checkIteratorOrArray(IteratorOrArray.ARRAY);
         fillArray(Integer.MAX_VALUE);
         return all.size();
     }
@@ -834,13 +833,13 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
-    private void checkCursorType(final CursorType type) {
-        if (cursorType == null) {
-            cursorType = type;
+    private void checkIteratorOrArray(final IteratorOrArray expected) {
+        if (iteratorOrArray == null) {
+            iteratorOrArray = expected;
             return;
         }
 
-        if (type == cursorType) {
+        if (expected == iteratorOrArray) {
             return;
         }
 
@@ -856,15 +855,15 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void fillArray(final int n) {
-        checkCursorType(CursorType.ARRAY);
+        checkIteratorOrArray(IteratorOrArray.ARRAY);
         while (n >= all.size() && hasNext()) {
             all.add(nextInternal());
         }
     }
 
     private DBObject nextInternal() {
-        if (cursorType == null) {
-            checkCursorType(CursorType.ITERATOR);
+        if (iteratorOrArray == null) {
+            checkIteratorOrArray(IteratorOrArray.ITERATOR);
         }
 
         DBObject next = cursor.next();
@@ -899,7 +898,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return null;
     }
 
-    private static enum CursorType {
+    private static enum IteratorOrArray {
         ITERATOR,
         ARRAY
     }
