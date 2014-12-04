@@ -1,7 +1,7 @@
 package com.mongodb.connection
 
 import category.Async
-import com.mongodb.CommandFailureException
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
 import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
@@ -52,7 +52,7 @@ class CommandHelperSpecification extends Specification {
 
         then:
         !receivedDocument
-        receivedException instanceof CommandFailureException
+        receivedException instanceof MongoCommandException
     }
 
 }

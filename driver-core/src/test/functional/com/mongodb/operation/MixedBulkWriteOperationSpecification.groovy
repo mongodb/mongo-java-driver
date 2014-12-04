@@ -22,7 +22,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.binding.SingleConnectionBinding
-import com.mongodb.bulk.BulkWriteException
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
@@ -82,7 +82,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.getWriteErrors().get(0).code == 11000
 
         where:
@@ -511,7 +511,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.writeErrors[0].index == 2
         ex.writeErrors[0].code == 11000
@@ -531,7 +531,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 2
         ex.writeErrors[0].index == 0
         ex.writeErrors[0].code == 11000
@@ -552,7 +552,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 2
         ex.getWriteResult().getInsertedCount() == 1998
         getCollectionHelper().count() == 2000
@@ -571,7 +571,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.getWriteResult().getInsertedCount() == 500
         getCollectionHelper().count() == 502
@@ -590,7 +590,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.getWriteConcernError() != null
     }
 
@@ -607,7 +607,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         op.execute(getBinding())  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.writeErrors[0].index == 1
         ex.writeErrors[0].code == 11000

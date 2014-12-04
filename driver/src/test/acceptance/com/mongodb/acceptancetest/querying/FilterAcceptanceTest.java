@@ -16,7 +16,7 @@
 
 package com.mongodb.acceptancetest.querying;
 
-import com.mongodb.MongoQueryFailureException;
+import com.mongodb.MongoQueryException;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
@@ -136,7 +136,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         assertThat((Integer) documents.get(0).get("_id"), is(0));
     }
 
-    @Test(expected = MongoQueryFailureException.class)
+    @Test(expected = MongoQueryException.class)
     public void shouldThrowQueryFailureException() {
         collection.insertOne(new Document("loc", asList(0.0, 0.0)));
         collection.find().filter(new Document("loc", new Document("$near", asList(0.0, 0.0)))).first();

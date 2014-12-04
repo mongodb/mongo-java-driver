@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import category.Slow
+import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.InsertRequest
@@ -208,7 +209,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents).execute(getBinding())
 
         then:
-        thrown(MongoException.DuplicateKey)
+        thrown(DuplicateKeyException)
         getCollectionHelper().count() == 2
     }
 
@@ -225,7 +226,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         executeAsync(new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents))
 
         then:
-        thrown(MongoException.DuplicateKey)
+        thrown(DuplicateKeyException)
         getCollectionHelper().count() == 2
     }
 
@@ -241,7 +242,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).execute(getBinding())
 
         then:
-        thrown(MongoException.DuplicateKey)
+        thrown(DuplicateKeyException)
         getCollectionHelper().count() == 1
     }
 
@@ -258,7 +259,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents))
 
         then:
-        thrown(MongoException.DuplicateKey)
+        thrown(DuplicateKeyException)
         getCollectionHelper().count() == 1
     }
 

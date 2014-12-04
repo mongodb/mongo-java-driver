@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.CommandFailureException
+import com.mongodb.MongoCommandException
 import com.mongodb.DuplicateKeyException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
@@ -171,7 +171,7 @@ class CreateIndexOperationSpecification extends OperationFunctionalSpecification
         createIndexOperation.execute(getBinding())
 
         then:
-        thrown(CommandFailureException)
+        thrown(MongoCommandException)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
@@ -184,7 +184,7 @@ class CreateIndexOperationSpecification extends OperationFunctionalSpecification
         executeAsync(createIndexOperation)
 
         then:
-        thrown(CommandFailureException)
+        thrown(MongoCommandException)
     }
 
     def 'should be able to create a unique index'() {

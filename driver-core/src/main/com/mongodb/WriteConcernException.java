@@ -17,14 +17,21 @@
 package com.mongodb;
 
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonValue;
+
+import static java.lang.String.format;
 
 /**
  * An exception representing an error reported due to a write failure.
+ *
  */
-public class WriteConcernException extends MongoWriteException {
-    private static final long serialVersionUID = 841056799207039974L;
+public class WriteConcernException extends MongoServerException {
+
+    private static final long serialVersionUID = -1100801000476719450L;
 
     private final WriteConcernResult writeConcernResult;
+    private final BsonDocument response;
 
     /**
      * Construct a new instance.
@@ -33,9 +40,53 @@ public class WriteConcernException extends MongoWriteException {
      * @param address the address of the server that executed the operation
      * @param writeConcernResult the write concern result
      */
-    public WriteConcernException(final BsonDocument response, final ServerAddress address, final WriteConcernResult writeConcernResult) {
-        super(response, address);
+    public WriteConcernException(final BsonDocument response, final ServerAddress address,
+                                 final WriteConcernResult writeConcernResult) {
+        super(extractErrorCode(response),
+              format("Write failed with error code %d and error message '%s'", extractErrorCode(response), extractErrorMessage(response)),
+              address);
+        this.response = response;
         this.writeConcernResult = writeConcernResult;
+    }
+
+    /**
+     * For internal use only: extract the error code from the response to a getlasterror command.
+     * @param response the response
+     * @return the code, or -1 if there is none
+     */
+    public static int extractErrorCode(final BsonDocument response) {
+        // mongos may set an err field containing duplicate key error information
+        if (response.containsKey("err")) {
+            String errorMessage = extractErrorMessage(response);
+            if (errorMessage.contains("E11000 duplicate key error")) {
+                return 11000;
+            }
+        }
+
+        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
+        // "err" field, so that it can be used to get the error code
+        if (!response.containsKey("code") && response.containsKey("errObjects")) {
+            for (BsonValue curErrorDocument : response.getArray("errObjects")) {
+                if (extractErrorMessage(response).equals(extractErrorMessage(curErrorDocument.asDocument()))) {
+                    return curErrorDocument.asDocument().getNumber("code").intValue();
+                }
+            }
+        }
+        return response.getNumber("code", new BsonInt32(-1)).intValue();
+    }
+
+    /**
+     * For internal use only: extract the error message from the response to a getlasterror command.
+     *
+     * @param response the response
+     * @return the error message
+     */
+    public static String extractErrorMessage(final BsonDocument response) {
+        if (response.isString("err")) {
+            return response.getString("err").getValue();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -45,5 +96,32 @@ public class WriteConcernException extends MongoWriteException {
      */
     public WriteConcernResult getWriteConcernResult() {
         return writeConcernResult;
+    }
+
+    /**
+     * Gets the error code associated with the write concern failure.
+     *
+     * @return the error code
+     */
+    public int getErrorCode() {
+        return extractErrorCode(response);
+    }
+
+    /**
+     * Gets the error message associated with the write concern failure.
+     *
+     * @return the error message
+     */
+    public String getErrorMessage() {
+        return extractErrorMessage(response);
+    }
+
+    /**
+     * Gets the response to the write operation.
+     *
+     * @return the response to the write operation
+     */
+    public BsonDocument getResponse() {
+        return response;
     }
 }

@@ -70,6 +70,7 @@ classes:
 - com.mongodb.DBPortPool$NoMoreConnection                           # JAVA-896
 - com.mongodb.MongoException$Network                                # JAVA-896
 - com.mongodb.MongoException$CursorNotFound                         # JAVA-896
+- com.mongodb.MongoException$DuplicateKey
 - com.mongodb.DBConnector                                           # JAVA-897 Deprecate com.mongodb.{DBConnector, DBTCPConnector, DBApiLayer} and corresponding methods
 - com.mongodb.DBTCPConnector                                        # JAVA-897
 - com.mongodb.DBApiLayer                                            # JAVA-897
@@ -80,6 +81,8 @@ classes:
 - com.mongodb.util.SimplePool
 - com.mongodb.ConnectionPoolStatisticsMBean
 - com.mongodb.MongoServerSelectionException
+- com.mongodb.UnacknowledgedWriteException
+- com.mongodb.CommandFailureException
 
 members:
   com.mongodb.gridfs.GridFS:
@@ -350,9 +353,6 @@ members:
 
   com.mongodb.MongoException:
   - MongoException(org.bson.BSONObject)                        # JAVA-1376
-
-  com.mongodb.MongoException$DuplicateKey:
-  - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-1379
 
   com.mongodb.LazyDBObject:
   - LazyDBObject(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)           # JAVA-1482

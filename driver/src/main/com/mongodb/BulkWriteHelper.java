@@ -52,9 +52,9 @@ final class BulkWriteHelper {
         return decoder.decode(new BsonDocumentReader(new BsonDocument("_id", cur.getId())), DecoderContext.builder().build()).get("_id");
     }
 
-    static BulkWriteException translateBulkWriteException(final com.mongodb.bulk.BulkWriteException e, final Decoder<DBObject> decoder) {
+    static BulkWriteException translateBulkWriteException(final MongoBulkWriteException e, final Decoder<DBObject> decoder) {
         return new BulkWriteException(translateBulkWriteResult(e.getWriteResult(), decoder), translateWriteErrors(e.getWriteErrors()),
-                                      translateWriteConcernError(e.getWriteConcernError()), e.getServerAddress());
+                                           translateWriteConcernError(e.getWriteConcernError()), e.getServerAddress());
     }
 
     static WriteConcernError translateWriteConcernError(final com.mongodb.bulk.WriteConcernError writeConcernError) {

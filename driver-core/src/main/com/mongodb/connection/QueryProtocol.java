@@ -21,9 +21,8 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
-import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DocumentCodec;
 
 import static com.mongodb.connection.ProtocolHelper.encodeMessage;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
@@ -282,10 +281,10 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                Document errorDocument = new ReplyMessage<Document>(responseBuffers,
-                                                                    new DocumentCodec(),
-                                                                    message.getId()).getDocuments().get(0);
-                throw getQueryFailureException(connection.getDescription().getServerAddress(), errorDocument);
+                BsonDocument errorDocument = new ReplyMessage<BsonDocument>(responseBuffers,
+                                                                            new BsonDocumentCodec(),
+                                                                            message.getId()).getDocuments().get(0);
+                throw getQueryFailureException(errorDocument, connection.getDescription().getServerAddress());
             }
             ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 

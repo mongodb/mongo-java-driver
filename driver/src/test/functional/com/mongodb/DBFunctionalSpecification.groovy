@@ -30,7 +30,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         given:
         def executor = Stub(OperationExecutor) {
             execute(_, _) >> {
-                throw new CommandFailureException(new BsonDocument('ok', new BsonDouble(0))
+                throw new MongoCommandException(new BsonDocument('ok', new BsonDouble(0))
                                                           .append('code', new BsonInt32(13))
                                                           .append('errmsg', new BsonString('not authorized on admin to execute ' +
                                                                                            'command { usersInfo: "admin" }')),
@@ -45,7 +45,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         def result = database.addUser('ross', 'pwd'.toCharArray())
 
         then:
-        notThrown(CommandFailureException)
+        notThrown(MongoCommandException)
         !result.updateOfExisting
         result.getN() == 1
     }
@@ -66,7 +66,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         when:
         executor = Stub(OperationExecutor) {
             execute(_, _) >> {
-                throw new CommandFailureException(new BsonDocument('ok', new BsonDouble(0))
+                throw new MongoCommandException(new BsonDocument('ok', new BsonDouble(0))
                                                           .append('code', new BsonInt32(13))
                                                           .append('errmsg', new BsonString('not authorized on admin to execute ' +
                                                                                            'command { usersInfo: "admin" }')),

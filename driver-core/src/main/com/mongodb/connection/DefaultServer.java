@@ -17,8 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
-import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
@@ -134,15 +135,8 @@ class DefaultServer implements ClusterableServer {
     }
 
     private void handleThrowable(final Throwable t) {
-        if (t instanceof MongoSocketException) {
+        if (t instanceof MongoSocketException || t instanceof MongoNotPrimaryException || t instanceof MongoNodeIsRecoveringException) {
             invalidate();
-        } else if (t instanceof MongoServerException) {
-            MongoServerException serverException = (MongoServerException) t;
-            if (serverException.getErrorMessage().contains("not master")
-                || serverException.getErrorMessage().contains("node is recovering")
-                || serverException.getCode() == 10107) {
-                invalidate();
-            }
         }
     }
 

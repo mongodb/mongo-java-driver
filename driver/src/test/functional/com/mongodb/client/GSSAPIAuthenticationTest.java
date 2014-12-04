@@ -16,7 +16,7 @@
 
 package com.mongodb.client;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoTimeoutException;
@@ -44,7 +44,7 @@ public class GSSAPIAuthenticationTest {
         assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getAuthenticationMechanism() == GSSAPI);
     }
 
-    @Test(expected = CommandFailureException.class)
+    @Test(expected = MongoCommandException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException, UnknownHostException {
         MongoClient client = new MongoClient(getServerAddress(), MongoClientOptions.builder().maxWaitTime(1000).build());
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");

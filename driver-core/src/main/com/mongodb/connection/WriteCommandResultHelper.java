@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.bulk.BulkWriteException;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
@@ -49,13 +49,13 @@ final class WriteCommandResultHelper {
         return BulkWriteResult.acknowledged(type, count - upsertedItems.size(), getModifiedCount(type, result), upsertedItems);
     }
 
-    static BulkWriteException getBulkWriteException(final WriteRequest.Type type, final BsonDocument result,
+    static MongoBulkWriteException getBulkWriteException(final WriteRequest.Type type, final BsonDocument result,
                                                     final ServerAddress serverAddress) {
         if (!hasError(result)) {
             throw new MongoInternalException("This method should not have been called");
         }
-        return new BulkWriteException(getBulkWriteResult(type, result), getWriteErrors(result),
-                                      getWriteConcernError(result), serverAddress);
+        return new MongoBulkWriteException(getBulkWriteResult(type, result), getWriteErrors(result),
+                                           getWriteConcernError(result), serverAddress);
     }
 
     @SuppressWarnings("unchecked")

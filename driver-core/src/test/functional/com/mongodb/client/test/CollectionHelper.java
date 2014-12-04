@@ -16,7 +16,7 @@
 
 package com.mongodb.client.test;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncReadWriteBinding;
@@ -66,7 +66,7 @@ public final class CollectionHelper<T> {
         }
         try {
             new DropDatabaseOperation(name).execute(getBinding());
-        } catch (CommandFailureException e) {
+        } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }

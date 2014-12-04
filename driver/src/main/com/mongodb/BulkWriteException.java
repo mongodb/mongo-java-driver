@@ -25,7 +25,7 @@ import java.util.List;
  * @mongodb.driver.manual reference/method/BulkWriteResult/#BulkWriteResult.writeErrors BulkWriteResult.writeErrors
  * @since 2.12
  */
-public class BulkWriteException extends MongoException {
+public class BulkWriteException extends MongoServerException {
     private static final long serialVersionUID = -1505950263354313025L;
 
     private final BulkWriteResult writeResult;
@@ -45,7 +45,7 @@ public class BulkWriteException extends MongoException {
                        final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
         super("Bulk write operation error on server " + serverAddress + ". "
               + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
-              + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "));
+              + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
         this.writeResult = writeResult;
         this.writeErrors = writeErrors;
         this.writeConcernError = writeConcernError;
@@ -77,15 +77,6 @@ public class BulkWriteException extends MongoException {
      */
     public WriteConcernError getWriteConcernError() {
         return writeConcernError;
-    }
-
-    /**
-     * The address of the server which performed the bulk write operation.
-     *
-     * @return the address
-     */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
     }
 
     @Override

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.bulk;
+package com.mongodb;
 
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
+import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.WriteConcernError;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
  *
  * @since 3.0
  */
-public class BulkWriteException extends MongoException {
+public class MongoBulkWriteException extends MongoServerException {
 
     private static final long serialVersionUID = -4345399805987210275L;
 
@@ -43,11 +44,11 @@ public class BulkWriteException extends MongoException {
      * @param writeConcernError        the write concern error
      * @param serverAddress            the server address.
      */
-    public BulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
-                              final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
+    public MongoBulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
+                                   final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
         super("Bulk write operation error on server " + serverAddress + ". "
               + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
-              + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "));
+              + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
         this.writeResult = writeResult;
         this.errors = writeErrors;
         this.writeConcernError = writeConcernError;
@@ -100,7 +101,7 @@ public class BulkWriteException extends MongoException {
             return false;
         }
 
-        final BulkWriteException that = (BulkWriteException) o;
+        final MongoBulkWriteException that = (MongoBulkWriteException) o;
 
         if (!errors.equals(that.errors)) {
             return false;

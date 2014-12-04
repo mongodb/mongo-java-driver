@@ -20,9 +20,9 @@ import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import org.bson.Document;
+import org.bson.BsonDocument;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DocumentCodec;
 
 import static com.mongodb.connection.ProtocolHelper.getQueryFailureException;
 import static java.lang.String.format;
@@ -46,9 +46,9 @@ class QueryResultCallback<T> extends ResponseCallback {
             if (t != null) {
                 callback.onResult(null, t);
             } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
-                                                                    getRequestId()).getDocuments().get(0);
-                callback.onResult(null, getQueryFailureException(getServerAddress(), errorDocument));
+                BsonDocument errorDocument = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                                                                            getRequestId()).getDocuments().get(0);
+                callback.onResult(null, getQueryFailureException(errorDocument, getServerAddress()));
             } else {
                 QueryResult<T> result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                                                            getServerAddress());

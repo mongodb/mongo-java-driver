@@ -81,7 +81,7 @@ public class CommandResultTest {
         try {
             new CommandResult(new BsonDocument("ok", new BsonInt32(0)), new ServerAddress()).throwOnError();
             fail("Should throw");
-        } catch (CommandFailureException e) {
+        } catch (MongoCommandException e) {
             assertEquals(-1, e.getCode());
         }
     }
@@ -93,7 +93,7 @@ public class CommandResultTest {
                               .append("errmsg", new BsonString("ns not found"))
                               .append("code", new BsonInt32(5000)), new ServerAddress()).throwOnError();
             fail("Should throw");
-        } catch (CommandFailureException e) {
+        } catch (MongoCommandException e) {
             assertEquals(5000, e.getCode());
         }
     }

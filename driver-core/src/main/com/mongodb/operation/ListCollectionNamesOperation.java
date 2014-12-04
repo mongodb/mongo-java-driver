@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
@@ -78,7 +78,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                                                              new BsonDocumentCodec(),
                                                              binding,
                                                              commandTransformer());
-                    } catch (CommandFailureException e) {
+                    } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, new ArrayList<String>());
                     }
                 } else {

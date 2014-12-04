@@ -22,7 +22,7 @@ import com.mongodb.ClusterFixture
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.bulk.BulkWriteException
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
@@ -79,7 +79,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.getWriteErrors().get(0).code == 11000
 
         where:
@@ -501,7 +501,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.writeErrors[0].index == 2
         ex.writeErrors[0].code == 11000
@@ -521,7 +521,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 2
         ex.writeErrors[0].index == 0
         ex.writeErrors[0].code == 11000
@@ -541,7 +541,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.getWriteConcernError() != null
     }
 
@@ -558,7 +558,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
 
         then:
-        def ex = thrown(BulkWriteException)
+        def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.writeErrors[0].index == 1
         ex.writeErrors[0].code == 11000

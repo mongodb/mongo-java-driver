@@ -16,19 +16,21 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
+import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
-import com.mongodb.MongoQueryFailureException;
-import com.mongodb.MongoWriteException;
-import com.mongodb.ServerAddress;
+import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoNotPrimaryException;
+import com.mongodb.MongoQueryException;
 import com.mongodb.WriteConcernException;
+import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.io.BsonOutput;
 
 import java.util.Arrays;
@@ -40,7 +42,7 @@ final class ProtocolHelper {
 
     static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
         if (!isCommandOk(result)) {
-            throw new CommandFailureException(result, serverAddress);
+            throw getCommandFailureException(result, serverAddress);
         }
 
         if (hasWriteError(result)) {
@@ -70,33 +72,27 @@ final class ProtocolHelper {
     }
 
     static MongoException getCommandFailureException(final BsonDocument response, final ServerAddress serverAddress) {
-        if (EXECUTION_TIMEOUT_ERROR_CODES.contains(getErrorCode(response))) {
-            return new MongoExecutionTimeoutException(getErrorCode(response), getErrorMessage(response));
+        MongoException specialException = createSpecialException(response, serverAddress, "errmsg");
+        if (specialException != null) {
+            return specialException;
         }
-        return new CommandFailureException(response, serverAddress);
+        return new MongoCommandException(response, serverAddress);
     }
 
     static int getErrorCode(final BsonDocument response) {
         return (response.getNumber("code", new BsonInt32(-1)).intValue());
     }
 
-    static String getErrorMessage(final BsonDocument response) {
-        return response.getString("errmsg", null).getValue();
+    static String getErrorMessage(final BsonDocument response, final String errorMessageFieldName) {
+        return response.getString(errorMessageFieldName, new BsonString("")).getValue();
     }
 
-    static MongoException getQueryFailureException(final ServerAddress serverAddress, final Document errorDocument) {
-        if (EXECUTION_TIMEOUT_ERROR_CODES.contains(getErrorCode(errorDocument))) {
-            return new MongoExecutionTimeoutException(getErrorCode(errorDocument), getErrorMessage(errorDocument));
+    static MongoException getQueryFailureException(final BsonDocument errorDocument, final ServerAddress serverAddress) {
+        MongoException specialException = createSpecialException(errorDocument, serverAddress, "$err");
+        if (specialException != null) {
+            return specialException;
         }
-        return new MongoQueryFailureException(serverAddress, getErrorCode(errorDocument), getErrorMessage(errorDocument));
-    }
-
-    static String getErrorMessage(final Document errorDocument) {
-        return (String) errorDocument.get("$err");
-    }
-
-    static int getErrorCode(final Document errorDocument) {
-        return errorDocument.containsKey("code") ? (Integer) errorDocument.get("code") : -1;
+        return new MongoQueryException(serverAddress, getErrorCode(errorDocument), getErrorMessage(errorDocument, "$err"));
     }
 
     static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {
@@ -119,16 +115,33 @@ final class ProtocolHelper {
         }
     }
 
+    private static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
+                                                         final String errorMessageFieldName) {
+        if (EXECUTION_TIMEOUT_ERROR_CODES.contains(getErrorCode(response))) {
+            return new MongoExecutionTimeoutException(getErrorCode(response), getErrorMessage(response, errorMessageFieldName));
+        } else if (getErrorMessage(response, errorMessageFieldName).startsWith("not master")) {
+            return new MongoNotPrimaryException(serverAddress);
+        } else if (getErrorMessage(response, errorMessageFieldName).startsWith("node is recovering")) {
+            return new MongoNodeIsRecoveringException(serverAddress);
+        } else {
+            return null;
+        }
+    }
+
     private static boolean hasWriteError(final BsonDocument response) {
-        String err = MongoWriteException.extractErrorMessage(response);
+        String err = WriteConcernException.extractErrorMessage(response);
         return err != null && err.length() > 0;
     }
 
     @SuppressWarnings("deprecation")
     private static void throwWriteException(final BsonDocument result, final ServerAddress serverAddress) {
-        int code = MongoWriteException.extractErrorCode(result);
+        MongoException specialException = createSpecialException(result, serverAddress, "err");
+        if (specialException != null) {
+            throw specialException;
+        }
+        int code = WriteConcernException.extractErrorCode(result);
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoException.DuplicateKey(result, serverAddress, createWriteResult(result));
+            throw new DuplicateKeyException(result, serverAddress, createWriteResult(result));
         } else {
             throw new WriteConcernException(result, serverAddress, createWriteResult(result));
         }

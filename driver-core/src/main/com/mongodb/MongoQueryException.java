@@ -23,9 +23,8 @@ import static java.lang.String.format;
  *
  * @since 3.0
  */
-public class MongoQueryFailureException extends MongoServerException {
+public class MongoQueryException extends MongoServerException {
     private static final long serialVersionUID = -5113350133297015801L;
-    private final int errorCode;
     private final String errorMessage;
 
     /**
@@ -35,18 +34,26 @@ public class MongoQueryFailureException extends MongoServerException {
      * @param errorCode the error code
      * @param errorMessage the error message
      */
-    public MongoQueryFailureException(final ServerAddress address, final int errorCode, final String errorMessage) {
-        super(format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address), address);
-        this.errorCode = errorCode;
+    public MongoQueryException(final ServerAddress address, final int errorCode, final String errorMessage) {
+        super(errorCode, format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address),
+              address);
         this.errorMessage = errorMessage;
     }
 
-    @Override
+    /**
+     * Gets the error code for this query failure.
+     *
+     * @return the error code
+     */
     public int getErrorCode() {
-        return errorCode;
+        return getCode();
     }
 
-    @Override
+    /**
+     * Gets the error message for this query failure.
+     *
+     * @return the error message
+     */
     public String getErrorMessage() {
         return errorMessage;
     }

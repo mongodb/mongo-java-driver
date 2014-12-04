@@ -125,7 +125,7 @@ public class DBTest extends DatabaseTestCase {
         assertTrue(database.getCollection(collectionName).isCapped());
     }
 
-    @Test(expected = CommandFailureException.class)
+    @Test(expected = MongoCommandException.class)
     public void shouldErrorIfCreatingACollectionThatAlreadyExists() {
         // given
         database.createCollection(collectionName, new BasicDBObject());
@@ -158,7 +158,7 @@ public class DBTest extends DatabaseTestCase {
         assertFalse(database.getCollection(collectionName).isCapped());
     }
 
-    @Test(expected = CommandFailureException.class)
+    @Test(expected = MongoCommandException.class)
     public void shouldThrowErrorIfCreatingACappedCollectionWithANegativeSize() {
         collection.drop();
         DBObject creationOptions = BasicDBObjectBuilder.start().add("capped", true)

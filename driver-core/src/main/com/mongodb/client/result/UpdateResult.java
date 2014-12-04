@@ -16,7 +16,6 @@
 
 package com.mongodb.client.result;
 
-import com.mongodb.UnacknowledgedWriteException;
 import org.bson.BsonValue;
 
 /**
@@ -115,8 +114,8 @@ public abstract class UpdateResult {
                throw getUnacknowledgedWriteException();
             }
 
-            private UnacknowledgedWriteException getUnacknowledgedWriteException() {
-                return new UnacknowledgedWriteException("Cannot get information about an unacknowledged update");
+            private UnsupportedOperationException getUnacknowledgedWriteException() {
+                return new UnsupportedOperationException("Cannot get information about an unacknowledged update");
             }
         };
     }

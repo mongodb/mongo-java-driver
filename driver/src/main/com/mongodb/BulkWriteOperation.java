@@ -89,7 +89,7 @@ public class BulkWriteOperation {
      * continueOnError property of the write concern is ignored.
      *
      * @return the result of the bulk write operation.
-     * @throws com.mongodb.BulkWriteException
+     * @throws BulkWriteException
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute() {
@@ -104,7 +104,7 @@ public class BulkWriteOperation {
      *
      * @param writeConcern the write concern to apply to the bulk operation.
      * @return the result of the bulk write operation.
-     * @throws com.mongodb.BulkWriteException
+     * @throws BulkWriteException
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {

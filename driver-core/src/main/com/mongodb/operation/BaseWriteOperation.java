@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -25,7 +26,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.bulk.BulkWriteException;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.Connection;
@@ -110,7 +111,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
                     } else {
                         return executeProtocol(connection);
                     }
-                } catch (BulkWriteException e) {
+                } catch (MongoBulkWriteException e) {
                     throw convertBulkWriteException(e);
                 }
             }
@@ -189,19 +190,19 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     private MongoException translateException(final Throwable t) {
         MongoException checkedError = MongoException.fromThrowable(t);
-        if (t instanceof BulkWriteException) {
-            checkedError = convertBulkWriteException((BulkWriteException) t);
+        if (t instanceof MongoBulkWriteException) {
+            checkedError = convertBulkWriteException((MongoBulkWriteException) t);
         }
         return checkedError;
     }
 
     @SuppressWarnings("deprecation")
-    private MongoException convertBulkWriteException(final BulkWriteException e) {
+    private MongoException convertBulkWriteException(final MongoBulkWriteException e) {
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {
             if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
-                return new MongoException.DuplicateKey(manufactureGetLastErrorResponse(e), e.getServerAddress(),
-                                                       translateBulkWriteResult(e.getWriteResult()));
+                return new DuplicateKeyException(manufactureGetLastErrorResponse(e), e.getServerAddress(),
+                                                      translateBulkWriteResult(e.getWriteResult()));
             } else {
                 return new WriteConcernException(manufactureGetLastErrorResponse(e), e.getServerAddress(),
                                                  translateBulkWriteResult(e.getWriteResult()));
@@ -213,7 +214,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     }
 
-    private BsonDocument manufactureGetLastErrorResponse(final BulkWriteException e) {
+    private BsonDocument manufactureGetLastErrorResponse(final MongoBulkWriteException e) {
         BsonDocument response = new BsonDocument();
         addBulkWriteResultToResponse(e.getWriteResult(), response);
         if (e.getWriteConcernError() != null) {
@@ -262,7 +263,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         return false;
     }
 
-    private BulkWriteError getLastError(final BulkWriteException e) {
+    private BulkWriteError getLastError(final MongoBulkWriteException e) {
         return e.getWriteErrors().isEmpty() ? null : e.getWriteErrors().get(e.getWriteErrors().size() - 1);
 
     }

@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
@@ -82,7 +82,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                     try {
                         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
                                                              transformer());
-                    } catch (CommandFailureException e) {
+                    } catch (MongoCommandException e) {
                         return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<T>());
                     }
                 } else {

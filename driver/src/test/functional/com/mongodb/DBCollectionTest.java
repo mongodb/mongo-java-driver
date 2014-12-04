@@ -225,7 +225,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.setDBEncoderFactory(null);
     }
 
-    @Test(expected = CommandFailureException.class)
+    @Test(expected = MongoCommandException.class)
     public void testCreateIndexWithInvalidIndexType() {
         assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         DBObject index = new BasicDBObject("x", "funny");

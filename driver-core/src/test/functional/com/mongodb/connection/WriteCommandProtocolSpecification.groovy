@@ -19,7 +19,7 @@ package com.mongodb.connection
 
 import category.Slow
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.bulk.BulkWriteException
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -94,7 +94,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         protocol.execute(connection)  // now do it again
 
         then:
-        def e = thrown(BulkWriteException)
+        def e = thrown(MongoBulkWriteException)
         e.serverAddress == connection.getServerAddress()
         e.writeErrors.size() == 2
         e.writeResult != null
@@ -165,7 +165,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         protocol.execute(connection)
 
         then:
-        def exception = thrown(BulkWriteException)
+        def exception = thrown(MongoBulkWriteException)
         exception.writeResult.insertedCount == 1
     }
 
@@ -199,7 +199,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         protocol.execute(connection)
 
         then:
-        def e = thrown(BulkWriteException)
+        def e = thrown(MongoBulkWriteException)
         e.serverAddress == connection.getServerAddress()
         e.writeErrors.size() == 3
         e.writeErrors[0].index == 0

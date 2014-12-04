@@ -16,8 +16,6 @@
 
 package com.mongodb.client.result;
 
-import com.mongodb.UnacknowledgedWriteException;
-
 /**
  * The result of a delete operation. If the delete was unacknowledged, then {@code wasAcknowledged} will return false and all other methods
  * with throw {@code MongoUnacknowledgedWriteException}.
@@ -76,7 +74,7 @@ public abstract class DeleteResult {
 
             @Override
             public long getDeletedCount() {
-                throw new UnacknowledgedWriteException("Cannot get information about an unacknowledged delete");
+                throw new UnsupportedOperationException("Cannot get information about an unacknowledged delete");
             }
         };
     }

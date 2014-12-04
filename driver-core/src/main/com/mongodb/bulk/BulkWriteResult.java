@@ -16,8 +16,6 @@
 
 package com.mongodb.bulk;
 
-import com.mongodb.UnacknowledgedWriteException;
-
 import java.util.List;
 
 /**
@@ -39,7 +37,7 @@ public abstract class BulkWriteResult {
      * Returns the number of documents inserted by the write operation.
      *
      * @return the number of documents inserted by the write operation
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getInsertedCount();
@@ -50,7 +48,7 @@ public abstract class BulkWriteResult {
      * field, and the field already has that value, that will still count as an update.
      *
      * @return the number of documents matched by updates in the write operation
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getMatchedCount();
@@ -59,7 +57,7 @@ public abstract class BulkWriteResult {
      * Returns the number of documents removed by the write operation.
      *
      * @return the number of documents removed by the write operation
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getRemovedCount();
@@ -69,7 +67,7 @@ public abstract class BulkWriteResult {
      * server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
      *
      * @return true if modifiedCount is available
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      * @see #getModifiedCount()
      */
@@ -84,8 +82,7 @@ public abstract class BulkWriteResult {
      * then this method will throw an {@code UnsupportedOperationException} </p>
      *
      * @return the number of documents modified by the write operation
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @throws java.lang.UnsupportedOperationException  if no modified count is available
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged or if no modified count is available.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      * @see #isModifiedCountAvailable()
      */
@@ -96,7 +93,7 @@ public abstract class BulkWriteResult {
      * Gets an unmodifiable list of upserted items, or the empty list if there were none.
      *
      * @return a list of upserted items, or the empty list if there were none.
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract List<BulkWriteUpsert> getUpserts();
@@ -307,8 +304,8 @@ public abstract class BulkWriteResult {
                 return "UnacknowledgedBulkWriteResult{}";
             }
 
-            private UnacknowledgedWriteException getUnacknowledgedWriteException() {
-                return new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
+            private UnsupportedOperationException getUnacknowledgedWriteException() {
+                return new UnsupportedOperationException("Cannot get information about an unacknowledged write");
             }
         };
     }

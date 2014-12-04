@@ -17,14 +17,14 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoWriteException;
+import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.bulk.BulkWriteException;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.DeleteRequest;
@@ -131,7 +131,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      *
      * @param binding the WriteBinding        for the operation
      * @return the bulk write result.
-     * @throws com.mongodb.bulk.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
+     * @throws com.mongodb.MongoBulkWriteException if a failure to complete the bulk write is detected based on the server response
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
@@ -146,7 +146,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         if (result.wasAcknowledged()) {
                             bulkWriteBatchCombiner.addResult(result, run.indexMap);
                         }
-                    } catch (BulkWriteException e) {
+                    } catch (MongoBulkWriteException e) {
                         bulkWriteBatchCombiner.addErrorResult(e, run.indexMap);
                         if (bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
                             break;
@@ -185,8 +185,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
                 if (t != null) {
-                    if (t instanceof BulkWriteException) {
-                        bulkWriteBatchCombiner.addErrorResult((BulkWriteException) t, run.indexMap);
+                    if (t instanceof MongoBulkWriteException) {
+                        bulkWriteBatchCombiner.addErrorResult((MongoBulkWriteException) t, run.indexMap);
                     } else {
                         wrappedCallback.onResult(null, t);
                         return;
@@ -517,7 +517,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                 }
                                 bulkWriteBatchCombiner.addResult(bulkWriteResult, indexMap);
                             }
-                        } catch (MongoWriteException writeException) {
+                        } catch (WriteConcernException writeException) {
                             if (writeException.getResponse().get("wtimeout") != null) {
                                 bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                             } else {
@@ -554,8 +554,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     public void onResult(final WriteConcernResult result, final Throwable t) {
                         final int nextRunPosition = currentPosition + 1;
                         if (t != null) {
-                            if (t instanceof MongoWriteException) {
-                                MongoWriteException writeException = (MongoWriteException) t;
+                            if (t instanceof WriteConcernException) {
+                                WriteConcernException writeException = (WriteConcernException) t;
                                 if (writeException.getResponse().get("wtimeout") != null) {
                                     bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                                 } else {
@@ -630,12 +630,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
             }
 
-            private BulkWriteError getBulkWriteError(final MongoWriteException writeException) {
+            private BulkWriteError getBulkWriteError(final WriteConcernException writeException) {
                 return new BulkWriteError(writeException.getErrorCode(), writeException.getErrorMessage(),
                                           translateGetLastErrorResponseToErrInfo(writeException.getResponse()), 0);
             }
 
-            private WriteConcernError getWriteConcernError(final MongoWriteException writeException) {
+            private WriteConcernError getWriteConcernError(final WriteConcernException writeException) {
                 return new WriteConcernError(writeException.getErrorCode(),
                                              ((BsonString) writeException.getResponse().get("err")).getValue(),
                                              translateGetLastErrorResponseToErrInfo(writeException.getResponse()));

@@ -185,7 +185,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.dropIndex('y_1');
 
         then:
-        CommandFailureException exception = thrown(CommandFailureException)
+        def exception = thrown(MongoCommandException)
         exception.getErrorMessage().contains('index not found')
     }
 
@@ -198,7 +198,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.dropIndex(new BasicDBObject('x', '2d'));
 
         then:
-        CommandFailureException exception = thrown(CommandFailureException)
+        def exception = thrown(MongoCommandException)
         exception.getErrorMessage().contains('index not found')
     }
 

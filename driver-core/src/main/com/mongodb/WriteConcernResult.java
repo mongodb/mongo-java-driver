@@ -38,7 +38,7 @@ public abstract class WriteConcernResult {
      * Returns the number of documents affected by the write operation.
      *
      * @return the number of documents affected by the write operation
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws UnsupportedOperationException if the write was unacknowledged.
      */
     public abstract int getCount();
 
@@ -46,7 +46,7 @@ public abstract class WriteConcernResult {
      * Returns true if the write was an update of an existing document.
      *
      * @return true if the write was an update of an existing document
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws UnsupportedOperationException if the write was unacknowledged.
      */
     public abstract boolean isUpdateOfExisting();
 
@@ -54,7 +54,7 @@ public abstract class WriteConcernResult {
      * Returns the value of _id if this write resulted in an upsert.
      *
      * @return the value of _id if this write resulted in an upsert.
-     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws UnsupportedOperationException if the write was unacknowledged.
      */
     public abstract BsonValue getUpsertedId();
 
@@ -184,8 +184,8 @@ public abstract class WriteConcernResult {
                 return "UnacknowledgedWriteResult{}";
             }
 
-            private UnacknowledgedWriteException getUnacknowledgedWriteException() {
-                return new UnacknowledgedWriteException("Cannot get information about an unacknowledged write");
+            private UnsupportedOperationException getUnacknowledgedWriteException() {
+                return new UnsupportedOperationException("Cannot get information about an unacknowledged write");
             }
         };
     }

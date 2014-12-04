@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
@@ -163,9 +163,9 @@ final class CommandHelper {
                                                });
     }
 
-    private static CommandFailureException createCommandFailureException(final BsonDocument reply,
-                                                                         final InternalConnection internalConnection) {
-        return new CommandFailureException(reply, internalConnection.getDescription().getServerAddress());
+    private static MongoCommandException createCommandFailureException(final BsonDocument reply,
+                                                                       final InternalConnection internalConnection) {
+        return new MongoCommandException(reply, internalConnection.getDescription().getServerAddress());
     }
 
     private CommandHelper() {

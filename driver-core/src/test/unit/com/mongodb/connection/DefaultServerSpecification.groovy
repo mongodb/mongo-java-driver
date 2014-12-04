@@ -18,25 +18,24 @@ package com.mongodb.connection
 
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoNodeIsRecoveringException
+import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoSocketException
 import com.mongodb.ServerAddress
-import com.mongodb.WriteConcernException
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
 import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.BsonString
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
-import static java.util.concurrent.TimeUnit.SECONDS
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class DefaultServerSpecification extends Specification {
 
@@ -152,7 +151,7 @@ class DefaultServerSpecification extends Specification {
         1 * serverMonitor.invalidate()
     }
 
-    def 'should invalidate on not master errors'() {
+    def 'should invalidate on MongoNotPrimaryException'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
@@ -167,15 +166,12 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(
-                new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
-                                                  .append('err', new BsonString('server is not master')),
-                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
+        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoNotPrimaryException(new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        thrown(WriteConcernException)
+        thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
 
@@ -186,7 +182,7 @@ class DefaultServerSpecification extends Specification {
         futureResultCallback.get(10, SECONDS)
 
         then:
-        thrown(WriteConcernException)
+        thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
 
@@ -197,12 +193,12 @@ class DefaultServerSpecification extends Specification {
         futureResultCallback.get(10, SECONDS)
 
         then:
-        thrown(WriteConcernException)
+        thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
     }
 
-    def 'should invalidate on node is recovering errors'() {
+    def 'should invalidate on MongoNodeIsRecoveringException'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
@@ -217,60 +213,18 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(
-                new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
-                                                  .append('err', new BsonString('the node is recovering')),
-                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
+        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        thrown(WriteConcernException)
+        thrown(MongoNodeIsRecoveringException)
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
     }
 
-    def 'should invalidate on 10107 error code'() {
-        given:
-        def connectionPool = Mock(ConnectionPool)
-        def serverMonitorFactory = Stub(ServerMonitorFactory)
-        def serverMonitor = Mock(ServerMonitor)
-        def internalConnection = Mock(InternalConnection)
-        connectionPool.get() >> { internalConnection }
-        serverMonitorFactory.create(_) >> { serverMonitor }
 
-        TestConnectionFactory connectionFactory = new TestConnectionFactory()
-
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
-        def testConnection = (TestConnection) server.getConnection()
-
-        when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(
-                new WriteConcernException(new BsonDocument('ok', new BsonInt32(1))
-                                                  .append('err', new BsonString('error'))
-                                                  .append('code', new BsonInt32(10107)),
-                                          new ServerAddress(), WriteConcernResult.acknowledged(0, false, null))))
-
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
-
-        then:
-        thrown(WriteConcernException)
-        1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
-
-        when:
-        def futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
-                                   futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
-
-        then:
-        thrown(WriteConcernException)
-        1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
-    }
-
-    def 'should invalidate on socket exceptions'() {
+    def 'should invalidate on MongoSocketException'() {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)

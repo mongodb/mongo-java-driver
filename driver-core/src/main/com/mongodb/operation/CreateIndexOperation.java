@@ -16,7 +16,8 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
+import com.mongodb.DuplicateKeyException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -477,7 +478,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     try {
                         executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
-                    } catch (CommandFailureException e) {
+                    } catch (MongoCommandException e) {
                         throw checkForDuplicateKeyError(e);
                     }
                 } else {
@@ -582,15 +583,14 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     }
 
     private MongoException translateException(final Throwable t) {
-        return (t instanceof CommandFailureException) ? checkForDuplicateKeyError((CommandFailureException) t)
+        return (t instanceof MongoCommandException) ? checkForDuplicateKeyError((MongoCommandException) t)
                                                       : MongoException.fromThrowable(t);
     }
 
     @SuppressWarnings("deprecation")
-    private MongoException checkForDuplicateKeyError(final CommandFailureException e) {
+    private MongoException checkForDuplicateKeyError(final MongoCommandException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getCode())) {
-            return new MongoException.DuplicateKey(e.getResponse(), e.getServerAddress(),
-                                                   WriteConcernResult.acknowledged(0, false, null));
+            return new DuplicateKeyException(e.getResponse(), e.getServerAddress(), WriteConcernResult.acknowledged(0, false, null));
         } else {
             return e;
         }

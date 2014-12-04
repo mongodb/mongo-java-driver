@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
@@ -44,7 +44,7 @@ class NativeAuthenticator extends Authenticator {
                                                       getCredential().getPassword(),
                                                       ((BsonString) nonceResponse.get("nonce")).getValue());
             executeCommand(getCredential().getSource(), authCommand, connection);
-        } catch (CommandFailureException e) {
+        } catch (MongoCommandException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }
     }
@@ -79,7 +79,7 @@ class NativeAuthenticator extends Authenticator {
     }
 
     private Throwable translateThrowable(final Throwable t) {
-        if (t instanceof CommandFailureException) {
+        if (t instanceof MongoCommandException) {
             return new MongoSecurityException(getCredential(), "Exception authenticating", t);
         } else {
             return t;

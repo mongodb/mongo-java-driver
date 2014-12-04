@@ -58,8 +58,8 @@ class UnacknowledgedBulkWriteResult extends BulkWriteResult {
         throw getUnacknowledgedWriteException();
     }
 
-    private UnacknowledgedWriteException getUnacknowledgedWriteException() {
-        return new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
+    private UnsupportedOperationException getUnacknowledgedWriteException() {
+        return new UnsupportedOperationException("Can not get information about an unacknowledged write");
     }
 
     @Override

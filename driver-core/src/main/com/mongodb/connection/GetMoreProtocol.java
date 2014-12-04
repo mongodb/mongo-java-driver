@@ -21,10 +21,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import org.bson.Document;
+import org.bson.BsonDocument;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DocumentCodec;
 
+import static com.mongodb.connection.ProtocolHelper.getQueryFailureException;
 import static java.lang.String.format;
 
 /**
@@ -114,9 +115,9 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
             }
 
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
-                Document errorDocument = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(),
-                                                                    message.getId()).getDocuments().get(0);
-                throw ProtocolHelper.getQueryFailureException(connection.getDescription().getServerAddress(), errorDocument);
+                BsonDocument errorDocument = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                                                                            message.getId()).getDocuments().get(0);
+                throw getQueryFailureException(errorDocument, connection.getDescription().getServerAddress());
             }
 
             return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),

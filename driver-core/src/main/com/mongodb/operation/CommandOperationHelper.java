@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
@@ -307,11 +307,11 @@ final class CommandOperationHelper {
 
     /* Misc operation helpers */
 
-    static void rethrowIfNotNamespaceError(final CommandFailureException e) {
+    static void rethrowIfNotNamespaceError(final MongoCommandException e) {
         rethrowIfNotNamespaceError(e, null);
     }
 
-    static <T> T rethrowIfNotNamespaceError(final CommandFailureException e, final T defaultValue) {
+    static <T> T rethrowIfNotNamespaceError(final MongoCommandException e, final T defaultValue) {
         if (!isNamespaceError(e)) {
             throw e;
         }
@@ -319,8 +319,8 @@ final class CommandOperationHelper {
     }
 
     static boolean isNamespaceError(final Throwable t) {
-        if (t instanceof CommandFailureException) {
-            CommandFailureException e = (CommandFailureException) t;
+        if (t instanceof MongoCommandException) {
+            MongoCommandException e = (MongoCommandException) t;
             return (e.getErrorMessage().contains("ns not found") || e.getErrorCode() == 26);
         } else {
             return false;

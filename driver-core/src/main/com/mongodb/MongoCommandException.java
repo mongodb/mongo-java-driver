@@ -29,9 +29,12 @@ import static java.lang.String.format;
 
 /**
  * An exception indicating that a command sent to a MongoDB server returned a failure.
+ *
+ * @since 2.13
  */
-public class CommandFailureException extends MongoServerException {
-    private static final long serialVersionUID = -1180715413196161037L;
+public class MongoCommandException extends MongoServerException {
+    private static final long serialVersionUID = 8160676451944215078L;
+
     private final BsonDocument response;
 
     /**
@@ -40,18 +43,27 @@ public class CommandFailureException extends MongoServerException {
      * @param response the command response
      * @param address the address of the server that generated the response
      */
-    public CommandFailureException(final BsonDocument response, final ServerAddress address) {
-        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCode(response),
+    public MongoCommandException(final BsonDocument response, final ServerAddress address) {
+        super(extractErrorCode(response),
+              format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCode(response),
                      extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
     }
 
-    @Override
+    /**
+     * Gets the error code associated with the command failure.
+     *
+     * @return the error code
+     */
     public int getErrorCode() {
-        return extractErrorCode(response);
+        return getCode();
     }
 
-    @Override
+    /**
+     * Gets the error message associated with the command failure.
+     *
+     * @return the error message
+     */
     public String getErrorMessage() {
         return extractErrorMessage(response);
     }
@@ -87,5 +99,4 @@ public class CommandFailureException extends MongoServerException {
             return null;
         }
     }
-
 }

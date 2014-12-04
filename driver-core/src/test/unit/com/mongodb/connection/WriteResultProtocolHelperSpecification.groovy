@@ -16,8 +16,8 @@
 
 package com.mongodb.connection
 
-import com.mongodb.CommandFailureException
-import com.mongodb.MongoException
+import com.mongodb.MongoCommandException
+import com.mongodb.DuplicateKeyException
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import org.bson.BsonArray
@@ -66,7 +66,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        def e = thrown(CommandFailureException)
+        def e = thrown(MongoCommandException)
         e.getCode() == 14
     }
 
@@ -79,7 +79,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        def e = thrown(MongoException.DuplicateKey)
+        def e = thrown(DuplicateKeyException)
         e.getCode() == 11000
     }
 
@@ -101,7 +101,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        def e = thrown(MongoException.DuplicateKey)
+        def e = thrown(DuplicateKeyException)
         e.getCode() == 11000
     }
 
@@ -119,7 +119,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        def e = thrown(MongoException.DuplicateKey)
+        def e = thrown(DuplicateKeyException)
         e.getCode() == 11000
     }
 }

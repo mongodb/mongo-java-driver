@@ -77,7 +77,7 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            return new CommandFailureException(response, address);
+            return new MongoCommandException(response, address);
         }
 
         return null;

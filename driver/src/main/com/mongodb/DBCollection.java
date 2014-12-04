@@ -1923,7 +1923,7 @@ public class DBCollection {
                                                                                                                      getObjectCodec()),
                                                                                          ordered, writeConcern)),
                                             getObjectCodec());
-        } catch (com.mongodb.bulk.BulkWriteException e) {
+        } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));
         }
     }

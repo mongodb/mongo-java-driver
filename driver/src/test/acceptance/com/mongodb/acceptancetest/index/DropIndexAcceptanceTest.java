@@ -16,7 +16,7 @@
 
 package com.mongodb.acceptancetest.index;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.DatabaseTestCase;
 import org.bson.Document;
 import org.junit.Before;
@@ -66,7 +66,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         assertThat("Should only be the default index on the collection", collection.getIndexes().size(), is(1));
     }
 
-    @Test(expected = CommandFailureException.class)
+    @Test(expected = MongoCommandException.class)
     public void shouldErrorWhenDroppingAnIndexThatDoesNotExist() {
         //Given
         collection.insertOne(new Document("to", "createTheCollection"));

@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.bulk.BulkWriteException;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
@@ -96,7 +96,7 @@ public class BulkWriteBatchCombiner {
      * @param exception the exception
      * @param indexMap  the index map
      */
-    public void addErrorResult(final BulkWriteException exception, final IndexMap indexMap) {
+    public void addErrorResult(final MongoBulkWriteException exception, final IndexMap indexMap) {
         addResult(exception.getWriteResult(), indexMap);
         mergeWriteErrors(exception.getWriteErrors(), indexMap);
         mergeWriteConcernError(exception.getWriteConcernError());
@@ -168,8 +168,8 @@ public class BulkWriteBatchCombiner {
      * Gets the combined errors as an exception
      * @return the bulk write exception, or null if there were no errors
      */
-    public BulkWriteException getError() {
-        return hasErrors() ? new BulkWriteException(createResult(),
+    public MongoBulkWriteException getError() {
+        return hasErrors() ? new MongoBulkWriteException(createResult(),
                                                     new ArrayList<BulkWriteError>(writeErrors),
                                                     writeConcernErrors.isEmpty() ? null
                                                                                  : writeConcernErrors.get(writeConcernErrors.size() - 1),

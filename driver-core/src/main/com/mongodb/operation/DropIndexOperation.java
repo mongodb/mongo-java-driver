@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -54,7 +54,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     public Void execute(final WriteBinding binding) {
         try {
             executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
-        } catch (CommandFailureException e) {
+        } catch (MongoCommandException e) {
             CommandOperationHelper.rethrowIfNotNamespaceError(e);
         }
         return null;

@@ -21,7 +21,7 @@ package com.mongodb;
  *
  * @since 2.12
  */
-public class MongoCursorNotFoundException extends MongoException {
+public class MongoCursorNotFoundException extends MongoQueryException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
@@ -35,7 +35,7 @@ public class MongoCursorNotFoundException extends MongoException {
      * @param serverAddress server address
      */
     public MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {
-        super(-5, "Cursor " + cursorId + " not found on server " + serverAddress);
+        super(serverAddress, -5, "Cursor " + cursorId + " not found on server " + serverAddress);
         this.cursorId = cursorId;
         this.serverAddress = serverAddress;
     }
