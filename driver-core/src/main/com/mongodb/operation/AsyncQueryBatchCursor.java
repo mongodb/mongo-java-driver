@@ -37,7 +37,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
-    private final AsyncConnectionSource connectionSource;
+    private volatile AsyncConnectionSource connectionSource;
     private volatile QueryResult<T> firstBatch;
     private volatile int batchSize;
     private volatile ServerCursor cursor;
@@ -139,12 +139,14 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                                   public void onResult(final Void result, final Throwable t) {
                                       connection.release();
                                       connectionSource.release();
+                                      connectionSource = null;
                                   }
                               });
                 }
             });
         } else if (connectionSource != null) {
             connectionSource.release();
+            connectionSource = null;
         }
     }
 

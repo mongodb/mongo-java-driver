@@ -64,6 +64,16 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         connectionSource.count == 1
     }
 
+    def 'should exhaust single batch with limit'() {
+        given:
+        cursor = new AsyncQueryBatchCursor<Document>(getNamespace(), executeQuery(1), 1, 0, new DocumentCodec(), connectionSource)
+
+        expect:
+        nextBatch().size() == 1
+        !nextBatch()
+        connectionSource.count == 1
+    }
+
     def 'should exhaust multiple batches'() {
         given:
         cursor = new AsyncQueryBatchCursor<Document>(getNamespace(), executeQuery(3), 0, 2, new DocumentCodec(), connectionSource)
