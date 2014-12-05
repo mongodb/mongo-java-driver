@@ -51,7 +51,6 @@ import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexOperation;
-import com.mongodb.operation.DeleteOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
@@ -65,7 +64,6 @@ import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.RenameCollectionOperation;
-import com.mongodb.operation.UpdateOperation;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -341,9 +339,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        List<InsertRequest> requests = new ArrayList<InsertRequest>(1);
-        requests.add(new InsertRequest(asBson(document)));
-        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
+
+        executeSingleWriteRequest(new InsertRequest(asBson(document)));
     }
 
     @Override
@@ -380,9 +377,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public UpdateResult replaceOne(final Object filter, final T replacement, final UpdateOptions updateOptions) {
-        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
-        requests.add(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()));
-        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests)));
+        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE)
+                                                        .upsert(updateOptions.isUpsert())));
     }
 
     @Override
@@ -510,28 +506,37 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private DeleteResult delete(final Object filter, final boolean multi) {
-        WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                                                                     asList(new DeleteRequest(asBson(filter))
-                                                                                            .multi(multi))));
-        if (writeConcernResult.wasAcknowledged()) {
-            return DeleteResult.acknowledged(writeConcernResult.getCount());
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(asBson(filter)).multi(multi));
+        if (result.wasAcknowledged()) {
+            return DeleteResult.acknowledged(result.getDeletedCount());
         } else {
             return DeleteResult.unacknowledged();
         }
     }
 
     private UpdateResult update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi) {
-        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
-        requests.add(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
-                     .upsert(updateOptions.isUpsert()).multi(multi));
-        return createUpdateResult(executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests)));
+        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
+                                                        .upsert(updateOptions.isUpsert()).multi(multi)));
     }
 
-    // TODO modifiedCount
-    private UpdateResult createUpdateResult(final WriteConcernResult writeConcernResult) {
-        if (writeConcernResult.wasAcknowledged()) {
 
-            return UpdateResult.acknowledged(writeConcernResult.getCount(), 0, writeConcernResult.getUpsertedId());
+    private BulkWriteResult executeSingleWriteRequest(final WriteRequest request) {
+        try {
+            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, options.getWriteConcern()));
+        } catch (MongoBulkWriteException e) {
+            if (e.getWriteErrors().isEmpty()) {
+                throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());
+            } else {
+                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+            }
+        }
+    }
+
+    private UpdateResult toUpdateResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            Long modifiedCount = result.isModifiedCountAvailable() ? (long) result.getModifiedCount() : null;
+            BsonValue upsertedId = result.getUpserts().isEmpty() ? null : result.getUpserts().get(0).getId();
+            return UpdateResult.acknowledged(result.getMatchedCount(), modifiedCount, upsertedId);
         } else {
             return UpdateResult.unacknowledged();
         }

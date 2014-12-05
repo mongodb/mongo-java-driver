@@ -16,7 +16,7 @@
 
 package com.mongodb.acceptancetest.crud;
 
-import com.mongodb.WriteConcernException;
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
@@ -88,7 +88,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         try {
             collection.replaceOne(filter, newDocumentWithDifferentId);
             fail("Should have thrown an exception");
-        } catch (WriteConcernException e) {
+        } catch (MongoWriteException e) {
             // Then
             assertThat("Error code should match one of these error codes", e.getCode(), anyOf(is(13596), is(16837)));
         }

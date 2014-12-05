@@ -237,7 +237,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         if (getType() == INSERT) {
             response.put("n", new BsonInt32(0));
         } else if (getType() == DELETE) {
-            response.put("n", new BsonInt32(bulkWriteResult.getRemovedCount()));
+            response.put("n", new BsonInt32(bulkWriteResult.getDeletedCount()));
         } else if (getType() == UPDATE || getType() == REPLACE) {
             response.put("n", new BsonInt32(bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size()));
             if (bulkWriteResult.getUpserts().isEmpty()) {

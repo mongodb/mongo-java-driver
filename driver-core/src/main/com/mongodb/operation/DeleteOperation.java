@@ -88,7 +88,7 @@ public class DeleteOperation extends BaseWriteOperation {
 
     @Override
     protected int getCount(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getRemovedCount();
+        return bulkWriteResult.getDeletedCount();
     }
 
 }

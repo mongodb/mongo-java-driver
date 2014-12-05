@@ -47,17 +47,7 @@ public abstract class DeleteResult {
      * @return an acknowledged DeleteResult
      */
     public static DeleteResult acknowledged(final long deletedCount) {
-        return new DeleteResult() {
-            @Override
-            public boolean wasAcknowledged() {
-                return true;
-            }
-
-            @Override
-            public long getDeletedCount() {
-                return deletedCount;
-            }
-        };
+        return new AcknowledgedDeleteResult(deletedCount);
     }
 
     /**
@@ -66,17 +56,76 @@ public abstract class DeleteResult {
      * @return an unacknowledged DeleteResult
      */
     public static DeleteResult unacknowledged() {
-        return new DeleteResult() {
-            @Override
-            public boolean wasAcknowledged() {
+        return new UnacknowledgedDeleteResult();
+    }
+
+    private static class AcknowledgedDeleteResult extends DeleteResult {
+        private final long deletedCount;
+
+        public AcknowledgedDeleteResult(final long deletedCount) {
+            this.deletedCount = deletedCount;
+        }
+
+        @Override
+        public boolean wasAcknowledged() {
+            return true;
+        }
+
+        @Override
+        public long getDeletedCount() {
+            return deletedCount;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
 
-            @Override
-            public long getDeletedCount() {
-                throw new UnsupportedOperationException("Cannot get information about an unacknowledged delete");
+            AcknowledgedDeleteResult that = (AcknowledgedDeleteResult) o;
+
+            if (deletedCount != that.deletedCount) {
+                return false;
             }
-        };
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (deletedCount ^ (deletedCount >>> 32));
+        }
     }
 
+    private static class UnacknowledgedDeleteResult extends DeleteResult {
+        @Override
+        public boolean wasAcknowledged() {
+            return false;
+        }
+
+        @Override
+        public long getDeletedCount() {
+            throw new UnsupportedOperationException("Cannot get information about an unacknowledged delete");
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
+    }
 }

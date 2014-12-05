@@ -242,7 +242,7 @@ public interface MongoCollection<T> {
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
      * @param requests the writes to execute
-     * @throws com.mongodb.BulkWriteException
+     * @throws com.mongodb.MongoBulkWriteException
      * @throws com.mongodb.MongoException
      * @return the result of the bulk write
      */
@@ -253,7 +253,7 @@ public interface MongoCollection<T> {
      *
      * @param requests the writes to execute
      * @param options the options to apply to the bulk write operation
-     * @throws com.mongodb.BulkWriteException
+     * @throws com.mongodb.MongoBulkWriteException
      * @throws com.mongodb.MongoException
      * @return the result of the bulk write
      */
@@ -264,7 +264,8 @@ public interface MongoCollection<T> {
      * the driver should generate one.
      *
      * @param document the document to insert
-     * @throws com.mongodb.DuplicateKeyException
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
      * @throws com.mongodb.MongoException
      */
     void insertOne(T document);
@@ -276,7 +277,8 @@ public interface MongoCollection<T> {
      * in the bulk API related to error handling.
      *
      * @param documents the documents to insert
-     * @throws com.mongodb.DuplicateKeyException
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
      * @throws com.mongodb.MongoException
      */
     void insertMany(List<? extends T> documents);
@@ -289,7 +291,8 @@ public interface MongoCollection<T> {
      *
      * @param documents the documents to insert
      * @param options the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
      * @throws com.mongodb.MongoException
      */
     void insertMany(List<? extends T> documents, InsertManyOptions options);
@@ -300,6 +303,8 @@ public interface MongoCollection<T> {
      *
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
      * @throws com.mongodb.MongoException
      */
     DeleteResult deleteOne(Object filter);
@@ -309,6 +314,8 @@ public interface MongoCollection<T> {
      *
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
      * @throws com.mongodb.MongoException
      */
     DeleteResult deleteMany(Object filter);
@@ -320,6 +327,9 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      */
     UpdateResult replaceOne(Object filter, T replacement);
 
@@ -331,6 +341,9 @@ public interface MongoCollection<T> {
      * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param updateOptions the options to apply to the replace operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      */
     UpdateResult replaceOne(Object filter, T replacement, UpdateOptions updateOptions);
 
@@ -342,6 +355,9 @@ public interface MongoCollection<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -356,6 +372,9 @@ public interface MongoCollection<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -369,6 +388,9 @@ public interface MongoCollection<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -383,6 +405,9 @@ public interface MongoCollection<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
+     * @throws com.mongodb.MongoWriteException
+     * @throws com.mongodb.MongoWriteConcernException
+     * @throws com.mongodb.MongoException
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */

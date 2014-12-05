@@ -32,7 +32,7 @@ final class BulkWriteHelper {
         if (bulkWriteResult.wasAcknowledged()) {
             Integer modifiedCount = (bulkWriteResult.isModifiedCountAvailable()) ? bulkWriteResult.getModifiedCount() : null;
             return new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getMatchedCount(),
-                                                   bulkWriteResult.getRemovedCount(), modifiedCount,
+                                                   bulkWriteResult.getDeletedCount(), modifiedCount,
                                                    translateBulkWriteUpserts(bulkWriteResult.getUpserts(), decoder));
         } else {
             return new UnacknowledgedBulkWriteResult();

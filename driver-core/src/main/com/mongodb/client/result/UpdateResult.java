@@ -42,6 +42,15 @@ public abstract class UpdateResult {
     public abstract long getMatchedCount();
 
     /**
+     * Gets a value indicating whether the modified count is available.
+     * <p>
+     * The modified count is only available when all servers have been upgraded to 2.6 or above.
+     * </p>
+     * @return true if the modified count is available
+     */
+    public abstract boolean isModifiedCountAvailable();
+
+    /**
      * Gets he number of documents modified by the update.
      *
      * @return the number of documents modified
@@ -63,28 +72,8 @@ public abstract class UpdateResult {
      * @param upsertedId    if the replace resulted in an inserted document, the id of the inserted document
      * @return an acknowledged UpdateResult
      */
-    public static UpdateResult acknowledged(final long matchedCount, final long modifiedCount, final BsonValue upsertedId) {
-        return new UpdateResult() {
-            @Override
-            public boolean wasAcknowledged() {
-                return true;
-            }
-
-            @Override
-            public long getMatchedCount() {
-                return matchedCount;
-            }
-
-            @Override
-            public long getModifiedCount() {
-                return modifiedCount;
-            }
-
-            @Override
-            public BsonValue getUpsertedId() {
-                return upsertedId;
-            }
-        };
+    public static UpdateResult acknowledged(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
+        return new AcknowledgedUpdateResult(matchedCount, modifiedCount, upsertedId);
     }
 
     /**
@@ -93,31 +82,127 @@ public abstract class UpdateResult {
      * @return an unacknowledged UpdateResult
      */
     public static UpdateResult unacknowledged() {
-        return new UpdateResult() {
-            @Override
-            public boolean wasAcknowledged() {
+        return new UnacknowledgedUpdateResult();
+    }
+
+    private static class AcknowledgedUpdateResult extends UpdateResult {
+        private final long matchedCount;
+        private final Long modifiedCount;
+        private final BsonValue upsertedId;
+
+        public AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
+            this.matchedCount = matchedCount;
+            this.modifiedCount = modifiedCount;
+            this.upsertedId = upsertedId;
+        }
+
+        @Override
+        public boolean wasAcknowledged() {
+            return true;
+        }
+
+        @Override
+        public long getMatchedCount() {
+            return matchedCount;
+        }
+
+        @Override
+        public boolean isModifiedCountAvailable() {
+            return modifiedCount != null;
+        }
+
+        @Override
+        public long getModifiedCount() {
+            if (modifiedCount == null) {
+                throw new UnsupportedOperationException("Modified count is only available when connected to MongoDB 2.6 servers or "
+                                                        + "above.");
+            }
+            return modifiedCount;
+        }
+
+        @Override
+        public BsonValue getUpsertedId() {
+            return upsertedId;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
 
-            @Override
-            public long getMatchedCount() {
-                throw getUnacknowledgedWriteException();
+            AcknowledgedUpdateResult that = (AcknowledgedUpdateResult) o;
+
+            if (matchedCount != that.matchedCount) {
+                return false;
+            }
+            if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
+                return false;
+            }
+            if (upsertedId != null ? !upsertedId.equals(that.upsertedId) : that.upsertedId != null) {
+                return false;
             }
 
-            @Override
-            public long getModifiedCount() {
-                throw getUnacknowledgedWriteException();
-            }
+            return true;
+        }
 
-            @Override
-            public BsonValue getUpsertedId() {
-               throw getUnacknowledgedWriteException();
-            }
-
-            private UnsupportedOperationException getUnacknowledgedWriteException() {
-                return new UnsupportedOperationException("Cannot get information about an unacknowledged update");
-            }
-        };
+        @Override
+        public int hashCode() {
+            int result = (int) (matchedCount ^ (matchedCount >>> 32));
+            result = 31 * result + (modifiedCount != null ? modifiedCount.hashCode() : 0);
+            result = 31 * result + (upsertedId != null ? upsertedId.hashCode() : 0);
+            return result;
+        }
     }
 
+    private static class UnacknowledgedUpdateResult extends UpdateResult {
+        @Override
+        public boolean wasAcknowledged() {
+            return false;
+        }
+
+        @Override
+        public long getMatchedCount() {
+            throw getUnacknowledgedWriteException();
+        }
+
+        @Override
+        public boolean isModifiedCountAvailable() {
+            return false;
+        }
+
+        @Override
+        public long getModifiedCount() {
+            throw getUnacknowledgedWriteException();
+        }
+
+        @Override
+        public BsonValue getUpsertedId() {
+           throw getUnacknowledgedWriteException();
+        }
+
+        private UnsupportedOperationException getUnacknowledgedWriteException() {
+            return new UnsupportedOperationException("Cannot get information about an unacknowledged update");
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
+    }
 }

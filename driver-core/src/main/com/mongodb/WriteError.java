@@ -1,6 +1,5 @@
 package com.mongodb;
 
-import com.mongodb.bulk.BulkWriteError;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -26,6 +25,17 @@ public class WriteError {
         this.code = code;
         this.message = notNull("message", message);
         this.details = notNull("details", details);
+    }
+
+    /**
+     * Construct an instance that is a shallow copy of the given instance.
+     *
+     * @param writeError the write error to copy
+     */
+    public WriteError(final WriteError writeError) {
+        this.code = writeError.code;
+        this.message = writeError.message;
+        this.details = writeError.details;
     }
 
     /**

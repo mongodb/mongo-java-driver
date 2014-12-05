@@ -258,8 +258,9 @@ public interface MongoCollection<T> {
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
-     * @throws com.mongodb.DuplicateKeyException
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      */
     void insertOne(T document, SingleResultCallback<Void> callback);
 
@@ -290,7 +291,9 @@ public interface MongoCollection<T> {
      *
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove one operation
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      */
     void deleteOne(Object filter, SingleResultCallback<DeleteResult> callback);
 
@@ -299,7 +302,9 @@ public interface MongoCollection<T> {
      *
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove many operation
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      */
     void deleteMany(Object filter, SingleResultCallback<DeleteResult> callback);
 
@@ -309,6 +314,9 @@ public interface MongoCollection<T> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param callback    the callback passed the result of the replace one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
     void replaceOne(Object filter, T replacement, SingleResultCallback<UpdateResult> callback);
@@ -320,6 +328,9 @@ public interface MongoCollection<T> {
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @param callback    the callback passed the result of the replace one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
     void replaceOne(Object filter, T replacement, UpdateOptions options, SingleResultCallback<UpdateResult> callback);
@@ -332,6 +343,9 @@ public interface MongoCollection<T> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
      *                 can be of any type for which a {@code Codec} is registered
      * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -346,6 +360,9 @@ public interface MongoCollection<T> {
      *                 can be of any type for which a {@code Codec} is registered
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -359,6 +376,9 @@ public interface MongoCollection<T> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
      *                 can be of any type for which a {@code Codec} is registered
      * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -373,6 +393,9 @@ public interface MongoCollection<T> {
      *                 can be of any type for which a {@code Codec} is registered
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        returned via the callback
+     * @throws com.mongodb.MongoWriteConcernException returned via the callback
+     * @throws com.mongodb.MongoException             returned via the callback
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */

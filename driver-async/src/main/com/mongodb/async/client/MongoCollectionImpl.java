@@ -16,9 +16,13 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoWriteConcernException;
+import com.mongodb.MongoWriteException;
 import com.mongodb.WriteConcernResult;
+import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
@@ -53,7 +57,6 @@ import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexOperation;
-import com.mongodb.operation.DeleteOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
@@ -67,7 +70,6 @@ import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.RenameCollectionOperation;
-import com.mongodb.operation.UpdateOperation;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -367,15 +369,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        List<InsertRequest> requests = new ArrayList<InsertRequest>();
-        requests.add(new InsertRequest(asBson(document)));
-        executor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests),
-                         new SingleResultCallback<WriteConcernResult>() {
-                             @Override
-                             public void onResult(final WriteConcernResult result, final Throwable t) {
-                                 callback.onResult(null, t);
-                             }
-                         });
+        executeSingleWriteRequest(new InsertRequest(asBson(document)), new SingleResultCallback<BulkWriteResult>() {
+            @Override
+            public void onResult(final BulkWriteResult result, final Throwable t) {
+                callback.onResult(null, t);
+            }
+        });
     }
 
     @Override
@@ -420,9 +419,18 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public void replaceOne(final Object filter, final T replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
-        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
-        requests.add(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE).upsert(options.isUpsert()));
-        executor.execute(new UpdateOperation(namespace, true, this.options.getWriteConcern(), requests), createUpdateResult(callback));
+        executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE)
+                                  .upsert(options.isUpsert()),
+                                  new SingleResultCallback<BulkWriteResult>() {
+                                      @Override
+                                      public void onResult(final BulkWriteResult result, final Throwable t) {
+                                          if (t != null) {
+                                              callback.onResult(null, t);
+                                          } else {
+                                              callback.onResult(toUpdateResult(result), null);
+                                          }
+                                      }
+                                  });
     }
 
     @Override
@@ -555,45 +563,65 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private void delete(final Object filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
-        executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                             asList(new DeleteRequest(asBson(filter)).multi(multi))),
-                         new SingleResultCallback<WriteConcernResult>() {
+        executeSingleWriteRequest(new DeleteRequest(asBson(filter)).multi(multi), new SingleResultCallback<BulkWriteResult>() {
+            @Override
+            public void onResult(final BulkWriteResult result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    if (result.wasAcknowledged()) {
+                        callback.onResult(DeleteResult.acknowledged(result.getDeletedCount()), null);
+                    } else {
+                        callback.onResult(DeleteResult.unacknowledged(), null);
+                    }
+
+                }
+            }
+        });
+    }
+
+    private void update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi,
+                        final SingleResultCallback<UpdateResult> callback) {
+        executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
+                                  .upsert(updateOptions.isUpsert()).multi(multi), new SingleResultCallback<BulkWriteResult>() {
+            @Override
+            public void onResult(final BulkWriteResult result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(toUpdateResult(result), null);
+                }
+            }
+        });
+    }
+
+    private void executeSingleWriteRequest(final WriteRequest request, final SingleResultCallback<BulkWriteResult> callback) {
+        executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, options.getWriteConcern()),
+                         new SingleResultCallback<BulkWriteResult>() {
                              @Override
-                             public void onResult(final WriteConcernResult result, final Throwable t) {
-                                 if (t != null) {
-                                     callback.onResult(null, t);
+                             public void onResult(final BulkWriteResult result, final Throwable t) {
+                                 if (t instanceof MongoBulkWriteException) {
+                                     MongoBulkWriteException e = (MongoBulkWriteException) t;
+                                     if (e.getWriteErrors().isEmpty()) {
+                                         throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());
+                                     } else {
+                                         throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                                     }
                                  } else {
-                                     DeleteResult deleteResult = result.wasAcknowledged() ? DeleteResult.acknowledged(result.getCount())
-                                                                                          : DeleteResult.unacknowledged();
-                                     callback.onResult(deleteResult, null);
+                                     callback.onResult(result, null);
                                  }
                              }
                          });
     }
 
-    private void update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi,
-                        final SingleResultCallback<UpdateResult> callback) {
-        List<UpdateRequest> requests = new ArrayList<UpdateRequest>(1);
-        requests.add(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
-                     .upsert(updateOptions.isUpsert()).multi(multi));
-        executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests), createUpdateResult(callback));
-    }
-
-    // TODO modifiedCount
-    private SingleResultCallback<WriteConcernResult> createUpdateResult(final SingleResultCallback<UpdateResult> callback) {
-        return new SingleResultCallback<WriteConcernResult>() {
-            @Override
-            public void onResult(final WriteConcernResult result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    UpdateResult updateResult = result.wasAcknowledged() ? UpdateResult.acknowledged(result.getCount(), 0,
-                                                                                                     result.getUpsertedId())
-                                                                         : UpdateResult.unacknowledged();
-                    callback.onResult(updateResult, null);
-                }
-            }
-        };
+    private UpdateResult toUpdateResult(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            Long modifiedCount = result.isModifiedCountAvailable() ? (long) result.getModifiedCount() : null;
+            BsonValue upsertedId = result.getUpserts().isEmpty() ? null : result.getUpserts().get(0).getId();
+            return UpdateResult.acknowledged(result.getMatchedCount(), modifiedCount, upsertedId);
+        } else {
+            return UpdateResult.unacknowledged();
+        }
     }
 
     private Codec<T> getCodec() {

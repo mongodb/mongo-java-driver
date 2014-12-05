@@ -43,7 +43,7 @@ public class BulkWriteBatchCombiner {
 
     private int insertedCount;
     private int matchedCount;
-    private int removedCount;
+    private int deletedCount;
     private Integer modifiedCount = 0;
     private final Set<BulkWriteUpsert> writeUpserts = new TreeSet<BulkWriteUpsert>(new Comparator<BulkWriteUpsert>() {
         @Override
@@ -81,7 +81,7 @@ public class BulkWriteBatchCombiner {
     public void addResult(final BulkWriteResult result, final IndexMap indexMap) {
         insertedCount += result.getInsertedCount();
         matchedCount += result.getMatchedCount();
-        removedCount += result.getRemovedCount();
+        deletedCount += result.getDeletedCount();
         if (result.isModifiedCountAvailable() && modifiedCount != null) {
             modifiedCount += result.getModifiedCount();
         } else {
@@ -207,7 +207,7 @@ public class BulkWriteBatchCombiner {
 
     private BulkWriteResult createResult() {
         return writeConcern.isAcknowledged()
-               ? BulkWriteResult.acknowledged(insertedCount, matchedCount, removedCount, modifiedCount,
+               ? BulkWriteResult.acknowledged(insertedCount, matchedCount, deletedCount, modifiedCount,
                                               new ArrayList<BulkWriteUpsert>(writeUpserts))
                : BulkWriteResult.unacknowledged();
     }

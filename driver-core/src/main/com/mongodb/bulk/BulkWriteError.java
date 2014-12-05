@@ -19,14 +19,12 @@ package com.mongodb.bulk;
 import com.mongodb.WriteError;
 import org.bson.BsonDocument;
 
-import static com.mongodb.assertions.Assertions.notNull;
-
 /**
  * Represents an error for an item included in a bulk write operation, e.g. a duplicate key error
  *
  * @since 3.0
  */
-public class BulkWriteError extends WriteError{
+public class BulkWriteError extends WriteError {
     private final int index;
 
     /**

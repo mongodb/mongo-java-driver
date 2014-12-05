@@ -1,7 +1,5 @@
 package com.mongodb;
 
-import com.mongodb.bulk.BulkWriteError;
-
 /**
  * An exception indicating the failure of a write operation.
  *
@@ -18,7 +16,7 @@ public class MongoWriteException extends MongoServerException {
      * @param error the error
      * @param serverAddress the server address
      */
-    public MongoWriteException(final BulkWriteError error, final ServerAddress serverAddress) {
+    public MongoWriteException(final WriteError error, final ServerAddress serverAddress) {
         super(error.getCode(), error.getMessage(), serverAddress);
         this.error = error;
     }

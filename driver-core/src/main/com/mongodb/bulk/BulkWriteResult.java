@@ -54,13 +54,13 @@ public abstract class BulkWriteResult {
     public abstract int getMatchedCount();
 
     /**
-     * Returns the number of documents removed by the write operation.
+     * Returns the number of documents deleted by the write operation.
      *
-     * @return the number of documents removed by the write operation
+     * @return the number of documents deleted by the write operation
      * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
-    public abstract int getRemovedCount();
+    public abstract int getDeletedCount();
 
     /**
      * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if the
@@ -156,7 +156,7 @@ public abstract class BulkWriteResult {
             }
 
             @Override
-            public int getRemovedCount() {
+            public int getDeletedCount() {
                 return removedCount;
             }
 
@@ -203,7 +203,7 @@ public abstract class BulkWriteResult {
                 if (modifiedCount != null && !modifiedCount.equals(that.getModifiedCount())) {
                     return false;
                 }
-                if (removedCount != that.getRemovedCount()) {
+                if (removedCount != that.getDeletedCount()) {
                     return false;
                 }
                 if (matchedCount != that.getMatchedCount()) {
@@ -262,7 +262,7 @@ public abstract class BulkWriteResult {
             }
 
             @Override
-            public int getRemovedCount() {
+            public int getDeletedCount() {
                 throw getUnacknowledgedWriteException();
             }
 
