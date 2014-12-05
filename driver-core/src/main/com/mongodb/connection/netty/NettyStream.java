@@ -153,55 +153,62 @@ final class NettyStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        if (checkPendingException(handler)) {
-            final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
-            for (ByteBuf cur : buffers) {
-                io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
-                composite.addComponent(byteBuf.retain());
-                composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
-            }
-
-            channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(final ChannelFuture future) throws Exception {
-                    if (!future.isSuccess()) {
-                        handler.failed(future.cause());
-                    } else {
-                        handler.completed(null);
-                    }
-                }
-            });
+        CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
+        for (ByteBuf cur : buffers) {
+            io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
+            composite.addComponent(byteBuf.retain());
+            composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
         }
+
+        channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(final ChannelFuture future) throws Exception {
+                if (!future.isSuccess()) {
+                    handler.failed(future.cause());
+                } else {
+                    handler.completed(null);
+                }
+            }
+        });
     }
 
     @Override
     public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        if (checkPendingException(handler)) {
-            if (!hasBytesAvailable(numBytes)) {
-                pendingReader = new PendingReader(numBytes, handler);
-            } else {
-                CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
-                int bytesNeeded = numBytes;
-                for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
-                    io.netty.buffer.ByteBuf next = iter.next();
-                    int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
-                    if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
-                        composite.addComponent(next);
-                        iter.remove();
-                    } else {
-                        next.retain();
-                        composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+        ByteBuf buffer = null;
+        Throwable exceptionResult = null;
+        synchronized (this) {
+            exceptionResult = pendingException;
+            if (exceptionResult == null) {
+                if (!hasBytesAvailable(numBytes)) {
+                    pendingReader = new PendingReader(numBytes, handler);
+                } else {
+                    CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
+                    int bytesNeeded = numBytes;
+                    for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
+                        io.netty.buffer.ByteBuf next = iter.next();
+                        int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
+                        if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
+                            composite.addComponent(next);
+                            iter.remove();
+                        } else {
+                            next.retain();
+                            composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+                        }
+                        composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
+                        bytesNeeded -= bytesNeededFromCurrentBuffer;
+                        if (bytesNeeded == 0) {
+                            break;
+                        }
                     }
-                    composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
-                    bytesNeeded -= bytesNeededFromCurrentBuffer;
-                    if (bytesNeeded == 0) {
-                        break;
-                    }
+                    buffer = new NettyByteBuf(composite).flip();
                 }
-                NettyByteBuf buffer = new NettyByteBuf(composite);
-
-                handler.completed(buffer.flip());
             }
+        }
+        if (exceptionResult != null) {
+            handler.failed(exceptionResult);
+        }
+        if (buffer != null) {
+            handler.completed(buffer);
         }
     }
 
@@ -216,29 +223,21 @@ final class NettyStream implements Stream {
         return false;
     }
 
-    private void handledInboundBuffer(final io.netty.buffer.ByteBuf buffer) {
-        pendingInboundBuffers.add(buffer.retain());
-        handlePendingReader();
-    }
-
-    private void handleException(final Throwable t) {
-        pendingException = t;
-        handlePendingReader();
-    }
-
-    private boolean checkPendingException(final AsyncCompletionHandler<?> handler) {
-        if (pendingException != null) {
-            handler.failed(pendingException);
-            return false;
-        } else {
-            return true;
+    private void handleReadResponse(final io.netty.buffer.ByteBuf buffer, final Throwable t) {
+        PendingReader localPendingReader = null;
+        synchronized (this) {
+            if (buffer != null) {
+                pendingInboundBuffers.add(buffer.retain());
+            } else {
+                pendingException = t;
+            }
+            if (pendingReader != null) {
+                localPendingReader = pendingReader;
+                pendingReader = null;
+            }
         }
-    }
 
-    private void handlePendingReader() {
-        if (pendingReader != null) {
-            PendingReader localPendingReader = pendingReader;
-            pendingReader = null;
+        if (localPendingReader != null) {
             readAsync(localPendingReader.numBytes, localPendingReader.handler);
         }
     }
@@ -270,15 +269,15 @@ final class NettyStream implements Stream {
     private class InboundBufferHandler extends SimpleChannelInboundHandler<io.netty.buffer.ByteBuf> {
         @Override
         protected void channelRead0(final ChannelHandlerContext ctx, final io.netty.buffer.ByteBuf buffer) throws Exception {
-            handledInboundBuffer(buffer);
+            handleReadResponse(buffer, null);
         }
 
         @Override
         public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable t) {
             if (t instanceof ReadTimeoutException) {
-                handleException(new MongoSocketReadTimeoutException("Timeout while receiving message", address, t));
+                handleReadResponse(null, new MongoSocketReadTimeoutException("Timeout while receiving message", address, t));
             } else {
-                handleException(t);
+                handleReadResponse(null, t);
             }
             ctx.close();
         }
