@@ -17,7 +17,6 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;

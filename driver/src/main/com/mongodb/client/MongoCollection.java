@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.AggregateOptions;
