@@ -43,8 +43,10 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     shadowJar {
         dependencies {
-            // exclude all "provided" dependencies 
-            exclude(project.configurations.provided.allDependencies.collect { dependency("$it.group:$it.name") })
+            // these are currently the only two provided dependencies we have, so we'll exclude them here. If our dependency tree gets 
+            // more complicated, they should be excluded in the projects they are in, and the projects that depend on those projects.
+            exclude(dependency('io.netty:netty-all'))
+            exclude(dependency('org.slf4j:slf4j-api'))
         }
         // by default this is 'all', which leads to a jar file will an '-all' suffix. We want this to be the default without '-all'
         classifier = null
