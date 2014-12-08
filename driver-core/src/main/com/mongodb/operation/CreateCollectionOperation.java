@@ -43,6 +43,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private boolean autoIndex = true;
     private long maxDocuments = 0;
     private Boolean usePowerOf2Sizes = null;
+    private BsonDocument storageEngineOptions;
 
     /**
      * Construct a new instance.
@@ -174,6 +175,28 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
+    /**
+     * Gets the storage engine options document for this collection.
+     *
+     * @return the storage engine options
+     * @mongodb.server.release 2.8
+     */
+    public BsonDocument getStorageEngineOptions() {
+        return storageEngineOptions;
+    }
+
+    /**
+     * Sets the storage engine options document for this collection.
+     *
+     * @param storageEngineOptions the storate engine options
+     * @return this
+     * @mongodb.server.release 2.8
+     */
+    public CreateCollectionOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
+        this.storageEngineOptions = storageEngineOptions;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         executeWrappedCommandProtocol(databaseName, asDocument(), new BsonDocumentCodec(), binding);
@@ -196,6 +219,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         }
         if (usePowerOf2Sizes != null) {
             document.put("usePowerOfTwoSizes", BsonBoolean.valueOf(usePowerOf2Sizes));
+        }
+        if (storageEngineOptions != null) {
+            document.put("storageEngine", storageEngineOptions);
         }
         return document;
     }

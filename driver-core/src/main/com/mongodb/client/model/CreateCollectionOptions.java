@@ -28,6 +28,7 @@ public class CreateCollectionOptions {
     private boolean capped;
     private long sizeInBytes;
     private Boolean usePowerOf2Sizes;
+    private Object storageEngineOptions;
 
     /**
      * Gets if auto-index is enabled
@@ -131,6 +132,27 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
+        return this;
+    }
+    /**
+     * Gets the storage engine options document for this index.
+     *
+     * @return the storage engine options
+     * @mongodb.server.release 2.8
+     */
+    public Object getStorageEngineOptions() {
+        return storageEngineOptions;
+    }
+
+    /**
+     * Sets the storage engine options document for this index.
+     *
+     * @param storageEngineOptions the storate engine options
+     * @return this
+     * @mongodb.server.release 2.8
+     */
+    public CreateCollectionOptions storageEngineOptions(final Object storageEngineOptions) {
+        this.storageEngineOptions = storageEngineOptions;
         return this;
     }
 }

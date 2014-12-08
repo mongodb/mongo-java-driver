@@ -158,6 +158,8 @@ class MongoDatabaseSpecification extends Specification {
                 .usePowerOf2Sizes(true)
                 .maxDocuments(100)
                 .sizeInBytes(1000)
+                .storageEngineOptions(new Document('wiredTiger', new Document()))
+
         database.createCollection(collectionName, createCollectionOptions, futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as CreateCollectionOperation
@@ -168,7 +170,8 @@ class MongoDatabaseSpecification extends Specification {
                                               .capped(true)
                                               .usePowerOf2Sizes(true)
                                               .maxDocuments(100)
-                                              .sizeInBytes(1000))
+                                              .sizeInBytes(1000)
+                                              .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument())))
     }
 
     def 'should pass the correct options to getCollection'() {

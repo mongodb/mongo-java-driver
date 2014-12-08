@@ -72,6 +72,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     private Double max;
     private Double bucketSize;
     private boolean dropDups;
+    private BsonDocument storageEngineOptions;
 
     /**
      * Construct a new instance.
@@ -446,6 +447,28 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         return this;
     }
 
+    /**
+     * Gets the storage engine options document for this index.
+     *
+     * @return the storage engine options
+     * @mongodb.server.release 2.8
+     */
+    public BsonDocument getStorageEngineOptions() {
+        return storageEngineOptions;
+    }
+
+    /**
+     * Sets the storage engine options document for this index.
+     *
+     * @param storageEngineOptions the storate engine options
+     * @return this
+     * @mongodb.server.release 2.8
+     */
+    public CreateIndexOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
+        this.storageEngineOptions = storageEngineOptions;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -544,6 +567,9 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         }
         if (dropDups) {
             index.append("dropDups", BsonBoolean.TRUE);
+        }
+        if (storageEngineOptions != null) {
+            index.append("storageEngine", storageEngineOptions);
         }
         return index;
     }

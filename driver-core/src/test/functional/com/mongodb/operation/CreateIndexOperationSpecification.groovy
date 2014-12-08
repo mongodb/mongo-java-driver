@@ -21,6 +21,7 @@ import com.mongodb.CommandFailureException
 import com.mongodb.DuplicateKeyException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
@@ -344,6 +345,28 @@ class CreateIndexOperationSpecification extends OperationFunctionalSpecification
 
         then:
         getUserCreatedIndexes('textIndexVersion') == [1]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should pass through storage engine options'() {
+        given:
+        def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))
+                .append('mmapv1', new Document())
+        def operation = new CreateIndexOperation(getNamespace(), new BsonDocument('a', new BsonInt32(1)))
+                .storageEngineOptions(new BsonDocumentWrapper(storageEngineOptions, new DocumentCodec()))
+
+        when:
+        operation.execute(getBinding())
+
+        then:
+        getIndex('a_1').get('storageEngine') == storageEngineOptions
+    }
+
+
+    Document getIndex(final String indexName) {
+        getIndexes().find {
+            it -> it.getString('name') == indexName
+        }
     }
 
     def List<Document> getIndexes() {

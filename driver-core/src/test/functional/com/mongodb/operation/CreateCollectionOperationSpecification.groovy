@@ -20,14 +20,18 @@ import category.Async
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -97,6 +101,21 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         !collectionNameExists('nonExistingCollection')
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should pass through storage engine options'() {
+        given:
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .storageEngineOptions(new BsonDocument('wiredTiger',
+                                                       new BsonDocument('configString', new BsonString('block_compressor=zlib')))
+                                              .append('mmapv1', new BsonDocument()))
+
+        when:
+        operation.execute(getBinding())
+
+        then:
+        getCollection(getCollectionName()).getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
+    }
+
     @Category(Async)
     def 'should error when creating a collection that already exists asynchronously'() {
         given:
@@ -146,4 +165,11 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         new ListCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
+    def getCollection(String collectionName) {
+        def document = new CommandReadOperation(getDatabaseName(), new BsonDocument('listCollections', new BsonInt32(1)),
+                                                new BsonDocumentCodec()).execute(getBinding())
+        document.getArray('collections').find {
+            it -> ((BsonDocument) it).getString('name').value == collectionName
+        }
+    }
 }
