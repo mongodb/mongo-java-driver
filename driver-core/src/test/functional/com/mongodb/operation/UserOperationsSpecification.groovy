@@ -89,7 +89,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def server = cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
         def connection = server.getConnection()
         testConnection(connection)
 
@@ -109,7 +109,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def server = cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
         def connection = server.getConnection()
         testConnection(connection)
 
@@ -129,7 +129,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
 
         then:
         thrown(MongoTimeoutException)
@@ -146,7 +146,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
 
         then:
         thrown(MongoTimeoutException)
@@ -163,7 +163,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(newCredentials)
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def server = cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
         def connection = server.getConnection()
         testConnection(connection)
 
@@ -185,7 +185,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getAsyncCluster(newCredentials)
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def server = cluster.selectServer(new PrimaryServerSelector(), 10, SECONDS)
         def connection = server.getConnection()
         testConnection(connection)
 
