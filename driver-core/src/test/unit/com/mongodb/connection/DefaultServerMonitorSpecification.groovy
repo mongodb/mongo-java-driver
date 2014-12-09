@@ -72,7 +72,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(100); }
+                    open() >> { sleep(1000); }
                 }
             }
         }
