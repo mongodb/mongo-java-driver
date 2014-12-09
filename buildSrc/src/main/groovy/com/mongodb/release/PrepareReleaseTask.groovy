@@ -15,6 +15,7 @@ class PrepareReleaseTask extends DefaultTask {
 
     PrepareReleaseTask (){
         description = 'Update release version in the build file, commit to github and tag the release'
+        mustRunAfter project.subprojects.clean
     }
 
     @TaskAction

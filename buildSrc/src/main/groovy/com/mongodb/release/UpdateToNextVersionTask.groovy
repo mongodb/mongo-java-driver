@@ -8,6 +8,7 @@ class UpdateToNextVersionTask extends DefaultTask {
 
     UpdateToNextVersionTask() {
         description = 'Update the version in the build file to the next SNAPSHOT version and commit'
+        mustRunAfter: 'draftReleaseNotes'
     }
 
     @TaskAction

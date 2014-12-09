@@ -12,6 +12,7 @@ class DraftReleaseNotesTask extends DefaultTask {
 
     DraftReleaseNotesTask() {
         description = 'Creates the release notes document'
+        mustRunAfter 'prepareRelease', project.subprojects.publish
     }
 
     @TaskAction

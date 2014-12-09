@@ -36,11 +36,12 @@ class ReleasePlugin implements Plugin<Project> {
         project.extensions.create('release', ReleasePluginExtension)
         project.evaluationDependsOnChildren()
 
-        project.task('prepareRelease', type: PrepareReleaseTask, dependsOn: project.subprojects.clean)
+        project.task('prepareRelease', type: PrepareReleaseTask)
         // publish is currently configured in publish.gradle
-        project.task('draftReleaseNotes', type: DraftReleaseNotesTask, dependsOn: ['prepareRelease', project.subprojects.publish])
-        project.task('updateToNextVersion', type: UpdateToNextVersionTask, dependsOn: 'draftReleaseNotes')
-        project.task('release', dependsOn: 'updateToNextVersion')
+        project.task('draftReleaseNotes', type: DraftReleaseNotesTask)
+        project.task('updateToNextVersion', type: UpdateToNextVersionTask)
+        project.task('release', dependsOn: [project.subprojects.clean, 'prepareRelease', project.subprojects.publish, 'draftReleaseNotes',
+                                            'updateToNextVersion'])
     }
 
 }
