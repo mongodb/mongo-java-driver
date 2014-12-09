@@ -48,8 +48,9 @@ configure(subprojects.findAll { it.name != 'util' }) {
             exclude(dependency('io.netty:netty-all'))
             exclude(dependency('org.slf4j:slf4j-api'))
         }
-        // by default this is 'all', which leads to a jar file will an '-all' suffix. We want this to be the default without '-all'
-        classifier = null
+        // by default the uber jar has a classifier of 'all', which leads to a jar file will an '-all' suffix for the uber jar. 
+        // If we want this to be the default without '-all', uncomment this line
+//        classifier = null
     }
 
     publishing {
@@ -59,9 +60,11 @@ configure(subprojects.findAll { it.name != 'util' }) {
                 artifact javadocJar
                 // shadowJar builds the uberjar of the code from the module and all the modules it's dependent upon
                 // i.e. for "driver" this includes classes for driver + driver-core + bson
-                artifact shadowJar
-                // if you want to only publish the module code and not the uber jar, uncomment the line below
-                // from components.java
+                // to publish the uber jar, uncomment the line below
+//                artifact shadowJar
+                
+                // publishes the module code and not the uber jar
+                from components.java
 
                 // this adds the following details to the published pom.xml
                 pom.withXml {
