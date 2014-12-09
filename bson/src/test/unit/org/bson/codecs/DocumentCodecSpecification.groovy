@@ -166,4 +166,47 @@ class DocumentCodecSpecification extends Specification {
         then:
         doc['_id'] == 5
     }
+
+
+    def 'should generate id if absent'() {
+        given:
+        def document = new Document()
+
+        when:
+        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+
+        then:
+        document.get('_id') instanceof ObjectId
+    }
+
+    def 'should not generate id if present'() {
+        given:
+        def document = new Document('_id', 1)
+
+        when:
+        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+
+        then:
+        document.get('_id') == 1
+    }
+
+    def 'should determine if id is present'() {
+        expect:
+        new DocumentCodec().documentHasId(new Document('_id', 1))
+        !new DocumentCodec().documentHasId(new Document())
+    }
+
+    def 'should get id if present'() {
+        expect:
+        new DocumentCodec().getDocumentId(new Document('_id', 1)) == new BsonInt32(1)
+        new DocumentCodec().getDocumentId(new Document('_id', new BsonInt32(1))) == new BsonInt32(1)
+    }
+
+    def 'should throw if getting id when absent'() {
+        when:
+        new DocumentCodec().getDocumentId(new Document())
+
+        then:
+        thrown(IllegalStateException)
+    }
 }
