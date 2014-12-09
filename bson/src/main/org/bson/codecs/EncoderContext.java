@@ -91,6 +91,15 @@ public final class EncoderContext {
         encoder.encode(writer, value, DEFAULT_CONTEXT);
     }
 
+    /**
+     * Gets a child context based on this.
+     *
+     * @return the child context
+     */
+    public EncoderContext getChildContext() {
+        return DEFAULT_CONTEXT;
+    }
+
     private EncoderContext(final Builder builder) {
         encodingCollectibleDocument = builder.encodingCollectibleDocument;
     }

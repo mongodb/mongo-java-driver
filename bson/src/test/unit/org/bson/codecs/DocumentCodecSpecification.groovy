@@ -80,6 +80,7 @@ class DocumentCodecSpecification extends Specification {
             put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
             put('uuid', new UUID(1L, 2L))
             put('document', new Document('a', 2))
+            put('map', [a:1, b:2])
         }
 
         when:
@@ -119,6 +120,7 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('uuid') == originalDocument.get('uuid')
         decodedDoc.get('array') == originalDocument.get('array')
         decodedDoc.get('document') == originalDocument.get('document')
+        decodedDoc.get('map') == originalDocument.get('map')
         where:
         writer << [
                 new BsonDocumentWriter(bsonDoc),

@@ -22,8 +22,6 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
 
-import java.util.List;
-
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -84,10 +82,6 @@ public class DocumentCodecProvider implements CodecProvider {
 
         if (clazz == Document.class) {
             return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap, valueTransformer);
-        }
-
-        if (List.class.isAssignableFrom(clazz)) {
-            return (Codec<T>) new ListCodec(registry, bsonTypeClassMap);
         }
 
         return null;
