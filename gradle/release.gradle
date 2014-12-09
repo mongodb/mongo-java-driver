@@ -6,7 +6,7 @@ release {
             file(project.file('build.gradle'))
     ]
 
-    // define which jar files to attach to the release notes
+    // define which jar files to attach to the release notes. Shadow jar is the uber jar.
     jarFile project(':driver').shadowJar
 //    jarFile project(':driver-core').shadowJar
 //    jarFile project(':bson').shadowJar

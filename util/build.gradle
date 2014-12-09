@@ -31,3 +31,8 @@ sourceSets {
 task publish {
     
 }
+
+// we don't want anything to be published for util
+task shadowJar {
+    
+}
