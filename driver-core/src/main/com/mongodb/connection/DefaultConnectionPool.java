@@ -303,10 +303,10 @@ class DefaultConnectionPool implements ConnectionPool {
      * created prior will be discarded.
      *
      * @param connection the connection that generated the exception
-     * @param e          the exception
+     * @param t          the exception
      */
-    private void incrementGenerationOnSocketException(final InternalConnection connection, final MongoException e) {
-        if (e instanceof MongoSocketException && !(e instanceof MongoSocketReadTimeoutException)) {
+    private void incrementGenerationOnSocketException(final InternalConnection connection, final Throwable t) {
+        if (t instanceof MongoSocketException && !(t instanceof MongoSocketReadTimeoutException)) {
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
                                    getId(connection), serverId.getAddress(), serverId.getAddress()));
@@ -393,13 +393,29 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", wrapped != null);
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    if (t != null) {
+                        incrementGenerationOnSocketException(PooledConnection.this, t);
+                    }
+                    callback.onResult(null, t);
+                }
+            });
         }
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", wrapped != null);
-            wrapped.receiveMessageAsync(responseTo, callback);
+            wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
+                @Override
+                public void onResult(final ResponseBuffers result, final Throwable t) {
+                    if (t != null) {
+                        incrementGenerationOnSocketException(PooledConnection.this, t);
+                    }
+                    callback.onResult(result, t);
+                }
+            });
         }
 
         @Override
