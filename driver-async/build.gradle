@@ -30,9 +30,3 @@ jar {
                               'javax.security.auth, org.ietf.jgss',
             )
 }
-
-shadowJar {
-    dependencies {
-        exclude(dependency('io.netty:netty-all'))
-    }
-}
