@@ -73,6 +73,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
 
         then:
         names.containsAll([collectionName, 'collection2'])
+        !names.contains(null)
     }
 
     @Category(Async)
@@ -90,6 +91,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
 
         then:
         names.containsAll([collectionName, 'collection2'])
+        !names.contains(null)
     }
 
 }
