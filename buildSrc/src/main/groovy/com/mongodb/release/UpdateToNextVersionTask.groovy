@@ -1,8 +1,12 @@
 package com.mongodb.release
 
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class UpdateToNextVersionTask extends DefaultTask {
 
@@ -13,7 +17,11 @@ class UpdateToNextVersionTask extends DefaultTask {
 
     @TaskAction
     def updateToNextVersion() {
-        def oldVersion = project.release.releaseVersion
+        def oldVersion = System.getProperty('releaseVersion')
+        if (!oldVersion) {
+            throw new GradleException('When doing a full release, you need to specify a value for releaseVersion. For example, ' +
+                                      './gradlew release -DreleaseVersion=3.0.0')
+        }
         def newVersion = incrementToNextVersion(oldVersion)
         def buildFile = project.file('build.gradle')
         project.release.filesToUpdate.each {
@@ -24,6 +32,14 @@ class UpdateToNextVersionTask extends DefaultTask {
         git.commit()
            .setAll(true)
            .setMessage("Updated to next development version: ${newVersion}")
+           .call()
+
+        getLog().info 'Pushing changes using the credentials stored in ~/.gradle/gradle.properties'
+        String username = project.property("github.credentials.username")
+        String password = project.property("github.credentials.password")
+
+        git.push()
+           .setCredentialsProvider(new UsernamePasswordCredentialsProvider(username, password))
            .call()
     }
 
@@ -36,4 +52,5 @@ class UpdateToNextVersionTask extends DefaultTask {
         updated
     }
 
+    private Logger getLog() { project?.logger ?: LoggerFactory.getLogger(this.class) }
 }
