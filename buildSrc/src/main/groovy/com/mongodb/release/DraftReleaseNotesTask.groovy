@@ -60,21 +60,15 @@ http://api.mongodb.org/java/${releaseVersion}/
 
 ### Bug fixes
 
-You can find a full list of bug fixes [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20fixVersion%20%3D%20%22${
-            releaseVersion
-        }%22).
+You can find a full list of bug fixes [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20fixVersion%20%3D%20%22${releaseVersion}%22).
 
 ### New Features
 
-You can find a full list of new features [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20in%20(%22New%20Feature%22%2C%20Task)%20AND%20fixVersion%20%3D%20%22${
-            releaseVersion
-        }%22).
+You can find a full list of new features [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20in%20(%22New%20Feature%22%2C%20Task)%20AND%20fixVersion%20%3D%20%22${releaseVersion}%22).
 
 ### Improvements
 
-You can find a full list of improvements [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20fixVersion%20%3D%20%22${
-            releaseVersion
-        }%22).
+You can find a full list of improvements [here](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20fixVersion%20%3D%20%22${releaseVersion}%22).
 """
     }
 
