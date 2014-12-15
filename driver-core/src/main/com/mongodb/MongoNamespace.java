@@ -18,6 +18,9 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * A MongoDB namespace, which includes a database name and collection name.
  *
@@ -33,19 +36,26 @@ public final class MongoNamespace {
     /**
      * Construct an instance.
      *
+     * @param fullName the full namespace
+     */
+    public MongoNamespace(final String fullName) {
+        notNull("fullName", fullName);
+        isTrueArgument("fullName is of form <db>.<collection>", isFullNameValid(fullName));
+
+
+        this.databaseName = getDatatabaseNameFromFullName(fullName);
+        this.collectionName = getCollectionNameFullName(fullName);
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param databaseName the non-null database name
      * @param collectionName the non-null collection name
      */
     public MongoNamespace(final String databaseName, final String collectionName) {
-        if (databaseName == null) {
-            throw new IllegalArgumentException("database name can not be null");
-        }
-        if (collectionName == null) {
-            throw new IllegalArgumentException("Collection name can not be null");
-        }
-
-        this.databaseName = databaseName;
-        this.collectionName = collectionName;
+        this.databaseName = notNull("databaseName", databaseName);
+        this.collectionName = notNull("collectionName", collectionName);
     }
 
     /**
@@ -113,4 +123,29 @@ public final class MongoNamespace {
         return result;
     }
 
+    private static boolean isFullNameValid(final String fullName) {
+        int firstDotIndex = fullName.indexOf(".");
+
+        if (firstDotIndex == -1) {
+            return false;
+        }
+        if (firstDotIndex == 0) {
+            return false;
+        }
+        if (fullName.charAt(fullName.length() - 1) == '.') {
+            return false;
+        }
+        if (fullName.charAt(firstDotIndex + 1) == '.') {
+            return false;
+        }
+        return true;
+    }
+
+    private static String getCollectionNameFullName(final String namespace) {
+        return namespace.substring(namespace.indexOf('.') + 1);
+    }
+
+    private static String getDatatabaseNameFromFullName(final String namespace) {
+        return namespace.substring(0, namespace.indexOf('.'));
+    }
 }

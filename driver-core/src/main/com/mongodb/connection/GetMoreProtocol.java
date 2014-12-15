@@ -81,7 +81,8 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
             ProtocolHelper.encodeMessage(message, bsonOutput);
-            SingleResultCallback<ResponseBuffers> receiveCallback = new GetMoreResultCallback<T>(callback,
+            SingleResultCallback<ResponseBuffers> receiveCallback = new GetMoreResultCallback<T>(namespace,
+                                                                                                 callback,
                                                                                                  resultDecoder,
                                                                                                  cursorId,
                                                                                                  message.getId(),
@@ -120,7 +121,7 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                 throw getQueryFailureException(errorDocument, connection.getDescription().getServerAddress());
             }
 
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
+            return new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId()),
                                       connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();

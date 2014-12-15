@@ -42,9 +42,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private int count;
     private boolean closed;
 
-    QueryBatchCursor(final MongoNamespace namespace, final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
-        this.namespace = namespace;
+        this.namespace = firstQueryResult.getNamespace();
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);

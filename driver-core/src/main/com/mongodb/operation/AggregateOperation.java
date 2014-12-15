@@ -272,15 +272,19 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
         long cursorId;
         BsonArray results;
+        MongoNamespace queryResultNamespace;
         if (isInline(connection)) {
             cursorId = 0;
             results = result.getArray(RESULT);
+            queryResultNamespace = namespace;
         } else {
             BsonDocument cursor = result.getDocument("cursor");
             cursorId = ((BsonInt64) cursor.get("id")).getValue();
+            queryResultNamespace = new MongoNamespace(cursor.getString("ns").getValue());
             results = cursor.getArray(FIRST_BATCH);
         }
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, connection.getDescription().getServerAddress(),
+        return new QueryResult<T>(queryResultNamespace,
+                                  BsonDocumentWrapperHelper.<T>toList(results), cursorId, connection.getDescription().getServerAddress(),
                                   0);
     }
 
@@ -289,7 +293,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             @Override
             public BatchCursor<T> apply(final BsonDocument result) {
                 QueryResult<T> queryResult = createQueryResult(result, connection);
-                return new QueryBatchCursor<T>(namespace, queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
             }
         };
     }
@@ -299,7 +303,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
                 QueryResult<T> queryResult = createQueryResult(result, connection);
-                return new AsyncQueryBatchCursor<T>(namespace, queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
+                return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, decoder, source);
             }
         };
     }

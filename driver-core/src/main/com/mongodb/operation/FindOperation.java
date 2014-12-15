@@ -404,7 +404,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                               isPartial(),
                                                               isOplogReplay(),
                                                               decoder);
-                return new QueryBatchCursor<T>(namespace, queryResult, limit, batchSize, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source);
             }
         });
     }
@@ -428,9 +428,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(namespace, result, limit, batchSize,
-                                                                                      decoder, source),
-                                                         null);
+                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize, decoder, source), null);
                             }
                         }
                     });

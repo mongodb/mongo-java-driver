@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -30,12 +31,15 @@ import static java.lang.String.format;
 class QueryResultCallback<T> extends ResponseCallback {
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
 
+    private final MongoNamespace namespace;
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
 
-    public QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
+    public QueryResultCallback(final MongoNamespace namespace, final SingleResultCallback<QueryResult<T>> callback,
+                               final Decoder<T> decoder,
                                final int requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
+        this.namespace = namespace;
         this.callback = callback;
         this.decoder = decoder;
     }
@@ -50,7 +54,7 @@ class QueryResultCallback<T> extends ResponseCallback {
                                                                             getRequestId()).getDocuments().get(0);
                 callback.onResult(null, getQueryFailureException(errorDocument, getServerAddress()));
             } else {
-                QueryResult<T> result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
+                QueryResult<T> result = new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                                                            getServerAddress());
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("Query results received %s documents with cursor %s",

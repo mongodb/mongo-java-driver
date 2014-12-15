@@ -44,14 +44,14 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private volatile int count;
     private volatile boolean closed;
 
-    AsyncQueryBatchCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder) {
-        this(namespace, firstBatch, limit, batchSize, decoder, null);
+        this(firstBatch, limit, batchSize, decoder, null);
     }
 
-    AsyncQueryBatchCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource) {
-        this.namespace = namespace;
+        this.namespace = firstBatch.getNamespace();
         this.firstBatch = firstBatch;
         this.limit = limit;
         this.batchSize = batchSize;

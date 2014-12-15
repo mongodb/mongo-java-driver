@@ -233,7 +233,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return new Function<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result) {
-                return new QueryBatchCursor<T>(namespace, createQueryResult(result, connection), 0, 0, decoder, source);
+                return new QueryBatchCursor<T>(createQueryResult(result, connection), 0, 0, decoder, source);
 
             }
         };
@@ -243,14 +243,14 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return new Function<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
-                return new AsyncQueryBatchCursor<T>(namespace, createQueryResult(result, connection), 0, 0, decoder);
+                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection), 0, 0, decoder);
             }
         };
     }
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")), 0,
-                           connection.getDescription().getServerAddress(), 0);
+        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")), 0,
+                                  connection.getDescription().getServerAddress(), 0);
     }
 }

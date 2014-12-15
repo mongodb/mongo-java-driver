@@ -82,10 +82,10 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                         return rethrowIfNotNamespaceError(e, new ArrayList<String>());
                     }
                 } else {
-                    return queryResultToList(getNamespace(), connection.query(getNamespace(), new BsonDocument(), null, 0, 0,
-                                                                              binding.getReadPreference().isSlaveOk(), false,
-                                                                              false, false, false, false,
-                                                                              new BsonDocumentCodec()),
+                    return queryResultToList(connection.query(getNamespace(), new BsonDocument(), null, 0, 0,
+                                                              binding.getReadPreference().isSlaveOk(), false,
+                                                              false, false, false, false,
+                                                              new BsonDocumentCodec()),
                                              new BsonDocumentCodec(), source, queryResultTransformer());
                 }
             }
@@ -126,8 +126,8 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                                 if (t != null && !isNamespaceError(t)) {
                                     wrappedCallback.onResult(null, t);
                                 } else {
-                                    queryResultToListAsync(getNamespace(), result, new BsonDocumentCodec(), source,
-                                                           queryResultTransformer(), wrappedCallback);
+                                    queryResultToListAsync(result, new BsonDocumentCodec(), source, queryResultTransformer(),
+                                                           wrappedCallback);
                                 }
                             }
                         });

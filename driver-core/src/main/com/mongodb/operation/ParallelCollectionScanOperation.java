@@ -145,7 +145,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
             public List<BatchCursor<T>> apply(final BsonDocument result) {
                 List<BatchCursor<T>> cursors = new ArrayList<BatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
-                    cursors.add(new QueryBatchCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
+                    cursors.add(new QueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                      source.getServerDescription().getAddress()),
                                                         0, getBatchSize(), decoder, source));
                 }
@@ -160,7 +160,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
             public List<AsyncBatchCursor<T>> apply(final BsonDocument result) {
                 List<AsyncBatchCursor<T>> cursors = new ArrayList<AsyncBatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
-                    cursors.add(new AsyncQueryBatchCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
+                    cursors.add(new AsyncQueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           source.getServerDescription().getAddress()),
                                                              0, getBatchSize(), decoder, source
                     ));
@@ -181,7 +181,8 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(cursorDocument.getArray("firstBatch")),
+        return new QueryResult<T>(new MongoNamespace(cursorDocument.getString("ns").getValue()),
+                                  BsonDocumentWrapperHelper.<T>toList(cursorDocument.getArray("firstBatch")),
                                   cursorDocument.getInt64("id").getValue(), serverAddress, 0);
     }
 

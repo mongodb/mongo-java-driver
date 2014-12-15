@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.ConnectionSource;
@@ -29,10 +28,10 @@ import java.util.List;
 
 final class FindOperationHelper {
 
-    static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
+    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final Decoder<T> decoder,
                                             final ConnectionSource source,
                                             final Function<T, V> block) {
-        BatchCursor<T> cursor = new QueryBatchCursor<T>(namespace, queryResult, 0, 0, decoder, source);
+        BatchCursor<T> cursor = new QueryBatchCursor<T>(queryResult, 0, 0, decoder, source);
         try {
             List<V> retVal = new ArrayList<V>();
             while (cursor.hasNext()) {
@@ -49,27 +48,23 @@ final class FindOperationHelper {
         }
     }
 
-    static <T, V> void queryResultToListAsync(final MongoNamespace namespace,
-                                              final QueryResult<T> queryResult,
+    static <T, V> void queryResultToListAsync(final QueryResult<T> queryResult,
                                               final Decoder<T> decoder, final AsyncConnectionSource source,
                                               final Function<T, V> transformer,
                                               final SingleResultCallback<List<V>> callback) {
-        new QueryResultToListCallback<T, V>(namespace, decoder, source, transformer, callback).onResult(queryResult, null);
+        new QueryResultToListCallback<T, V>(decoder, source, transformer, callback).onResult(queryResult, null);
     }
 
     private static class QueryResultToListCallback<T, V> implements SingleResultCallback<QueryResult<T>> {
-        private final MongoNamespace namespace;
         private final Decoder<T> decoder;
         private final AsyncConnectionSource connectionSource;
         private final Function<T, V> mapper;
         private final SingleResultCallback<List<V>> callback;
 
-        public QueryResultToListCallback(final MongoNamespace namespace,
-                                         final Decoder<T> decoder,
+        public QueryResultToListCallback(final Decoder<T> decoder,
                                          final AsyncConnectionSource connectionSource,
                                          final Function<T, V> mapper,
                                          final SingleResultCallback<List<V>> callback) {
-            this.namespace = namespace;
             this.decoder = decoder;
             this.connectionSource = connectionSource;
             this.mapper = mapper;
@@ -81,7 +76,7 @@ final class FindOperationHelper {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                loopCursor(new AsyncQueryBatchCursor<T>(namespace, results, 0, 0, decoder, connectionSource), new ArrayList<V>());
+                loopCursor(new AsyncQueryBatchCursor<T>(results, 0, 0, decoder, connectionSource), new ArrayList<V>());
             }
         }
 

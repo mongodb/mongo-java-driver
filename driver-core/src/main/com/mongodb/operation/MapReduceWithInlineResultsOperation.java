@@ -358,7 +358,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return new Function<BsonDocument, MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> apply(final BsonDocument result) {
-                return new MapReduceInlineResultsCursor<T>(namespace, createQueryResult(result, connection), decoder, source,
+                return new MapReduceInlineResultsCursor<T>(createQueryResult(result, connection), decoder, source,
                                                            MapReduceHelper.createStatistics(result));
             }
         };
@@ -368,7 +368,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return new Function<BsonDocument, MapReduceAsyncBatchCursor<T>>() {
             @Override
             public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result) {
-                return new MapReduceInlineResultsAsyncCursor<T>(namespace, createQueryResult(result, connection), decoder,
+                return new MapReduceInlineResultsAsyncCursor<T>(createQueryResult(result, connection), decoder,
                                                                 MapReduceHelper.createStatistics(result));
             }
         };
@@ -392,7 +392,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")), 0,
+        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray("results")), 0,
                                   connection.getDescription().getServerAddress(), 0);
     }
 

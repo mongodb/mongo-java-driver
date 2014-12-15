@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCursorNotFoundException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
@@ -27,13 +28,16 @@ import static java.lang.String.format;
 
 class GetMoreResultCallback<T> extends ResponseCallback {
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
+    private final MongoNamespace namespace;
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
     private final long cursorId;
 
-    public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final Decoder<T> decoder,
+    public GetMoreResultCallback(final MongoNamespace namespace, final SingleResultCallback<QueryResult<T>> callback,
+                                 final Decoder<T> decoder,
                                  final long cursorId, final long requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
+        this.namespace = namespace;
         this.callback = callback;
         this.decoder = decoder;
         this.cursorId = cursorId;
@@ -47,7 +51,7 @@ class GetMoreResultCallback<T> extends ResponseCallback {
             } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                 callback.onResult(null, new MongoCursorNotFoundException(cursorId, getServerAddress()));
             } else {
-                QueryResult<T> result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
+                QueryResult<T> result = new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, decoder, getRequestId()),
                                                            getServerAddress());
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug(format("GetMore results received %s documents with cursor %s",

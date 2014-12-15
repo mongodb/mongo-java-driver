@@ -241,7 +241,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             QueryMessage message = createQueryMessage(connection.getDescription());
             encodeMessage(message, bsonOutput);
-            SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback<T>(callback,
+            SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback<T>(namespace,
+                                                                                               callback,
                                                                                                resultDecoder,
                                                                                                message.getId(),
                                                                                                connection.getDescription()
@@ -288,7 +289,7 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             }
             ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
-            return new QueryResult<T>(replyMessage, connection.getDescription().getServerAddress());
+            return new QueryResult<T>(namespace, replyMessage, connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();
         }

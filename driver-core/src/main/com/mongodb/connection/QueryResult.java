@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 
@@ -28,6 +29,7 @@ import java.util.List;
  * @since 3.0
  */
 public class QueryResult<T> {
+    private final MongoNamespace namespace;
     private final List<T> results;
     private final long cursorId;
     private final ServerAddress serverAddress;
@@ -36,12 +38,15 @@ public class QueryResult<T> {
     /**
      * Construct an instance.
      *
+     * @param namespace    the namespace
      * @param results       the query results
      * @param cursorId      the cursor id
      * @param serverAddress the server address
      * @param requestId     the request id of the response message
      */
-    public QueryResult(final List<T> results, final long cursorId, final ServerAddress serverAddress, final int requestId) {
+    public QueryResult(final MongoNamespace namespace, final List<T> results, final long cursorId, final ServerAddress serverAddress,
+                       final int requestId) {
+        this.namespace = namespace;
         this.results = results;
         this.cursorId = cursorId;
         this.serverAddress = serverAddress;
@@ -51,12 +56,22 @@ public class QueryResult<T> {
     /**
      * Construct an instance.
      *
+     * @param namespace    the namespace
      * @param replyMessage the reply message
      * @param address      the server address
      */
-    QueryResult(final ReplyMessage<T> replyMessage, final ServerAddress address) {
-        this(replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address,
+    QueryResult(final MongoNamespace namespace, final ReplyMessage<T> replyMessage, final ServerAddress address) {
+        this(namespace, replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address,
              replyMessage.getReplyHeader().getRequestId());
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     /**

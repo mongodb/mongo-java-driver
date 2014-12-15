@@ -35,14 +35,33 @@ class MongoNamespaceSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'test getters'() {
+    def 'null full name should throw IllegalArgumentException'() {
         when:
-        MongoNamespace namespace = new MongoNamespace('db', 'coll');
+        new MongoNamespace(null)
 
         then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'invalid full name should throw IllegalArgumentException'() {
+        when:
+        new MongoNamespace(fullName)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        fullName << ['db', '.db', 'db.', 'db..coll', 'db.coll.']
+    }
+
+    def 'test getters'() {
+        expect:
         namespace.getDatabaseName() == 'db'
-        namespace.getCollectionName() == 'coll'
-        namespace.getFullName() == 'db.coll'
+        namespace.getCollectionName() == 'a.b'
+        namespace.getFullName() == 'db.a.b'
+
+        where:
+        namespace << [new MongoNamespace('db', 'a.b'), new MongoNamespace('db.a.b')]
     }
 
     @SuppressWarnings('ComparisonWithSelf')

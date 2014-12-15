@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.connection.QueryResult;
 import org.bson.codecs.Decoder;
 
@@ -31,9 +30,8 @@ class MapReduceInlineResultsAsyncCursor<T> extends AsyncQueryBatchCursor<T> impl
 
     private final MapReduceStatistics statistics;
 
-    public MapReduceInlineResultsAsyncCursor(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
-                                             final MapReduceStatistics statistics) {
-        super(namespace, queryResult, 0, 0, decoder);
+    MapReduceInlineResultsAsyncCursor(final QueryResult<T> queryResult, final Decoder<T> decoder, final MapReduceStatistics statistics) {
+        super(queryResult, 0, 0, decoder);
         this.statistics = statistics;
     }
 
