@@ -30,12 +30,12 @@ import static java.util.Arrays.asList;
 
 class QueryResultIterator implements Cursor {
 
-    private final DBApiLayer _db;
     private final DBDecoder _decoder;
-    private final DBCollectionImpl _collection;
     private final ServerAddress _host;
     private final int _limit;
 
+    private DBApiLayer _db;
+    private DBCollection _collection;
     private long _cursorId;
     private Iterator<DBObject> _cur;
     private int _curSize;
@@ -52,26 +52,23 @@ class QueryResultIterator implements Cursor {
     private boolean batchSizeTrackingDisabled;
 
     // Constructor to use for normal queries
-    QueryResultIterator(DBApiLayer db, DBCollectionImpl collection, Response res, int batchSize, int limit, DBDecoder decoder) {
-        this._db = db;
-        _collection = collection;
+    QueryResultIterator(String namespace, Mongo mongo, Response res, int batchSize, int limit, DBDecoder decoder) {
+        _db = (DBApiLayer) mongo.getDB(getDatatabaseNameFromNamespace(namespace));
+        _collection =  _db.getCollection(getCollectionNameFromNamespace(namespace));
         _batchSize = batchSize;
         _limit = limit;
         _host = res._host;
         _decoder = decoder;
-        initFromQueryResponse(res);
+        initFromQueryResponse(res, mongo);
     }
 
-    // Constructor to use for aggregate queries
-    QueryResultIterator(DBObject cursorDocument, DBApiLayer db, DBCollectionImpl collection, int batchSize, DBDecoder decoder,
-                        final ServerAddress serverAddress) {
-        this._db = db;
-        _collection = collection;
+    // Constructor to use for commands that return cursor documents
+    QueryResultIterator(DBObject cursorDocument, Mongo mongo, int batchSize, DBDecoder decoder, final ServerAddress serverAddress) {
         _batchSize = batchSize;
         _host = serverAddress;
         _limit = 0;
         _decoder = decoder;
-        initFromCursorDocument(cursorDocument);
+        initFromCursorDocument(cursorDocument, mongo);
     }
 
     static int chooseBatchSize(int batchSize, int limit, int fetched) {
@@ -145,11 +142,11 @@ class QueryResultIterator implements Cursor {
     }
 
     private void getMore(){
-        Response res = _db._connector.call(_collection.getDB(), _collection,
+        Response res = _db._connector.call(_db, _collection,
                                            OutMessage.getMore(_collection, _cursorId, getGetMoreBatchSize()),
                                            _host, _decoder);
         _numGetMores++;
-        initFromQueryResponse(res);
+        initFromQueryResponse(res, _db.getMongo());
     }
 
     private int getGetMoreBatchSize() {
@@ -183,24 +180,35 @@ class QueryResultIterator implements Cursor {
         }
     }
 
-    private void initFromQueryResponse(final Response response) {
-        init(response._flags, response.cursor(), response.size(), response.iterator());
+    private void initFromQueryResponse(final Response response, final Mongo mongo) {
+        init(response._flags, response.cursor(), response.size(), response.iterator(), mongo);
     }
 
     @SuppressWarnings("unchecked")
-    private void initFromCursorDocument(final DBObject cursorDocument) {
+    private void initFromCursorDocument(final DBObject cursorDocument, final Mongo mongo) {
         Map cursor = (Map) cursorDocument.get("cursor");
         if (cursor != null) {
             long cursorId = (Long) cursor.get("id");
             List<DBObject> firstBatch = (List<DBObject>) cursor.get("firstBatch");
-            init(0, cursorId, firstBatch.size(), firstBatch.iterator());
+            String namespace = (String) cursor.get("ns");
+            _db = (DBApiLayer) mongo.getDB(getDatatabaseNameFromNamespace(namespace));
+            _collection = _db.getCollection(getCollectionNameFromNamespace(namespace));
+            init(0, cursorId, firstBatch.size(), firstBatch.iterator(), mongo);
         } else {
             List<DBObject> result = (List<DBObject>) cursorDocument.get("result");
-            init(0, 0, result.size(), result.iterator());
+            init(0, 0, result.size(), result.iterator(), mongo);
         }
     }
 
-    private void init(int flags, long cursorId, int size, Iterator<DBObject> iterator){
+    private String getCollectionNameFromNamespace(final String namespace) {
+        return namespace.substring(namespace.indexOf('.') + 1);
+    }
+
+    private String getDatatabaseNameFromNamespace(final String namespace) {
+        return namespace.substring(0, namespace.indexOf('.'));
+    }
+
+    private void init(int flags, long cursorId, int size, Iterator<DBObject> iterator, Mongo mongo){
         _curSize = size;
         _cur = iterator;
         if (!batchSizeTrackingDisabled) {
@@ -209,7 +217,7 @@ class QueryResultIterator implements Cursor {
         _numFetched += size;
 
         if (_optionalFinalizer == null) {
-            _optionalFinalizer = createFinalizerIfNeeded(cursorId);
+            _optionalFinalizer = createFinalizerIfNeeded(cursorId, mongo);
         }
 
         setCursorIdOnFinalizer(cursorId);
@@ -271,8 +279,8 @@ class QueryResultIterator implements Cursor {
         return _optionalFinalizer != null;
     }
 
-    private OptionalFinalizer createFinalizerIfNeeded(final long cursorId) {
-        return _collection.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && cursorId != 0 ?
+    private OptionalFinalizer createFinalizerIfNeeded(final long cursorId, Mongo mongo) {
+        return mongo.getMongoOptions().isCursorFinalizerEnabled() && cursorId != 0 ?
                new OptionalFinalizer(_db, _host) : null;
     }
 

@@ -83,7 +83,7 @@ class DBCollectionImpl extends DBCollection {
 
         Response res = db.getConnector().call(_db, this, query, null, 2, readPref, decoder);
 
-        return new QueryResultIterator(db, this, res, batchSize, limit, decoder);
+        return new QueryResultIterator(this.namespace, db.getMongo(), res, batchSize, limit, decoder);
     }
 
     public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
@@ -105,7 +105,7 @@ class DBCollectionImpl extends DBCollection {
             return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
         } else {
             Integer batchSize = options.getBatchSize();
-            return new QueryResultIterator(res, db, this, batchSize == null ? 0 : batchSize, getDecoder(), res.getServerUsed());
+            return new QueryResultIterator(res, db.getMongo(), batchSize == null ? 0 : batchSize, getDecoder(), res.getServerUsed());
         }
     }
 
@@ -119,7 +119,7 @@ class DBCollectionImpl extends DBCollection {
 
         List<Cursor> cursors = new ArrayList<Cursor>();
         for (DBObject cursorDocument : (List<DBObject>) res.get("cursors")) {
-            cursors.add(new QueryResultIterator(cursorDocument, db, this, options.getBatchSize(), getDecoder(), res.getServerUsed()));
+            cursors.add(new QueryResultIterator(cursorDocument, db.getMongo(), options.getBatchSize(), getDecoder(), res.getServerUsed()));
         }
 
         return cursors;
