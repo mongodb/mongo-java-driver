@@ -80,6 +80,10 @@ class SmokeTestSpecification extends FunctionalSpecification {
         then: 'aggregate the collection'
         run(collection.aggregate([new Document('$match', new Document('a', 1))]).&first) == updatedDocument
 
+        then: 'aggregate the collection to a collection'
+        run(collection.aggregate([new Document('$match', new Document('a', 1)), new Document('$out', getClass().getName() + '.out')])
+                      .&first) == updatedDocument
+
         then: 'remove all documents'
         run(collection.&deleteOne, new Document()).getDeletedCount() == 1
 

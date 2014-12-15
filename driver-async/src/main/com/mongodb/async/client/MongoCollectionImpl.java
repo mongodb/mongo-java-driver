@@ -220,15 +220,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse());
-            executor.execute(operation, new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    // NoOp
-                    // Todo - review api - this is a race.
-                }
-            });
-            return new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
-                                         this.options, executor, new BsonDocument(), new FindOptions(), clazz);
+            MongoIterable<C> delegated = new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(),
+                                                                                  outCollection.asString().getValue()),
+                                                               getOptionsWithPrimaryReadPreference(), executor, new BsonDocument(),
+                                                               new FindOptions(), clazz);
+            return new AwaitingWriteOperationIterable<C, Void>(operation, executor, delegated);
         } else {
             return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, getCodec(clazz))
                                             .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -238,6 +234,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                             this.options.getReadPreference(),
                                             executor);
         }
+    }
+
+    private OperationOptions getOptionsWithPrimaryReadPreference() {
+        return OperationOptions.builder().codecRegistry(options.getCodecRegistry()).readPreference(primary()).build();
     }
 
 
@@ -297,18 +297,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (options.getFinalizeFunction() != null) {
                 operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
             }
-            executor.execute(operation, new SingleResultCallback<MapReduceStatistics>() {
-                @Override
-                public void onResult(final MapReduceStatistics result, final Throwable t) {
-                    // Noop
-                    // Todo - this is a race
-                }
-            });
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
             OperationOptions readOptions = OperationOptions.builder().readPreference(primary()).build().withDefaults(this.options);
-            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), readOptions, executor,
-                                         new BsonDocument(), new FindOptions(), clazz);
+            MongoIterable<C> delegated = new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), readOptions,
+                                                               executor,
+                                                               new BsonDocument(), new FindOptions(), clazz);
+            return new AwaitingWriteOperationIterable<C, MapReduceStatistics>(operation, executor, delegated);
         }
     }
 

@@ -49,6 +49,7 @@ import com.mongodb.client.options.OperationOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.AggregateOperation
+import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
@@ -301,6 +302,31 @@ class MongoCollectionSpecification extends Specification {
                                                              new BsonDocumentCodec()))
     }
 
+    def 'should use AggregateToCollectionOperation correctly'() {
+        given:
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
+        }
+        def executor = new TestOperationExecutor([null, asyncCursor])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def outCollectionName = 'outColl'
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
+        def pipeline = [new Document('$match', 1), new Document('$out', outCollectionName)]
+        def bsonPipeline = new BsonArray([new BsonDocument('$match', new BsonInt32(1)),
+                                          new BsonDocument('$out', new BsonString(outCollectionName))])
+        when:
+        collection.aggregate(pipeline).into([], futureResultCallback)
+        futureResultCallback.get()
+        def aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def findOperation = executor.getReadOperation() as FindOperation
+
+        then:
+        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline))
+        expect findOperation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.getDatabaseName(), outCollectionName),
+                                                            options.codecRegistry.get(Document))
+                                                  .filter(new BsonDocument()))
+    }
+
     def 'should handle exceptions in aggregate correctly'() {
         given:
         def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
@@ -379,12 +405,13 @@ class MongoCollectionSpecification extends Specification {
         def asyncCursor = Stub(AsyncBatchCursor) {
             next(_) >> { args -> args[0].onResult(null, null) }
         }
-        def executor = new TestOperationExecutor([stats, asyncCursor, stats, asyncCursor, stats, asyncCursor, stats, asyncCursor])
+        def executor = new TestOperationExecutor([stats, asyncCursor])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
-        def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                                                                   'collectionName').filter(new BsonDocument('filter', new BsonInt32(1)))
-                                                                                    .finalizeFunction(new BsonJavaScript('final'))
-                                                                                    .verbose(true)
+        def expectedAggregateOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
+                                                                            new BsonJavaScript('reduce'), 'collectionName')
+                .filter(new BsonDocument('filter', new BsonInt32(1)))
+                .finalizeFunction(new BsonJavaScript('final'))
+                .verbose(true)
         def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
         def futureResultCallback = new FutureResultCallback<List<Document>>()
 
@@ -394,7 +421,7 @@ class MongoCollectionSpecification extends Specification {
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
+        expect operation, isTheSameAs(expectedAggregateOperation)
 
         when: 'The following read operation'
         operation = executor.getReadOperation() as FindOperation
@@ -402,24 +429,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'), new DocumentCodec())
                                               .filter(new BsonDocument()))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-
-        then:
-        expect operation, isTheSameAs(expectedOperation)
-
-        when: 'The following read operation'
-        operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'),
-                                                        new BsonDocumentCodec())
-                                              .filter(new BsonDocument()))
-    }
+   }
 
     def 'should handle exceptions in mapReduce correctly'() {
         given:

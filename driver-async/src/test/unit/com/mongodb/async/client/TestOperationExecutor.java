@@ -25,34 +25,63 @@ import com.mongodb.operation.AsyncWriteOperation;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class TestOperationExecutor implements AsyncOperationExecutor {
 
     private final List<Object> responses;
+    private final boolean queueExecution;
     private final List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
+    private final List<AsyncReadOperation> queuedReadOperations = new ArrayList<AsyncReadOperation>();
+    private final List<AsyncWriteOperation> queuedWriteOperations = new ArrayList<AsyncWriteOperation>();
+    private final List<SingleResultCallback> queuedReadCallbacks = new ArrayList<SingleResultCallback>();
+    private final List<SingleResultCallback> queuedWriteCallbacks = new ArrayList<SingleResultCallback>();
     private final List<AsyncReadOperation> readOperations = new ArrayList<AsyncReadOperation>();
     private final List<AsyncWriteOperation> writeOperations = new ArrayList<AsyncWriteOperation>();
 
     TestOperationExecutor(final List<Object> responses) {
+        this(responses, false);
+    }
+
+    TestOperationExecutor(final List<Object> responses, final boolean queueExecution) {
         this.responses = responses;
+        this.queueExecution = queueExecution;
     }
 
     @Override
     public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
                             final SingleResultCallback<T> callback) {
-        readOperations.add(operation);
         readPreferences.add(readPreference);
-        callResult(callback);
+        if (queueExecution) {
+            queuedReadOperations.add(operation);
+            queuedReadCallbacks.add(callback);
+        } else {
+            readOperations.add(operation);
+            callResult(callback);
+        }
     }
 
 
     @Override
     public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
-        writeOperations.add(operation);
-        callResult(callback);
+        if (queueExecution) {
+            queuedWriteOperations.add(operation);
+            queuedWriteCallbacks.add(callback);
+        } else {
+            writeOperations.add(operation);
+            callResult(callback);
+        }
     }
 
-    @SuppressWarnings("unchecked")
+    public void proceedWithRead() {
+        readOperations.add(queuedReadOperations.remove(0));
+        callResult(queuedReadCallbacks.remove(0));
+    }
+
+    public void proceedWithWrite() {
+        writeOperations.add(queuedWriteOperations.remove(0));
+        callResult(queuedWriteCallbacks.remove(0));
+    }
+
     <T> void callResult(final SingleResultCallback<T> callback) {
         Object response = responses.remove(0);
         if (response instanceof Throwable) {

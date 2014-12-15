@@ -149,7 +149,9 @@ public interface MongoCollection<T> {
     <C> FindFluent<C> find(Object filter, Class<C> clazz);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
+     * executed even if the iterable is never iterated.
      *
      * @param pipeline the aggregate pipeline
      * @return an iterable containing the result of the aggregation operation
@@ -158,7 +160,9 @@ public interface MongoCollection<T> {
     MongoIterable<Document> aggregate(List<?> pipeline);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
+     * executed even if the iterable is never iterated.
      *
      * @param pipeline the aggregate pipeline
      * @param clazz    the class to decode each document into
@@ -169,7 +173,9 @@ public interface MongoCollection<T> {
     <C> MongoIterable<C> aggregate(List<?> pipeline, Class<C> clazz);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
+     * executed even if the iterable is never iterated.
      *
      * @param pipeline the aggregate pipeline
      * @param options  the options to apply to the aggregation operation
@@ -179,7 +185,9 @@ public interface MongoCollection<T> {
     MongoIterable<Document> aggregate(List<?> pipeline, AggregateOptions options);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
+     * executed even if the iterable is never iterated.
      *
      * @param pipeline the aggregate pipeline
      * @param options  the options to apply to the aggregation operation
