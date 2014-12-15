@@ -33,7 +33,6 @@ class QueryResultIterator implements Cursor {
     private final DBApiLayer _db;
     private final DBDecoder _decoder;
     private final DBCollectionImpl _collection;
-    private final int _options;
     private final ServerAddress _host;
     private final int _limit;
 
@@ -53,13 +52,11 @@ class QueryResultIterator implements Cursor {
     private boolean batchSizeTrackingDisabled;
 
     // Constructor to use for normal queries
-    QueryResultIterator(DBApiLayer db, DBCollectionImpl collection, Response res, int batchSize, int limit,
-                        int options, DBDecoder decoder){
+    QueryResultIterator(DBApiLayer db, DBCollectionImpl collection, Response res, int batchSize, int limit, DBDecoder decoder) {
         this._db = db;
         _collection = collection;
         _batchSize = batchSize;
         _limit = limit;
-        _options = options;
         _host = res._host;
         _decoder = decoder;
         initFromQueryResponse(res);
@@ -73,7 +70,6 @@ class QueryResultIterator implements Cursor {
         _batchSize = batchSize;
         _host = serverAddress;
         _limit = 0;
-        _options = 0;
         _decoder = decoder;
         initFromCursorDocument(cursorDocument);
     }

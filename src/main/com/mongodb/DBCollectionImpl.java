@@ -83,7 +83,7 @@ class DBCollectionImpl extends DBCollection {
 
         Response res = db.getConnector().call(_db, this, query, null, 2, readPref, decoder);
 
-        return new QueryResultIterator(db, this, res, batchSize, limit, options, decoder);
+        return new QueryResultIterator(db, this, res, batchSize, limit, decoder);
     }
 
     public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
