@@ -109,6 +109,11 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         return batchSize;
     }
 
+    @Override
+    public boolean isClosed() {
+        return closed;
+    }
+
     private boolean limitReached() {
         return limit != 0 && count >= limit;
     }

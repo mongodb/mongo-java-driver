@@ -56,6 +56,13 @@ public interface AsyncBatchCursor<T> extends Closeable {
      */
     int getBatchSize();
 
+    /**
+     * Return true if the AsyncBatchCursor has been closed
+     *
+     * @return true if the AsyncBatchCursor has been closed
+     */
+    boolean isClosed();
+
     @Override
     void close();
 }
