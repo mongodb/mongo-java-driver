@@ -653,7 +653,6 @@ public class DBCollectionTest extends TestCase {
         } catch (WriteConcernException e) {
             assertNotNull(e.getServerAddress());
             assertNotNull(e.getErrorMessage());
-            assertEquals(64, e.getCode());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(0, e.getCommandResult().get("n"));
         } finally {
