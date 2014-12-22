@@ -20,14 +20,16 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.options.OperationOptions
+import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionNamesOperation
+import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.codecs.DocumentCodec
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -122,17 +124,24 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should use ListCollectionNamesOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([['collectionName']])
-        def futureResultCallback = new FutureResultCallback<List<String>>()
+        def invocationCount = 0
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(invocationCount++ == 0 ? [new Document('name', 'collectionName')] : null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor])
+        def futureResultCallback = new FutureResultCallback()
 
         when:
         new MongoDatabaseImpl(name, options, executor).getCollectionNames(futureResultCallback)
-        def operation = executor.getReadOperation() as ListCollectionNamesOperation
-        futureResultCallback.get()
+        def operation = executor.getReadOperation() as ListCollectionsOperation
+        def names = futureResultCallback.get()
 
         then:
-        expect operation, isTheSameAs(new ListCollectionNamesOperation(name))
+        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
         executor.getReadPreference() == primary()
+        names == ['collectionName']
     }
 
     def 'should use CreateCollectionOperation correctly'() {

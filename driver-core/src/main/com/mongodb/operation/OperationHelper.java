@@ -34,6 +34,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -75,22 +76,34 @@ final class OperationHelper {
         }
     }
 
-    static <T> BatchCursor<T> commandResultToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                         final ConnectionSource source) {
-        return new QueryBatchCursor<T>(OperationHelper.<T>commandResultToQueryResult(cursorDocument,
-                                                                                     source.getServerDescription().getAddress()),
+    static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
+                                                          final ServerAddress serverAddress) {
+        return new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L,
+                                                          serverAddress, 0),
+                                       0, 0, decoder, serverAddress);
+    }
+
+    static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
+                                                               final ServerAddress serverAddress) {
+        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress, 0), 0, 0, decoder);
+    }
+
+    static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                          final ConnectionSource source) {
+        return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
+                                                                                      source.getServerDescription().getAddress()),
                                        0, 0, decoder, source);
     }
 
-    static <T> AsyncBatchCursor<T> commandResultToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                                   final AsyncConnectionSource source) {
-        return new AsyncQueryBatchCursor<T>(OperationHelper.<T>commandResultToQueryResult(cursorDocument,
-                                                                                          source.getServerDescription().getAddress()),
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                                    final AsyncConnectionSource source) {
+        return new AsyncQueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
+                                                                                           source.getServerDescription().getAddress()),
                                             0, 0, decoder, source);
     }
 
 
-    static <T> QueryResult<T> commandResultToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
+    static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
         long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
         MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
         BsonArray results = cursorDocument.getArray("firstBatch");

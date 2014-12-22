@@ -34,21 +34,41 @@ import static java.util.Arrays.asList;
 class QueryBatchCursor<T> implements BatchCursor<T> {
     private final MongoNamespace namespace;
     private final int limit;
-    private int batchSize;
+    private final ServerAddress serverAddress;
     private final Decoder<T> decoder;
     private final ConnectionSource connectionSource;
+    private int batchSize;
     private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
     private boolean closed;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
+                     final Decoder<T> decoder, final ServerAddress serverAddress) {
+        this(firstQueryResult, limit, batchSize, decoder, (ConnectionSource) null, serverAddress);
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
+        this(firstQueryResult, limit, batchSize, decoder, connectionSource, connectionSource.getServerDescription().getAddress());
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
+                     final Decoder<T> decoder, final ConnectionSource connectionSource, final ServerAddress serverAddress) {
         this.namespace = firstQueryResult.getNamespace();
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);
-        this.connectionSource = notNull("connectionSource", connectionSource).retain();
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        if (firstQueryResult.getCursor() != null) {
+            notNull("connectionSource", connectionSource);
+        }
+        if (connectionSource != null) {
+            this.connectionSource = connectionSource.retain();
+        } else {
+            this.connectionSource = null;
+        }
+
         initFromQueryResult(firstQueryResult);
         if (limitReached()) {
             killCursor();
@@ -117,7 +137,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         try {
             killCursor();
         } finally {
-            connectionSource.release();
+            if (connectionSource != null) {
+                connectionSource.release();
+            }
         }
 
         closed = true;

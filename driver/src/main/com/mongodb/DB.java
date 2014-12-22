@@ -23,7 +23,7 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.DropUserOperation;
-import com.mongodb.operation.ListCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.UpdateUserOperation;
 import com.mongodb.operation.UserExistsOperation;
@@ -33,6 +33,7 @@ import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -212,7 +213,14 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
-        List<String> collectionNames = executor.execute(new ListCollectionNamesOperation(name), primary());
+        List<String> collectionNames = new OperationIterable<DBObject>(new ListCollectionsOperation<DBObject>(name, commandCodec),
+                                                                       primary(), executor)
+                                       .map(new Function<DBObject, String>() {
+                                           @Override
+                                           public String apply(final DBObject result) {
+                                               return (String) result.get("name");
+                                           }
+                                       }).into(new ArrayList<String>());
         Collections.sort(collectionNames);
         return new LinkedHashSet<String>(collectionNames);
     }

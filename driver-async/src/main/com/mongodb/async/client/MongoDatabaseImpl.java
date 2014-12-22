@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
@@ -26,10 +27,12 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
@@ -81,7 +84,13 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public void getCollectionNames(final SingleResultCallback<List<String>> callback) {
-        executor.execute(new ListCollectionNamesOperation(name), primary(), callback);
+        new OperationIterable<Document>(new ListCollectionsOperation<Document>(name, new DocumentCodec()), primary(), executor)
+        .map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document document) {
+                return (String) document.get("name");
+            }
+        }).into(new ArrayList<String>(), callback);
     }
 
     @Override

@@ -43,7 +43,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.commandResultToQueryResult;
+import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -275,7 +275,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray(RESULT)), 0L,
                                       connection.getDescription().getServerAddress(), 0);
         } else {
-            return commandResultToQueryResult(result.getDocument("cursor"), connection.getDescription().getServerAddress());
+            return cursorDocumentToQueryResult(result.getDocument("cursor"), connection.getDescription().getServerAddress());
         }
     }
 

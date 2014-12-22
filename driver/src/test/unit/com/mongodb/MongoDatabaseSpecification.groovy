@@ -19,15 +19,17 @@ package com.mongodb
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.MongoDatabaseOptions
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionNamesOperation
+import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
@@ -115,14 +117,19 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should use ListCollectionNamesOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([['collectionName']])
+        def cursor = Stub(BatchCursor) {
+            hasNext() >>> [true, true, false]
+            next() >> [new Document('name', 'coll1')]
+        }
+        def executor = new TestOperationExecutor([cursor])
 
         when:
-        new MongoDatabaseImpl(name, options, executor).getCollectionNames()
-        def operation = executor.getReadOperation() as ListCollectionNamesOperation
+        def names = new MongoDatabaseImpl(name, options, executor).getCollectionNames()
+        def operation = executor.getReadOperation() as ListCollectionsOperation
 
         then:
-        expect operation, isTheSameAs(new ListCollectionNamesOperation(name))
+        names == ['coll1']
+        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
         executor.getReadPreference() == primary()
     }
 

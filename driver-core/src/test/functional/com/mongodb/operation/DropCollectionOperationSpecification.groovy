@@ -77,7 +77,11 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
     }
 
     def collectionNameExists(String collectionName) {
-        new ListCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
+        def cursor = new ListCollectionsOperation(databaseName, new DocumentCodec()).execute(getBinding())
+        if (!cursor.hasNext()) {
+            return false
+        }
+        cursor.next()*.get('name').contains(collectionName)
     }
 
 }

@@ -25,12 +25,14 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
@@ -86,7 +88,13 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public List<String> getCollectionNames() {
-        return executor.execute(new ListCollectionNamesOperation(name), primary());
+        return new OperationIterable<Document>(new ListCollectionsOperation<Document>(name, new DocumentCodec()), primary(), executor)
+               .map(new Function<Document, String>() {
+                   @Override
+                   public String apply(final Document result) {
+                       return (String) result.get("name");
+                   }
+               }).into(new ArrayList<String>());
     }
 
     @Override
