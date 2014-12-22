@@ -178,7 +178,7 @@ public class DB {
     /**
      * Drops this database. Removes all data on disk. Use with caution.
      *
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/dropDatabase/ Drop Database
      */
     public void dropDatabase() {
@@ -208,7 +208,7 @@ public class DB {
      * Returns a set containing the names of all collections in this database.
      *
      * @return the names of collections in this database
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
@@ -236,7 +236,7 @@ public class DB {
      * @param collectionName the name of the collection to return
      * @param options        options
      * @return the collection
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
@@ -301,7 +301,7 @@ public class DB {
      *
      * @param command command to execute
      * @return result of command from the database
-     * @throws MongoException
+     * @throws MongoException if the command failed
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final String command) {
@@ -314,7 +314,7 @@ public class DB {
      *
      * @param command {@code DBObject} representation of the command to be executed
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException  if the command failed
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject command) {
@@ -328,7 +328,7 @@ public class DB {
      * @param command {@code DBObject} representation of the command to be executed
      * @param encoder {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException if the command failed
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
     public CommandResult command(final DBObject command, final DBEncoder encoder) {
@@ -373,7 +373,7 @@ public class DB {
      * @param command        The name of the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
      * @return The result of the command execution
-     * @throws MongoException
+     * @throws MongoException if the command failed
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
@@ -397,7 +397,7 @@ public class DB {
      *
      * @param collectionName a name of the collection to test for existence
      * @return {@code false} if no collection by that name exists, {@code true} if a match to an existing collection was found
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      */
     public boolean collectionExists(final String collectionName) {
         Set<String> collectionNames = getCollectionNames();
@@ -416,7 +416,7 @@ public class DB {
      * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public CommandResult doEval(final String code, final Object... args) {
@@ -431,7 +431,7 @@ public class DB {
      * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the execution
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public Object eval(final String code, final Object... args) {
@@ -444,7 +444,7 @@ public class DB {
      * Helper method for calling a 'dbStats' command. It returns storage statistics for a given database.
      *
      * @return result of the execution
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/dbStats/ Database Stats
      */
     public CommandResult getStats() {
@@ -458,7 +458,7 @@ public class DB {
      * @param userName the user name
      * @param password the password
      * @return the result of executing this operation
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @mongodb.driver.manual reference/command/createUser createUser
      * @mongodb.driver.manual reference/command/updateUser updateUser
@@ -476,7 +476,7 @@ public class DB {
      * @param password the password
      * @param readOnly if true, user will only be able to read
      * @return the result of executing this operation
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @mongodb.driver.manual reference/command/createUser createUser
      * @mongodb.driver.manual reference/command/updateUser updateUser
@@ -507,7 +507,7 @@ public class DB {
      *
      * @param userName user to be removed
      * @return the result of executing this operation
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call the dropUser command
      */

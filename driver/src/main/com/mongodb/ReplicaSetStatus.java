@@ -49,7 +49,7 @@ public class ReplicaSetStatus {
      * Gets the ServerAddress of the master server in this replica set.
      *
      * @return master or null if don't have one
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public ServerAddress getMaster() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
@@ -71,7 +71,7 @@ public class ReplicaSetStatus {
      * on which server is master.
      *
      * @return the maximum size, or 0 if not obtained from servers yet.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();

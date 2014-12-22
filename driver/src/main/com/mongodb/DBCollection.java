@@ -765,7 +765,7 @@ public class DBCollection {
      * Same as {@link #getCount()}
      *
      * @return the number of documents in collection
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long count() {
@@ -777,7 +777,7 @@ public class DBCollection {
      *
      * @param query specifies the selection criteria
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long count(final DBObject query) {
@@ -790,7 +790,7 @@ public class DBCollection {
      * @param query          specifies the selection criteria
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long count(final DBObject query, final ReadPreference readPreference) {
@@ -801,7 +801,7 @@ public class DBCollection {
      * Get the count of documents in collection.
      *
      * @return the number of documents in collection
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount() {
@@ -813,7 +813,7 @@ public class DBCollection {
      *
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the number of documents in collection
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final ReadPreference readPreference) {
@@ -825,7 +825,7 @@ public class DBCollection {
      *
      * @param query specifies the selection criteria
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final DBObject query) {
@@ -838,7 +838,7 @@ public class DBCollection {
      * @param query      specifies the selection criteria
      * @param projection this is ignored
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final DBObject query, final DBObject projection) {
@@ -852,7 +852,7 @@ public class DBCollection {
      * @param projection     this is ignored
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final DBObject query, final DBObject projection, final ReadPreference readPreference) {
@@ -867,7 +867,7 @@ public class DBCollection {
      * @param limit      limit the count to this value
      * @param skip       number of documents to skip
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip) {
@@ -883,7 +883,7 @@ public class DBCollection {
      * @param skip           number of documents to skip
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the number of documents that matches selection criteria
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
@@ -1429,7 +1429,7 @@ public class DBCollection {
      * Forces creation of an ascending index on a field with the default options.
      *
      * @param name name of field to index on
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final String name) {
@@ -1441,7 +1441,7 @@ public class DBCollection {
      *
      * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
      * @param name an identifier for the index. If null or empty, the default name will be used.
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final String name) {
@@ -1454,7 +1454,7 @@ public class DBCollection {
      * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
      * @param name   an identifier for the index. If null or empty, the default name will be used.
      * @param unique if the index should be unique
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final String name, final boolean unique) {
@@ -1734,7 +1734,7 @@ public class DBCollection {
     /**
      * Drops (deletes) this collection from the database. Use with care.
      *
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/drop/ Drop Command
      */
     public void drop() {
@@ -1795,7 +1795,7 @@ public class DBCollection {
      * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
      *
      * @return list of index documents
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {

@@ -181,7 +181,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * return null if no documents is available.</p>
      *
      * @return the next element or null
-     * @throws MongoException
+     * @throws MongoException if failed
+     * @throws IllegalArgumentException if the cursor is not tailable
      * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
      */
     public DBObject tryNext() {
@@ -476,7 +477,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * </ul>
      *
      * @return a {@code DBObject} containing the explain output for this DBCursor's query
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
@@ -637,7 +638,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Converts this cursor to an array.
      *
      * @return an array of elements
-     * @throws MongoException
+     * @throws MongoException if failed
      */
     public List<DBObject> toArray() {
         return toArray(Integer.MAX_VALUE);
@@ -648,7 +649,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @param max the maximum number of objects to return
      * @return an array of objects
-     * @throws MongoException
+     * @throws MongoException if failed
      */
     public List<DBObject> toArray(final int max) {
         checkIteratorOrArray(IteratorOrArray.ARRAY);
@@ -661,7 +662,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * server.
      *
      * @return the number of objects
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @see DBCursor#size
      */
     public int count() {
@@ -687,7 +688,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Pulls back all items into an array and returns the number of objects. Note: this can be resource intensive.
      *
      * @return the number of elements in the array
-     * @throws MongoException
+     * @throws MongoException if failed
      * @see #count()
      * @see #size()
      */
@@ -701,7 +702,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * For testing only! Iterates cursor and counts objects
      *
      * @return num objects
-     * @throws MongoException
+     * @throws MongoException if failed
      * @see #count()
      */
     public int itcount() {
@@ -718,7 +719,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Counts the number of objects matching the query this does take limit/skip into consideration
      *
      * @return the number of objects
-     * @throws MongoException
+     * @throws MongoException if the operation failed
      * @see #count()
      */
     public int size() {

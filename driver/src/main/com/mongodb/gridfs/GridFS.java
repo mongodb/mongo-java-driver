@@ -80,7 +80,7 @@ public class GridFS {
      * DB.setWriteConcern
      *
      * @param db database to work with
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if there's a failure
      * @see com.mongodb.WriteConcern
      */
     public GridFS(final DB db) {
@@ -93,7 +93,7 @@ public class GridFS {
      *
      * @param db     database to work with
      * @param bucket bucket to use in the given database
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if there's a failure
      * @see com.mongodb.WriteConcern
      */
     public GridFS(final DB db, final String bucket) {
@@ -154,7 +154,7 @@ public class GridFS {
      *
      * @param objectId the objectId of the file stored on a server
      * @return a gridfs file
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public GridFSDBFile find(final ObjectId objectId) {
         return findOne(objectId);
@@ -165,7 +165,7 @@ public class GridFS {
      *
      * @param objectId the objectId of the file stored on a server
      * @return a gridfs file
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public GridFSDBFile findOne(final ObjectId objectId) {
         return findOne(new BasicDBObject("objectId", objectId));
@@ -176,7 +176,7 @@ public class GridFS {
      *
      * @param filename the name of the file stored on a server
      * @return the gridfs db file
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public GridFSDBFile findOne(final String filename) {
         return findOne(new BasicDBObject("filename", filename));
@@ -187,7 +187,7 @@ public class GridFS {
      *
      * @param query filter to apply
      * @return a gridfs file
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public GridFSDBFile findOne(final DBObject query) {
         return injectGridFSInstance(filesCollection.findOne(query));
@@ -198,7 +198,7 @@ public class GridFS {
      *
      * @param filename the filename to look for
      * @return list of gridfs files
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public List<GridFSDBFile> find(final String filename) {
         return find(new BasicDBObject("filename", filename));
@@ -210,7 +210,7 @@ public class GridFS {
      * @param filename the filename to look for
      * @param sort     the fields to sort with
      * @return list of gridfs files
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public List<GridFSDBFile> find(final String filename, final DBObject sort) {
         return find(new BasicDBObject("filename", filename), sort);
@@ -221,7 +221,7 @@ public class GridFS {
      *
      * @param query the filter to apply
      * @return list of gridfs files
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public List<GridFSDBFile> find(final DBObject query) {
         return find(query, null);
@@ -233,7 +233,7 @@ public class GridFS {
      * @param query the filter to apply
      * @param sort  the fields to sort with
      * @return list of gridfs files
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public List<GridFSDBFile> find(final DBObject query, final DBObject sort) {
         List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
@@ -271,7 +271,7 @@ public class GridFS {
      * Removes the file matching the given id.
      *
      * @param id the id of the file to be removed
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public void remove(final ObjectId id) {
         if (id == null) {
@@ -286,7 +286,7 @@ public class GridFS {
      * Removes all files matching the given filename.
      *
      * @param filename the name of the file to be removed
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public void remove(final String filename) {
         if (filename == null) {
@@ -300,7 +300,7 @@ public class GridFS {
      * Removes all files matching the given query.
      *
      * @param query filter to apply
-     * @throws com.mongodb.MongoException
+     * @throws com.mongodb.MongoException if the operation fails
      */
     public void remove(final DBObject query) {
         if (query == null) {

@@ -138,7 +138,7 @@ public class MongoURI {
      * Creates a Mongo instance based on the URI.
      *
      * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which must be closed manually.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     @SuppressWarnings("deprecation")
     public Mongo connect() {
@@ -150,7 +150,7 @@ public class MongoURI {
      * Returns the DB object from a newly created Mongo instance based on this URI.
      *
      * @return the database specified in the URI.  This will implicitly create a new Mongo instance, which must be closed manually.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public DB connectDB() {
         return connect().getDB(getDatabase());

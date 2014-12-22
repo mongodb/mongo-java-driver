@@ -103,7 +103,7 @@ public class MongoClient extends Mongo implements Closeable {
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).
      *
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      */
     public MongoClient() {
         this(new ServerAddress());
@@ -113,7 +113,7 @@ public class MongoClient extends Mongo implements Closeable {
      * Creates a Mongo instance based on a (single) mongodb node.
      *
      * @param host server to connect to in format host[:port]
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      */
     public MongoClient(final String host) {
         this(new ServerAddress(host));
@@ -124,7 +124,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @param host    server to connect to in format host[:port]
      * @param options default query options
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      */
     public MongoClient(final String host, final MongoClientOptions options) {
         this(new ServerAddress(host), options);
@@ -135,7 +135,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      */
     public MongoClient(final String host, final int port) {
         this(new ServerAddress(host, port));
@@ -145,7 +145,7 @@ public class MongoClient extends Mongo implements Closeable {
      * Creates a Mongo instance based on a (single) mongodb node
      *
      * @param addr the database address
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(final ServerAddress addr) {
@@ -157,7 +157,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @param addr            the database address
      * @param credentialsList the list of credentials used to authenticate all connections
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -170,7 +170,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @param addr    the database address
      * @param options default options
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(final ServerAddress addr, final MongoClientOptions options) {
@@ -183,7 +183,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param addr            the database address
      * @param credentialsList the list of credentials used to authenticate all connections
      * @param options         default options
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -201,7 +201,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(final List<ServerAddress> seeds) {
@@ -219,7 +219,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param seeds           Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list
      *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param credentialsList the list of credentials used to authenticate all connections
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -238,7 +238,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options default options
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(final List<ServerAddress> seeds, final MongoClientOptions options) {
@@ -257,7 +257,7 @@ public class MongoClient extends Mongo implements Closeable {
      *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param credentialsList the list of credentials used to authenticate all connections
      * @param options         default options
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -270,7 +270,7 @@ public class MongoClient extends Mongo implements Closeable {
      * nodes.
      *
      * @param uri the URI
-     * @throws MongoException
+     * @throws MongoException if theres a failure
      */
     public MongoClient(final MongoClientURI uri) {
         super(uri);

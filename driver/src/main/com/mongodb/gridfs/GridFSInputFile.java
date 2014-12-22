@@ -189,7 +189,7 @@ public class GridFSInputFile extends GridFSFile {
      *
      * @return Number of the next chunk.
      * @throws IOException    on problems reading the new entry's {@link java.io.InputStream}.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.gridfs.GridFSInputFile#saveChunks(long)
      */
     public int saveChunks() throws IOException {
@@ -203,7 +203,7 @@ public class GridFSInputFile extends GridFSFile {
      * @param chunkSize Size of chunks for file in bytes.
      * @return Number of the next chunk.
      * @throws IOException    on problems reading the new entry's {@link java.io.InputStream}.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public int saveChunks(final long chunkSize) throws IOException {
         if (outputStream != null) {
@@ -253,7 +253,7 @@ public class GridFSInputFile extends GridFSFile {
      * immediately.
      *
      * @param writePartial Write also partial buffers full.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     private void dumpBuffer(final boolean writePartial) {
         if ((currentBufferPosition < chunkSize) && !writePartial) {

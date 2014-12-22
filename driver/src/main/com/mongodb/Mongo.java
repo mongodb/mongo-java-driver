@@ -98,7 +98,7 @@ public class Mongo {
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
      *
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient()})
      */
     @Deprecated
@@ -111,7 +111,7 @@ public class Mongo {
      *
      * @param host server to connect to
      * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
      */
     @Deprecated
@@ -125,7 +125,7 @@ public class Mongo {
      *
      * @param host    server to connect to
      * @param options default query options
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
     @Deprecated
@@ -141,7 +141,7 @@ public class Mongo {
      * @param host the host address of the database
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
      */
     @Deprecated
@@ -153,7 +153,7 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      *
      * @param address the database address
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
      */
@@ -167,7 +167,7 @@ public class Mongo {
      *
      * @param address the database address
      * @param options default query options
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
      */
@@ -185,7 +185,7 @@ public class Mongo {
      *
      * @param left  left side of the pair
      * @param right right side of the pair
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List)} instead.
      */
@@ -202,7 +202,7 @@ public class Mongo {
      * @param left    left side of the pair
      * @param right   right side of the pair
      * @param options the optional settings for the Mongo instance
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
@@ -223,7 +223,7 @@ public class Mongo {
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
@@ -243,7 +243,7 @@ public class Mongo {
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options for configuring this Mongo instance
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
@@ -265,7 +265,7 @@ public class Mongo {
      * </ul>
      *
      * @param uri URI to connect to, optionally containing additional information like credentials
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @see MongoURI 
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
@@ -360,7 +360,7 @@ public class Mongo {
      * Gets a list of all server addresses used when this Mongo was created
      *
      * @return list of server addresses
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getAllAddress() {
         //TODO It should return the address list without auto-discovered nodes. Not sure if it's required. Maybe users confused with name.
@@ -371,7 +371,7 @@ public class Mongo {
      * Gets the list of server addresses currently seen by this client. This includes addresses auto-discovered from a replica set.
      *
      * @return list of server addresses
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
@@ -427,7 +427,7 @@ public class Mongo {
      * Gets a list of the names of all databases on the connected server.
      *
      * @return list of database names
-     * @throws MongoException
+     * @throws MongoException  if the operation fails
      */
     public List<String> getDatabaseNames() {
         return execute(new GetDatabaseNamesOperation(), primary());
@@ -470,7 +470,7 @@ public class Mongo {
      * Drops the database if it exists.
      *
      * @param dbName name of database to drop
-     * @throws MongoException
+     * @throws MongoException if the operation fails
      */
     public void dropDatabase(final String dbName) {
         getDB(dbName).dropDatabase();
@@ -536,7 +536,7 @@ public class Mongo {
      *
      * @param async if true, the fsync will be done asynchronously on the server.
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsync(final boolean async) {
@@ -552,7 +552,7 @@ public class Mongo {
      * returns.
      *
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public CommandResult fsyncAndLock() {
@@ -566,7 +566,7 @@ public class Mongo {
      * may be a small delay before the database becomes writable.
      *
      * @return {@code DBObject} in the following form {@code {"ok": 1,"info": "unlock completed"}}
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
@@ -577,7 +577,7 @@ public class Mongo {
      * Returns true if the database is locked (read-only), false otherwise.
      *
      * @return result of the command execution
-     * @throws MongoException
+     * @throws MongoException if the operation fails
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
@@ -599,7 +599,7 @@ public class Mongo {
      * on which server is master.
      *
      * @return the maximum size, or 0 if not obtained from servers yet.
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
@@ -822,7 +822,7 @@ public class Mongo {
          *
          * @param uri the Mongo URI
          * @return the client
-         * @throws MongoException
+         * @throws MongoException if there's a failure
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
         @Deprecated
@@ -836,7 +836,7 @@ public class Mongo {
          *
          * @param uri the Mongo URI
          * @return the client
-         * @throws MongoException
+         * @throws MongoException if there's a failure
          */
         public Mongo connect(final MongoClientURI uri) {
             String key = toKey(uri);

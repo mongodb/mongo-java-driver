@@ -61,7 +61,7 @@ public abstract class GridFSFile implements DBObject {
     /**
      * Saves the file entry to the files collection
      *
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public void save() {
         if (fs == null) {
@@ -73,7 +73,7 @@ public abstract class GridFSFile implements DBObject {
     /**
      * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
      *
-     * @throws MongoException
+     * @throws MongoException if there's a failure
      */
     public void validate() {
         if (fs == null) {

@@ -156,7 +156,7 @@ public class DBAddress extends ServerAddress {
      *
      * @param name database name
      * @return the DBAddress for the given name with the same host and port as this
-     * @throws MongoException
+     * @throws MongoException if failed
      */
     public DBAddress getSister(final String name) {
         return new DBAddress(getHost(), getPort(), name);

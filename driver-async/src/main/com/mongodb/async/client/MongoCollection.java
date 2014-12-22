@@ -258,6 +258,7 @@ public interface MongoCollection<T> {
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
+     * @param callback the callback that is completed once the insert has completed
      * @throws com.mongodb.MongoWriteException        returned via the callback
      * @throws com.mongodb.MongoWriteConcernException returned via the callback
      * @throws com.mongodb.MongoException             returned via the callback
@@ -269,8 +270,9 @@ public interface MongoCollection<T> {
      * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
      *
      * @param documents the documents to insert
-     * @throws com.mongodb.DuplicateKeyException
-     * @throws com.mongodb.MongoException
+     * @param callback  the callback that is completed once the insert has completed
+     * @throws com.mongodb.DuplicateKeyException returned via the callback
+     * @throws com.mongodb.MongoException        returned via the callback
      */
     void insertMany(List<? extends T> documents, SingleResultCallback<Void> callback);
 
@@ -280,8 +282,9 @@ public interface MongoCollection<T> {
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException
-     * @throws com.mongodb.MongoException
+     * @param callback  the callback that is completed once the insert has completed
+     * @throws com.mongodb.DuplicateKeyException returned via the callback
+     * @throws com.mongodb.MongoException        returned via the callback
      */
     void insertMany(List<? extends T> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
 
@@ -472,21 +475,24 @@ public interface MongoCollection<T> {
     /**
      * Drops this collection from the Database.
      *
+     * @param callback the callback that is completed once the collection has been dropped
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
     void dropCollection(SingleResultCallback<Void> callback);
 
     /**
-     * @param key an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
-     *            registered
+     * @param key      an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param callback the callback that is completed once the index has been created
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
     void createIndex(Object key, SingleResultCallback<Void> callback);
 
     /**
-     * @param key     an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
-     *                registered
-     * @param options the options for the index
+     * @param key      an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param options  the options for the index
+     * @param callback the callback that is completed once the index has been created
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
     void createIndex(Object key, CreateIndexOptions options, SingleResultCallback<Void> callback);

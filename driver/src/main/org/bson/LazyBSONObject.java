@@ -360,7 +360,7 @@ public class LazyBSONObject implements BSONObject {
      * @param key Name to set
      * @param v   Corresponding value
      * @return will not return normally
-     * @throws java.lang.UnsupportedOperationException
+     * @throws java.lang.UnsupportedOperationException the object is read only
      */
     @Override
     public Object put(final String key, final Object v) {
@@ -371,7 +371,7 @@ public class LazyBSONObject implements BSONObject {
      * Always throws {@code UnsupportedOperationException}.
      *
      * @param o the object
-     * @throws java.lang.UnsupportedOperationException
+     * @throws java.lang.UnsupportedOperationException the object is read only
      */
     @Override
     public void putAll(final BSONObject o) {
@@ -382,7 +382,7 @@ public class LazyBSONObject implements BSONObject {
      * Always throws {@code UnsupportedOperationException}.
      *
      * @param m the map
-     * @throws java.lang.UnsupportedOperationException
+     * @throws java.lang.UnsupportedOperationException the object is read only
      */@Override
     @SuppressWarnings("rawtypes")
     public void putAll(final Map m) {
@@ -394,7 +394,7 @@ public class LazyBSONObject implements BSONObject {
      *
      * @param key The name of the field to remove
      * @return will not return normally
-     * @throws java.lang.UnsupportedOperationException
+     * @throws java.lang.UnsupportedOperationException the object is read only
      */
     @Override
     public Object removeField(final String key) {
