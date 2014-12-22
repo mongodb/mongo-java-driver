@@ -43,6 +43,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.commandResultToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -181,9 +182,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
-        return new QueryResult<T>(new MongoNamespace(cursorDocument.getString("ns").getValue()),
-                                  BsonDocumentWrapperHelper.<T>toList(cursorDocument.getArray("firstBatch")),
-                                  cursorDocument.getInt64("id").getValue(), serverAddress, 0);
+        return commandResultToQueryResult(cursorDocument, serverAddress);
     }
 
     private BsonDocument getCommand() {

@@ -572,7 +572,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public <C> void getIndexes(final Class<C> clazz, final SingleResultCallback<List<C>> callback) {
-        executor.execute(new ListIndexesOperation<C>(namespace, getCodec(clazz)), options.getReadPreference(), callback);
+        new OperationIterable<C>(new ListIndexesOperation<C>(namespace, getCodec(clazz)), this.options.getReadPreference(), executor)
+        .into(new ArrayList<C>(), callback);
     }
 
     @Override

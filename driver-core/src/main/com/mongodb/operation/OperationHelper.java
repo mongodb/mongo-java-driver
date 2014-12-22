@@ -17,6 +17,8 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -25,7 +27,12 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.QueryResult;
 import com.mongodb.connection.ServerVersion;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
@@ -66,6 +73,28 @@ final class OperationHelper {
         public Void apply(final T t) {
             return null;
         }
+    }
+
+    static <T> BatchCursor<T> commandResultToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                         final ConnectionSource source) {
+        return new QueryBatchCursor<T>(OperationHelper.<T>commandResultToQueryResult(cursorDocument,
+                                                                                     source.getServerDescription().getAddress()),
+                                       0, 0, decoder, source);
+    }
+
+    static <T> AsyncBatchCursor<T> commandResultToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
+                                                                   final AsyncConnectionSource source) {
+        return new AsyncQueryBatchCursor<T>(OperationHelper.<T>commandResultToQueryResult(cursorDocument,
+                                                                                          source.getServerDescription().getAddress()),
+                                            0, 0, decoder, source);
+    }
+
+
+    static <T> QueryResult<T> commandResultToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
+        long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
+        MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
+        BsonArray results = cursorDocument.getArray("firstBatch");
+        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(results), cursorId, serverAddress, 0);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final Connection connection) {

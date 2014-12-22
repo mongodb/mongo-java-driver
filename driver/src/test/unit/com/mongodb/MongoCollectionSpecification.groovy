@@ -758,7 +758,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use ListIndexesOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([[], []])
+        def batchCursor = Stub(BatchCursor)
+        def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
 
         when:
@@ -769,8 +770,9 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
 
         when:
-        collection.getIndexes(BsonDocument)
+        def indexes = collection.getIndexes(BsonDocument)
         operation = executor.getReadOperation() as ListIndexesOperation
+        indexes == []
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new BsonDocumentCodec()))

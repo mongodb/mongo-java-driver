@@ -128,7 +128,12 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
     def getIndexes() {
-        new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        def indexes = []
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        while (cursor.hasNext()) {
+            indexes.addAll(cursor.next())
+        }
+        indexes
     }
 
 }

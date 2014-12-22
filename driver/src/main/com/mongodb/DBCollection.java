@@ -1799,7 +1799,8 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return executor.execute(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()), primary());
+        return new OperationIterable<DBObject>(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()),
+                                               primary(), executor).into(new ArrayList<DBObject>());
     }
 
     /**

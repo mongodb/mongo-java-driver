@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -26,27 +27,22 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
 import org.bson.BsonString;
-import org.bson.BsonValue;
-import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DecoderContext;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
-import static com.mongodb.operation.FindOperationHelper.queryResultToList;
-import static com.mongodb.operation.FindOperationHelper.queryResultToListAsync;
+import static com.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.IdentityTransformer;
+import static com.mongodb.operation.OperationHelper.commandResultToAsyncBatchCursor;
+import static com.mongodb.operation.OperationHelper.commandResultToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -58,7 +54,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, ReadOperation<List<T>> {
+public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
 
@@ -74,22 +70,28 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
     }
 
     @Override
-    public List<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<List<T>>() {
+    public BatchCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
-            public List<T> call(final ConnectionSource source, final Connection connection) {
+            public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     try {
-                        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
-                                                             transformer());
+                        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(), connection,
+                                                             transformer(source));
                     } catch (MongoCommandException e) {
-                        return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<T>());
+                        return rethrowIfNotNamespaceError(e,
+                                                          new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(),
+                                                                                                     0L,
+                                                                                                     source.getServerDescription()
+                                                                                                           .getAddress(),
+                                                                                                     0),
+                                                                                  0, 0, decoder, source));
                     }
                 } else {
-                    return queryResultToList(connection.query(getIndexNamespace(), asQueryDocument(), null, 0, 0,
-                                                              binding.getReadPreference().isSlaveOk(), false,
-                                                              false, false, false, false,
-                                                              decoder), decoder, source, new IdentityTransformer<T>());
+                    return new QueryBatchCursor<T>(connection.query(getIndexNamespace(), asQueryDocument(), null, 0, 0,
+                                                                    binding.getReadPreference().isSlaveOk(), false,
+                                                                    false, false, false, false, decoder),
+                                                   0, 0, decoder, source);
                 }
             }
         });
@@ -97,26 +99,29 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<List<T>> callback) {
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    final SingleResultCallback<List<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
-                                                                                            source, connection);
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                                                                                                        source, connection);
                     if (serverIsAtLeastVersionTwoDotEight(connection)) {
-                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection, transformer(),
-                                                           new SingleResultCallback<List<T>>() {
+                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
+                                                           connection, binding.getReadPreference(), asyncTransformer(source),
+                                                           new SingleResultCallback<AsyncBatchCursor<T>>() {
                                                                @Override
-                                                               public void onResult(final List<T> result,
+                                                               public void onResult(final AsyncBatchCursor<T> result,
                                                                                     final Throwable t) {
                                                                    if (t != null && !isNamespaceError(t)) {
                                                                        wrappedCallback.onResult(null, t);
                                                                    } else {
-                                                                       wrappedCallback.onResult(result != null
-                                                                                                ? result : new ArrayList<T>(),
+                                                                       AsyncBatchCursor<T> emptyCursor
+                                                                       = createEmptyAsyncBatchCursor(source.getServerDescription()
+                                                                                                           .getAddress());
+                                                                       wrappedCallback.onResult(result != null ? result : emptyCursor,
                                                                                                 null);
                                                                    }
                                                                }
@@ -129,7 +134,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                                 if (t != null && !isNamespaceError(t)) {
                                     wrappedCallback.onResult(null, t);
                                 } else {
-                                    queryResultToListAsync(result, decoder, source, new IdentityTransformer<T>(), wrappedCallback);
+                                    wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, 0, decoder, source), null);
                                 }
                             }
                         });
@@ -137,6 +142,10 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                 }
             }
         });
+    }
+
+    private AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final ServerAddress serverAddress) {
+        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress, 0), 0, 0, decoder);
     }
 
     private BsonDocument asQueryDocument() {
@@ -148,21 +157,29 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
     }
 
     private BsonDocument getCommand() {
-        return new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()));
+        return new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
+               .append("cursor", new BsonDocument());
     }
 
-    private Function<BsonDocument, List<T>> transformer() {
-        return new Function<BsonDocument, List<T>>() {
+    private Function<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source) {
+        return new Function<BsonDocument, BatchCursor<T>>() {
             @Override
-            public List<T> apply(final BsonDocument results) {
-                BsonArray bsonIndexes = results.getArray("indexes");
-                List<T> indexes = new ArrayList<T>(bsonIndexes.size());
-                for (BsonValue rawIndex : bsonIndexes) {
-                    indexes.add(decoder.decode(new BsonDocumentReader((BsonDocument) rawIndex), DecoderContext.builder().build()));
-                }
-                return indexes;
+            public BatchCursor<T> apply(final BsonDocument result) {
+                return commandResultToBatchCursor(result.getDocument("cursor"), decoder, source);
             }
         };
     }
 
+    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source) {
+        return new Function<BsonDocument, AsyncBatchCursor<T>>() {
+            @Override
+            public AsyncBatchCursor<T> apply(final BsonDocument result) {
+                return commandResultToAsyncBatchCursor(result.getDocument("cursor"), decoder, source);
+            }
+        };
+    }
+
+    private Codec<BsonDocument> createCommandDecoder() {
+        return CommandResultDocumentCodec.create(decoder, "firstBatch");
+    }
 }

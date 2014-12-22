@@ -958,7 +958,10 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use ListIndexesOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([[], []])
+        def asyncCursor = Stub(AsyncBatchCursor) {
+            next(_) >> { args -> args[0].onResult(null, null) }
+        }
+        def executor = new TestOperationExecutor([asyncCursor, asyncCursor])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def futureResultCallback = new FutureResultCallback<List<Document>>()
 

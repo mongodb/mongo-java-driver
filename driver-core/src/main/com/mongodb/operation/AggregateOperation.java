@@ -43,6 +43,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.commandResultToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -270,22 +271,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
-        long cursorId;
-        BsonArray results;
-        MongoNamespace queryResultNamespace;
         if (isInline(connection)) {
-            cursorId = 0;
-            results = result.getArray(RESULT);
-            queryResultNamespace = namespace;
+            return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray(RESULT)), 0L,
+                                      connection.getDescription().getServerAddress(), 0);
         } else {
-            BsonDocument cursor = result.getDocument("cursor");
-            cursorId = ((BsonInt64) cursor.get("id")).getValue();
-            queryResultNamespace = new MongoNamespace(cursor.getString("ns").getValue());
-            results = cursor.getArray(FIRST_BATCH);
+            return commandResultToQueryResult(result.getDocument("cursor"), connection.getDescription().getServerAddress());
         }
-        return new QueryResult<T>(queryResultNamespace,
-                                  BsonDocumentWrapperHelper.<T>toList(results), cursorId, connection.getDescription().getServerAddress(),
-                                  0);
     }
 
     private Function<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source, final Connection connection) {

@@ -370,7 +370,12 @@ class CreateIndexOperationSpecification extends OperationFunctionalSpecification
     }
 
     def List<Document> getIndexes() {
-        new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        def indexes = []
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        while (cursor.hasNext()) {
+            indexes.addAll(cursor.next())
+        }
+        indexes
     }
 
     def List<Document> getUserCreatedIndexes() {

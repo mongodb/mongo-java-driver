@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.FutureResultCallback
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -34,10 +35,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
 
         when:
-        List<Document> indexes = operation.execute(getBinding())
+        def cursor = operation.execute(getBinding())
 
         then:
-        indexes.size() == 0
+        !cursor.hasNext()
     }
 
     @Category(Async)
@@ -46,10 +47,12 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
 
         when:
-        List<Document> indexes = executeAsync(operation)
+        AsyncBatchCursor cursor = executeAsync(operation)
+        def callback = new FutureResultCallback()
+        cursor.next(callback)
 
         then:
-        indexes.size() == 0
+        callback.get() == null
     }
 
 
@@ -59,11 +62,13 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<Document> indexes = operation.execute(getBinding())
+        BatchCursor<Document> indexes = operation.execute(getBinding())
 
         then:
-        indexes.size() == 1
-        indexes[0].name == '_id_'
+        def firstBatch = indexes.next()
+        firstBatch.size() == 1
+        firstBatch[0].name == '_id_'
+        !indexes.hasNext()
     }
 
     @Category(Async)
@@ -73,7 +78,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<Document> indexes = executeAsync(operation)
+        def cursor = executeAsync(operation)
+        def callback = new FutureResultCallback()
+        cursor.next(callback)
+        def indexes = callback.get()
 
         then:
         indexes.size() == 1
@@ -88,12 +96,14 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
 
         when:
-        List<Document> indexes = operation.execute(getBinding())
+        BatchCursor cursor = operation.execute(getBinding())
 
         then:
+        def indexes = cursor.next()
         indexes.size() == 4
         indexes*.name.containsAll(['_id_', 'theField_1', 'compound_1_index_-1', 'unique_1'])
         indexes.find { it.name == 'unique_1' }.unique
+        !cursor.hasNext()
     }
 
     @Category(Async)
@@ -105,7 +115,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
 
         when:
-        List<Document> indexes = executeAsync(operation)
+        def cursor = executeAsync(operation)
+        def callback = new FutureResultCallback()
+        cursor.next(callback)
+        def indexes = callback.get()
 
         then:
         indexes.size() == 4
