@@ -199,6 +199,26 @@ public interface MongoCollection<T> {
     <C> MongoIterable<C> aggregate(List<?> pipeline, AggregateOptions options, Class<C> clazz);
 
     /**
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     *
+     * @param pipeline the aggregate pipeline
+     * @param callback the callback, which is called when the aggregation completes
+     * @mongodb.driver.manual aggregation/ Aggregation
+     */
+    void aggregateToCollection(List<?> pipeline, SingleResultCallback<Void> callback);
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     *
+     * @param pipeline the aggregate pipeline
+     * @param options  the options to apply to the aggregation operation
+     * @param callback the callback, which is called when the aggregation completes
+     * @mongodb.driver.manual aggregation/ Aggregation
+     * @mongodb.server.release 2.6
+     */
+    void aggregateToCollection(List<?> pipeline, AggregateOptions options, SingleResultCallback<Void> callback);
+
+    /**
      * Aggregates documents according to the specified map-reduce function.
      *
      * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
@@ -209,7 +229,9 @@ public interface MongoCollection<T> {
     MongoIterable<Document> mapReduce(String mapFunction, String reduceFunction);
 
     /**
-     * Aggregates documents according to the specified map-reduce function.
+     * Aggregates documents according to the specified map-reduce function. If the options specify that the results should be output to a
+     * collection, the returned iterable will be a query of the collection that the results were written to.  Note that in this case the
+     * map reduce operation will be executed executed even if the iterable is never iterated.
      *
      * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
@@ -232,7 +254,9 @@ public interface MongoCollection<T> {
     <C> MongoIterable<C> mapReduce(String mapFunction, String reduceFunction, Class<C> clazz);
 
     /**
-     * Aggregates documents according to the specified map-reduce function.
+     * Aggregates documents according to the specified map-reduce function. If the options specify that the results should be output to a
+     * collection, the returned iterable will be a query of the collection that the results were written to.  Note that in this case the
+     * map reduce operation will be executed executed even if the iterable is never iterated.
      *
      * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
@@ -243,6 +267,18 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
     <C> MongoIterable<C> mapReduce(String mapFunction, String reduceFunction, MapReduceOptions options, Class<C> clazz);
+
+    /**
+     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
+     * non-inline result.
+     *
+     * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param callback       Executed when the map-reduce operation has completed
+     * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
+     */
+    void mapReduceToCollection(String mapFunction, String reduceFunction, MapReduceOptions options,
+                               SingleResultCallback<Void> callback);
 
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.

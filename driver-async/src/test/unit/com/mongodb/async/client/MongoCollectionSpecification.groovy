@@ -302,7 +302,7 @@ class MongoCollectionSpecification extends Specification {
                                                              new BsonDocumentCodec()))
     }
 
-    def 'should use AggregateToCollectionOperation correctly'() {
+    def 'aggregate should use AggregateToCollectionOperation correctly'() {
         given:
         def asyncCursor = Stub(AsyncBatchCursor) {
             next(_) >> { args -> args[0].onResult(null, null) }
@@ -325,6 +325,46 @@ class MongoCollectionSpecification extends Specification {
         expect findOperation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.getDatabaseName(), outCollectionName),
                                                             options.codecRegistry.get(Document))
                                                   .filter(new BsonDocument()))
+    }
+
+    def 'aggregateToCollection should use AggregateToCollectionOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def outCollectionName = 'outColl'
+        def pipeline = [new Document('$match', 1), new Document('$out', outCollectionName)]
+        def bsonPipeline = new BsonArray([new BsonDocument('$match', new BsonInt32(1)),
+                                          new BsonDocument('$out', new BsonString(outCollectionName))])
+        when:
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.aggregateToCollection(pipeline, futureResultCallback)
+        futureResultCallback.get()
+        def aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline))
+
+        when:
+        futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.aggregateToCollection(pipeline, new AggregateOptions().allowDiskUse(true), futureResultCallback)
+        futureResultCallback.get()
+        aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline).allowDiskUse(true))
+    }
+
+    def 'aggregateToCollection should throw IllegalArgumentException when last state is not $out'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when:
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
+        collection.aggregateToCollection([new Document('$match', 1)], futureResultCallback)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should handle exceptions in aggregate correctly'() {
@@ -399,7 +439,7 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(bsonOperation.finalizeFunction(new BsonJavaScript('final')))
     }
 
-    def 'should use MapReduceToCollectionOperation correctly'() {
+    def 'mapReduce should use MapReduceToCollectionOperation correctly'() {
         given:
         def stats = Stub(MapReduceStatistics)
         def asyncCursor = Stub(AsyncBatchCursor) {
@@ -430,6 +470,39 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'), new DocumentCodec())
                                               .filter(new BsonDocument()))
    }
+
+    def 'mapReduceToCollection should use MapReduceToCollectionOperation correctly'() {
+        given:
+        def stats = Stub(MapReduceStatistics)
+        def executor = new TestOperationExecutor([stats])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
+        def futureResultCallback = new FutureResultCallback<List<Document>>()
+
+        when:
+        collection.mapReduceToCollection('map', 'reduce', mapReduceOptions, futureResultCallback)
+        futureResultCallback.get()
+        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
+                                                                         new BsonJavaScript('reduce'), 'collectionName')
+                                              .filter(new BsonDocument('filter', new BsonInt32(1)))
+                                              .finalizeFunction(new BsonJavaScript('final'))
+                                              .verbose(true))
+    }
+
+    def 'mapReduceToCollection should throw IllegalArgumentException if inline'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+
+        when:
+        collection.mapReduceToCollection('map', 'reduce', new MapReduceOptions(), new FutureResultCallback<List<Document>>())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 
     def 'should handle exceptions in mapReduce correctly'() {
         given:

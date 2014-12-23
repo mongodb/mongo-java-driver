@@ -40,6 +40,7 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
  * a read operation).
  *
+ * @mongodb.server.release 2.6
  * @since 3.0
  */
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {

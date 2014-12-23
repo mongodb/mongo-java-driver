@@ -19,42 +19,24 @@ package com.mongodb.async.client
 import com.mongodb.MongoNamespace
 import com.mongodb.async.FutureResultCallback
 import org.bson.Document
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.async.client.Fixture.getMongoClient
+import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class SmokeTestSpecification extends FunctionalSpecification {
 
-    def 'should handle common scenarios without error'() {
-
+    def 'should handle common CRUD scenarios without error'() {
         given:
         def mongoClient = getMongoClient()
         def database = mongoClient.getDatabase(databaseName)
         def collection = database.getCollection(collectionName)
+
+        when:
         def document = new Document('_id', 1)
         def updatedDocument = new Document('_id', 1).append('a', 1)
-
-        when: 'clean up old database'
-        run(mongoClient.getDatabase(databaseName).&dropDatabase) == null
-        def names = run(mongoClient.&getDatabaseNames)
-
-        then: 'Get Database Names'
-        !names.contains(null)
-
-        when: 'Create a collection and the created database is in the list'
-        run(database.&createCollection, collectionName)
-        def updatedNames = run(mongoClient.&getDatabaseNames)
-
-        then: 'The database names should contain the database and be one bigger than before'
-        updatedNames.contains(databaseName)
-        updatedNames.size() == names.size() + 1
-
-        when: 'The collection name should be in the collection names list'
-        def collectionNames = run(database.&getCollectionNames)
-
-        then:
-        !collectionNames.contains(null)
-        collectionNames.contains(collectionName)
 
         then: 'The count is zero'
         run(collection.&count) == 0
@@ -80,15 +62,56 @@ class SmokeTestSpecification extends FunctionalSpecification {
         then: 'aggregate the collection'
         run(collection.aggregate([new Document('$match', new Document('a', 1))]).&first) == updatedDocument
 
-        then: 'aggregate the collection to a collection'
-        run(collection.aggregate([new Document('$match', new Document('a', 1)), new Document('$out', getClass().getName() + '.out')])
-                      .&first) == updatedDocument
-
         then: 'remove all documents'
         run(collection.&deleteOne, new Document()).getDeletedCount() == 1
 
         then: 'The count is zero'
         run(collection.&count) == 0
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should aggregate to collection'() {
+        given:
+        def mongoClient = getMongoClient()
+        def database = mongoClient.getDatabase(databaseName)
+        def collection = database.getCollection(collectionName)
+
+        when:
+        def document = new Document('_id', 1).append('a', 1)
+        run(collection.&insertOne, document)
+
+        then: 'aggregate the collection to a collection'
+        run(collection.aggregate([new Document('$match', new Document('a', 1)), new Document('$out', getClass().getName() + '.out')])
+                      .&first) == document
+    }
+
+    def 'should handle common administrative scenarios without error'() {
+        given:
+        def mongoClient = getMongoClient()
+        def database = mongoClient.getDatabase(databaseName)
+        def collection = database.getCollection(collectionName)
+
+        when: 'clean up old database'
+        run(mongoClient.getDatabase(databaseName).&dropDatabase) == null
+        def names = run(mongoClient.&getDatabaseNames)
+
+        then: 'Get Database Names'
+        !names.contains(null)
+
+        when: 'Create a collection and the created database is in the list'
+        run(database.&createCollection, collectionName)
+        def updatedNames = run(mongoClient.&getDatabaseNames)
+
+        then: 'The database names should contain the database and be one bigger than before'
+        updatedNames.contains(databaseName)
+        updatedNames.size() == names.size() + 1
+
+        when: 'The collection name should be in the collection names list'
+        def collectionNames = run(database.&getCollectionNames)
+
+        then:
+        !collectionNames.contains(null)
+        collectionNames.contains(collectionName)
 
         then: 'create an index'
         run(collection.&createIndex, new Document('test', 1)) == null
