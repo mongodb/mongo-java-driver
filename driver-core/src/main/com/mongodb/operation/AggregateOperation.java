@@ -273,7 +273,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
         if (isInline(connection)) {
             return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray(RESULT)), 0L,
-                                      connection.getDescription().getServerAddress(), 0);
+                                      connection.getDescription().getServerAddress());
         } else {
             return cursorDocumentToQueryResult(result.getDocument("cursor"), connection.getDescription().getServerAddress());
         }

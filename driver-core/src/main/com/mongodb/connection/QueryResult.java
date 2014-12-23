@@ -33,7 +33,6 @@ public class QueryResult<T> {
     private final List<T> results;
     private final long cursorId;
     private final ServerAddress serverAddress;
-    private final int requestId;
 
     /**
      * Construct an instance.
@@ -42,15 +41,12 @@ public class QueryResult<T> {
      * @param results       the query results
      * @param cursorId      the cursor id
      * @param serverAddress the server address
-     * @param requestId     the request id of the response message
      */
-    public QueryResult(final MongoNamespace namespace, final List<T> results, final long cursorId, final ServerAddress serverAddress,
-                       final int requestId) {
+    public QueryResult(final MongoNamespace namespace, final List<T> results, final long cursorId, final ServerAddress serverAddress) {
         this.namespace = namespace;
         this.results = results;
         this.cursorId = cursorId;
         this.serverAddress = serverAddress;
-        this.requestId = requestId;
     }
 
     /**
@@ -61,8 +57,8 @@ public class QueryResult<T> {
      * @param address      the server address
      */
     QueryResult(final MongoNamespace namespace, final ReplyMessage<T> replyMessage, final ServerAddress address) {
-        this(namespace, replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address,
-             replyMessage.getReplyHeader().getRequestId());
+        this(namespace, replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address
+            );
     }
 
     /**
@@ -99,14 +95,5 @@ public class QueryResult<T> {
      */
     public ServerAddress getAddress() {
         return serverAddress;
-    }
-
-    /**
-     * Gets the request id of the response message.
-     *
-     * @return the request id
-     */
-    public int getRequestId() {
-        return requestId;
     }
 }

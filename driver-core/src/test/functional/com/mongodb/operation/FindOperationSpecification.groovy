@@ -321,7 +321,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                              new BsonDocument('$query', findOperation.filter).append('$explain', BsonBoolean.TRUE)
                                                                              .append('$orderby', findOperation.sort),
                              findOperation.projection, -20, 0, false, false, false, false, false, false, _) >>
-        new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress(), 42)
+        new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
 
         1 * connection.release()
     }

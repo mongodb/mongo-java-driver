@@ -79,13 +79,13 @@ final class OperationHelper {
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress) {
         return new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L,
-                                                          serverAddress, 0),
+                                                          serverAddress),
                                        0, 0, decoder, serverAddress);
     }
 
     static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                                final ServerAddress serverAddress) {
-        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress, 0), 0, 0, decoder);
+        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress), 0, 0, decoder);
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
@@ -107,7 +107,7 @@ final class OperationHelper {
         long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
         MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
         BsonArray results = cursorDocument.getArray("firstBatch");
-        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(results), cursorId, serverAddress, 0);
+        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(results), cursorId, serverAddress);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final Connection connection) {

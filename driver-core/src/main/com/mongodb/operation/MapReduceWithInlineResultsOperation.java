@@ -393,7 +393,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
         return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray("results")), 0,
-                                  connection.getDescription().getServerAddress(), 0);
+                                  connection.getDescription().getServerAddress());
     }
 
     private static BsonValue asValueOrNull(final BsonValue value) {

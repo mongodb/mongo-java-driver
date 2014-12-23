@@ -79,7 +79,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         names.containsAll([collectionName, 'collection2'])
         !names.contains(null)
-        names.findAll { it.contains('$')}.isEmpty()
+        names.findAll { it.contains('$') }.isEmpty()
     }
 
     @Category(Async)
@@ -101,6 +101,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         names.containsAll([collectionName, 'collection2'])
         !names.contains(null)
-        names.findAll { it.contains('$')}.isEmpty()
+        names.findAll { it.contains('$') }.isEmpty()
     }
 }
