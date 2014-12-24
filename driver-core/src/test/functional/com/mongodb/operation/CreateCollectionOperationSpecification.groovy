@@ -20,7 +20,6 @@ import category.Async
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
-import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
@@ -113,7 +112,9 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.execute(getBinding())
 
         then:
-        getCollection(getCollectionName()).getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
+            it -> it.getString('name').value == getCollectionName()
+        }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
     }
 
     @Category(Async)
@@ -167,13 +168,5 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
             return false
         }
         cursor.next()*.get('name').contains(collectionName)
-    }
-
-    def getCollection(String collectionName) {
-        def document = new CommandReadOperation(getDatabaseName(), new BsonDocument('listCollections', new BsonInt32(1)),
-                                                new BsonDocumentCodec()).execute(getBinding())
-        document.getArray('collections').find {
-            it -> ((BsonDocument) it).getString('name').value == collectionName
-        }
     }
 }
