@@ -19,6 +19,7 @@ package com.mongodb.async.client
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.MongoWriteException
 import com.mongodb.ServerAddress
@@ -781,13 +782,13 @@ class MongoCollectionSpecification extends Specification {
                                                                  unacknowledged()])               | UpdateResult.unacknowledged()
     }
 
-    def 'should translate MongoBulkWriteException to MongoWriteException'() {
+    def 'write operation should translate MongoBulkWriteException to MongoWriteException'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def futureResultCallback = new FutureResultCallback<Void>()
+        collection.insertOne(new Document('_id', 1), futureResultCallback)
 
         when:
-        collection.insertOne(new Document('_id', 1), futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -800,21 +801,37 @@ class MongoCollectionSpecification extends Specification {
                                                                            null, new ServerAddress())])
     }
 
-    def 'should translate MongoBulkWriteException to MongoWriteConcernException'() {
+    def 'write operation should translate MongoBulkWriteException to MongoWriteConcernException'() {
         given:
         def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []), [],
                                                                               new WriteConcernError(42, 'oops', new BsonDocument()),
                                                                               new ServerAddress())])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
         def futureResultCallback = new FutureResultCallback<Void>()
+        collection.insertOne(new Document('_id', 1), futureResultCallback)
 
         when:
-        collection.insertOne(new Document('_id', 1), futureResultCallback)
         futureResultCallback.get()
 
         then:
         def e = thrown(MongoWriteConcernException)
         e.writeConcernError == new WriteConcernError(42, 'oops', new BsonDocument())
+    }
+
+    def 'write operation should pass other exception through'() {
+        given:
+        def exception = new MongoSocketReadException('oops', new ServerAddress())
+        def executor = new TestOperationExecutor([exception]);
+        def collection = new MongoCollectionImpl(namespace, Document, options, executor)
+        def futureResultCallback = new FutureResultCallback<Void>()
+        collection.insertOne(new Document('_id', 1), futureResultCallback)
+
+        when:
+        futureResultCallback.get()
+
+        then:
+        def e = thrown(MongoSocketReadException)
+        e.is(exception)
     }
 
     def 'should use FindOneAndDeleteOperation correctly'() {

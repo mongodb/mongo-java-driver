@@ -639,12 +639,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                  if (t instanceof MongoBulkWriteException) {
                                      MongoBulkWriteException e = (MongoBulkWriteException) t;
                                      if (e.getWriteErrors().isEmpty()) {
-                                         throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());
+                                         callback.onResult(null, new MongoWriteConcernException(e.getWriteConcernError(),
+                                                                                                e.getServerAddress()));
                                      } else {
-                                         throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+                                         callback.onResult(null, new MongoWriteException(new WriteError(e.getWriteErrors().get(0)),
+                                                                                         e.getServerAddress()));
                                      }
                                  } else {
-                                     callback.onResult(result, null);
+                                     callback.onResult(result, t);
                                  }
                              }
                          });
