@@ -15,8 +15,12 @@
  */
 
 def nettyVersion = '4.0.24.Final'
+archivesBaseName = 'mongo-java-driver-core'
+dependencies {
+    compile project(':bson')
 
-apply plugin: 'osgi'
+    provided "io.netty:netty-all:$nettyVersion"
+}
 
 jar {
     manifest.attributes(
@@ -28,19 +32,19 @@ jar {
             )
 }
 
-dependencies {
-    compile project(':bson')
-
-    provided "io.netty:netty-all:$nettyVersion"
+//
+// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
+//
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'mongo-java-driver-core'
+            pom.withXml {
+                asNode().appendNode('name', 'MongoDB Java Driver')
+                asNode().appendNode('description', 'The Java operations layer for the MongoDB Java Driver. Other third parties can ' +
+                                                   'wrap this layer to provide custom APIs')
+                asNode().appendNode('url', 'http://www.mongodb.org')
+            }
+        }
+    }
 }
-
-task uberJar(type: Jar) {
-    classifier = 'all'
-    from project(':bson').sourceSets.main.output
-    from sourceSets.main.output
-}
-
-uberJar {
-    manifest = jar.manifest //not sure, may be we need to include 'Export-Package' from :bson as well
-}
-
