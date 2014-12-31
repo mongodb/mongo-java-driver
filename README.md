@@ -1,5 +1,5 @@
 ## MongoDB Java Driver ##
- * release notes: http://github.com/mongodb/mongo-java-driver/wiki/Release-Notes
+ * release notes: https://github.com/mongodb/mongo-java-driver/releases
  * driver home: http://github.com/mongodb/mongo-java-driver
  * mongodb home: http://www.mongodb.org/
  * javadoc: http://api.mongodb.org/java/
