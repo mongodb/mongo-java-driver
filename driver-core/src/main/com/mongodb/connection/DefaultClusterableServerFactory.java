@@ -25,6 +25,7 @@ import java.util.List;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ClusterId clusterId;
+    private final ClusterSettings clusterSettings;
     private final ServerSettings settings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final StreamFactory streamFactory;
@@ -33,7 +34,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionListener connectionListener;
     private final StreamFactory heartbeatStreamFactory;
 
-    public DefaultClusterableServerFactory(final ClusterId clusterId, final ServerSettings settings,
+    public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
                                            final StreamFactory streamFactory,
                                            final StreamFactory heartbeatStreamFactory,
@@ -41,6 +42,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final ConnectionListener connectionListener,
                                            final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = clusterId;
+        this.clusterSettings = clusterSettings;
         this.settings = settings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.streamFactory = streamFactory;
@@ -63,7 +65,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                                 credentialList,
                                                                                 connectionListener),
                                             connectionPool);
-        return new DefaultServer(serverAddress, connectionPool, new DefaultConnectionFactory(), serverMonitorFactory);
+        return new DefaultServer(serverAddress, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(),
+                                 serverMonitorFactory);
     }
 
     @Override

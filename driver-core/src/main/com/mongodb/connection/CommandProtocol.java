@@ -44,27 +44,34 @@ class CommandProtocol<T> implements Protocol<T> {
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final Decoder<T> commandResultDecoder;
-    private final boolean slaveOk;
     private final FieldNameValidator fieldNameValidator;
+    private boolean slaveOk;
 
     /**
      * Construct an instance.
-     *
-     * @param database             the database
+     *  @param database             the database
      * @param command              the command
-     * @param slaveOk              if querying of non-primary replica set members is allowed
      * @param fieldNameValidator   the field name validator to apply tot the command
      * @param commandResultDecoder the decoder to use to decode the command result
      */
-    public CommandProtocol(final String database, final BsonDocument command, final boolean slaveOk,
-                           final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
+    public CommandProtocol(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                           final Decoder<T> commandResultDecoder) {
         notNull("database", database);
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
         this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
-        this.slaveOk = slaveOk;
         this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
     }
+
+    public boolean isSlaveOk() {
+        return slaveOk;
+    }
+
+    public CommandProtocol<T> slaveOk(final boolean slaveOk) {
+        this.slaveOk = slaveOk;
+        return this;
+    }
+
 
     @Override
     public T execute(final InternalConnection connection) {

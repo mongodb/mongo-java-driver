@@ -39,6 +39,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ConnectionListener connectionListener) {
         ClusterId clusterId = new ClusterId(settings.getDescription());
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
+                                                                                     settings,
                                                                                      serverSettings,
                                                                                      connectionPoolSettings,
                                                                                      streamFactory,

@@ -32,14 +32,18 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
     private final InternalConnection wrapped;
     private final ProtocolExecutor protocolExecutor;
+    private final ClusterConnectionMode clusterConnectionMode;
 
-    public DefaultServerConnection(final InternalConnection wrapped, final ProtocolExecutor protocolExecutor) {
+    public DefaultServerConnection(final InternalConnection wrapped, final ProtocolExecutor protocolExecutor,
+                                   final ClusterConnectionMode clusterConnectionMode) {
         this.wrapped = wrapped;
         this.protocolExecutor = protocolExecutor;
+        this.clusterConnectionMode = clusterConnectionMode;
     }
 
     @Override
@@ -139,14 +143,17 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
                          final FieldNameValidator fieldNameValidator,
                          final Decoder<T> commandResultDecoder) {
-        return executeProtocol(new CommandProtocol<T>(database, command, slaveOk, fieldNameValidator, commandResultDecoder));
+        return executeProtocol(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
+                               .slaveOk(getSlaveOk(slaveOk)));
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
                                            final FieldNameValidator fieldNameValidator,
                                            final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
-        executeProtocolAsync(new CommandProtocol<T>(database, command, slaveOk, fieldNameValidator, commandResultDecoder), callback);
+        executeProtocolAsync(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
+                             .slaveOk(getSlaveOk(slaveOk)),
+                             callback);
     }
 
     @Override
@@ -158,7 +165,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                     final Decoder<T> resultDecoder) {
         return executeProtocol(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
                                .tailableCursor(tailableCursor)
-                               .slaveOk(slaveOk)
+                               .slaveOk(getSlaveOk(slaveOk))
                                .oplogReplay(oplogReplay)
                                .noCursorTimeout(noCursorTimeout)
                                .awaitData(awaitData)
@@ -174,7 +181,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                final SingleResultCallback<QueryResult<T>> callback) {
         executeProtocolAsync(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
                              .tailableCursor(tailableCursor)
-                             .slaveOk(slaveOk)
+                             .slaveOk(getSlaveOk(slaveOk))
                              .oplogReplay(oplogReplay)
                              .noCursorTimeout(noCursorTimeout)
                              .awaitData(awaitData)
@@ -201,6 +208,11 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     @Override
     public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
         executeProtocolAsync(new KillCursorProtocol(cursors), callback);
+    }
+
+    private boolean getSlaveOk(final boolean slaveOk) {
+        return slaveOk
+               || (clusterConnectionMode == ClusterConnectionMode.SINGLE && wrapped.getDescription().getServerType() != SHARD_ROUTER);
     }
 
     private <T> T executeProtocol(final Protocol<T> protocol) {

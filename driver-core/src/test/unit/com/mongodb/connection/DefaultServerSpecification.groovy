@@ -35,6 +35,8 @@ import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -43,7 +45,7 @@ class DefaultServerSpecification extends Specification {
     def 'should get a connection'() {
         given:
         def connectionPool = Stub(ConnectionPool)
-        def connectionFactory = Stub(ConnectionFactory)
+        def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
@@ -51,24 +53,34 @@ class DefaultServerSpecification extends Specification {
 
         serverMonitorFactory.create(_) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
-        connectionFactory.create(_, _) >> connection
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory)
 
-        expect:
-        server.getConnection()
+        when:
+        def receivedConnection = server.getConnection()
+
+        then:
+        receivedConnection
+        1 * connectionFactory.create(internalConnection, _, mode) >> connection
+
+        where:
+        mode << [SINGLE, MULTIPLE]
     }
 
     def 'should get a connection asynchronously'() {
         given:
-        def connectionFactory = Stub(ConnectionFactory)
+        def connectionPool = Stub(ConnectionPool)
+        def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Stub(ServerMonitor)
+        def internalConnection = Stub(InternalConnection)
         def connection = Stub(Connection)
 
+        connectionPool.getAsync(_) >> {
+            it[0].onResult(internalConnection, null)
+        }
         serverMonitorFactory.create(_) >> { serverMonitor }
-        connectionFactory.create(_, _) >> connection
 
-        def server = new DefaultServer(new ServerAddress(), new TestConnectionPool(), connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory)
 
         when:
         def latch = new CountDownLatch(1)
@@ -80,12 +92,16 @@ class DefaultServerSpecification extends Specification {
         then:
         receivedConnection
         !receivedThrowable
+        1 * connectionFactory.create(_, _, mode) >> connection
+
+        where:
+        mode << [SINGLE, MULTIPLE]
     }
 
     def 'invalidate should invoke change listeners'() {
         given:
         def connectionFactory = Mock(ConnectionFactory)
-        def server = new DefaultServer(new ServerAddress(), new TestConnectionPool(),
+        def server = new DefaultServer(new ServerAddress(), SINGLE, new TestConnectionPool(),
                                        connectionFactory, new TestServerMonitorFactory())
         def stateChanged = false;
 
@@ -115,7 +131,7 @@ class DefaultServerSpecification extends Specification {
         connectionPool.get() >> { throw new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed') }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
 
         when:
         server.getConnection()
@@ -136,7 +152,7 @@ class DefaultServerSpecification extends Specification {
         def exceptionToThrow = new MongoSecurityException(createCredential('jeff', 'admin',
                                                                            '123'.toCharArray()),
                                                           'Auth failed')
-        def server = new DefaultServer(new ServerAddress(), new TestConnectionPool(exceptionToThrow), connectionFactory,
+        def server = new DefaultServer(new ServerAddress(), SINGLE, new TestConnectionPool(exceptionToThrow), connectionFactory,
                                        serverMonitorFactory)
 
         when:
@@ -163,7 +179,7 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -210,7 +226,7 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -236,7 +252,7 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -272,7 +288,7 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
         def testConnection = (TestConnection) server.getConnection()
 
         when:

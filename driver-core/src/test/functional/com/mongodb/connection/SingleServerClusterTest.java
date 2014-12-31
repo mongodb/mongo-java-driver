@@ -39,12 +39,13 @@ public class SingleServerClusterTest {
         SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
                                                                     getSSLSettings());
         ClusterId clusterId = new ClusterId();
+        ClusterSettings clusterSettings = ClusterSettings.builder()
+                                               .mode(ClusterConnectionMode.SINGLE)
+                                               .hosts(Arrays.asList(getPrimary()))
+                                               .build();
         cluster = new SingleServerCluster(clusterId,
-                                          ClusterSettings.builder()
-                                                         .mode(ClusterConnectionMode.SINGLE)
-                                                         .hosts(Arrays.asList(getPrimary()))
-                                                         .build(),
-                                          new DefaultClusterableServerFactory(clusterId, ServerSettings.builder().build(),
+                                          clusterSettings,
+                                          new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                                               streamFactory,
                                                                               streamFactory,

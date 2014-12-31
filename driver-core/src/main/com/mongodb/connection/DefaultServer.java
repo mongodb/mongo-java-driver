@@ -37,6 +37,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ConnectionPool connectionPool;
+    private final ClusterConnectionMode clusterConnectionMode;
     private final ConnectionFactory connectionFactory;
     private final ServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
@@ -45,11 +46,14 @@ class DefaultServer implements ClusterableServer {
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final ServerAddress serverAddress, final ConnectionPool connectionPool,
+    public DefaultServer(final ServerAddress serverAddress,
+                         final ClusterConnectionMode clusterConnectionMode,
+                         final ConnectionPool connectionPool,
                          final ConnectionFactory connectionFactory,
                          final ServerMonitorFactory serverMonitorFactory) {
-        this.connectionFactory = connectionFactory;
         notNull("serverMonitorFactory", serverMonitorFactory);
+        this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
+        this.connectionFactory = notNull("connectionFactory", connectionFactory);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = notNull("connectionPool", connectionPool);
         this.serverStateListener = new DefaultServerStateListener();
@@ -62,7 +66,7 @@ class DefaultServer implements ClusterableServer {
     public Connection getConnection() {
         isTrue("open", !isClosed());
         try {
-            return connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor());
+            return connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor(), clusterConnectionMode);
         } catch (MongoSecurityException e) {
             invalidate();
             throw e;
@@ -81,7 +85,7 @@ class DefaultServer implements ClusterableServer {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(connectionFactory.create(result, new DefaultServerProtocolExecutor()), null);
+                    callback.onResult(connectionFactory.create(result, new DefaultServerProtocolExecutor(), clusterConnectionMode), null);
                 }
             }
         });

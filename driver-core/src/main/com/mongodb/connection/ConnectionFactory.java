@@ -17,5 +17,5 @@
 package com.mongodb.connection;
 
 interface ConnectionFactory {
-    Connection create(InternalConnection internalConnection, ProtocolExecutor executor);
+    Connection create(InternalConnection internalConnection, ProtocolExecutor executor, ClusterConnectionMode clusterConnectionMode);
 }
