@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.gridfs.GridFSFileCodecProvider;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
@@ -46,7 +47,8 @@ class MongoClientImpl implements MongoClient {
 
     private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                                  new DocumentCodecProvider(),
-                                                                                                 new BsonValueCodecProvider()));
+                                                                                                 new BsonValueCodecProvider(),
+                                                                                                 new GridFSFileCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:
