@@ -94,8 +94,7 @@ public class GridFS {
         GridFSFile gridFSFile = new GridFSFile(chunkSize);
         gridFSFile.setId(new ObjectId());
         gridFSFile.setUploadDate(new Date());
-        injectContext(gridFSFile);
-        return gridFSFile;
+        return injectContext(gridFSFile);
     }
 
     /**
@@ -130,11 +129,12 @@ public class GridFS {
             @Override
             public void onResult(final ArrayList<GridFSFile> result, final Throwable t) {
                 if (t != null) {
-                    onResult(null, t);
+                    callback.onResult(null, t);
                 } else {
                     for (GridFSFile file : result) {
                         injectContext(file);
                     }
+                    callback.onResult(result, null);
                 }
             }
         });
