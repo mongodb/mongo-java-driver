@@ -21,10 +21,10 @@ import org.bson.io.OutputBuffer;
 import java.util.List;
 
 class InsertCommandMessage extends BaseWriteCommandMessage {
-    private final List<DBObject> documents;
+    private final List<? extends DBObject> documents;
     private final DBEncoder encoder;
 
-    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<DBObject> documents,
+    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<? extends DBObject> documents,
                                 final DBEncoder commandEncoder, final DBEncoder encoder, final MessageSettings settings) {
         super(namespace, writeConcern, commandEncoder, settings);
         this.documents = documents;

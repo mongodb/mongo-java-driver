@@ -143,7 +143,7 @@ public abstract class DBCollection {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
-    public WriteResult insert(List<DBObject> list ){
+    public WriteResult insert(List<? extends DBObject> list ){
         return insert( list, getWriteConcern() );
     }
 
@@ -157,7 +157,7 @@ public abstract class DBCollection {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
-    public WriteResult insert(List<DBObject> list, WriteConcern concern ){
+    public WriteResult insert(List<? extends DBObject> list, WriteConcern concern ){
         return insert(list, concern, getDBEncoder() );
     }
 
@@ -172,7 +172,7 @@ public abstract class DBCollection {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
-    public abstract WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
+    public abstract WriteResult insert(List<? extends DBObject> list, WriteConcern concern, DBEncoder encoder);
 
     /**
      * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
