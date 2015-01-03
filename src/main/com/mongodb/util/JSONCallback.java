@@ -35,10 +35,7 @@ import org.bson.types.ObjectId;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.SimpleTimeZone;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -134,6 +131,16 @@ public class JSONCallback extends BasicBSONCallback {
             o = !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o );
             setRoot(o);
         }
+
+        Iterator<String> itr = b.keySet().iterator();
+        while( itr.hasNext() ) {
+            String k = itr.next();
+            if( k.contains("\"") ) {
+                throw new JSONParseException("SyntaxError: Unexpected token ILLEGAL",0);
+            }
+        }
+
+
         return o;
     }
 
