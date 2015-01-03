@@ -26,7 +26,7 @@ public class GridFSFile {
     private Date uploadDate;
     private Map<String, Object> metadata;
 
-    private GridFS gridFS;
+    private GridFSImpl gridFS;
     /**
      * The actual chunks, used when creating a new file as we probably don't know the filesize until we are done...
      * However, we know the chunksize, so we can initialize a chunk and add more if needed...
@@ -184,7 +184,7 @@ public class GridFSFile {
      *
      * @param gridFS the gridFS
      */
-    void setGridFS(final GridFS gridFS) {
+    void setGridFS(final GridFSImpl gridFS) {
         this.gridFS = gridFS;
     }
 
@@ -269,12 +269,12 @@ public class GridFSFile {
 
         // calculate MD5 string
         byte[] digest = md.digest();
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < digest.length; i++) {
-            if ((0xff & digest[i]) < 0x10) {
+        StringBuilder sb = new StringBuilder();
+        for (byte aDigest : digest) {
+            if ((0xff & aDigest) < 0x10) {
                 sb.append('0');
             }
-            sb.append(Integer.toHexString(0xff & digest[i]));
+            sb.append(Integer.toHexString(0xff & aDigest));
         }
         this.md5 = sb.toString();
 
@@ -296,7 +296,7 @@ public class GridFSFile {
                             } else {
                                 // compare MD5
                                 if (!md5.equals(result)) {
-                                    // TODO log a warning? raise an exception?
+                                    // TODO log a warning? raise an exception? probably should be configurable...
                                 }
                                 // insert the file document
                                 fileCollection.insertOne(gridFSFile, callback);
@@ -316,7 +316,7 @@ public class GridFSFile {
     private void queryMD5(final SingleResultCallback<String> callback) {
         Document cmd = new Document("filemd5", id);
         cmd.put("root", gridFS.getBucketName());
-        gridFS.getDb().executeCommand(cmd, new SingleResultCallback<Document>() {
+        gridFS.getDatabase().executeCommand(cmd, new SingleResultCallback<Document>() {
 
             @Override
             public void onResult(final Document result, final Throwable t) {
