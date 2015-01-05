@@ -49,6 +49,7 @@ public class MongoClientOptions {
     private final int minConnectionPoolSize;
     private final int maxConnectionPoolSize;
     private final int threadsAllowedToBlockForConnectionMultiplier;
+    private final int serverSelectionTimeout;
     private final int maxWaitTime;
     private final int maxConnectionIdleTime;
     private final int maxConnectionLifeTime;
@@ -79,6 +80,7 @@ public class MongoClientOptions {
         minConnectionPoolSize = builder.minConnectionPoolSize;
         maxConnectionPoolSize = builder.maxConnectionPoolSize;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
+        serverSelectionTimeout = builder.serverSelectionTimeout;
         maxWaitTime = builder.maxWaitTime;
         maxConnectionIdleTime = builder.maxConnectionIdleTime;
         maxConnectionLifeTime = builder.maxConnectionLifeTime;
@@ -185,6 +187,19 @@ public class MongoClientOptions {
      */
     public int getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
+    }
+
+    /**
+     * <p>Gets the server selection timeout in milliseconds, which defines how long the driver will wait for server selection to
+     * succeed before throwing an exception.</p>
+     *
+     * <p>Default is 30,000. A value of 0 means that it will timeout immediately if no server is available.  A negative value means to
+     * wait indefinitely.</p>
+     *
+     * @return the server selection timeout in milliseconds.
+     */
+    public int getServerSelectionTimeout() {
+        return serverSelectionTimeout;
     }
 
     /**
@@ -499,6 +514,9 @@ public class MongoClientOptions {
         if (maxConnectionPoolSize != that.maxConnectionPoolSize) {
             return false;
         }
+        if (serverSelectionTimeout != that.serverSelectionTimeout) {
+            return false;
+        }
         if (maxWaitTime != that.maxWaitTime) {
             return false;
         }
@@ -552,6 +570,7 @@ public class MongoClientOptions {
         result = 31 * result + minConnectionPoolSize;
         result = 31 * result + maxConnectionPoolSize;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
+        result = 31 * result + serverSelectionTimeout;
         result = 31 * result + maxWaitTime;
         result = 31 * result + maxConnectionIdleTime;
         result = 31 * result + maxConnectionLifeTime;
@@ -583,6 +602,7 @@ public class MongoClientOptions {
                + ", minConnectionPoolSize=" + minConnectionPoolSize
                + ", maxConnectionPoolSize=" + maxConnectionPoolSize
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
+               + ", serverSelectionTimeout=" + serverSelectionTimeout
                + ", maxWaitTime=" + maxWaitTime
                + ", maxConnectionIdleTime=" + maxConnectionIdleTime
                + ", maxConnectionLifeTime=" + maxConnectionLifeTime
@@ -622,6 +642,7 @@ public class MongoClientOptions {
         private int minConnectionPoolSize;
         private int maxConnectionPoolSize = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
+        private int serverSelectionTimeout = 1000 * 30;
         private int maxWaitTime = 1000 * 60 * 2;
         private int maxConnectionIdleTime;
         private int maxConnectionLifeTime;
@@ -710,11 +731,26 @@ public class MongoClientOptions {
         }
 
         /**
+         * <p>Sets the server selection timeout in milliseconds, which defines how long the driver will wait for server selection to
+         * succeed before throwing an exception.</p>
+         *
+         * <p> A value of 0 means that it will timeout immediately if no server is available.  A negative value means to wait
+         * indefinitely.</p>
+         *
+         * @param serverSelectionTimeout the server selection timeout
+         * @return {@code this}
+         * @see com.mongodb.MongoClientOptions#getServerSelectionTimeout()
+         */
+        public Builder serverSelectionTimeout(final int serverSelectionTimeout) {
+            this.serverSelectionTimeout = serverSelectionTimeout;
+            return this;
+        }
+
+        /**
          * Sets the maximum time that a thread will block waiting for a connection.
          *
          * @param maxWaitTime the maximum wait time
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code maxWaitTime < 0}
          * @see MongoClientOptions#getMaxWaitTime()
          */
         public Builder maxWaitTime(final int maxWaitTime) {

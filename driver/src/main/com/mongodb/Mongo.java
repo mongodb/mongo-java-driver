@@ -634,6 +634,7 @@ public class Mongo {
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
                                             .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
@@ -647,6 +648,7 @@ public class Mongo {
                                             .mode(getSingleServerClusterMode(options))
                                             .hosts(asList(serverAddress))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                            .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
                                             .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())

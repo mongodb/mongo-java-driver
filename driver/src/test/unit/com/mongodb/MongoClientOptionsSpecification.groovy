@@ -50,6 +50,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getAcceptableLatencyDifference() == 15
         options.isCursorFinalizerEnabled()
         options.getMinHeartbeatFrequency() == 10
+        options.getServerSelectionTimeout() == 30000
 
         options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         options.socketSettings == SocketSettings.builder().build()
@@ -125,6 +126,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .connectionsPerHost(500)
                                         .connectTimeout(100)
                                         .socketTimeout(700)
+                                        .serverSelectionTimeout(150)
                                         .maxWaitTime(200)
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
@@ -146,6 +148,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getDescription() == 'test'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNAL_SAFE
+        options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
         options.getMaxConnectionLifeTime() == 400
