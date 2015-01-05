@@ -310,25 +310,25 @@ public interface MongoCollection<T> {
     void insertOne(T document, SingleResultCallback<Void> callback);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * @param documents the documents to insert
      * @param callback  the callback that is completed once the insert has completed
-     * @throws com.mongodb.DuplicateKeyException returned via the callback
-     * @throws com.mongodb.MongoException        returned via the callback
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @see com.mongodb.async.client.MongoCollection#bulkWrite
      */
     void insertMany(List<? extends T> documents, SingleResultCallback<Void> callback);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
      * @param callback  the callback that is completed once the insert has completed
-     * @throws com.mongodb.DuplicateKeyException returned via the callback
-     * @throws com.mongodb.MongoException        returned via the callback
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @see com.mongodb.async.client.MongoCollection#bulkWrite
      */
     void insertMany(List<? extends T> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
 

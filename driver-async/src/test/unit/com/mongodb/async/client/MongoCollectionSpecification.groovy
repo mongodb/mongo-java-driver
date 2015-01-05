@@ -61,7 +61,6 @@ import com.mongodb.operation.FindAndDeleteOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
-import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.ListIndexesOperation
 import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
@@ -528,7 +527,7 @@ class MongoCollectionSpecification extends Specification {
         thrown(CodecConfigurationException)
     }
 
-    def 'should use MixedBulkWriteOperation correctly'() {
+    def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { boolean ordered ->
@@ -544,7 +543,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         result.wasAcknowledged() == writeConcern.isAcknowledged()
-        expect operation, isTheSameAs(expectedOperation(false))
+        expect operation, isTheSameAs(expectedOperation(true))
 
         when:
         futureResultCallback = new FutureResultCallback<BulkWriteResult>()
@@ -556,10 +555,22 @@ class MongoCollectionSpecification extends Specification {
         result.wasAcknowledged() == writeConcern.isAcknowledged()
         expect operation, isTheSameAs(expectedOperation(true))
 
+        when:
+        futureResultCallback = new FutureResultCallback<BulkWriteResult>()
+        collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(false), futureResultCallback)
+        result = futureResultCallback.get()
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        result.wasAcknowledged() == writeConcern.isAcknowledged()
+        expect operation, isTheSameAs(expectedOperation(false))
+
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(INSERT, 0, []), acknowledged(INSERT, 0, [])])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
     }
 
     def 'should handle exceptions in bulkWrite correctly'() {
@@ -597,40 +608,51 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])
     }
 
-    def 'should use InsertManyOperation correctly'() {
+    def 'insertMany should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, getOptions(writeConcern), executor)
         def expectedOperation = { ordered ->
-            new InsertOperation(namespace, ordered, writeConcern,
+            new MixedBulkWriteOperation(namespace,
                                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
+                                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))],
+                                ordered, writeConcern)
         }
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
 
         when:
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], futureResultCallback)
         futureResultCallback.get()
-        def operation = executor.getWriteOperation() as InsertOperation
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(false))
+        expect operation, isTheSameAs(expectedOperation(true))
 
         when:
         futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true),
                               futureResultCallback)
         futureResultCallback.get()
-        operation = executor.getWriteOperation() as InsertOperation
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation(true))
 
+        when:
+        futureResultCallback = new FutureResultCallback<WriteConcernResult>()
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false),
+                              futureResultCallback)
+        futureResultCallback.get()
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(false))
+
         where:
         writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, false, null),
-                                                                 WriteConcernResult.acknowledged(1, false, null)])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
-                                                                 WriteConcernResult.unacknowledged()])
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
     }
 
     def 'deleteOne should use MixedBulkWriteOperationperation correctly'() {

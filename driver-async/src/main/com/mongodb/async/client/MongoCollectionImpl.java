@@ -21,7 +21,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
@@ -63,7 +62,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
@@ -427,10 +425,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests),
-                         errorHandlingCallback(new SingleResultCallback<WriteConcernResult>() {
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), this.options.getWriteConcern()),
+                         errorHandlingCallback(new SingleResultCallback<BulkWriteResult>() {
                              @Override
-                             public void onResult(final WriteConcernResult result, final Throwable t) {
+                             public void onResult(final BulkWriteResult result, final Throwable t) {
                                  callback.onResult(null, t);
                              }
                          }));

@@ -270,19 +270,17 @@ public interface MongoCollection<T> {
     void insertOne(T document);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * @param documents the documents to insert
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException        if the write failed due some other failure
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
+     * @see com.mongodb.client.MongoCollection#bulkWrite
      */
     void insertMany(List<? extends T> documents);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation

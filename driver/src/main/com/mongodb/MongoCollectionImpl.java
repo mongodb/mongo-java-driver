@@ -57,7 +57,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
@@ -357,7 +356,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), this.options.getWriteConcern()));
     }
 
     @Override
