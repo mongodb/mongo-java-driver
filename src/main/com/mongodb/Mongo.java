@@ -402,7 +402,9 @@ public class Mongo {
      * Gets this driver version.
      *
      * @return the full version string of this driver, e.g. "2.8.0"
+     * @deprecated There is no replacement for this method.
      */
+    @Deprecated
     public String getVersion(){
         return FULL_VERSION;
     }
