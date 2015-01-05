@@ -52,12 +52,10 @@ public interface Cluster extends Closeable{
      * Get a MongoDB server that matches the criteria defined by the serverSelector
      *
      * @param serverSelector a ServerSelector that defines how to select the required Server
-     * @param maxWaitTime    the maximum time to wait for a connection to the cluster to get a server
-     * @param timeUnit       the TimeUnit for the maxWaitTime
      * @return a Server that meets the requirements
      * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before a server matching the selector is available
      */
-    Server selectServer(ServerSelector serverSelector, long maxWaitTime, TimeUnit timeUnit);
+    Server selectServer(ServerSelector serverSelector);
 
     /**
      * Asynchronously gets a MongoDB server that matches the criteria defined by the serverSelector.

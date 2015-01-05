@@ -24,10 +24,7 @@ import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.ServerAddressSelector;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A simple binding where all connection sources are bound to the server specified in the constructor.
@@ -38,36 +35,26 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     private final Cluster cluster;
     private final ServerAddress serverAddress;
     private final ReadPreference readPreference;
-    private final long maxWaitTimeMS;
 
     /**
      * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
-     *
      * @param cluster       a non-null  Cluster which will be used to select a server to bind to
      * @param serverAddress a non-null  address of the server to bind to
-     * @param maxWaitTime   the maximum time to wait for a connection to become available.
-     * @param timeUnit      a non-null  TimeUnit for the maxWaitTime
      */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final long maxWaitTime, final TimeUnit timeUnit) {
-        this(cluster, serverAddress, ReadPreference.primary(), maxWaitTime, timeUnit);
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress) {
+        this(cluster, serverAddress, ReadPreference.primary());
     }
 
     /**
      * Creates an instance.
-     *
      * @param cluster        a non-null  Cluster which will be used to select a server to bind to
      * @param serverAddress  a non-null  address of the server to bind to
      * @param readPreference a non-null  ReadPreference for read operations
-     * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       a non-null  TimeUnit for the maxWaitTime
      */
-    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference,
-                               final long maxWaitTime, final TimeUnit timeUnit) {
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference) {
         this.cluster = notNull("cluster", cluster);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.readPreference = notNull("readPreference", readPreference);
-        notNull("timeUnit", timeUnit);
-        this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
     @Override
@@ -96,7 +83,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         private SingleServerBindingConnectionSource() {
             SingleServerBinding.this.retain();
-            server = cluster.selectServer(new ServerAddressSelector(serverAddress), maxWaitTimeMS, MILLISECONDS);
+            server = cluster.selectServer(new ServerAddressSelector(serverAddress));
         }
 
         @Override
@@ -106,7 +93,7 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
 
         @Override
         public Connection getConnection() {
-            return cluster.selectServer(new ServerAddressSelector(serverAddress), maxWaitTimeMS, MILLISECONDS).getConnection();
+            return cluster.selectServer(new ServerAddressSelector(serverAddress)).getConnection();
         }
 
         @Override

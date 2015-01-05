@@ -54,7 +54,6 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class FindOperationSpecification extends OperationFunctionalSpecification {
 
@@ -266,7 +265,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should read from a secondary'() {
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-        def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
+        def binding = new ClusterBinding(getCluster(), ReadPreference.secondary())
 
         expect:
         findOperation.execute(binding) != null // if it didn't throw, the query was executed

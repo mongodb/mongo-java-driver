@@ -324,11 +324,15 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should throw from getServer if cluster is closed'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer]).build(), factory, CLUSTER_LISTENER)
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder()
+                                                                        .serverSelectionTimeout(100, MILLISECONDS)
+                                                                        .hosts([firstServer])
+                                                                        .build(),
+                                             factory, CLUSTER_LISTENER)
         cluster.close()
 
         when:
-        cluster.selectServer(new PrimaryServerSelector(), 100, MILLISECONDS)
+        cluster.selectServer(new PrimaryServerSelector())
 
         then:
         thrown(IllegalStateException)

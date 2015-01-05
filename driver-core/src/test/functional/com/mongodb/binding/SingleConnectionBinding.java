@@ -68,9 +68,9 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         notNull("cluster", cluster);
         notNull("timeUnit", timeUnit);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new PrimaryServerSelector(), maxWaitTime, timeUnit);
+        writeServer = cluster.selectServer(new PrimaryServerSelector());
         writeConnection = writeServer.getConnection();
-        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTime, timeUnit);
+        readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
         readConnection = readServer.getConnection();
     }
 

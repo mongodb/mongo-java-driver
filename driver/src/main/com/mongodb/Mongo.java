@@ -707,7 +707,7 @@ public class Mongo {
     }
 
     private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
-        return new ClusterBinding(getCluster(), readPreference, options.getMaxWaitTime(), MILLISECONDS);
+        return new ClusterBinding(getCluster(), readPreference);
     }
 
     void addOrphanedCursor(final ServerCursor serverCursor) {
@@ -760,7 +760,7 @@ public class Mongo {
     private void cleanCursors() {
         ServerCursor cur;
         while ((cur = orphanedCursors.poll()) != null) {
-            ReadWriteBinding binding = new SingleServerBinding(cluster, cur.getAddress(), options.getMaxWaitTime(), MILLISECONDS);
+            ReadWriteBinding binding = new SingleServerBinding(cluster, cur.getAddress());
             try {
                 ConnectionSource source = binding.getReadConnectionSource();
                 try {

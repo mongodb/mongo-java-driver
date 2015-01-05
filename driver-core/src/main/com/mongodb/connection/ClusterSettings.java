@@ -146,6 +146,9 @@ public final class ClusterSettings {
          * Sets the timeout to apply when selecting a server.  If the timeout expires before a server is found to handle a request, a
          * {@link com.mongodb.MongoTimeoutException} will be thrown.  The default value is 30 seconds.
          *
+         * <p> A value of 0 means that it will timeout immediately if no server is available.  A negative value means to wait
+         * indefinitely.</p>
+         *
          * @param serverSelectionTimeout the timeout
          * @param timeUnit the time unit
          * @return this
@@ -255,7 +258,7 @@ public final class ClusterSettings {
      * Cluster.selectServer}.
      *
      * @return the server selector, which may be null
-     * @see Cluster#selectServer(ServerSelector, long, java.util.concurrent.TimeUnit)
+     * @see Cluster#selectServer(com.mongodb.selector.ServerSelector)
      */
     public ServerSelector getServerSelector() {
         return serverSelector;
@@ -264,6 +267,9 @@ public final class ClusterSettings {
     /**
      * Gets the timeout to apply when selecting a server.  If the timeout expires before a server is found to
      * handle a request, a {@link com.mongodb.MongoTimeoutException} will be thrown.  The default value is 30 seconds.
+     *
+     * <p> A value of 0 means that it will timeout immediately if no server is available.  A negative value means to wait
+     * indefinitely.</p>
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit

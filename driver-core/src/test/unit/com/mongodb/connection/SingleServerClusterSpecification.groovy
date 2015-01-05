@@ -143,12 +143,14 @@ class SingleServerClusterSpecification extends Specification {
     def 'getServer should throw when cluster is incompatible'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,
-                                              ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer)).build(),
+                                              ClusterSettings.builder().mode(SINGLE).hosts(Arrays.asList(firstServer))
+                                                             .serverSelectionTimeout(1, SECONDS)
+                                                             .build(),
                                               factory, CLUSTER_LISTENER)
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        cluster.selectServer(new PrimaryServerSelector())
 
         then:
         thrown(MongoIncompatibleDriverException)

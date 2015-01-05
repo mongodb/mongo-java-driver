@@ -138,7 +138,7 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary(), 20, SECONDS);
+        return new ClusterBinding(cluster, ReadPreference.primary());
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {

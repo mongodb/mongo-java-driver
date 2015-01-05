@@ -72,7 +72,7 @@ public class SingleServerClusterTest {
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 return clusterDescription.getPrimaries();
             }
-        }, 10, TimeUnit.SECONDS);
+        });
         assertTrue(server.getDescription().isOk());
     }
 

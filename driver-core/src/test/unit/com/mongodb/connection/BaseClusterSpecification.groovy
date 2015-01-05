@@ -52,6 +52,7 @@ class BaseClusterSpecification extends Specification {
         def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
                                                       .hosts([firstServer, secondServer, thirdServer])
+                                                      .serverSelectionTimeout(1, SECONDS)
                                                       .serverSelector(new ServerAddressSelector(firstServer))
                                                       .build(),
                                              factory, CLUSTER_LISTENER)
@@ -60,13 +61,14 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary()), 1, SECONDS).description.address == firstServer
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.secondary())).description.address == firstServer
     }
 
     def 'should use server selector passed to selectServer if server selector in cluster settings is null'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
+                                                      .serverSelectionTimeout(1, SECONDS)
                                                       .hosts([firstServer, secondServer, thirdServer])
                                                       .build(),
                                              factory, CLUSTER_LISTENER)
@@ -75,7 +77,7 @@ class BaseClusterSpecification extends Specification {
         factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
 
         expect:
-        cluster.selectServer(new ServerAddressSelector(firstServer), 1, SECONDS).description.address == firstServer
+        cluster.selectServer(new ServerAddressSelector(firstServer)).description.address == firstServer
     }
 
     def 'should timeout with useful message'() {
@@ -83,6 +85,7 @@ class BaseClusterSpecification extends Specification {
         def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
                                                       .hosts([firstServer, secondServer])
+                                                      .serverSelectionTimeout(1, MILLISECONDS)
                                                       .build(),
                                              factory, CLUSTER_LISTENER)
 
@@ -102,7 +105,7 @@ class BaseClusterSpecification extends Specification {
         '{address=localhost:27018, type=UNKNOWN, state=CONNECTING}]'
 
         when:
-        cluster.selectServer(new PrimaryServerSelector(), 1, MILLISECONDS)
+        cluster.selectServer(new PrimaryServerSelector())
 
         then:
         e = thrown(MongoTimeoutException)

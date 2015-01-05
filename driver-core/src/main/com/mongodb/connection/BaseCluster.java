@@ -47,7 +47,6 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 abstract class BaseCluster implements Cluster {
 
@@ -80,9 +79,8 @@ abstract class BaseCluster implements Cluster {
         return description;
     }
 
-    // TODO: remove maxWaitTime and use ClusterSettings.serverSelectionTimeout instead
     @Override
-    public Server selectServer(final ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit) {
+    public Server selectServer(final ServerSelector serverSelector) {
         isTrue("open", !isClosed());
 
         try {
@@ -94,7 +92,7 @@ abstract class BaseCluster implements Cluster {
             boolean selectionFailureLogged = false;
 
             long startTimeNanos = System.nanoTime();
-            long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long endTimeNanos = startTimeNanos + getUseableTimeoutInNanoseconds();
             long curTimeNanos = startTimeNanos;
 
             while (true) {
@@ -105,11 +103,11 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (curTimeNanos > endTimeNanos) {
-                    throw createTimeoutException(serverSelector, maxWaitTime, timeUnit, curDescription);
+                    throw createTimeoutException(serverSelector, curDescription);
                 }
 
                 if (!selectionFailureLogged) {
-                    logServerSelectionFailure(serverSelector, maxWaitTime, timeUnit, curDescription);
+                    logServerSelectionFailure(serverSelector, curDescription);
                     selectionFailureLogged = true;
                 }
 
@@ -134,8 +132,7 @@ abstract class BaseCluster implements Cluster {
         isTrue("open", !isClosed());
 
         ServerSelectionRequest request = new ServerSelectionRequest(serverSelector, getCompositeServerSelector(serverSelector),
-                                                                    settings.getServerSelectionTimeout(NANOSECONDS),
-                                                                    callback);
+                                                                    getUseableTimeoutInNanoseconds(), callback);
 
         CountDownLatch currentPhase = phase.get();
         ClusterDescription currentDescription = description;
@@ -236,6 +233,13 @@ abstract class BaseCluster implements Cluster {
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description));
     }
 
+    private long getUseableTimeoutInNanoseconds() {
+        if (settings.getServerSelectionTimeout(NANOSECONDS) < 0) {
+            return Long.MAX_VALUE;
+        }
+        return settings.getServerSelectionTimeout(NANOSECONDS);
+    }
+
     private long getMinWaitTimeNanos() {
         return serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS);
     }
@@ -257,13 +261,12 @@ abstract class BaseCluster implements Cluster {
                     return true;
                 }
                 if (prevPhase == null) {
-                    logServerSelectionFailure(request.originalSelector, settings.getServerSelectionTimeout(MILLISECONDS), MILLISECONDS,
-                                              description);
+                    logServerSelectionFailure(request.originalSelector, description);
                 }
             }
 
             if (request.timedOut()) {
-                request.onResult(null, createTimeoutException(request.originalSelector, 5, SECONDS, description));
+                request.onResult(null, createTimeoutException(request.originalSelector, description));
                 return true;
             }
 
@@ -274,11 +277,15 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    private void logServerSelectionFailure(final ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit,
-                                           final ClusterDescription curDescription) {
+    private void logServerSelectionFailure(final ServerSelector serverSelector, final ClusterDescription curDescription) {
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
-                               serverSelector, curDescription, MILLISECONDS.convert(maxWaitTime, timeUnit)));
+            if (settings.getServerSelectionTimeout(MILLISECONDS) < 0) {
+                LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting indefinitely.",
+                                   serverSelector, curDescription));
+            } else {
+                LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
+                                   serverSelector, curDescription, settings.getServerSelectionTimeout(MILLISECONDS)));
+            }
         }
     }
 
@@ -344,12 +351,10 @@ abstract class BaseCluster implements Cluster {
                                                     curDescription);
     }
 
-    private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector, final long maxWaitTime,
-                                                         final TimeUnit timeUnit,
-                                                         final ClusterDescription curDescription) {
+    private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector, final ClusterDescription curDescription) {
         return new MongoTimeoutException(format("Timed out after %d ms while waiting for a server that matches %s. "
                                                 + "Client view of cluster state is %s",
-                                                MILLISECONDS.convert(maxWaitTime, timeUnit), serverSelector,
+                                                settings.getServerSelectionTimeout(MILLISECONDS), serverSelector,
                                                 curDescription.getShortDescription()));
     }
 
