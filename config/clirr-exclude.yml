@@ -117,6 +117,7 @@ members:
   - heartbeatThreadCount(int)
 
   com.mongodb.Mongo:
+  - getVersion()                                   # JAVA-1606
   - getMinorVersion()                              # JAVA-882
   - getMajorVersion()                              # JAVA-882
   - debugString()                                  # JAVA-882

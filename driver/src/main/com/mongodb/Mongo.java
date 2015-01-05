@@ -77,7 +77,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @ThreadSafe
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
-    private static final String VERSION = "3.0.0-SNAPSHOT";
 
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<String, DB>();
 
@@ -348,15 +347,6 @@ public class Mongo {
     }
 
     /**
-     * Gets this driver version.
-     *
-     * @return the full version string, e.g. "3.0.0"
-     */
-    public String getVersion() {
-        return VERSION;
-    }
-
-    /**
      * Gets a list of all server addresses used when this Mongo was created
      *
      * @return list of server addresses
@@ -589,8 +579,7 @@ public class Mongo {
     @Override
     public String toString() {
         return "Mongo{"
-               + "VERSION='" + VERSION + '\''
-               + ", options=" + getOptions()
+               + "options=" + getMongoClientOptions()
                + '}';
     }
 
