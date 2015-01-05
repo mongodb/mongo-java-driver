@@ -22,7 +22,7 @@ package com.mongodb.client.model;
  * @since 3.0
  */
 public final class BulkWriteOptions {
-    private boolean ordered;
+    private boolean ordered = true;
 
     /**
      * If true, then when a write fails, return without performing the remaining

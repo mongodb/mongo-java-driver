@@ -23,7 +23,7 @@ package com.mongodb.client.model;
  * @mongodb.driver.manual tutorial/insert-documents/ Insert
  */
 public final class InsertManyOptions {
-    private boolean ordered;
+    private boolean ordered = true;
 
     /**
      * Gets whether the documents should be inserted in the order provided, stopping on the first failed insertion. The default is true.
