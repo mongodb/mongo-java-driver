@@ -78,22 +78,30 @@ public class JsonPoweredClusterTest {
     private void assertServers(final BsonDocument servers) {
         for (String serverName : servers.keySet()) {
             assertServer(serverName, servers.getDocument(serverName));
-
         }
     }
 
     private void assertServer(final String serverName, final BsonDocument expectedServerDescriptionDocument) {
-        ServerAddress serverAddress = new ServerAddress(serverName);
-        String type = expectedServerDescriptionDocument.getString("type").getValue();
-        ServerDescription serverDescription = cluster.getDescription().getByServerAddress(serverAddress);
+        ServerDescription serverDescription = getServerDescription(serverName);
 
         assertNotNull(serverDescription);
-        assertEquals(getServerType(type), serverDescription.getType());
+        assertEquals(getServerType(expectedServerDescriptionDocument.getString("type").getValue()), serverDescription.getType());
 
         if (expectedServerDescriptionDocument.isString("setName")) {
             assertNotNull(serverDescription.getSetName());
             assertEquals(serverDescription.getSetName(), expectedServerDescriptionDocument.getString("setName").getValue());
         }
+    }
+
+    private ServerDescription getServerDescription(final String serverName) {
+        ServerDescription serverDescription  = null;
+        for (ServerDescription cur: cluster.getDescription().getAll()) {
+            if (cur.getAddress().equals(new ServerAddress(serverName))) {
+                serverDescription = cur;
+                break;
+            }
+        }
+        return serverDescription;
     }
 
     private ServerType getServerType(final String serverTypeString) {
@@ -161,7 +169,7 @@ public class JsonPoweredClusterTest {
         factory.sendNotification(serverAddress, serverDescription);
     }
 
-    @Parameters
+    @Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
     public static Collection<Object[]> data() throws URISyntaxException {
         List<File> files = getTestFiles();
         List<Object[]> data = new ArrayList<Object[]>();
@@ -210,7 +218,7 @@ public class JsonPoweredClusterTest {
 
     private static List<File> getTestFiles() throws URISyntaxException {
         List<File> files = new ArrayList<File>();
-        addFilesFromDirectory(new java.io.File(JsonPoweredClusterTest.class.getResource("/com/mongodb/connection").toURI()), files);
+        addFilesFromDirectory(new File(JsonPoweredClusterTest.class.getResource("/server-discovery-and-monitoring").toURI()), files);
         return files;
     }
 
