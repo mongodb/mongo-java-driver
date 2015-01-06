@@ -55,10 +55,8 @@ public class JsonPoweredClusterTest {
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory();
     private final BsonDocument definition;
     private final Cluster cluster;
-    private final String fileName;
 
-    public JsonPoweredClusterTest(final File file, final String fileName) throws IOException {
-        this.fileName = fileName;
+    public JsonPoweredClusterTest(final File file) throws IOException {
         definition = getTestDocument(file);
         cluster = getCluster(definition.getString("uri").getValue());
     }
@@ -174,7 +172,7 @@ public class JsonPoweredClusterTest {
         List<File> files = getTestFiles();
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : files) {
-            data.add(new Object[]{file, file.getName().substring(0, file.getName().indexOf('.'))});
+            data.add(new Object[]{file});
         }
         return data;
     }
