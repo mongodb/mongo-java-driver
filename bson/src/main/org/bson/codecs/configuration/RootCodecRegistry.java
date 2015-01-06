@@ -19,7 +19,6 @@ package org.bson.codecs.configuration;
 import org.bson.codecs.Codec;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class RootCodecRegistry implements CodecRegistry {
      * @param codecProviders the list of codec providers
      */
     public RootCodecRegistry(final List<? extends CodecProvider> codecProviders) {
-        this(new ArrayList<CodecProvider>(codecProviders), Collections.<Class<?>, Codec<?>>emptyMap());
+        this(new ArrayList<CodecProvider>(codecProviders), new HashMap<Class<?>, Codec<?>>());
     }
 
     private RootCodecRegistry(final List<CodecProvider> codecProviders, final Map<Class<?>, Codec<?>> codecMap) {
@@ -67,6 +66,14 @@ public class RootCodecRegistry implements CodecRegistry {
         Map<Class<?>, Codec<?>> newCodecMap = new HashMap<Class<?>, Codec<?>>(codecMap);
         newCodecMap.put(codec.getEncoderClass(), codec);
         return new RootCodecRegistry(codecProviders, newCodecMap);
+    }
+
+    /**
+     * Register a new codec.
+     * @param codec the codec
+     */
+    public void register(final Codec codec) {
+        codecMap.put(codec.getEncoderClass(), codec);
     }
 
     /**
