@@ -16,8 +16,8 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
 import org.bson.Document;
@@ -86,7 +86,7 @@ public final class Fixture {
 
     public static boolean isSharded() {
         getMongoClient();
-        return mongoClient.getCluster().getDescription(10, SECONDS).getType() == SHARDED;
+        return mongoClient.getCluster().getDescription().getType() == SHARDED;
     }
 
     public static void dropDatabase(final String name) throws InterruptedException, ExecutionException, TimeoutException {

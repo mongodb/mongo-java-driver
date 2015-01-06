@@ -96,7 +96,7 @@ class BaseClusterSpecification extends Specification {
                                                                .exception(new MongoInternalException('oops'))
                                                                .build())
 
-        cluster.getDescription(1, MILLISECONDS)
+        cluster.getDescription()
 
         then:
         def e = thrown(MongoTimeoutException)

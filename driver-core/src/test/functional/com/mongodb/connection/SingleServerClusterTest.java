@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getCredentialList;
 import static com.mongodb.ClusterFixture.getPrimary;
@@ -62,7 +61,7 @@ public class SingleServerClusterTest {
 
     @Test
     public void shouldGetDescription() {
-        assertNotNull(cluster.getDescription(10, TimeUnit.SECONDS));
+        assertNotNull(cluster.getDescription());
     }
 
     @Test

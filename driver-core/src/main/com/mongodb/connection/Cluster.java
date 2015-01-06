@@ -21,7 +21,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.selector.ServerSelector;
 
 import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
@@ -31,22 +30,12 @@ import java.util.concurrent.TimeUnit;
 public interface Cluster extends Closeable{
 
     /**
-     * Get the description of this cluster.  This method will return the current cluster description even if the cluster type is not yet
-     * known.
-     *
-     * @return a ClusterDescription representing the current state of the cluster
-     */
-    ClusterDescription getDescription();
-
-    /**
      * Get the description of this cluster.  This method will not return normally until the cluster type is known.
      *
-     * @param maxWaitTime the maximum time to wait for a connection to the cluster to get the description
-     * @param timeUnit    the TimeUnit for the maxWaitTime
      * @return a ClusterDescription representing the current state of the cluster
      * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
      */
-    ClusterDescription getDescription(long maxWaitTime, TimeUnit timeUnit);
+    ClusterDescription getDescription();
 
     /**
      * Get a MongoDB server that matches the criteria defined by the serverSelector

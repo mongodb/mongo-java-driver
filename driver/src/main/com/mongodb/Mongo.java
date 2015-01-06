@@ -53,7 +53,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ReadPreference.primary;
@@ -372,7 +371,7 @@ public class Mongo {
     }
 
     private ClusterDescription getClusterDescription() {
-        return cluster.getDescription(options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
+        return cluster.getDescription();
     }
 
     /**
@@ -408,7 +407,8 @@ public class Mongo {
      * @return replica set status information
      */
     public ReplicaSetStatus getReplicaSetStatus() {
-        return getClusterDescription().getType() == REPLICA_SET && getClusterDescription().getConnectionMode() == MULTIPLE
+        ClusterDescription clusterDescription = getClusterDescription();
+        return clusterDescription.getType() == REPLICA_SET && clusterDescription.getConnectionMode() == MULTIPLE
                ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
     }
 

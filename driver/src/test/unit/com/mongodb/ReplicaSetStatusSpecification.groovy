@@ -22,8 +22,6 @@ import com.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Subject
 
-import static java.util.concurrent.TimeUnit.SECONDS
-
 class ReplicaSetStatusSpecification extends Specification {
     private final ClusterDescription clusterDescription = Mock();
     private final Cluster cluster = Mock();
@@ -32,7 +30,7 @@ class ReplicaSetStatusSpecification extends Specification {
     private final ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cluster);
 
     def setup() {
-        cluster.getDescription(10, SECONDS) >> clusterDescription;
+        cluster.getDescription() >> clusterDescription;
     }
 
     def 'should return replica set name'() {

@@ -33,7 +33,7 @@ import spock.lang.Subject
 class MongoSpecification extends Specification {
     private final ClusterDescription clusterDescription = Mock()
     private final Cluster cluster = Mock() {
-        getDescription(_, _) >> clusterDescription
+        getDescription() >> clusterDescription
     }
 
     @Subject

@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -72,11 +71,6 @@ abstract class BaseCluster implements Cluster {
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = notNull("clusterListener", clusterListener);
         clusterListener.clusterOpened(new ClusterEvent(clusterId));
-    }
-
-    @Override
-    public ClusterDescription getDescription() {
-        return description;
     }
 
     @Override
@@ -143,7 +137,7 @@ abstract class BaseCluster implements Cluster {
     }
 
     @Override
-    public ClusterDescription getDescription(final long maxWaitTime, final TimeUnit timeUnit) {
+    public ClusterDescription getDescription() {
         isTrue("open", !isClosed());
 
         try {
@@ -153,7 +147,7 @@ abstract class BaseCluster implements Cluster {
             boolean selectionFailureLogged = false;
 
             long startTimeNanos = System.nanoTime();
-            long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long endTimeNanos = startTimeNanos + getUseableTimeoutInNanoseconds();
             long curTimeNanos = startTimeNanos;
 
             while (curDescription.getType() == ClusterType.UNKNOWN) {
@@ -161,14 +155,18 @@ abstract class BaseCluster implements Cluster {
                 if (curTimeNanos > endTimeNanos) {
                     throw new MongoTimeoutException(format("Timed out after %d ms while waiting to connect. Client view of cluster state "
                                                            + "is %s",
-                                                           MILLISECONDS.convert(maxWaitTime, timeUnit),
+                                                           settings.getServerSelectionTimeout(MILLISECONDS),
                                                            curDescription.getShortDescription()));
                 }
 
                 if (!selectionFailureLogged) {
                     if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
-                                           MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                        if (settings.getServerSelectionTimeout(MILLISECONDS) < 0) {
+                            LOGGER.info(format("Cluster description not yet available. Waiting indefinitely."));
+                        } else {
+                            LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
+                                               settings.getServerSelectionTimeout(MILLISECONDS)));
+                        }
                     }
                     selectionFailureLogged = true;
                 }
@@ -231,6 +229,10 @@ abstract class BaseCluster implements Cluster {
 
     protected void fireChangeEvent() {
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description));
+    }
+
+    ClusterDescription getCurrentDescription() {
+        return description;
     }
 
     private long getUseableTimeoutInNanoseconds() {

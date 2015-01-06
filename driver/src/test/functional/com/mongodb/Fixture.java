@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for the acceptance tests.  Considering replacing with MongoClientTestBase.
@@ -88,10 +87,10 @@ public final class Fixture {
 
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
-        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription(10, TimeUnit.SECONDS).getPrimaries();
+        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {
             Thread.sleep(100);
-            serverDescriptions = mongoClient.getCluster().getDescription(10, TimeUnit.SECONDS).getPrimaries();
+            serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
         }
         return serverDescriptions.get(0).getAddress();
     }

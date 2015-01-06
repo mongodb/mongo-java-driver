@@ -22,7 +22,6 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Keeps replica set status.
@@ -79,7 +78,7 @@ public class ReplicaSetStatus {
     }
 
     private ClusterDescription getClusterDescription() {
-        return cluster.getDescription(10, TimeUnit.SECONDS);
+        return cluster.getDescription();
     }
 
     @Override

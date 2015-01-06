@@ -94,15 +94,15 @@ public final class ClusterFixture {
     }
 
     public static boolean clusterIsType(final ClusterType clusterType) {
-        return getCluster().getDescription(20, SECONDS).getType() == clusterType;
+        return getCluster().getDescription().getType() == clusterType;
     }
 
     public static ServerVersion getServerVersion() {
-        return getCluster().getDescription(20, SECONDS).getAny().get(0).getVersion();
+        return getCluster().getDescription().getAny().get(0).getVersion();
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        ClusterDescription clusterDescription = getCluster().getDescription(20, SECONDS);
+        ClusterDescription clusterDescription = getCluster().getDescription();
         int retries = 0;
         while (clusterDescription.getAny().isEmpty() && retries <= 3) {
             try {
@@ -111,7 +111,7 @@ public final class ClusterFixture {
             } catch (InterruptedException e) {
                 throw new RuntimeException("Interrupted", e);
             }
-            clusterDescription = getCluster().getDescription(20, SECONDS);
+            clusterDescription = getCluster().getDescription();
         }
         if (clusterDescription.getAny().isEmpty()) {
             throw new RuntimeException("There are no servers available in " + clusterDescription);
@@ -206,10 +206,10 @@ public final class ClusterFixture {
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription(20, SECONDS).getPrimaries();
+        List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {
             sleep(100);
-            serverDescriptions = getCluster().getDescription(20, SECONDS).getPrimaries();
+            serverDescriptions = getCluster().getDescription().getPrimaries();
         }
         return serverDescriptions.get(0).getAddress();
     }
@@ -219,12 +219,12 @@ public final class ClusterFixture {
     }
 
     public static boolean isDiscoverableReplicaSet() {
-        return getCluster().getDescription(20, SECONDS).getType() == REPLICA_SET
-               && getCluster().getDescription(20, SECONDS).getConnectionMode() == MULTIPLE;
+        return getCluster().getDescription().getType() == REPLICA_SET
+               && getCluster().getDescription().getConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
-        return getCluster().getDescription(20, SECONDS).getType() == SHARDED;
+        return getCluster().getDescription().getType() == SHARDED;
     }
 
     public static boolean isAuthenticated() {

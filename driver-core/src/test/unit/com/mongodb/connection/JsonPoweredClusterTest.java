@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
@@ -54,7 +55,7 @@ public class JsonPoweredClusterTest {
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory();
     private final BsonDocument definition;
-    private final Cluster cluster;
+    private final BaseCluster cluster;
 
     public JsonPoweredClusterTest(final File file) throws IOException {
         definition = getTestDocument(getFileAsString(file));
@@ -93,7 +94,7 @@ public class JsonPoweredClusterTest {
 
     private ServerDescription getServerDescription(final String serverName) {
         ServerDescription serverDescription  = null;
-        for (ServerDescription cur: cluster.getDescription().getAll()) {
+        for (ServerDescription cur: cluster.getCurrentDescription().getAll()) {
             if (cur.getAddress().equals(new ServerAddress(serverName))) {
                 serverDescription = cur;
                 break;
@@ -133,17 +134,17 @@ public class JsonPoweredClusterTest {
             assertEquals(SingleServerCluster.class, cluster.getClass());
         } else if (topologyType.equals("ReplicaSetWithPrimary")) {
             assertEquals(MultiServerCluster.class, cluster.getClass());
-            assertEquals(REPLICA_SET, cluster.getDescription().getType());
-            assertEquals(1, cluster.getDescription().getPrimaries().size());
+            assertEquals(REPLICA_SET, cluster.getCurrentDescription().getType());
+            assertEquals(1, cluster.getCurrentDescription().getPrimaries().size());
         } else if (topologyType.equals("ReplicaSetNoPrimary")) {
             assertEquals(MultiServerCluster.class, cluster.getClass());
-            assertEquals(REPLICA_SET, cluster.getDescription().getType());
-            assertEquals(0, cluster.getDescription().getPrimaries().size());
+            assertEquals(REPLICA_SET, cluster.getCurrentDescription().getType());
+            assertEquals(0, cluster.getCurrentDescription().getPrimaries().size());
         } else if (topologyType.equals("Sharded")) {
             assertEquals(MultiServerCluster.class, cluster.getClass());
-            assertEquals(SHARDED, cluster.getDescription().getType());
+            assertEquals(SHARDED, cluster.getCurrentDescription().getType());
         } else if (topologyType.equals("Unknown")) {
-            assertEquals(UNKNOWN, cluster.getDescription().getType());
+            assertEquals(UNKNOWN, cluster.getCurrentDescription().getType());
         } else {
             throw new UnsupportedOperationException("No handler for topology type " + topologyType);
         }
@@ -195,10 +196,11 @@ public class JsonPoweredClusterTest {
         return stringBuilder.toString();
     }
 
-    Cluster getCluster(final String uri) {
+    BaseCluster getCluster(final String uri) {
         ConnectionString connectionString = new ConnectionString(uri);
 
         ClusterSettings settings = ClusterSettings.builder()
+                                                  .serverSelectionTimeout(1, TimeUnit.SECONDS)
                                                   .hosts(getHosts(connectionString))
                                                   .mode(getMode(connectionString))
                                                   .requiredReplicaSetName(connectionString.getRequiredReplicaSetName())
