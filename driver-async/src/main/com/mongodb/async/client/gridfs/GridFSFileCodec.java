@@ -1,27 +1,35 @@
 package com.mongodb.async.client.gridfs;
 
+import com.mongodb.assertions.Assertions;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.assertions.Assertions;
+import org.bson.codecs.BsonTypeClassMap;
+import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
 
     private static final String ID_FIELD_NAME = "_id";
 
     private final CodecRegistry registry;
+    private final BsonTypeClassMap bsonTypeClassMap;
 
     public GridFSFileCodec(final CodecRegistry registry) {
         this.registry = Assertions.notNull("registry", registry);
+        this.bsonTypeClassMap = new BsonTypeClassMap();
     }
 
     @Override
@@ -68,12 +76,29 @@ public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
                 gridFSFile.setMd5(reader.readString());
             } else if ("uploadDate".equals(fieldName)) {
                 gridFSFile.setUploadDate(new Date(reader.readDateTime()));
+            } else if ("metadata".equals(fieldName)) {
+                Map<String, Object> metadata = new HashMap<String, Object>();
+                reader.readStartDocument();
+                BsonType embeddedType;
+                while ((embeddedType = reader.readBsonType()) != BsonType.END_OF_DOCUMENT) {
+                    Codec<?> codec = registry.get(bsonTypeClassMap.get(embeddedType));
+                    String name = reader.readName();
+                    metadata.put(name, codec.decode(reader, decoderContext));
+                }
+                reader.readEndDocument();
+                gridFSFile.setMetadata(metadata);
+            } else if ("aliases".equals(fieldName)) {
+                List<String> aliases = new ArrayList<String>();
+                reader.readStartArray();
+                while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                    aliases.add(reader.readString());
+                }
+                reader.readEndArray();
+                gridFSFile.setAliases(aliases);
             } else {
                 reader.skipValue();
             }
         }
-        //TODO metadata
-        //TODO alias
         reader.readEndDocument();
         return gridFSFile;
     }
@@ -96,9 +121,28 @@ public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
             writer.writeString("md5", gridFSFile.getMd5());
         }
         writer.writeDateTime("uploadDate", gridFSFile.getUploadDate().getTime());
+
+        if (gridFSFile.getMetadata() != null) {
+            writer.writeStartDocument("metadata");
+            for (String key : gridFSFile.getMetadata().keySet()) {
+                Object value = gridFSFile.getMetadata().get(key);
+                Codec codec = registry.get(value.getClass());
+                writer.writeName(key);
+                codec.encode(writer, value, encoderContext);
+            }
+            writer.writeEndDocument();
+        }
+
+        if (gridFSFile.getAliases() != null) {
+            writer.writeStartArray("aliases");
+            for (String alias : gridFSFile.getAliases()) {
+                writer.writeString(alias);
+            }
+            writer.writeEndArray();
+        }
+
         writer.writeEndDocument();
-        //TODO metadata
-        //TODO alias
+
     }
 
     @Override

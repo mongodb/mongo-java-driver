@@ -10,6 +10,16 @@ import java.util.List;
 public interface GridFS {
 
     /**
+     * Creates the required index on the chunks collection used by this GridFS instance.
+     *
+     * The created index is a unique compound index with keys "files_id" and "n".
+     * Calling this method is optional if the index has already been created manually.
+     *
+     * @param callback callback that is completed when the result of creating the index is available.
+     */
+    void createIndex(final SingleResultCallback<Void> callback);
+
+    /**
      * Instantiate a new GridFSFile.
      *
      * @return GridFSFile
@@ -29,9 +39,10 @@ public interface GridFS {
      *
      * @param filter a document describing the query filter, which may not be null. This can be of any type for which
      *               a {@code Codec} is registered
+     * @param sort the sort criteria, which may be null.
      * @param callback callback that is completed when the result is available
      */
-    void find(Object filter, SingleResultCallback<List<GridFSFile>> callback);
+    void find(Object filter, Object sort, SingleResultCallback<List<GridFSFile>> callback);
 
     /**
      * Delete a GridFSFile by its id.

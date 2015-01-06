@@ -2,6 +2,7 @@ package com.mongodb.async.client.gridfs;
 
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollection;
+import com.mongodb.util.Util;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -17,16 +18,17 @@ import java.util.Map;
 public class GridFSFile {
 
     private ObjectId id;
-    //TODO aliases
     private int chunkSize;
     private String contentType;
     private String filename;
     private long length = 0;
     private String md5;
     private Date uploadDate;
+    private List<String> aliases;
     private Map<String, Object> metadata;
 
     private GridFSImpl gridFS;
+
     /**
      * The actual chunks, used when creating a new file as we probably don't know the filesize until we are done...
      * However, we know the chunksize, so we can initialize a chunk and add more if needed...
@@ -34,7 +36,7 @@ public class GridFSFile {
     private List<byte[]> chunks;
 
     /**
-     * the curent position in the last chunk. If '-1' the file is no longer writeable
+     * the current position in the last chunk. If '-1' the file is no longer writable
      */
     private int positionInChunk = 0;
 
@@ -45,7 +47,7 @@ public class GridFSFile {
     }
 
     /**
-     * Get id.
+     * Get the id.
      *
      * @return the id
      */
@@ -54,7 +56,7 @@ public class GridFSFile {
     }
 
     /**
-     * Get chunkSize.
+     * Get the chunkSize.
      *
      * @return the chunkSize
      */
@@ -63,16 +65,7 @@ public class GridFSFile {
     }
 
     /**
-     * Set the md5.
-     *
-     * @param md5 the md5
-     */
-    public void setMd5(final String md5) {
-        this.md5 = md5;
-    }
-
-    /**
-     * Get contentType.
+     * Get the contentType.
      *
      * @return the contentType
      */
@@ -103,17 +96,8 @@ public class GridFSFile {
      *
      * @param contentType the contentType
      */
-    public void setContentType(final String contentType) {
+     public void setContentType(final String contentType) {
         this.contentType = contentType;
-    }
-
-    /**
-     * Set the length.
-     *
-     * @param length the length
-     */
-    void setLength(final long length) {
-        this.length = length;
     }
 
     /**
@@ -121,14 +105,14 @@ public class GridFSFile {
      *
      * @param filename the filename
      */
-    public void setFilename(final String filename) {
+     public void setFilename(final String filename) {
         this.filename = filename;
     }
 
     /**
-     * Get md5.
+     * Get the files md5 checksum.
      *
-     * @return the md5
+     * @return the md5 checksum
      */
     public String getMd5() {
         return md5;
@@ -153,6 +137,24 @@ public class GridFSFile {
     }
 
     /**
+     * Set the aliases.
+     *
+     * @param aliases as List of Strings
+     */
+    public void setAliases(final List<String> aliases) {
+        this.aliases = aliases;
+    }
+
+    /**
+     * Get aliases.
+     *
+     * @return List of Strings
+     */
+    public List<String> getAliases() {
+        return aliases;
+    }
+
+    /**
      * Set the metadata.
      *
      * @param metadata the metadata
@@ -166,7 +168,7 @@ public class GridFSFile {
      *
      * @return the metadata
      */
-    public Map<String, Object> getMetadata() {
+     public Map<String, Object> getMetadata() {
         return metadata;
     }
 
@@ -177,6 +179,24 @@ public class GridFSFile {
      */
     public void setId(final ObjectId id) {
         this.id = id;
+    }
+
+    /**
+     * Set the md5.
+     *
+     * @param md5 the md5
+     */
+    void setMd5(final String md5) {
+        this.md5 = md5;
+    }
+
+    /**
+     * Set the length.
+     *
+     * @param length the length
+     */
+    void setLength(final long length) {
+        this.length = length;
     }
 
     /**
@@ -196,7 +216,7 @@ public class GridFSFile {
     public void append(final byte[] bytes) {
 
         if (positionInChunk == -1) {
-            throw new RuntimeException("Data can not be appended after file has been saved");
+            throw new RuntimeException("Data can not be appended after file has been inserted");
         }
 
         if (chunks == null) {
@@ -217,7 +237,6 @@ public class GridFSFile {
             int bytesToWriteToChunk = Math.min(chunkSize - positionInChunk, bytesToWrite);
             System.arraycopy(bytes, bytes.length - bytesToWrite, currentChunk, positionInChunk, bytesToWriteToChunk);
             bytesToWrite -= bytesToWriteToChunk;
-            length += bytesToWriteToChunk;
             positionInChunk += bytesToWriteToChunk;
 
         }
@@ -234,8 +253,11 @@ public class GridFSFile {
             throw new RuntimeException("GridFSFile has no data!");
         }
 
-        final MongoCollection<GridFSFile> fileCollection = gridFS.getFileCollection();
-        final MongoCollection<Document> chunkCollection = gridFS.getChunkCollection();
+        final MongoCollection<GridFSFile> filesCollection = gridFS.getFilesCollection();
+        final MongoCollection<Document> chunksCollection = gridFS.getChunksCollection();
+
+        // reset the length (will be recalculated, as someone might have been setting a wrong file length earlier)
+        length = 0;
 
         // the last chunk probably has unused bytes at the end... fix that
         if (positionInChunk > 0) {
@@ -265,22 +287,16 @@ public class GridFSFile {
             document.put("n", i);
             document.put("data", bytes);
             documents.add(document);
+
+            // recalculate the file's length
+            length += bytes.length;
         }
 
-        // calculate MD5 string
-        byte[] digest = md.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte aDigest : digest) {
-            if ((0xff & aDigest) < 0x10) {
-                sb.append('0');
-            }
-            sb.append(Integer.toHexString(0xff & aDigest));
-        }
-        this.md5 = sb.toString();
+        this.md5 = Util.toHex(md.digest());
 
         // insert the chunks
         final GridFSFile gridFSFile = this;
-        chunkCollection.insertMany(documents, new SingleResultCallback<Void>() {
+        chunksCollection.insertMany(documents, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 if (t != null) {
@@ -299,13 +315,59 @@ public class GridFSFile {
                                     // TODO log a warning? raise an exception? probably should be configurable...
                                 }
                                 // insert the file document
-                                fileCollection.insertOne(gridFSFile, callback);
+                                filesCollection.insertOne(gridFSFile, callback);
                             }
                         }
                     });
                 }
             }
         });
+    }
+
+    /**
+     * Set the chunkSize.
+     *
+     * @param chunkSize as int
+     */
+    public void setChunkSize(final int chunkSize) {
+        if (chunks != null && chunks.size() > 0) {
+            throw new RuntimeException("chunkSize may not bo modified after data has been written");
+        }
+        this.chunkSize = chunkSize;
+    }
+
+    /**
+     * Get all bytes for this GridFSFile from the db.
+     *
+     * @param dataCallback callback that is completed whenever new data is available
+     * @param endCallback callback that is completed when all data has been retrieved
+     */
+    public void getBytes(final SingleResultCallback<byte[]> dataCallback,
+                         final SingleResultCallback<Void> endCallback) {
+
+        GridFSResultCallback callback = new GridFSResultCallback(0, 0, length,
+                dataCallback, endCallback);
+        fetchChunk(callback);
+    }
+
+    /**
+     * Get a range of bytes for this GridFSFile from the db.
+     *
+     * @param start the first byte to retrieve
+     * @param end the last byte to retrieve
+     * @param dataCallback callback that is completed whenever new data is available
+     * @param endCallback callback that is completed when all data has been retrieved
+     */
+    public void getBytes(final int start, final long end, final SingleResultCallback<byte[]> dataCallback,
+                         final SingleResultCallback<Void> endCallback) {
+        Integer startChunkIndex = start / chunkSize;
+        Integer bytesOffset = start % chunkSize;
+        Long bytesToRead = end - start;
+
+        GridFSResultCallback callback = new GridFSResultCallback(startChunkIndex, bytesOffset, bytesToRead,
+                dataCallback, endCallback);
+
+        fetchChunk(callback);
     }
 
     /**
@@ -330,52 +392,6 @@ public class GridFSFile {
     }
 
     /**
-     * Set the chunkSize.
-     *
-     * @param chunkSize as int
-     */
-    public void setChunkSize(final int chunkSize) {
-        if (length > 0) {
-            throw new RuntimeException("chunkSize may not bo modified after data has been written");
-        }
-        this.chunkSize = chunkSize;
-    }
-
-    /**
-     * Get all bytes for this GridFSFile from the db.
-     *
-     * @param dataCallback callback that is completed whenever new data is available
-     * @param endCallback callback that is completed when all data has been retrieved
-     */
-    public void getBytes(final SingleResultCallback<byte[]> dataCallback,
-                         final SingleResultCallback<Void> endCallback) {
-
-        GridFSResultCallback callback = new GridFSResultCallback(0, 0, length,
-            dataCallback, endCallback);
-        fetchChunk(callback);
-    }
-
-    /**
-     * Get a range of bytes for this GridFSFile from the db.
-     *
-     * @param start the first byte to retrieve
-     * @param end the last byte to retrieve
-     * @param dataCallback callback that is completed whenever new data is available
-     * @param endCallback callback that is completed when all data has been retrieved
-     */
-    public void getBytes(final int start, final long end, final SingleResultCallback<byte[]> dataCallback,
-                         final SingleResultCallback<Void> endCallback) {
-        Integer startChunkIndex = start / chunkSize;
-        Integer bytesOffset = start % chunkSize;
-        Long bytesToRead = end - start;
-
-        GridFSResultCallback callback = new GridFSResultCallback(startChunkIndex, bytesOffset, bytesToRead,
-            dataCallback, endCallback);
-
-        fetchChunk(callback);
-    }
-
-    /**
      * fetch a chunk from db.
      *
      * @param callback callback that is completed when the data is available. This callback also contains the
@@ -387,8 +403,9 @@ public class GridFSFile {
         query.put("files_id", id);
         query.put("n", callback.getChunkIndex());
 
-        gridFS.getChunkCollection()
+        gridFS.getChunksCollection()
                 .find(query)
+                .sort(new Document("files_id", 1))
                 .first(new SingleResultCallback<Document>() {
 
                     @Override
@@ -428,14 +445,14 @@ public class GridFSFile {
         public void onResult(final byte[] result, final Throwable t) {
 
             if (t != null) {
-                // call the endCallback and forward the exception
+                // call the endCallback and pass the exception
                 endCallback.onResult(null, t);
             } else {
                 int bytesInChunk = result.length - bytesOffset;
                 int bytesRead = (int) Math.min(bytesInChunk, bytesToRead);
 
                 this.bytesToRead -= bytesRead;
-                dataCallback.onResult(Arrays.copyOfRange(result, bytesOffset, bytesRead), null);
+                dataCallback.onResult(Arrays.copyOfRange(result, bytesOffset, bytesOffset + bytesRead), null);
 
                 if (this.bytesToRead > 0) {
                     // fetch another chunk
