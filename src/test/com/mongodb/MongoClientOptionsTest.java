@@ -62,6 +62,9 @@ public class MongoClientOptionsTest {
         assertEquals(getProperty("com.mongodb.slaveAcceptableLatencyMS") != null
                      ? parseInt(getProperty("com.mongodb.slaveAcceptableLatencyMS")) : 15,
                      options.getAcceptableLatencyDifference());
+        assertEquals(getProperty("com.mongodb.slaveAcceptableLatencyMS") != null
+                     ? parseInt(getProperty("com.mongodb.slaveAcceptableLatencyMS")) : 15,
+                     options.getLocalThreshold());
         assertNull(options.getRequiredReplicaSetName());
     }
 
@@ -80,6 +83,7 @@ public class MongoClientOptionsTest {
             assertEquals(options.getHeartbeatConnectTimeout(), 30000);
             assertEquals(options.getHeartbeatSocketTimeout(), 40000);
             assertEquals(options.getAcceptableLatencyDifference(), 25);
+            assertEquals(options.getLocalThreshold(), 25);
         } finally {
             System.setProperty("com.mongodb.updaterIntervalMS", "5000");
             System.setProperty("com.mongodb.updaterIntervalNoMasterMS", "10");
@@ -195,6 +199,12 @@ public class MongoClientOptionsTest {
         } catch (IllegalArgumentException e) {
             // all good
         }
+        try {
+            builder.localThreshold(-1);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
 
         try {
             builder.maxConnectionIdleTime(-1);
@@ -271,6 +281,7 @@ public class MongoClientOptionsTest {
         assertEquals(true, options.isCursorFinalizerEnabled());
         assertEquals(true, options.isAlwaysUseMBeans());
         assertEquals(41, options.getAcceptableLatencyDifference());
+        assertEquals(41, options.getLocalThreshold());
         assertEquals(51, options.getHeartbeatFrequency());
         assertEquals(62, options.getHeartbeatConnectRetryFrequency());
         assertEquals(62, options.getMinHeartbeatFrequency());
@@ -282,6 +293,10 @@ public class MongoClientOptionsTest {
         assertEquals(encoderFactory, options.getDbEncoderFactory());
         assertEquals(decoderFactory, options.getDbDecoderFactory());
         assertEquals("test", options.getRequiredReplicaSetName());
+
+        options = MongoClientOptions.builder().localThreshold(41).build();
+        assertEquals(41, options.getLocalThreshold());
+        assertEquals(41, options.getAcceptableLatencyDifference());
     }
 
     @Test

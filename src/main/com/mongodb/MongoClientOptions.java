@@ -62,7 +62,7 @@ public class MongoClientOptions {
         private int heartbeatConnectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
         private int heartbeatSocketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
         private int heartbeatThreadCount;
-        private int acceptableLatencyDifference = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
+        private int localThreshold = Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15"));
         private String requiredReplicaSetName;
 
         /**
@@ -168,6 +168,24 @@ public class MongoClientOptions {
         }
 
         /**
+         * Sets the local threshold.
+         *
+         * @param localThreshold the threshold in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if localThreshold &lt; 0
+         * @see com.mongodb.MongoClientOptions#getLocalThreshold()
+         * @since 2.13.0
+         */
+        @Deprecated
+        public Builder localThreshold(final int localThreshold) {
+            if (localThreshold < 0) {
+                throw new IllegalArgumentException("localThreshold must be greater than or equal to 0");
+            }
+            this.localThreshold = localThreshold;
+            return this;
+        }
+
+        /**
          * Sets the acceptable latency difference.
          *
          * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
@@ -175,12 +193,14 @@ public class MongoClientOptions {
          * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
          * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
          * @since 2.12.0
+         * @deprecated Use {@link #localThreshold(int)}
          */
+        @Deprecated
         public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
             if (acceptableLatencyDifference < 0) {
                 throw new IllegalArgumentException("acceptableLatencyDifference must be greater than or equal to 0");
             }
-            this.acceptableLatencyDifference = acceptableLatencyDifference;
+            this.localThreshold = acceptableLatencyDifference;
             return this;
         }
 
@@ -809,6 +829,27 @@ public class MongoClientOptions {
     }
 
     /**
+     * <p>Gets the local threshold.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
+     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+     * threshold.</p>
+     *
+     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is {@code
+     * ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15, and 16
+     * milliseconds, respectively.  With a local threshold of 5 milliseconds, the client will send the query to either
+     * server1 or server2 (randomly selecting between the two).
+     * </p>
+     *
+     * <p> The default value is 15 milliseconds.</p>
+     *
+     * @return the local threshold, in milliseconds
+     * @since 2.13.0
+     * @mongodb.driver.manual reference/program/mongos/#cmdoption--localThreshold Local Threshold
+     */
+    public int getLocalThreshold() {
+        return localThreshold;
+    }
+
+    /**
      * <p>Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
      * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the acceptable
      * latency difference.</p>
@@ -820,9 +861,11 @@ public class MongoClientOptions {
      *
      * @return the acceptable latency difference, in milliseconds
      * @since 2.12.0
+     * @deprecated Use {@link MongoClientOptions#getLocalThreshold()} instead
      */
+    @Deprecated
     public int getAcceptableLatencyDifference() {
-        return acceptableLatencyDifference;
+        return localThreshold;
     }
 
     /**
@@ -850,7 +893,7 @@ public class MongoClientOptions {
 
         MongoClientOptions that = (MongoClientOptions) o;
 
-        if (acceptableLatencyDifference != that.acceptableLatencyDifference) {
+        if (localThreshold != that.localThreshold) {
             return false;
         }
         if (alwaysUseMBeans != that.alwaysUseMBeans) {
@@ -959,7 +1002,7 @@ public class MongoClientOptions {
         result = 31 * result + heartbeatConnectTimeout;
         result = 31 * result + heartbeatSocketTimeout;
         result = 31 * result + heartbeatThreadCount;
-        result = 31 * result + acceptableLatencyDifference;
+        result = 31 * result + localThreshold;
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
@@ -988,7 +1031,7 @@ public class MongoClientOptions {
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
                + ", heartbeatThreadCount=" + heartbeatThreadCount
-               + ", acceptableLatencyDifference=" + acceptableLatencyDifference
+               + ", localThreshold=" + localThreshold
                + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
@@ -1018,7 +1061,7 @@ public class MongoClientOptions {
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
         heartbeatThreadCount = builder.heartbeatThreadCount;
-        acceptableLatencyDifference = builder.acceptableLatencyDifference;
+        localThreshold = builder.localThreshold;
         requiredReplicaSetName = builder.requiredReplicaSetName;
     }
 
@@ -1047,6 +1090,6 @@ public class MongoClientOptions {
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
     private final int heartbeatThreadCount;
-    private final int acceptableLatencyDifference;
+    private final int localThreshold;
     private final String requiredReplicaSetName;
 }
