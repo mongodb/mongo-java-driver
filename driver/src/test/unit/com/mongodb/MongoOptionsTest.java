@@ -166,7 +166,7 @@ public class MongoOptionsTest {
         assertFalse(options.isSslEnabled());
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
-        assertEquals(15, options.getAcceptableLatencyDifference());
+        assertEquals(15, options.getLocalThreshold());
     }
 }
 

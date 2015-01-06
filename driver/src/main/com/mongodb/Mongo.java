@@ -677,7 +677,7 @@ public class Mongo {
     }
 
     private static ServerSelector createServerSelector(final MongoClientOptions options) {
-        return new LatencyMinimizingServerSelector(options.getAcceptableLatencyDifference(), MILLISECONDS);
+        return new LatencyMinimizingServerSelector(options.getLocalThreshold(), MILLISECONDS);
     }
 
     Cluster getCluster() {

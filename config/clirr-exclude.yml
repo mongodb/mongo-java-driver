@@ -109,12 +109,14 @@ members:
   - isAutoConnectRetry()
   - getHeartbeatConnectRetryFrequency()
   - getHeartbeatThreadCount()
+  - getAcceptableLatencyDifference()
 
   com.mongodb.MongoClientOptions$Builder:
   - autoConnectRetry(boolean)
   - maxAutoConnectRetryTime(long)
   - heartbeatConnectRetryFrequency(int)
   - heartbeatThreadCount(int)
+  - acceptableLatencyDifference(int)
 
   com.mongodb.Mongo:
   - getVersion()                                   # JAVA-1606

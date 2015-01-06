@@ -47,7 +47,7 @@ class MongoClientOptionsSpecification extends Specification {
         !(options.getSocketFactory() instanceof SSLSocketFactory)
         options.getDbDecoderFactory() == DefaultDBDecoder.FACTORY
         options.getDbEncoderFactory() == DefaultDBEncoder.FACTORY
-        options.getAcceptableLatencyDifference() == 15
+        options.getLocalThreshold() == 15
         options.isCursorFinalizerEnabled()
         options.getMinHeartbeatFrequency() == 10
         options.getServerSelectionTimeout() == 30000
@@ -62,6 +62,11 @@ class MongoClientOptionsSpecification extends Specification {
     def 'should handle illegal arguments'() {
         given:
         def builder = new MongoClientOptions.Builder()
+
+        when:
+        builder.localThreshold(-1)
+        then:
+        thrown(IllegalArgumentException)
 
         when:
         builder.heartbeatFrequency(0)
@@ -138,7 +143,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .minHeartbeatFrequency(11)
                                         .heartbeatConnectTimeout(15)
                                         .heartbeatSocketTimeout(20)
-                                        .acceptableLatencyDifference(25)
+                                        .localThreshold(25)
                                         .requiredReplicaSetName('test')
                                         .cursorFinalizerEnabled(false)
                                         .dbEncoderFactory(encoderFactory)
@@ -165,7 +170,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getMinHeartbeatFrequency() == 11
         options.getHeartbeatConnectTimeout() == 15
         options.getHeartbeatSocketTimeout() == 20
-        options.getAcceptableLatencyDifference() == 25
+        options.getLocalThreshold() == 25
         options.getRequiredReplicaSetName() == 'test'
         !options.isCursorFinalizerEnabled()
         options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5

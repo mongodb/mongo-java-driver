@@ -63,7 +63,7 @@ public class MongoClientOptions {
     private final int minHeartbeatFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
-    private final int acceptableLatencyDifference;
+    private final int localThreshold;
 
     private final String requiredReplicaSetName;
     private final DBDecoderFactory dbDecoderFactory;
@@ -96,7 +96,7 @@ public class MongoClientOptions {
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
-        acceptableLatencyDifference = builder.acceptableLatencyDifference;
+        localThreshold = builder.localThreshold;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         dbDecoderFactory = builder.dbDecoderFactory;
         dbEncoderFactory = builder.dbEncoderFactory;
@@ -316,20 +316,24 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
-     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the acceptable
-     * latency difference.</p> 
-     * 
-     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is
-     * {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15,
-     * and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds, the client will send the query to either
-     * server1 or server2 (randomly selecting between the two). </p> <p> The default value is 15 milliseconds. </p>
+     * <p>Gets the local threshold.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
+     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+     * threshold.</p>
      *
-     * @return the acceptable latency difference, in milliseconds
-     * @since 2.12.0
+     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is {@code
+     * ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15, and 16
+     * milliseconds, respectively.  With a local threshold of 5 milliseconds, the client will send the query to either
+     * server1 or server2 (randomly selecting between the two).
+     * </p>
+     *
+     * <p> The default value is 15 milliseconds.</p>
+     *
+     * @return the local threshold, in milliseconds
+     * @since 2.13.0
+     * @mongodb.driver.manual reference/program/mongos/#cmdoption--localThreshold Local Threshold
      */
-    public int getAcceptableLatencyDifference() {
-        return acceptableLatencyDifference;
+    public int getLocalThreshold() {
+        return localThreshold;
     }
 
     /**
@@ -481,7 +485,7 @@ public class MongoClientOptions {
 
         MongoClientOptions that = (MongoClientOptions) o;
 
-        if (acceptableLatencyDifference != that.acceptableLatencyDifference) {
+        if (localThreshold != that.localThreshold) {
             return false;
         }
         if (alwaysUseMBeans != that.alwaysUseMBeans) {
@@ -583,7 +587,7 @@ public class MongoClientOptions {
         result = 31 * result + minHeartbeatFrequency;
         result = 31 * result + heartbeatConnectTimeout;
         result = 31 * result + heartbeatSocketTimeout;
-        result = 31 * result + acceptableLatencyDifference;
+        result = 31 * result + localThreshold;
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
@@ -615,7 +619,7 @@ public class MongoClientOptions {
                + ", minHeartbeatFrequency=" + minHeartbeatFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
-               + ", acceptableLatencyDifference=" + acceptableLatencyDifference
+               + ", localThreshold=" + localThreshold
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", dbDecoderFactory=" + dbDecoderFactory
                + ", dbEncoderFactory=" + dbEncoderFactory
@@ -656,7 +660,7 @@ public class MongoClientOptions {
         private int minHeartbeatFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
-        private int acceptableLatencyDifference = 15;
+        private int localThreshold = 15;
 
         private String requiredReplicaSetName;
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
@@ -672,7 +676,7 @@ public class MongoClientOptions {
             minHeartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
             heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
             heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
-            acceptableLatencyDifference(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
+            localThreshold(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
         }
 
         /**
@@ -1003,16 +1007,17 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets the acceptable latency difference.
+         * Sets the local threshold.
          *
-         * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
+         * @param localThreshold the acceptable latency difference, in milliseconds
          * @return {@code this}
          * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
-         * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
-         * @since 2.12.0
+         * @see com.mongodb.MongoClientOptions#getLocalThreshold()
+         * @since 2.13.0
          */
-        public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
-            this.acceptableLatencyDifference = acceptableLatencyDifference;
+        public Builder localThreshold(final int localThreshold) {
+            isTrueArgument("localThreshold must be >= 0", localThreshold >= 0);
+            this.localThreshold = localThreshold;
             return this;
         }
 
