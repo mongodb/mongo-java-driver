@@ -29,11 +29,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -57,7 +57,7 @@ public class JsonPoweredClusterTest {
     private final Cluster cluster;
 
     public JsonPoweredClusterTest(final File file) throws IOException {
-        definition = getTestDocument(file);
+        definition = getTestDocument(getFileAsString(file));
         cluster = getCluster(definition.getString("uri").getValue());
     }
 
@@ -177,9 +177,22 @@ public class JsonPoweredClusterTest {
         return data;
     }
 
-    BsonDocument getTestDocument(final File file) throws IOException {
-        String contents = new String(Files.readAllBytes(file.toPath()), Charset.forName("UTF-8"));
+    BsonDocument getTestDocument(final String contents) throws IOException {
         return new BsonDocumentCodec().decode(new JsonReader(contents), DecoderContext.builder().build());
+    }
+
+    private String getFileAsString(final File file) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = null;
+        StringBuilder stringBuilder = new StringBuilder();
+        String ls = System.getProperty("line.separator");
+
+        while ((line = reader.readLine()) != null) {
+            stringBuilder.append(line);
+            stringBuilder.append(ls);
+        }
+
+        return stringBuilder.toString();
     }
 
     Cluster getCluster(final String uri) {
