@@ -52,7 +52,7 @@ class CustomMatchers {
                 return false
             }
             true
-        }
+        }.every { it }
     }
 
     static describer(expected, actual, description) {
