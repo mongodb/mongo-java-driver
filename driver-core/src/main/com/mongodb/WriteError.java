@@ -39,6 +39,15 @@ public class WriteError {
     }
 
     /**
+     * Gets the category of this error.
+     *
+     * @return the category of this write error
+     */
+    public ErrorCategory getCategory() {
+        return ErrorCategory.fromErrorCode(code);
+    }
+
+    /**
      * Gets the code associated with this error.
      *
      * @return the code

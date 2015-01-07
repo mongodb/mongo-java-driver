@@ -16,8 +16,9 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.DuplicateKeyException;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -41,7 +42,6 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -589,7 +589,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
 
     @SuppressWarnings("deprecation")
     private MongoException checkForDuplicateKeyError(final MongoCommandException e) {
-        if (DUPLICATE_KEY_ERROR_CODES.contains(e.getCode())) {
+        if (ErrorCategory.fromErrorCode(e.getCode()) == ErrorCategory.DUPLICATE_KEY) {
             return new DuplicateKeyException(e.getResponse(), e.getServerAddress(), WriteConcernResult.acknowledged(0, false, null));
         } else {
             return e;

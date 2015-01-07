@@ -35,16 +35,11 @@ import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
 
 import java.util.Collections;
-import java.util.List;
 
 import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
 
 final class OperationHelper {
-
-    // TODO: This is duplicated in ProtocolHelper, but I don't want it to be public
-    static final List<Integer> DUPLICATE_KEY_ERROR_CODES = asList(11000, 11001, 12582);
-
 
     interface CallableWithConnection<T> {
         T call(Connection connection);

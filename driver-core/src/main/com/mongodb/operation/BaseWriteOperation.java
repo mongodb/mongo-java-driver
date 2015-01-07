@@ -17,6 +17,8 @@
 package com.mongodb.operation;
 
 import com.mongodb.DuplicateKeyException;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -26,7 +28,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.Connection;
@@ -43,7 +44,6 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -200,7 +200,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {
-            if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
+            if (ErrorCategory.fromErrorCode(lastError.getCode()) == ErrorCategory.DUPLICATE_KEY) {
                 return new DuplicateKeyException(manufactureGetLastErrorResponse(e), e.getServerAddress(),
                                                       translateBulkWriteResult(e.getWriteResult()));
             } else {

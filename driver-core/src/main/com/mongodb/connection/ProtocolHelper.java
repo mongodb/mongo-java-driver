@@ -16,15 +16,16 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.DuplicateKeyException;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoQueryException;
-import com.mongodb.WriteConcernException;
 import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -33,12 +34,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.io.BsonOutput;
 
-import java.util.Arrays;
-import java.util.List;
-
 final class ProtocolHelper {
-    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
-    private static final List<Integer> EXECUTION_TIMEOUT_ERROR_CODES = Arrays.asList(50);
 
     static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
         if (!isCommandOk(result)) {
@@ -117,7 +113,7 @@ final class ProtocolHelper {
 
     private static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
                                                          final String errorMessageFieldName) {
-        if (EXECUTION_TIMEOUT_ERROR_CODES.contains(getErrorCode(response))) {
+        if (ErrorCategory.fromErrorCode(getErrorCode(response)) == ErrorCategory.EXECUTION_TIMEOUT) {
             return new MongoExecutionTimeoutException(getErrorCode(response), getErrorMessage(response, errorMessageFieldName));
         } else if (getErrorMessage(response, errorMessageFieldName).startsWith("not master")) {
             return new MongoNotPrimaryException(serverAddress);
@@ -140,7 +136,7 @@ final class ProtocolHelper {
             throw specialException;
         }
         int code = WriteConcernException.extractErrorCode(result);
-        if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
+        if (ErrorCategory.fromErrorCode(code) == ErrorCategory.DUPLICATE_KEY) {
             throw new DuplicateKeyException(result, serverAddress, createWriteResult(result));
         } else {
             throw new WriteConcernException(result, serverAddress, createWriteResult(result));
