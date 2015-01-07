@@ -419,31 +419,39 @@ class DBCollectionImpl extends DBCollection {
         return writeWithCommandProtocol(port, UPDATE, message, writeConcern);
     }
 
-    private BulkWriteResult writeWithCommandProtocol(final DBPort port, final WriteRequest.Type type, BaseWriteCommandMessage message,
+    private BulkWriteResult writeWithCommandProtocol(final DBPort port, final WriteRequest.Type type, final BaseWriteCommandMessage message,
                                                      final WriteConcern writeConcern) {
-        int batchNum = 0;
-        int currentRangeStartIndex = 0;
-        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(port.getAddress(), writeConcern);
-        do {
-            batchNum++;
-            BaseWriteCommandMessage nextMessage = sendWriteCommandMessage(message, batchNum, port);
-            int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
-            IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-            CommandResult commandResult = receiveWriteCommandMessage(port);
-            if (willTrace() && nextMessage != null || batchNum > 1) {
-                getLogger().fine(format("Received response for batch %d", batchNum));
-            }
+        return db.getConnector().doOperation(db, port, new DBPort.Operation<BulkWriteResult>() {
+            @Override
+            public BulkWriteResult execute() throws IOException {
+                BaseWriteCommandMessage curMessage = message;
+                int batchNum = 0;
+                int currentRangeStartIndex = 0;
+                BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(port.getAddress(), writeConcern);
+                do {
+                    batchNum++;
+                    BaseWriteCommandMessage nextMessage = sendWriteCommandMessage(curMessage, batchNum, port);
+                    int itemCount = nextMessage != null ? curMessage.getItemCount() - nextMessage.getItemCount()
+                                                        : curMessage.getItemCount();
+                    IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+                    CommandResult commandResult = receiveWriteCommandMessage(port);
+                    if (willTrace() && nextMessage != null || batchNum > 1) {
+                        getLogger().fine(format("Received response for batch %d", batchNum));
+                    }
 
-            if (hasError(commandResult)) {
-                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(type, commandResult), indexMap);
-            } else {
-                bulkWriteBatchCombiner.addResult(getBulkWriteResult(type, commandResult), indexMap);
-            }
-            currentRangeStartIndex += itemCount;
-            message = nextMessage;
-        } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
+                    if (hasError(commandResult)) {
+                        bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(type, commandResult), indexMap);
+                    } else {
+                        bulkWriteBatchCombiner.addResult(getBulkWriteResult(type, commandResult), indexMap);
+                    }
+                    currentRangeStartIndex += itemCount;
+                    curMessage = nextMessage;
+                } while (curMessage != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
 
-        return bulkWriteBatchCombiner.getResult();
+                return bulkWriteBatchCombiner.getResult();
+            }
+        });
+
     }
 
     private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
@@ -469,38 +477,26 @@ class DBCollectionImpl extends DBCollection {
     }
 
     private BaseWriteCommandMessage sendWriteCommandMessage(final BaseWriteCommandMessage message, final int batchNum,
-                                                            final DBPort port) {
+                                                            final DBPort port) throws IOException {
         final PoolOutputBuffer buffer = new PoolOutputBuffer();
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {
                 getLogger().fine(format("Sending batch %d", batchNum));
             }
-            db.getConnector().doOperation(getDB(), port, new DBPort.Operation<Void>() {
-                @Override
-                public Void execute() throws IOException {
-                    buffer.pipe(port.getOutputStream());
-                    return null;
-                }
-            });
+            buffer.pipe(port.getOutputStream());
             return nextMessage;
         } finally {
             buffer.reset();
         }
     }
 
-    private CommandResult receiveWriteCommandMessage(final DBPort port) {
-        return db.getConnector().doOperation(getDB(), port, new DBPort.Operation<CommandResult>() {
-            @Override
-            public CommandResult execute() throws IOException {
-                Response response = new Response(port.getAddress(), null, port.getInputStream(),
-                                                 DefaultDBDecoder.FACTORY.create());
-                CommandResult writeCommandResult = new CommandResult(port.getAddress());
-                writeCommandResult.putAll(response.get(0));
-                writeCommandResult.throwOnError();
-                return writeCommandResult;
-            }
-        });
+    private CommandResult receiveWriteCommandMessage(final DBPort port) throws IOException {
+        Response response = new Response(port.getAddress(), null, port.getInputStream(), DefaultDBDecoder.FACTORY.create());
+        CommandResult writeCommandResult = new CommandResult(port.getAddress());
+        writeCommandResult.putAll(response.get(0));
+        writeCommandResult.throwOnError();
+        return writeCommandResult;
     }
 
 
