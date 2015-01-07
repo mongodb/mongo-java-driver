@@ -40,28 +40,19 @@ class CustomMatchers {
         if (actual.class.name != expected.class.name) {
             return false
         }
-        def curClass = actual.class
-
-        while (curClass != Object) {
-            def classSame = curClass.declaredFields.findAll { !it.synthetic }*.name.collect { it ->
-                if (it == 'decoder') {
-                    return actual.decoder.class == expected.decoder.class
-                } else if (actual."$it" != expected."$it") {
-                    def (a1, e1) = [actual."$it", expected."$it"]
-                    if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
-                        def i = -1
-                        return a1.collect { a -> i++; compare(a, e1[i]) }.every { it }
-                    }
-                    return false
+        getFieldNames(actual.class).collect { it ->
+            if (it == 'decoder') {
+                return actual.decoder.class == expected.decoder.class
+            } else if (actual."$it" != expected."$it") {
+                def (a1, e1) = [actual."$it", expected."$it"]
+                if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
+                    def i = -1
+                    return a1.collect { a -> i++; compare(a, e1[i]) }.every { it }
                 }
-                true
-            }.every { it }
-            if (!classSame) {
                 return false
             }
-            curClass = curClass.getSuperclass()
+            true
         }
-        true
     }
 
     static describer(expected, actual, description) {
@@ -76,11 +67,14 @@ class CustomMatchers {
             description.appendText("different classes: ${expected.class.name} != ${actual.class.name}, ")
             return false
         }
-        actual.class.declaredFields.findAll { !it.synthetic }*.name
-              .collect { it ->
-            if (it == 'decoder' && actual.decoder.class != expected.decoder.class) {
-                description.appendText("different decoder classes $it : ${expected.decoder.class.name} != ${actual.decoder.class.name}, ")
-                return false
+
+        getFieldNames(actual.class).collect { it ->
+            if (it == 'decoder') {
+                if (actual.decoder.class != expected.decoder.class) {
+                    description.appendText("different decoder classes $it :" +
+                            " ${expected.decoder.class.name} != ${actual.decoder.class.name}, ")
+                    return false
+                }
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
                 if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
@@ -96,5 +90,16 @@ class CustomMatchers {
             }
             true
         }
+    }
+
+    static getFieldNames(Class curClass) {
+        getFieldNames(curClass, [])
+    }
+
+    static getFieldNames(Class curClass, names) {
+        if (curClass != Object) {
+            getFieldNames(curClass.getSuperclass(), names += curClass.declaredFields.findAll { !it.synthetic }*.name)
+        }
+        names
     }
 }
