@@ -62,24 +62,6 @@ public final class Assertions {
         }
     }
 
-    /**
-     * Cast an object to the given class and return it, or throw IllegalArgumentException if it's not assignable to that class.
-     *
-     * @param clazz        the class to cast to
-     * @param value        the value to cast
-     * @param errorMessage the error message to include in the exception
-     * @param <T>          the Class type
-     * @return value cast to clazz
-     * @throws java.lang.IllegalArgumentException if value is not assignable to clazz
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> T convertToType(final Class<T> clazz, final Object value, final String errorMessage) {
-        if (!clazz.isAssignableFrom(value.getClass())) {
-            throw new IllegalArgumentException(errorMessage);
-        }
-        return (T) value;
-    }
-
     private Assertions() {
     }
 }

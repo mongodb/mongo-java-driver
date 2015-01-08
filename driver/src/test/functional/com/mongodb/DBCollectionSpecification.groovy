@@ -82,4 +82,77 @@ class DBCollectionSpecification extends Specification {
         operation2.getBucketSize() == 200.0
         operation2.getDropDups()
     }
+
+    def 'should support boolean index options that are numbers'() {
+        given:
+        def executor = new TestOperationExecutor([null, null]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def options = new BasicDBObject('sparse', value);
+
+        when:
+        collection.createIndex(new BasicDBObject('y', 1), options);
+
+        then:
+        def operation = executor.getWriteOperation() as CreateIndexOperation
+        operation.sparse == expectedValue
+
+        where:
+        value | expectedValue
+        0     | false
+        0F    | false
+        0D    | false
+        1     | true
+        -1    | true
+        4L    | true
+        4.3F  | true
+        4.0D  | true
+    }
+
+    def 'should support integer index options that are numbers'() {
+        given:
+        def executor = new TestOperationExecutor([null, null]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def options = new BasicDBObject('expireAfterSeconds', integerValue);
+
+        when:
+        collection.createIndex(new BasicDBObject('y', 1), options);
+
+        then:
+        def operation = executor.getWriteOperation() as CreateIndexOperation
+        operation.expireAfterSeconds == integerValue
+
+        where:
+        integerValue << [4, 4L, (double) 4.0]
+    }
+
+    def 'should support double index options that are numbers'() {
+        given:
+        def executor = new TestOperationExecutor([null, null]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def options = new BasicDBObject('max', doubleValue);
+
+        when:
+        collection.createIndex(new BasicDBObject('y', '2d'), options);
+
+        then:
+        def operation = executor.getWriteOperation() as CreateIndexOperation
+        operation.max == doubleValue
+
+        where:
+        doubleValue << [4, 4L, (double) 4.0]
+    }
+
+    def 'should throw IllegalArgumentException for unsupported option value type'() {
+        given:
+        def executor = new TestOperationExecutor([null, null]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def options = new BasicDBObject('sparse', 'true');
+
+
+        when:
+        collection.createIndex(new BasicDBObject('y', '1'), options);
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 }

@@ -72,7 +72,6 @@ import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
-import static com.mongodb.assertions.Assertions.convertToType;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -1981,6 +1980,32 @@ public class DBCollection {
     private <T> T convertOptionsToType(final DBObject options, final String field, final Class<T> clazz) {
         return convertToType(clazz, options.get(field), format("'%s' should be of class %s", field, clazz.getSimpleName()));
     }
+
+    @SuppressWarnings("unchecked")
+    private <T> T convertToType(final Class<T> clazz, final Object value, final String errorMessage) {
+        Object transformedValue = value;
+        if (clazz == Boolean.class) {
+            if (value instanceof Boolean) {
+                transformedValue = value;
+            } else if (value instanceof Number) {
+                transformedValue = ((Number) value).doubleValue() != 0;
+            }
+        } else if (clazz == Double.class) {
+            if (value instanceof Number) {
+                transformedValue = ((Number) value).doubleValue();
+            }
+        } else if (clazz == Integer.class) {
+            if (value instanceof Number) {
+                transformedValue = ((Number) value).intValue();
+            }
+        }
+
+        if (!clazz.isAssignableFrom(transformedValue.getClass())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return (T) transformedValue;
+    }
+
 
     private CreateIndexOperation createIndexOperation(final DBObject key, final DBObject options) {
         CreateIndexOperation operation = new CreateIndexOperation(getNamespace(), wrap(key));
