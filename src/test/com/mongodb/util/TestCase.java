@@ -51,7 +51,7 @@ public class TestCase {
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
             String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty() ? DEFAULT_URI : mongoURIProperty;
+            String mongoURIString = mongoURIProperty == null || mongoURIProperty.length() == 0 ? DEFAULT_URI : mongoURIProperty;
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;
