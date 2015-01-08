@@ -546,7 +546,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should have threadsafe connection pipelining'() {
         given:
         int threads = 10
-        int numberOfOperations = 100000
+        int numberOfOperations = 10000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
         def messages = (1..numberOfOperations).collect { helper.isMaster() }
         def headers = helper.generateHeaders(messages.collect { buffer, messageId -> messageId })
@@ -579,7 +579,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should have threadsafe connection pipelining asynchronously'() {
         given:
         int threads = 10
-        int numberOfOperations = 100000
+        int numberOfOperations = 10000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
 
         def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
