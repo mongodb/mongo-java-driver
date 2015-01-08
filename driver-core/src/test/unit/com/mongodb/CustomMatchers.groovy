@@ -19,6 +19,8 @@ package com.mongodb
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 
+import java.lang.reflect.Modifier
+
 class CustomMatchers {
 
     static isTheSameAs(final Object e) {
@@ -40,7 +42,9 @@ class CustomMatchers {
         if (actual.class.name != expected.class.name) {
             return false
         }
-        getFieldNames(actual.class).collect { it ->
+
+        def fieldNames = getFieldNames(actual.class)
+        fieldNames.collect { it ->
             if (it == 'decoder') {
                 return actual.decoder.class == expected.decoder.class
             } else if (actual."$it" != expected."$it") {
@@ -93,13 +97,12 @@ class CustomMatchers {
     }
 
     static getFieldNames(Class curClass) {
-        getFieldNames(curClass, [])
-    }
-
-    static getFieldNames(Class curClass, names) {
-        if (curClass != Object) {
-            getFieldNames(curClass.getSuperclass(), names += curClass.declaredFields.findAll { !it.synthetic }*.name)
+        if (curClass == Object) {
+            []
+        } else {
+            getFieldNames(curClass.getSuperclass()) + curClass.declaredFields.findAll {
+                !Modifier.isStatic(it.modifiers) && !Modifier.isSynthetic(it.modifiers)
+            }*.name
         }
-        names
     }
 }
