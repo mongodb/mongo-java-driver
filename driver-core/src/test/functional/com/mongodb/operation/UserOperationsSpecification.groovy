@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.MongoCredential
 import com.mongodb.MongoServerException
 import com.mongodb.MongoTimeoutException
@@ -37,6 +38,8 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -121,11 +124,12 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         executeAsync(new DropUserOperation(databaseName, credential.userName))
     }
 
+    @Category(Slow)
     def 'a removed user should not authenticate'() {
         given:
         new CreateUserOperation(credential, true).execute(getBinding())
         new DropUserOperation(databaseName, credential.userName).execute(getBinding())
-        def cluster = getCluster()
+        def cluster = getCluster(ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
 
         when:
         cluster.selectServer(new PrimaryServerSelector())
@@ -137,12 +141,12 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         cluster?.close()
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     def 'a removed user should not authenticate asynchronously'() {
         given:
         executeAsync(new CreateUserOperation(credential, true))
         executeAsync(new DropUserOperation(databaseName, credential.userName))
-        def cluster = getCluster()
+        def cluster = getCluster(ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
 
         when:
         cluster.selectServer(new PrimaryServerSelector())
@@ -308,8 +312,16 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         getCluster(credential)
     }
 
+    def getCluster(ClusterSettings.Builder builder) {
+        getCluster(credential, builder)
+    }
+
     def getCluster(MongoCredential credential) {
-        getCluster(credential, new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()))
+        getCluster(credential, ClusterSettings.builder())
+    }
+
+    def getCluster(MongoCredential credential, ClusterSettings.Builder builder) {
+        getCluster(credential, new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()), builder)
     }
 
     def getAsyncCluster() {
@@ -317,11 +329,11 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     }
 
     def getAsyncCluster(MongoCredential credential) {
-        getCluster(credential, getAsyncStreamFactory())
+        getCluster(credential, getAsyncStreamFactory(), ClusterSettings.builder())
     }
 
-    def getCluster(MongoCredential credential, StreamFactory streamFactory) {
-        new DefaultClusterFactory().create(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
+    def getCluster(MongoCredential credential, StreamFactory streamFactory, ClusterSettings.Builder builder) {
+        new DefaultClusterFactory().create(builder.hosts(asList(getPrimary())).build(),
                                            ServerSettings.builder().build(),
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                            streamFactory, streamFactory, asList(credential), null, null, null)
