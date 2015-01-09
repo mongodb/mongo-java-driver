@@ -16,13 +16,13 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
 /**
  * An event signifying that a message has been sent on a connection.
- *
- * @since 3.0
  */
+@Beta
 public class ConnectionMessagesSentEvent extends ConnectionEvent {
     private final int requestId;
     private final int size;

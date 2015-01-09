@@ -16,13 +16,13 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
 /**
  * An event related to the connection pool's wait queue..
- *
- * @since 3.0
  */
+@Beta
 public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
     private final long threadId;
 

@@ -16,12 +16,13 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
+
 /**
  * An adapter for cluster listener implementations, for clients that want to listen for a subset of cluster events.  Extend this class to
  * listen for cluster events and override the methods of interest.
- *
- * @since 3.0
  */
+@Beta
 public abstract class ClusterListenerAdapter implements ClusterListener {
     @Override
     public void clusterOpened(final ClusterEvent event) {

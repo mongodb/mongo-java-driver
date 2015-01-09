@@ -16,13 +16,13 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ClusterId;
 
 /**
  * A cluster-related event.
- *
- * @since 3.0
  */
+@Beta
 public class ClusterEvent {
     private final ClusterId clusterId;
 

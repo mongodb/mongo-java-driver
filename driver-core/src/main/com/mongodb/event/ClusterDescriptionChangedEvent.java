@@ -16,14 +16,14 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 
 /**
  * An event signifying that the cluster description has changed.
- *
- * @since 3.0
  */
+@Beta
 public class ClusterDescriptionChangedEvent extends ClusterEvent {
     private final ClusterDescription clusterDescription;
 

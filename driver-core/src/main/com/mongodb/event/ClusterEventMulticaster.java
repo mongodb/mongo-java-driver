@@ -16,15 +16,16 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A multicaster for cluster events.
- *
- * @since 3.0
  */
+@Beta
 public class ClusterEventMulticaster implements ClusterListener {
     private final Set<ClusterListener> clusterListeners = Collections.newSetFromMap(new ConcurrentHashMap<ClusterListener, Boolean>());
 

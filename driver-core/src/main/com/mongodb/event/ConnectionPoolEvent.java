@@ -16,13 +16,13 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
 /**
  * A connection pool-related event.
- *
- * @since 3.0
  */
+@Beta
 public class ConnectionPoolEvent extends ClusterEvent {
     private final ServerId serverId;
 

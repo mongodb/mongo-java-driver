@@ -16,14 +16,14 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
+
 import java.util.EventListener;
 
 /**
  * A listener for connection pool-related events.
- *
- * @since 3.0
  */
-
+@Beta
 public interface ConnectionPoolListener extends EventListener {
     /**
      * Invoked when a connection pool is opened.

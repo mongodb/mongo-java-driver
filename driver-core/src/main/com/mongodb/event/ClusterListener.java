@@ -16,13 +16,14 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
+
 import java.util.EventListener;
 
 /**
  * A listener for cluster-related events.
- *
- * @since 3.0
  */
+@Beta
 public interface ClusterListener extends EventListener {
     /**
      * Invoked when a cluster is opened.

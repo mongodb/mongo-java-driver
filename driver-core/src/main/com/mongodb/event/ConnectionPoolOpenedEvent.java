@@ -16,14 +16,14 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 
 /**
  * An event signifying the opening of a connection pool.
- *
- * @since 3.0
  */
+@Beta
 public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
     private final ConnectionPoolSettings settings;
 

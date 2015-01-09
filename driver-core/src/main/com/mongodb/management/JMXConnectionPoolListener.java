@@ -16,6 +16,7 @@
 
 package com.mongodb.management;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionPoolEvent;
@@ -36,6 +37,7 @@ import static java.util.Arrays.asList;
  *
  * @since 3.0
  */
+@Beta
 public class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ServerId, ConnectionPoolStatistics> map =
         new ConcurrentHashMap<ServerId, ConnectionPoolStatistics>();

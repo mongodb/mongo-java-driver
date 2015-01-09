@@ -16,6 +16,8 @@
 
 package com.mongodb.event;
 
+import com.mongodb.annotations.Beta;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,9 +25,8 @@ import static java.util.Collections.newSetFromMap;
 
 /**
  * A multicaster for connection events.
- *
- * @since 3.0
  */
+@Beta
 public class ConnectionEventMulticaster implements ConnectionListener {
     private final Set<ConnectionListener> connectionListeners = newSetFromMap(new ConcurrentHashMap<ConnectionListener, Boolean>());
 

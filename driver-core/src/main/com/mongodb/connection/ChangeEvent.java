@@ -16,14 +16,16 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.annotations.Beta;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Represents some sort of change in the system
  *
  * @param <T> the type of the value that changed.
- * @since 3.0
  */
+@Beta
 public class ChangeEvent<T> {
     private final T oldValue;
     private final T newValue;
