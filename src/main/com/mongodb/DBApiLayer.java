@@ -148,7 +148,7 @@ public class DBApiLayer extends DB {
         requestStart();
         try {
             List<String> collectionNames = new ArrayList<String>();
-            if (isServerVersionAtLeast(asList(2, 7, 7))) {
+            if (isServerVersionAtLeast(asList(2, 8, 0))) {
                 CommandResult res = command(new BasicDBObject("listCollections", getName()), ReadPreference.primary());
                 if (!res.ok() && res.getCode() != 26) {
                     res.throwOnError();

@@ -364,7 +364,7 @@ public class DBPort implements Connection {
         Authenticator authenticator;
         MongoCredential actualCredentials;
         if (credentials.getMechanism() == null) {
-            if (mongo.getConnector().getServerDescription(getAddress()).getVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
+            if (mongo.getConnector().getServerDescription(getAddress()).getVersion().compareTo(new ServerVersion(2, 8)) >= 0) {
                 actualCredentials = MongoCredential.createScramSha1Credential(credentials.getUserName(), credentials.getSource(),
                                                                               credentials.getPassword());
             } else {
