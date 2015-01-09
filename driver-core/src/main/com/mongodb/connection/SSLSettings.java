@@ -17,12 +17,14 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.annotations.Immutable;
 
 /**
  * Settings for connecting to MongoDB via SSL.
  *
  * @since 3.0
  */
+@Immutable
 public class SSLSettings {
     private final boolean enabled;
 
