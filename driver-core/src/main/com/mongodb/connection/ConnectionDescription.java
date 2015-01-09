@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.Immutable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
@@ -26,6 +27,7 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
  *
  * @since 3.0
  */
+@Immutable
 public class ConnectionDescription {
     private final ConnectionId connectionId;
     private final ServerVersion serverVersion;

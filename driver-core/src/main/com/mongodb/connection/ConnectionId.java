@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.annotations.Immutable;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -29,6 +31,7 @@ import static java.lang.String.format;
  *
  * @since 3.0
  */
+@Immutable
 public final class ConnectionId {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
 

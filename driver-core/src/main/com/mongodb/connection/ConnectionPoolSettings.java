@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +30,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  *
  * @since 3.0
  */
+@Immutable
 public class ConnectionPoolSettings {
     private final int maxSize;
     private final int minSize;
