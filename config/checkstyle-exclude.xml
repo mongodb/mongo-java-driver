@@ -25,9 +25,11 @@
     <!--Ignore the async functionality for now since this is incomplete -->
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]"/>
 
+    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
+
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
-    
+
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
 

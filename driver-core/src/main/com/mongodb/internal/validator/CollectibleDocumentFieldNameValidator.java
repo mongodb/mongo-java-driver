@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
@@ -25,7 +25,7 @@ import java.util.List;
  * A field name validator for document that are meant for storage in MongoDB collections.  It ensures that no fields contain a '.',
  * or start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
  *
- * @since 3.0
+ * <p>This class should not be considered a part of the public API.</p>
  */
 public class CollectibleDocumentFieldNameValidator implements FieldNameValidator {
     // Have to support DBRef fields

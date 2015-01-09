@@ -17,6 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.io.BsonOutput;
 
 import java.util.List;

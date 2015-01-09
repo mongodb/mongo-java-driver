@@ -18,6 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.InsertRequest;
+import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;

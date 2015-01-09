@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.internal.connection.IndexMap;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 

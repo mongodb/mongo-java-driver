@@ -25,7 +25,7 @@ import org.bson.BsonValue;
 
 import java.util.Arrays;
 
-import static com.mongodb.connection.NativeAuthenticationHelper.createAuthenticationHash;
+import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 
 final class UserOperationHelper {
 

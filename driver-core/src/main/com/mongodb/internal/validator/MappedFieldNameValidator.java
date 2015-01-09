@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
@@ -24,7 +24,7 @@ import java.util.Map;
  * A field name validator that serves as a root validator for a map of validators that are applied to child fields.  Note that instances of
  * this class can be nested to achieve a wide variety of validation behaviors.
  *
- * @since 3.0
+ * <p>This class should not be considered a part of the public API.</p>
  */
 public class MappedFieldNameValidator implements FieldNameValidator {
     private final FieldNameValidator defaultValidator;

@@ -16,13 +16,14 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.connection.IndexMap;
 
 import java.util.ArrayList;
 import java.util.Comparator;

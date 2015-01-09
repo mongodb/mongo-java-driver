@@ -25,8 +25,8 @@ import org.bson.BsonString;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.CommandHelper.executeCommandAsync;
-import static com.mongodb.connection.NativeAuthenticationHelper.getAuthCommand;
-import static com.mongodb.connection.NativeAuthenticationHelper.getNonceCommand;
+import static com.mongodb.internal.authentication.NativeAuthenticationHelper.getAuthCommand;
+import static com.mongodb.internal.authentication.NativeAuthenticationHelper.getNonceCommand;
 
 class NativeAuthenticator extends Authenticator {
     public NativeAuthenticator(final MongoCredential credential) {

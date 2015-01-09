@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-
-
-package com.mongodb.connection
+package com.mongodb.internal.connection
 
 import com.mongodb.MongoInternalException
 import spock.lang.Specification

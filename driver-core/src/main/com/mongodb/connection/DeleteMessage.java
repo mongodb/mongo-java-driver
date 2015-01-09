@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.io.BsonOutput;
 
 import java.util.List;

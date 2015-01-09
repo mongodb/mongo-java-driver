@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
 /**
- * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
- * <p>
- * This class should not be considered as part of the public API.
- * </p>
+ * A field name validator that treats all fields as valid.
  *
+ * <p>This class should not be considered a part of the public API.</p>
  */
-public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
+public class NoOpFieldNameValidator implements FieldNameValidator {
     @Override
     public boolean validate(final String fieldName) {
-        return fieldName.startsWith("$");
+        return true;
     }
 
     @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
-        return new NoOpFieldNameValidator();
+        return this;
     }
 }

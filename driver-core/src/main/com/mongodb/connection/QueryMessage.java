@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.io.BsonOutput;
 

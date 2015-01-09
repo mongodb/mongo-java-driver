@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.authentication;
 
 import com.mongodb.MongoInternalException;
 import org.bson.BsonDocument;
@@ -30,7 +30,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Utility class for working with MongoDB native authentication.
  *
- * @since 3.0
+ * <p>This class should not be considered a part of the public API.</p>
  */
 public final class NativeAuthenticationHelper {
 
@@ -62,11 +62,11 @@ public final class NativeAuthenticationHelper {
         return hexMD5(bout.toByteArray());
     }
 
-    static BsonDocument getAuthCommand(final String userName, final char[] password, final String nonce) {
+    public static BsonDocument getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createAuthenticationHash(userName, password), nonce);
     }
 
-    static BsonDocument getAuthCommand(final String userName, final String authHash, final String nonce) {
+    public static BsonDocument getAuthCommand(final String userName, final String authHash, final String nonce) {
         String key = nonce + userName + authHash;
 
         BsonDocument cmd = new BsonDocument();
@@ -79,7 +79,7 @@ public final class NativeAuthenticationHelper {
         return cmd;
     }
 
-    static BsonDocument getNonceCommand() {
+    public static BsonDocument getNonceCommand() {
         return new BsonDocument("getnonce", new BsonInt32(1));
     }
 

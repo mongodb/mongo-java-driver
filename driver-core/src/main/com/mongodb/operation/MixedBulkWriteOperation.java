@@ -16,15 +16,15 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
-import com.mongodb.MongoBulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.DeleteRequest;
@@ -35,8 +35,8 @@ import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.BulkWriteBatchCombiner;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.IndexMap;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.internal.connection.IndexMap;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;

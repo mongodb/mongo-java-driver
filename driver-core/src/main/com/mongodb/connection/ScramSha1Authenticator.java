@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.authentication.NativeAuthenticationHelper;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
@@ -165,7 +166,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
             byte[] saltedPassword = hi(
                     NativeAuthenticationHelper.createAuthenticationHash(this.credential.getUserName(),
-                            this.credential.getPassword()),
+                                                                        this.credential.getPassword()),
                     decodeBase64(s),
                     Integer.parseInt(i)
             );

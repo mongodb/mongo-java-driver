@@ -27,11 +27,11 @@ import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.DefaultClusterFactory
-import com.mongodb.connection.NoOpFieldNameValidator
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.connection.StreamFactory
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
