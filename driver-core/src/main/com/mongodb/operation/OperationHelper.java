@@ -143,8 +143,7 @@ final class OperationHelper {
     }
 
     static boolean serverIsAtLeastVersionTwoDotEight(final Connection connection) {
-        // TODO: update to 2.8 once released
-        return serverIsAtLeastVersion(connection, new ServerVersion(asList(2, 7, 7)));
+        return serverIsAtLeastVersion(connection, new ServerVersion(asList(2, 8, 0)));
     }
 
     static boolean serverIsAtLeastVersion(final Connection connection, final ServerVersion serverVersion) {

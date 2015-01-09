@@ -100,7 +100,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         !collectionNameExists('nonExistingCollection')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) })
     def 'should pass through storage engine options'() {
         given:
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())

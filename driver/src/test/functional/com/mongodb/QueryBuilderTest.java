@@ -324,7 +324,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
 
     @Test
     public void textTest() {
-        if (!serverVersionAtLeast(asList(2, 5, 5))) {
+        if (!serverVersionAtLeast(asList(2, 6, 0))) {
             return;
         }
 

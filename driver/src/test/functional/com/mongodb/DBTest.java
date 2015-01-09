@@ -226,7 +226,7 @@ public class DBTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         enableMaxTimeFailPoint();
         try {
             database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));

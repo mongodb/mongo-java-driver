@@ -300,7 +300,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAsText() {
-        assumeThat(serverVersionAtLeast(asList(2, 5, 5)), is(true));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
@@ -429,7 +429,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndUpdateTimeout() {
         assumeThat(ClusterFixture.isAuthenticated(), is(false));
-        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -443,7 +443,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndReplaceTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -457,7 +457,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndRemoveTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(asList(2, 5, 3)), is(true));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -902,7 +902,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(asList(2, 5, 5)), is(true));
+        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
 
         Set<Integer> ids = new HashSet<Integer>();
 

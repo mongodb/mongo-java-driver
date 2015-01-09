@@ -17,8 +17,8 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.MongoCommandException
 import com.mongodb.DuplicateKeyException
+import com.mongodb.MongoCommandException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -347,7 +347,7 @@ class CreateIndexOperationSpecification extends OperationFunctionalSpecification
         getUserCreatedIndexes('textIndexVersion') == [1]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) })
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))

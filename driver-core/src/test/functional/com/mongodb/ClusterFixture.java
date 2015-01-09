@@ -243,7 +243,7 @@ public final class ClusterFixture {
 
     public static void disableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
+        if (serverVersionAtLeast(asList(2, 6, 0)) && !isSharded()) {
             new CommandWriteOperation<BsonDocument>("admin",
                                                     new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
                                                                                                    "maxTimeAlwaysTimeOut")

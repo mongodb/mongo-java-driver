@@ -79,7 +79,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testAggregationCursor() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
 
         List<DBObject> pipeline = prepareData();
 
@@ -103,7 +103,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testInlineAndDollarOut() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
@@ -122,7 +122,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testDollarOut() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
@@ -140,7 +140,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException, InterruptedException {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         assumeTrue(clusterIsType(REPLICA_SET));
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
@@ -172,7 +172,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testOldAggregationWithOut() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -186,7 +186,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testOldAggregationWithOutOnSecondary() throws UnknownHostException, InterruptedException {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -200,7 +200,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
@@ -220,7 +220,7 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     @Test
     public void testMaxTime() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");
         try {
