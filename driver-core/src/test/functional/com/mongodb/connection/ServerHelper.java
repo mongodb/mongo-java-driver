@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.selector.ServerAddressSelector;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;

@@ -30,6 +30,7 @@ import com.mongodb.event.ConnectionPoolEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEvent;
+import com.mongodb.internal.connection.ConcurrentPool;
 import org.bson.ByteBuf;
 
 import java.util.List;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoTimeoutException;
 import org.junit.Before;

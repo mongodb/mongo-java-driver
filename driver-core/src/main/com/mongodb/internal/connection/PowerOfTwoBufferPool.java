@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
+import com.mongodb.connection.BufferProvider;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 
@@ -25,7 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ * Power-of-two buffer pool implementation.
+ *
+ * <p>This class should not be considered a part of the public API.</p>
  */
 public class PowerOfTwoBufferPool implements BufferProvider {
 
@@ -70,7 +73,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
 
     @Override
     public ByteBuf getBuffer(final int size) {
-        Pool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
+        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
         byteBuffer.clear();

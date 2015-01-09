@@ -28,6 +28,7 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterEvent;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.connection.ConcurrentLinkedDeque;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;
 

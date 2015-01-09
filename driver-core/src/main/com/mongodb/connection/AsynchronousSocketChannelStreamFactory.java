@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

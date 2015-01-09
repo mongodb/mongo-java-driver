@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
@@ -25,7 +25,12 @@ import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-class ConcurrentPool<T> implements Pool<T> {
+/**
+ * A concurrent pool implementation.
+ *
+ * <p>This class should not be considered a part of the public API.</p>
+ */
+public class ConcurrentPool<T> implements Pool<T> {
 
     private final int maxSize;
     private final ItemFactory<T> itemFactory;
@@ -39,7 +44,7 @@ class ConcurrentPool<T> implements Pool<T> {
      *
      * @param <T>
      */
-    interface ItemFactory<T> {
+    public interface ItemFactory<T> {
         T create();
 
         void close(T t);

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;

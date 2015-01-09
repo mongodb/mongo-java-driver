@@ -20,7 +20,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;
@@ -31,8 +31,11 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A concurrent linked-list implementation of a {@link Deque}
- * (double-ended queue).  Concurrent insertion, removal, and access
+ * A concurrent linked-list implementation of a {@link Deque} (double-ended queue).
+ *
+ * <p>This class should not be considered a part of the public API.</p>
+
+ * <p>Concurrent insertion, removal, and access
  * operations execute safely across multiple threads. Iterators are
  * <i>weakly consistent</i>, returning elements reflecting the state
  * of the deque at some point at or since the creation of the
@@ -64,7 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author  Doug Lea
  * @param <E> the type of elements held in this collection
  */
-class ConcurrentLinkedDeque<E>
+public class ConcurrentLinkedDeque<E>
 extends AbstractCollection<E>
 implements Deque<E>, java.io.Serializable {
 
