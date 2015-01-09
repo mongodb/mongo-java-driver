@@ -27,7 +27,7 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final SingleResultCallback<WriteConcernResult> callback;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
-    private boolean ordered;
+    private final boolean ordered;
     private final WriteConcern writeConcern;
     private final InternalConnection connection;
 
