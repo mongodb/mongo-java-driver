@@ -74,6 +74,7 @@ import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +107,26 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public OperationOptions getOptions() {
         return options;
+    }
+
+    @Override
+    public MongoCollection<T> withReadPreference(final ReadPreference readPreference) {
+        return new MongoCollectionImpl<T>(namespace, clazz, options.withReadPreference(readPreference), executor);
+    }
+
+    @Override
+    public MongoCollection<T> withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoCollectionImpl<T>(namespace, clazz, options.withWriteConcern(writeConcern), executor);
+    }
+
+    @Override
+    public MongoCollection<T> withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoCollectionImpl<T>(namespace, clazz, options.withCodecRegistry(codecRegistry), executor);
+    }
+
+    @Override
+    public <C> MongoCollection<C> withClazz(final Class<C> clazz) {
+        return new MongoCollectionImpl<C>(namespace, clazz, options, executor);
     }
 
     @Override

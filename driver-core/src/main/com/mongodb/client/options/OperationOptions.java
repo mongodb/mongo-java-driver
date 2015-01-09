@@ -44,12 +44,12 @@ public class OperationOptions {
     }
 
     /**
-     * Merges MongoClientOptions to the current OperationOptions
+     * Merges OperationOptions into the current OperationOptions
      *
      * <p>If any options haven't been set then the default MongoClientOptions will be used.</p>
      *
      * @param defaultOptions the MongoClientOptions to default to
-     * @return a new MongoCollectionOptions with the merged in default options
+     * @return a new OperationOptions with the merged in default options
      */
     public OperationOptions withDefaults(final OperationOptions defaultOptions) {
         Builder builder = new Builder();
@@ -57,6 +57,36 @@ public class OperationOptions {
         builder.readPreference(getReadPreference() != null ? getReadPreference() : defaultOptions.getReadPreference());
         builder.codecRegistry(getCodecRegistry() != null ? getCodecRegistry() : defaultOptions.getCodecRegistry());
         return builder.build();
+    }
+
+    /**
+     * Creates a new OperationOptions instance based on the current instance but with the updated readPreference
+     *
+     * @param readPreference the new {@link com.mongodb.ReadPreference} for the collection
+     * @return a new OperationOptions instance with the updated readPreference
+     */
+    public OperationOptions withReadPreference(final ReadPreference readPreference) {
+        return new Builder().readPreference(readPreference).build().withDefaults(this);
+    }
+
+    /**
+     * Creates a new OperationOptions instance based on the current instance but with the updated writeConcern
+     *
+     * @param writeConcern the new {@link com.mongodb.WriteConcern} for the collection
+     * @return a new OperationOptions instance with the updated writeConcern
+     */
+    public OperationOptions withWriteConcern(final WriteConcern writeConcern) {
+        return new Builder().writeConcern(writeConcern).build().withDefaults(this);
+    }
+
+    /**
+     * Creates a new OperationOptions instance based on the current instance but with the updated codec registry.
+     *
+     * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
+     * @return a new MongoCollection instance with the updated codec registry
+     */
+    public OperationOptions withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new Builder().codecRegistry(codecRegistry).build().withDefaults(this);
     }
 
     /**
