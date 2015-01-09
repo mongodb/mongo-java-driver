@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.DBRef;
 import com.mongodb.Function;
+import com.mongodb.client.options.OperationOptions;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
@@ -43,8 +44,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
                                                    new DocumentCodecProvider(),
                                                    new ConcreteCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), Concrete.class, options);
 
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
@@ -62,8 +62,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
                                                    new DocumentCodecProvider(),
                                                    new ConcreteCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), Concrete.class, options);
 
         Concrete firstItem = new Concrete("first", 1, 2L, 3.0, 5L);
@@ -110,9 +109,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     public void testMapReduceWithGenerics() {
         // given
         List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new NameCodecProvider());
-        MongoCollectionOptions options =
-            MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document("name", "Pete").append("job", "handyman"),
                                               new Document("name", "Sam").append("job", "Plumber"),
                                               new Document("name", "Pete").append("job", "'electrician'"));

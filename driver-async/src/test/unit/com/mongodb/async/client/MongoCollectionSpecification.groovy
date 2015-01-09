@@ -100,9 +100,7 @@ class MongoCollectionSpecification extends Specification {
                                   .writeConcern(WriteConcern.ACKNOWLEDGED)
                                   .readPreference(secondary())
                                   .codecRegistry(MongoClientImpl.getDefaultCodecRegistry()).build()
-    def getOptions = { WriteConcern writeConcern ->
-        OperationOptions.builder().writeConcern(writeConcern).build().withDefaults(options)
-    }
+    def getOptions = { WriteConcern writeConcern -> options.withWriteConcern(writeConcern) }
 
     def 'should return the correct name from getName'() {
         given:

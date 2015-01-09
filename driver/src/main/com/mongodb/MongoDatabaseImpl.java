@@ -17,10 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -39,11 +38,11 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
-    private final MongoDatabaseOptions options;
+    private final OperationOptions options;
     private final String name;
     private final OperationExecutor executor;
 
-    MongoDatabaseImpl(final String name, final MongoDatabaseOptions options, final OperationExecutor executor) {
+    MongoDatabaseImpl(final String name, final OperationOptions options, final OperationExecutor executor) {
         this.name = name;
         this.executor = executor;
         this.options = options;
@@ -55,29 +54,29 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoDatabaseOptions getOptions() {
+    public OperationOptions getOptions() {
         return options;
     }
 
     @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
-        return getCollection(collectionName, MongoCollectionOptions.builder().build());
+        return getCollection(collectionName, options);
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String collectionName, final MongoCollectionOptions mongoCollectionOptions) {
-        return getCollection(collectionName, Document.class, mongoCollectionOptions);
+    public MongoCollection<Document> getCollection(final String collectionName, final OperationOptions operationOptions) {
+        return getCollection(collectionName, Document.class, operationOptions);
     }
 
     @Override
     public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return getCollection(collectionName, clazz, MongoCollectionOptions.builder().build());
+        return getCollection(collectionName, clazz, OperationOptions.builder().build());
     }
 
     @Override
     public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz,
-                                                final MongoCollectionOptions mongoCollectionOptions) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, mongoCollectionOptions.withDefaults(options),
+                                                final OperationOptions operationOptions) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, operationOptions.withDefaults(options),
                                           executor);
     }
 

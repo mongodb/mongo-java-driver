@@ -18,9 +18,9 @@ package com.mongodb.acceptancetest.querying;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.QueryBuilder;
+import com.mongodb.client.options.OperationOptions;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -76,8 +76,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
                                                    new DocumentCodecProvider(),
                                                    new PersonCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), Person.class, options);
         personCollection.insertOne(new Person("Bob"));
 

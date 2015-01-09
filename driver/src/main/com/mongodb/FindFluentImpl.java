@@ -17,10 +17,10 @@
 package com.mongodb;
 
 import com.mongodb.client.FindFluent;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;
@@ -36,13 +36,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class FindFluentImpl<T> implements FindFluent<T> {
     private final MongoNamespace namespace;
-    private final MongoCollectionOptions options;
+    private final OperationOptions options;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
     private Object filter;
     private final Class<T> clazz;
 
-    FindFluentImpl(final MongoNamespace namespace, final MongoCollectionOptions options, final OperationExecutor executor,
+    FindFluentImpl(final MongoNamespace namespace, final OperationOptions options, final OperationExecutor executor,
                    final Object filter, final FindOptions findOptions, final Class<T> clazz) {
         this.namespace = notNull("namespace", namespace);
         this.options = notNull("options", options);

@@ -294,7 +294,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>  
+     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>
      *
      * <p>The default value is 20,000 milliseconds.</p>
      *
@@ -337,15 +337,15 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p> 
-     * 
-     * <ol> 
-     *     <li>Connect in replica set mode, and discover all members of the set based on the given servers</li> 
-     *     <li>Make sure that the set name reported by all members matches the required set name.</li> 
-     *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li> 
+     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p>
+     *
+     * <ol>
+     *     <li>Connect in replica set mode, and discover all members of the set based on the given servers</li>
+     *     <li>Make sure that the set name reported by all members matches the required set name.</li>
+     *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li>
      * </ol>
      *
-     * @return the required replica set name 
+     * @return the required replica set name
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {

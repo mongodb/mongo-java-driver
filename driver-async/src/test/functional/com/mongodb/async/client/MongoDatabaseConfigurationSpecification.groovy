@@ -1,0 +1,86 @@
+/*
+ * Copyright 2015 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.async.client
+
+import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
+import com.mongodb.client.options.OperationOptions
+import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.configuration.RootCodecRegistry
+import spock.lang.Specification
+
+import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.async.client.Fixture.getMongoClient
+import static spock.util.matcher.HamcrestSupport.expect
+
+class MongoDatabaseConfigurationSpecification extends Specification {
+
+    def 'should return default value inherited from MongoClientOptions'() {
+        given:
+        def client = getMongoClient()
+        def clientOptions = client.getOptions()
+        def defaultOptions = OperationOptions.builder()
+                .codecRegistry(clientOptions.getCodecRegistry())
+                .readPreference(clientOptions.getReadPreference())
+                .writeConcern(clientOptions.getWriteConcern())
+                .build()
+
+        when:
+        def database = client.getDatabase(getDefaultDatabaseName())
+
+        then:
+        expect database.options, isTheSameAs(defaultOptions)
+    }
+
+    def 'should override inherited values'() {
+        given:
+        def client = getMongoClient()
+        def clientOptions = client.getOptions()
+        def defaultOptions = OperationOptions.builder()
+                .codecRegistry(clientOptions.getCodecRegistry())
+                .readPreference(clientOptions.getReadPreference())
+                .writeConcern(clientOptions.getWriteConcern())
+                .build()
+
+        when:
+        def customOptions = OperationOptions.builder().build()
+        def database = client.getDatabase(getDefaultDatabaseName(), customOptions)
+
+        then:
+        expect database.options, isTheSameAs(defaultOptions)
+
+        when:
+        customOptions = OperationOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
+        database = client.getDatabase(getDefaultDatabaseName(), customOptions)
+
+        then:
+        expect database.options, isTheSameAs(defaultOptions.withWriteConcern(WriteConcern.MAJORITY))
+
+        when:
+        customOptions = OperationOptions.builder()
+                .writeConcern(WriteConcern.MAJORITY)
+                .readPreference(ReadPreference.primaryPreferred())
+                .codecRegistry(new RootCodecRegistry(Arrays.asList(new BsonValueCodecProvider())))
+                .build()
+        database = client.getDatabase(getDefaultDatabaseName(), customOptions)
+
+        then:
+        expect database.options, isTheSameAs(customOptions)
+    }
+
+}
