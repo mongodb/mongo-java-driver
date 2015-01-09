@@ -17,7 +17,7 @@
 package com.mongodb
 
 import com.mongodb.client.ConcreteCodecProvider
-import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.client.options.OperationOptions
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -47,7 +47,7 @@ class MongoCollectionOptionsSpecification extends Specification {
         def customOptions
 
         when:
-        customOptions = MongoCollectionOptions.builder().build()
+        customOptions = OperationOptions.builder().build()
         options = database.getCollection(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
@@ -56,7 +56,7 @@ class MongoCollectionOptionsSpecification extends Specification {
         options.getWriteConcern() == database.getOptions().getWriteConcern()
 
         when:
-        customOptions = MongoCollectionOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
+        customOptions = OperationOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
         options = database.getCollection(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
@@ -65,11 +65,11 @@ class MongoCollectionOptionsSpecification extends Specification {
         options.getWriteConcern() == customOptions.getWriteConcern()
 
         when:
-        customOptions = MongoCollectionOptions.builder()
-                                            .writeConcern(WriteConcern.MAJORITY)
-                                            .readPreference(ReadPreference.primaryPreferred())
-                                            .codecRegistry(new RootCodecRegistry(Arrays.asList(new ConcreteCodecProvider())))
-                                            .build()
+        customOptions = OperationOptions.builder()
+                                        .writeConcern(WriteConcern.MAJORITY)
+                                        .readPreference(ReadPreference.primaryPreferred())
+                                        .codecRegistry(new RootCodecRegistry(Arrays.asList(new ConcreteCodecProvider())))
+                                        .build()
 
         options = database.getCollection(getDefaultDatabaseName(), customOptions).getOptions()
 

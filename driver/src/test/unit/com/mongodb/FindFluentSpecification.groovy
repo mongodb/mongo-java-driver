@@ -16,8 +16,8 @@
 
 package com.mongodb
 
-import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.FindOptions
+import com.mongodb.client.options.OperationOptions
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -37,10 +37,10 @@ class FindFluentSpecification extends Specification {
                   new DocumentCodecProvider(),
                   new DBObjectCodecProvider(),
                   new BsonValueCodecProvider()]
-    def options = MongoCollectionOptions.builder()
-                                        .codecRegistry(new RootCodecRegistry(codecs))
-                                        .readPreference(secondary())
-                                        .build()
+    def options = OperationOptions.builder()
+                                  .codecRegistry(new RootCodecRegistry(codecs))
+                                  .readPreference(secondary())
+                                  .build()
 
     def 'should build the expected findOperation'() {
         given:

@@ -23,7 +23,6 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.FindFluent;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
@@ -45,6 +44,7 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.operation.AggregateOperation;
@@ -86,12 +86,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoNamespace namespace;
-    private final MongoCollectionOptions options;
+    private final OperationOptions options;
     private final Class<T> clazz;
     private final OperationExecutor executor;
 
-    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz,
-                        final MongoCollectionOptions options, final OperationExecutor executor) {
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz, final OperationOptions options,
+                        final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.clazz = notNull("clazz", clazz);
         this.options = notNull("options", options);
@@ -104,7 +104,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoCollectionOptions getOptions() {
+    public OperationOptions getOptions() {
         return options;
     }
 
@@ -273,10 +273,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             executor.execute(operation);
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
-            MongoCollectionOptions readOptions = MongoCollectionOptions.builder()
-                                                                       .readPreference(primary())
-                                                                       .build()
-                                                                       .withDefaults(this.options);
+            OperationOptions readOptions = OperationOptions.builder().readPreference(primary()).build().withDefaults(this.options);
             return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), readOptions, executor,
                                          new BsonDocument(), new FindOptions(), clazz);
         }

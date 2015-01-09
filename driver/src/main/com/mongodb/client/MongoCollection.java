@@ -32,6 +32,7 @@ import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
@@ -61,7 +62,7 @@ public interface MongoCollection<T> {
      *
      * @return the collection options
      */
-    MongoCollectionOptions getOptions();
+    OperationOptions getOptions();
 
     /**
      * Counts the number of documents in the collection.

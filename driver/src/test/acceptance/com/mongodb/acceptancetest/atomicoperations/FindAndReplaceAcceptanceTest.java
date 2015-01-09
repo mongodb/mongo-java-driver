@@ -18,8 +18,8 @@ package com.mongodb.acceptancetest.atomicoperations;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
@@ -68,8 +68,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
                                                    new DocumentCodecProvider(),
                                                    new WorkerCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
 
         collection.insertOne(pat);
@@ -89,8 +88,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
                                                    new DocumentCodecProvider(),
                                                    new WorkerCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        OperationOptions options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
         collection.insertOne(pat);
 

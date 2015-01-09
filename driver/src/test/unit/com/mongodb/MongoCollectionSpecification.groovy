@@ -19,7 +19,6 @@ package com.mongodb
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
-import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
@@ -32,6 +31,7 @@ import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.options.OperationOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.AggregateOperation
@@ -80,12 +80,12 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoCollectionSpecification extends Specification {
 
     def namespace = new MongoNamespace('databaseName', 'collectionName')
-    def options = MongoCollectionOptions.builder()
-                                        .writeConcern(WriteConcern.ACKNOWLEDGED)
-                                        .readPreference(secondary())
-                                        .codecRegistry(getDefaultCodecRegistry()).build()
+    def options = OperationOptions.builder()
+                                  .writeConcern(WriteConcern.ACKNOWLEDGED)
+                                  .readPreference(secondary())
+                                  .codecRegistry(getDefaultCodecRegistry()).build()
     def getOptions = { WriteConcern writeConcern ->
-        MongoCollectionOptions.builder().writeConcern(writeConcern).build().withDefaults(options)
+        OperationOptions.builder().writeConcern(writeConcern).build().withDefaults(options)
     }
 
 
@@ -160,7 +160,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should handle exceptions in distinct correctly'() {
         given:
-        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+        def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def filter = new BsonDocument()
@@ -249,7 +249,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should handle exceptions in aggregate correctly'() {
         given:
-        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+        def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
@@ -351,7 +351,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should handle exceptions in mapReduce correctly'() {
         given:
-        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+        def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)
@@ -411,7 +411,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should handle exceptions in bulkWrite correctly'() {
         given:
-        def options = MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
+        def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                             new BsonValueCodecProvider()))).build()
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, options, executor)

@@ -16,9 +16,8 @@
 
 package com.mongodb
 
-import com.mongodb.client.MongoCollectionOptions
-import com.mongodb.client.MongoDatabaseOptions
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.options.OperationOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
@@ -44,8 +43,8 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoDatabaseSpecification extends Specification {
 
     def name = 'databaseName'
-    def options = MongoDatabaseOptions.builder().codecRegistry(new RootCodecRegistry([new DocumentCodecProvider(),
-                                                                                      new BsonValueCodecProvider()]))
+    def options = OperationOptions.builder().codecRegistry(new RootCodecRegistry([new DocumentCodecProvider(),
+                                                                                  new BsonValueCodecProvider()]))
                                       .writeConcern(WriteConcern.ACKNOWLEDGED)
                                       .readPreference(primary())
                                       .build()
@@ -170,7 +169,7 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should pass the correct options to getCollection'() {
         given:
-        def options = MongoDatabaseOptions.builder()
+        def options = OperationOptions.builder()
                                       .readPreference(secondary())
                                       .writeConcern(WriteConcern.ACKNOWLEDGED)
                                       .codecRegistry(codecRegistry)
@@ -189,11 +188,11 @@ class MongoDatabaseSpecification extends Specification {
         where:
         customOptions                                        | readPreference       | writeConcern              | codecRegistry
         null                                                 | secondary()          | WriteConcern.ACKNOWLEDGED | new RootCodecRegistry([])
-        MongoCollectionOptions.builder().build()             | secondary()          | WriteConcern.ACKNOWLEDGED | new RootCodecRegistry([])
-        MongoCollectionOptions.builder()
-                              .readPreference(secondaryPreferred())
-                              .writeConcern(WriteConcern.MAJORITY)
-                              .build()                       | secondaryPreferred() | WriteConcern.MAJORITY     | new RootCodecRegistry([])
+        OperationOptions.builder().build()                   | secondary()          | WriteConcern.ACKNOWLEDGED | new RootCodecRegistry([])
+        OperationOptions.builder()
+                        .readPreference(secondaryPreferred())
+                        .writeConcern(WriteConcern.MAJORITY)
+                        .build()                             | secondaryPreferred() | WriteConcern.MAJORITY     | new RootCodecRegistry([])
 
     }
 

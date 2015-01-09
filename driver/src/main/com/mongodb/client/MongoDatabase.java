@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.options.OperationOptions;
 import org.bson.Document;
 
 import java.util.List;
@@ -81,11 +82,11 @@ public interface MongoDatabase {
     /**
      * Gets the options that are used with the database.
      *
-     * <p>Note: {@link MongoDatabaseOptions} is immutable.</p>
+     * <p>Note: {@link OperationOptions} is immutable.</p>
      *
      * @return the options
      */
-    MongoDatabaseOptions getOptions();
+    OperationOptions getOptions();
 
     /**
      * Gets a collection.
@@ -98,11 +99,11 @@ public interface MongoDatabase {
     /**
      * Gets a collection, with the specific {@code MongoCollectionOptions}.
      *
-     * @param collectionName         the name of the collection to return
-     * @param mongoCollectionOptions the options to be used with the {@code MongoCollection}
+     * @param collectionName   the name of the collection to return
+     * @param operationOptions the options to be used with the {@code MongoCollection}
      * @return the collection
      */
-    MongoCollection<Document> getCollection(String collectionName, MongoCollectionOptions mongoCollectionOptions);
+    MongoCollection<Document> getCollection(String collectionName, OperationOptions operationOptions);
 
     /**
      * Gets a collection, with a specific document class.
@@ -117,14 +118,13 @@ public interface MongoDatabase {
     /**
      * Gets a collection, with a specific document class and {@code MongoCollectionOptions}.
      *
-     * @param collectionName         the name of the collection to return
-     * @param clazz                  the default class to cast any documents returned from the database into
-     * @param mongoCollectionOptions the options to be used with the {@code MongoCollection}
-     * @param <T>                    the type of the class to use instead of {@code Document}
+     * @param collectionName   the name of the collection to return
+     * @param clazz            the default class to cast any documents returned from the database into
+     * @param operationOptions the options to be used with the {@code MongoCollection}
+     * @param <T>              the type of the class to use instead of {@code Document}
      * @return the collection
      */
-    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, MongoCollectionOptions mongoCollectionOptions);
-
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, OperationOptions operationOptions);
 
     /**
      * Drops this database.

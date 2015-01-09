@@ -19,7 +19,7 @@
 package com.mongodb
 
 import com.mongodb.client.ConcreteCodecProvider
-import com.mongodb.client.MongoDatabaseOptions
+import com.mongodb.client.options.OperationOptions
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -49,7 +49,7 @@ class MongoDatabaseOptionsSpecification extends Specification {
         def customOptions
 
         when:
-        customOptions = MongoDatabaseOptions.builder().build()
+        customOptions = OperationOptions.builder().build()
         options = client.getDatabase(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
@@ -58,7 +58,7 @@ class MongoDatabaseOptionsSpecification extends Specification {
         options.getWriteConcern() == client.getMongoClientOptions().getWriteConcern()
 
         when:
-        customOptions = MongoDatabaseOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
+        customOptions = OperationOptions.builder().writeConcern(WriteConcern.MAJORITY).build()
         options = client.getDatabase(getDefaultDatabaseName(), customOptions).getOptions()
 
         then:
@@ -67,7 +67,7 @@ class MongoDatabaseOptionsSpecification extends Specification {
         options.getWriteConcern() == customOptions.getWriteConcern()
 
         when:
-        customOptions = MongoDatabaseOptions.builder()
+        customOptions = OperationOptions.builder()
                 .writeConcern(WriteConcern.MAJORITY)
                 .readPreference(ReadPreference.primaryPreferred())
                 .codecRegistry(new RootCodecRegistry(Arrays.asList(new ConcreteCodecProvider())))
