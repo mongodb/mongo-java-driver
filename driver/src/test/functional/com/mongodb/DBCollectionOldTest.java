@@ -222,7 +222,25 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         collection.insert(new BasicDBObject("_id", 1));
         WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)),
                                             false, false, WriteConcern.UNACKNOWLEDGED);
-        assertNull(res);
+        try {
+            res.getN();
+            fail();
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+        try {
+            res.getUpsertedId();
+            fail();
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+
+        try {
+            res.isUpdateOfExisting();
+            fail();
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
     }
 
     @Test

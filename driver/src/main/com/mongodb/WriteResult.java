@@ -18,16 +18,27 @@ package com.mongodb;
 
 
 /**
- * This class lets you access the results of the previous write. If the write was performed with an acknowledged write concern, this just
- * stores the result of the write.
+ * This class lets you access the results of the previous acknowledged write. If the write was unacknowledged, all property access
+ * methods will throw {@link java.lang.UnsupportedOperationException}.
  *
  * @see WriteConcern#UNACKNOWLEDGED
  */
 public class WriteResult {
 
+    private final boolean acknowledged;
     private final int n;
     private final boolean updateOfExisting;
     private final Object upsertedId;
+
+    /**
+     * Gets an instance representing an unacknowledged write.
+     *
+     * @return an instance representing an unacknowledged write
+     *
+     */
+    public static WriteResult unacknowledged() {
+       return new WriteResult();
+    }
 
     /**
      * Construct a new instance.
@@ -37,19 +48,38 @@ public class WriteResult {
      * @param upsertedId the _id of a document that was upserted by this operation
      */
     public WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId) {
+        this.acknowledged = true;
         this.n = n;
         this.updateOfExisting = updateOfExisting;
         this.upsertedId = upsertedId;
+    }
+
+    WriteResult() {
+        acknowledged = false;
+        n = 0;
+        updateOfExisting = false;
+        upsertedId = null;
+    }
+
+    /**
+     * Returns true if the write was acknowledged.
+     *
+     * @return true if the write was acknowledged
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
+     */
+    public boolean wasAcknowledged() {
+        return acknowledged;
     }
 
     /**
      * Gets the "n" field, which contains the number of documents affected in the write operation.
      *
      * @return the value of the "n" field
-     * @throws MongoException if the write was unacknowledged
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public int getN() {
+        throwIfUnacknowledged("n");
         return n;
     }
 
@@ -58,9 +88,11 @@ public class WriteResult {
      * this method will return null unless the _id of the upserted document was of type ObjectId.
      *
      * @return the value of the _id of an upserted document
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
      * @since 2.12
      */
     public Object getUpsertedId() {
+        throwIfUnacknowledged("upsertedId");
         return upsertedId;
     }
 
@@ -69,18 +101,32 @@ public class WriteResult {
      * Returns true if this write resulted in an update of an existing document.
      *
      * @return whether the write resulted in an update of an existing document.
+     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
      * @since 2.12
      */
     public boolean isUpdateOfExisting() {
+        throwIfUnacknowledged("updateOfExisting");
         return updateOfExisting;
     }
 
     @Override
     public String toString() {
-        return "WriteResult{"
-               + ", n=" + n
-               + ", updateOfExisting=" + updateOfExisting
-               + ", upsertedId=" + upsertedId
-               + '}';
+        if (acknowledged) {
+            return "WriteResult{"
+                   + ", n=" + n
+                   + ", updateOfExisting=" + updateOfExisting
+                   + ", upsertedId=" + upsertedId
+                   + '}';
+        } else {
+            return "WriteResult{acknowledged=false}";
+        }
+    }
+
+    private void throwIfUnacknowledged(final String property) {
+        if (!acknowledged) {
+            throw new UnsupportedOperationException("Cannot get " + property + " property for an unacknowledged write");
+        }
     }
 }
+
+

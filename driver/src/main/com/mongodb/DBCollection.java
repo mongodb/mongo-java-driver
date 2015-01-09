@@ -328,7 +328,7 @@ public class DBCollection {
 
     private WriteResult translateWriteResult(final WriteConcernResult writeConcernResult) {
         if (!writeConcernResult.wasAcknowledged()) {
-            return null;
+            return WriteResult.unacknowledged();
         }
 
         return translateWriteResult(writeConcernResult.getCount(), writeConcernResult.isUpdateOfExisting(),
