@@ -149,27 +149,19 @@ public class DBApiLayer extends DB {
         try {
             List<String> collectionNames = new ArrayList<String>();
             if (isServerVersionAtLeast(asList(2, 7, 7))) {
-                CommandResult res = command(new BasicDBObject("listCollections", getName()).append("cursor", new BasicDBObject()),
-                                            ReadPreference.primary());
+                CommandResult res = command(new BasicDBObject("listCollections", getName()), ReadPreference.primary());
                 if (!res.ok() && res.getCode() != 26) {
                     res.throwOnError();
                 } else {
-                    List<DBObject> collections = (List<DBObject>) res.get("collections");
-                    if (collections != null) {
-                        for (DBObject collectionInfo : collections) {
+                   QueryResultIterator iterator = new QueryResultIterator(res, getMongo(), 0, DefaultDBDecoder.FACTORY.create(),
+                                                                           res.getServerUsed());
+                    try {
+                        while (iterator.hasNext()) {
+                            DBObject collectionInfo = iterator.next();
                             collectionNames.add(collectionInfo.get("name").toString());
                         }
-                    } else {
-                        QueryResultIterator iterator = new QueryResultIterator(res, getMongo(), 0, DefaultDBDecoder.FACTORY.create(),
-                                                                               res.getServerUsed());
-                        try {
-                            while (iterator.hasNext()) {
-                                DBObject collectionInfo = iterator.next();
-                                collectionNames.add(collectionInfo.get("name").toString());
-                            }
-                        } finally {
-                            iterator.close();
-                        }
+                    } finally {
+                        iterator.close();
                     }
                 }
             } else {

@@ -343,28 +343,21 @@ class DBCollectionImpl extends DBCollection {
             List<DBObject> list = new ArrayList<DBObject>();
 
             if (db.isServerVersionAtLeast(asList(2, 7, 6))) {
-                CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()).append("cursor", new BasicDBObject()),
-                                                ReadPreference.primary());
+                CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()), ReadPreference.primary());
                 if (!res.ok() && res.getCode() == 26) {
                     return list;
                 }
                 res.throwOnError();
-                List<DBObject> indexes = (List<DBObject>) res.get("indexes");
-                if (indexes != null) {
-                    for (DBObject indexDocument : indexes) {
-                        list.add(indexDocument);
+
+                QueryResultIterator iterator = new QueryResultIterator(res, db.getMongo(), 0, DefaultDBDecoder.FACTORY.create(),
+                                                                       res.getServerUsed());
+                try {
+                    while (iterator.hasNext()) {
+                        DBObject collectionInfo = iterator.next();
+                        list.add(collectionInfo);
                     }
-                } else {
-                    QueryResultIterator iterator = new QueryResultIterator(res, db.getMongo(), 0, DefaultDBDecoder.FACTORY.create(),
-                                                                           res.getServerUsed());
-                    try {
-                        while (iterator.hasNext()) {
-                            DBObject collectionInfo = iterator.next();
-                            list.add(collectionInfo);
-                        }
-                    } finally {
-                        iterator.close();
-                    }
+                } finally {
+                    iterator.close();
                 }
             } else {
                 BasicDBObject cmd = new BasicDBObject("ns", getFullName());
