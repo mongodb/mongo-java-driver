@@ -44,9 +44,10 @@ MongoDB project, please report it according to the [instructions here]
 
 ### Maintainers
 * Jeff Yemin           jeff.yemin@mongodb.com
-* Trisha Gee           trisha.gee@mongodb.com
+* Ross Lawley          ross@mongodb.com
 
 ### Contributors:
+* Trisha Gee           trisha.gee@gmail.com
 * Scott Hernandez      scott@mongodb.com
 * Ryan Nitz            ryan@mongodb.com
 * Antoine Girbal       antoine@mongodb.com
