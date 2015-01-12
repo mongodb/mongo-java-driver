@@ -21,7 +21,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
-import com.mongodb.client.model.ListCollectionsOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -135,22 +134,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <C> ListCollectionsFluent<C> listCollections(final Class<C> clazz) {
-        MongoDatabaseOptions listOptions = MongoDatabaseOptions.builder()
-                .readPreference(ReadPreference.primary()).build().withDefaults(options);
-        return new ListCollectionsFluentImpl<C>(name, listOptions, executor, new ListCollectionsOptions(), clazz);
-    }
-
-    @Override
-    public ListCollectionsFluent<Document> listCollections(final Object filter) {
-        return listCollections(filter, Document.class);
-    }
-
-    @Override
-    public <C> ListCollectionsFluent<C> listCollections(final Object filter, final Class<C> clazz) {
-        notNull("filter", filter);
-        MongoDatabaseOptions listOptions = MongoDatabaseOptions.builder()
-                .readPreference(ReadPreference.primary()).build().withDefaults(options);
-        return new ListCollectionsFluentImpl<C>(name, listOptions, executor, new ListCollectionsOptions().filter(filter), clazz);
+        return new ListCollectionsFluentImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override

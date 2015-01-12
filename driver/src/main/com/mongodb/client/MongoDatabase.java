@@ -164,26 +164,6 @@ public interface MongoDatabase {
     <C> ListCollectionsFluent<C> listCollections(Class<C> clazz);
 
     /**
-     * Finds the collections in this database.
-     *
-     * @param filter the query filter
-     * @return the fluent list collections interface
-     * @mongodb.driver.manual reference/command/listCollections listCollections
-     */
-    ListCollectionsFluent<Document> listCollections(Object filter);
-
-    /**
-     * Finds the collections in this database.
-     *
-     * @param filter the query filter
-     * @param clazz  the class to decode each document into
-     * @param <C>    the target document type of the iterable.
-     * @return the fluent list collections interface
-     * @mongodb.driver.manual reference/command/listCollections listCollections
-     */
-    <C> ListCollectionsFluent<C> listCollections(Object filter, Class<C> clazz);
-
-    /**
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create

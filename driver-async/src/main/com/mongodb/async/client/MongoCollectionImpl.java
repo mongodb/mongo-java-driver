@@ -43,7 +43,6 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.ListIndexesOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
@@ -609,8 +608,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public <C> ListIndexesFluent<C> listIndexes(final Class<C> clazz) {
-        OperationOptions listOptions = OperationOptions.builder().readPreference(ReadPreference.primary()).build().withDefaults(options);
-        return new ListIndexesFluentImpl<C>(namespace, listOptions, executor, new ListIndexesOptions(), clazz);
+        return new ListIndexesFluentImpl<C>(namespace, clazz, codecRegistry, readPreference, executor);
     }
 
     @Override

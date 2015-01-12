@@ -20,17 +20,13 @@ import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -160,79 +156,22 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should use ListCollectionsOperation correctly'() {
         given:
-        def cursor = {
-            def invocationCount = 0
-            Stub(AsyncBatchCursor) {
-                next(_) >> {
-                    it[0].onResult(invocationCount++ == 0 ? [new Document('name', 'collectionName')] : null, null)
-                }
-            }
-        }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor(), cursor(), cursor()])
+        def executor = new TestOperationExecutor([null, null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
-        def documentOperation = new ListCollectionsOperation(name, new DocumentCodec())
-        def bsonOperation = new ListCollectionsOperation(name, new BsonDocumentCodec())
-        def futureResultCallback = new FutureResultCallback()
 
         when:
-        database.listCollections().into([], futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getReadOperation() as ListCollectionsOperation
+        def listCollectionFluent = database.listCollections()
 
         then:
-        expect operation, isTheSameAs(documentOperation)
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<Document>(name, Document, codecRegistry, primary(),
+                executor))
 
         when:
-        futureResultCallback = new FutureResultCallback()
-        database.listCollections(BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as ListCollectionsOperation
+        listCollectionFluent = database.listCollections(BsonDocument)
 
         then:
-        expect operation, isTheSameAs(bsonOperation)
-
-        when:
-        futureResultCallback = new FutureResultCallback()
-        database.listCollections(new Document('filter', 1)).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(documentOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-
-        when:
-        futureResultCallback = new FutureResultCallback()
-        database.listCollections(new Document('filter', 1), BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(bsonOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-
-        when: 'Test setting values via the fluid api'
-        futureResultCallback = new FutureResultCallback()
-        database.listCollections().filter(new Document('filter', 2)).batchSize(1).maxTime(1, MILLISECONDS).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(1).maxTime(1, MILLISECONDS))
-        executor.getReadPreference() == primary()
-
-        when: 'Test getting the names list'
-        futureResultCallback = new FutureResultCallback()
-        new MongoDatabaseImpl(name, options, executor).listCollectionNames().into([], futureResultCallback)
-        def names = futureResultCallback.get()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-
-        then:
-        names == ['collectionName']
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
-        executor.getReadPreference() == primary()
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
+                executor))
     }
 
     def 'should use CreateCollectionOperation correctly'() {

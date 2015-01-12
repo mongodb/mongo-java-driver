@@ -121,7 +121,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         collections = database.listCollections().into(new ArrayList<Document>());
         assertThat(collections.size(), is(greaterThan(20)));
 
-        collections = database.listCollections(new Document("name", "coll1")).into(new ArrayList<Document>());
+        collections = database.listCollections().filter(new Document("name", "coll1")).into(new ArrayList<Document>());
         assertThat(collections.size(), is(1));
 
     }

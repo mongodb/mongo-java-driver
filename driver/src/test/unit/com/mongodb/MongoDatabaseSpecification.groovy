@@ -17,26 +17,20 @@
 package com.mongodb
 
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
-import static com.mongodb.MongoClient.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
-import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoDatabaseSpecification extends Specification {
@@ -147,65 +141,22 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should use ListCollectionsOperation correctly'() {
         given:
-        def cursor = {
-            Stub(BatchCursor) {
-                hasNext() >>> [true, true, false]
-                next() >> [new Document('name', 'coll1')]
-            }
-        }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor(), cursor(), cursor()])
-        def database = new MongoDatabaseImpl(name, options, executor)
-        def documentOperation = new ListCollectionsOperation(name, new DocumentCodec())
-        def bsonOperation = new ListCollectionsOperation(name, new BsonDocumentCodec())
+        def executor = new TestOperationExecutor([null, null, null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        database.listCollections().iterator()
-        def operation = executor.getReadOperation() as ListCollectionsOperation
+        def listCollectionFluent = database.listCollections()
 
         then:
-        expect operation, isTheSameAs(documentOperation)
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<Document>(name, Document, codecRegistry, primary(),
+                executor))
 
         when:
-        database.listCollections(BsonDocument).iterator()
-        operation = executor.getReadOperation() as ListCollectionsOperation
+        listCollectionFluent = database.listCollections(BsonDocument)
 
         then:
-        expect operation, isTheSameAs(bsonOperation)
-
-        when:
-        database.listCollections(new Document('filter', 1)).iterator()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(documentOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-
-        when:
-        database.listCollections(new Document('filter', 1), BsonDocument).iterator()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(bsonOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-
-        when: 'Test setting values via the fluid api'
-        database.listCollections().filter(new Document('filter', 2)).batchSize(1).maxTime(1, MILLISECONDS).iterator()
-        operation = executor.getReadOperation() as ListCollectionsOperation
-        executor.getReadPreference() == primary()
-
-        then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(1).maxTime(1, MILLISECONDS))
-        executor.getReadPreference() == primary()
-
-        when: 'Test getting the names list'
-        def names = new MongoDatabaseImpl(name, options, executor).listCollectionNames().into([])
-        operation = executor.getReadOperation() as ListCollectionsOperation
-
-        then:
-        names == ['coll1']
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
-        executor.getReadPreference() == primary()
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
+                executor))
     }
 
     def 'should use CreateCollectionOperation correctly'() {

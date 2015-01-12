@@ -113,7 +113,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         collectionNames*.name.contains(collectionName)
 
         when: 'The collections list should be filterable'
-        collectionNames = run(database.listCollections(new Document('name', collectionName)).&into, [])
+        collectionNames = run(database.listCollections().filter(new Document('name', collectionName)).&into, [])
 
         then:
         collectionNames*.name == [collectionName]
