@@ -72,29 +72,30 @@ final class OperationHelper {
     }
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
-                                                          final ServerAddress serverAddress) {
+                                                          final ServerAddress serverAddress, final int batchSize) {
         return new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L,
                                                           serverAddress),
-                                       0, 0, decoder, serverAddress);
+                                       0, batchSize, decoder, serverAddress);
     }
 
     static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
-                                                               final ServerAddress serverAddress) {
-        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress), 0, 0, decoder);
+                                                               final ServerAddress serverAddress, final int batchSize) {
+        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress), 0, batchSize, 
+                decoder);
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                          final ConnectionSource source) {
+                                                          final ConnectionSource source, final int batchSize) {
         return new QueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
                                                                                       source.getServerDescription().getAddress()),
-                                       0, 0, decoder, source);
+                                       0, batchSize, decoder, source);
     }
 
     static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument, final Decoder<T> decoder,
-                                                                    final AsyncConnectionSource source) {
+                                                                    final AsyncConnectionSource source, final int batchSize) {
         return new AsyncQueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
                                                                                            source.getServerDescription().getAddress()),
-                                            0, 0, decoder, source);
+                                            0, batchSize, decoder, source);
     }
 
 

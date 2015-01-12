@@ -106,8 +106,20 @@ class SmokeTestSpecification extends FunctionalSpecification {
         updatedNames.contains(databaseName)
         updatedNames.size() == names.size() + 1
 
+        when: 'The collection name should be in the collections list'
+        def collectionNames = run(database.listCollections().&into, [])
+
+        then:
+        collectionNames*.name.contains(collectionName)
+
+        when: 'The collections list should be filterable'
+        collectionNames = run(database.listCollections(new Document('name', collectionName)).&into, [])
+
+        then:
+        collectionNames*.name == [collectionName]
+
         when: 'The collection name should be in the collection names list'
-        def collectionNames = run(database.listCollectionNames().&into, [])
+        collectionNames = run(database.listCollectionNames().&into, [])
 
         then:
         !collectionNames.contains(null)

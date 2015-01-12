@@ -554,20 +554,20 @@ public interface MongoCollection<T> {
     /**
      * Get all the indexes in this collection.
      *
-     * @return an iterable containing all the indexes
+     * @return the fluent list indexes interface
      * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    MongoIterable<Document> listIndexes();
+    ListIndexesFluent<Document> listIndexes();
 
     /**
      * Get all the indexes in this collection.
      *
      * @param clazz    the class to decode each document into
      * @param <C>      the target document type of the iterable.
-     * @return an iterable containing all the indexes
+     * @return the fluent list indexes interface
      * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    <C> MongoIterable<C> listIndexes(Class<C> clazz);
+    <C> ListIndexesFluent<C> listIndexes(Class<C> clazz);
 
     /**
      * Drops the given index.

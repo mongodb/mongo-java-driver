@@ -148,29 +148,29 @@ public interface MongoDatabase {
     /**
      * Finds all the collections in this database.
      *
-     * @return an iterable containing all the collections in this database
+     * @return the fluent list collections interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<Document> listCollections();
+    ListCollectionsFluent<Document> listCollections();
 
     /**
      * Finds all the collections in this database.
      *
      * @param clazz the class to decode each document into
      * @param <C>   the target document type of the iterable.
-     * @return an iterable containing all the collections in this database
+     * @return the fluent list collections interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    <C> MongoIterable<C> listCollections(Class<C> clazz);
+    <C> ListCollectionsFluent<C> listCollections(Class<C> clazz);
 
     /**
      * Finds the collections in this database.
      *
      * @param filter the query filter
-     * @return an iterable containing all the collections in this database
+     * @return the fluent list collections interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    MongoIterable<Document> listCollections(Object filter);
+    ListCollectionsFluent<Document> listCollections(Object filter);
 
     /**
      * Finds the collections in this database.
@@ -178,10 +178,10 @@ public interface MongoDatabase {
      * @param filter the query filter
      * @param clazz  the class to decode each document into
      * @param <C>    the target document type of the iterable.
-     * @return an iterable containing all the collections in this database
+     * @return the fluent list collections interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    <C> MongoIterable<C> listCollections(Object filter, Class<C> clazz);
+    <C> ListCollectionsFluent<C> listCollections(Object filter, Class<C> clazz);
 
     /**
      * Create a new collection with the given name.

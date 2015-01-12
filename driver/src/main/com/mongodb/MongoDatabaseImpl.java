@@ -16,22 +16,22 @@
 
 package com.mongodb;
 
+import com.mongodb.client.ListCollectionsFluent;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.ListCollectionsOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -129,25 +129,28 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoIterable<Document> listCollections() {
-        return listCollections(new BsonDocument(), Document.class);
+    public ListCollectionsFluent<Document> listCollections() {
+        return listCollections(Document.class);
     }
 
     @Override
-    public <C> MongoIterable<C> listCollections(final Class<C> clazz) {
-        return listCollections(new BsonDocument(), clazz);
+    public <C> ListCollectionsFluent<C> listCollections(final Class<C> clazz) {
+        MongoDatabaseOptions listOptions = MongoDatabaseOptions.builder()
+                .readPreference(ReadPreference.primary()).build().withDefaults(options);
+        return new ListCollectionsFluentImpl<C>(name, listOptions, executor, new ListCollectionsOptions(), clazz);
     }
 
     @Override
-    public MongoIterable<Document> listCollections(final Object filter) {
+    public ListCollectionsFluent<Document> listCollections(final Object filter) {
         return listCollections(filter, Document.class);
     }
 
     @Override
-    public <C> MongoIterable<C> listCollections(final Object filter, final Class<C> clazz) {
+    public <C> ListCollectionsFluent<C> listCollections(final Object filter, final Class<C> clazz) {
         notNull("filter", filter);
-        return new OperationIterable<C>(new ListCollectionsOperation<C>(name, codecRegistry.get(clazz)).filter(asBson(filter)), primary(),
-                executor);
+        MongoDatabaseOptions listOptions = MongoDatabaseOptions.builder()
+                .readPreference(ReadPreference.primary()).build().withDefaults(options);
+        return new ListCollectionsFluentImpl<C>(name, listOptions, executor, new ListCollectionsOptions().filter(filter), clazz);
     }
 
     @Override

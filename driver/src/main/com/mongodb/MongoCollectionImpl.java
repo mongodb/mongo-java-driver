@@ -22,6 +22,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.FindFluent;
+import com.mongodb.client.ListIndexesFluent;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.AggregateOptions;
@@ -37,6 +38,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ListIndexesOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
@@ -56,7 +58,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
@@ -508,13 +509,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<Document> listIndexes() {
+    public ListIndexesFluent<Document> listIndexes() {
         return listIndexes(Document.class);
     }
 
     @Override
-    public <C> MongoIterable<C> listIndexes(final Class<C> clazz) {
-        return new OperationIterable<C>(new ListIndexesOperation<C>(getNamespace(), getCodec(clazz)), primary(), executor);
+    public <C> ListIndexesFluent<C> listIndexes(final Class<C> clazz) {
+        MongoCollectionOptions listOptions = MongoCollectionOptions.builder()
+                .readPreference(ReadPreference.primary()).build().withDefaults(options);
+        return new ListIndexesFluentImpl<C>(getNamespace(), listOptions, executor, new ListIndexesOptions(), clazz);
     }
 
     @Override
