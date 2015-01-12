@@ -18,11 +18,13 @@ package com.mongodb.client;
 
 import com.mongodb.DBRef;
 import com.mongodb.Function;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -40,12 +42,15 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
-                                                   new DocumentCodecProvider(),
-                                                   new ConcreteCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), Concrete.class, options);
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                new DocumentCodecProvider(),
+                new ConcreteCodecProvider()));
+        MongoCollection<Concrete> collection = database
+                .getCollection(getCollectionName())
+                .withDefaultClass(Concrete.class)
+                .withCodecRegistry(codecRegistry)
+                .withReadPreference(ReadPreference.primary())
+                .withWriteConcern(WriteConcern.ACKNOWLEDGED);
 
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insertOne(doc);
@@ -59,47 +64,50 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryTypedCollectionAndMapResultsIntoTypedLists() {
         // given
-        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
-                                                   new DocumentCodecProvider(),
-                                                   new ConcreteCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), Concrete.class, options);
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                new DocumentCodecProvider(),
+                new ConcreteCodecProvider()));
+        MongoCollection<Concrete> collection = database
+                .getCollection(getCollectionName())
+                .withDefaultClass(Concrete.class)
+                .withCodecRegistry(codecRegistry)
+                .withReadPreference(ReadPreference.primary())
+                .withWriteConcern(WriteConcern.ACKNOWLEDGED);
 
         Concrete firstItem = new Concrete("first", 1, 2L, 3.0, 5L);
-        concreteCollection.insertOne(firstItem);
+        collection.insertOne(firstItem);
 
         Concrete secondItem = new Concrete("second", 7, 11L, 13.0, 17L);
-        concreteCollection.insertOne(secondItem);
+        collection.insertOne(secondItem);
 
         // when
-        List<String> listOfStringObjectIds = concreteCollection.find(new Document("i", 1))
-                                                               .map(new Function<Concrete, ObjectId>() {
-                                                                   @Override
-                                                                   public ObjectId apply(final Concrete concrete) {
-                                                                       return concrete.getId();
-                                                                   }
-                                                               })
-                                                               .map(new Function<ObjectId, String>() {
-                                                                   @Override
-                                                                   public String apply(final ObjectId objectId) {
-                                                                       return objectId.toString();
-                                                                   }
-                                                               }).into(new ArrayList<String>());
+        List<String> listOfStringObjectIds = collection.find(new Document("i", 1))
+                                                       .map(new Function<Concrete, ObjectId>() {
+                                                           @Override
+                                                           public ObjectId apply(final Concrete concrete) {
+                                                               return concrete.getId();
+                                                           }
+                                                       })
+                                                       .map(new Function<ObjectId, String>() {
+                                                           @Override
+                                                           public String apply(final ObjectId objectId) {
+                                                               return objectId.toString();
+                                                           }
+                                                       }).into(new ArrayList<String>());
 
         // then
         assertThat(listOfStringObjectIds.size(), is(1));
         assertThat(listOfStringObjectIds.get(0), is(firstItem.getId().toString()));
 
         // when
-        List<ObjectId> listOfObjectIds = concreteCollection.find(new Document("i", 1))
-                                                           .map(new Function<Concrete, ObjectId>() {
-                                                               @Override
-                                                               public ObjectId apply(final Concrete concrete) {
-                                                                   return concrete.getId();
-                                                               }
-                                                           })
-                                                           .into(new ArrayList<ObjectId>());
+        List<ObjectId> listOfObjectIds = collection.find(new Document("i", 1))
+                                                   .map(new Function<Concrete, ObjectId>() {
+                                                       @Override
+                                                       public ObjectId apply(final Concrete concrete) {
+                                                           return concrete.getId();
+                                                       }
+                                                   })
+                                                   .into(new ArrayList<ObjectId>());
 
         // then
         assertThat(listOfObjectIds.size(), is(1));
@@ -109,17 +117,19 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testMapReduceWithGenerics() {
         // given
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new NameCodecProvider());
-        MongoCollectionOptions options =
-            MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-
+        // given
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new DocumentCodecProvider(), new NameCodecProvider()));
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document("name", "Pete").append("job", "handyman"),
                                               new Document("name", "Sam").append("job", "Plumber"),
                                               new Document("name", "Pete").append("job", "'electrician'"));
 
         String mapFunction  = "function(){ emit( this.name , 1 ); }";
         String reduceFunction = "function(key, values){ return values.length; }";
-        MongoCollection<Document> collection = database.getCollection(getCollectionName(), Document.class, options);
+        MongoCollection<Document> collection = database
+                .getCollection(getCollectionName())
+                .withCodecRegistry(codecRegistry)
+                .withReadPreference(ReadPreference.primary())
+                .withWriteConcern(WriteConcern.ACKNOWLEDGED);
 
         // when
         List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());

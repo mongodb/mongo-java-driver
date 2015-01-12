@@ -18,21 +18,19 @@ package com.mongodb.acceptancetest.atomicoperations;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -65,12 +63,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnOriginalItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 0);
-        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
-                                                   new DocumentCodecProvider(),
-                                                   new WorkerCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                new DocumentCodecProvider(),
+                new WorkerCodecProvider()));
+        MongoCollection<Worker> collection = database
+                .getCollection(getCollectionName())
+                .withDefaultClass(Worker.class)
+                .withCodecRegistry(codecRegistry);
 
         collection.insertOne(pat);
 
@@ -86,12 +85,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnNewItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 3);
-        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
-                                                   new DocumentCodecProvider(),
-                                                   new WorkerCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                new DocumentCodecProvider(),
+                new WorkerCodecProvider()));
+        MongoCollection<Worker> collection = database
+                .getCollection(getCollectionName())
+                .withDefaultClass(Worker.class)
+                .withCodecRegistry(codecRegistry);
         collection.insertOne(pat);
 
         assertThat(collection.count(), is(1L));

@@ -17,6 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
@@ -33,10 +35,10 @@ import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
 
@@ -59,11 +61,65 @@ public interface MongoCollection<T> {
     MongoNamespace getNamespace();
 
     /**
-     * Gets the options to apply by default to all operations executed via this instance.
+     * Get the default class to cast any documents returned from the database into.
      *
-     * @return the collection options
+     * @return the default class to cast any documents into
      */
-    OperationOptions getOptions();
+    Class<T> getDefaultClass();
+
+    /**
+     * Get the codec registry for the MongoCollection.
+     *
+     * @return the {@link org.bson.codecs.configuration.CodecRegistry}
+     */
+    CodecRegistry getCodecRegistry();
+
+    /**
+     * Get the read preference for the MongoCollection.
+     *
+     * @return the {@link com.mongodb.ReadPreference}
+     */
+    ReadPreference getReadPreference();
+
+    /**
+     * Get the write concern for the MongoCollection.
+     *
+     * @return the {@link com.mongodb.WriteConcern}
+     */
+    WriteConcern getWriteConcern();
+
+    /**
+     * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
+     *
+     * @param clazz the default class to cast any documents returned from the database into.
+     * @param <C> The type that the new collection will encode documents from and decode documents to
+     * @return a new MongoCollection instance with the different default class
+     */
+    <C> MongoCollection<C> withDefaultClass(Class<C> clazz);
+
+    /**
+     * Create a new MongoCollection instance with a different codec registry.
+     *
+     * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
+     * @return a new MongoCollection instance with the different codec registry
+     */
+    MongoCollection<T> withCodecRegistry(CodecRegistry codecRegistry);
+
+    /**
+     * Create a new MongoCollection instance with a different read preference.
+     *
+     * @param readPreference the new {@link com.mongodb.ReadPreference} for the collection
+     * @return a new MongoCollection instance with the different readPreference
+     */
+    MongoCollection<T> withReadPreference(ReadPreference readPreference);
+
+    /**
+     * Create a new MongoCollection instance with a different write concern.
+     *
+     * @param writeConcern the new {@link com.mongodb.WriteConcern} for the collection
+     * @return a new MongoCollection instance with the different writeConcern
+     */
+    MongoCollection<T> withWriteConcern(WriteConcern writeConcern);
 
     /**
      * Counts the number of documents in the collection.

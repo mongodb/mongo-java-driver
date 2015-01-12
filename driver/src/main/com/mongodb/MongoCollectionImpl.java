@@ -23,7 +23,6 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.FindFluent;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
@@ -74,6 +73,7 @@ import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,15 +86,19 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoNamespace namespace;
-    private final MongoCollectionOptions options;
     private final Class<T> clazz;
+    private final ReadPreference readPreference;
+    private final CodecRegistry codecRegistry;
+    private final WriteConcern writeConcern;
     private final OperationExecutor executor;
 
-    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz,
-                        final MongoCollectionOptions options, final OperationExecutor executor) {
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
+                        final ReadPreference readPreference, final WriteConcern writeConcern, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.clazz = notNull("clazz", clazz);
-        this.options = notNull("options", options);
+        this.codecRegistry = notNull("codecRegistry", codecRegistry);
+        this.readPreference = notNull("readPreference", readPreference);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
     }
 
@@ -104,8 +108,43 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoCollectionOptions getOptions() {
-        return options;
+    public Class<T> getDefaultClass() {
+        return clazz;
+    }
+
+    @Override
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    @Override
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    @Override
+    public <C> MongoCollection<C> withDefaultClass(final Class<C> clazz) {
+        return new MongoCollectionImpl<C>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
+    public MongoCollection<T> withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
+    public MongoCollection<T> withReadPreference(final ReadPreference readPreference) {
+        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
+    public MongoCollection<T> withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
@@ -130,7 +169,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         } else if (options.getHintString() != null) {
             operation.hint(new BsonString(options.getHintString()));
         }
-        return executor.execute(operation, this.options.getReadPreference());
+        return executor.execute(operation, readPreference);
     }
 
     @Override
@@ -143,11 +182,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         DistinctOperation operation = new DistinctOperation(namespace, fieldName)
                                           .filter(asBson(filter))
                                           .maxTime(distinctOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
-        BsonArray distinctArray = executor.execute(operation, options.getReadPreference());
+        BsonArray distinctArray = executor.execute(operation, readPreference);
         List<Object> distinctList = new ArrayList<Object>();
         for (BsonValue value : distinctArray) {
             BsonDocument bsonDocument = new BsonDocument("value", value);
-            Document document = options.getCodecRegistry().get(Document.class).decode(new BsonDocumentReader(bsonDocument),
+            Document document = getCodec(Document.class).decode(new BsonDocumentReader(bsonDocument),
                                                                                       DecoderContext.builder().build());
             distinctList.add(document.get("value"));
         }
@@ -172,7 +211,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public <C> FindFluent<C> find(final Object filter, final Class<C> clazz) {
-        return new FindFluentImpl<C>(namespace, options, executor, filter, new FindOptions(), clazz);
+        return new FindFluentImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, filter, new FindOptions());
     }
 
     @Override
@@ -202,15 +241,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                            .allowDiskUse(options.getAllowDiskUse());
             executor.execute(operation);
             return new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
-                                         this.options, executor, new BsonDocument(), new FindOptions(), clazz);
+                    clazz, codecRegistry, readPreference, executor, new BsonDocument(), new FindOptions());
         } else {
             return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, getCodec(clazz))
                                             .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                             .allowDiskUse(options.getAllowDiskUse())
                                             .batchSize(options.getBatchSize())
                                             .useCursor(options.getUseCursor()),
-                                            this.options.getReadPreference(),
-                                            executor);
+                                            readPreference, executor);
         }
     }
 
@@ -248,7 +286,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (options.getFinalizeFunction() != null) {
                 operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
             }
-            return new OperationIterable<C>(operation, this.options.getReadPreference(), executor);
+            return new OperationIterable<C>(operation, readPreference, executor);
         } else {
             MapReduceToCollectionOperation operation =
                 new MapReduceToCollectionOperation(getNamespace(),
@@ -273,12 +311,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             executor.execute(operation);
 
             String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
-            MongoCollectionOptions readOptions = MongoCollectionOptions.builder()
-                                                                       .readPreference(primary())
-                                                                       .build()
-                                                                       .withDefaults(this.options);
-            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), readOptions, executor,
-                                         new BsonDocument(), new FindOptions(), clazz);
+            return new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()), clazz, codecRegistry,
+                    primary(), executor, new BsonDocument(), new FindOptions());
         }
     }
 
@@ -330,7 +364,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(),
-                                                            this.options.getWriteConcern()));
+                                                            this.writeConcern));
     }
 
     @Override
@@ -356,7 +390,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), this.options.getWriteConcern()));
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), this.writeConcern));
     }
 
     @Override
@@ -522,7 +556,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private BulkWriteResult executeSingleWriteRequest(final WriteRequest request) {
         try {
-            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, options.getWriteConcern()));
+            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern));
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {
                 throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());
@@ -547,11 +581,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return options.getCodecRegistry().get(clazz);
+        return codecRegistry.get(clazz);
     }
 
     private BsonDocument asBson(final Object document) {
-        return BsonDocumentWrapper.asBsonDocument(document, options.getCodecRegistry());
+        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
     }
 
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {

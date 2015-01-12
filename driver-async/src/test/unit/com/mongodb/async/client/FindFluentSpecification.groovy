@@ -3,7 +3,6 @@ package com.mongodb.async.client
 import com.mongodb.CursorType
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.FindOptions
-import com.mongodb.client.options.OperationOptions
 import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
@@ -20,13 +19,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class FindFluentSpecification extends Specification {
 
-    def codecs = [new ValueCodecProvider(),
+    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
                   new DocumentCodecProvider(),
-                  new BsonValueCodecProvider()]
-    def options = OperationOptions.builder()
-                                  .codecRegistry(new RootCodecRegistry(codecs))
-                                  .readPreference(secondary())
-                                  .build()
+                  new BsonValueCodecProvider()])
+    def readPref = secondary()
 
     def 'should build the expected findOperation'() {
         given:
@@ -47,8 +43,8 @@ class FindFluentSpecification extends Specification {
                                            .oplogReplay(false)
                                            .noCursorTimeout(false)
                                            .partial(false)
-        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), options, executor, new Document('filter', 1),
-                                                      findOptions, Document)
+        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), Document, codecRegistry, readPref, executor,
+                new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         fluentFind.into([]) { result, t -> }
@@ -116,8 +112,8 @@ class FindFluentSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
-        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), options, executor, new Document('filter', 1),
-                                                      findOptions, Document)
+        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), Document, codecRegistry, readPref, executor,
+                new Document('filter', 1), findOptions)
 
         when:
         fluentFind.filter(new Document('filter', 1))

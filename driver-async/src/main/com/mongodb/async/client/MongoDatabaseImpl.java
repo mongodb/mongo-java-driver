@@ -19,9 +19,9 @@ package com.mongodb.async.client;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
@@ -31,6 +31,7 @@ import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +41,19 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.BsonDocumentWrapper.asBsonDocument;
 
 class MongoDatabaseImpl implements MongoDatabase {
-    private final OperationOptions options;
     private final String name;
+    private final ReadPreference readPreference;
+    private final CodecRegistry codecRegistry;
+    private final WriteConcern writeConcern;
     private final AsyncOperationExecutor executor;
 
-    MongoDatabaseImpl(final String name, final OperationOptions options, final AsyncOperationExecutor executor) {
-        this.name = name;
-        this.options = options;
-        this.executor = executor;
+    MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                      final WriteConcern writeConcern, final AsyncOperationExecutor executor) {
+        this.name = notNull("name", name);
+        this.codecRegistry = notNull("codecRegistry", codecRegistry);
+        this.readPreference = notNull("readPreference", readPreference);
+        this.writeConcern = notNull("writeConcern", writeConcern);
+        this.executor = notNull("executor", executor);
     }
 
     @Override
@@ -56,25 +62,64 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    @Override
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    @Override
+    public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
+    public MongoDatabase withReadPreference(final ReadPreference readPreference) {
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
+    public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor);
+    }
+
+    @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
-        return getCollection(collectionName, OperationOptions.builder().build());
+        return new MongoCollectionImpl<Document>(new MongoNamespace(name, collectionName), Document.class, codecRegistry, readPreference,
+                writeConcern, executor);
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String collectionName, final OperationOptions options) {
-        return getCollection(collectionName, Document.class, options);
+    public void executeCommand(final Object command, final SingleResultCallback<Document> callback) {
+        executeCommand(command, Document.class, callback);
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return getCollection(collectionName, clazz, OperationOptions.builder().build());
+    public void executeCommand(final Object command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
+        executeCommand(command, readPreference, Document.class, callback);
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz,
-                                                final OperationOptions options) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
-                                          executor);
+    public <T> void executeCommand(final Object command, final Class<T> clazz, final SingleResultCallback<T> callback) {
+        notNull("command", command);
+        executor.execute(new CommandWriteOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), callback);
+    }
+
+    @Override
+    public <T> void executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz,
+                                   final SingleResultCallback<T> callback) {
+        notNull("command", command);
+        notNull("readPreference", readPreference);
+        executor.execute(new CommandReadOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), readPreference,
+                callback);
     }
 
     @Override
@@ -110,37 +155,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                          .storageEngineOptions(asBson(createCollectionOptions.getStorageEngineOptions())), callback);
     }
 
-    @Override
-    public void executeCommand(final Object command, final SingleResultCallback<Document> callback) {
-        executeCommand(command, Document.class, callback);
-    }
-
-    @Override
-    public void executeCommand(final Object command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
-        executeCommand(command, readPreference, Document.class, callback);
-    }
-
-    @Override
-    public <T> void executeCommand(final Object command, final Class<T> clazz, final SingleResultCallback<T> callback) {
-        notNull("command", command);
-        executor.execute(new CommandWriteOperation<T>(getName(), asBson(command), options.getCodecRegistry().get(clazz)), callback);
-    }
-
-    @Override
-    public <T> void executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz,
-                                   final SingleResultCallback<T> callback) {
-        notNull("command", command);
-        notNull("readPreference", readPreference);
-        executor.execute(new CommandReadOperation<T>(getName(), asBson(command), options.getCodecRegistry().get(clazz)), readPreference,
-                         callback);
-    }
-
-    @Override
-    public OperationOptions getOptions() {
-        return options;
-    }
-
     private BsonDocument asBson(final Object document) {
-        return asBsonDocument(document, options.getCodecRegistry());
+        return asBsonDocument(document, codecRegistry);
     }
 }

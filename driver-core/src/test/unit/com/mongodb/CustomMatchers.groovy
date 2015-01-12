@@ -19,7 +19,6 @@ package com.mongodb
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 
-import java.lang.reflect.Modifier
 
 class CustomMatchers {
 
@@ -42,11 +41,9 @@ class CustomMatchers {
         if (actual.class.name != expected.class.name) {
             return false
         }
-
-        def fieldNames = getFieldNames(actual.class)
-        fieldNames.collect { it ->
-            if (it == 'decoder') {
-                return actual.decoder.class == expected.decoder.class
+        getFieldNames(actual.class).collect { it ->
+            if (nominallyTheSame(it)) {
+                return actual."$it".class == expected."$it".class
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
                 if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
@@ -73,10 +70,10 @@ class CustomMatchers {
         }
 
         getFieldNames(actual.class).collect { it ->
-            if (it == 'decoder') {
-                if (actual.decoder.class != expected.decoder.class) {
-                    description.appendText("different decoder classes $it :" +
-                            " ${expected.decoder.class.name} != ${actual.decoder.class.name}, ")
+            if (nominallyTheSame(it)) {
+                if (actual."$it".class != expected."$it".class) {
+                    description.appendText("different classes $it :" +
+                            " ${expected."$it".class.name} != ${actual."$it".class.name}, ")
                     return false
                 }
             } else if (actual."$it" != expected."$it") {
@@ -97,12 +94,18 @@ class CustomMatchers {
     }
 
     static getFieldNames(Class curClass) {
-        if (curClass == Object) {
-            []
-        } else {
-            getFieldNames(curClass.getSuperclass()) + curClass.declaredFields.findAll {
-                !Modifier.isStatic(it.modifiers) && !Modifier.isSynthetic(it.modifiers)
-            }*.name
-        }
+        getFieldNames(curClass, [])
     }
+
+    static getFieldNames(Class curClass, names) {
+        if (curClass != Object) {
+            getFieldNames(curClass.getSuperclass(), names += curClass.declaredFields.findAll { !it.synthetic }*.name)
+        }
+        names
+    }
+
+    static nominallyTheSame(String className ) {
+        className in ['decoder', 'executor']
+    }
+
 }

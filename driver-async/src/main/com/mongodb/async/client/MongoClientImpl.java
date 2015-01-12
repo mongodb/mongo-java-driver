@@ -22,7 +22,6 @@ import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.connection.Cluster;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
@@ -44,7 +43,6 @@ class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientOptions options;
     private final AsyncOperationExecutor executor;
-    private final OperationOptions operationOptions;
 
     private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
                                                                                                  new DocumentCodecProvider(),
@@ -75,21 +73,11 @@ class MongoClientImpl implements MongoClient {
         this.options = notNull("options", options);
         this.cluster = notNull("cluster", cluster);
         this.executor = notNull("executor", executor);
-        operationOptions = OperationOptions.builder()
-                                           .codecRegistry(options.getCodecRegistry())
-                                           .readPreference(options.getReadPreference())
-                                           .writeConcern(options.getWriteConcern())
-                                           .build();
     }
 
     @Override
     public MongoDatabase getDatabase(final String name) {
-        return getDatabase(name, OperationOptions.builder().build());
-    }
-
-    @Override
-    public MongoDatabase getDatabase(final String name, final OperationOptions options) {
-        return new MongoDatabaseImpl(name, options.withDefaults(operationOptions), executor);
+        return new MongoDatabaseImpl(name, options.getCodecRegistry(), options.getReadPreference(), options.getWriteConcern(), executor);
     }
 
     @Override

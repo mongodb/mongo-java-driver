@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.client.FindFluent;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOptions;
@@ -27,6 +26,7 @@ import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -36,20 +36,23 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class FindFluentImpl<T> implements FindFluent<T> {
     private final MongoNamespace namespace;
-    private final MongoCollectionOptions options;
+    private final Class<T> clazz;
+    private final ReadPreference readPreference;
+    private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
     private Object filter;
-    private final Class<T> clazz;
 
-    FindFluentImpl(final MongoNamespace namespace, final MongoCollectionOptions options, final OperationExecutor executor,
-                   final Object filter, final FindOptions findOptions, final Class<T> clazz) {
+    FindFluentImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
+                   final ReadPreference readPreference, final OperationExecutor executor,
+                   final Object filter, final FindOptions findOptions) {
         this.namespace = notNull("namespace", namespace);
-        this.options = notNull("options", options);
+        this.clazz = notNull("clazz", clazz);
+        this.codecRegistry = notNull("codecRegistry", codecRegistry);
+        this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
-        this.clazz = notNull("clazz", clazz);
     }
 
     @Override
@@ -151,11 +154,11 @@ final class FindFluentImpl<T> implements FindFluent<T> {
     }
 
     private MongoIterable<T> execute() {
-        return new FindOperationIterable(createQueryOperation(), this.options.getReadPreference(), executor);
+        return new FindOperationIterable(createQueryOperation(), this.readPreference, executor);
     }
 
     private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return options.getCodecRegistry().get(clazz);
+        return codecRegistry.get(clazz);
     }
 
     private FindOperation<T> createQueryOperation() {
@@ -172,11 +175,11 @@ final class FindFluentImpl<T> implements FindFluent<T> {
                    .noCursorTimeout(findOptions.isNoCursorTimeout())
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
-                   .slaveOk(options.getReadPreference().isSlaveOk());
+                   .slaveOk(readPreference.isSlaveOk());
     }
 
     private BsonDocument asBson(final Object document) {
-        return BsonDocumentWrapper.asBsonDocument(document, options.getCodecRegistry());
+        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
     }
 
     private final class FindOperationIterable extends OperationIterable<T> {

@@ -18,7 +18,6 @@ package com.mongodb.acceptancetest.querying;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.QueryBuilder;
 import org.bson.BsonObjectId;
@@ -73,15 +72,16 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
-                                                   new DocumentCodecProvider(),
-                                                   new PersonCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), Person.class, options);
-        personCollection.insertOne(new Person("Bob"));
+        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                new DocumentCodecProvider(),
+                new PersonCodecProvider()));
+        MongoCollection<Person> collection = database
+                .getCollection(getCollectionName())
+                .withDefaultClass(Person.class)
+                .withCodecRegistry(codecRegistry);
+        collection.insertOne(new Person("Bob"));
 
-        MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).iterator();
+        MongoCursor<Person> results = collection.find(new Document("name", "Bob")).iterator();
 
         assertThat(results.next().name, is("Bob"));
     }

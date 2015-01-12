@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.RenameCollectionOptions;
 import org.bson.BsonRegularExpression;
@@ -283,11 +282,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
-        MongoCollection<Document> collection = database.getCollection(getCollectionName(),
-                                                                      Document.class,
-                                                                      MongoCollectionOptions.builder()
-                                                                                            .writeConcern(WriteConcern.ACKNOWLEDGED)
-                                                                                            .build());
+        MongoCollection<Document> collection = database.getCollection(getCollectionName()).withWriteConcern(WriteConcern.ACKNOWLEDGED);
         for (int i = 0; i < numberOfDocuments; i++) {
             collection.insertOne(new Document("_id", i));
         }

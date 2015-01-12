@@ -17,11 +17,12 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.client.options.OperationOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
 
@@ -41,6 +42,59 @@ public interface MongoDatabase {
      * @return the database name
      */
     String getName();
+
+    /**
+     * Get the codec registry for the MongoDatabase.
+     *
+     * @return the {@link org.bson.codecs.configuration.CodecRegistry}
+     */
+    CodecRegistry getCodecRegistry();
+
+    /**
+     * Get the read preference for the MongoDatabase.
+     *
+     * @return the {@link com.mongodb.ReadPreference}
+     */
+    ReadPreference getReadPreference();
+
+    /**
+     * Get the write concern for the MongoDatabase.
+     *
+     * @return the {@link com.mongodb.WriteConcern}
+     */
+    WriteConcern getWriteConcern();
+
+    /**
+     * Create a new MongoDatabase instance with a different codec registry.
+     *
+     * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
+     * @return a new MongoCollection instance with the different codec registry
+     */
+    MongoDatabase withCodecRegistry(CodecRegistry codecRegistry);
+
+    /**
+     * Create a new MongoDatabase instance with a different read preference.
+     *
+     * @param readPreference the new {@link com.mongodb.ReadPreference} for the collection
+     * @return a new MongoDatabase instance with the different readPreference
+     */
+    MongoDatabase withReadPreference(ReadPreference readPreference);
+
+    /**
+     * Create a new MongoDatabase instance with a different write concern.
+     *
+     * @param writeConcern the new {@link com.mongodb.WriteConcern} for the collection
+     * @return a new MongoCollection instance with the different writeConcern
+     */
+    MongoDatabase withWriteConcern(WriteConcern writeConcern);
+
+    /**
+     * Gets a collection.
+     *
+     * @param collectionName the name of the collection to return
+     * @return the collection
+     */
+    MongoCollection<Document> getCollection(String collectionName);
 
     /**
      * Executes command in the context of the current database.
@@ -81,53 +135,6 @@ public interface MongoDatabase {
     <T> void executeCommand(Object command, ReadPreference readPreference, Class<T> clazz, SingleResultCallback<T> callback);
 
     /**
-     * Gets the options that are used with the database.
-     *
-     * <p>Note: {@link OperationOptions} is immutable.</p>
-     *
-     * @return the options
-     */
-    OperationOptions getOptions();
-
-    /**
-     * Gets a collection.
-     *
-     * @param collectionName the name of the collection to return
-     * @return the collection
-     */
-    MongoCollection<Document> getCollection(String collectionName);
-
-    /**
-     * Gets a collection, with the specific {@code OperationOptions}.
-     *
-     * @param collectionName   the name of the collection to return
-     * @param operationOptions the options to be used with the {@code MongoCollection}
-     * @return the collection
-     */
-    MongoCollection<Document> getCollection(String collectionName, OperationOptions operationOptions);
-
-    /**
-     * Gets a collection, with a specific document class.
-     *
-     * @param collectionName the name of the collection to return
-     * @param clazz          the default class to cast any documents returned from the database into.
-     * @param <T>            the type of the class to use instead of {@code Document}.
-     * @return the collection
-     */
-    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
-
-    /**
-     * Gets a collection, with a specific document class and {@code OperationOptions}.
-     *
-     * @param collectionName the name of the collection to return
-     * @param clazz          the default class to cast any documents returned from the database into
-     * @param options        the options to be used with the {@code MongoCollection}
-     * @param <T>            the type of the class to use instead of {@code Document}
-     * @return the collection
-     */
-    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, OperationOptions options);
-
-    /**
      * Drops this database.
      *
      * @param callback the callback that is completed once the database has been dropped
@@ -160,4 +167,5 @@ public interface MongoDatabase {
      * @mongodb.driver.manual reference/commands/create Create Command
      */
     void createCollection(String collectionName, CreateCollectionOptions options, SingleResultCallback<Void> callback);
+
 }

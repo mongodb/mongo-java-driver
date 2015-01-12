@@ -18,7 +18,6 @@ package com.mongodb.async.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.client.options.OperationOptions;
 
 import java.io.Closeable;
 import java.util.List;
@@ -41,15 +40,6 @@ public interface MongoClient extends Closeable {
      * @return the database
      */
     MongoDatabase getDatabase(String name);
-
-    /**
-     * Gets the database with the given name.
-     *
-     * @param name                 the name of the database
-     * @param options the database options
-     * @return the database
-     */
-    MongoDatabase getDatabase(String name, OperationOptions options);
 
     /**
      * Close the client, which will close all underlying cached resources, including, for example,
