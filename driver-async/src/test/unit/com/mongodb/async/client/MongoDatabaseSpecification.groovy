@@ -219,7 +219,8 @@ class MongoDatabaseSpecification extends Specification {
         executor.getReadPreference() == primary()
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
+        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec())
+                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(1).maxTime(1, MILLISECONDS))
         executor.getReadPreference() == primary()
 
         when: 'Test getting the names list'
