@@ -155,6 +155,18 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
     }
 
     int _getInt( String s , boolean err ){
+        // j1618
+        {
+            if ( null == s )
+            {
+                return this.size();
+            }
+            if ( 0 == s.length() )
+            {
+                return this.size();
+            }
+        }
+
         try {
             return Integer.parseInt( s );
         }
