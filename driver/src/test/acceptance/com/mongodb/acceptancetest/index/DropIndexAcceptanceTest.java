@@ -22,6 +22,8 @@ import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -31,7 +33,8 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         super.setUp();
         //create a brand new collection for each test
         collection = database.getCollection("Collection" + System.currentTimeMillis());
-        assertThat("Should be no indexes on the database at all at this stage", collection.getIndexes().size(),
+        assertThat("Should be no indexes on the database at all at this stage",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
                    is(0));
     }
 
@@ -40,14 +43,15 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         // Given
         collection.createIndex(new Document("field", 1));
 
-        assertThat("Should be default index and new index on the database now", collection.getIndexes().size(),
+        assertThat("Should be default index and new index on the database now",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
                    is(2));
 
         // When
         collection.dropIndex("field_1");
 
         // Then
-        assertThat("Should be one less index", collection.getIndexes().size(), is(1));
+        assertThat("Should be one less index", collection.listIndexes().into(new ArrayList<Document>()).size(), is(1));
     }
 
     @Test
@@ -56,14 +60,16 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         collection.createIndex(new Document("field", 1));
         collection.createIndex(new Document("anotherField", 1));
 
-        assertThat("Should be three indexes on the collection now", collection.getIndexes().size(),
+        assertThat("Should be three indexes on the collection now", collection.listIndexes().into(new ArrayList<Document>()).size(),
                    is(3));
 
         // When
         collection.dropIndexes();
 
         // Then
-        assertThat("Should only be the default index on the collection", collection.getIndexes().size(), is(1));
+        assertThat("Should only be the default index on the collection",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(1));
     }
 
     @Test(expected = MongoCommandException.class)

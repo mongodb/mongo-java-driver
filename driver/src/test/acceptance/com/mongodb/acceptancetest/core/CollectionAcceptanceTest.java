@@ -103,11 +103,11 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         database.createCollection(collectionName);
         MongoCollection<Document> newCollection = database.getCollection(collectionName);
 
-        assertThat(database.getCollectionNames().contains(collectionName), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(collectionName), is(true));
 
         newCollection.dropCollection();
 
-        assertThat(database.getCollectionNames().contains(collectionName), is(false));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(collectionName), is(false));
     }
 
     @Test
@@ -315,15 +315,15 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         //given
         collection.insertOne(new Document("someKey", "someValue"));
 
-        assertThat(database.getCollectionNames().contains(getCollectionName()), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(getCollectionName()), is(true));
 
         //when
         String newCollectionName = "TheNewCollectionName";
         collection.renameCollection(new MongoNamespace(getDatabaseName(), newCollectionName));
 
         //then
-        assertThat(database.getCollectionNames().contains(getCollectionName()), is(false));
-        assertThat(database.getCollectionNames().contains(newCollectionName), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(getCollectionName()), is(false));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(newCollectionName), is(true));
 
         MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
@@ -344,16 +344,16 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         String valueInExistingCollection = "withADifferentValue";
         existingCollection.insertOne(new Document(keyInExistingCollection, valueInExistingCollection));
 
-        assertThat(database.getCollectionNames().contains(getCollectionName()), is(true));
-        assertThat(database.getCollectionNames().contains(existingCollectionName), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(getCollectionName()), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(existingCollectionName), is(true));
 
         //when
         collection.renameCollection(new MongoNamespace(getDatabaseName(), existingCollectionName),
                                     new RenameCollectionOptions().dropTarget(true));
 
         //then
-        assertThat(database.getCollectionNames().contains(getCollectionName()), is(false));
-        assertThat(database.getCollectionNames().contains(existingCollectionName), is(true));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(getCollectionName()), is(false));
+        assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(existingCollectionName), is(true));
 
         MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
         assertThat(replacedCollection.find().first().get(keyInExistingCollection), is(nullValue()));

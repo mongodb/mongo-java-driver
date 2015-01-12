@@ -1055,7 +1055,7 @@ class MongoCollectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<List<Document>>()
 
         when:
-        collection.getIndexes(futureResultCallback)
+        collection.listIndexes().into([], futureResultCallback)
         futureResultCallback.get()
         def operation = executor.getReadOperation() as ListIndexesOperation
 
@@ -1064,7 +1064,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        collection.getIndexes(BsonDocument, futureResultCallback)
+        collection.listIndexes(BsonDocument).into([], futureResultCallback)
         futureResultCallback.get()
         operation = executor.getReadOperation() as ListIndexesOperation
 

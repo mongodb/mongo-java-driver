@@ -64,7 +64,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return collection names if a collection exists'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(10)
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()
@@ -85,7 +85,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     @Category(Async)
     def 'should return collection names if a collection exists asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(10)
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()

@@ -330,6 +330,7 @@ public interface MongoCollection<T> {
      *
      * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     * @param options        The specific options for the map-reduce command.
      * @param callback       Executed when the map-reduce operation has completed
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
@@ -598,18 +599,22 @@ public interface MongoCollection<T> {
     void createIndex(Object key, CreateIndexOptions options, SingleResultCallback<Void> callback);
 
     /**
-     * @param callback the callback passed all the indexes on this collection
-     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     * Get all the indexes in this collection.
+     *
+     * @return an iterable containing all the indexes
+     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    void getIndexes(SingleResultCallback<List<Document>> callback);
+    MongoIterable<Document> listIndexes();
 
     /**
+     * Get all the indexes in this collection.
+     *
      * @param clazz    the class to decode each document into
      * @param <C>      the target document type of the iterable.
-     * @param callback the callback passed all the indexes on this collection
-     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     * @return an iterable containing all the indexes
+     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    <C> void getIndexes(Class<C> clazz, SingleResultCallback<List<C>> callback);
+    <C> MongoIterable<C> listIndexes(Class<C> clazz);
 
     /**
      * Drops the given index.

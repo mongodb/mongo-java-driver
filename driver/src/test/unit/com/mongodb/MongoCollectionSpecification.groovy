@@ -822,14 +822,14 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        collection.getIndexes()
+        collection.listIndexes().into([])
         def operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
 
         when:
-        def indexes = collection.getIndexes(BsonDocument)
+        def indexes = collection.listIndexes(BsonDocument).into([])
         operation = executor.getReadOperation() as ListIndexesOperation
         indexes == []
 

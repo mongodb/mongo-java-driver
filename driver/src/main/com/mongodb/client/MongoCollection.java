@@ -552,18 +552,22 @@ public interface MongoCollection<T> {
     void createIndex(Object key, CreateIndexOptions createIndexOptions);
 
     /**
-     * @return all the indexes on this collection
-     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     * Get all the indexes in this collection.
+     *
+     * @return an iterable containing all the indexes
+     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    List<Document> getIndexes();
+    MongoIterable<Document> listIndexes();
 
     /**
-     * @param clazz the class to decode each document into
-     * @param <C>   the target document type of the iterable.
-     * @return all the indexes on this collection
-     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     * Get all the indexes in this collection.
+     *
+     * @param clazz    the class to decode each document into
+     * @param <C>      the target document type of the iterable.
+     * @return an iterable containing all the indexes
+     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    <C> List<C> getIndexes(Class<C> clazz);
+    <C> MongoIterable<C> listIndexes(Class<C> clazz);
 
     /**
      * Drops the given index.

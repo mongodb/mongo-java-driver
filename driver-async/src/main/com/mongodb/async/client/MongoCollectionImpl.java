@@ -603,14 +603,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void getIndexes(final SingleResultCallback<List<Document>> callback) {
-        getIndexes(Document.class, callback);
+    public MongoIterable<Document> listIndexes() {
+        return listIndexes(Document.class);
     }
 
     @Override
-    public <C> void getIndexes(final Class<C> clazz, final SingleResultCallback<List<C>> callback) {
-        new OperationIterable<C>(new ListIndexesOperation<C>(namespace, getCodec(clazz)), readPreference, executor)
-        .into(new ArrayList<C>(), callback);
+    public <C> MongoIterable<C> listIndexes(final Class<C> clazz) {
+        return new OperationIterable<C>(new ListIndexesOperation<C>(namespace, getCodec(clazz)), readPreference, executor);
     }
 
     @Override

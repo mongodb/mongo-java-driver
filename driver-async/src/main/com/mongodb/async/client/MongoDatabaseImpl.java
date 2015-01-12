@@ -30,11 +30,7 @@ import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -92,6 +88,38 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public MongoIterable<String> listCollectionNames() {
+        return listCollections().map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document result) {
+                return (String) result.get("name");
+            }
+        });
+    }
+
+    @Override
+    public MongoIterable<Document> listCollections() {
+        return listCollections(new BsonDocument(), Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> listCollections(final Class<C> clazz) {
+        return listCollections(new BsonDocument(), clazz);
+    }
+
+    @Override
+    public MongoIterable<Document> listCollections(final Object filter) {
+        return listCollections(filter, Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> listCollections(final Object filter, final Class<C> clazz) {
+        notNull("filter", filter);
+        return new OperationIterable<C>(new ListCollectionsOperation<C>(name, codecRegistry.get(clazz)).filter(asBson(filter)), primary(),
+                executor);
+    }
+
+    @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
         return new MongoCollectionImpl<Document>(new MongoNamespace(name, collectionName), Document.class, codecRegistry, readPreference,
                 writeConcern, executor);
@@ -125,17 +153,6 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public void dropDatabase(final SingleResultCallback<Void> callback) {
         executor.execute(new DropDatabaseOperation(name), callback);
-    }
-
-    @Override
-    public void getCollectionNames(final SingleResultCallback<List<String>> callback) {
-        new OperationIterable<Document>(new ListCollectionsOperation<Document>(name, new DocumentCodec()), primary(), executor)
-        .map(new Function<Document, String>() {
-            @Override
-            public String apply(final Document document) {
-                return (String) document.get("name");
-            }
-        }).into(new ArrayList<String>(), callback);
     }
 
     @Override

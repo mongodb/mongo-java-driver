@@ -55,6 +55,7 @@ import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static java.lang.String.format;
 
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
@@ -67,6 +68,8 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final String databaseName;
     private final Decoder<T> decoder;
+    private BsonDocument filter;
+    private Integer batchSize;
 
     /**
      * Construct a new instance.
@@ -77,6 +80,52 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the query filter.
+     *
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
+     */
+    public BsonDocument getFilter() {
+        return filter;
+    }
+
+    /**
+     * Sets the query filter to apply to the query.
+     *
+     * @param filter the filter, which may be null.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
+     */
+    public ListCollectionsOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    /**
+     * Gets the number of documents to return per batch.
+     *
+     * @return the batch size
+     * @mongodb.server.release 2.8
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.server.release 2.8
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public ListCollectionsOperation<T> batchSize(final int batchSize) {
+        this.batchSize = batchSize;
+        return this;
     }
 
     @Override
@@ -93,7 +142,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                                                                     source.getServerDescription().getAddress()));
                     }
                 } else {
-                    return new FilteringBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(), new BsonDocument(),
+                    return new FilteringBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(), getLegacyFilter(),
                                                                                                          null, 0, 0,
                                                                                                          binding.getReadPreference()
                                                                                                                 .isSlaveOk(),
@@ -131,23 +180,23 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                                                }
                                                            });
                     } else {
-                        connection.queryAsync(getNamespace(), new BsonDocument(), null, 0, 0,
-                                              binding.getReadPreference().isSlaveOk(), false,
-                                              false, false, false, false,
-                                              new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
-                            @Override
-                            public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
-                                if (t != null) {
-                                    wrappedCallback.onResult(null, t);
-                                } else {
-                                    AsyncBatchCursor<T> cursor =
-                                    new FilteringAsyncBatchCursor(new AsyncQueryBatchCursor<BsonDocument>(result, 0, 0,
-                                                                                                           new BsonDocumentCodec(),
-                                                                                                           source));
-                                    wrappedCallback.onResult(cursor, null);
-                                }
-                            }
-                        });
+                        connection.queryAsync(getNamespace(), getLegacyFilter(), null, 0, 0,
+                                binding.getReadPreference().isSlaveOk(), false,
+                                false, false, false, false,
+                                new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
+                                    @Override
+                                    public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
+                                        if (t != null) {
+                                            wrappedCallback.onResult(null, t);
+                                        } else {
+                                            AsyncBatchCursor<T> cursor =
+                                                    new FilteringAsyncBatchCursor(new AsyncQueryBatchCursor<BsonDocument>(result, 0, 0,
+                                                            new BsonDocumentCodec(),
+                                                            source));
+                                            wrappedCallback.onResult(cursor, null);
+                                        }
+                                    }
+                                });
                     }
                 }
             }
@@ -186,7 +235,24 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     private BsonDocument getCommand() {
-        return new BsonDocument("listCollections", new BsonInt32(1)).append("cursor", new BsonDocument());
+        BsonDocument cursorDocument = batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
+        BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1)).append("cursor", cursorDocument);
+        if (filter != null) {
+            command.append("filter", filter);
+        }
+        return command;
+    }
+
+    private BsonDocument getLegacyFilter() {
+        BsonDocument legacyFilter = filter != null ? filter : new BsonDocument();
+        if (legacyFilter.containsKey("name")) {
+            if (!legacyFilter.isString("name")) {
+                throw new IllegalArgumentException("When filtering collections on MongoDB versions < 2.8 the name field "
+                        + "must be a string");
+            }
+            legacyFilter.append("name", new BsonString(format("%s.%s", databaseName, filter.getString("name").getValue())));
+        }
+        return legacyFilter;
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

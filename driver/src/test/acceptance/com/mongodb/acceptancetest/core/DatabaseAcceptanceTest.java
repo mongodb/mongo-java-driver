@@ -25,12 +25,14 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -43,7 +45,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCollection() {
         database.createCollection(getCollectionName());
 
-        List<String> collections = database.getCollectionNames();
+        List<String> collections = database.listCollectionNames().into(new ArrayList<String>());
         assertThat(collections.contains(getCollectionName()), is(true));
     }
 
@@ -51,7 +53,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCappedCollection() {
         database.createCollection(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(40 * 1024));
 
-        List<String> collections = database.getCollectionNames();
+        List<String> collections = database.listCollectionNames().into(new ArrayList<String>());
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -59,17 +61,17 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
-        assertThat("Should have the default index on _id", collection.getIndexes().size(), is(1));
+        assertThat("Should have the default index on _id", collection.listIndexes().into(new ArrayList<Document>()).size(), is(1));
     }
 
     @Test
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
         database.createCollection(getCollectionName(), new CreateCollectionOptions()
-                                                           .capped(true)
-                                                           .sizeInBytes(40 * 1024)
-                                                           .autoIndex(false));
+                .capped(true)
+                .sizeInBytes(40 * 1024)
+                .autoIndex(false));
 
-        List<String> collections = database.getCollectionNames();
+        List<String> collections = database.listCollectionNames().into(new ArrayList<String>());
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -77,19 +79,19 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
-        assertThat("Should NOT have the default index on _id", collection.getIndexes().size(), is(0));
+        assertThat("Should NOT have the default index on _id", collection.listIndexes().into(new ArrayList<Document>()).size(), is(0));
     }
 
     @Test
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
         int maxDocuments = 5;
         database.createCollection(getCollectionName(), new CreateCollectionOptions()
-                                                           .capped(true)
-                                                           .sizeInBytes(40 * 1024)
-                                                           .autoIndex(false)
-                                                           .maxDocuments(maxDocuments));
+                .capped(true)
+                .sizeInBytes(40 * 1024)
+                .autoIndex(false)
+                .maxDocuments(maxDocuments));
 
-        List<String> collections = database.getCollectionNames();
+        List<String> collections = database.listCollectionNames().into(new ArrayList<String>());
         assertThat(collections.contains(getCollectionName()), is(true));
 
         Document collStatsCommand = new Document("collStats", getCollectionName());
@@ -98,12 +100,30 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldGetCollectionNamesFromDatabase() {
+    public void shouldListCollectionNamesFromDatabase() {
         database.createCollection(getCollectionName());
-
-        List<String> collections = database.getCollectionNames();
+        List<String> collections = database.listCollectionNames().into(new ArrayList<String>());
 
         assertThat(collections.contains(getCollectionName()), is(true));
+    }
+
+    @Test
+    public void shouldListCollectionsFromDatabase() {
+        database.dropDatabase();
+
+        List<Document> collections = database.listCollections().into(new ArrayList<Document>());
+        assertThat(collections.size(), is(0));
+
+        for (int i = 0; i < 20; i++) {
+            database.createCollection("coll" + i);
+        }
+
+        collections = database.listCollections().into(new ArrayList<Document>());
+        assertThat(collections.size(), is(greaterThan(20)));
+
+        collections = database.listCollections(new Document("name", "coll1")).into(new ArrayList<Document>());
+        assertThat(collections.size(), is(1));
+
     }
 
     @Test

@@ -169,7 +169,8 @@ class MongoDatabaseSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback()
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).getCollectionNames(futureResultCallback)
+        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
+                .listCollectionNames().into([], futureResultCallback)
         def operation = executor.getReadOperation() as ListCollectionsOperation
         def names = futureResultCallback.get()
 

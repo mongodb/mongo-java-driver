@@ -27,6 +27,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -56,6 +57,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
+    private Integer batchSize;
 
     /**
      * Construct a new instance.
@@ -66,6 +68,30 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the number of documents to return per batch.
+     *
+     * @return the batch size
+     * @mongodb.server.release 2.8
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.server.release 2.8
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public ListIndexesOperation<T> batchSize(final int batchSize) {
+        this.batchSize = batchSize;
+        return this;
     }
 
     @Override
@@ -149,8 +175,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private BsonDocument getCommand() {
+        BsonDocument cursorDocument = batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
         return new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
-               .append("cursor", new BsonDocument());
+               .append("cursor", cursorDocument);
     }
 
     private Function<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source) {
