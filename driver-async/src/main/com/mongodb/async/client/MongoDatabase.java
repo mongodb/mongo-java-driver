@@ -24,8 +24,6 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.List;
-
 /**
  * The MongoDatabase interface.
  *
@@ -145,9 +143,27 @@ public interface MongoDatabase {
     /**
      * Gets the names of all the collections in this database.
      *
-     * @param callback the callback that is passed the names of all the collections in this database
+     * @return an iterable containing all the names of all the collections in this database
      */
-    void getCollectionNames(SingleResultCallback<List<String>> callback);
+    MongoIterable<String> listCollectionNames();
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @return the fluent list collections interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    ListCollectionsFluent<Document> listCollections();
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @param clazz the class to decode each document into
+     * @param <C>   the target document type of the iterable.
+     * @return the fluent list collections interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    <C> ListCollectionsFluent<C> listCollections(Class<C> clazz);
 
     /**
      * Create a new collection with the given name.

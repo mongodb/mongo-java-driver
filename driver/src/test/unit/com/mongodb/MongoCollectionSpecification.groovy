@@ -818,23 +818,30 @@ class MongoCollectionSpecification extends Specification {
     def 'should use ListIndexesOperations correctly'() {
         given:
         def batchCursor = Stub(BatchCursor)
-        def executor = new TestOperationExecutor([batchCursor, batchCursor])
+        def executor = new TestOperationExecutor([batchCursor, batchCursor, batchCursor])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        collection.getIndexes()
+        collection.listIndexes().into([])
         def operation = executor.getReadOperation() as ListIndexesOperation
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()))
 
         when:
-        def indexes = collection.getIndexes(BsonDocument)
+        def indexes = collection.listIndexes(BsonDocument).into([])
         operation = executor.getReadOperation() as ListIndexesOperation
         indexes == []
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation(namespace, new BsonDocumentCodec()))
+
+        when:
+        collection.listIndexes().batchSize(10).maxTime(10, MILLISECONDS).iterator()
+        operation = executor.getReadOperation() as ListIndexesOperation
+
+        then:
+        expect operation, isTheSameAs(new ListIndexesOperation(namespace, new DocumentCodec()).batchSize(10).maxTime(10, MILLISECONDS))
     }
 
     def 'should use DropIndexOperation correctly for dropIndex'() {

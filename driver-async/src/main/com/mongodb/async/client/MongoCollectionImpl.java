@@ -63,7 +63,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
@@ -603,14 +602,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void getIndexes(final SingleResultCallback<List<Document>> callback) {
-        getIndexes(Document.class, callback);
+    public ListIndexesFluent<Document> listIndexes() {
+        return listIndexes(Document.class);
     }
 
     @Override
-    public <C> void getIndexes(final Class<C> clazz, final SingleResultCallback<List<C>> callback) {
-        new OperationIterable<C>(new ListIndexesOperation<C>(namespace, getCodec(clazz)), readPreference, executor)
-        .into(new ArrayList<C>(), callback);
+    public <C> ListIndexesFluent<C> listIndexes(final Class<C> clazz) {
+        return new ListIndexesFluentImpl<C>(namespace, clazz, codecRegistry, readPreference, executor);
     }
 
     @Override

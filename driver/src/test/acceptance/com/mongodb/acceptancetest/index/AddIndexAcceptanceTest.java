@@ -24,6 +24,9 @@ import org.bson.Document;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.mongodb.operation.OrderBy.ASC;
 import static com.mongodb.operation.OrderBy.DESC;
 import static com.mongodb.operation.OrderBy.fromInt;
@@ -42,9 +45,9 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldGetExistingIndexesOnDatabase() {
         collection.insertOne(new Document("new", "value"));
 
-        assertThat("Should have the default index on _id when a document exists",
-                   collection.getIndexes().size(), is(1));
-        String nameOfIndex = (String) collection.getIndexes().get(0).get("name");
+        List<Document> indexes = collection.listIndexes().into(new ArrayList<Document>());
+        assertThat("Should have the default index on _id when a document exists", indexes.size(), is(1));
+        String nameOfIndex = indexes.get(0).getString("name");
         assertThat("Should be the default index on id", nameOfIndex, is("_id_"));
     }
 
@@ -52,14 +55,16 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateIndexOnCollectionWithoutIndex() {
         collection.createIndex(new Document("field", 1));
 
-        assertThat("Should be default index and new index on the database now", collection.getIndexes().size(), is(2));
+        assertThat("Should be default index and new index on the database now",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(2));
     }
 
     @Test
     public void shouldCreateIndexWithNameOfFieldPlusOrder() {
         collection.createIndex(new Document("field", 1));
 
-        String nameOfCreatedIndex = (String) collection.getIndexes().get(1).get("name");
+        String nameOfCreatedIndex = (String) collection.listIndexes().into(new ArrayList<Document>()).get(1).get("name");
         assertThat("Should be an index with name of field, ascending", nameOfCreatedIndex, is("field_1"));
     }
 
@@ -67,7 +72,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateAnAscendingIndex() {
         collection.createIndex(new Document("field", 1));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
         OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be ascending", order, is(ASC));
     }
@@ -76,7 +81,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateADescendingIndex() {
         collection.createIndex(new Document("field", -1));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
         OrderBy order = fromInt((Integer) ((Document) newIndexDetails.get("key")).get("field"));
         assertThat("Index created should be descending", order, is(DESC));
     }
@@ -85,7 +90,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateNonUniqueIndexByDefault() {
         collection.createIndex(new Document("field", 1));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
         assertThat("Index created should not be unique", newIndexDetails.get("unique"), is(nullValue()));
     }
 
@@ -93,7 +98,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateIndexOfUniqueValues() {
         collection.createIndex(new Document("field", 1), new CreateIndexOptions().unique(true));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
         Boolean unique = (Boolean) newIndexDetails.get("unique");
         assertThat("Index created should be unique", unique, is(true));
     }
@@ -101,7 +106,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldSupportCompoundIndexes() {
         collection.createIndex(new Document("theFirstField", 1).append("theSecondField", 1));
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
 
         Document keys = (Document) newIndexDetails.get("key");
         Object theFirstField = keys.get("theFirstField");
@@ -122,7 +127,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldSupportCompoundIndexesWithDifferentOrders() {
         collection.createIndex(new Document("theFirstField", 1).append("theSecondField", -1));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
 
         Document keys = (Document) newIndexDetails.get("key");
 
@@ -144,27 +149,36 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
         MongoCollection<Document> anotherCollection = database.getCollection("anotherCollection");
         anotherCollection.createIndex(new Document("someOtherField", 1));
 
-        assertThat("Should be default index and new index on the first database", collection.getIndexes().size(), is(2));
-        assertThat("Should be default index and new index on the second database", anotherCollection.getIndexes().size(), is(2));
+        assertThat("Should be default index and new index on the first database",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(2));
+        assertThat("Should be default index and new index on the second database", anotherCollection.listIndexes()
+                                                                                                    .into(new
+                                                                                                          ArrayList<Document>())
+                                                                                                    .size(), is(2));
     }
 
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
         collection.createIndex(new Document("locationField", "2d"));
-        assertThat("Should be default index and new index on the database now", collection.getIndexes().size(), is(2));
+        assertThat("Should be default index and new index on the database now",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(2));
     }
 
     @Test
     public void shouldBeAbleToAddGeoSphereIndexes() {
         collection.createIndex(new Document("locationField", "2dsphere"));
-        assertThat("Should be default index and new index on the database now", collection.getIndexes().size(), is(2));
+        assertThat("Should be default index and new index on the database now",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(2));
     }
 
     @Test
     public void shouldSupportCompoundIndexesOfOrderedFieldsAndGeoFields() {
         collection.createIndex(new Document("locationField", "2d").append("someOtherField", 1));
 
-        Document newIndexDetails = collection.getIndexes().get(1);
+        Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
 
         Document keys = (Document) newIndexDetails.get("key");
         Object geoField = keys.get("locationField");
@@ -187,7 +201,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
         String indexAlias = "indexAlias";
         collection.createIndex(new Document("theField", 1), new CreateIndexOptions().name(indexAlias));
 
-        String nameOfCreatedIndex = collection.getIndexes().get(1).getString("name");
+        String nameOfCreatedIndex = collection.listIndexes().into(new ArrayList<Document>()).get(1).getString("name");
         assertThat("Should be an index named after the alias", nameOfCreatedIndex, is(indexAlias));
     }
 
@@ -195,7 +209,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateASparseIndex() {
         collection.createIndex(new Document("theField", 1), new CreateIndexOptions().sparse(true));
 
-        Boolean sparse = collection.getIndexes().get(1).getBoolean("sparse");
+        Boolean sparse = collection.listIndexes().into(new ArrayList<Document>()).get(1).getBoolean("sparse");
         assertThat("Should be a sparse index", sparse, is(true));
     }
 
@@ -204,7 +218,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateABackgroundIndex() {
         collection.createIndex(new Document("theField", 1), new CreateIndexOptions().background(true));
 
-        Boolean background = collection.getIndexes().get(1).getBoolean("background");
+        Boolean background = collection.listIndexes().into(new ArrayList<Document>()).get(1).getBoolean("background");
         assertThat("Should be a background index", background, is(true));
     }
 
@@ -212,7 +226,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateATtlIndex() {
         collection.createIndex(new Document("theField", 1), new CreateIndexOptions().expireAfterSeconds(1600));
 
-        Integer ttl = collection.getIndexes().get(1).getInteger("expireAfterSeconds");
+        Integer ttl = collection.listIndexes().into(new ArrayList<Document>()).get(1).getInteger("expireAfterSeconds");
         assertThat("Should be a ttl index", ttl, is(1600));
     }
 

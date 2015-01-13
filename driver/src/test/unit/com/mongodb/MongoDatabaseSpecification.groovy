@@ -17,16 +17,13 @@
 package com.mongodb
 
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -142,22 +139,24 @@ class MongoDatabaseSpecification extends Specification {
         expect operation, isTheSameAs(new DropDatabaseOperation(name))
     }
 
-    def 'should use ListCollectionNamesOperation correctly'() {
+    def 'should use ListCollectionsOperation correctly'() {
         given:
-        def cursor = Stub(BatchCursor) {
-            hasNext() >>> [true, true, false]
-            next() >> [new Document('name', 'coll1')]
-        }
-        def executor = new TestOperationExecutor([cursor])
+        def executor = new TestOperationExecutor([null, null, null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def names = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).getCollectionNames()
-        def operation = executor.getReadOperation() as ListCollectionsOperation
+        def listCollectionFluent = database.listCollections()
 
         then:
-        names == ['coll1']
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
-        executor.getReadPreference() == primary()
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<Document>(name, Document, codecRegistry, primary(),
+                executor))
+
+        when:
+        listCollectionFluent = database.listCollections(BsonDocument)
+
+        then:
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
+                executor))
     }
 
     def 'should use CreateCollectionOperation correctly'() {

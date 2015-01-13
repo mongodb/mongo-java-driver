@@ -16,6 +16,9 @@
 
 package com.mongodb.operation;
 
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+
 final class CursorHelper {
 
     /**
@@ -44,6 +47,10 @@ final class CursorHelper {
             numberToReturn = batchSize;
         }
         return numberToReturn;
+    }
+
+    static BsonDocument getCursorDocumentFromBatchSize(final Integer batchSize) {
+        return batchSize == null ? new BsonDocument() : new BsonDocument("batchSize", new BsonInt32(batchSize));
     }
 
     private CursorHelper() {

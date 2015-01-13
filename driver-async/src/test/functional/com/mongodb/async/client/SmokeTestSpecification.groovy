@@ -106,8 +106,20 @@ class SmokeTestSpecification extends FunctionalSpecification {
         updatedNames.contains(databaseName)
         updatedNames.size() == names.size() + 1
 
+        when: 'The collection name should be in the collections list'
+        def collectionNames = run(database.listCollections().&into, [])
+
+        then:
+        collectionNames*.name.contains(collectionName)
+
+        when: 'The collections list should be filterable'
+        collectionNames = run(database.listCollections().filter(new Document('name', collectionName)).&into, [])
+
+        then:
+        collectionNames*.name == [collectionName]
+
         when: 'The collection name should be in the collection names list'
-        def collectionNames = run(database.&getCollectionNames)
+        collectionNames = run(database.listCollectionNames().&into, [])
 
         then:
         !collectionNames.contains(null)
@@ -117,21 +129,21 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&createIndex, new Document('test', 1)) == null
 
         then: 'has the newly created index'
-        run(collection.&getIndexes)*.name.containsAll('_id_', 'test_1')
+        run(collection.listIndexes().&into, [])*.name.containsAll('_id_', 'test_1')
 
         then: 'drop the index'
         run(collection.&dropIndex, 'test_1') == null
 
         then: 'has a single index left "_id" '
-        run(collection.&getIndexes).size == 1
+        run(collection.listIndexes().&into, []).size == 1
 
         then: 'can rename the collection'
         def newCollectionName = 'newCollectionName'
         run(collection.&renameCollection, new MongoNamespace(databaseName, newCollectionName)) == null
 
         then: 'the new collection name is in the collection names list'
-        !run(database.&getCollectionNames).contains(collectionName)
-        run(database.&getCollectionNames).contains(newCollectionName)
+        !run(database.listCollectionNames().&into, []).contains(collectionName)
+        run(database.listCollectionNames().&into, []).contains(newCollectionName)
 
         when:
         collection = database.getCollection(newCollectionName)
@@ -140,10 +152,10 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&dropCollection) == null
 
         then: 'there are no indexes'
-        run(collection.&getIndexes).size == 0
+        run(collection.listIndexes().&into, []).size == 0
 
         then: 'the collection name is no longer in the collectionNames list'
-        !run(database.&getCollectionNames).contains(collectionName)
+        !run(database.listCollectionNames().&into, []).contains(collectionName)
     }
 
     def run(operation, ... args) {

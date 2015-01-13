@@ -16,25 +16,21 @@
 
 package com.mongodb;
 
+import com.mongodb.client.ListCollectionsFluent;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
-import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -122,14 +118,23 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public List<String> getCollectionNames() {
-        return new OperationIterable<Document>(new ListCollectionsOperation<Document>(name, new DocumentCodec()), primary(), executor)
-               .map(new Function<Document, String>() {
-                   @Override
-                   public String apply(final Document result) {
-                       return (String) result.get("name");
-                   }
-               }).into(new ArrayList<String>());
+    public MongoIterable<String> listCollectionNames() {
+        return listCollections().map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document result) {
+                return (String) result.get("name");
+            }
+        });
+    }
+
+    @Override
+    public ListCollectionsFluent<Document> listCollections() {
+        return listCollections(Document.class);
+    }
+
+    @Override
+    public <C> ListCollectionsFluent<C> listCollections(final Class<C> clazz) {
+        return new ListCollectionsFluentImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.FindFluent;
+import com.mongodb.client.ListIndexesFluent;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.AggregateOptions;
@@ -56,7 +57,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
@@ -508,14 +508,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public List<Document> getIndexes() {
-        return getIndexes(Document.class);
+    public ListIndexesFluent<Document> listIndexes() {
+        return listIndexes(Document.class);
     }
 
     @Override
-    public <C> List<C> getIndexes(final Class<C> clazz) {
-        return new OperationIterable<C>(new ListIndexesOperation<C>(getNamespace(), getCodec(clazz)), primary(), executor)
-               .into(new ArrayList<C>());
+    public <C> ListIndexesFluent<C> listIndexes(final Class<C> clazz) {
+        return new ListIndexesFluentImpl<C>(getNamespace(), clazz, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override

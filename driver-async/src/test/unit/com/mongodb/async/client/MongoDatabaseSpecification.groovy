@@ -20,16 +20,13 @@ import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.operation.AsyncBatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
@@ -157,26 +154,24 @@ class MongoDatabaseSpecification extends Specification {
         expect operation, isTheSameAs(new DropDatabaseOperation(name))
     }
 
-    def 'should use ListCollectionNamesOperation correctly'() {
+    def 'should use ListCollectionsOperation correctly'() {
         given:
-        def invocationCount = 0
-        def cursor = Stub(AsyncBatchCursor) {
-            next(_) >> {
-                it[0].onResult(invocationCount++ == 0 ? [new Document('name', 'collectionName')] : null, null)
-            }
-        }
-        def executor = new TestOperationExecutor([cursor])
-        def futureResultCallback = new FutureResultCallback()
+        def executor = new TestOperationExecutor([null, null, null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).getCollectionNames(futureResultCallback)
-        def operation = executor.getReadOperation() as ListCollectionsOperation
-        def names = futureResultCallback.get()
+        def listCollectionFluent = database.listCollections()
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation(name, new DocumentCodec()))
-        executor.getReadPreference() == primary()
-        names == ['collectionName']
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<Document>(name, Document, codecRegistry, primary(),
+                executor))
+
+        when:
+        listCollectionFluent = database.listCollections(BsonDocument)
+
+        then:
+        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
+                executor))
     }
 
     def 'should use CreateCollectionOperation correctly'() {

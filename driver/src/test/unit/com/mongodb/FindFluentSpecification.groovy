@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,22 @@
 package com.mongodb
 
 import com.mongodb.client.model.FindOptions
+import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static spock.util.matcher.HamcrestSupport.expect
 
 class FindFluentSpecification extends Specification {
 
@@ -37,6 +41,7 @@ class FindFluentSpecification extends Specification {
                                                new DBObjectCodecProvider(),
                                                new BsonValueCodecProvider()])
     def readPreference = secondary()
+    def namespace = new MongoNamespace('db', 'coll')
 
     def 'should build the expected findOperation'() {
         given:
@@ -52,7 +57,7 @@ class FindFluentSpecification extends Specification {
                                            .oplogReplay(false)
                                            .noCursorTimeout(false)
                                            .partial(false)
-        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'), Document, codecRegistry, readPreference, executor,
+        def fluentFind = new FindFluentImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
                 new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
@@ -62,21 +67,18 @@ class FindFluentSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        operation.filter == new BsonDocument('filter', new BsonInt32(1))
-        operation.sort == new BsonDocument('sort', new BsonInt32(1))
-        operation.modifiers == new BsonDocument('modifier', new BsonInt32(1))
-        operation.projection == new BsonDocument('projection', new BsonInt32(1))
-        operation.getMaxTime(MILLISECONDS) == 1000
-        operation.batchSize == 100
-        operation.limit == 100
-        operation.skip == 10
-        operation.cursorType == CursorType.NonTailable
-        !operation.isTailableCursor()
-        !operation.isAwaitData()
-        !operation.isOplogReplay()
-        !operation.isNoCursorTimeout()
-        !operation.isPartial()
-        operation.isSlaveOk()
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
+                .filter(new BsonDocument('filter', new BsonInt32(1)))
+                .sort(new BsonDocument('sort', new BsonInt32(1)))
+                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
+                .projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(1000, MILLISECONDS)
+                .batchSize(100)
+                .limit(100)
+                .skip(10)
+                .cursorType(CursorType.NonTailable)
+                .slaveOk(true)
+        )
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -97,26 +99,28 @@ class FindFluentSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<Document>
 
         then: 'should use the overrides'
-        operation.filter == new BsonDocument('filter', new BsonInt32(2))
-        operation.sort == new BsonDocument('sort', new BsonInt32(2))
-        operation.modifiers == new BsonDocument('modifier', new BsonInt32(2))
-        operation.projection == new BsonDocument('projection', new BsonInt32(2))
-        operation.getMaxTime(MILLISECONDS) == 999
-        operation.batchSize == 99
-        operation.limit == 99
-        operation.skip == 9
-        operation.cursorType == CursorType.Tailable
-        operation.isOplogReplay()
-        operation.isNoCursorTimeout()
-        operation.isPartial()
-        operation.isSlaveOk()
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
+                .filter(new BsonDocument('filter', new BsonInt32(2)))
+                .sort(new BsonDocument('sort', new BsonInt32(2)))
+                .modifiers(new BsonDocument('modifier', new BsonInt32(2)))
+                .projection(new BsonDocument('projection', new BsonInt32(2)))
+                .maxTime(999, MILLISECONDS)
+                .batchSize(99)
+                .limit(99)
+                .skip(9)
+                .cursorType(CursorType.Tailable)
+                .oplogReplay(true)
+                .noCursorTimeout(true)
+                .partial(true)
+                .slaveOk(true)
+        )
     }
 
     def 'should handle mixed types'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
-        def fluentFind = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'),  Document, codecRegistry, readPreference, executor,
+        def fluentFind = new FindFluentImpl<Document>(namespace,  Document, codecRegistry, readPreference, executor,
                 new Document('filter', 1), findOptions)
 
         when:
@@ -128,9 +132,77 @@ class FindFluentSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<Document>
 
         then:
-        operation.filter == new BsonDocument('filter', new BsonInt32(1))
-        operation.sort == new BsonDocument('sort', new BsonInt32(1))
-        operation.modifiers == new BsonDocument('modifier', new BsonInt32(1))
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
+                .filter(new BsonDocument('filter', new BsonInt32(1)))
+                .sort(new BsonDocument('sort', new BsonInt32(1)))
+                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
+                .cursorType(CursorType.NonTailable)
+                .slaveOk(true)
+        )
+    }
+
+    def 'should follow the MongoIterable interface as expected'() {
+        given:
+        def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
+        def cursor = {
+            Stub(BatchCursor) {
+                def count = 0
+                def results;
+                def getResult = {
+                    count++
+                    results = count == 1 ? cannedResults : null
+                    results
+                }
+                next() >> {
+                    getResult()
+                }
+                hasNext() >> {
+                    count == 0
+                }
+
+            }
+        }
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def findOptions = new FindOptions()
+        def mongoIterable = new FindFluentImpl<Document>(namespace,  Document, codecRegistry, readPreference, executor, new Document(),
+                findOptions)
+
+        when:
+        def results = mongoIterable.first()
+
+        then:
+        results == cannedResults[0]
+
+        when:
+        def count = 0
+        mongoIterable.forEach(new Block<Document>() {
+            @Override
+            void apply(Document document) {
+                count++
+            }
+        })
+
+        then:
+        count == 3
+
+        when:
+        def target = []
+        mongoIterable.into(target)
+
+        then:
+        target == cannedResults
+
+        when:
+        target = []
+        mongoIterable.map(new Function<Document, Integer>(){
+            @Override
+            Integer apply(Document document) {
+                document.getInteger('_id')
+            }
+        }).into(target)
+
+        then:
+        target == [1, 2, 3]
     }
 
 }

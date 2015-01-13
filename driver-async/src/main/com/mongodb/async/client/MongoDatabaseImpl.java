@@ -27,16 +27,10 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.BsonDocumentWrapper.asBsonDocument;
 
@@ -92,6 +86,26 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    public MongoIterable<String> listCollectionNames() {
+        return listCollections().map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document result) {
+                return (String) result.get("name");
+            }
+        });
+    }
+
+    @Override
+    public ListCollectionsFluent<Document> listCollections() {
+        return listCollections(Document.class);
+    }
+
+    @Override
+    public <C> ListCollectionsFluent<C> listCollections(final Class<C> clazz) {
+        return new ListCollectionsFluentImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
+    }
+
+    @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
         return new MongoCollectionImpl<Document>(new MongoNamespace(name, collectionName), Document.class, codecRegistry, readPreference,
                 writeConcern, executor);
@@ -125,17 +139,6 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public void dropDatabase(final SingleResultCallback<Void> callback) {
         executor.execute(new DropDatabaseOperation(name), callback);
-    }
-
-    @Override
-    public void getCollectionNames(final SingleResultCallback<List<String>> callback) {
-        new OperationIterable<Document>(new ListCollectionsOperation<Document>(name, new DocumentCodec()), primary(), executor)
-        .map(new Function<Document, String>() {
-            @Override
-            public String apply(final Document document) {
-                return (String) document.get("name");
-            }
-        }).into(new ArrayList<String>(), callback);
     }
 
     @Override
