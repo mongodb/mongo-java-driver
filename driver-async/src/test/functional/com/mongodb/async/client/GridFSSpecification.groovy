@@ -50,7 +50,7 @@ class GridFSSpecification extends Specification {
 
         and: 'read back the created indexes'
         FutureResultCallback<List<Document>> getIndexCallback = new FutureResultCallback<List<Document>>()
-        chunksCollection.getIndexes(getIndexCallback)
+        chunksCollection.listIndexes().into([], (getIndexCallback))
         List<Document> chunksIndexes = getIndexCallback.get(COMPLETION_TIMEOUT, SECONDS)
 
         then: 'there should be an index on the _id field and one on the files_id and n field'
