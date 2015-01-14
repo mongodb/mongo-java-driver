@@ -32,7 +32,7 @@ import static com.mongodb.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -119,7 +119,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         }
 
         collections = database.listCollections().into(new ArrayList<Document>());
-        assertThat(collections.size(), is(greaterThan(20)));
+        assertThat(collections.size(), is(greaterThanOrEqualTo(20)));
 
         collections = database.listCollections().filter(new Document("name", "coll1")).into(new ArrayList<Document>());
         assertThat(collections.size(), is(1));
