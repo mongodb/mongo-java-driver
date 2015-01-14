@@ -78,8 +78,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
                 new DocumentCodecProvider(),
                 new WorkerCodecProvider()));
         MongoCollection<Worker> collection = database
-                .getCollection(getCollectionName())
-                .withDefaultClass(Worker.class)
+                .getCollection(getCollectionName(), Worker.class)
                 .withCodecRegistry(codecRegistry);
         collection.insertOne(pat);
 

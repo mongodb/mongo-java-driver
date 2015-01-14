@@ -76,8 +76,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
                 new DocumentCodecProvider(),
                 new PersonCodecProvider()));
         MongoCollection<Person> collection = database
-                .getCollection(getCollectionName())
-                .withDefaultClass(Person.class)
+                .getCollection(getCollectionName(), Person.class)
                 .withCodecRegistry(codecRegistry);
         collection.insertOne(new Person("Bob"));
 

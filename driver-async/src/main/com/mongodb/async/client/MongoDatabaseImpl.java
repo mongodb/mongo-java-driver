@@ -107,8 +107,13 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollection<Document> getCollection(final String collectionName) {
-        return new MongoCollectionImpl<Document>(new MongoNamespace(name, collectionName), Document.class, codecRegistry, readPreference,
-                writeConcern, executor);
+        return getCollection(collectionName, Document.class);
+    }
+
+    @Override
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, codecRegistry, readPreference, writeConcern,
+                executor);
     }
 
     @Override

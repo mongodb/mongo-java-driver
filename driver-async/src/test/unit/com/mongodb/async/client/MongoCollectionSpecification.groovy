@@ -112,7 +112,7 @@ class MongoCollectionSpecification extends Specification {
         collection.getNamespace() == namespace
     }
 
-    def 'should behave correctly when using withResultClass'() {
+    def 'should behave correctly when using withDefaultClass'() {
         given:
         def newClass = Worker
         def executor = new TestOperationExecutor([])

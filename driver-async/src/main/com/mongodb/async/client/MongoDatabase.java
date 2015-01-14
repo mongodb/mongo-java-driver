@@ -95,6 +95,16 @@ public interface MongoDatabase {
     MongoCollection<Document> getCollection(String collectionName);
 
     /**
+     * Gets a collection, with a specific default document class.
+     *
+     * @param collectionName the name of the collection to return
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @return the collection
+     */
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
+
+    /**
      * Executes command in the context of the current database.
      *
      * @param command  the command to be run
