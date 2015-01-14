@@ -21,6 +21,9 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
+    <suppress checks="MethodLength" files="QuickTour"/>
+    <suppress checks="Regexp" files="QuickTour"/>
+
     <!--Ignore the core module, as this is not complete yet.  Documenting this is JAVA-1391 -->
     <!--Ignore the async functionality for now since this is incomplete -->
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]"/>

@@ -22,8 +22,9 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -31,24 +32,24 @@ import java.util.Set;
  * The tutorial from http://www.mongodb.org/display/DOCS/Java+Tutorial.
  */
 public class QuickTour {
-    // CHECKSTYLE:OFF
-
     /**
      * Run this main method to see the output of this quick example.
      *
-     * @param args takes no args
-     * @throws UnknownHostException if it cannot connect to a MongoDB instance at localhost:27017
+     * @param args takes an optional single argument for the connection string
      */
     @SuppressWarnings("deprecation")
-    public static void main(final String[] args) throws UnknownHostException {
-        // connect to the local database server
-        MongoClient mongoClient = new MongoClient();
+    public static void main(final String[] args) {
+        MongoClient mongoClient;
 
-        // get handle to "mydb"
+        if (args.length == 0) {
+            // connect to the local database server
+            mongoClient = new MongoClient();
+        } else {
+            mongoClient = new MongoClient(new MongoClientURI(args[0]));
+        }
+
+        // get handle to the "mydb" database
         DB db = mongoClient.getDB("mydb");
-
-        // Authenticate - optional
-        // boolean auth = db.authenticate("foo", "bar");
 
         // get a list of the collections in this database and print them out
         Set<String> collectionNames = db.getCollectionNames();
@@ -56,31 +57,34 @@ public class QuickTour {
             System.out.println(s);
         }
 
-        // get a collection object to work with
-        DBCollection testCollection = db.getCollection("testCollection");
+        // get a handle to the "test" collection
+        DBCollection collection = db.getCollection("test");
 
         // drop all the data in it
-        testCollection.drop();
+        collection.drop();
 
         // make a document and insert it
-        BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database")
-                                                                .append("count", 1)
-                                                                .append("info", new BasicDBObject("x", 203).append("y", 102));
+        BasicDBObject doc = new BasicDBObject("name", "MongoDB")
+                            .append("type", "database")
+                            .append("count", 1)
+                            .append("info", new BasicDBObject("x", 203).append("y", 102));
 
-        testCollection.insert(doc);
+        collection.insert(doc);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
-        DBObject myDoc = testCollection.findOne();
+        DBObject myDoc = collection.findOne();
         System.out.println(myDoc);
 
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
+        List<DBObject> documents = new ArrayList<DBObject>();
         for (int i = 0; i < 100; i++) {
-            testCollection.insert(new BasicDBObject().append("i", i));
+            documents.add(new BasicDBObject().append("i", i));
         }
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection.getCount());
+        collection.insert(documents);
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.getCount());
 
         // lets get all the documents in the collection and print them out
-        DBCursor cursor = testCollection.find();
+        DBCursor cursor = collection.find();
         try {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
@@ -90,8 +94,7 @@ public class QuickTour {
         }
 
         // now use a query to get 1 document out
-        BasicDBObject query = new BasicDBObject("i", 71);
-        cursor = testCollection.find(query);
+        cursor = collection.find(new BasicDBObject("i", 71));
 
         try {
             while (cursor.hasNext()) {
@@ -102,8 +105,7 @@ public class QuickTour {
         }
 
         // now use a range query to get a larger subset
-        query = new BasicDBObject("i", new BasicDBObject("$gt", 50));  // i.e. find all where i > 50
-        cursor = testCollection.find(query);
+        cursor = collection.find(new BasicDBObject("i", new BasicDBObject("$gt", 50)));
 
         try {
             while (cursor.hasNext()) {
@@ -114,8 +116,7 @@ public class QuickTour {
         }
 
         // range query with multiple constraints
-        query = new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30));  // i.e.   20 < i <= 30
-        cursor = testCollection.find(query);
+        cursor = collection.find(new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30)));
 
         try {
             while (cursor.hasNext()) {
@@ -125,11 +126,11 @@ public class QuickTour {
             cursor.close();
         }
 
-        // create an index on the "i" field
-        testCollection.createIndex(new BasicDBObject("i", 1));  // create index on "i", ascending
+        // create an ascending index on the "i" field
+        collection.createIndex(new BasicDBObject("i", 1));
 
         // list the indexes on the collection
-        List<DBObject> list = testCollection.getIndexInfo();
+        List<DBObject> list = collection.getIndexInfo();
         for (final DBObject o : list) {
             System.out.println(o);
         }
@@ -137,5 +138,4 @@ public class QuickTour {
         // release resources
         mongoClient.close();
     }
-    // CHECKSTYLE:ON
 }
