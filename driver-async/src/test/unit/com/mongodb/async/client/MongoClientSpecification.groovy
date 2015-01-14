@@ -17,34 +17,40 @@
 package com.mongodb.async.client
 
 import com.mongodb.WriteConcern
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.Cluster
-import com.mongodb.operation.GetDatabaseNamesOperation
+import org.bson.BsonDocument
+import org.bson.Document
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
-import static java.util.concurrent.TimeUnit.SECONDS
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
 
-    def 'should use GetDatabaseNamesOperation for getDatabaseNames '() {
+    def 'should use ListCollectionsOperation correctly'() {
         given:
         def options = MongoClientOptions.builder().build()
         def cluster = Stub(Cluster)
-        def executor = new TestOperationExecutor([['databaseName']])
-        def futureResultCallback = new FutureResultCallback<List<String>>();
+        def executor = new TestOperationExecutor([null, null, null])
+        def client = new MongoClientImpl(options, cluster, executor)
+        def codecRegistry = client.getDefaultCodecRegistry()
 
         when:
-        new MongoClientImpl(options, cluster, executor).getDatabaseNames(futureResultCallback)
+        def listDatabasesFluent = client.listDatabases()
 
         then:
-        futureResultCallback.get(10, SECONDS);
-        executor.getReadOperation() instanceof GetDatabaseNamesOperation
-        executor.getReadPreference() == primary()
+        expect listDatabasesFluent, isTheSameAs(new ListDatabasesFluentImpl<Document>(Document, codecRegistry, primary(),
+                executor))
+
+        when:
+        listDatabasesFluent = client.listDatabases(BsonDocument)
+
+        then:
+        expect listDatabasesFluent, isTheSameAs(new ListDatabasesFluentImpl<BsonDocument>(BsonDocument, codecRegistry, primary(),
+                executor))
     }
 
     def 'should provide the same options'() {

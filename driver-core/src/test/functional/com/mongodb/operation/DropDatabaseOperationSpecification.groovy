@@ -80,7 +80,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def databaseNameExists(String databaseName) {
-        new GetDatabaseNamesOperation().execute(getBinding()).contains(databaseName);
+        new ListDatabasesOperation(new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName);
     }
 
 }

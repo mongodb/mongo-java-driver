@@ -34,7 +34,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.management.JMXConnectionPoolListener;
-import com.mongodb.operation.GetDatabaseNamesOperation;
+import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
@@ -178,7 +178,7 @@ public class Mongo {
 
     /**
      * <p>Creates a Mongo in paired mode. </p>
-     * 
+     *
      * <p>This will also work for a replica set and will find all members (the master will be used by default).</p>
      *
      * @param left  left side of the pair
@@ -194,7 +194,7 @@ public class Mongo {
 
     /**
      * <p>Creates a Mongo connection in paired mode. </p>
-     * 
+     *
      * <p>This will also work for a replica set and will find all members (the master will be used by default).</p>
      *
      * @param left    left side of the pair
@@ -255,17 +255,17 @@ public class Mongo {
     /**
      * <p>Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it will discover all
      * nodes. If the URI contains database credentials, the database will be authenticated lazily on first use with those credentials.</p>
-     * 
-     * <p>Examples:</p> 
+     *
+     * <p>Examples:</p>
      * <ul>
-     *     <li>mongodb://localhost</li> 
+     *     <li>mongodb://localhost</li>
      *     <li>mongodb://fred:foobar@localhost/</li>
      * </ul>
      *
      * @param uri URI to connect to, optionally containing additional information like credentials
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
-     * @see MongoURI 
+     * @see MongoURI
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated
@@ -420,7 +420,14 @@ public class Mongo {
      * @throws MongoException  if the operation fails
      */
     public List<String> getDatabaseNames() {
-        return execute(new GetDatabaseNamesOperation(), primary());
+      return new OperationIterable<DBObject>(new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec()),
+          primary(), createOperationExecutor())
+          .map(new Function<DBObject, String>() {
+              @Override
+              public String apply(final DBObject result) {
+                  return (String) result.get("name");
+              }
+          }).into(new ArrayList<String>());
     }
 
     /**

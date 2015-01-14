@@ -17,10 +17,9 @@
 package com.mongodb.async.client;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.async.SingleResultCallback;
+import org.bson.Document;
 
 import java.io.Closeable;
-import java.util.List;
 
 /**
  * A client-side representation of a MongoDB cluster.  Instances can represent either a standalone MongoDB instance, a replica set,
@@ -59,9 +58,25 @@ public interface MongoClient extends Closeable {
     /**
      * Get a list of the database names
      *
-     * @param  callback a callback that is passed the list of the names of all the databases on the server
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     * @return an iterable containing all the names of all the databases
      */
-    void getDatabaseNames(SingleResultCallback<List<String>> callback);
+    MongoIterable<String> listDatabaseNames();
+
+    /**
+     * Gets the list of databases
+     *
+     * @return the fluent list databases interface
+     */
+    ListDatabasesFluent<Document> listDatabases();
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clazz the class to cast the database documents to
+     * @param <T>   the type of the class to use instead of {@code Document}.
+     * @return the fluent list databases interface
+     */
+    <T> ListDatabasesFluent<T> listDatabases(Class<T> clazz);
 
 }

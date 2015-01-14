@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
@@ -26,15 +27,12 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.operation.GetDatabaseNamesOperation;
+import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
-import java.util.List;
-
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
@@ -91,8 +89,23 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public void getDatabaseNames(final SingleResultCallback<List<String>> callback) {
-        executor.execute(new GetDatabaseNamesOperation(), primary(), callback);
+    public MongoIterable<String> listDatabaseNames() {
+        return listDatabases().map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document document) {
+                return document.getString("name");
+            }
+        });
+    }
+
+    @Override
+    public ListDatabasesFluent<Document> listDatabases() {
+        return listDatabases(Document.class);
+    }
+
+    @Override
+    public <T> ListDatabasesFluent<T> listDatabases(final Class<T> clazz) {
+        return new ListDatabasesFluentImpl<T>(clazz, DEFAULT_CODEC_REGISTRY, ReadPreference.primary(), executor);
     }
 
     Cluster getCluster() {

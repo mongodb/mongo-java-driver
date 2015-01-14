@@ -93,14 +93,14 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         when: 'clean up old database'
         run(mongoClient.getDatabase(databaseName).&dropDatabase) == null
-        def names = run(mongoClient.&getDatabaseNames)
+        def names = run(mongoClient.listDatabaseNames().&into, [])
 
         then: 'Get Database Names'
         !names.contains(null)
 
         when: 'Create a collection and the created database is in the list'
         run(database.&createCollection, collectionName)
-        def updatedNames = run(mongoClient.&getDatabaseNames)
+        def updatedNames = run(mongoClient.listDatabaseNames().&into, [])
 
         then: 'The database names should contain the database and be one bigger than before'
         updatedNames.contains(databaseName)

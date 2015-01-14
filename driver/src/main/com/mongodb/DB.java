@@ -77,7 +77,7 @@ public class DB {
         this.executor = executor;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
-        this.commandCodec = new DBObjectCodec(MongoClient.getDefaultCodecRegistry());
+        this.commandCodec = MongoClient.getCommandCodec();
     }
 
     /**
@@ -142,8 +142,8 @@ public class DB {
     }
 
     /**
-     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p> 
-     * 
+     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p>
+     *
      * <p>This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
      *
      * @param name the name of the collection
@@ -226,21 +226,21 @@ public class DB {
     }
 
     /**
-     * <p>Creates a collection with a given name and options. If the collection already exists, 
+     * <p>Creates a collection with a given name and options. If the collection already exists,
      * this throws a {@code CommandFailureException}.</p>
-     * 
+     *
      * <p>Possible options:</p>
-     * <ul> 
-     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, 
-     *     you must specify a size parameter. </li> 
-     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When 
-     *     capped is false, you may use size to preallocate space. </li> 
+     * <ul>
+     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled,
+     *     you must specify a size parameter. </li>
+     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When
+     *     capped is false, you may use size to preallocate space. </li>
      *     <li> <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections. You must
      *     also specify size when specifying max. </li>
      * </ul>
      * <p>Note that if the {@code options} parameter is {@code null}, the creation will be deferred to when the collection is written
      * to.</p>
-     * 
+     *
      * @param collectionName the name of the collection to return
      * @param options        options
      * @return the collection

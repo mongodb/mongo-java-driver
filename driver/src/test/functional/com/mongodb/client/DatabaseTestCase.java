@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClient;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerHelper;
@@ -33,13 +34,15 @@ import static com.mongodb.Fixture.getPrimary;
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
+    protected MongoClient client;
     protected MongoDatabase database;
     protected MongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
     @Before
     public void setUp() {
-        database = getMongoClient().getDatabase(getDefaultDatabaseName());
+        client =  getMongoClient();
+        database = client.getDatabase(getDefaultDatabaseName());
         collection = database.getCollection(getClass().getName());
         collection.dropCollection();
     }
