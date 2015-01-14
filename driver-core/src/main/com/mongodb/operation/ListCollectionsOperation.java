@@ -169,7 +169,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     try {
-                        return executeWrappedCommandProtocol(databaseName, getCommand(), createCommandDecoder(), binding,
+                        return executeWrappedCommandProtocol(databaseName, getCommand(), createCommandDecoder(), connection,
                                                              commandTransformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
