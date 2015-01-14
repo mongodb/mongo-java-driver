@@ -89,6 +89,18 @@ Example for Maven:
     <artifactId>mongodb-driver</artifactId>
     <version>x.y.z</version>
 </dependency>
+
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-core</artifactId>
+    <version>x.y.z</version>
+</dependency>
+
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>bson</artifactId>
+    <version>x.y.z</version>
+</dependency>
 ```
 
 Snapshot builds are also published regulary via Sonatype.
