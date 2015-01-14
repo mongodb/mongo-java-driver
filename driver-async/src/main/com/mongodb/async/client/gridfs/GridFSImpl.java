@@ -28,30 +28,32 @@ public class GridFSImpl implements GridFS {
     public GridFSImpl(final MongoDatabase database, final String bucket, final Integer chunkSize) {
 
         this.database = database;
+        RootCodecRegistry rootCodecRegistry = (RootCodecRegistry) this.database.getCodecRegistry();
+        RootCodecRegistry gridFSCodecRegistry = rootCodecRegistry.withCodec(new GridFSFileCodec(rootCodecRegistry));
 
         this.bucketName = bucket == null ? DEFAULT_BUCKET_NAME : bucket;
         this.chunkSize = chunkSize == null ? DEFAULT_CHUNK_SIZE : chunkSize;
 
-        this.filesCollection = this.database.getCollection(bucketName  + ".files", GridFSFile.class);
-        this.chunksCollection = this.database.getCollection(bucketName + ".chunks");
+        this.filesCollection = this.database.getCollection(bucketName  + ".files", GridFSFile.class)
+                .withCodecRegistry(gridFSCodecRegistry);
+        this.chunksCollection = this.database.getCollection(bucketName + ".chunks")
+                .withCodecRegistry(gridFSCodecRegistry);
 
-        RootCodecRegistry rootCodecRegistry = (RootCodecRegistry) this.database.getOptions().getCodecRegistry();
-        rootCodecRegistry.register(new GridFSFileCodec(rootCodecRegistry));
     }
 
     public void createIndex(final SingleResultCallback<Void> callback) {
 
         chunksCollection.createIndex(new Document("files_id", 1).append("n", 1), new CreateIndexOptions().unique(true),
                 new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(null, null);
-                }
-            }
-        });
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(null, null);
+                        }
+                    }
+                });
     }
 
     @Override

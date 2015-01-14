@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.gridfs.GridFS;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -40,6 +41,15 @@ public interface MongoDatabase {
      * @return the database name
      */
     String getName();
+
+    /**
+     * Instantiates a new GridFS instance.
+     *
+     * @param bucketName optional name of the bucket to use
+     * @param chunkSize optional chunkSize
+     * @return GridFS
+     */
+    GridFS gridFS(String bucketName, final Integer chunkSize);
 
     /**
      * Get the codec registry for the MongoDatabase.
@@ -93,6 +103,15 @@ public interface MongoDatabase {
      * @return the collection
      */
     MongoCollection<Document> getCollection(String collectionName);
+
+    /**
+     * Gets a collection.
+     *
+     * @param collectionName the name of the collection to return
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @return the collection
+     */
+    <T> MongoCollection<T> getCollection(String collectionName, final Class<T> clazz);
 
     /**
      * Executes command in the context of the current database.
