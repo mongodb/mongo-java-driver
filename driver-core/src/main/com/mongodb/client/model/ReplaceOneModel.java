@@ -36,6 +36,17 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param filter    a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec}
      *                    is registered
      * @param replacement the replacement document
+     */
+    public ReplaceOneModel(final Object filter, final T replacement) {
+        this(filter, replacement, new UpdateOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter    a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec}
+     *                    is registered
+     * @param replacement the replacement document
      * @param options     the options to apply
      */
     public ReplaceOneModel(final Object filter, final T replacement, final UpdateOptions options) {
