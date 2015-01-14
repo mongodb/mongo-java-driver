@@ -42,18 +42,7 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
      *                 can be of any type for which a {@code Codec} is registered
      */
     public UpdateOneModel(final Object filter, final Object update) {
-        this(filter, update, new UpdateOptions() {
-            /**
-             * Set to true if a new document should be inserted if there are no matches to the query filter.
-             *
-             * @param upsert true if a new document should be inserted if there are no matches to the query filter
-             * @return this
-             */
-            public UpdateOptions upsert(final boolean upsert) {
-                super.upsert(upsert);
-                return this;
-            }
-        });
+        this(filter, update, new UpdateOptions());
     }
 
     /**
