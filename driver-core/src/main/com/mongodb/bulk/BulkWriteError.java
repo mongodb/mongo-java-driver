@@ -73,4 +73,14 @@ public class BulkWriteError extends WriteError {
         result = 31 * super.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "BulkWriteError{"
+               + "index=" + index
+               + ", code=" + getCode()
+               + ", message='" + getMessage() + '\''
+               + ", details=" + getDetails()
+               + '}';
+    }
 }
