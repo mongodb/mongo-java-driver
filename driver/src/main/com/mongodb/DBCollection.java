@@ -229,7 +229,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(final List<DBObject> documents) {
+    public WriteResult insert(final List<? extends DBObject> documents) {
         return insert(documents, getWriteConcern());
     }
 
@@ -245,7 +245,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern) {
+    public WriteResult insert(final List<? extends DBObject> documents, final WriteConcern aWriteConcern) {
         return insert(documents, aWriteConcern, null);
     }
 
@@ -279,7 +279,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
+    public WriteResult insert(final List<? extends DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
         return insert(documents, new InsertOptions().writeConcern(aWriteConcern).dbEncoder(dbEncoder));
     }
 
@@ -299,7 +299,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(final List<DBObject> documents, final InsertOptions insertOptions) {
+    public WriteResult insert(final List<? extends DBObject> documents, final InsertOptions insertOptions) {
         WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
         Encoder<DBObject> encoder = toEncoder(insertOptions.getDbEncoder());
 
@@ -1244,7 +1244,7 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
-    public AggregationOutput aggregate(final List<DBObject> pipeline) {
+    public AggregationOutput aggregate(final List<? extends DBObject> pipeline) {
         return aggregate(pipeline, getReadPreference());
     }
 
@@ -1258,7 +1258,7 @@ public class DBCollection {
      * @mongodb.server.release 2.2
      */
     @SuppressWarnings("unchecked")
-    public AggregationOutput aggregate(final List<DBObject> pipeline, final ReadPreference readPreference) {
+    public AggregationOutput aggregate(final List<? extends DBObject> pipeline, final ReadPreference readPreference) {
         Cursor cursor = aggregate(pipeline, AggregationOptions.builder().outputMode(INLINE).build(), readPreference, false);
 
         if (cursor == null) {
@@ -1282,7 +1282,7 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
-    public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options) {
+    public Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         return aggregate(pipeline, options, getReadPreference());
     }
 
@@ -1296,11 +1296,12 @@ public class DBCollection {
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
      */
-    public Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference) {
+    public Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options,
+                            final ReadPreference readPreference) {
         return aggregate(pipeline, options, readPreference, true);
     }
 
-    private Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+    private Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
                              final boolean returnCursorForOutCollection) {
         if (options == null) {
             throw new IllegalArgumentException("options can not be null");
@@ -1340,7 +1341,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
      * @mongodb.server.release 2.6
      */
-    public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
+    public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
                                                                                           new BsonDocumentCodec())
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -1349,7 +1350,7 @@ public class DBCollection {
     }
 
     @SuppressWarnings("unchecked")
-    private List<BsonDocument> preparePipeline(final List<DBObject> pipeline) {
+    private List<BsonDocument> preparePipeline(final List<? extends DBObject> pipeline) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }
@@ -1504,8 +1505,8 @@ public class DBCollection {
      * @param indexes list of indexes to "hint" or force MongoDB to use when performing the query.
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
-    public void setHintFields(final List<DBObject> indexes) {
-        this.hintFields = indexes;
+    public void setHintFields(final List<? extends DBObject> indexes) {
+        this.hintFields = new ArrayList<DBObject>(indexes);
     }
 
     /**
