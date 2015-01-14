@@ -166,4 +166,39 @@ class BsonDocumentCodecSpecification extends Specification {
         then:
         encodedDocument == docWithNestedRawDoc
     }
+
+    def 'should determine if document has an id'() {
+        expect:
+        !new BsonDocumentCodec().documentHasId(new BsonDocument());
+        new BsonDocumentCodec().documentHasId(new BsonDocument('_id', new BsonInt32(1)));
+    }
+
+    def 'should get document id'() {
+        expect:
+        !new BsonDocumentCodec().getDocumentId(new BsonDocument());
+        new BsonDocumentCodec().getDocumentId(new BsonDocument('_id', new BsonInt32(1))) == new BsonInt32(1)
+    }
+
+    def 'should generate document id if absent'() {
+        given:
+        def document = new BsonDocument()
+
+        when:
+        new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+
+        then:
+        document.get('_id') instanceof BsonObjectId
+    }
+
+    def 'should not generate document id if present'() {
+        given:
+        def document = new BsonDocument('_id', new BsonInt32(1))
+
+        when:
+        new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+
+        then:
+        document.get('_id') == new BsonInt32(1)
+    }
+
 }

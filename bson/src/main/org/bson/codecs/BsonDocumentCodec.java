@@ -18,6 +18,7 @@ package org.bson.codecs;
 
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
@@ -25,6 +26,7 @@ import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +38,7 @@ import java.util.Map;
  *
  * @since 3.0
  */
-public class BsonDocumentCodec implements Codec<BsonDocument> {
+public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
 
@@ -135,5 +137,22 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
     @Override
     public Class<BsonDocument> getEncoderClass() {
         return BsonDocument.class;
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final BsonDocument document) {
+        if (!documentHasId(document)) {
+            document.put(ID_FIELD_NAME, new BsonObjectId(new ObjectId()));
+        }
+    }
+
+    @Override
+    public boolean documentHasId(final BsonDocument document) {
+        return document.containsKey(ID_FIELD_NAME);
+    }
+
+    @Override
+    public BsonValue getDocumentId(final BsonDocument document) {
+        return document.get(ID_FIELD_NAME);
     }
 }
