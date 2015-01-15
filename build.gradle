@@ -207,6 +207,15 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     }
 }
 
+task docs(type: Javadoc) {
+    source subprojects.grep({ it.name != 'util' }).collect {project -> project.sourceSets.main.allJava }
+    options = subprojects.first().javadoc.options
+    dependsOn = subprojects.first().javadoc.dependsOn
+    excludes =  subprojects.first().javadoc.excludes
+    classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
+    destinationDir = new File(projectDir, 'build/docs')
+}
+
 //////////////////////////////////////////
 // Root project configuration           //
 //////////////////////////////////////////
