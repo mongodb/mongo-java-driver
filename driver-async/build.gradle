@@ -25,15 +25,10 @@ dependencies {
     testCompile project(':driver-core').sourceSets.test.output
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = archivesBaseName
-            pom.withXml {
-                asNode().appendNode('name', 'MongoDB Asynchronous Driver')
-                asNode().appendNode('description', 'The MongoDB Asynchronous Driver')
-                asNode().appendNode('url', 'http://www.mongodb.org')
-            }
-        }
+modifyPom {
+    project {
+        name 'MongoDB Asynchronous Driver'
+        description 'The MongoDB Asynchronous Driver'
+        url 'http://www.mongodb.org'
     }
 }

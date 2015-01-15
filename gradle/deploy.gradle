@@ -1,0 +1,58 @@
+/*
+ * Copyright 2015 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Configures the nexus plugin - see: https://github.com/bmuschko/gradle-nexus-plugin
+ *
+ * Ensure you have configured ~/.gradle/gradle.properties for both the nexus and signing plugins
+ */
+configure(subprojects - project(':util')) {
+    apply plugin: 'com.bmuschko.nexus'
+
+    modifyPom {
+        project {
+
+            url 'https://github.com/mongodb/mongo-java-driver'
+
+            scm {
+                url 'https://github.com/mongodb/mongo-java-driver'
+                connection 'scm:https://github.com/mongodb/mongo-java-driver.git'
+                developerConnection 'scm:git@github.com:mongodb/mongo-java-driver.git'
+            }
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    name 'Various'
+                    organization = 'MongoDB'
+                }
+            }
+        }
+    }
+
+    modifyPom { pom ->
+        pom.dependencies.find {dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' }.optional = true
+        // no need to publish test dependencies
+        pom.dependencies.removeAll { it.scope == "test" }
+    }
+}

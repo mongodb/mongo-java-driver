@@ -35,19 +35,11 @@ jar {
     }
 }
 
-//
-// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
-//
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = archivesBaseName
-            pom.withXml {
-                asNode().appendNode('name', 'MongoDB Java Driver Core')
-                asNode().appendNode('description', 'The Java operations layer for the MongoDB Java Driver. Third parties can ' +
-                                                   'wrap this layer to provide custom higher-level APIs')
-                asNode().appendNode('url', 'http://www.mongodb.org')
-            }
-        }
-    }
+modifyPom {
+    project {
+        name 'MongoDB Java Driver Core'
+        description 'The Java operations layer for the MongoDB Java Driver. Third parties can \' +\n' +
+                    '                                                   \'wrap this layer to provide custom higher-level APIs'
+        url 'http://www.mongodb.org'
+}
 }

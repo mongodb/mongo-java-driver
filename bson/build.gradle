@@ -18,18 +18,10 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'bson'
 
-//
-// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
-//
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = archivesBaseName
-            pom.withXml {
-                asNode().appendNode('name', 'BSON')
-                asNode().appendNode('description', 'The BSON library')
-                asNode().appendNode('url', 'http://bsonspec.org/')
-            }
-        }
+modifyPom {
+    project {
+        name 'BSON'
+        description 'The BSON library'
+        url 'http://bsonspec.org'
     }
 }

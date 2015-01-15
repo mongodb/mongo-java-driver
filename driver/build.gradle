@@ -18,6 +18,8 @@ def configDir = new File(rootDir, 'config')
 
 apply plugin: 'clirr'
 
+archivesBaseName = 'mongodb-driver'
+
 sourceSets {
     test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
 }
@@ -44,18 +46,10 @@ tasks.withType(Checkstyle) {
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
 }
 
-//
-// Configure the specific values for the published pom file. Used by the tasks in publish.gradle.
-//
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId = 'mongodb-driver'
-            pom.withXml {
-                asNode().appendNode('name', 'MongoDB Driver')
-                asNode().appendNode('description', 'The MongoDB Driver')
-                asNode().appendNode('url', 'http://www.mongodb.org')
-            }
-        }
+modifyPom {
+    project {
+        name 'MongoDB Driver'
+        description 'The MongoDB Driver'
+        url 'http://www.mongodb.org'
     }
 }
