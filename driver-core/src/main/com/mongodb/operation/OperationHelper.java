@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -80,7 +81,7 @@ final class OperationHelper {
 
     static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                                final ServerAddress serverAddress, final int batchSize) {
-        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress), 0, batchSize, 
+        return new AsyncQueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L, serverAddress), 0, batchSize,
                 decoder);
     }
 

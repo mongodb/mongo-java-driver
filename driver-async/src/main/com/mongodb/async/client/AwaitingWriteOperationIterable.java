@@ -3,6 +3,7 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncWriteOperation;
 
@@ -121,5 +122,33 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
         return new MappingIterable<T, U>(this, mapper);
+    }
+
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        boolean localWriteCompleted;
+
+        synchronized (this) {
+            localWriteCompleted = writeCompleted;
+            if (!localWriteCompleted) {
+                callbacks.add(new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            delegated.batchCursor(callback);
+                        }
+                    }
+                });
+            }
+        }
+        if (localWriteCompleted) {
+            if (thrown != null) {
+                callback.onResult(null, thrown);
+            } else {
+                delegated.batchCursor(callback);
+            }
+        }
     }
 }

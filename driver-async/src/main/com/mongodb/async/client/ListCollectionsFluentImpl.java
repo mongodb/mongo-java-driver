@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
@@ -91,6 +92,11 @@ final class ListCollectionsFluentImpl<T> implements ListCollectionsFluent<T> {
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
         return execute().map(mapper);
+    }
+
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        execute().batchCursor(callback);
     }
 
     private MongoIterable<T> execute() {

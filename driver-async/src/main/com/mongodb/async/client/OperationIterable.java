@@ -22,7 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.operation.AsyncBatchCursor;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 
@@ -45,7 +45,7 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public void forEach(final Block<? super T> block, final SingleResultCallback<Void> callback) {
-        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
+        batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
                 if (t != null) {
@@ -59,7 +59,7 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public <A extends Collection<? super T>> void into(final A target, final SingleResultCallback<A> callback) {
-        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
+        batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
                 if (t != null) {
@@ -87,7 +87,7 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public void first(final SingleResultCallback<T> callback) {
-        execute(new SingleResultCallback<AsyncBatchCursor<T>>() {
+        batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
                 if (t != null) {
@@ -118,7 +118,8 @@ class OperationIterable<T> implements MongoIterable<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private void execute(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         executor.execute((AsyncReadOperation<AsyncBatchCursor<T>>) operation, readPreference, callback);
     }
 

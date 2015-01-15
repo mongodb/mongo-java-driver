@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.AsyncBatchCursor;
 
 import java.util.Collection;
 
@@ -63,4 +64,11 @@ public interface MongoIterable<T> {
      * @return an iterable which maps T to U
      */
     <U> MongoIterable<U> map(Function<T, U> mapper);
+
+    /**
+     * Provide the underlying {@link com.mongodb.async.AsyncBatchCursor} allowing fine grained control of the cursor.
+     *
+     * @param callback a callback that will be passed the AsyncBatchCursor
+     */
+    void batchCursor(SingleResultCallback<AsyncBatchCursor<T>> callback);
 }

@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.AsyncBatchCursor;
 
 import java.util.Collection;
 
@@ -86,5 +87,19 @@ class MappingIterable<T, U> implements MongoIterable<U> {
     @Override
     public <V> MongoIterable<V> map(final Function<U, V> mapper) {
         return new MappingIterable<U, V>(this, mapper);
+    }
+
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<U>> callback) {
+        iterable.batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
+            @Override
+            public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(new MappingAsyncBatchCursor<T, U>(batchCursor, mapper), null);
+                }
+            }
+        });
     }
 }

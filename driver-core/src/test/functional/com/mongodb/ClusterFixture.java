@@ -42,7 +42,7 @@ import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
-import com.mongodb.operation.AsyncBatchCursor;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CommandWriteOperation;

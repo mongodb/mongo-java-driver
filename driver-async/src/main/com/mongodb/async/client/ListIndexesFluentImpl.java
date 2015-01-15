@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.ListIndexesOperation;
 import org.bson.codecs.Codec;
@@ -82,6 +83,11 @@ final class ListIndexesFluentImpl<T> implements ListIndexesFluent<T> {
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
         return execute().map(mapper);
+    }
+
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        execute().batchCursor(callback);
     }
 
     private MongoIterable<T> execute() {

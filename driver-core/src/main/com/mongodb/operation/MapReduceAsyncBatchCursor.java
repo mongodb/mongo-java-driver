@@ -16,6 +16,8 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.async.AsyncBatchCursor;
+
 /**
  * Represents the future results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
  * statistics about the operation.

@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -112,7 +113,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync("admin", getCommand(), CommandResultDocumentCodec.create(decoder, "databases"),
-                            connection, binding.getReadPreference(), asyncTransformer(source, connection), 
+                            connection, binding.getReadPreference(), asyncTransformer(source, connection),
                             releasingCallback(errorHandlingCallback(callback), connection));
                 }
             }

@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
@@ -144,7 +145,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                 } else {
                     return new QueryBatchCursor<T>(connection.query(getIndexNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,
-                            binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder), 0, batchSize, decoder, 
+                            binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder), 0, batchSize, decoder,
                             source);
                 }
             }
@@ -187,7 +188,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                         if (t != null) {
                                             wrappedCallback.onResult(null, t);
                                         } else {
-                                            wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, decoder, source), 
+                                            wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, decoder, source),
                                                     null);
                                         }
                                     }

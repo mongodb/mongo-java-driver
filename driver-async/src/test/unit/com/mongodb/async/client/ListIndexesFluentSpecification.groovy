@@ -20,7 +20,7 @@ import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.operation.AsyncBatchCursor
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.operation.ListIndexesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -92,10 +92,10 @@ class ListIndexesFluentSpecification extends Specification {
                 next(_) >> {
                     it[0].onResult(getResult(), null)
                 }
-
+                isClosed() >> { count >= 1 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new ListIndexesFluentImpl<Document>(namespace, Document, codecRegistry, readPreference, executor)
 
         when:
@@ -138,6 +138,22 @@ class ListIndexesFluentSpecification extends Specification {
         }).into(target, results)
         then:
         results.get() == [1, 1, 1]
+
+        when:
+        results = new FutureResultCallback()
+        mongoIterable.batchCursor(results)
+        def batchCursor = results.get()
+
+        then:
+        !batchCursor.isClosed()
+
+        when:
+        results = new FutureResultCallback()
+        batchCursor.next(results)
+
+        then:
+        results.get() == cannedResults
+        batchCursor.isClosed()
     }
 
 }

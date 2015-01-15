@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import org.bson.BsonDocument
 import org.bson.BsonInt32

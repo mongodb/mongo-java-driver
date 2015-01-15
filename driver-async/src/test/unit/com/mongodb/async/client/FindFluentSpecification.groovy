@@ -22,7 +22,7 @@ import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.FindOptions
-import com.mongodb.operation.AsyncBatchCursor
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -170,10 +170,10 @@ class FindFluentSpecification extends Specification {
                 next(_) >> {
                     it[0].onResult(getResult(), null)
                 }
-
+                isClosed() >> { count >= 1 }
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindFluentImpl<Document>(new MongoNamespace('db', 'coll'),  Document, codecRegistry, readPreference,
                 executor, new Document(), findOptions)
@@ -218,6 +218,22 @@ class FindFluentSpecification extends Specification {
         }).into(target, results)
         then:
         results.get() == [1, 1, 1]
+
+        when:
+        results = new FutureResultCallback()
+        mongoIterable.batchCursor(results)
+        def batchCursor = results.get()
+
+        then:
+        !batchCursor.isClosed()
+
+        when:
+        results = new FutureResultCallback()
+        batchCursor.next(results)
+
+        then:
+        results.get() == cannedResults
+        batchCursor.isClosed()
     }
 
 }

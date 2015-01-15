@@ -51,7 +51,7 @@ import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
-import com.mongodb.operation.AsyncBatchCursor
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DistinctOperation

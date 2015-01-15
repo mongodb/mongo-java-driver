@@ -1,11 +1,14 @@
 package com.mongodb.async.client
 
 import com.mongodb.MongoException
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.operation.AsyncWriteOperation
+import org.bson.Document
 import spock.lang.Specification
 
 class AwaitingWriteOperationIterableSpecification extends Specification {
+
     def 'first should get first result when awaited operation has completed'() {
         given:
         def writeOp = Stub(AsyncWriteOperation)
@@ -197,7 +200,7 @@ class AwaitingWriteOperationIterableSpecification extends Specification {
     def 'should map'() {
         given:
         def writeOp = Stub(AsyncWriteOperation)
-        def executor = new TestOperationExecutor(['Response', new MongoException('Failed')])
+        def executor = new TestOperationExecutor(['Response', new MongoException('Failed')], true)  // queue execution
         def delegateIterable = Stub(MongoIterable) {
             forEach(_, _) >> {
                 it[0].apply(1)
@@ -211,11 +214,77 @@ class AwaitingWriteOperationIterableSpecification extends Specification {
         def mappingIterable = awaitingIterable.map { it -> it.toString() }
         def callback = new FutureResultCallback()
         mappingIterable.into([], callback)
+        executor.proceedWithWrite()
         def list = callback.get()
 
         then:
         list == ['1', '2']
 
+        when: 'write operation failed'
+        awaitingIterable = new AwaitingWriteOperationIterable(writeOp, executor, delegateIterable)
+        callback = new FutureResultCallback()
+        mappingIterable = awaitingIterable.map { it -> it.toString() }
+        mappingIterable.into([], callback)
+        executor.proceedWithWrite()
+        callback.get()
+
+        then:
+        thrown(MongoException)
+    }
+
+    def 'batchCursor should get results when awaited operation has completed'() {
+        given:
+        def writeOp = Stub(AsyncWriteOperation)
+        def executor = new TestOperationExecutor(['Response', new MongoException('Failed')], true)  // queue execution
+        def cannedResults = [new Document('_id', 1), new Document('_id', 1), new Document('_id', 1)]
+        def cursor = {
+            Stub(AsyncBatchCursor) {
+                def count = 0
+                def results;
+                def getResult = {
+                    count++
+                    results = count == 1 ? cannedResults : null
+                    results
+                }
+                next(_) >> {
+                    it[0].onResult(getResult(), null)
+                }
+                isClosed() >> { count >= 1 }
+            }
+        }
+        def delegateIterable = Stub(MongoIterable) {
+            batchCursor(_) >> {
+                it[0].onResult(cursor(), null)
+            }
+        }
+
+        when: 'write operation succeeded'
+        def awaitingIterable = new AwaitingWriteOperationIterable(writeOp, executor, delegateIterable)
+        def callback = new FutureResultCallback()
+        awaitingIterable.batchCursor(callback)
+        executor.proceedWithWrite()
+        def batchCursor = callback.get()
+
+        then:
+        !batchCursor.isClosed()
+
+        when:
+        callback = new FutureResultCallback()
+        batchCursor.next(callback)
+
+        then:
+        callback.get() == cannedResults
+        batchCursor.isClosed()
+
+        when: 'write operation failed'
+        awaitingIterable = new AwaitingWriteOperationIterable(writeOp, executor, delegateIterable)
+        callback = new FutureResultCallback()
+        awaitingIterable.batchCursor(callback)
+        executor.proceedWithWrite()
+        batchCursor = callback.get()
+
+        then:
+        thrown(MongoException)
     }
 
 }

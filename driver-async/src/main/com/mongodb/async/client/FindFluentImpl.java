@@ -23,6 +23,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.FindOperation;
 import org.bson.BsonDocument;
@@ -148,6 +149,11 @@ class FindFluentImpl<T> implements FindFluent<T> {
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
         return execute().map(mapper);
+    }
+
+    @Override
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        execute().batchCursor(callback);
     }
 
     private MongoIterable<T> execute() {
