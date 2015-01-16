@@ -17,8 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Function;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.async.SingleResultCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ class MappingAsyncBatchCursor<T, U> implements AsyncBatchCursor<U> {
             public void onResult(final List<T> results, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
-                } else {
+                } else if (results != null) {
                     try {
                         List<U> mappedResults = new ArrayList<U>();
                         for (T result : results) {
@@ -50,6 +50,8 @@ class MappingAsyncBatchCursor<T, U> implements AsyncBatchCursor<U> {
                     } catch (Throwable t1) {
                         callback.onResult(null, t1);
                     }
+                } else {
+                    callback.onResult(null, null);
                 }
             }
         });

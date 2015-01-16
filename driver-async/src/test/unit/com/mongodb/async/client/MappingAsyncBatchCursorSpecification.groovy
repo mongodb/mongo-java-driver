@@ -57,6 +57,16 @@ class MappingAsyncBatchCursorSpecification extends Specification {
 
         then:
         results.get() == cannedResults*.name
+
+        when:
+        results = new FutureResultCallback()
+        mappingAsyncBatchCursor.next(results)
+        !mappingAsyncBatchCursor.isClosed()
+
+        then:
+        results.get() == null
+        mappingAsyncBatchCursor.isClosed()
+
     }
 
     def 'should capture mapping errors'() {
