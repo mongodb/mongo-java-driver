@@ -137,8 +137,9 @@ public class Mongo {
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
      *
-     * @throws UnknownHostException
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      * @deprecated Replaced by {@link MongoClient#MongoClient()})
      */
     @Deprecated
@@ -150,8 +151,9 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node (default port)
      *
      * @param host server to connect to
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
      */
     @Deprecated
@@ -165,8 +167,9 @@ public class Mongo {
      *
      * @param host    server to connect to
      * @param options default query options
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
     @Deprecated
@@ -180,8 +183,9 @@ public class Mongo {
      *
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
      */
     @Deprecated
@@ -194,7 +198,6 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      *
      * @param addr the database address
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
      */
@@ -208,7 +211,6 @@ public class Mongo {
      *
      * @param addr    the database address
      * @param options default query options
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
      */
@@ -224,7 +226,6 @@ public class Mongo {
      * @param left  left side of the pair
      * @param right right side of the pair
      * @throws MongoException
-     * @see com.mongodb.ServerAddress
      */
     @Deprecated
     public Mongo(ServerAddress left, ServerAddress right) {
@@ -238,7 +239,6 @@ public class Mongo {
      * @param left    left side of the pair
      * @param right   right side of the pair
      * @param options the optional settings for the Mongo instance
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
@@ -257,7 +257,6 @@ public class Mongo {
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
@@ -277,7 +276,6 @@ public class Mongo {
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options for configuring this Mongo instance
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
@@ -297,7 +295,6 @@ public class Mongo {
      * </ul>
      *
      * @param uri URI to connect to, optionally containing additional information like credentials
-     * @throws MongoException
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @see MongoURI 
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}

@@ -31,7 +31,9 @@ public class ServerAddress {
     /**
      * Creates a ServerAddress with default host and port
      *
-     * @throws UnknownHostException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public ServerAddress()
         throws UnknownHostException {
@@ -42,7 +44,9 @@ public class ServerAddress {
      * Creates a ServerAddress with default port
      *
      * @param host hostname
-     * @throws UnknownHostException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public ServerAddress( String host )
         throws UnknownHostException {
@@ -54,7 +58,9 @@ public class ServerAddress {
      *
      * @param host hostname
      * @param port mongod port
-     * @throws UnknownHostException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public ServerAddress( String host , int port )
         throws UnknownHostException {
@@ -190,7 +196,6 @@ public class ServerAddress {
      * Gets the underlying socket address
      *
      * @return socket address
-     * @throws MongoException.Network        if the host can not be resolved
      * @throws java.net.UnknownHostException
      */
     public InetSocketAddress getSocketAddress() throws UnknownHostException {

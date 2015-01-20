@@ -71,8 +71,9 @@ public class MongoClient extends Mongo {
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).
      *
-     * @throws UnknownHostException
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public MongoClient() throws UnknownHostException {
         this(new ServerAddress());
@@ -82,8 +83,9 @@ public class MongoClient extends Mongo {
      * Creates a Mongo instance based on a (single) mongodb node.
      *
      * @param host server to connect to in format host[:port]
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public MongoClient(String host) throws UnknownHostException {
         this(new ServerAddress(host));
@@ -94,8 +96,9 @@ public class MongoClient extends Mongo {
      *
      * @param host    server to connect to in format host[:port]
      * @param options default query options
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public MongoClient(String host, MongoClientOptions options) throws UnknownHostException {
         this(new ServerAddress(host), options);
@@ -106,8 +109,9 @@ public class MongoClient extends Mongo {
      *
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      */
     public MongoClient(String host, int port) throws UnknownHostException {
         this(new ServerAddress(host, port));
@@ -117,7 +121,6 @@ public class MongoClient extends Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      *
      * @param addr the database address
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(ServerAddress addr) {
@@ -129,7 +132,6 @@ public class MongoClient extends Mongo {
      *
      * @param addr the database address
      * @param credentialsList the list of credentials used to authenticate all connections
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -142,7 +144,6 @@ public class MongoClient extends Mongo {
      *
      * @param addr    the database address
      * @param options default options
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(ServerAddress addr, MongoClientOptions options) {
@@ -155,7 +156,6 @@ public class MongoClient extends Mongo {
      * @param addr    the database address
      * @param credentialsList the list of credentials used to authenticate all connections
      * @param options default options
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -175,7 +175,6 @@ public class MongoClient extends Mongo {
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(List<ServerAddress> seeds) {
@@ -193,7 +192,6 @@ public class MongoClient extends Mongo {
      * @param seeds           Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list
      *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster. \
      * @param credentialsList the list of credentials used to authenticate all connections
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -212,7 +210,6 @@ public class MongoClient extends Mongo {
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options default options
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      */
     public MongoClient(List<ServerAddress> seeds, MongoClientOptions options) {
@@ -231,7 +228,6 @@ public class MongoClient extends Mongo {
      *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param credentialsList the list of credentials used to authenticate all connections
      * @param options default options
-     * @throws MongoException
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
      */
@@ -246,8 +242,9 @@ public class MongoClient extends Mongo {
      * nodes.
      *
      * @param uri the URI
-     * @throws MongoException
-     * @throws UnknownHostException
+     * @throws UnknownHostException This exception is no longer thrown, but leaving in throws clause so as not to break source
+     *                              compatibility.  The exception will be removed from the declaration in the next major release of the
+     *                              driver.
      * @see MongoURI
      * @dochub connections
      */
