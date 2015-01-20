@@ -41,7 +41,6 @@ import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -108,12 +107,10 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node (default port)
      *
      * @param host server to connect to
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
      */
     @Deprecated
-    public Mongo(final String host) throws UnknownHostException {
+    public Mongo(final String host) {
         this(new ServerAddress(host), createLegacyOptions());
     }
 
@@ -123,7 +120,6 @@ public class Mongo {
      *
      * @param host    server to connect to
      * @param options default query options
-     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
     @Deprecated
@@ -138,12 +134,10 @@ public class Mongo {
      *
      * @param host the host address of the database
      * @param port the port on which the database is running
-     * @throws UnknownHostException if the database host cannot be resolved
-     * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
      */
     @Deprecated
-    public Mongo(final String host, final int port) throws UnknownHostException {
+    public Mongo(final String host, final int port) {
         this(new ServerAddress(host, port), createLegacyOptions());
     }
 
@@ -151,7 +145,6 @@ public class Mongo {
      * Creates a Mongo instance based on a (single) mongodb node
      *
      * @param address the database address
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
      */
@@ -165,7 +158,6 @@ public class Mongo {
      *
      * @param address the database address
      * @param options default query options
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
      */
@@ -183,7 +175,6 @@ public class Mongo {
      *
      * @param left  left side of the pair
      * @param right right side of the pair
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List)} instead.
      */
@@ -200,7 +191,6 @@ public class Mongo {
      * @param left    left side of the pair
      * @param right   right side of the pair
      * @param options the optional settings for the Mongo instance
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
@@ -221,7 +211,6 @@ public class Mongo {
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
@@ -241,7 +230,6 @@ public class Mongo {
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options for configuring this Mongo instance
-     * @throws MongoException if there's a failure
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
