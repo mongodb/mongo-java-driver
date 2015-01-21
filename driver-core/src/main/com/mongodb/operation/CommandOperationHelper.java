@@ -35,7 +35,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 import static com.mongodb.operation.OperationHelper.releasingCallback;

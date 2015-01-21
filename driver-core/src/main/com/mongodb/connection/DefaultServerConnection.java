@@ -31,7 +31,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection {

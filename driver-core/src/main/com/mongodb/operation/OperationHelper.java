@@ -37,7 +37,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.Collections;
 
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
 
 final class OperationHelper {

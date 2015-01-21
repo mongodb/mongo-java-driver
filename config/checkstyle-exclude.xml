@@ -24,9 +24,6 @@
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="QuickTour"/>
 
-    <!--Ignore the async functionality for now since this is incomplete -->
-    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]"/>
-
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
 
     <!--Do not check test classes -->
@@ -37,10 +34,10 @@
 
     <suppress checks="ParameterNumber" files="Connection"/>
     <suppress checks="ParameterNumber" files="DefaultServer"/>
-    
+
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>
-    
+
     <suppress checks="MemberName" files="BasicDBList"/>
     <suppress checks="MemberName" files="BasicDBObjectBuilder"/>
     <suppress checks="MemberName" files="Bytes"/>
@@ -54,7 +51,7 @@
     <suppress checks="ConstantName" files="JSONCallback"/>
     <suppress checks="ConstantName" files="Mongo"/>
     <suppress checks="ConstantName" files="ReflectionDBObject"/>
-    
+
     <suppress checks="MethodName" files="BasicBSONCallback"/>
     <suppress checks="MethodName" files="BasicBSONEncoder"/>
     <suppress checks="MethodName" files="BasicBSONList"/>
@@ -62,15 +59,15 @@
     <suppress checks="MethodName" files="DBAddress"/>
     <suppress checks="MethodName" files="GridFSInputFile"/>
     <suppress checks="MethodName" files="ReflectionDBObject"/>
-    
+
     <suppress checks="VisibilityModifier" files="Bytes"/>
     <suppress checks="VisibilityModifier" files="GridFSFile"/>
     <suppress checks="VisibilityModifier" files="JSON"/>
     <suppress checks="VisibilityModifier" files="MongoOptions"/>
-    
+
     <suppress checks="InnerAssignment" files="DBCursor"/>
     <suppress checks="InnerAssignment" files="JSON"/>
-    
+
     <suppress checks="FinalClass" files="DBCursor"/>
     <suppress checks="FinalClass" files="MongoClientOptions"/>
     <suppress checks="FinalClass" files="QueryOperators"/>

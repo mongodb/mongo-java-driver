@@ -186,6 +186,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 
     /* Code quality */
     checkstyle {
+        toolVersion = "6.2"
         configFile = new File("$configDir/checkstyle.xml")
     }
 

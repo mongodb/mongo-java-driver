@@ -48,7 +48,7 @@ import java.util.concurrent.Semaphore;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static java.lang.String.format;
 

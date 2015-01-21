@@ -33,7 +33,7 @@ import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.Arrays.asList

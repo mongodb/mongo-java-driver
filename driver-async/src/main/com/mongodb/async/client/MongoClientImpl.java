@@ -34,7 +34,7 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
 
 class MongoClientImpl implements MongoClient {

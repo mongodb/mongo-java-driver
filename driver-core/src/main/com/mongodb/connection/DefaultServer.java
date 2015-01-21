@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
 class DefaultServer implements ClusterableServer {

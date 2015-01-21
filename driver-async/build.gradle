@@ -25,6 +25,11 @@ dependencies {
     testCompile project(':driver-core').sourceSets.test.output
 }
 
+tasks.withType(Checkstyle) {
+    // needed so the Javadoc checks can find the code in other modules
+    classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
+}
+
 modifyPom {
     project {
         name 'MongoDB Asynchronous Driver'
