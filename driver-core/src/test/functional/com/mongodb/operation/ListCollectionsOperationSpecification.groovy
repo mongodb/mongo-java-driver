@@ -111,6 +111,98 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.findAll { it.contains('$') }.isEmpty()
     }
 
+    def 'should filter indexes when calling hasNext before next'() {
+        given:
+        new DropDatabaseOperation(databaseName).execute(getBinding())
+        addSeveralIndexes()
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+
+        when:
+        def cursor = operation.execute(getBinding())
+
+        then:
+        cursor.hasNext()
+        cursor.hasNext()
+        cursor.next()*.get('name').contains(collectionName)
+        !cursor.hasNext()
+        !cursor.hasNext()
+    }
+
+    def 'should filter indexes without calling hasNext before next'() {
+        given:
+        new DropDatabaseOperation(databaseName).execute(getBinding())
+        addSeveralIndexes()
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+
+        when:
+        def cursor = operation.execute(getBinding())
+
+        then:
+        cursor.next()*.get('name').contains(collectionName)
+        !cursor.hasNext()
+
+        when:
+        cursor.next()
+
+        then:
+        thrown(NoSuchElementException)
+    }
+
+    def 'should filter indexes when calling hasNext before tryNext'() {
+        given:
+        new DropDatabaseOperation(databaseName).execute(getBinding())
+        addSeveralIndexes()
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+
+        when:
+        def cursor = operation.execute(getBinding())
+
+        then:
+        cursor.hasNext()
+        cursor.hasNext()
+        cursor.tryNext()*.get('name').contains(collectionName)
+        !cursor.hasNext()
+        !cursor.hasNext()
+        cursor.tryNext() == null
+    }
+
+    def 'should filter indexes without calling hasNext before tryNext'() {
+        given:
+        new DropDatabaseOperation(databaseName).execute(getBinding())
+        addSeveralIndexes()
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+
+        when:
+        def cursor = operation.execute(getBinding())
+
+        then:
+        cursor.tryNext()*.get('name').contains(collectionName)
+        cursor.tryNext() == null
+    }
+
+    @Category(Async)
+    def 'should filter indexes asynchronously'() {
+        given:
+        new DropDatabaseOperation(databaseName).execute(getBinding())
+        addSeveralIndexes()
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+
+        when:
+        def cursor = executeAsync(operation)
+        def callback = new FutureResultCallback()
+        cursor.next(callback)
+
+        then:
+        callback.get()*.get('name').contains(collectionName)
+
+        when:
+        callback = new FutureResultCallback()
+        cursor.next(callback)
+
+        then:
+        callback.get() == null
+
+    }
     def 'should use the set batchSize of collections'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
@@ -203,5 +295,15 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         cleanup:
         disableMaxTimeFailPoint()
+    }
+
+    private void addSeveralIndexes() {
+        getCollectionHelper().createIndex(['a': 1] as Document)
+        getCollectionHelper().createIndex(['b': 1] as Document)
+        getCollectionHelper().createIndex(['c': 1] as Document)
+        getCollectionHelper().createIndex(['d': 1] as Document)
+        getCollectionHelper().createIndex(['e': 1] as Document)
+        getCollectionHelper().createIndex(['f': 1] as Document)
+        getCollectionHelper().createIndex(['g': 1] as Document)
     }
 }

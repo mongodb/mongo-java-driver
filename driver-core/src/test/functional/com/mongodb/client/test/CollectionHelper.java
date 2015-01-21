@@ -177,4 +177,8 @@ public final class CollectionHelper<T> {
     public void createIndex(final BsonDocument key) {
         new CreateIndexOperation(namespace, key).execute(getBinding());
     }
+
+    public void createIndex(final Document key) {
+        new CreateIndexOperation(namespace, wrap(key)).execute(getBinding());
+    }
 }

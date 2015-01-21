@@ -300,6 +300,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     private final class FilteringBatchCursor implements BatchCursor<T> {
 
         private final BatchCursor<BsonDocument> delegate;
+        private List<T> fixedAndFilteredBatch;
 
         private FilteringBatchCursor(final BatchCursor<BsonDocument> delegate) {
             this.delegate = delegate;
@@ -317,12 +318,29 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
         @Override
         public boolean hasNext() {
-            return delegate.hasNext();
+            if (fixedAndFilteredBatch != null) {
+                return true;
+            }
+            while (delegate.hasNext()) {
+                List<T> next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
+
+                if (!next.isEmpty()) {
+                    fixedAndFilteredBatch = next;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         @Override
         public List<T> next() {
-            return fixAndFilterDocumentsFromSystemNamespace(delegate.next());
+            List<T> next = fixedAndFilteredBatch;
+            fixedAndFilteredBatch = null;
+            while (next == null || next.isEmpty()) {
+                next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
+            }
+            return next;
         }
 
         @Override
@@ -337,7 +355,21 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
         @Override
         public List<T> tryNext() {
-            return fixAndFilterDocumentsFromSystemNamespace(delegate.tryNext());
+            if (fixedAndFilteredBatch != null) {
+                List<T> next = fixedAndFilteredBatch;
+                fixedAndFilteredBatch = null;
+                return next;
+            }
+
+            List<BsonDocument> nextBatch = delegate.tryNext();
+            while (nextBatch != null) {
+                List<T> next = fixAndFilterDocumentsFromSystemNamespace(nextBatch);
+                if (!next.isEmpty()) {
+                    return next;
+                }
+                nextBatch = delegate.tryNext();
+            }
+            return null;
         }
 
         @Override
@@ -367,8 +399,15 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 public void onResult(final List<BsonDocument> result, final Throwable t) {
                     if (t != null) {
                         callback.onResult(null, t);
+                    } else if (result == null) {
+                        callback.onResult(null, null);
                     } else {
-                        callback.onResult(fixAndFilterDocumentsFromSystemNamespace(result), null);
+                        List<T> fixedAndFilteredBatch = fixAndFilterDocumentsFromSystemNamespace(result);
+                        if (fixedAndFilteredBatch.isEmpty()) {
+                            next(callback);
+                        } else {
+                            callback.onResult(fixedAndFilteredBatch, null);
+                        }
                     }
                 }
             });
@@ -398,9 +437,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     // Skip documents whose collection name contains a '$'
     // For all others, remove database prefix from the value of the name field
     private List<T> fixAndFilterDocumentsFromSystemNamespace(final List<BsonDocument> unstripped) {
-        if (unstripped == null) {
-            return null;
-        }
         List<T> stripped = new ArrayList<T>(unstripped.size());
         String prefix = databaseName + ".";
         for (BsonDocument cur : unstripped) {
