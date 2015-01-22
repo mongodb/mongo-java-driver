@@ -524,6 +524,15 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testPropertyMutability() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject("y", 1), ReadPreference.primary());
+        cursor.getQuery().put("z", 2);
+        cursor.getKeysWanted().put("v", 1);
+        assertTrue(cursor.getQuery().containsField("z"));
+        assertTrue(cursor.getKeysWanted().containsField("v"));
+    }
+
+    @Test
     public void testClose() {
         cursor.next();
         cursor.close();
