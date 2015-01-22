@@ -85,6 +85,12 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
     }
 
+    def 'should use provided hint for count'() {
+        expect:
+        collection.find().hint('a_1').count() == 1
+        collection.find().hint(new BasicDBObject('a', 1)).count() == 1
+    }
+
     @IgnoreIf({ serverVersionAtLeast(asList(2, 8, 0)) })
     def 'should use provided string hints for queries'() {
         given:
