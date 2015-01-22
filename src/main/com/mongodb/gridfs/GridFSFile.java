@@ -246,7 +246,11 @@ public abstract class GridFSFile implements DBObject {
 
     @Override
     public Map toMap(){
-        throw new UnsupportedOperationException();
+        Map m = new HashMap();
+        for (String field : keySet()) {
+            m.put(field.toString(), get(field.toString()));
+        }
+        return m;
     }
 
     @Override
