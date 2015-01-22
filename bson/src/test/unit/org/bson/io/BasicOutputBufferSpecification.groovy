@@ -206,7 +206,7 @@ class BasicOutputBufferSpecification extends Specification {
         def bsonOutput = new BasicOutputBuffer()
 
         when:
-        bsonOutput.writeCString("hell\u0000world")
+        bsonOutput.writeCString('hell\u0000world')
 
         then:
         thrown(BsonSerializationException)

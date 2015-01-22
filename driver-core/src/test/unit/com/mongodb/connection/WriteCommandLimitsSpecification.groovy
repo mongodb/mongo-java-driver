@@ -28,7 +28,7 @@ import spock.lang.Specification
 
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 
-class WriteCommandLimitsSpecifications extends Specification {
+class WriteCommandLimitsSpecification extends Specification {
     def 'should split an insert command when the number of items exceeds the maximum'() {
         given:
         def inserts = []

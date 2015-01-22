@@ -56,13 +56,7 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         cursors.size() <= 3
 
         when:
-        for (BatchCursor<Document> cursor : cursors) {
-            while (cursor.hasNext()) {
-                for (Document cur: cursor.next()) {
-                    assertTrue(ids.remove(cur.getInteger('_id')))
-                }
-            }
-        }
+        cursors.each { batchCursor -> batchCursor.each { cursor -> cursor.each { doc -> ids.remove(doc.getInteger('_id')) } } }
 
         then:
         ids.isEmpty()

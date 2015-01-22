@@ -197,7 +197,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     }
 
     codenarc {
-        toolVersion = '0.21'
+        toolVersion = '0.22'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
@@ -222,7 +222,7 @@ task docs(type: Javadoc) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
+    gradleVersion = '2.2.1'
 }
 
 gradle.buildFinished { BuildResult result ->

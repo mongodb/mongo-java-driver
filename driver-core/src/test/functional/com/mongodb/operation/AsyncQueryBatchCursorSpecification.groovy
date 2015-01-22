@@ -48,10 +48,8 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     def cleanup() {
-        if (cursor != null) {
-            cursor.close()
-            waitForLastCheckin(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
-        }
+        cursor?.close()
+        waitForLastCheckin(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
     }
 
     def 'should exhaust single batch'() {
@@ -153,7 +151,8 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        if (!latch.await(10, SECONDS)) {
+        def cleanedUp = latch.await(10, SECONDS) // Workaround for codenarc bug
+        if (!cleanedUp) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
     }
@@ -187,7 +186,8 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         batch[0].get('_id') == 2
 
         cleanup:
-        if (!latch.await(10, SECONDS)) {
+        def cleanedUp = latch.await(10, SECONDS)
+        if (!cleanedUp) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
     }

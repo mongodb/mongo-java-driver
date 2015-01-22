@@ -39,14 +39,12 @@ class StringRangeSetSpecification extends Specification {
     }
 
     def 'set should be ordered'() {
-        given:
+        when:
         def counter = 0
         def stringSet = new StringRangeSet(5)
 
-        when:
-        def iter = stringSet.getSet().iterator()
-
         then:
+        def iter = stringSet.getSet().iterator() // work around for codenarc bug
         while (iter.hasNext()) {
             iter.next() == counter.toString()
             counter++

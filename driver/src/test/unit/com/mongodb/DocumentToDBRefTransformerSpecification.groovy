@@ -28,12 +28,12 @@ class DocumentToDBRefTransformerSpecification extends Specification {
         def str = 'some string'
 
         expect:
-        transformer.transform(str) is str
+        transformer.transform(str).is(str)
     }
 
     def 'should not transform a Document that does not have both $ref and $id fields'() {
         expect:
-        transformer.transform(doc) is doc
+        transformer.transform(doc).is(doc)
 
         where:
         doc << [new Document(),

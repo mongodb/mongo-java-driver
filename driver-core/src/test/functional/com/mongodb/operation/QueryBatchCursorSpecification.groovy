@@ -30,16 +30,12 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     QueryBatchCursor<Document> cursor
 
     def setup() {
-        for (int i = 0; i < 10; i++) {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
-        }
+        (0..9).each { collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it)) }
         connectionSource = getBinding().getReadConnectionSource()
     }
 
     def cleanup() {
-        if (cursor != null) {
-            cursor.close()
-        }
+        cursor?.close()
     }
 
     def 'server cursor should not be null'() {
@@ -110,38 +106,22 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         given:
         def firstBatch = executeQuery()
 
+        when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 0, new DocumentCodec(), connectionSource)
 
-        when:
-        int i = 0
-        while (cursor.hasNext()) {
-            def next = cursor.next()
-            for (Document doc : next) {
-                i++;
-            }
-        }
-
         then:
-        i == 10
+        cursor.iterator().sum { it.size } == 10
     }
 
     def 'test limit exhaustion'() {
         given:
         def firstBatch = executeQuery(2)
 
+        when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), connectionSource)
 
-        when:
-        int i = 0
-        while (cursor.hasNext()) {
-            def next = cursor.next()
-            for (Document doc : next) {
-                i++
-            }
-        }
-
         then:
-        i == 5
+        cursor.iterator().sum { it.size } == 5
     }
 
     def 'test remove'() {
@@ -192,7 +172,8 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         cursor.next().iterator().next().get('_id') == 2
 
         cleanup:
-        if (!latch.await(10, TimeUnit.SECONDS)) {
+        def cleanedUp = latch.await(10, TimeUnit.SECONDS)
+        if (!cleanedUp) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
     }
@@ -313,23 +294,14 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         char[] array = 'x' * 16000
         String bigString = new String(array)
 
-        for (int i = 11; i < 1000; i++) {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i).append('s', bigString))
-        }
-
+        (11..1000).each { collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it).append('s', bigString)) }
         def firstBatch = executeQuery()
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 300, 0, new DocumentCodec(), connectionSource)
-        int i = 0;
-        while (cursor.hasNext()) {
-            for (def doc : cursor.next()) {
-                i++;
-            }
-        }
 
         then:
-        i == 300
+        cursor.iterator().sum { it.size } == 300
     }
 
     def 'should respect batch size'() {
@@ -375,17 +347,10 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        def results = cursor.iterator().collectMany { it*.get('_id') }
 
         then:
-        int i = 0
-        while (cursor.hasNext()) {
-            def nextBatch = cursor.next()
-            for (def cur : nextBatch) {
-                cur.get('_id') == i
-                i++
-            }
-        }
-        i == 10
+        results == (0..9).toList()
         !cursor.hasNext()
     }
 
@@ -397,9 +362,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         then:
-        for (int i = 0; i < 5; i++) {
-            cursor.next()
-        }
+        (0..4).each { cursor.next() }
         !cursor.hasNext()
         !cursor.hasNext()
 
@@ -411,6 +374,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     }
 
     // 2.2 does not properly detect cursor not found, so ignoring
+    @SuppressWarnings('BracesForTryCatchFinally')
     @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
     def 'should throw cursor not found exception'() {
         given:

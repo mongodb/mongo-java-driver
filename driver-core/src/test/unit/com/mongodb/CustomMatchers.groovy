@@ -19,7 +19,7 @@ package com.mongodb
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 
-
+@SuppressWarnings('NoDef')
 class CustomMatchers {
 
     static isTheSameAs(final Object e) {

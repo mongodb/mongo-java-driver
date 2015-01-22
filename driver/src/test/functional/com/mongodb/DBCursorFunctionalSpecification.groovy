@@ -25,7 +25,7 @@ import static java.util.Arrays.asList
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
-    def cursorMap = [a:1]
+    def cursorMap = [a: 1]
 
     @Subject
     private DBCursor dbCursor
@@ -216,17 +216,17 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                             .sort(new BasicDBObject('$natural', 1))
+                .sort(new BasicDBObject('$natural', 1))
 
         then:
-        dbCursor *.get('name') == ['Chris', 'Adam', 'Bob']
+        dbCursor*.get('name') == ['Chris', 'Adam', 'Bob']
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                             .addSpecial('$natural', 1)
+                .addSpecial('$natural', 1)
 
         then:
-        dbCursor *.get('name') == ['Chris', 'Adam', 'Bob']
+        dbCursor*.get('name') == ['Chris', 'Adam', 'Bob']
     }
 
     def 'should return results in the reverse order they are on disk when natural sort of minus one applied'() {
@@ -237,28 +237,29 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                             .sort(new BasicDBObject('$natural', -1))
+                .sort(new BasicDBObject('$natural', -1))
 
         then:
-        dbCursor *.get('name') == ['Bob', 'Adam', 'Chris']
+        dbCursor*.get('name') == ['Bob', 'Adam', 'Chris']
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                             .addSpecial('$natural', -1)
+                .addSpecial('$natural', -1)
 
         then:
-        dbCursor *.get('name') == ['Bob', 'Adam', 'Chris']
+        dbCursor*.get('name') == ['Bob', 'Adam', 'Chris']
     }
 
     def 'should sort in reverse order'() {
         given:
-        for (i in 1..10) {
+        def range = 1..10
+        for (i in range) {
             collection.insert(new BasicDBObject('x', i))
         }
 
         when:
         def cursor = collection.find()
-                               .sort(new BasicDBObject('x', -1))
+                .sort(new BasicDBObject('x', -1))
 
         then:
         cursor.next().get('x') == 10
@@ -266,14 +267,15 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
     def 'should sort in order'() {
         given:
-        for (i in 89..80) {
+        def range = 80..89
+        for (i in range) {
             def document = new BasicDBObject('x', i)
             collection.insert(document)
         }
 
         when:
         def cursor = collection.find(new BasicDBObject('x', new BasicDBObject('$exists', true)))
-                               .sort(new BasicDBObject('x', 1))
+                .sort(new BasicDBObject('x', 1))
 
         then:
         cursor.next().get('x') == 80
@@ -289,26 +291,27 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                               .sort(new BasicDBObject('name', 1).append('_id', 1))
+                .sort(new BasicDBObject('name', 1).append('_id', 1))
 
         then:
-        dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
+        dbCursor.collect { it -> [it.get('name'), it.get('_id')] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
 
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                                      .addSpecial('$orderby', new BasicDBObject('name', 1).append('_id', 1))
+                .addSpecial('$orderby', new BasicDBObject('name', 1).append('_id', 1))
 
         then:
-        dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
+        dbCursor.collect { it -> [it.get('name'), it.get('_id')] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
     }
 
-    @SuppressWarnings('CloseWithoutCloseable') // Spock bug as MongoCursor does implement closeable
+    // Spock bug as MongoCursor does implement closeable
+    @SuppressWarnings('CloseWithoutCloseable')
     def 'DBCursor options should set the correct read preference'() {
         given:
         def tailableCursor =
                 new BatchCursor<DBObject>() {
                     @Override
-                    List<DBObject> tryNext() { null  }
+                    List<DBObject> tryNext() { null }
 
                     @Override
                     void close() { }
@@ -320,22 +323,19 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
                     List<DBObject> next() { null }
 
                     @Override
-                    void setBatchSize(final int batchSize) {
-                    }
+                    void setBatchSize(final int batchSize) { }
 
                     @Override
-                    int getBatchSize() {
-                        0
-                    }
+                    int getBatchSize() { 0 }
 
                     @Override
                     void remove() { }
 
                     @Override
-                    ServerCursor getServerCursor() { }
+                    ServerCursor getServerCursor() { null }
 
                     @Override
-                    ServerAddress getServerAddress() { }
+                    ServerAddress getServerAddress() { null }
                 }
 
         def executor = new TestOperationExecutor([tailableCursor, tailableCursor, tailableCursor, tailableCursor])
@@ -345,24 +345,24 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hasNext()
 
         then:
-        executor.getReadPreference() ==  ReadPreference.primary()
+        executor.getReadPreference() == ReadPreference.primary()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_SLAVEOK).hasNext()
 
         then:
-        executor.getReadPreference() ==  ReadPreference.secondaryPreferred()
+        executor.getReadPreference() == ReadPreference.secondaryPreferred()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).tryNext()
 
         then:
-        executor.getReadPreference() ==  ReadPreference.primary()
+        executor.getReadPreference() == ReadPreference.primary()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).addOption(Bytes.QUERYOPTION_SLAVEOK).tryNext()
 
         then:
-        executor.getReadPreference() ==  ReadPreference.secondaryPreferred()
+        executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 }

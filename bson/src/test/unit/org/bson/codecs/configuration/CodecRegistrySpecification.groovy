@@ -56,16 +56,16 @@ class CodecRegistrySpecification extends Specification {
                 .withCodec(minKeyCodec)
 
         then:
-        registry.get(MinKey) is minKeyCodec
-        registry.get(MaxKey) is providedMaxKeyCodec
+        registry.get(MinKey).is(minKeyCodec)
+        registry.get(MaxKey).is(providedMaxKeyCodec)
 
         when:
         def maxKeyCodec = new MaxKeyCodec()
         def newRegistry = registry.withCodec(maxKeyCodec)
 
         then:
-        newRegistry.get(MaxKey) is maxKeyCodec
-        registry.get(MaxKey) is providedMaxKeyCodec
+        newRegistry.get(MaxKey).is(maxKeyCodec)
+        registry.get(MaxKey).is(providedMaxKeyCodec)
     }
 
     def 'get should return registered codec'() {
@@ -74,7 +74,7 @@ class CodecRegistrySpecification extends Specification {
         def registry = new RootCodecRegistry([new SimpleCodecProvider(minKeyCodec)])
 
         expect:
-        registry.get(MinKey) is minKeyCodec
+        registry.get(MinKey).is(minKeyCodec)
     }
 
     def 'get should return the codec from the first source that has one'() {
@@ -84,7 +84,7 @@ class CodecRegistrySpecification extends Specification {
         def registry = new RootCodecRegistry([new SimpleCodecProvider(minKeyCodec1), new SimpleCodecProvider(minKeyCodec2)])
 
         expect:
-        registry.get(MinKey) is minKeyCodec1
+        registry.get(MinKey).is(minKeyCodec1)
     }
 
     def 'should handle cycles'() {
