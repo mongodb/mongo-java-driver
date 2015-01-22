@@ -20,6 +20,7 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
@@ -123,8 +124,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         cursor.hasNext()
         cursor.hasNext()
-        cursor.next()*.get('name').contains(collectionName)
-        !cursor.hasNext()
+        cursorToListWithNext(cursor)*.get('name').contains(collectionName)
         !cursor.hasNext()
     }
 
@@ -136,9 +136,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         when:
         def cursor = operation.execute(getBinding())
+        def list = cursorToListWithNext(cursor)
 
         then:
-        cursor.next()*.get('name').contains(collectionName)
+        list*.get('name').contains(collectionName)
+        list.findAll { collection -> collection.get('name').contains('$') } == []
         !cursor.hasNext()
 
         when:
@@ -160,7 +162,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         cursor.hasNext()
         cursor.hasNext()
-        cursor.tryNext()*.get('name').contains(collectionName)
+
+        def list = cursorToListWithTryNext(cursor)
+        list*.get('name').contains(collectionName)
+        list.findAll { collection -> collection.get('name').contains('$') } == []
+
         !cursor.hasNext()
         !cursor.hasNext()
         cursor.tryNext() == null
@@ -174,9 +180,11 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         when:
         def cursor = operation.execute(getBinding())
+        def list = cursorToListWithTryNext(cursor)
 
         then:
-        cursor.tryNext()*.get('name').contains(collectionName)
+        list*.get('name').contains(collectionName)
+        list.findAll { collection -> collection.get('name').contains('$') } == []
         cursor.tryNext() == null
     }
 
@@ -189,20 +197,13 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
         when:
         def cursor = executeAsync(operation)
-        def callback = new FutureResultCallback()
-        cursor.next(callback)
+        def list = asyncCursorToList(cursor)
 
         then:
-        callback.get()*.get('name').contains(collectionName)
-
-        when:
-        callback = new FutureResultCallback()
-        cursor.next(callback)
-
-        then:
-        callback.get() == null
-
+        list*.get('name').contains(collectionName)
+        list.findAll { collection -> collection.get('name').contains('$') } == []
     }
+
     def 'should use the set batchSize of collections'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
@@ -305,5 +306,39 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         getCollectionHelper().createIndex(['e': 1] as Document)
         getCollectionHelper().createIndex(['f': 1] as Document)
         getCollectionHelper().createIndex(['g': 1] as Document)
+    }
+
+    def cursorToListWithNext(BatchCursor cursor) {
+        def list = []
+        try {
+            while (true) {
+                list += cursor.next()
+            }
+        } catch (NoSuchElementException e) {
+            return list
+        }
+    }
+
+    def cursorToListWithTryNext(BatchCursor cursor) {
+        def list = []
+        while (true) {
+            def next = cursor.tryNext()
+            if (next == null) {
+                break;
+            }
+            list += next
+        }
+        list
+    }
+
+    def asyncCursorToList(AsyncBatchCursor cursor) {
+        def callback = new FutureResultCallback()
+        cursor.next(callback)
+        def next = callback.get();
+        if (next == null) {
+            return []
+        }
+
+        next + asyncCursorToList(cursor)
     }
 }
