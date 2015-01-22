@@ -23,7 +23,7 @@ import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The mongo options test.
@@ -153,20 +153,37 @@ public class MongoOptionsTest {
 
     @Test
     @SuppressWarnings("deprecation")
-    public void testOptionDefaults() throws UnknownHostException {
-        MongoClientOptions options = new MongoOptions().toClientOptions();
-        assertNull(options.getDescription());
-        assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
-        assertEquals(0, options.getMinConnectionsPerHost());
-        assertEquals(100, options.getConnectionsPerHost());
-        assertEquals(10000, options.getConnectTimeout());
-        assertEquals(ReadPreference.primary(), options.getReadPreference());
-        assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
-        assertFalse(options.isSocketKeepAlive());
-        assertFalse(options.isSslEnabled());
-        assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
-        assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
-        assertEquals(15, options.getLocalThreshold());
+    public void testToClientOptions() throws UnknownHostException {
+        MongoOptions options = new MongoOptions();
+        options.description = "my client";
+        options.fsync = true;
+        options.readPreference = ReadPreference.secondary();
+        options.requiredReplicaSetName = "test";
+        options.cursorFinalizerEnabled = false;
+        options.alwaysUseMBeans = true;
+        options.connectTimeout = 100;
+        options.maxWaitTime = 500;
+        options.socketKeepAlive = true;
+        options.threadsAllowedToBlockForConnectionMultiplier = 10;
+
+        MongoClientOptions clientOptions = options.toClientOptions();
+
+        assertEquals(options.requiredReplicaSetName, clientOptions.getRequiredReplicaSetName());
+        assertEquals(options.description, clientOptions.getDescription());
+        assertEquals(new WriteConcern(0, 0, true, false), clientOptions.getWriteConcern());
+        assertEquals(0, clientOptions.getMinConnectionsPerHost());
+        assertEquals(10, clientOptions.getConnectionsPerHost());
+        assertEquals(100, clientOptions.getConnectTimeout());
+        assertEquals(500, clientOptions.getMaxWaitTime());
+        assertEquals(ReadPreference.secondary(), clientOptions.getReadPreference());
+        assertEquals(10, clientOptions.getThreadsAllowedToBlockForConnectionMultiplier());
+        assertTrue(clientOptions.isSocketKeepAlive());
+        assertFalse(clientOptions.isSslEnabled());
+        assertEquals(options.dbDecoderFactory, clientOptions.getDbDecoderFactory());
+        assertEquals(options.dbEncoderFactory, clientOptions.getDbEncoderFactory());
+        assertEquals(15, clientOptions.getLocalThreshold());
+        assertTrue(clientOptions.isAlwaysUseMBeans());
+        assertFalse(clientOptions.isCursorFinalizerEnabled());
     }
 }
 

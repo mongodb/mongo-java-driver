@@ -246,6 +246,8 @@ public class MongoOptions {
 
     MongoClientOptions toClientOptions() {
         Builder builder = MongoClientOptions.builder()
+                                            .requiredReplicaSetName(requiredReplicaSetName)
+                                            .connectionsPerHost(connectionsPerHost)
                                             .connectTimeout(connectTimeout)
                                             .dbDecoderFactory(dbDecoderFactory)
                                             .dbEncoderFactory(dbEncoderFactory)
@@ -255,13 +257,13 @@ public class MongoOptions {
                                             .socketKeepAlive(socketKeepAlive)
                                             .socketTimeout(socketTimeout)
                                             .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier)
+                                            .cursorFinalizerEnabled(cursorFinalizerEnabled)
                                             .alwaysUseMBeans(alwaysUseMBeans);
 
+        builder.writeConcern(getWriteConcern());
+
         if (readPreference != null) {
-            builder.readPreference(readPreference);
-        }
-        if (writeConcern != null) {
-            builder.writeConcern(writeConcern);
+            builder.readPreference(getReadPreference());
         }
         return builder.build();
     }
@@ -277,9 +279,9 @@ public class MongoOptions {
         } else if (w != 0 || wtimeout != 0 || fsync | j) {
             return new WriteConcern(w, wtimeout, fsync, j);
         } else if (safe) {
-            return WriteConcern.SAFE;
+            return WriteConcern.ACKNOWLEDGED;
         } else {
-            return WriteConcern.NORMAL;
+            return WriteConcern.UNACKNOWLEDGED;
         }
     }
 
