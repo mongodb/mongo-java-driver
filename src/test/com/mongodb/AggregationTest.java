@@ -201,7 +201,7 @@ public class AggregationTest extends TestCase {
                 .build();
         Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
         assertEquals(2, rsDatabase.getCollection("aggCollection").count());
-        assertEquals(primary, cursor.getServerAddress());
+        assertEquals(primary.getSocketAddress(), cursor.getServerAddress().getSocketAddress());
     }
 
     @Test
