@@ -34,7 +34,7 @@ public class WriteResult {
      * Gets an instance representing an unacknowledged write.
      *
      * @return an instance representing an unacknowledged write
-     *
+     * @since 3.0
      */
     public static WriteResult unacknowledged() {
        return new WriteResult();
@@ -66,6 +66,7 @@ public class WriteResult {
      *
      * @return true if the write was acknowledged
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
+     * @since 3.0
      */
     public boolean wasAcknowledged() {
         return acknowledged;
