@@ -16,6 +16,7 @@
 
 package org.bson.types;
 
+import org.bson.io.Bits;
 import java.net.NetworkInterface;
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -24,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 
 /**
  * <p>A globally unique identifier for objects.</p>
@@ -44,6 +46,8 @@ import java.util.logging.Logger;
  * @mongodb.driver.manual core/object-id ObjectId
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
+
+    private static final char[] HEXITS = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
 
     private static final long serialVersionUID = -4415279469780082174L;
 
@@ -202,14 +206,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         if ( babble )
             s = babbleToMongod( s );
 
-        byte b[] = new byte[12];
-        for ( int i=0; i<b.length; i++ ){
-            b[i] = (byte)Integer.parseInt( s.substring( i*2 , i*2 + 2) , 16 );
-        }
-        ByteBuffer bb = ByteBuffer.wrap( b );
-        _time = bb.getInt();
-        _machine = bb.getInt();
-        _inc = bb.getInt();
+        _time = readIntFromHex(s, 0);
+        _machine = readIntFromHex(s, 8);
+        _inc = readIntFromHex(s, 16);
         _new = false;
     }
 
@@ -220,10 +219,19 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     public ObjectId( byte[] b ){
         if ( b.length != 12 )
             throw new IllegalArgumentException( "need 12 bytes" );
-        ByteBuffer bb = ByteBuffer.wrap( b );
-        _time = bb.getInt();
-        _machine = bb.getInt();
-        _inc = bb.getInt();
+        _time = Bits.readIntBE(b, 0);
+        _machine = Bits.readIntBE(b, 4);
+        _inc = Bits.readIntBE(b, 8);
+        _new = false;
+    }
+
+    public ObjectId( ByteBuffer buffer ){
+        if (buffer.remaining() < 12){
+            throw new IllegalArgumentException( "need 12 bytes" );
+        }
+        _time = buffer.getInt();
+        _machine = buffer.getInt();
+        _inc = buffer.getInt();
         _new = false;
     }
 
@@ -316,19 +324,36 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      */
     @Deprecated
     public String toStringMongod(){
-        byte b[] = toByteArray();
+        char c[] = new char[24];
+        writeIntHex(c, 0, _time);
+        writeIntHex(c, 8, _machine);
+        writeIntHex(c, 16, _inc);
+        // this does a copy of the array
+        return new String(c);
+    }
 
-        StringBuilder buf = new StringBuilder(24);
+    static byte int3(int x) { return (byte)(x >> 24); }
+    static byte int2(int x) { return (byte)(x >> 16); }
+    static byte int1(int x) { return (byte)(x >>  8); }
+    static byte int0(int x) { return (byte)(x      ); }
 
-        for ( int i=0; i<b.length; i++ ){
-            int x = b[i] & 0xFF;
-            String s = Integer.toHexString( x );
-            if ( s.length() == 1 )
-                buf.append( "0" );
-            buf.append( s );
-        }
+    static void writeIntHex(char[] c, int offset, int i){
+        writeByteHex(c, offset    , int3(i));
+        writeByteHex(c, offset + 2, int2(i));
+        writeByteHex(c, offset + 4, int1(i));
+        writeByteHex(c, offset + 6, int0(i));
+    }
 
-        return buf.toString();
+    static void writeByteHex(char[] c, int offset, byte b){
+        c[offset    ] = HEXITS[(b & 0xF0) >> 4];
+        c[offset + 1] = HEXITS[(b & 0x0F)     ];
+    }
+
+    static void writeIntBE(byte[] b, int offset, int x){
+        b[offset    ] = int3(x);
+        b[offset + 1] = int2(x);
+        b[offset + 2] = int1(x);
+        b[offset + 3] = int0(x);
     }
 
     /**
@@ -338,12 +363,28 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      */
     public byte[] toByteArray(){
         byte b[] = new byte[12];
-        ByteBuffer bb = ByteBuffer.wrap( b );
-        // by default BB is big endian like we need
-        bb.putInt( _time );
-        bb.putInt( _machine );
-        bb.putInt( _inc );
+        writeIntBE(b, 0, _time);
+        writeIntBE(b, 4, _machine);
+        writeIntBE(b, 8, _inc);
         return b;
+    }
+
+    static int readIntFromHex(String s, int offset){
+        int counter = 0;
+        int  x = 0;
+        while (counter < 8){
+            x = (x << 4);
+            char c = s.charAt(offset + counter);
+            if ( c >= '0' && c <= '9' ) {
+                x |= c - 48;
+            } else if ( c >= 'A' && c <= 'F' ) {
+                x |= c - 55;
+            } else if ( c >= 'a' && c <= 'f' ) {
+                x |= c - 87;
+            }
+            counter++;
+        }
+        return x;
     }
 
     static String _pos( String s , int p ){
