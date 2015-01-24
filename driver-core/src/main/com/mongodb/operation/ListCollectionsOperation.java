@@ -47,8 +47,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
@@ -61,7 +61,7 @@ import static com.mongodb.operation.OperationHelper.createEmptyBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotZero;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
 
@@ -117,7 +117,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
      * Gets the number of documents to return per batch.
      *
      * @return the batch size
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public Integer getBatchSize() {
@@ -129,7 +129,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public ListCollectionsOperation<T> batchSize(final int batchSize) {
@@ -168,7 +168,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                if (serverIsAtLeastVersionThreeDotZero(connection)) {
                     try {
                         return executeWrappedCommandProtocol(databaseName, getCommand(), createCommandDecoder(), connection,
                                                              commandTransformer(source));
@@ -196,7 +196,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
-                    if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                    if (serverIsAtLeastVersionThreeDotZero(connection)) {
                         executeWrappedCommandProtocolAsync(databaseName, getCommand(), createCommandDecoder(), connection,
                                 binding.getReadPreference(), asyncTransformer(source),
                                 new SingleResultCallback<AsyncBatchCursor<T>>() {
@@ -278,7 +278,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         BsonDocument query = filter != null ? filter : new BsonDocument();
         if (query.containsKey("name")) {
             if (!query.isString("name")) {
-                throw new IllegalArgumentException("When filtering collections on MongoDB versions < 2.8 the name field "
+                throw new IllegalArgumentException("When filtering collections on MongoDB versions < 3.0 the name field "
                         + "must be a string");
             }
             query.append("name", new BsonString(format("%s.%s", databaseName, filter.getString("name").getValue())));

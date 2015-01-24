@@ -144,8 +144,8 @@ final class OperationHelper {
         return serverIsAtLeastVersion(connection, new ServerVersion(2, 6));
     }
 
-    static boolean serverIsAtLeastVersionTwoDotEight(final Connection connection) {
-        return serverIsAtLeastVersion(connection, new ServerVersion(asList(2, 8, 0)));
+    static boolean serverIsAtLeastVersionThreeDotZero(final Connection connection) {
+        return serverIsAtLeastVersion(connection, new ServerVersion(asList(3, 0, 0)));
     }
 
     static boolean serverIsAtLeastVersion(final Connection connection, final ServerVersion serverVersion) {

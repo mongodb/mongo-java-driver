@@ -276,7 +276,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeThat(serverVersionAtLeast(asList(2, 8, 0)), is(false));
+        assumeThat(serverVersionAtLeast(asList(3, 0, 0)), is(false));
         insertTestData(collection, 100);
 
         DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();

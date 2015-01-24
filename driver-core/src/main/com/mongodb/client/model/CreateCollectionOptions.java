@@ -138,7 +138,7 @@ public class CreateCollectionOptions {
      * Gets the storage engine options document for this index.
      *
      * @return the storage engine options
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public Object getStorageEngineOptions() {
         return storageEngineOptions;
@@ -149,7 +149,7 @@ public class CreateCollectionOptions {
      *
      * @param storageEngineOptions the storate engine options
      * @return this
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public CreateCollectionOptions storageEngineOptions(final Object storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;

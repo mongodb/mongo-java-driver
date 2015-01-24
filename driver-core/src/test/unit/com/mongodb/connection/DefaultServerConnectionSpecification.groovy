@@ -33,9 +33,9 @@ import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
 import static java.util.Arrays.asList
 
 class DefaultServerConnectionSpecification extends Specification {
@@ -45,10 +45,10 @@ class DefaultServerConnectionSpecification extends Specification {
     def executor = Mock(ProtocolExecutor)
     @Shared
     def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                    new ServerVersion(2, 8), STANDALONE, 100, 100, 100)
+                                                                    new ServerVersion(3, 0), STANDALONE, 100, 100, 100)
     @Shared
     def mongosConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                new ServerVersion(2, 8), SHARD_ROUTER, 100, 100, 100)
+                                                                new ServerVersion(3, 0), SHARD_ROUTER, 100, 100, 100)
     def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
     def 'should execute insert protocol'() {

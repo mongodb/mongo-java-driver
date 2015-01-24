@@ -148,7 +148,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def collections = cursor.next()
 
         then:
-        collections.size() <= 2 // pre 2.8 items may be filtered out the batch by the driver
+        collections.size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.hasNext()
         cursor.getBatchSize() == 2
 
@@ -156,7 +156,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         collections = cursor.next()
 
         then:
-        collections.size() <= 2 // pre 2.8 items may be filtered out the batch by the driver
+        collections.size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.hasNext()
         cursor.getBatchSize() == 2
     }
@@ -177,7 +177,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.next(callback)
 
         then:
-        callback.get().size() <= 2 // pre 2.8 items may be filtered out the batch by the driver
+        callback.get().size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.getBatchSize() == 2
 
         when:
@@ -185,7 +185,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.next(callback)
 
         then:
-        callback.get().size() <= 2 // pre 2.8 items may be filtered out the batch by the driver
+        callback.get().size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.getBatchSize() == 2
     }
 

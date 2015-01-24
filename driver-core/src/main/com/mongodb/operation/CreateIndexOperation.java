@@ -423,7 +423,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     /**
      * Returns the legacy dropDups setting
      *
-     * <p>Prior to MongoDB 2.8 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * <p>Prior to MongoDB 3.0 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
      * building the index. Later versions of MongoDB will silently ignore this setting.</p>
      *
      * @return the legacy dropDups setting
@@ -436,7 +436,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     /**
      * Sets the legacy dropDups setting
      *
-     * <p>Prior to MongoDB 2.8 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * <p>Prior to MongoDB 3.0 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
      * building the index. Later versions of MongoDB will silently ignore this setting.</p>
      *
      * @param dropDups the legacy dropDups setting
@@ -452,7 +452,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      * Gets the storage engine options document for this index.
      *
      * @return the storage engine options
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public BsonDocument getStorageEngineOptions() {
         return storageEngineOptions;
@@ -463,7 +463,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      *
      * @param storageEngineOptions the storate engine options
      * @return this
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public CreateIndexOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;

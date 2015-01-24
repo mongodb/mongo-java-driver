@@ -5,7 +5,7 @@ import spock.lang.Specification
 
 class ConnectionDescriptionSpecification extends Specification {
     private final id = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
-    private final version = new ServerVersion(2, 8)
+    private final version = new ServerVersion(3, 0)
     private final description = new ConnectionDescription(id, version, ServerType.STANDALONE, 1, 2, 3)
 
     def 'should initialize all values'() {

@@ -145,7 +145,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         document.get('background') == true
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should support legacy dropDups when creating a unique index'() {
         when:
         collection.drop()

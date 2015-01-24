@@ -39,8 +39,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
@@ -52,7 +52,7 @@ import static com.mongodb.operation.OperationHelper.createEmptyBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotZero;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -83,7 +83,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
      * Gets the number of documents to return per batch.
      *
      * @return the batch size
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public Integer getBatchSize() {
@@ -95,7 +95,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public ListIndexesOperation<T> batchSize(final int batchSize) {
@@ -134,7 +134,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                if (serverIsAtLeastVersionThreeDotZero(connection)) {
                     try {
                         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(), connection,
                                                              transformer(source));
@@ -162,7 +162,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
-                    if (serverIsAtLeastVersionTwoDotEight(connection)) {
+                    if (serverIsAtLeastVersionThreeDotZero(connection)) {
                         executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
                                                            connection, binding.getReadPreference(), asyncTransformer(source),
                                                            new SingleResultCallback<AsyncBatchCursor<T>>() {

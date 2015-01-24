@@ -77,13 +77,13 @@ public final class MongoCredential {
      * The SCRAM-SHA-1 Mechanism.
      *
      * @since 2.13
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public static final String SCRAM_SHA_1_MECHANISM = AuthenticationMechanism.SCRAM_SHA_1.getMechanismName();
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
-     * version of the server that the client is authenticating to.  If the server version is 2.8 or higher,
+     * version of the server that the client is authenticating to.  If the server version is 3.0 or higher,
      * the driver will authenticate using the SCRAM-SHA-1 mechanism.  Otherwise, the driver will authenticate using the MONGODB_CR
      * mechanism.
      *
@@ -113,7 +113,7 @@ public final class MongoCredential {
      * @see #createCredential(String, String, char[])
      *
      * @since 2.13
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public static MongoCredential createScramSha1Credential(final String userName, final String source, final char[] password) {
         return new MongoCredential(SCRAM_SHA_1, userName, source, password);

@@ -49,7 +49,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should use provided hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -67,7 +67,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should use provided hints for queries mongod > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -91,7 +91,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should use provided string hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -110,7 +110,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should use provided string hints for queries mongodb > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -187,7 +187,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         countWithHint == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should be able to use addSpecial with $explain'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -200,7 +200,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.next().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
     def 'should be able to use addSpecial with $explain mongod > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))

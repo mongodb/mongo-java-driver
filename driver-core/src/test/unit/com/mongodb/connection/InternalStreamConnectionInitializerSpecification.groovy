@@ -134,7 +134,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     private ConnectionDescription getExpectedDescription(final Integer localValue, final Integer serverValue) {
         new ConnectionDescription(new ConnectionId(serverId, localValue, serverValue),
-                                  new ServerVersion(2, 8), ServerType.STANDALONE, 512, 16777216, 33554432)
+                                  new ServerVersion(3, 0), ServerType.STANDALONE, 512, 16777216, 33554432)
     }
 
     def enqueueSuccessfulReplies(final boolean isArbiter, final Integer serverConnectionId) {
@@ -142,7 +142,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                 '{ok: 1' +
                 (isArbiter ? ', isreplicaset: true, arbiterOnly: true' : '') +
                 '}'))
-        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1, versionArray : [2, 8, 0]}'))
+        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1, versionArray : [3, 0, 0]}'))
         internalConnection.enqueueReply(buildSuccessfulReply(
                 '{ok: 1 ' +
                 (serverConnectionId == null ? '' : ', connectionId: ' + serverConnectionId) +

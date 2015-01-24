@@ -20,7 +20,7 @@ package com.mongodb;
  * An enumeration of the verbosity levels available for explaining query execution.
  *
  * @since 3.0
- * @mongodb.server.release 2.8
+ * @mongodb.server.release 3.0
  */
 public enum ExplainVerbosity {
     /**

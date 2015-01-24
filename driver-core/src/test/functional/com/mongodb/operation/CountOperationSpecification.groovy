@@ -218,7 +218,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         notThrown(MongoException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) || isSharded() })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) || isSharded() })
     def 'should explain'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -232,7 +232,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 8, 0)) || isSharded() })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) || isSharded() })
     def 'should explain asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())

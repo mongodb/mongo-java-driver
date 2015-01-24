@@ -179,7 +179,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * Gets the storage engine options document for this collection.
      *
      * @return the storage engine options
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public BsonDocument getStorageEngineOptions() {
         return storageEngineOptions;
@@ -190,7 +190,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      *
      * @param storageEngineOptions the storate engine options
      * @return this
-     * @mongodb.server.release 2.8
+     * @mongodb.server.release 3.0
      */
     public CreateCollectionOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
