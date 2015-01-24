@@ -342,7 +342,7 @@ class DBCollectionImpl extends DBCollection {
         try {
             List<DBObject> list = new ArrayList<DBObject>();
 
-            if (db.isServerVersionAtLeast(asList(2, 8, 0))) {
+            if (db.isServerVersionAtLeast(asList(3, 0, 0))) {
                 CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()), ReadPreference.primary());
                 if (!res.ok() && res.getCode() == 26) {
                     return list;
