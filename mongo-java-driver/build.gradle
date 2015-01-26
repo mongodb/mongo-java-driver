@@ -20,6 +20,12 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'mongo-java-driver'
 
+idea {
+    module {
+        sourceDirs = [] // Ignore in idea (prevents intellij crashing due to sources outside project dir)
+    }
+}
+
 // dependencies copied from driver-core
 dependencies {
     compile "io.netty:netty-buffer:$nettyVersion", optional
