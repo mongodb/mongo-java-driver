@@ -50,7 +50,11 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
             if (!ProtocolHelper.isCommandOk(response)) {
                 callback.onResult(null, ProtocolHelper.getCommandFailureException(response, getServerAddress()));
             } else {
-                callback.onResult(decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build()), null);
+                try {
+                    callback.onResult(decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build()), null);
+                } catch (Throwable t1) {
+                    callback.onResult(null, t1);
+                }
             }
         }
     }
