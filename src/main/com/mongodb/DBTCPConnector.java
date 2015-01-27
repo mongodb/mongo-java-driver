@@ -30,6 +30,7 @@ import static com.mongodb.ClusterType.Sharded;
 import static com.mongodb.ClusterType.Unknown;
 import static com.mongodb.MongoAuthority.Type.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.util.Assertions.isTrue;
 
 /**
@@ -479,7 +480,12 @@ public class DBTCPConnector implements DBConnector {
          */
         void error( DBPort port , Exception e ){
             if (!(e instanceof InterruptedIOException)) {
-                getServer(new ServerAddressSelector(port.getAddress())).invalidate();
+                try {
+                    // no need to wait if the server is no longer available
+                    cluster.getServer(new ServerAddressSelector(port.getAddress()), 1, NANOSECONDS).invalidate();
+                } catch (MongoTimeoutException timeoutException) {
+                    // ignore this if the server is already no longer available
+                }
             }
             port.close();
             pinnedRequestStatusThreadLocal.remove();

@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 class ServerAddressSelector implements ServerSelector {
@@ -28,6 +29,10 @@ class ServerAddressSelector implements ServerSelector {
 
     @Override
     public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-        return Arrays.asList(clusterDescription.getByServerAddress(address));
+        ServerDescription serverDescription = clusterDescription.getByServerAddress(address);
+        if (serverDescription != null) {
+            return Arrays.asList(serverDescription);
+        }
+        return Collections.emptyList();
     }
 }
