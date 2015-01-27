@@ -54,8 +54,8 @@ public class MongoClientOptionsTest {
         assertEquals(false, options.isAutoConnectRetry());
         assertEquals(false, options.isAlwaysUseMBeans());
         assertEquals(5000, options.getHeartbeatFrequency());
-        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
-        assertEquals(10, options.getMinHeartbeatFrequency());
+        assertEquals(500, options.getMinHeartbeatFrequency());
+        assertEquals(500, options.getHeartbeatConnectRetryFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
         assertEquals(0, options.getHeartbeatThreadCount());
@@ -85,11 +85,11 @@ public class MongoClientOptionsTest {
             assertEquals(options.getAcceptableLatencyDifference(), 25);
             assertEquals(options.getLocalThreshold(), 25);
         } finally {
-            System.setProperty("com.mongodb.updaterIntervalMS", "5000");
-            System.setProperty("com.mongodb.updaterIntervalNoMasterMS", "10");
-            System.setProperty("com.mongodb.updaterConnectTimeoutMS", "20000");
-            System.setProperty("com.mongodb.updaterSocketTimeoutMS", "20000");
-            System.setProperty("com.mongodb.slaveAcceptableLatencyMS", "15");
+            System.clearProperty("com.mongodb.updaterIntervalMS");
+            System.clearProperty("com.mongodb.updaterIntervalNoMasterMS");
+            System.clearProperty("com.mongodb.updaterConnectTimeoutMS");
+            System.clearProperty("com.mongodb.updaterSocketTimeoutMS");
+            System.clearProperty("com.mongodb.slaveAcceptableLatencyMS");
         }
     }
 

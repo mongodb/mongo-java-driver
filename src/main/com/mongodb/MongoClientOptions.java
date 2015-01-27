@@ -58,7 +58,7 @@ public class MongoClientOptions {
         private boolean cursorFinalizerEnabled = true;
         private boolean alwaysUseMBeans = false;
         private int heartbeatFrequency = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000"));
-        private int minHeartbeatFrequency = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10"));
+        private int minHeartbeatFrequency = Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "500"));
         private int heartbeatConnectTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000"));
         private int heartbeatSocketTimeout = Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000"));
         private int heartbeatThreadCount;
