@@ -16,13 +16,18 @@
 
 package com.mongodb.operation;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.bson.BsonType.DOCUMENT;
 
@@ -32,6 +37,19 @@ class CommandResultArrayCodec<T> extends BsonArrayCodec {
     CommandResultArrayCodec(final CodecRegistry registry, final Decoder<T> decoder) {
         super(registry);
         this.decoder = decoder;
+    }
+
+    @Override
+    public BsonArray decode(final BsonReader reader, final DecoderContext decoderContext) {
+        reader.readStartArray();
+
+        List<T> list = new ArrayList<T>();
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            list.add(decoder.decode(reader, decoderContext));
+        }
+        reader.readEndArray();
+
+        return new BsonArrayWrapper<T>(list);
     }
 
     @Override

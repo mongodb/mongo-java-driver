@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,169 +14,160 @@
  * limitations under the License.
  */
 
-package org.bson;
+package com.mongodb.operation;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import org.bson.BsonArray;
+import org.bson.BsonValue;
+
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-/**
- * A type-safe representation of the BSON array type.
- *
- * @since 3.0
- */
-public class BsonArray extends BsonValue implements List<BsonValue>, Serializable {
+import static org.bson.assertions.Assertions.notNull;
 
-    private static final long serialVersionUID = -6848772175446898432L;
-    private final List<BsonValue> values;
+
+class BsonArrayWrapper<T> extends BsonArray {
+    private static final long serialVersionUID = 3213553338060799471L;
+
+    private final List<T> wrappedArray;
 
     /**
-     * Construct an instance with the given list of values.
+     * Construct a new instance with the given array and encoder for the document.
      *
-     * @param values the list of values, none of whose members may be null.
+     * @param wrappedArray the wrapped array
      */
-    public BsonArray(final List<? extends BsonValue> values) {
-        this.values = new ArrayList<BsonValue>(values);
+    public BsonArrayWrapper(final List<T> wrappedArray) {
+        this.wrappedArray = notNull("wrappedArray", wrappedArray);
     }
 
     /**
-     * Construct an empty B
-     */
-    public BsonArray() {
-        values = new ArrayList<BsonValue>();
-    }
-
-    /**
-     * Gets the values in this array as a list of {@code BsonValue} objects.
+     * Get the wrapped array.
      *
-     * @return the values in this array.
+     * @return the wrapped array
      */
-    public List<BsonValue> getValues() {
-        return Collections.unmodifiableList(values);
+    public List<T> getWrappedArray() {
+        return wrappedArray;
     }
 
     @Override
-    public BsonType getBsonType() {
-        return BsonType.ARRAY;
+    public List<BsonValue> getValues() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int size() {
-        return values.size();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isEmpty() {
-        return values.isEmpty();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean contains(final Object o) {
-        return values.contains(o);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Iterator<BsonValue> iterator() {
-        return values.iterator();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object[] toArray() {
-        return values.toArray();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T[] toArray(final T[] a) {
-        return values.toArray(a);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean add(final BsonValue bsonValue) {
-        return values.add(bsonValue);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean remove(final Object o) {
-        return values.remove(o);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean containsAll(final Collection<?> c) {
-        return values.containsAll(c);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean addAll(final Collection<? extends BsonValue> c) {
-        return values.addAll(c);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean addAll(final int index, final Collection<? extends BsonValue> c) {
-        return values.addAll(index, c);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean removeAll(final Collection<?> c) {
-        return values.removeAll(c);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean retainAll(final Collection<?> c) {
-        return values.retainAll(c);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void clear() {
-        values.clear();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public BsonValue get(final int index) {
-        return values.get(index);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public BsonValue set(final int index, final BsonValue element) {
-        return values.set(index, element);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void add(final int index, final BsonValue element) {
-        values.add(index, element);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public BsonValue remove(final int index) {
-        return values.remove(index);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int indexOf(final Object o) {
-        return values.indexOf(o);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int lastIndexOf(final Object o) {
-        return values.lastIndexOf(o);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ListIterator<BsonValue> listIterator() {
-        return values.listIterator();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ListIterator<BsonValue> listIterator(final int index) {
-        return values.listIterator(index);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public List<BsonValue> subList(final int fromIndex, final int toIndex) {
-        return values.subList(fromIndex, toIndex);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -188,9 +179,8 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Serializabl
             return false;
         }
 
-        BsonArray that = (BsonArray) o;
-
-        if (!values.equals(that.values)) {
+        BsonArrayWrapper<?> that = (BsonArrayWrapper<?>) o;
+        if (!wrappedArray.equals(that.wrappedArray)) {
             return false;
         }
 
@@ -199,13 +189,15 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Serializabl
 
     @Override
     public int hashCode() {
-        return values.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + wrappedArray.hashCode();
+        return result;
     }
 
     @Override
     public String toString() {
-        return "BsonArray{"
-               + "values=" + values
-               + '}';
+        return "BsonArrayWrapper{"
+                + "wrappedArray=" + wrappedArray
+                + '}';
     }
 }

@@ -24,8 +24,13 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.RenameCollectionOptions;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonRegularExpression;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -279,6 +284,25 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
                             new Document("_id", "driver"),
                             new Document("_id", "kernel")),
                      grouped);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldBeAbleToUseBsonValueToDistinctDocumentsOfVaryingTypes() {
+        List<Object> mixedList = new ArrayList<Object>();
+        mixedList.add(2);
+        mixedList.add("d");
+        mixedList.add(new Document("e", 3));
+
+        collection.dropCollection();
+        collection.insertMany(asList(new Document("id", "a"), new Document("id", 1),
+                                     new Document("id", new Document("b", "c")),
+                                     new Document("id", new Document("list", mixedList))));
+
+        List<BsonValue> distinct = collection.distinct("id", new Document(), BsonValue.class).into(new ArrayList<BsonValue>());
+        assertTrue(distinct.containsAll(asList(new BsonString("a"), new BsonInt32(1), new BsonDocument("b", new BsonString("c")),
+                new BsonDocument("list", new BsonArray(asList(new BsonInt32(2), new BsonString("d"),
+                        new BsonDocument("e", new BsonInt32(3))))))));
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {

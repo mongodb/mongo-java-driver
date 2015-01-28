@@ -30,7 +30,6 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.connection.ServerVersion;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
@@ -103,8 +102,8 @@ final class OperationHelper {
     static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
         long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
         MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
-        BsonArray results = cursorDocument.getArray("firstBatch");
-        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(results), cursorId, serverAddress);
+        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(cursorDocument, "firstBatch"), cursorId,
+                serverAddress);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final Connection connection) {

@@ -17,14 +17,22 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
-import org.bson.BsonArray
+import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.test.Worker
+import com.mongodb.client.test.WorkerCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonString
+import org.bson.BsonInvalidOperationException
 import org.bson.Document
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
+import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.ValueCodecProvider
+import org.bson.codecs.configuration.RootCodecRegistry
+import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
@@ -38,6 +46,16 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
+    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
+                                               new DocumentCodecProvider(),
+                                               new BsonValueCodecProvider()])
+
+    def getCodec(final Class clazz) {
+        codecRegistry.get(clazz);
+    }
+
+    def stringDecoder = getCodec(String);
+
     def 'should be able to distinct by name'() {
         given:
         Document pete = new Document('name', 'Pete').append('age', 38)
@@ -46,11 +64,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        def result = op.execute(getBinding());
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def result = op.execute(getBinding()).next();
 
         then:
-        result.toList().sort() == new BsonArray([new BsonString('Pete'), new BsonString('Sam')])
+        result == ['Pete', 'Sam']
     }
 
     @Category(Async)
@@ -62,11 +80,13 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        def result = executeAsync(op)
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def futureResult = new FutureResultCallback()
+        executeAsync(op).next(futureResult)
+        def result = futureResult.get(1, SECONDS)
 
         then:
-        result.sort() == new BsonArray([new BsonString('Pete'), new BsonString('Sam')])
+        result == ['Pete', 'Sam']
     }
 
     def 'should be able to distinct by name with find'() {
@@ -77,12 +97,12 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         op.filter(new BsonDocument('age', new BsonInt32(25)))
         def result = op.execute(getBinding());
 
         then:
-        result == new BsonArray([new BsonString('Pete')])
+        result.next() == ['Pete']
     }
 
     @Category(Async)
@@ -94,18 +114,111 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         op.filter(new BsonDocument('age', new BsonInt32(25)))
-        def result = executeAsync(op)
+        def futureResult = new FutureResultCallback()
+        executeAsync(op).next(futureResult)
+        def result = futureResult.get(1, SECONDS)
 
         then:
-        result == new BsonArray([new BsonString('Pete')])
+        result == ['Pete']
+    }
+
+    def 'should be able to distinct with custom codecs'() {
+        given:
+        Worker pete = new Worker(new ObjectId(), 'Pete', 'handyman', new Date(), 3)
+        Worker sam = new Worker(new ObjectId(),'Sam', 'plumber', new Date(), 7)
+
+        Document peteDocument = new Document('_id', pete.id)
+                .append('name', pete.name)
+                .append('jobTitle', pete.jobTitle)
+                .append('dateStarted', pete.dateStarted)
+                .append('numberOfJobs', pete.numberOfJobs)
+
+        Document samDocument = new Document('_id', sam.id)
+                .append('name', sam.name)
+                .append('jobTitle', sam.jobTitle)
+                .append('dateStarted', sam.dateStarted)
+                .append('numberOfJobs', sam.numberOfJobs)
+
+        getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
+
+        when:
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        def result = op.execute(getBinding()).next();
+
+        then:
+        result == [pete, sam]
+    }
+
+    @Category(Async)
+    def 'should be able to distinct with custom codecs asynchronously'() {
+        given:
+        Worker pete = new Worker(new ObjectId(), 'Pete', 'handyman', new Date(), 3)
+        Worker sam = new Worker(new ObjectId(),'Sam', 'plumber', new Date(), 7)
+
+        Document peteDocument = new Document('_id', pete.id)
+                .append('name', pete.name)
+                .append('jobTitle', pete.jobTitle)
+                .append('dateStarted', pete.dateStarted)
+                .append('numberOfJobs', pete.numberOfJobs)
+
+        Document samDocument = new Document('_id', sam.id)
+                .append('name', sam.name)
+                .append('jobTitle', sam.jobTitle)
+                .append('dateStarted', sam.dateStarted)
+                .append('numberOfJobs', sam.numberOfJobs)
+
+        getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
+
+        when:
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        def futureResult = new FutureResultCallback()
+        executeAsync(op).next(futureResult)
+        def result = futureResult.get(1, SECONDS)
+
+        then:
+        result == [pete, sam]
+    }
+
+    def 'should throw if invalid decoder passed to distinct'() {
+        given:
+        Document pete = new Document('name', 'Pete')
+        Document sam = new Document('name', 1)
+        Document pete2 = new Document('name', new Document('earle', 'Jones'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
+
+        when:
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        op.execute(getBinding()).next();
+
+        then:
+        thrown(BsonInvalidOperationException)
+    }
+
+    @Category(Async)
+    def 'should throw if invalid decoder passed to distinct asynchronously'() {
+        given:
+        Document pete = new Document('name', 'Pete')
+        Document sam = new Document('name', 1)
+        Document pete2 = new Document('name', new Document('earle', 'Jones'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
+
+        when:
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def futureResult = new FutureResultCallback()
+        executeAsync(op).next(futureResult)
+        futureResult.get(5, SECONDS)
+
+        then:
+        MongoException ex = thrown()
+        ex.cause instanceof BsonInvalidOperationException
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def op = new DistinctOperation(getNamespace(), 'name')
+        def op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         op.maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
@@ -123,7 +236,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def op = new DistinctOperation(getNamespace(), 'name')
+        def op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         op.maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 

@@ -47,7 +47,6 @@ import com.mongodb.operation.ParallelCollectionScanOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.WriteOperation;
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
@@ -55,6 +54,7 @@ import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
@@ -286,9 +286,9 @@ public class DBCollection {
     /**
      * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
      * does not contain an '_id' field, it will be added.</p>
-     * 
-     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true, 
-     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise, 
+     *
+     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true,
+     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise,
      * the value of the continueOnError property of the given {@code WriteConcern} will take effect. </p>
      *
      * @param documents     a list of {@code DBObject}'s to be inserted
@@ -347,12 +347,12 @@ public class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
      * <ul>
-     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in
      *     the document.</li>
-     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
-     *     replacing all field in the existing record with the fields from the document.</li> 
+     *     <li>If a document exists with the specified '_id' value, the method performs an update,
+     *     replacing all field in the existing record with the fields from the document.</li>
      * </ul>
      *
      * @param document {@link DBObject} to save to the collection.
@@ -369,12 +369,12 @@ public class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
      * <ul>
-     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in
      *     the document.</li>
-     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
-     *     replacing all field in the existing record with the fields from the document.</li> 
+     *     <li>If a document exists with the specified '_id' value, the method performs an update,
+     *     replacing all field in the existing record with the fields from the document.</li>
      * </ul>
      *
      * @param document     {@link DBObject} to save to the collection.
@@ -1067,17 +1067,16 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        BsonArray distinctArray = executor.execute(new DistinctOperation(getNamespace(), fieldName).filter(wrapAllowNull(query)),
-                                                   readPreference);
-
-        List distinctList = new ArrayList();
-        for (BsonValue value : distinctArray) {
-            BsonDocument document = new BsonDocument("value", value);
-            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
-            distinctList.add(obj.get("value"));
-        }
-
-        return distinctList;
+        return new OperationIterable<BsonValue>(new DistinctOperation<BsonValue>(getNamespace(), fieldName,
+                                                new BsonValueCodec()).filter(wrap(query)),
+                                                readPreference, executor).map(new Function<BsonValue, Object>() {
+            @Override
+            public Object apply(final BsonValue bsonValue) {
+                BsonDocument document = new BsonDocument("value", bsonValue);
+                DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+                return obj.get("value");
+            }
+        }).into(new ArrayList<Object>());
     }
 
     /**
@@ -1363,8 +1362,8 @@ public class DBCollection {
     }
 
     /**
-     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p> 
-     * 
+     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p>
+     *
      * <p>Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos. </p>
      *
      * @param options the parallel scan options

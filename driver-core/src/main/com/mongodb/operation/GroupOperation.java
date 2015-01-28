@@ -251,7 +251,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
-        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")), 0,
+        return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result, "retval"), 0,
                                   connection.getDescription().getServerAddress());
     }
 }

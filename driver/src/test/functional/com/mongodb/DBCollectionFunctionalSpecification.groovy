@@ -299,14 +299,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should return a list of all the values of a given field without duplicates'() {
         given:
         collection.drop()
-        for (
-                int i = 0;
-                i < 100;
-                i++) {
-            def document = ~['_id': i,
-                             'x'  : i % 10]
-            collection.save(document);
-        }
+        (0..99).each { collection.save(~['_id': it, 'x' : it % 10]) }
         assert collection.count() == 100;
 
         when:
@@ -320,15 +313,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should query database for values and return a list of all the distinct values of a given field that match the filter'() {
         given:
         collection.drop()
-        for (
-                int i = 0;
-                i < 100;
-                i++) {
-            def document = ~['_id'        : i,
-                             'x'          : i % 10,
-                             'isOddNumber': i % 2]
-            collection.save(document);
-        }
+        (0..99).each { collection.save(~['_id': it, 'x' : it % 10, 'isOddNumber': it % 2]) }
         assert collection.count() == 100;
 
         when:
@@ -337,6 +322,23 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         then:
         distinctValuesOfFieldX.size() == 5
         that distinctValuesOfFieldX, contains(1, 3, 5, 7, 9)
+    }
+
+    def 'should return distinct values of differing types '() {
+        given:
+        collection.drop()
+        def documents = [~['id' :'a'], ~['id' : 1],
+                         ~['id' : ~['b': 'c']],  ~['id' : ~['list': [2, 'd', ~['e': 3]]]]]
+
+        collection.insert(documents)
+        assert collection.count() == 4;
+
+        when:
+        List distinctValues = collection.distinct('id')
+
+        then:
+        distinctValues.size() == 4
+        that distinctValues, contains('a', 1, ~['b': 'c'], ~['list': [2, 'd', ~['e': 3]]])
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')

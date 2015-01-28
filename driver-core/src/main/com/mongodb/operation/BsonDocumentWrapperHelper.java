@@ -16,23 +16,16 @@
 
 package com.mongodb.operation;
 
-import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.BsonValue;
 
-import java.util.ArrayList;
 import java.util.List;
 
 final class BsonDocumentWrapperHelper {
 
     @SuppressWarnings("unchecked")
-    static <T> List<T> toList(final BsonArray array) {
-        List<T> list = new ArrayList<T>();
-        for (BsonValue cur : array) {
-            list.add(((BsonDocumentWrapper<T>) cur).getWrappedDocument());
-        }
-        return list;
+    static <T> List<T> toList(final BsonDocument result, final String fieldContainingWrappedArray) {
+        return ((BsonArrayWrapper<T>) result.getArray(fieldContainingWrappedArray)).getWrappedArray();
     }
 
     @SuppressWarnings("unchecked")

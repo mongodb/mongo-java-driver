@@ -140,7 +140,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
 
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
-        return new QueryResult<T>(null, BsonDocumentWrapperHelper.<T>toList(result.getArray("databases")), 0,
+        return new QueryResult<T>(null, BsonDocumentWrapperHelper.<T>toList(result, "databases"), 0,
                 connection.getDescription().getServerAddress());
     }
 

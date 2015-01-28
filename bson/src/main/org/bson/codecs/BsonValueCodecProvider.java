@@ -100,6 +100,10 @@ public class BsonValueCodecProvider implements CodecProvider {
             return (Codec<T>) new BsonJavaScriptWithScopeCodec(registry.get(BsonDocument.class));
         }
 
+        if (clazz == BsonValue.class) {
+            return (Codec<T>) new BsonValueCodec(registry);
+        }
+
         return null;
     }
 

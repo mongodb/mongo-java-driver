@@ -26,21 +26,23 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * A codec for BsonArray instances.
  *
  * @since 3.0
  */
 public class BsonArrayCodec implements Codec<BsonArray> {
-    private final CodecRegistry registry;
+    private final CodecRegistry codecRegistry;
 
     /**
      * Construct an instance with the given registry
      *
-     * @param registry the registry
+     * @param codecRegistry the codec registry
      */
-    public BsonArrayCodec(final CodecRegistry registry) {
-        this.registry = registry;
+    public BsonArrayCodec(final CodecRegistry codecRegistry) {
+        this.codecRegistry = notNull("codecRegistry", codecRegistry);
     }
 
     @Override
@@ -63,7 +65,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
-            Codec codec = registry.get(value.getClass());
+            Codec codec = codecRegistry.get(value.getClass());
             encoderContext.encodeWithChildContext(codec, writer, value);
         }
 
@@ -84,7 +86,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * @return the non-null value read from the reader
      */
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        return registry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader, decoderContext);
+        return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader, decoderContext);
     }
 
 }
