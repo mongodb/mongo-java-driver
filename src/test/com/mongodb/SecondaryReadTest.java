@@ -181,6 +181,9 @@ public class SecondaryReadTest extends TestCase {
             }
 
             String stateStr = member.getString("stateStr");
+            if (stateStr.equalsIgnoreCase("arbiter")) {
+                continue;
+            }
             pHosts.add(new TestHost(hostnameAndPort, stateStr));
         }
 
@@ -238,7 +241,7 @@ public class SecondaryReadTest extends TestCase {
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
         for (TestHost testHost : pHosts) {
             Mongo mongoHost;
-            if (getMongoClientURI().getCredentials() == null || testHost.stateStr.equals("ARBITER")) {
+            if (getMongoClientURI().getCredentials() == null) {
                 mongoHost = new MongoClient(testHost.hostnameAndPort);
             } else {
                 mongoHost = new MongoClient(new ServerAddress(testHost.hostnameAndPort), asList(getMongoClientURI().getCredentials()));
