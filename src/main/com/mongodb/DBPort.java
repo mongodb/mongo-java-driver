@@ -291,9 +291,6 @@ public class DBPort implements Connection {
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
-                if (mongo != null) {
-                    _serverVersion = getVersion(runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1)));
-                }
                 successfullyConnected = true;
             }
             catch ( IOException e ){
@@ -316,6 +313,22 @@ public class DBPort implements Connection {
                 sleepTime *= 2;
             }
         } while (!successfullyConnected);
+
+        if (mongo != null) {
+            try {
+                CommandResult buildInfoResult = runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1));
+                buildInfoResult.throwOnError();
+                _serverVersion = getVersion(buildInfoResult);
+            }
+            catch (IOException e) {
+                close();
+                throw e;
+            }
+            catch (RuntimeException e) {
+                close();
+                throw e;
+            }
+        }
     }
 
     @SuppressWarnings("unchecked")
