@@ -42,7 +42,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                               .maxWaitTime(options.getMaxWaitTime(), MILLISECONDS)
                               .build();
         return new DefaultServer(serverAddress, settings, clusterId,
-                                 new PooledConnectionProvider(clusterId, serverAddress, new DBPortFactory(options), connectionPoolSettings,
+                                 new PooledConnectionProvider(clusterId, serverAddress, new DBPortFactory(mongo), connectionPoolSettings,
                                                               new JMXConnectionPoolListener(mongo.getMongoOptions().getDescription())),
                                  mongo);
     }

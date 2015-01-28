@@ -42,7 +42,7 @@ public class DBPortTest extends TestCase {
             db1.addUser("u1", "e".toCharArray());
             db2.addUser("u2", "e".toCharArray());
 
-            DBPort port = new DBPort(m.getAddress());
+            DBPort port = new DBPort(m.getAddress(), null, m, 0);
             port.checkAuth(m);
 
             Set<String> expected = new HashSet<String>();

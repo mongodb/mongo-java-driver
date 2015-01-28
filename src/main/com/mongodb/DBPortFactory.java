@@ -17,14 +17,14 @@
 package com.mongodb;
 
 class DBPortFactory implements ConnectionFactory {
-    private final MongoOptions options;
+    private final Mongo mongo;
 
-    DBPortFactory(MongoOptions options) {
-        this.options = options;
+    DBPortFactory(Mongo mongo) {
+        this.mongo = mongo;
     }
 
     @Override
     public Connection create(ServerAddress serverAddress, PooledConnectionProvider provider, int generation) {
-        return new DBPort(serverAddress, provider, options, generation);
+        return new DBPort(serverAddress, provider, mongo, generation);
     }
 }

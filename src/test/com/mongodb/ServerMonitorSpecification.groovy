@@ -135,7 +135,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
     def initializeServerMonitor(ServerAddress address) {
         def options = new MongoOptions()
         options.connectTimeout = 1000
-        def connectionProvider = new PooledConnectionProvider('cluster-1', address, new DBPortFactory(options),
+        def connectionProvider = new PooledConnectionProvider('cluster-1', address, new DBPortFactory(getMongoClient()),
                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                               new JMXConnectionPoolListener());
         serverMonitor = new ServerMonitor(address,

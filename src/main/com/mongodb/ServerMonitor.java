@@ -85,7 +85,7 @@ class ServerMonitor {
                     Throwable previousException = currentException;
                     try {
                         if (connection == null) {
-                            connection = new DBPort(serverAddress, null, getOptions(), 0);
+                            connection = new DBPort(serverAddress, getOptions());
                         }
                         try {
                             currentServerDescription = lookupServerDescription(connection);
@@ -99,7 +99,7 @@ class ServerMonitor {
                                 connection = null;
                                 connectionProvider.invalidate();
                             }
-                            connection = new DBPort(serverAddress, null, getOptions(), 0);
+                            connection = new DBPort(serverAddress, getOptions());
                             try {
                                 currentServerDescription = lookupServerDescription(connection);
                             } catch (IOException e1) {
@@ -263,7 +263,7 @@ class ServerMonitor {
     }
 
     @SuppressWarnings("unchecked")
-    private static ServerVersion getVersion(final CommandResult buildInfoResult) {
+    static ServerVersion getVersion(final CommandResult buildInfoResult) {
         return new ServerVersion(((List<Integer>) buildInfoResult.get("versionArray")).subList(0, 3));
     }
 

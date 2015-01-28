@@ -86,10 +86,20 @@ public class DBPort implements Connection {
      */
     @SuppressWarnings("deprecation")
     public DBPort( ServerAddress addr ){
-        this( addr , null , new MongoOptions(), 0 );
+        this( addr , new MongoOptions());
     }
-    
-    DBPort( ServerAddress addr, PooledConnectionProvider pool, MongoOptions options, int generation ) {
+
+    // Normal usage
+    DBPort( ServerAddress addr, PooledConnectionProvider pool, Mongo mongo, int generation ) {
+        this(addr, pool, mongo, mongo.getMongoOptions(), generation);
+    }
+
+    // Server monitor usage
+    DBPort( ServerAddress addr, MongoOptions options ) {
+        this(addr, null, null, options, 0);
+    }
+
+    private DBPort( ServerAddress addr, PooledConnectionProvider pool, Mongo mongo, MongoOptions options, int generation ) {
         _options = options;
         _sa = addr;
         _addr = addr;
@@ -98,8 +108,8 @@ public class DBPort implements Connection {
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
         try {
-            ensureOpen();
             _decoder = _options.dbDecoderFactory.create();
+            ensureOpen(mongo);
             openedAt = System.currentTimeMillis();
             lastUsedAt = openedAt;
         } catch (IOException e) {
@@ -248,6 +258,15 @@ public class DBPort implements Connection {
      * @throws IOException
      */
     public synchronized void ensureOpen() throws IOException {
+        ensureOpen(null);
+    }
+
+    /**
+     * makes sure that a connection to the server has been opened
+     * @throws IOException
+     * @param mongo
+     */
+    private synchronized void ensureOpen(final Mongo mongo) throws IOException {
 
         if ( _socket != null )
             return;
@@ -271,6 +290,9 @@ public class DBPort implements Connection {
                 _socket.setSoTimeout( _options.socketTimeout );
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
+                if (mongo != null) {
+                    _serverVersion = ServerMonitor.getVersion(runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1)));
+                }
                 successfullyConnected = true;
             }
             catch ( IOException e ){
@@ -364,7 +386,7 @@ public class DBPort implements Connection {
         Authenticator authenticator;
         MongoCredential actualCredentials;
         if (credentials.getMechanism() == null) {
-            if (mongo.getConnector().getServerDescription(getAddress()).getVersion().compareTo(new ServerVersion(3, 0)) >= 0) {
+            if (_serverVersion.compareTo(new ServerVersion(3, 0)) >= 0) {
                 actualCredentials = MongoCredential.createScramSha1Credential(credentials.getUserName(), credentials.getSource(),
                                                                               credentials.getPassword());
             } else {
@@ -415,6 +437,10 @@ public class DBPort implements Connection {
         return usageCount;
     }
 
+    ServerVersion getServerVersion() {
+        return _serverVersion;
+    }
+
     PooledConnectionProvider getProvider() {
         return provider;
     }
@@ -440,6 +466,7 @@ public class DBPort implements Connection {
     private volatile Socket _socket;
     private volatile InputStream _in;
     private volatile OutputStream _out;
+    private volatile ServerVersion _serverVersion;
 
     // needs synchronization to ensure that modifications are published.
     private final Set<String> authenticatedDatabases = Collections.synchronizedSet(new HashSet<String>());

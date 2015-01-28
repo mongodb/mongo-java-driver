@@ -250,8 +250,7 @@ public class DBApiLayer extends DB {
     boolean isServerVersionAtLeast(final List<Integer> versionList) {
         DBPort primaryPort = getConnector().getPrimaryPort();
         try {
-            return getConnector().getServerDescription(primaryPort.getAddress()).getVersion()
-                                 .compareTo(new ServerVersion(versionList)) >= 0;
+            return primaryPort.getServerVersion().compareTo(new ServerVersion(versionList)) >= 0;
         } finally {
            _connector.releasePort(primaryPort);
         }
