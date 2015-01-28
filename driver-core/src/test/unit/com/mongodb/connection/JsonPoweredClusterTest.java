@@ -43,6 +43,7 @@ import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.DescriptionHelper.createServerDescription;
+import static com.mongodb.connection.DescriptionHelper.getVersion;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -159,10 +160,10 @@ public class JsonPoweredClusterTest {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
             serverDescription = createServerDescription(serverAddress, isMasterResult,
-                                                        new BsonDocument("versionArray",
-                                                                         new BsonArray(asList(new BsonInt32(2),
-                                                                                              new BsonInt32(6),
-                                                                                              new BsonInt32(0)))),
+                                                        getVersion(new BsonDocument("versionArray",
+                                                                                    new BsonArray(asList(new BsonInt32(2),
+                                                                                                         new BsonInt32(6),
+                                                                                                         new BsonInt32(0))))),
                                                         5000000);
         }
         factory.sendNotification(serverAddress, serverDescription);

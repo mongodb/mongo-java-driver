@@ -186,8 +186,8 @@ class DefaultServerMonitor implements ServerMonitor {
             BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
             averageRoundTripTime.addSample(System.nanoTime() - start);
 
-            BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-            return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, averageRoundTripTime.getAverage());
+            return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
+                                           averageRoundTripTime.getAverage());
         }
 
         private void sendStateChangedEvent(final ServerDescription previousServerDescription,

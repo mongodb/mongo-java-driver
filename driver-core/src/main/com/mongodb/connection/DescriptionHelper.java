@@ -60,10 +60,10 @@ final class DescriptionHelper {
     }
 
     static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
-                                                     final BsonDocument buildInfoResult, final long roundTripTime) {
+                                                     final ServerVersion serverVersion, final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
-                                .version(getVersion(buildInfoResult))
+                                .version(serverVersion)
                                 .address(serverAddress)
                                 .type(getServerType(isMasterResult))
                                 .hosts(listToSet(isMasterResult.getArray("hosts", new BsonArray())))
@@ -102,7 +102,7 @@ final class DescriptionHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
+    static ServerVersion getVersion(final BsonDocument buildInfoResult) {
         List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
 
         return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
