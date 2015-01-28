@@ -41,7 +41,7 @@ class ServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
-    private ServerAddress serverAddress;
+    private final ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final SocketSettings socketSettings;
     private final ServerSettings settings;
@@ -85,7 +85,7 @@ class ServerMonitor {
                     Throwable previousException = currentException;
                     try {
                         if (connection == null) {
-                            connection = new DBPort(serverAddress, getOptions());
+                            connection = new DBPort(serverAddress, mongo, getOptions());
                         }
                         try {
                             currentServerDescription = lookupServerDescription(connection);
@@ -99,7 +99,7 @@ class ServerMonitor {
                                 connection = null;
                                 connectionProvider.invalidate();
                             }
-                            connection = new DBPort(serverAddress, getOptions());
+                            connection = new DBPort(serverAddress, mongo, getOptions());
                             try {
                                 currentServerDescription = lookupServerDescription(connection);
                             } catch (IOException e1) {
@@ -234,16 +234,15 @@ class ServerMonitor {
         count++;
         elapsedNanosSum += System.nanoTime() - startNanoTime;
 
-        final CommandResult buildInfoResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1));
-        return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
+        return createDescription(isMasterResult, connection.getServerVersion(), elapsedNanosSum / count);
     }
 
     @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
+    private ServerDescription createDescription(final CommandResult commandResult, final ServerVersion serverVersion,
                                                 final long averageLatencyNanos) {
         return ServerDescription.builder()
                                 .state(ServerConnectionState.Connected)
-                                .version(getVersion(buildInfoResult))
+                                .version(serverVersion)
                                 .address(commandResult.getServerUsed())
                                 .type(getServerType(commandResult))
                                 .hosts(listToSet((List<String>) commandResult.get("hosts")))
@@ -260,11 +259,6 @@ class ServerMonitor {
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
                                 .averageLatency(averageLatencyNanos, TimeUnit.NANOSECONDS)
                                 .ok(commandResult.ok()).build();
-    }
-
-    @SuppressWarnings("unchecked")
-    static ServerVersion getVersion(final CommandResult buildInfoResult) {
-        return new ServerVersion(((List<Integer>) buildInfoResult.get("versionArray")).subList(0, 3));
     }
 
     private Set<String> listToSet(final List<String> list) {

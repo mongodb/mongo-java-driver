@@ -54,6 +54,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -86,7 +87,7 @@ public class DBPort implements Connection {
      */
     @SuppressWarnings("deprecation")
     public DBPort( ServerAddress addr ){
-        this( addr , new MongoOptions());
+        this( addr , null, new MongoOptions());
     }
 
     // Normal usage
@@ -95,8 +96,8 @@ public class DBPort implements Connection {
     }
 
     // Server monitor usage
-    DBPort( ServerAddress addr, MongoOptions options ) {
-        this(addr, null, null, options, 0);
+    DBPort( ServerAddress addr, Mongo mongo, MongoOptions options ) {
+        this(addr, null, mongo, options, 0);
     }
 
     private DBPort( ServerAddress addr, PooledConnectionProvider pool, Mongo mongo, MongoOptions options, int generation ) {
@@ -291,7 +292,7 @@ public class DBPort implements Connection {
                 _in = new BufferedInputStream( _socket.getInputStream() );
                 _out = _socket.getOutputStream();
                 if (mongo != null) {
-                    _serverVersion = ServerMonitor.getVersion(runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1)));
+                    _serverVersion = getVersion(runCommand(mongo.getDB("admin"), new BasicDBObject("buildinfo", 1)));
                 }
                 successfullyConnected = true;
             }
@@ -315,6 +316,11 @@ public class DBPort implements Connection {
                 sleepTime *= 2;
             }
         } while (!successfullyConnected);
+    }
+
+    @SuppressWarnings("unchecked")
+    static ServerVersion getVersion(final CommandResult buildInfoResult) {
+        return new ServerVersion(((List<Integer>) buildInfoResult.get("versionArray")).subList(0, 3));
     }
 
     @Override
