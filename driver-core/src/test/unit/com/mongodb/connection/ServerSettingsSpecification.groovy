@@ -11,8 +11,8 @@ class ServerSettingsSpecification extends Specification {
         def settings = ServerSettings.builder().build()
 
         then:
-        settings.getHeartbeatFrequency(MILLISECONDS) == 5000
-        settings.getMinHeartbeatFrequency(MILLISECONDS) == 10
+        settings.getHeartbeatFrequency(MILLISECONDS) == 10000
+        settings.getMinHeartbeatFrequency(MILLISECONDS) == 500
     }
 
     def 'should apply builder settings'() {

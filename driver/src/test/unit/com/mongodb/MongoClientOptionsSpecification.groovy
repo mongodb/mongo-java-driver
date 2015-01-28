@@ -49,13 +49,16 @@ class MongoClientOptionsSpecification extends Specification {
         options.getDbEncoderFactory() == DefaultDBEncoder.FACTORY
         options.getLocalThreshold() == 15
         options.isCursorFinalizerEnabled()
-        options.getMinHeartbeatFrequency() == 10
+        options.getHeartbeatFrequency() == 10000
+        options.getMinHeartbeatFrequency() == 500
         options.getServerSelectionTimeout() == 30000
 
         options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         options.socketSettings == SocketSettings.builder().build()
         options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(20, SECONDS).readTimeout(20, SECONDS).build()
-        options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(10, MILLISECONDS).build()
+        options.serverSettings == ServerSettings.builder().heartbeatFrequency(10000, MILLISECONDS)
+                                                .minHeartbeatFrequency(500, MILLISECONDS)
+                                                .build()
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')

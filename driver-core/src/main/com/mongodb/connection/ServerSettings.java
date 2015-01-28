@@ -43,8 +43,8 @@ public class ServerSettings {
      * A builder for the settings.
      */
     public static class Builder {
-        private long heartbeatFrequencyMS = 5000;
-        private long minHeartbeatFrequencyMS = 10;
+        private long heartbeatFrequencyMS = 10000;
+        private long minHeartbeatFrequencyMS = 500;
 
         /**
          * Sets the frequency that the cluster monitor attempts to reach each server.

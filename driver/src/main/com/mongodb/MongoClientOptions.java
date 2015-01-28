@@ -657,7 +657,7 @@ public class MongoClientOptions {
         private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
-        private int minHeartbeatFrequency = 10;
+        private int minHeartbeatFrequency = 500;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
         private int localThreshold = 15;
@@ -672,8 +672,8 @@ public class MongoClientOptions {
          * Creates a Builder for MongoClientOptions, getting the appropriate system properties for initialization.
          */
         public Builder() {
-            heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
-            minHeartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
+            heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "10000")));
+            minHeartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "500")));
             heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
             heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
             localThreshold(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
