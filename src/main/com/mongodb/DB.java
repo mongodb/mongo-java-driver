@@ -16,14 +16,15 @@
 
 package com.mongodb;
 
-import com.mongodb.util.Util;
-import org.bson.BSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.bson.BSONObject;
+
+import com.mongodb.util.Util;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
@@ -56,6 +57,16 @@ public abstract class DB {
         _obedientCommands.add("listCollections");
     }
 
+    /**
+     * CDI eyes only
+     * @deprecated CDI eyes only
+     */
+    public DB() {
+    	_options = null;
+    	_name = null;
+    	_mongo = null;
+    }
+    
     /**
      * Constructs a new instance of the {@code DB}.
      *
