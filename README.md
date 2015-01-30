@@ -1,15 +1,3 @@
-# MongoDB 3.x Java Driver
-
-The 3.x MongoDB driver for Java is a major release.  The API is not yet stable, and while it is well-tested we do not yet consider it
-ready for a production deployment.  Hightlights include:
-
-* A generic MongoCollection interface that implements a new cross-driver CRUD specification.
-* A new asynchronous MongoClient API that can leverage either [Netty](http://netty.io/)
-or Java 7's [AsynchronousSocketChannel](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html)
-* A new Codec infrastructure that you can use to build high-performance encoders and decoders without having to go through an intermediate
-Map.
-* A new core driver on top of which you can build alternative or experimental driver APIs
-
 ## Release Notes
 
 Release notes are available [here](https://github.com/mongodb/mongo-java-driver/releases).
@@ -26,7 +14,7 @@ do not email any of the Java driver developers directly with issues or
 questions - you're more likely to get an answer on the [mongodb-user]
 (http://groups.google.com/group/mongodb-user) list on Google Groups.
 
-At a minimum, please include in your description the exact version of the driver that you are using.  If you are having 
+At a minimum, please include in your description the exact version of the driver that you are using.  If you are having
 connectivity issues, it's often also useful to paste in the line of code where you construct the MongoClient instance,
 along with the values of all parameters that you pass to the constructor. You should also check your application logs for
 any connectivity-related exceptions and post those as well.
@@ -135,6 +123,8 @@ Additional contributors can be found [here](https://github.com/mongodb/mongo-jav
 
 YourKit is supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
 
-JetBrains is supporting this open source project with [![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)]
+JetBrains is supporting this open source project with:
+
+[![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)]
 (http://www.jetbrains.com/idea/)
 
