@@ -551,8 +551,4 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         QueryBuilder.start('x').lessThan(2).get() | [y: -1] as BasicDBObject      | 5
 
     }
-
-    static class ClassA extends BasicDBObject { }
-
-    static class ClassB extends BasicDBObject { }
 }
