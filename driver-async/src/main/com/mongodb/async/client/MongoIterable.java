@@ -66,6 +66,15 @@ public interface MongoIterable<T> {
     <U> MongoIterable<U> map(Function<T, U> mapper);
 
     /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    MongoIterable<T> batchSize(int batchSize);
+
+    /**
      * Provide the underlying {@link com.mongodb.async.AsyncBatchCursor} allowing fine grained control of the cursor.
      *
      * @param callback a callback that will be passed the AsyncBatchCursor

@@ -80,4 +80,9 @@ class OperationIterable<T> implements MongoIterable<T> {
         return target;
     }
 
+    @Override
+    public MongoIterable<T> batchSize(final int batchSize) {
+        throw new UnsupportedOperationException();
+    }
+
 }

@@ -140,7 +140,7 @@ final class FindFluentImpl<T> implements FindFluent<T> {
 
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return execute().map(mapper);
+        return new MappingIterable<T, U>(this, mapper);
     }
 
     @Override
@@ -198,6 +198,12 @@ final class FindFluentImpl<T> implements FindFluent<T> {
             FindOperation<T> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
             BatchCursor<T> batchCursor = executor.execute(findFirstOperation, readPreference);
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
+        }
+
+        @Override
+        public FindOperationIterable batchSize(final int batchSize) {
+            batchSize(batchSize);
+            return this;
         }
     }
 }

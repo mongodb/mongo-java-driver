@@ -90,6 +90,12 @@ class MappingIterable<T, U> implements MongoIterable<U> {
     }
 
     @Override
+    public MongoIterable<U> batchSize(final int batchSize) {
+        iterable.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<U>> callback) {
         iterable.batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override

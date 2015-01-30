@@ -112,6 +112,12 @@ class SmokeTestSpecification extends FunctionalSpecification {
         updatedNames.contains(databaseName)
         updatedNames.size() == names.size() + 1
 
+        when: 'Calling listDatabaseNames batchSize should be ignored'
+        def batchCursor = run(mongoClient.listDatabaseNames().batchSize(100).&batchCursor)
+
+        then:
+        batchCursor.getBatchSize() == 0
+
         when: 'The collection name should be in the collections list'
         def collectionNames = run(database.listCollections().&into, [])
 

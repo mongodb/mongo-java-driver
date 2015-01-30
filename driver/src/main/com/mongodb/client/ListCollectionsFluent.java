@@ -36,15 +36,6 @@ public interface ListCollectionsFluent<T> extends MongoIterable<T> {
     ListCollectionsFluent<T> filter(Object filter);
 
     /**
-     * Sets the number of documents to return per batch.
-     *
-     * @param batchSize the batch size
-     * @return this
-     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
-     */
-    ListCollectionsFluent<T> batchSize(int batchSize);
-
-    /**
      * Sets the maximum execution time on the server for this operation.
      *
      * @param maxTime  the max time

@@ -148,7 +148,7 @@ class FindFluentImpl<T> implements FindFluent<T> {
 
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return execute().map(mapper);
+        return new MappingIterable<T, U>(this, mapper);
     }
 
     @Override

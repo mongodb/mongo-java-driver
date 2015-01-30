@@ -72,7 +72,13 @@ final class ListDatabasesFluentImpl<T> implements ListDatabasesFluent<T> {
 
     @Override
     public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return execute().map(mapper);
+        return new MappingIterable<T, U>(this, mapper);
+    }
+
+    @Override
+    public ListDatabasesFluentImpl<T> batchSize(final int batchSize) {
+        // Noop - not supported by ListDatabasesFluent
+        return this;
     }
 
     @Override

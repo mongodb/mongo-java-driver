@@ -117,6 +117,11 @@ class OperationIterable<T> implements MongoIterable<T> {
         return new MappingIterable<T, U>(this, mapper);
     }
 
+    @Override
+    public OperationIterable<T> batchSize(final int batchSize) {
+        throw new UnsupportedOperationException();
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {

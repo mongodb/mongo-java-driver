@@ -67,6 +67,12 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     }
 
     @Override
+    public MongoIterable<V> batchSize(final int batchSize) {
+        iterable.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
         return new MappingIterable<V, W>(this, newMap);
     }

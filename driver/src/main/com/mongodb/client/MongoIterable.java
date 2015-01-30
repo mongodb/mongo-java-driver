@@ -65,4 +65,13 @@ public interface MongoIterable<T> extends Iterable<T> {
      * @return the target
      */
     <A extends Collection<? super T>> A into(A target);
+
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    MongoIterable<T> batchSize(int batchSize);
 }

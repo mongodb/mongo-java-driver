@@ -125,6 +125,12 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
     }
 
     @Override
+    public AwaitingWriteOperationIterable<T, W> batchSize(final int batchSize) {
+        delegated.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         boolean localWriteCompleted;
 

@@ -51,6 +51,7 @@ class ListDatabasesFluentSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor, cursor]);
         def listDatabasesFluent = new ListDatabasesFluentImpl<Document>(Document, codecRegistry, readPreference, executor)
                 .maxTime(1000, MILLISECONDS)
+                .batchSize(1) // batchSize should be silently ignored
 
         when: 'default input should be as expected'
         listDatabasesFluent.into([])  { result, t -> }
