@@ -46,7 +46,7 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncStreamFactory
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
-import static com.mongodb.ClusterFixture.getSSLSettings
+import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.MongoCredential.createCredential
@@ -321,7 +321,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     }
 
     def getCluster(MongoCredential credential, ClusterSettings.Builder builder) {
-        getCluster(credential, new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()), builder)
+        getCluster(credential, new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), builder)
     }
 
     def getAsyncCluster() {

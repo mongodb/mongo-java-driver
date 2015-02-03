@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.getCredentialList;
 import static com.mongodb.ClusterFixture.getPrimary;
-import static com.mongodb.ClusterFixture.getSSLSettings;
+import static com.mongodb.ClusterFixture.getSslSettings;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +36,7 @@ public class SingleServerClusterTest {
     @Before
     public void setUp() throws Exception {
         SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                    getSSLSettings());
+                                                                    getSslSettings());
         ClusterId clusterId = new ClusterId();
         ClusterSettings clusterSettings = ClusterSettings.builder()
                                                .mode(ClusterConnectionMode.SINGLE)

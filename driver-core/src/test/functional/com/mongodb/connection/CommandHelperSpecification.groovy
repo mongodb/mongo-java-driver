@@ -13,14 +13,14 @@ import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
-import static com.mongodb.ClusterFixture.getSSLSettings
+import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.CommandHelper.executeCommandAsync
 
 class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                          getCredentialList(), new NoOpConnectionListener())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()

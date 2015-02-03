@@ -22,7 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -52,7 +52,7 @@ public final class MongoClientOptions {
     private final SocketSettings heartbeatSocketSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final ServerSettings serverSettings;
-    private final SSLSettings sslSettings;
+    private final SslSettings sslSettings;
 
     /**
      * Convenience method to create a Builder.
@@ -80,7 +80,7 @@ public final class MongoClientOptions {
                                                                                       .maxWaitQueueSize(500)
                                                                                       .build();
         private ServerSettings serverSettings = ServerSettings.builder().build();
-        private SSLSettings sslSettings = SSLSettings.builder().build();
+        private SslSettings sslSettings = SslSettings.builder().build();
         private List<MongoCredential> credentialList = Collections.emptyList();
 
         private Builder() {
@@ -165,7 +165,7 @@ public final class MongoClientOptions {
          * @return {@code this}
          * @see MongoClientOptions#getSslSettings() ()
          */
-        public Builder sslSettings(final SSLSettings sslSettings) {
+        public Builder sslSettings(final SslSettings sslSettings) {
             this.sslSettings = notNull("sslSettings", sslSettings);
             return this;
         }
@@ -302,7 +302,7 @@ public final class MongoClientOptions {
      *
      * @return the SSL settings
      */
-    public SSLSettings getSslSettings() {
+    public SslSettings getSslSettings() {
         return sslSettings;
     }
 

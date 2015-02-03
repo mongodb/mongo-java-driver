@@ -33,7 +33,7 @@ import static DefaultServerMonitor.stateHasChanged
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
-import static com.mongodb.ClusterFixture.getSSLSettings
+import static com.mongodb.ClusterFixture.getSslSettings
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
@@ -158,7 +158,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                               }
                                           },
                                           new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                                                      getSSLSettings()),
+                                                                                                      getSslSettings()),
                                                                               getCredentialList(),
                                                                               new NoOpConnectionListener()),
                                           new TestConnectionPool())

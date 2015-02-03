@@ -27,7 +27,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 import static com.mongodb.ClusterFixture.getPrimary;
-import static com.mongodb.ClusterFixture.getSSLSettings;
+import static com.mongodb.ClusterFixture.getSslSettings;
 import static java.util.Arrays.asList;
 
 public class AuthenticatingConnectionTest {
@@ -45,7 +45,7 @@ public class AuthenticatingConnectionTest {
         serverAddress = new ServerAddress(System.getProperty("org.mongodb.test.serverAddress", getPrimary().toString()));
 
         InternalConnectionFactory internalConnectionFactory =
-            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 Collections.<MongoCredential>emptyList(),
                                                 new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
@@ -60,7 +60,7 @@ public class AuthenticatingConnectionTest {
     @Ignore
     public void testMongoCRAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
-            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createMongoCRCredential(userName, source,
                                                                                                password.toCharArray())),
                                                 new NoOpConnectionListener());
@@ -71,7 +71,7 @@ public class AuthenticatingConnectionTest {
     @Ignore
     public void testPlainAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
-            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createPlainCredential(userName, source,
                                                                                              password.toCharArray())),
                                                 new NoOpConnectionListener());
@@ -82,7 +82,7 @@ public class AuthenticatingConnectionTest {
     @Ignore
     public void testGSSAPIAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
-            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+            new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createGSSAPICredential(userName)),
                                                 new NoOpConnectionListener());
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
@@ -93,7 +93,7 @@ public class AuthenticatingConnectionTest {
     public void testMongoX509Authentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                        getSSLSettings()),
+                                                                        getSslSettings()),
                                                 asList(MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,"
                                                                                                  + "O=10Gen,L=New York City,"
                                                                                                  + "ST=New York,C=US")),

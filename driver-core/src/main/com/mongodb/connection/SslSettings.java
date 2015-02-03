@@ -25,7 +25,7 @@ import com.mongodb.annotations.Immutable;
  * @since 3.0
  */
 @Immutable
-public class SSLSettings {
+public class SslSettings {
     private final boolean enabled;
 
     /**
@@ -72,8 +72,8 @@ public class SSLSettings {
          *
          * @return a new SSL settings
          */
-        public SSLSettings build() {
-            return new SSLSettings(this);
+        public SslSettings build() {
+            return new SslSettings(this);
         }
     }
 
@@ -86,7 +86,7 @@ public class SSLSettings {
         return enabled;
     }
 
-    SSLSettings(final Builder builder) {
+    SslSettings(final Builder builder) {
         enabled = builder.enabled;
     }
 

@@ -22,7 +22,7 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
 import io.netty.bootstrap.Bootstrap;
@@ -60,7 +60,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class NettyStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;
-    private final SSLSettings sslSettings;
+    private final SslSettings sslSettings;
     private final EventLoopGroup workerGroup;
     private final ByteBufAllocator allocator;
 
@@ -71,7 +71,7 @@ final class NettyStream implements Stream {
     private volatile PendingReader pendingReader;
     private volatile Throwable pendingException;
 
-    public NettyStream(final ServerAddress address, final SocketSettings settings, final SSLSettings sslSettings,
+    public NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
                        final EventLoopGroup workerGroup, final ByteBufAllocator allocator) {
         this.address = address;
         this.settings = settings;

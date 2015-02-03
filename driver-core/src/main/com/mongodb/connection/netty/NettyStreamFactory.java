@@ -17,7 +17,7 @@
 package com.mongodb.connection.netty;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
@@ -35,7 +35,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class NettyStreamFactory implements StreamFactory {
     private final SocketSettings settings;
-    private final SSLSettings sslSettings;
+    private final SslSettings sslSettings;
     private final EventLoopGroup eventLoopGroup;
     private final ByteBufAllocator allocator;
 
@@ -47,7 +47,7 @@ public class NettyStreamFactory implements StreamFactory {
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
      * @param allocator the allocator to use for ByteBuf instances
      */
-    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings, final NioEventLoopGroup eventLoopGroup,
+    public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final NioEventLoopGroup eventLoopGroup,
                               final ByteBufAllocator allocator) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
@@ -61,7 +61,7 @@ public class NettyStreamFactory implements StreamFactory {
      * @param settings the socket settings
      * @param sslSettings the SSL settings
      */
-    public NettyStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
+    public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
         this(settings, sslSettings, new NioEventLoopGroup(), PooledByteBufAllocator.DEFAULT);
     }
 

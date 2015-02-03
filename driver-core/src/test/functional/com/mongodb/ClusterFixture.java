@@ -33,7 +33,7 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerVersion;
@@ -163,7 +163,7 @@ public final class ClusterFixture {
 
     public static Cluster getCluster() {
         if (cluster == null) {
-            cluster = createCluster(new SocketStreamFactory(getSocketSettings(), getSSLSettings()));
+            cluster = createCluster(new SocketStreamFactory(getSocketSettings(), getSslSettings()));
         }
         return cluster;
     }
@@ -180,7 +180,7 @@ public final class ClusterFixture {
                                                   ServerSettings.builder().build(),
                                                   ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
                                                   streamFactory,
-                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                   getConnectionString().getCredentialList(), null, new JMXConnectionPoolListener(), null);
 
     }
@@ -188,10 +188,10 @@ public final class ClusterFixture {
     public static StreamFactory getAsyncStreamFactory() {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
-        if (streamType.equals("netty") || getSSLSettings().isEnabled()) {
-            return new NettyStreamFactory(getSocketSettings(), getSSLSettings());
+        if (streamType.equals("netty") || getSslSettings().isEnabled()) {
+            return new NettyStreamFactory(getSocketSettings(), getSslSettings());
         } else if (streamType.equals("nio2")) {
-            return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSSLSettings());
+            return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
@@ -201,8 +201,8 @@ public final class ClusterFixture {
         return SocketSettings.builder().applyConnectionString(getConnectionString()).build();
     }
 
-    public static SSLSettings getSSLSettings() {
-        return SSLSettings.builder().applyConnectionString(getConnectionString()).build();
+    public static SslSettings getSslSettings() {
+        return SslSettings.builder().applyConnectionString(getConnectionString()).build();
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {

@@ -20,21 +20,21 @@ import com.mongodb.ConnectionString
 import spock.lang.Specification
 
 
-class SSLSettingsSpecification extends Specification {
+class SslSettingsSpecification extends Specification {
     def 'should default to disabled'() {
         expect:
-        !SSLSettings.builder().build().enabled
+        !SslSettings.builder().build().enabled
     }
 
     def 'should enable'() {
         expect:
-        SSLSettings.builder().enabled(true).build().enabled
+        SslSettings.builder().enabled(true).build().enabled
     }
 
     def 'should apply connection string'() {
         expect:
-        !SSLSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost')).build().enabled
-        !SSLSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=false')).build().enabled
-        SSLSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).build().enabled
+        !SslSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost')).build().enabled
+        !SslSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=false')).build().enabled
+        SslSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).build().enabled
     }
 }

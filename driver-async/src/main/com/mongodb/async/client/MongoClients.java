@@ -22,7 +22,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactory;
@@ -61,7 +61,7 @@ public final class MongoClients {
                                                                                        .build())
                                          .serverSettings(ServerSettings.builder().build())
                                          .credentialList(connectionString.getCredentialList())
-                                         .sslSettings(SSLSettings.builder()
+                                         .sslSettings(SslSettings.builder()
                                                                  .applyConnectionString(connectionString)
                                                                  .build())
                                          .socketSettings(SocketSettings.builder()
@@ -88,7 +88,7 @@ public final class MongoClients {
     }
 
     private static StreamFactory getStreamFactory(final SocketSettings socketSettings,
-                                                  final SSLSettings sslSettings) {
+                                                  final SslSettings sslSettings) {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
         if (streamType.equals("netty")) {

@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.mongodb.ClusterFixture.getSSLSettings;
+import static com.mongodb.ClusterFixture.getSslSettings;
 
 @Ignore
 public class PlainAuthenticatorTest {
@@ -35,7 +35,7 @@ public class PlainAuthenticatorTest {
     private String userName;
     private String source;
     private String password;
-    private StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings());
+    private StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
 
     @Before
     public void setUp() throws Exception {

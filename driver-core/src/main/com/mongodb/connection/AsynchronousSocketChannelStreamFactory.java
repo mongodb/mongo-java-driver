@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SocketSettings settings;
-    private final SSLSettings sslSettings;
+    private final SslSettings sslSettings;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     /**
@@ -37,7 +37,7 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @param settings    the settings for the connection to a MongoDB server
      * @param sslSettings the settings for connecting via SSL
      */
-    public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
+    public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
     }
