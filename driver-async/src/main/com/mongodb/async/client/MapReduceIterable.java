@@ -38,7 +38,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
      */
-    MapReduceIterable<T> collectionName(final String collectionName);
+    MapReduceIterable<T> collectionName(String collectionName);
 
     /**
      * Sets the JavaScript function that follows the reduce method and modifies the output.
@@ -47,7 +47,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
      */
-    MapReduceIterable<T> finalizeFunction(final String finalizeFunction);
+    MapReduceIterable<T> finalizeFunction(String finalizeFunction);
 
     /**
      * Sets the global variables that are accessible in the map, reduce and finalize functions.
@@ -56,7 +56,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReduceIterable<T> scope(final Object scope);
+    MapReduceIterable<T> scope(Object scope);
 
     /**
      * Sets the sort criteria to apply to the query.
@@ -65,7 +65,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    MapReduceIterable<T> sort(final Object sort);
+    MapReduceIterable<T> sort(Object sort);
 
     /**
      * Sets the query filter to apply to the query.
@@ -74,7 +74,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    MapReduceIterable<T> filter(final Object filter);
+    MapReduceIterable<T> filter(Object filter);
 
     /**
      * Sets the limit to apply.
@@ -83,7 +83,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
-    MapReduceIterable<T> limit(final int limit);
+    MapReduceIterable<T> limit(int limit);
 
     /**
      * Sets the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and reduce
@@ -94,7 +94,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return jsMode
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReduceIterable<T> jsMode(final boolean jsMode);
+    MapReduceIterable<T> jsMode(boolean jsMode);
 
     /**
      * Sets whether to include the timing information in the result information.
@@ -102,7 +102,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param verbose whether to include the timing information in the result information.
      * @return this
      */
-    MapReduceIterable<T> verbose(final boolean verbose);
+    MapReduceIterable<T> verbose(boolean verbose);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -112,7 +112,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    MapReduceIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit);
+    MapReduceIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Specify the {@code Action} to be used when writing to a collection.
@@ -120,7 +120,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    MapReduceIterable<T> action(final MapReduceAction action);
+    MapReduceIterable<T> action(MapReduceAction action);
 
     /**
      * Sets the name of the database to output into.
@@ -129,7 +129,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> databaseName(final String databaseName);
+    MapReduceIterable<T> databaseName(String databaseName);
     /**
      * Sets if the output database is sharded
      *
@@ -137,7 +137,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> sharded(final boolean sharded);
+    MapReduceIterable<T> sharded(boolean sharded);
 
     /**
      * Sets if the post-processing step will prevent MongoDB from locking the database.
@@ -148,7 +148,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> nonAtomic(final boolean nonAtomic);
+    MapReduceIterable<T> nonAtomic(boolean nonAtomic);
 
     /**
      * Sets the number of documents to return per batch.

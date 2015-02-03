@@ -36,7 +36,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<T> allowDiskUse(final Boolean allowDiskUse);
+    AggregateIterable<T> allowDiskUse(Boolean allowDiskUse);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -46,7 +46,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    AggregateIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit);
+    AggregateIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets whether the server should use a cursor to return results.
@@ -56,7 +56,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<T> useCursor(final Boolean useCursor);
+    AggregateIterable<T> useCursor(Boolean useCursor);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
