@@ -79,6 +79,16 @@ Example for Maven:
 </dependency>
 ```
 
+For an all-in-one jar (which embeds the core driver and bson):
+
+```xml
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongo-java-driver</artifactId>
+    <version>x.y.z</version>
+</dependency>
+```
+
 Snapshot builds are also published regulary via Sonatype.
 
 Example for Maven:
@@ -91,6 +101,8 @@ Example for Maven:
         </repository>
     </repositories>
 ```
+
+For binaries containing the asynchronous API, see the [driver-async README](driver-async/#binaries).
 
 ## Build
 
