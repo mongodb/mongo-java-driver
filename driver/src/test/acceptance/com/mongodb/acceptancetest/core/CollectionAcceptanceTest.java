@@ -299,7 +299,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
                                      new Document("id", new Document("b", "c")),
                                      new Document("id", new Document("list", mixedList))));
 
-        List<BsonValue> distinct = collection.distinct("id", new Document(), BsonValue.class).into(new ArrayList<BsonValue>());
+        List<BsonValue> distinct = collection.distinct("id", BsonValue.class).into(new ArrayList<BsonValue>());
         assertTrue(distinct.containsAll(asList(new BsonString("a"), new BsonInt32(1), new BsonDocument("b", new BsonString("c")),
                 new BsonDocument("list", new BsonArray(asList(new BsonInt32(2), new BsonString("d"),
                         new BsonDocument("e", new BsonInt32(3))))))));

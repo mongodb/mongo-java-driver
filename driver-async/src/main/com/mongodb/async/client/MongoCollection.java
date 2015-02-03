@@ -22,16 +22,13 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
-import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
-import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
@@ -149,53 +146,39 @@ public interface MongoCollection<T> {
      * Gets the distinct values of the specified field name.
      *
      * @param fieldName the field name
-     * @param filter    the query filter
      * @param clazz     the default class to cast any distinct items into.
      * @param <C>       the target type of the iterable.
      * @return an iterable of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    <C> MongoIterable<C> distinct(String fieldName, Object filter, Class<C> clazz);
-
-    /**
-     * Gets the distinct values of the specified field name.
-     *
-     * @param fieldName       the field name
-     * @param filter          the query filter
-     * @param distinctOptions the options to apply to the distinct operation
-     * @param clazz           the default class to cast any distinct items into.
-     * @param <C>             the target type of the iterable.
-     * @return an iterable of distinct values
-     * @mongodb.driver.manual reference/command/distinct/ Distinct
-     */
-    <C> MongoIterable<C> distinct(String fieldName, Object filter, DistinctOptions distinctOptions, Class<C> clazz);
+    <C> DistinctIterable<C> distinct(String fieldName, Class<C> clazz);
 
     /**
      * Finds all documents in the collection.
      *
-     * @return the fluent find interface
+     * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    FindFluent<T> find();
+    FindIterable<T> find();
 
     /**
      * Finds all documents in the collection.
      *
      * @param clazz the class to decode each document into
      * @param <C>   the target document type of the iterable.
-     * @return the fluent find interface
+     * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> FindFluent<C> find(Class<C> clazz);
+    <C> FindIterable<C> find(Class<C> clazz);
 
     /**
      * Finds all documents in the collection.
      *
      * @param filter the query filter
-     * @return the fluent find interface
+     * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    FindFluent<T> find(Object filter);
+    FindIterable<T> find(Object filter);
 
     /**
      * Finds all documents in the collection.
@@ -203,10 +186,10 @@ public interface MongoCollection<T> {
      * @param filter the query filter
      * @param clazz  the class to decode each document into
      * @param <C>    the target document type of the iterable.
-     * @return the fluent find interface
+     * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> FindFluent<C> find(Object filter, Class<C> clazz);
+    <C> FindIterable<C> find(Object filter, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
@@ -217,7 +200,7 @@ public interface MongoCollection<T> {
      * @return an iterable containing the result of the aggregation operation
      * @mongodb.driver.manual aggregation/ Aggregation
      */
-    MongoIterable<Document> aggregate(List<?> pipeline);
+    AggregateIterable<Document> aggregate(List<?> pipeline);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
@@ -230,53 +213,7 @@ public interface MongoCollection<T> {
      * @return an iterable containing the result of the aggregation operation
      * @mongodb.driver.manual aggregation/ Aggregation
      */
-    <C> MongoIterable<C> aggregate(List<?> pipeline, Class<C> clazz);
-
-    /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
-     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
-     * executed even if the iterable is never iterated.
-     *
-     * @param pipeline the aggregate pipeline
-     * @param options  the options to apply to the aggregation operation
-     * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual aggregation/ Aggregation
-     */
-    MongoIterable<Document> aggregate(List<?> pipeline, AggregateOptions options);
-
-    /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
-     * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
-     * executed even if the iterable is never iterated.
-     *
-     * @param pipeline the aggregate pipeline
-     * @param options  the options to apply to the aggregation operation
-     * @param clazz    the class to decode each document into
-     * @param <C>      the target document type of the iterable.
-     * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual aggregation/ Aggregation
-     */
-    <C> MongoIterable<C> aggregate(List<?> pipeline, AggregateOptions options, Class<C> clazz);
-
-    /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
-     *
-     * @param pipeline the aggregate pipeline
-     * @param callback the callback, which is called when the aggregation completes
-     * @mongodb.driver.manual aggregation/ Aggregation
-     */
-    void aggregateToCollection(List<?> pipeline, SingleResultCallback<Void> callback);
-
-    /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
-     *
-     * @param pipeline the aggregate pipeline
-     * @param options  the options to apply to the aggregation operation
-     * @param callback the callback, which is called when the aggregation completes
-     * @mongodb.driver.manual aggregation/ Aggregation
-     * @mongodb.server.release 2.6
-     */
-    void aggregateToCollection(List<?> pipeline, AggregateOptions options, SingleResultCallback<Void> callback);
+    <C> AggregateIterable<C> aggregate(List<?> pipeline, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified map-reduce function.
@@ -286,20 +223,7 @@ public interface MongoCollection<T> {
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
-    MongoIterable<Document> mapReduce(String mapFunction, String reduceFunction);
-
-    /**
-     * Aggregates documents according to the specified map-reduce function. If the options specify that the results should be output to a
-     * collection, the returned iterable will be a query of the collection that the results were written to.  Note that in this case the
-     * map reduce operation will be executed executed even if the iterable is never iterated.
-     *
-     * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
-     * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
-     * @param options        The specific options for the map-reduce command.
-     * @return an iterable containing the result of the map-reduce operation
-     * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
-     */
-    MongoIterable<Document> mapReduce(String mapFunction, String reduceFunction, MapReduceOptions options);
+    MapReduceIterable<Document> mapReduce(String mapFunction, String reduceFunction);
 
     /**
      * Aggregates documents according to the specified map-reduce function.
@@ -311,35 +235,7 @@ public interface MongoCollection<T> {
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
-    <C> MongoIterable<C> mapReduce(String mapFunction, String reduceFunction, Class<C> clazz);
-
-    /**
-     * Aggregates documents according to the specified map-reduce function. If the options specify that the results should be output to a
-     * collection, the returned iterable will be a query of the collection that the results were written to.  Note that in this case the
-     * map reduce operation will be executed executed even if the iterable is never iterated.
-     *
-     * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
-     * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
-     * @param options        The specific options for the map-reduce command.
-     * @param clazz          the class to decode each resulting document into.
-     * @param <C>            the target document type of the iterable.
-     * @return an iterable containing the result of the map-reduce operation
-     * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
-     */
-    <C> MongoIterable<C> mapReduce(String mapFunction, String reduceFunction, MapReduceOptions options, Class<C> clazz);
-
-    /**
-     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
-     * non-inline result.
-     *
-     * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
-     * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
-     * @param options        The specific options for the map-reduce command.
-     * @param callback       Executed when the map-reduce operation has completed
-     * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
-     */
-    void mapReduceToCollection(String mapFunction, String reduceFunction, MapReduceOptions options,
-                               SingleResultCallback<Void> callback);
+    <C> MapReduceIterable<C> mapReduce(String mapFunction, String reduceFunction, Class<C> clazz);
 
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
@@ -605,20 +501,20 @@ public interface MongoCollection<T> {
     /**
      * Get all the indexes in this collection.
      *
-     * @return the fluent list indexes interface
+     * @return the list indexes iterable interface
      * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    ListIndexesFluent<Document> listIndexes();
+    ListIndexesIterable<Document> listIndexes();
 
     /**
      * Get all the indexes in this collection.
      *
      * @param clazz    the class to decode each document into
      * @param <C>      the target document type of the iterable.
-     * @return the fluent list indexes interface
+     * @return the list indexes iterable interface
      * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    <C> ListIndexesFluent<C> listIndexes(Class<C> clazz);
+    <C> ListIndexesIterable<C> listIndexes(Class<C> clazz);
 
     /**
      * Drops the given index.

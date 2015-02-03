@@ -26,6 +26,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernResult
 import com.mongodb.WriteError
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.bulk.BulkWriteError
 import com.mongodb.bulk.BulkWriteResult
@@ -34,24 +35,19 @@ import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteConcernError
-import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.CreateIndexOptions
-import com.mongodb.client.model.DistinctOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
+import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
-import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
-import com.mongodb.operation.AggregateOperation
-import com.mongodb.operation.AggregateToCollectionOperation
-import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DistinctOperation
@@ -60,18 +56,11 @@ import com.mongodb.operation.DropIndexOperation
 import com.mongodb.operation.FindAndDeleteOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
-import com.mongodb.operation.FindOperation
 import com.mongodb.operation.ListIndexesOperation
-import com.mongodb.operation.MapReduceStatistics
-import com.mongodb.operation.MapReduceToCollectionOperation
-import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
-import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonJavaScript
-import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
@@ -93,7 +82,6 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static spock.util.matcher.HamcrestSupport.expect
-
 
 @SuppressWarnings('ClassSize')
 class MongoCollectionSpecification extends Specification {
@@ -221,7 +209,7 @@ class MongoCollectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<List<String>>()
 
         when:
-        collection.distinct('test', filter, String).into([], futureResultCallback)
+        collection.distinct('test', String).filter(filter).into([], futureResultCallback)
         futureResultCallback.get()
         def operation = executor.getReadOperation() as DistinctOperation
 
@@ -231,7 +219,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<List<String>>()
         filter = new BsonDocument('a', new BsonInt32(1))
-        collection.distinct('test', filter, new DistinctOptions().maxTime(100, MILLISECONDS), String).into([], futureResultCallback)
+        collection.distinct('test', String).filter(filter).maxTime(100, MILLISECONDS).into([], futureResultCallback)
         futureResultCallback.get()
         operation = executor.getReadOperation() as DistinctOperation
 
@@ -239,338 +227,83 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(new DistinctOperation(namespace, 'test', codec).filter(filter).maxTime(100, MILLISECONDS))
     }
 
-    def 'should handle exceptions in distinct correctly'() {
-        given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args ->  args[0].onResult(null, new MongoException('failure')) }
-        }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor])
-        def filter = new BsonDocument()
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def futureResultCallback = new FutureResultCallback<List<String>>()
-
-        when: 'A failed operation'
-        collection.distinct('test', filter, String).into([], futureResultCallback)
-        futureResultCallback.get()
-
-        then:
-        thrown(MongoException)
-
-        when: 'A missing codec should throw immediately'
-        collection.distinct('test', new Document(), Document)
-
-        then:
-        thrown(CodecConfigurationException)
-    }
-
-    def 'should use FindOperation correctly'() {
-        given:
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args -> args[0].onResult(null, null) }
-        }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def documentOperation = new FindOperation(namespace, new DocumentCodec()).filter(new BsonDocument()).slaveOk(true)
-        def bsonOperation = new FindOperation(namespace, new BsonDocumentCodec()).filter(new BsonDocument()).slaveOk(true)
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-
-        when:
-        collection.find().into([], futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(documentOperation)
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.find(BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(bsonOperation)
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.find(new Document('filter', 1)).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(documentOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.find(new Document('filter', 1), BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(bsonOperation.filter(new BsonDocument('filter', new BsonInt32(1))))
-    }
-
-    def 'should use AggregateOperation correctly'() {
-        given:
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args -> args[0].onResult(null, null) }
-        }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-
-        when:
-        collection.aggregate([new Document('$match', 1)]).into([], futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getReadOperation() as AggregateOperation
-
-        then:
-        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                                                             new DocumentCodec()))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.aggregate([new Document('$match', 1)], new AggregateOptions().maxTime(100, MILLISECONDS)).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as AggregateOperation
-
-        then:
-        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                                                             new DocumentCodec()).maxTime(100, MILLISECONDS))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.aggregate([new Document('$match', 1)], BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as AggregateOperation
-
-        then:
-        expect operation, isTheSameAs(new AggregateOperation(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                                                             new BsonDocumentCodec()))
-    }
-
-    def 'aggregate should use AggregateToCollectionOperation correctly'() {
-        given:
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args -> args[0].onResult(null, null) }
-        }
-        def executor = new TestOperationExecutor([null, asyncCursor])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def outCollectionName = 'outColl'
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-        def pipeline = [new Document('$match', 1), new Document('$out', outCollectionName)]
-        def bsonPipeline = new BsonArray([new BsonDocument('$match', new BsonInt32(1)),
-                                          new BsonDocument('$out', new BsonString(outCollectionName))])
-        when:
-        collection.aggregate(pipeline).into([], futureResultCallback)
-        futureResultCallback.get()
-        def aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
-        def findOperation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline))
-        expect findOperation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.getDatabaseName(), outCollectionName),
-                                                            codecRegistry.get(Document))
-                                                  .filter(new BsonDocument()))
-    }
-
-    def 'aggregateToCollection should use AggregateToCollectionOperation correctly'() {
-        given:
-        def executor = new TestOperationExecutor([null, null])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def outCollectionName = 'outColl'
-        def pipeline = [new Document('$match', 1), new Document('$out', outCollectionName)]
-        def bsonPipeline = new BsonArray([new BsonDocument('$match', new BsonInt32(1)),
-                                          new BsonDocument('$out', new BsonString(outCollectionName))])
-        when:
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.aggregateToCollection(pipeline, futureResultCallback)
-        futureResultCallback.get()
-        def aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
-
-        then:
-        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.aggregateToCollection(pipeline, new AggregateOptions().allowDiskUse(true), futureResultCallback)
-        futureResultCallback.get()
-        aggregateOperation = executor.getWriteOperation() as AggregateToCollectionOperation
-
-        then:
-        expect aggregateOperation, isTheSameAs(new AggregateToCollectionOperation(namespace, bsonPipeline).allowDiskUse(true))
-    }
-
-    def 'aggregateToCollection should throw IllegalArgumentException when last state is not $out'() {
+    def 'should create DistinctIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.aggregateToCollection([new Document('$match', 1)], futureResultCallback)
+        def distinctIterable = collection.distinct('field', String)
 
         then:
-        thrown(IllegalArgumentException)
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, String, codecRegistry, readPreference, executor, 'field'))
     }
 
-    def 'should handle exceptions in aggregate correctly'() {
-        given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
-        def executor = new TestOperationExecutor([new MongoException('failure')])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-
-        when: 'The operation fails with an exception'
-        collection.aggregate([new BsonDocument('$match', new BsonInt32(1))], BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-
-        then: 'the future should handle the exception'
-        thrown(MongoException)
-
-        when: 'a codec is missing its acceptable to immediately throw'
-        collection.aggregate([new Document('$match', 1)])
-
-        then:
-        thrown(CodecConfigurationException)
-    }
-
-    def 'should use MapReduceWithInlineResultsOperation correctly'() {
-        given:
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args -> args[0].onResult(null, null) }
-        }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor, asyncCursor])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def documentOperation = new MapReduceWithInlineResultsOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                                                                        new DocumentCodec()).verbose(true)
-        def bsonOperation = new MapReduceWithInlineResultsOperation(namespace, new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                                                                    new BsonDocumentCodec()).verbose(true)
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-
-        when:
-        collection.mapReduce('map', 'reduce').into([], futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
-
-        then:
-        expect operation, isTheSameAs(documentOperation)
-
-        when:
-        def mapReduceOptions = new MapReduceOptions().finalizeFunction('final')
-        futureResultCallback = new FutureResultCallback<List<Document>>()
-        collection.mapReduce('map', 'reduce', mapReduceOptions).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
-
-        then:
-        expect operation, isTheSameAs(documentOperation.finalizeFunction(new BsonJavaScript('final')))
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        collection.mapReduce('map', 'reduce', BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
-
-        then:
-        expect operation, isTheSameAs(bsonOperation)
-
-        when:
-        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        collection.mapReduce('map', 'reduce', mapReduceOptions, BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation
-
-        then:
-        expect operation, isTheSameAs(bsonOperation.finalizeFunction(new BsonJavaScript('final')))
-    }
-
-    def 'mapReduce should use MapReduceToCollectionOperation correctly'() {
-        given:
-        def stats = Stub(MapReduceStatistics)
-        def asyncCursor = Stub(AsyncBatchCursor) {
-            next(_) >> { args -> args[0].onResult(null, null) }
-        }
-        def executor = new TestOperationExecutor([stats, asyncCursor])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedAggregateOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
-                                                                            new BsonJavaScript('reduce'), 'collectionName')
-                .filter(new BsonDocument('filter', new BsonInt32(1)))
-                .finalizeFunction(new BsonJavaScript('final'))
-                .verbose(true)
-        def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-
-        when:
-        collection.mapReduce('map', 'reduce', mapReduceOptions).into([], futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-
-        then:
-        expect operation, isTheSameAs(expectedAggregateOperation)
-
-        when: 'The following read operation'
-        operation = executor.getReadOperation() as FindOperation
-
-        then:
-        expect operation, isTheSameAs(new FindOperation(new MongoNamespace(namespace.databaseName, 'collectionName'), new DocumentCodec())
-                                              .filter(new BsonDocument()))
-   }
-
-    def 'mapReduceToCollection should use MapReduceToCollectionOperation correctly'() {
-        given:
-        def stats = Stub(MapReduceStatistics)
-        def executor = new TestOperationExecutor([stats])
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def mapReduceOptions = new MapReduceOptions('collectionName').filter(new Document('filter', 1)).finalizeFunction('final')
-        def futureResultCallback = new FutureResultCallback<List<Document>>()
-
-        when:
-        collection.mapReduceToCollection('map', 'reduce', mapReduceOptions, futureResultCallback)
-        futureResultCallback.get()
-        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
-
-        then:
-        expect operation, isTheSameAs(new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
-                                                                         new BsonJavaScript('reduce'), 'collectionName')
-                                              .filter(new BsonDocument('filter', new BsonInt32(1)))
-                                              .finalizeFunction(new BsonJavaScript('final'))
-                                              .verbose(true))
-    }
-
-    def 'mapReduceToCollection should throw IllegalArgumentException if inline'() {
+    def 'should create FindIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        collection.mapReduceToCollection('map', 'reduce', new MapReduceOptions(), new FutureResultCallback<List<Document>>())
+        def findIterable = collection.find()
 
         then:
-        thrown(IllegalArgumentException)
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new BsonDocument(),
+                new FindOptions()))
+
+        when:
+        findIterable = collection.find(BsonDocument)
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
+                new BsonDocument(), new FindOptions()))
+
+        when:
+        findIterable = collection.find(new Document())
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new Document(),
+                new FindOptions()))
+
+        when:
+        findIterable = collection.find(new Document(), BsonDocument)
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor, new Document(),
+                new FindOptions()))
     }
 
-    def 'should handle exceptions in mapReduce correctly'() {
+    def 'should use AggregateIterable correctly'() {
         given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
-        def executor = new TestOperationExecutor([new MongoException('failure')])
+        def executor = new TestOperationExecutor([])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
-        when: 'The operation fails with an exception'
-        collection.mapReduce('map', 'reduce', BsonDocument).into([], futureResultCallback)
-        futureResultCallback.get()
-
-        then: 'the future should handle the exception'
-        thrown(MongoException)
-
-        when: 'a codec is missing its acceptable to immediately throw'
-        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        collection.mapReduce('map', 'reduce').into([], futureResultCallback)
+        when:
+        def aggregateIterable = collection.aggregate([new Document('$match', 1)])
 
         then:
-        thrown(CodecConfigurationException)
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference,
+                executor, [new Document('$match', 1)]))
+
+        when:
+        aggregateIterable = collection.aggregate([new Document('$match', 1)], BsonDocument)
+
+        then:
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<BsonDocument>(namespace, BsonDocument, codecRegistry,
+                readPreference, executor, [new Document('$match', 1)]))
+    }
+
+    def 'should create MapReduceIterable correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
+
+        when:
+        def mapReduceIterable = collection.mapReduce('map', 'reduce')
+
+        then:
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor, 'map',
+                'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {

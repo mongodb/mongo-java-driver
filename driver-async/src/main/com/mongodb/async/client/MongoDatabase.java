@@ -160,20 +160,20 @@ public interface MongoDatabase {
     /**
      * Finds all the collections in this database.
      *
-     * @return the fluent list collections interface
+     * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    ListCollectionsFluent<Document> listCollections();
+    ListCollectionsIterable<Document> listCollections();
 
     /**
      * Finds all the collections in this database.
      *
      * @param clazz the class to decode each document into
      * @param <C>   the target document type of the iterable.
-     * @return the fluent list collections interface
+     * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    <C> ListCollectionsFluent<C> listCollections(Class<C> clazz);
+    <C> ListCollectionsIterable<C> listCollections(Class<C> clazz);
 
     /**
      * Create a new collection with the given name.

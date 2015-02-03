@@ -29,20 +29,17 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
@@ -51,25 +48,18 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexOperation;
-import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.MapReduceStatistics;
-import com.mongodb.operation.MapReduceToCollectionOperation;
-import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -80,7 +70,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
@@ -176,188 +165,48 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <C> MongoIterable<C> distinct(final String fieldName, final Object filter, final Class<C> clazz) {
-        return distinct(fieldName, filter, new DistinctOptions(), clazz);
+    public <C> DistinctIterable<C> distinct(final String fieldName, final Class<C> clazz) {
+        return new DistinctIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, fieldName);
     }
 
     @Override
-    public <C> MongoIterable<C> distinct(final String fieldName, final Object filter, final DistinctOptions distinctOptions,
-                                         final Class<C> clazz) {
-        DistinctOperation<C> operation = new DistinctOperation<C>(namespace, fieldName, getCodec(clazz))
-                .filter(asBson(filter))
-                .maxTime(distinctOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
-        return new OperationIterable<C>(operation, readPreference, executor);
-    }
-
-    @Override
-    public FindFluent<T> find() {
+    public FindIterable<T> find() {
         return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public <C> FindFluent<C> find(final Class<C> clazz) {
+    public <C> FindIterable<C> find(final Class<C> clazz) {
         return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public FindFluent<T> find(final Object filter) {
+    public FindIterable<T> find(final Object filter) {
         return find(filter, clazz);
     }
 
     @Override
-    public <C> FindFluent<C> find(final Object filter, final Class<C> clazz) {
-        return new FindFluentImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, filter, new FindOptions());
+    public <C> FindIterable<C> find(final Object filter, final Class<C> clazz) {
+        return new FindIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, filter, new FindOptions());
     }
 
     @Override
-    public MongoIterable<Document> aggregate(final List<?> pipeline) {
-        return aggregate(pipeline, new AggregateOptions(), Document.class);
+    public AggregateIterable<Document> aggregate(final List<?> pipeline) {
+        return aggregate(pipeline, Document.class);
     }
 
     @Override
-    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
-        return aggregate(pipeline, new AggregateOptions(), clazz);
+    public <C> AggregateIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
+        return new AggregateIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, pipeline);
     }
 
     @Override
-    public MongoIterable<Document> aggregate(final List<?> pipeline, final AggregateOptions options) {
-        return aggregate(pipeline, options, Document.class);
+    public MapReduceIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
+        return mapReduce(mapFunction, reduceFunction, Document.class);
     }
 
     @Override
-    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final AggregateOptions options, final Class<C> clazz) {
-        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
-        BsonValue outCollection = getAggregateOutCollection(aggregateList);
-
-        if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
-                                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                       .allowDiskUse(options.getAllowDiskUse());
-            MongoIterable<C> delegated = new FindFluentImpl<C>(new MongoNamespace(namespace.getDatabaseName(),
-                                                                                  outCollection.asString().getValue()),
-                                                               clazz, codecRegistry, primary(), executor, new BsonDocument(),
-                                                               new FindOptions());
-            return new AwaitingWriteOperationIterable<C, Void>(operation, executor, delegated);
-        } else {
-            return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, getCodec(clazz))
-                                            .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                            .allowDiskUse(options.getAllowDiskUse())
-                                            .batchSize(options.getBatchSize())
-                                            .useCursor(options.getUseCursor()),
-                                            readPreference,
-                                            executor);
-        }
-    }
-
-    @Override
-    public void aggregateToCollection(final List<?> pipeline, final SingleResultCallback<Void> callback) {
-        aggregateToCollection(pipeline, new AggregateOptions(), callback);
-    }
-
-    @Override
-    public void aggregateToCollection(final List<?> pipeline, final AggregateOptions options, final SingleResultCallback<Void> callback) {
-        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
-        BsonValue outCollection = getAggregateOutCollection(aggregateList);
-
-        if (outCollection == null) {
-            throw new IllegalArgumentException("The last stage of the aggregation pipeline must be $out");
-        }
-
-        executor.execute(new AggregateToCollectionOperation(namespace, aggregateList)
-                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                         .allowDiskUse(options.getAllowDiskUse()), callback);
-    }
-
-    private BsonValue getAggregateOutCollection(final List<BsonDocument> aggregateList) {
-        return aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
-    }
-
-    @Override
-    public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
-        return mapReduce(mapFunction, reduceFunction, new MapReduceOptions());
-    }
-
-    @Override
-    public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options) {
-        return mapReduce(mapFunction, reduceFunction, options, Document.class);
-    }
-
-    @Override
-    public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final Class<C> clazz) {
-        return mapReduce(mapFunction, reduceFunction, new MapReduceOptions(), clazz);
-    }
-
-    @Override
-    public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options,
-                                          final Class<C> clazz) {
-        if (options.isInline()) {
-            MapReduceWithInlineResultsOperation<C> operation =
-            new MapReduceWithInlineResultsOperation<C>(getNamespace(),
-                                                       new BsonJavaScript(mapFunction),
-                                                       new BsonJavaScript(reduceFunction),
-                                                       getCodec(clazz))
-            .filter(asBson(options.getFilter()))
-            .limit(options.getLimit())
-            .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-            .jsMode(options.isJsMode())
-            .scope(asBson(options.getScope()))
-            .sort(asBson(options.getSort()))
-            .verbose(options.isVerbose());
-            if (options.getFinalizeFunction() != null) {
-                operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
-            }
-            return new OperationIterable<C>(operation, readPreference, executor);
-        } else {
-            MapReduceToCollectionOperation operation = createMapReduceToCollectionOperation(mapFunction, reduceFunction, options);
-
-            String databaseName = options.getDatabaseName() != null ? options.getDatabaseName() : namespace.getDatabaseName();
-            MongoIterable<C> delegated = new FindFluentImpl<C>(new MongoNamespace(databaseName, options.getCollectionName()),
-                                                               clazz, codecRegistry, primary(), executor,
-                                                               new BsonDocument(), new FindOptions());
-            return new AwaitingWriteOperationIterable<C, MapReduceStatistics>(operation, executor, delegated);
-        }
-    }
-
-    @Override
-    public void mapReduceToCollection(final String mapFunction, final String reduceFunction, final MapReduceOptions options,
-                                      final SingleResultCallback<Void> callback) {
-
-        if (options.isInline()) {
-            throw new IllegalArgumentException("The options must specify a non-inline result");
-        }
-
-        executor.execute(createMapReduceToCollectionOperation(mapFunction, reduceFunction, options),
-                         new SingleResultCallback<MapReduceStatistics>() {
-                             @Override
-                             public void onResult(final MapReduceStatistics result, final Throwable t) {
-                                 callback.onResult(null, t);
-                             }
-                         });
-    }
-
-    private MapReduceToCollectionOperation createMapReduceToCollectionOperation(final String mapFunction, final String reduceFunction,
-                                                                                final MapReduceOptions options) {
-        MapReduceToCollectionOperation operation =
-        new MapReduceToCollectionOperation(getNamespace(),
-                                           new BsonJavaScript(mapFunction),
-                                           new BsonJavaScript(reduceFunction),
-                                           options.getCollectionName())
-        .filter(asBson(options.getFilter()))
-        .limit(options.getLimit())
-        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-        .jsMode(options.isJsMode())
-        .scope(asBson(options.getScope()))
-        .sort(asBson(options.getSort()))
-        .verbose(options.isVerbose())
-        .action(options.getAction().getValue())
-        .nonAtomic(options.isNonAtomic())
-        .sharded(options.isSharded())
-        .databaseName(options.getDatabaseName());
-
-        if (options.getFinalizeFunction() != null) {
-            operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
-        }
-        return operation;
+    public <C> MapReduceIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final Class<C> clazz) {
+        return new MapReduceIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, mapFunction, reduceFunction);
     }
 
     @Override
@@ -578,13 +427,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public ListIndexesFluent<Document> listIndexes() {
+    public ListIndexesIterable<Document> listIndexes() {
         return listIndexes(Document.class);
     }
 
     @Override
-    public <C> ListIndexesFluent<C> listIndexes(final Class<C> clazz) {
-        return new ListIndexesFluentImpl<C>(namespace, clazz, codecRegistry, readPreference, executor);
+    public <C> ListIndexesIterable<C> listIndexes(final Class<C> clazz) {
+        return new ListIndexesIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor);
     }
 
     @Override
@@ -683,14 +532,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private BsonDocument asBson(final Object document) {
         return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
-    }
-
-    private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {
-        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
-        for (D obj : pipeline) {
-            aggregateList.add(asBson(obj));
-        }
-        return aggregateList;
     }
 
 }

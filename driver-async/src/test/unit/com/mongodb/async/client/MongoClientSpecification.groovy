@@ -39,17 +39,17 @@ class MongoClientSpecification extends Specification {
         def codecRegistry = client.getDefaultCodecRegistry()
 
         when:
-        def listDatabasesFluent = client.listDatabases()
+        def listDatabasesIterable = client.listDatabases()
 
         then:
-        expect listDatabasesFluent, isTheSameAs(new ListDatabasesFluentImpl<Document>(Document, codecRegistry, primary(),
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<Document>(Document, codecRegistry, primary(),
                 executor))
 
         when:
-        listDatabasesFluent = client.listDatabases(BsonDocument)
+        listDatabasesIterable = client.listDatabases(BsonDocument)
 
         then:
-        expect listDatabasesFluent, isTheSameAs(new ListDatabasesFluentImpl<BsonDocument>(BsonDocument, codecRegistry, primary(),
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(BsonDocument, codecRegistry, primary(),
                 executor))
     }
 

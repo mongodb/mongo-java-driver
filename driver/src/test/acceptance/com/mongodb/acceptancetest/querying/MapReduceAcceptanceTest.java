@@ -19,7 +19,6 @@ package com.mongodb.acceptancetest.querying;
 import com.mongodb.Function;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.model.MapReduceOptions;
 import org.bson.Document;
 import org.junit.Test;
 
@@ -81,10 +80,6 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
     public void shouldPerformMapReduceOnALimitedSetOfData() {
         //given
         insertLabelData();
-        MapReduceOptions options = new MapReduceOptions()
-                                   .filter(new Document("_id", new Document("$gt", 1))) //find all IDs greater than 1
-                                   .sort(new Document("_id", 1))   // sort by ID
-                                   .limit(6); // limit to 6 of the remaining results);
 
         //when
         MongoIterable<Document> results = collection.mapReduce("  function(){ "
@@ -98,7 +93,10 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                + "  for( var i=0; i < values.length; i++ ) "
                                                                + "    sum += values[i]; "
                                                                + "  return sum;"
-                                                               + "}", options);
+                                                               + "}")
+                .filter(new Document("_id", new Document("$gt", 1))) //find all IDs greater than 1
+                .sort(new Document("_id", 1))   // sort by ID
+                .limit(6); // limit to 6 of the remaining results
         // will perform Map Reduce on _ids 2-7
 
         //then
@@ -115,10 +113,6 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
     public void shouldMapIterableOfDocumentsIntoAnObjectOfYourChoice() {
         //given
         insertLabelData();
-        MapReduceOptions options = new MapReduceOptions()
-                                   .filter(new Document("_id", new Document("$gt", 1))) //find all IDs greater than 1
-                                   .sort(new Document("_id", 1))   // sort by ID
-                                   .limit(6); // limit to 6 of the remaining results);
 
         //when
         MongoIterable<Document> results = collection.mapReduce("  function(){ "
@@ -132,7 +126,10 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                + "  for( var i=0; i < values.length; i++ ) "
                                                                + "    sum += values[i]; "
                                                                + "  return sum;"
-                                                               + "}", options);
+                                                               + "}")
+                .filter(new Document("_id", new Document("$gt", 1))) //find all IDs greater than 1
+                .sort(new Document("_id", 1))   // sort by ID
+                .limit(6); // limit to 6 of the remaining results
         // will perform Map Reduce on _ids 2-7
 
         //transforms Documents into LabelCount objects
@@ -175,9 +172,8 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
                                                                "  function(key,values){ "
                                                                + "  return Array.sum(values);"
-                                                               + "}",
-                                                               new MapReduceOptions().filter(new Document("status", "A"))
-                                                              );
+                                                               + "}"
+                                                              ).filter(new Document("status", "A"));
 
         // Then
         List<Document> totalForOrdersWithStatusAPerCustomer = results.into(new ArrayList<Document>());
@@ -205,7 +201,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                                    + "  for( var i=0; i < values.length; i++ ) "
                                                                    + "    sum += values[i]; "
                                                                    + "  return sum;"
-                                                                   + "}", new MapReduceOptions(getCollectionName() + "-output"));
+                                                                   + "}").collectionName(getCollectionName() + "-output");
 
         //then
         List<Document> resultList = results.into(new ArrayList<Document>());

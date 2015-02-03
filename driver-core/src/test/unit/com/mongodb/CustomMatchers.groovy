@@ -49,6 +49,8 @@ class CustomMatchers {
                 if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
                     return a1.collect { a -> i++; compare(a, e1[i]) }.every { it }
+                } else if (a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
+                    return compare(a1, e1)
                 }
                 return false
             }
@@ -85,6 +87,8 @@ class CustomMatchers {
                             describer(a, e1[i], description)
                         }
                     }.every { it }
+                } else if (a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
+                    return compare(a1, e1, description)
                 }
                 description.appendText("different values in $it : $e1 != $a1\n")
                 return false

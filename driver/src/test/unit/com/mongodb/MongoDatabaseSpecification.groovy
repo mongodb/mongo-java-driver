@@ -145,17 +145,17 @@ class MongoDatabaseSpecification extends Specification {
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def listCollectionFluent = database.listCollections()
+        def listCollectionIterable = database.listCollections()
 
         then:
-        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<Document>(name, Document, codecRegistry, primary(),
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(name, Document, codecRegistry, primary(),
                 executor))
 
         when:
-        listCollectionFluent = database.listCollections(BsonDocument)
+        listCollectionIterable = database.listCollections(BsonDocument)
 
         then:
-        expect listCollectionFluent, isTheSameAs(new ListCollectionsFluentImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
                 executor))
     }
 

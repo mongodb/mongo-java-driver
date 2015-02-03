@@ -66,17 +66,17 @@ public interface MongoClient extends Closeable {
     /**
      * Gets the list of databases
      *
-     * @return the fluent list databases interface
+     * @return the list databases iterable interface
      */
-    ListDatabasesFluent<Document> listDatabases();
+    ListDatabasesIterable<Document> listDatabases();
 
     /**
      * Gets the list of databases
      *
      * @param clazz the class to cast the database documents to
      * @param <T>   the type of the class to use instead of {@code Document}.
-     * @return the fluent list databases interface
+     * @return the list databases iterable interface
      */
-    <T> ListDatabasesFluent<T> listDatabases(Class<T> clazz);
+    <T> ListDatabasesIterable<T> listDatabases(Class<T> clazz);
 
 }

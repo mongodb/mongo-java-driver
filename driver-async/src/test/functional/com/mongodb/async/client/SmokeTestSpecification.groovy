@@ -72,7 +72,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&insertMany, [new Document('id', 'a'), new Document('id', 'b'), new Document('id', 'c')]) == null
 
         then: 'Distinct'
-        run(collection.distinct('id', new Document(), String).&into, []) == ['a', 'b', 'c']
+        run(collection.distinct('id', String).&into, []) == ['a', 'b', 'c']
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })

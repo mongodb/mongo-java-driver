@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.client.ListDatabasesFluent;
+import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -292,7 +292,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @return the list of databases
      * @since 3.0
      */
-    public ListDatabasesFluent<Document> listDatabases() {
+    public ListDatabasesIterable<Document> listDatabases() {
         return listDatabases(Document.class);
     }
 
@@ -304,8 +304,8 @@ public class MongoClient extends Mongo implements Closeable {
      * @return the list of databases
      * @since 3.0
      */
-    public <T> ListDatabasesFluent<T> listDatabases(final Class<T> clazz) {
-        return new ListDatabasesFluentImpl<T>(clazz, getMongoClientOptions().getCodecRegistry(),
+    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
+        return new ListDatabasesIterableImpl<T>(clazz, getMongoClientOptions().getCodecRegistry(),
                 ReadPreference.primary(), createOperationExecutor());
     }
 

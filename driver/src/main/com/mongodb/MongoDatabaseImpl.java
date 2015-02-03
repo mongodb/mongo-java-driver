@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.client.ListCollectionsFluent;
+import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
@@ -133,13 +133,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public ListCollectionsFluent<Document> listCollections() {
+    public ListCollectionsIterable<Document> listCollections() {
         return listCollections(Document.class);
     }
 
     @Override
-    public <C> ListCollectionsFluent<C> listCollections(final Class<C> clazz) {
-        return new ListCollectionsFluentImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
+    public <C> ListCollectionsIterable<C> listCollections(final Class<C> clazz) {
+        return new ListCollectionsIterableImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override
