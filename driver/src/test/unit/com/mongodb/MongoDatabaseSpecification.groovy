@@ -155,8 +155,8 @@ class MongoDatabaseSpecification extends Specification {
         listCollectionIterable = database.listCollections(BsonDocument)
 
         then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument, codecRegistry, primary(),
-                executor))
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument, codecRegistry,
+                primary(), executor))
     }
 
     def 'should use CreateCollectionOperation correctly'() {

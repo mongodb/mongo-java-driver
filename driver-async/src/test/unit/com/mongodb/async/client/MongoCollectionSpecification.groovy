@@ -248,8 +248,8 @@ class MongoCollectionSpecification extends Specification {
         def findIterable = collection.find()
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new BsonDocument(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
+                new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(BsonDocument)
@@ -269,8 +269,8 @@ class MongoCollectionSpecification extends Specification {
         findIterable = collection.find(new Document(), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor, new Document(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
+                new Document(), new FindOptions()))
     }
 
     def 'should use AggregateIterable correctly'() {
@@ -302,8 +302,8 @@ class MongoCollectionSpecification extends Specification {
         def mapReduceIterable = collection.mapReduce('map', 'reduce')
 
         then:
-        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor, 'map',
-                'reduce'))
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
+                'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {

@@ -195,8 +195,8 @@ class MongoCollectionSpecification extends Specification {
         def findIterable = collection.find()
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new BsonDocument(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
+                new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(BsonDocument)
@@ -216,8 +216,8 @@ class MongoCollectionSpecification extends Specification {
         findIterable = collection.find(new Document(), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor, new Document(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
+                new Document(), new FindOptions()))
     }
 
     def 'should create AggregateIterable correctly'() {
@@ -249,8 +249,8 @@ class MongoCollectionSpecification extends Specification {
         def mapReduceIterable = collection.mapReduce('map', 'reduce')
 
         then:
-        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor, 'map',
-                'reduce'))
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
+                'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
@@ -428,7 +428,7 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, null, [])]) | UpdateResult.acknowledged(1, null, null)
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1, [])])    | UpdateResult.acknowledged(1, 1, null)
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1,
-                                                                              [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32( 42))])]) | UpdateResult.acknowledged(1, 1, new BsonInt32(42))
+                                     [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32( 42))])]) | UpdateResult.acknowledged(1, 1, new BsonInt32(42))
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])                   | UpdateResult.unacknowledged()
     }
 
