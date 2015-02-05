@@ -176,7 +176,6 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getLocalThreshold()
          * @since 2.13.0
          */
-        @Deprecated
         public Builder localThreshold(final int localThreshold) {
             if (localThreshold < 0) {
                 throw new IllegalArgumentException("localThreshold must be greater than or equal to 0");
