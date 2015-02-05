@@ -19,9 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
-import com.mongodb.ServerCursor;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -29,25 +26,22 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.QueryResult;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
-import org.bson.codecs.BsonDocumentCodec;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DecoderContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -63,7 +57,6 @@ import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotZero;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static java.lang.String.format;
 
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
@@ -174,13 +167,13 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                                              commandTransformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
-                                source.getServerDescription().getAddress(), batchSize));
+                                                                                    source.getServerDescription().getAddress(), batchSize));
                     }
                 } else {
-                    return new FilteringBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
-                            asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,
-                            binding.getReadPreference().isSlaveOk(), false, false,  false, false, false, new BsonDocumentCodec()), 0,
-                            batchSize, new BsonDocumentCodec(), source));
+                    return new AggregateOperation<T>(getNamespace(), createAggregatePipeline(), decoder)
+                           .batchSize(getBatchSize())
+                           .maxTime(getMaxTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
+                           .execute(source, connection, binding.getReadPreference());
                 }
             }
         });
@@ -210,21 +203,10 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                     }
                                 });
                     } else {
-                        connection.queryAsync(getNamespace(), asQueryDocument(connection.getDescription(), binding.getReadPreference()),
-                                null, batchSize, 0, binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
-                                new BsonDocumentCodec(), new SingleResultCallback<QueryResult<BsonDocument>>() {
-                                    @Override
-                                    public void onResult(final QueryResult<BsonDocument> result, final Throwable t) {
-                                        if (t != null) {
-                                            wrappedCallback.onResult(null, t);
-                                        } else {
-                                            wrappedCallback.onResult(new FilteringAsyncBatchCursor(
-                                                    new AsyncQueryBatchCursor<BsonDocument>(result, 0,
-                                                            batchSize, new BsonDocumentCodec(), source)
-                                            ), null);
-                                        }
-                                    }
-                                });
+                        new AggregateOperation<T>(getNamespace(), createAggregatePipeline(), decoder)
+                        .batchSize(getBatchSize())
+                        .maxTime(getMaxTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
+                        .executeAsync(source, connection, binding.getReadPreference(), wrappedCallback);
                     }
                 }
             }
@@ -273,182 +255,30 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return command;
     }
 
-    private BsonDocument asQueryDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
-        BsonDocument document = new BsonDocument();
-        BsonDocument query = filter != null ? filter : new BsonDocument();
-        if (query.containsKey("name")) {
-            if (!query.isString("name")) {
-                throw new IllegalArgumentException("When filtering collections on MongoDB versions < 3.0 the name field "
-                        + "must be a string");
-            }
-            query.append("name", new BsonString(format("%s.%s", databaseName, filter.getString("name").getValue())));
-        }
-        document.put("$query", query);
-        if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
-            document.put("$readPreference", readPreference.toDocument());
-        }
-        if (maxTimeMS > 0) {
-            document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        return document;
-    }
-
     private Codec<BsonDocument> createCommandDecoder() {
         return CommandResultDocumentCodec.create(decoder, "firstBatch");
     }
 
-    private final class FilteringBatchCursor implements BatchCursor<T> {
-
-        private final BatchCursor<BsonDocument> delegate;
-        private List<T> fixedAndFilteredBatch;
-
-        private FilteringBatchCursor(final BatchCursor<BsonDocument> delegate) {
-            this.delegate = delegate;
+    private List<BsonDocument> createAggregatePipeline() {
+        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        // exclude anything with a '$'
+        pipeline.add(new BsonDocument("$match",
+                                      new BsonDocument("name", new BsonRegularExpression("^[^$]*$"))));
+        pipeline.add(new BsonDocument("$sort",
+                                      new BsonDocument("name", new BsonInt32(1))));
+        // Project a full namespace to just the collection name
+        pipeline.add(new BsonDocument("$project",
+                                      new BsonDocument()
+                                      .append("name",
+                                              new BsonDocument("$substr",
+                                                               new BsonArray(Arrays.<BsonValue>asList(new BsonString("$name"),
+                                                                                                      new BsonInt32(databaseName.length()
+                                                                                                                    + 1),
+                                                                                                      new BsonInt32(-1)))))
+                                      .append("options", new BsonInt32(1))));
+        if (filter != null) {
+            pipeline.add(new BsonDocument("$match", filter));
         }
-
-        @Override
-        public void remove() {
-            delegate.remove();
-        }
-
-        @Override
-        public void close() {
-            delegate.close();
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (fixedAndFilteredBatch != null) {
-                return true;
-            }
-            while (delegate.hasNext()) {
-                List<T> next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
-
-                if (!next.isEmpty()) {
-                    fixedAndFilteredBatch = next;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        @Override
-        public List<T> next() {
-            List<T> next = fixedAndFilteredBatch;
-            fixedAndFilteredBatch = null;
-            while (next == null || next.isEmpty()) {
-                next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
-            }
-            return next;
-        }
-
-        @Override
-        public void setBatchSize(final int batchSize) {
-            delegate.setBatchSize(batchSize);
-        }
-
-        @Override
-        public int getBatchSize() {
-            return delegate.getBatchSize();
-        }
-
-        @Override
-        public List<T> tryNext() {
-            if (fixedAndFilteredBatch != null) {
-                List<T> next = fixedAndFilteredBatch;
-                fixedAndFilteredBatch = null;
-                return next;
-            }
-
-            List<BsonDocument> nextBatch = delegate.tryNext();
-            while (nextBatch != null) {
-                List<T> next = fixAndFilterDocumentsFromSystemNamespace(nextBatch);
-                if (!next.isEmpty()) {
-                    return next;
-                }
-                nextBatch = delegate.tryNext();
-            }
-            return null;
-        }
-
-        @Override
-        public ServerCursor getServerCursor() {
-            return delegate.getServerCursor();
-        }
-
-        @Override
-        public ServerAddress getServerAddress() {
-            return delegate.getServerAddress();
-        }
-
-    }
-
-    private final class FilteringAsyncBatchCursor implements AsyncBatchCursor<T> {
-
-        private final AsyncBatchCursor<BsonDocument> delegate;
-
-        private FilteringAsyncBatchCursor(final AsyncBatchCursor<BsonDocument> delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void next(final SingleResultCallback<List<T>> callback) {
-            delegate.next(new SingleResultCallback<List<BsonDocument>>() {
-                @Override
-                public void onResult(final List<BsonDocument> result, final Throwable t) {
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else if (result == null) {
-                        callback.onResult(null, null);
-                    } else {
-                        List<T> fixedAndFilteredBatch = fixAndFilterDocumentsFromSystemNamespace(result);
-                        if (fixedAndFilteredBatch.isEmpty()) {
-                            next(callback);
-                        } else {
-                            callback.onResult(fixedAndFilteredBatch, null);
-                        }
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void setBatchSize(final int batchSize) {
-            delegate.setBatchSize(batchSize);
-        }
-
-        @Override
-        public int getBatchSize() {
-            return delegate.getBatchSize();
-        }
-
-        @Override
-        public boolean isClosed() {
-            return delegate.isClosed();
-        }
-
-        @Override
-        public void close() {
-            delegate.close();
-        }
-    }
-
-    // Skip documents whose collection name contains a '$'
-    // For all others, remove database prefix from the value of the name field
-    private List<T> fixAndFilterDocumentsFromSystemNamespace(final List<BsonDocument> unstripped) {
-        List<T> stripped = new ArrayList<T>(unstripped.size());
-        String prefix = databaseName + ".";
-        for (BsonDocument cur : unstripped) {
-            String name = cur.getString("name").getValue();
-            if (name.startsWith(prefix)) {
-                String collectionName = name.substring(prefix.length());
-                if (!collectionName.contains("$")) {
-                    cur.put("name", new BsonString(collectionName));
-                    stripped.add(decoder.decode(new BsonDocumentReader(cur), DecoderContext.builder().build()));
-                }
-            }
-        }
-        return stripped;
+        return pipeline;
     }
 }
