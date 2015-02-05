@@ -482,6 +482,8 @@ public interface MongoCollection<T> {
     void dropCollection(SingleResultCallback<Void> callback);
 
     /**
+     * Creates an index.
+     *
      * @param key      an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
      *                 registered
      * @param callback the callback that is completed once the index has been created
@@ -490,6 +492,8 @@ public interface MongoCollection<T> {
     void createIndex(Object key, SingleResultCallback<Void> callback);
 
     /**
+     * Creates an index.
+     *
      * @param key      an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
      *                 registered
      * @param options  the options for the index

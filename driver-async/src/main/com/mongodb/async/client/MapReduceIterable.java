@@ -115,7 +115,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
     MapReduceIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
-     * Specify the {@code Action} to be used when writing to a collection.
+     * Specify the {@code MapReduceAction} to be used when writing to a collection.
      *
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
@@ -142,7 +142,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
     /**
      * Sets if the post-processing step will prevent MongoDB from locking the database.
      *
-     * Valid only with the {@code Action.MERGE} or {@code Action.REDUCE} actions.
+     * Valid only with the {@code MapReduceAction.MERGE} or {@code MapReduceAction.REDUCE} actions.
      *
      * @param nonAtomic if the post-processing step will prevent MongoDB from locking the database.
      * @return this
