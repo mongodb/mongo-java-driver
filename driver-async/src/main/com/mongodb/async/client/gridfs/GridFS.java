@@ -6,7 +6,9 @@ import org.bson.types.ObjectId;
 
 import java.util.List;
 
-
+/**
+ * Implementation of GridFS - a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB.
+ */
 public interface GridFS {
 
     /**

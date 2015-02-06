@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * GridFS implementation.
+ */
 public class GridFSImpl implements GridFS {
 
     private static final int DEFAULT_CHUNK_SIZE = 255 * 1024;
@@ -25,6 +28,12 @@ public class GridFSImpl implements GridFS {
     private final MongoCollection<Document> chunksCollection;
     private final String bucketName;
 
+    /**
+     * Constructor.
+     * @param database the MongoDatabase
+     * @param bucket an optional bucket name
+     * @param chunkSize an optional chunk size in kB that is used for all new GridFSFiles
+     */
     public GridFSImpl(final MongoDatabase database, final String bucket, final Integer chunkSize) {
 
         this.database = database;
@@ -41,6 +50,7 @@ public class GridFSImpl implements GridFS {
 
     }
 
+    @Override
     public void createIndex(final SingleResultCallback<Void> callback) {
 
         chunksCollection.createIndex(new Document("files_id", 1).append("n", 1), new CreateIndexOptions().unique(true),

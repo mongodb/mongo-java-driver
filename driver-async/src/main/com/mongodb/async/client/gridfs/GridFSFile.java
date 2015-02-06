@@ -15,6 +15,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A class to represent data stored in GridFS.
+ */
 public class GridFSFile {
 
     private ObjectId id;
@@ -40,8 +43,15 @@ public class GridFSFile {
      */
     private int positionInChunk = 0;
 
+    /**
+     * Default constructor.
+     */
     GridFSFile() { }
 
+    /**
+     * Constructor that explicitly sets the chunk size of this GridFSFile.
+     * @param chunkSize the chunkSize in kB.
+     */
     GridFSFile(final int chunkSize) {
         this.chunkSize = chunkSize;
     }

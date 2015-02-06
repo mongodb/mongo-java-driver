@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A Codec for the GridFSFile.
+ */
 public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
 
     private static final String ID_FIELD_NAME = "_id";
@@ -27,6 +30,10 @@ public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
     private final CodecRegistry registry;
     private final BsonTypeClassMap bsonTypeClassMap;
 
+    /**
+     * Constructor.
+     * @param registry CodecRegistry
+     */
     public GridFSFileCodec(final CodecRegistry registry) {
         this.registry = Assertions.notNull("registry", registry);
         this.bsonTypeClassMap = new BsonTypeClassMap();
