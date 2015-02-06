@@ -22,6 +22,11 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.model.CreateCollectionOptions
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonRegularExpression
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -33,6 +38,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
@@ -89,6 +95,59 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         !names.contains(null)
         names.findAll { it.contains('$') }.isEmpty()
     }
+
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    def 'should throw if filtering on name with something other than a string'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .filter(new BsonDocument('name', new BsonRegularExpression('^[^$]*$')))
+
+        when:
+        operation.execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should filter collection names if a name filter is specified'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .filter(new BsonDocument('name', new BsonString('collection2')))
+        def helper = getCollectionHelper()
+        def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
+        def codec = new DocumentCodec()
+        helper.insertDocuments(codec, ['a': 1] as Document)
+        helper2.insertDocuments(codec, ['a': 1] as Document)
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collections = cursor.next()
+        def names = collections*.get('name')
+
+        then:
+        names.contains('collection2')
+        !names.contains(collectionName)
+    }
+
+    def 'should filter capped collections'() {
+        given:
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+                .filter(new BsonDocument('options.capped', BsonBoolean.TRUE))
+        def helper = getCollectionHelper()
+        getCollectionHelper().create('collection3', new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        def codec = new DocumentCodec()
+        helper.insertDocuments(codec, ['a': 1] as Document)
+
+        when:
+        def cursor = operation.execute(getBinding())
+        def collections = cursor.next()
+        def names = collections*.get('name')
+
+        then:
+        names.contains('collection3')
+        !names.contains(collectionName)
+    }
+
 
     @Category(Async)
     def 'should return collection names if a collection exists asynchronously'() {
