@@ -22,8 +22,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
-import org.bson.BsonDocument
-import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -90,26 +88,6 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.containsAll([collectionName, 'collection2'])
         !names.contains(null)
         names.findAll { it.contains('$') }.isEmpty()
-    }
-
-    def 'should filter collection names if a filter is specified'() {
-        given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
-                .filter(new BsonDocument('name', new BsonString('collection2')))
-        def helper = getCollectionHelper()
-        def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
-        def codec = new DocumentCodec()
-        helper.insertDocuments(codec, ['a': 1] as Document)
-        helper2.insertDocuments(codec, ['a': 1] as Document)
-
-        when:
-        def cursor = operation.execute(getBinding())
-        def collections = cursor.next()
-        def names = collections*.get('name')
-
-        then:
-        names.contains('collection2')
-        !names.contains(collectionName)
     }
 
     @Category(Async)

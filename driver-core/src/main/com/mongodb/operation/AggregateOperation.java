@@ -19,7 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -195,7 +194,10 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return execute(source, connection, binding.getReadPreference());
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(connection),
+                                                     CommandResultDocumentCodec.create(decoder,
+                                                                                       getFieldNameWithResults(connection)),
+                                                     connection, binding.getReadPreference(), transformer(source, connection));
             }
         });
     }
@@ -208,25 +210,13 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeAsync(source, connection, binding.getReadPreference(), releasingCallback(callback, source, connection));
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(connection),
+                                                       CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection)),
+                                                       connection, binding.getReadPreference(), asyncTransformer(source, connection),
+                                                       releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
         });
-    }
-
-    BatchCursor<T> execute(final ConnectionSource source, final Connection connection, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(connection),
-                                             CommandResultDocumentCodec.create(decoder,
-                                                                               getFieldNameWithResults(connection)),
-                                             connection, readPreference, transformer(source, connection));
-    }
-
-    void executeAsync(final AsyncConnectionSource source, final Connection connection, final ReadPreference readPreference,
-                      final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(connection),
-                                           CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection)),
-                                           connection, readPreference, asyncTransformer(source, connection),
-                                           errorHandlingCallback(callback));
     }
 
     /**
