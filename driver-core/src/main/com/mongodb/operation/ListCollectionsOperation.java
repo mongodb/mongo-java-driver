@@ -31,10 +31,12 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
@@ -64,6 +66,7 @@ import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotZero;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 /**
  * An operation that provides a cursor allowing iteration through the metadata of all the collections in a database.  This operation
@@ -177,7 +180,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                 source.getServerDescription().getAddress(), batchSize));
                     }
                 } else {
-                    return new FilteringBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
+                    return new ProjectingBatchCursor(new QueryBatchCursor<BsonDocument>(connection.query(getNamespace(),
                             asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,
                             binding.getReadPreference().isSlaveOk(), false, false,  false, false, false, new BsonDocumentCodec()), 0,
                             batchSize, new BsonDocumentCodec(), source));
@@ -218,7 +221,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         if (t != null) {
                                             wrappedCallback.onResult(null, t);
                                         } else {
-                                            wrappedCallback.onResult(new FilteringAsyncBatchCursor(
+                                            wrappedCallback.onResult(new ProjectingAsyncBatchCursor(
                                                     new AsyncQueryBatchCursor<BsonDocument>(result, 0,
                                                             batchSize, new BsonDocumentCodec(), source)
                                             ), null);
@@ -275,14 +278,26 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     private BsonDocument asQueryDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         BsonDocument document = new BsonDocument();
-        BsonDocument query = filter != null ? filter : new BsonDocument();
-        if (query.containsKey("name")) {
-            if (!query.isString("name")) {
-                throw new IllegalArgumentException("When filtering collections on MongoDB versions < 3.0 the name field "
-                        + "must be a string");
+        BsonDocument transformedFilter = null;
+        if (filter != null) {
+            if (filter.containsKey("name")) {
+                if (!filter.isString("name")) {
+                    throw new IllegalArgumentException("When filtering collections on MongoDB versions < 3.0 the name field "
+                                                       + "must be a string");
+                }
+                transformedFilter = new BsonDocument();
+                transformedFilter.putAll(filter);
+                transformedFilter.put("name", new BsonString(format("%s.%s", databaseName, filter.getString("name").getValue())));
+            } else {
+                transformedFilter = filter;
             }
-            query.append("name", new BsonString(format("%s.%s", databaseName, filter.getString("name").getValue())));
         }
+        BsonDocument indexExcludingRegex = new BsonDocument("name", new BsonRegularExpression("^[^$]*$"));
+        BsonDocument query = transformedFilter == null ? indexExcludingRegex
+                                                       : new BsonDocument("$and", new BsonArray(asList(indexExcludingRegex,
+                                                                                                       transformedFilter)));
+
+
         document.put("$query", query);
         if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
@@ -297,12 +312,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return CommandResultDocumentCodec.create(decoder, "firstBatch");
     }
 
-    private final class FilteringBatchCursor implements BatchCursor<T> {
+    private final class ProjectingBatchCursor implements BatchCursor<T> {
 
         private final BatchCursor<BsonDocument> delegate;
-        private List<T> fixedAndFilteredBatch;
 
-        private FilteringBatchCursor(final BatchCursor<BsonDocument> delegate) {
+        private ProjectingBatchCursor(final BatchCursor<BsonDocument> delegate) {
             this.delegate = delegate;
         }
 
@@ -318,29 +332,12 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
         @Override
         public boolean hasNext() {
-            if (fixedAndFilteredBatch != null) {
-                return true;
-            }
-            while (delegate.hasNext()) {
-                List<T> next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
-
-                if (!next.isEmpty()) {
-                    fixedAndFilteredBatch = next;
-                    return true;
-                }
-            }
-
-            return false;
+            return delegate.hasNext();
         }
 
         @Override
         public List<T> next() {
-            List<T> next = fixedAndFilteredBatch;
-            fixedAndFilteredBatch = null;
-            while (next == null || next.isEmpty()) {
-                next = fixAndFilterDocumentsFromSystemNamespace(delegate.next());
-            }
-            return next;
+            return projectFromFullNamespaceToCollectionName(delegate.next());
         }
 
         @Override
@@ -355,21 +352,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
         @Override
         public List<T> tryNext() {
-            if (fixedAndFilteredBatch != null) {
-                List<T> next = fixedAndFilteredBatch;
-                fixedAndFilteredBatch = null;
-                return next;
-            }
-
-            List<BsonDocument> nextBatch = delegate.tryNext();
-            while (nextBatch != null) {
-                List<T> next = fixAndFilterDocumentsFromSystemNamespace(nextBatch);
-                if (!next.isEmpty()) {
-                    return next;
-                }
-                nextBatch = delegate.tryNext();
-            }
-            return null;
+           return projectFromFullNamespaceToCollectionName(delegate.tryNext());
         }
 
         @Override
@@ -384,11 +367,11 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     }
 
-    private final class FilteringAsyncBatchCursor implements AsyncBatchCursor<T> {
+    private final class ProjectingAsyncBatchCursor implements AsyncBatchCursor<T> {
 
         private final AsyncBatchCursor<BsonDocument> delegate;
 
-        private FilteringAsyncBatchCursor(final AsyncBatchCursor<BsonDocument> delegate) {
+        private ProjectingAsyncBatchCursor(final AsyncBatchCursor<BsonDocument> delegate) {
             this.delegate = delegate;
         }
 
@@ -399,15 +382,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 public void onResult(final List<BsonDocument> result, final Throwable t) {
                     if (t != null) {
                         callback.onResult(null, t);
-                    } else if (result == null) {
-                        callback.onResult(null, null);
                     } else {
-                        List<T> fixedAndFilteredBatch = fixAndFilterDocumentsFromSystemNamespace(result);
-                        if (fixedAndFilteredBatch.isEmpty()) {
-                            next(callback);
-                        } else {
-                            callback.onResult(fixedAndFilteredBatch, null);
-                        }
+                        callback.onResult(projectFromFullNamespaceToCollectionName(result), null);
                     }
                 }
             });
@@ -434,20 +410,17 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         }
     }
 
-    // Skip documents whose collection name contains a '$'
-    // For all others, remove database prefix from the value of the name field
-    private List<T> fixAndFilterDocumentsFromSystemNamespace(final List<BsonDocument> unstripped) {
+    private List<T> projectFromFullNamespaceToCollectionName(final List<BsonDocument> unstripped) {
+        if (unstripped == null) {
+            return null;
+        }
         List<T> stripped = new ArrayList<T>(unstripped.size());
         String prefix = databaseName + ".";
         for (BsonDocument cur : unstripped) {
             String name = cur.getString("name").getValue();
-            if (name.startsWith(prefix)) {
-                String collectionName = name.substring(prefix.length());
-                if (!collectionName.contains("$")) {
-                    cur.put("name", new BsonString(collectionName));
-                    stripped.add(decoder.decode(new BsonDocumentReader(cur), DecoderContext.builder().build()));
-                }
-            }
+            String collectionName = name.substring(prefix.length());
+            cur.put("name", new BsonString(collectionName));
+            stripped.add(decoder.decode(new BsonDocumentReader(cur), DecoderContext.builder().build()));
         }
         return stripped;
     }
