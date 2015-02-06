@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Util {
     /**
-     * Converts the given byte buffer to a hexadecimal string using {@link Integer#toHexString(int)}.
+     * Converts the given byte buffer to a hexadecimal string using {@link java.lang.Integer#toHexString(int)}.
      *
      * @param bytes the bytes to convert to hex
      * @return a String containing the hex representation of the given bytes.

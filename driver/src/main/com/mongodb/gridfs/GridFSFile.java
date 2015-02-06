@@ -34,7 +34,7 @@ import static java.util.Arrays.asList;
 /**
  * The abstract class representing a GridFS file.
  *
- * @mongodb.driver.manual core/gridfs/GridFS
+ * @mongodb.driver.manual core/gridfs/ GridFS
  */
 public abstract class GridFSFile implements DBObject {
 
