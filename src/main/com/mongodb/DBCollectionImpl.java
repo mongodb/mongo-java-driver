@@ -63,7 +63,17 @@ class DBCollectionImpl extends DBCollection {
     @Override
     QueryResultIterator find(DBObject ref, DBObject fields, int numToSkip, int batchSize, int limit, int options,
                              ReadPreference readPref, DBDecoder decoder) {
-        return find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, DefaultDBEncoder.FACTORY.create());
+
+        DBEncoderFactory factory = getDBEncoderFactory();
+        DBEncoder encoder = null;
+
+        if (factory == null) {
+            encoder = DefaultDBEncoder.FACTORY.create();
+        } else {
+            encoder = factory.create();
+        }
+
+        return find(ref, fields, numToSkip, batchSize, limit, options, readPref, decoder, encoder);
     }
 
     @Override
