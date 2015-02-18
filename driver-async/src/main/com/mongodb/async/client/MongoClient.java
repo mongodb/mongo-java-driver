@@ -26,7 +26,7 @@ import java.io.Closeable;
  * or a sharded cluster.  Instance of this class are responsible for maintaining an up-to-date state of the cluster,
  * and possibly cache resources related to this, including background threads for monitoring, and connection pools.
  * <p>
- * Instance of this class server as factories for {@code MongoDatabase} instances.
+ * Instance of this class serve as factories for {@code MongoDatabase} instances.
  * </p>
  * @since 3.0
  */
