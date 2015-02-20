@@ -27,6 +27,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
@@ -90,10 +91,10 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
-        return listDatabases().map(new Function<Document, String>() {
+        return listDatabases(BsonDocument.class).map(new Function<BsonDocument, String>() {
             @Override
-            public String apply(final Document document) {
-                return document.getString("name");
+            public String apply(final BsonDocument document) {
+                return document.getString("name").getValue();
             }
         });
     }
