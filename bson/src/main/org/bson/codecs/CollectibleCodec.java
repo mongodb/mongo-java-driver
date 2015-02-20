@@ -29,8 +29,9 @@ public interface CollectibleCodec<T> extends Codec<T> {
      * Generates a value for the _id field on the given document, if the document does not have one.
      *
      * @param document the document for which to generate a value for the _id.
+     * @return the document with the _id
      */
-    void generateIdIfAbsentFromDocument(T document);
+    T generateIdIfAbsentFromDocument(T document);
 
     /**
      * Returns true if the given document has an _id.

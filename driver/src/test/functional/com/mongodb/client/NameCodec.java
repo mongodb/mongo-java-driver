@@ -59,6 +59,7 @@ class NameCodec implements CollectibleCodec<Name> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final Name document) {
+    public Name generateIdIfAbsentFromDocument(final Name document) {
+        return document;
     }
 }

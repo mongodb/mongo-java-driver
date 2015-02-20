@@ -140,10 +140,11 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final BsonDocument document) {
+    public BsonDocument generateIdIfAbsentFromDocument(final BsonDocument document) {
         if (!documentHasId(document)) {
             document.put(ID_FIELD_NAME, new BsonObjectId(new ObjectId()));
         }
+        return document;
     }
 
     @Override

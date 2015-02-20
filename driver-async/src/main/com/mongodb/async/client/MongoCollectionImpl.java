@@ -222,11 +222,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         for (WriteModel<? extends T> writeModel : requests) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
-                InsertOneModel<T> insertOneModel = (InsertOneModel<T>) writeModel;
+                T document = ((InsertOneModel<T>) writeModel).getDocument();
                 if (getCodec() instanceof CollectibleCodec) {
-                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertOneModel.getDocument());
+                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
                 }
-                writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
+                writeRequest = new InsertRequest(asBson(document));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
                 writeRequest = new UpdateRequest(asBson(replaceOneModel.getFilter()), asBson(replaceOneModel.getReplacement()),
@@ -262,10 +262,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public void insertOne(final T document, final SingleResultCallback<Void> callback) {
+        T insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
-            ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+            ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
         }
-        executeSingleWriteRequest(new InsertRequest(asBson(document)), new SingleResultCallback<BulkWriteResult>() {
+        executeSingleWriteRequest(new InsertRequest(asBson(insertDocument)), new SingleResultCallback<BulkWriteResult>() {
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
                 callback.onResult(null, t);
@@ -284,7 +285,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
-                ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+                document = ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
             requests.add(new InsertRequest(asBson(document)));
         }

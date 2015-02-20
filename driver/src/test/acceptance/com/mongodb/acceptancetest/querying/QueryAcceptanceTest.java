@@ -188,8 +188,8 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public void generateIdIfAbsentFromDocument(final Person person) {
-
+        public Person generateIdIfAbsentFromDocument(final Person person) {
+            return person;
         }
 
         @Override

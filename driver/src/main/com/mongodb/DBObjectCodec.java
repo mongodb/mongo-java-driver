@@ -167,10 +167,11 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final DBObject document) {
+    public DBObject generateIdIfAbsentFromDocument(final DBObject document) {
         if (!documentHasId(document)) {
             document.put(ID_FIELD_NAME, idGenerator.generate());
         }
+        return document;
     }
 
     private void beforeFields(final BsonWriter bsonWriter, final EncoderContext encoderContext, final DBObject document) {

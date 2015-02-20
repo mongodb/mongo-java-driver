@@ -119,10 +119,11 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final Document document) {
+    public Document generateIdIfAbsentFromDocument(final Document document) {
         if (!documentHasId(document)) {
             document.put(ID_FIELD_NAME, idGenerator.generate());
         }
+        return document;
     }
 
     @Override

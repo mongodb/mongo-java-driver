@@ -175,7 +175,7 @@ class DocumentCodecSpecification extends Specification {
         def document = new Document()
 
         when:
-        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+        document = new DocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') instanceof ObjectId
@@ -186,7 +186,7 @@ class DocumentCodecSpecification extends Specification {
         def document = new Document('_id', 1)
 
         when:
-        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+        document = new DocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') == 1

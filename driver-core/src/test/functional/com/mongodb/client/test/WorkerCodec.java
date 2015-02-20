@@ -38,7 +38,8 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final Worker worker) {
+    public Worker generateIdIfAbsentFromDocument(final Worker worker) {
+        return worker;
     }
 
     @Override

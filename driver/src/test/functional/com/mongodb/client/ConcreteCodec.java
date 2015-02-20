@@ -29,7 +29,7 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     @Override
     public void encode(final BsonWriter writer, final Concrete c, final EncoderContext encoderContext) {
         writer.writeStartDocument();
-        if (c.getId() == null) {
+        if (!documentHasId(c)) {
             c.setId(new ObjectId());
         }
         writer.writeObjectId("_id", c.getId());
@@ -62,7 +62,7 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
 
     @Override
     public boolean documentHasId(final Concrete document) {
-        return true;
+        return document.getId() != null;
     }
 
     @Override
@@ -71,7 +71,10 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final Concrete document) {
-
+    public Concrete generateIdIfAbsentFromDocument(final Concrete document) {
+        if (!documentHasId(document)) {
+            document.setId(new ObjectId());
+        }
+        return document;
     }
 }

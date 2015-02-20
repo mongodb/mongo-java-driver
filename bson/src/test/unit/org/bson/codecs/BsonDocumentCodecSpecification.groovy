@@ -184,7 +184,7 @@ class BsonDocumentCodecSpecification extends Specification {
         def document = new BsonDocument()
 
         when:
-        new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
 
         then:
         document.get('_id') instanceof BsonObjectId
@@ -195,7 +195,7 @@ class BsonDocumentCodecSpecification extends Specification {
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         when:
-        new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
+        document = new BsonDocumentCodec().generateIdIfAbsentFromDocument(document);
 
         then:
         document.get('_id') == new BsonInt32(1)

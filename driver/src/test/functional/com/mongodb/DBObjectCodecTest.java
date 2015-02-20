@@ -81,9 +81,9 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     public void shouldNotGenerateIdIfPresent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
                                             new DBObjectCodecProvider())));
-        BasicDBObject document = new BasicDBObject("_id", 1);
+        DBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
-        dbObjectCodec.generateIdIfAbsentFromDocument(document);
+        document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(dbObjectCodec.documentHasId(document));
         assertEquals(new BsonInt32(1), dbObjectCodec.getDocumentId(document));
     }
@@ -92,9 +92,9 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     public void shouldGenerateIdIfAbsent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
                                             new DBObjectCodecProvider())));
-        BasicDBObject document = new BasicDBObject();
+        DBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
-        dbObjectCodec.generateIdIfAbsentFromDocument(document);
+        document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(dbObjectCodec.documentHasId(document));
         assertEquals(BsonObjectId.class, dbObjectCodec.getDocumentId(document).getClass());
     }
