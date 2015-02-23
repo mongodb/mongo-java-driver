@@ -66,6 +66,7 @@ import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,15 +77,15 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class MongoCollectionImpl<T> implements MongoCollection<T> {
+class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
-    private final Class<T> clazz;
+    private final Class<TDocument> clazz;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final AsyncOperationExecutor executor;
 
-    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> clazz, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final AsyncOperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.clazz = notNull("clazz", clazz);
@@ -100,7 +101,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public Class<T> getDefaultClass() {
+    public Class<TDocument> getDocumentClass() {
         return clazz;
     }
 
@@ -120,23 +121,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <C> MongoCollection<C> withDefaultClass(final Class<C> clazz) {
-        return new MongoCollectionImpl<C>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
+        return new MongoCollectionImpl<NewTDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
-    public MongoCollection<T> withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
+        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
-    public MongoCollection<T> withReadPreference(final ReadPreference readPreference) {
-        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
+        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
-    public MongoCollection<T> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<T>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+    public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
+        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
@@ -145,19 +146,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void count(final Object filter, final SingleResultCallback<Long> callback) {
+    public void count(final Bson filter, final SingleResultCallback<Long> callback) {
         count(filter, new CountOptions(), callback);
     }
 
     @Override
-    public void count(final Object filter, final CountOptions options, final SingleResultCallback<Long> callback) {
+    public void count(final Bson filter, final CountOptions options, final SingleResultCallback<Long> callback) {
         CountOperation operation = new CountOperation(namespace)
-                                   .filter(asBson(filter))
+                                   .filter(toBsonDocument(filter))
                                    .skip(options.getSkip())
                                    .limit(options.getLimit())
                                    .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
         if (options.getHint() != null) {
-            operation.hint(asBson(options.getHint()));
+            operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
             operation.hint(new BsonString(options.getHintString()));
         }
@@ -165,38 +166,38 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <C> DistinctIterable<C> distinct(final String fieldName, final Class<C> clazz) {
-        return new DistinctIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, fieldName);
+    public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> clazz) {
+        return new DistinctIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor, fieldName);
     }
 
     @Override
-    public FindIterable<T> find() {
+    public FindIterable<TDocument> find() {
         return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public <C> FindIterable<C> find(final Class<C> clazz) {
+    public <TResult> FindIterable<TResult> find(final Class<TResult> clazz) {
         return find(new BsonDocument(), clazz);
     }
 
     @Override
-    public FindIterable<T> find(final Object filter) {
+    public FindIterable<TDocument> find(final Bson filter) {
         return find(filter, clazz);
     }
 
     @Override
-    public <C> FindIterable<C> find(final Object filter, final Class<C> clazz) {
-        return new FindIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, filter, new FindOptions());
+    public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> clazz) {
+        return new FindIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor, filter, new FindOptions());
     }
 
     @Override
-    public AggregateIterable<Document> aggregate(final List<?> pipeline) {
+    public AggregateIterable<Document> aggregate(final List<? extends Bson> pipeline) {
         return aggregate(pipeline, Document.class);
     }
 
     @Override
-    public <C> AggregateIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
-        return new AggregateIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, pipeline);
+    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> clazz) {
+        return new AggregateIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor, pipeline);
     }
 
     @Override
@@ -205,51 +206,54 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <C> MapReduceIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final Class<C> clazz) {
-        return new MapReduceIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor, mapFunction, reduceFunction);
+    public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
+                                                          final Class<TResult> clazz) {
+        return new MapReduceIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor, mapFunction, reduceFunction);
     }
 
     @Override
-    public void bulkWrite(final List<? extends WriteModel<? extends T>> requests, final SingleResultCallback<BulkWriteResult> callback) {
+    public void bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
+                          final SingleResultCallback<BulkWriteResult> callback) {
         bulkWrite(requests, new BulkWriteOptions(), callback);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options,
+    public void bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests, final BulkWriteOptions options,
                           final SingleResultCallback<BulkWriteResult> callback) {
         List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
-        for (WriteModel<? extends T> writeModel : requests) {
+        for (WriteModel<? extends TDocument> writeModel : requests) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
-                T document = ((InsertOneModel<T>) writeModel).getDocument();
+                TDocument document = ((InsertOneModel<TDocument>) writeModel).getDocument();
                 if (getCodec() instanceof CollectibleCodec) {
-                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+                    ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
                 }
-                writeRequest = new InsertRequest(asBson(document));
+                writeRequest = new InsertRequest(documentToBsonDocument(document));
             } else if (writeModel instanceof ReplaceOneModel) {
-                ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(replaceOneModel.getFilter()), asBson(replaceOneModel.getReplacement()),
+                ReplaceOneModel<TDocument> replaceOneModel = (ReplaceOneModel<TDocument>) writeModel;
+                writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()), documentToBsonDocument(replaceOneModel
+                                                                                                                     .getReplacement()),
                                                  WriteRequest.Type.REPLACE)
                                .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
-                UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateOneModel.getFilter()), asBson(updateOneModel.getUpdate()),
+                UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
+                writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                .multi(false)
                                .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
-                UpdateManyModel<T> updateManyModel = (UpdateManyModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateManyModel.getFilter()), asBson(updateManyModel.getUpdate()),
+                UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
+                writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                .multi(true)
                                .upsert(updateManyModel.getOptions().isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
-                DeleteOneModel<T> deleteOneModel = (DeleteOneModel<T>) writeModel;
-                writeRequest = new DeleteRequest(asBson(deleteOneModel.getFilter())).multi(false);
+                DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
+                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false);
             } else if (writeModel instanceof DeleteManyModel) {
-                DeleteManyModel<T> deleteManyModel = (DeleteManyModel<T>) writeModel;
-                writeRequest = new DeleteRequest(asBson(deleteManyModel.getFilter())).multi(true);
+                DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
+                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
@@ -261,12 +265,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void insertOne(final T document, final SingleResultCallback<Void> callback) {
-        T insertDocument = document;
+    public void insertOne(final TDocument document, final SingleResultCallback<Void> callback) {
+        TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
-            ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
+            ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
         }
-        executeSingleWriteRequest(new InsertRequest(asBson(insertDocument)), new SingleResultCallback<BulkWriteResult>() {
+        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), new SingleResultCallback<BulkWriteResult>() {
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
                 callback.onResult(null, t);
@@ -275,19 +279,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents, final SingleResultCallback<Void> callback) {
+    public void insertMany(final List<? extends TDocument> documents, final SingleResultCallback<Void> callback) {
         insertMany(documents, new InsertManyOptions(), callback);
     }
 
     @Override
-    public void insertMany(final List<? extends T> documents, final InsertManyOptions options,
+    public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options,
                            final SingleResultCallback<Void> callback) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
-        for (T document : documents) {
+        for (TDocument document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
-                document = ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+                document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            requests.add(new InsertRequest(asBson(document)));
+            requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
         executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern),
                          errorHandlingCallback(new SingleResultCallback<BulkWriteResult>() {
@@ -299,24 +303,24 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void deleteOne(final Object filter, final SingleResultCallback<DeleteResult> callback) {
+    public void deleteOne(final Bson filter, final SingleResultCallback<DeleteResult> callback) {
         delete(filter, false, callback);
     }
 
     @Override
-    public void deleteMany(final Object filter, final SingleResultCallback<DeleteResult> callback) {
+    public void deleteMany(final Bson filter, final SingleResultCallback<DeleteResult> callback) {
         delete(filter, true, callback);
     }
 
     @Override
-    public void replaceOne(final Object filter, final T replacement, final SingleResultCallback<UpdateResult> callback) {
+    public void replaceOne(final Bson filter, final TDocument replacement, final SingleResultCallback<UpdateResult> callback) {
         replaceOne(filter, replacement, new UpdateOptions(), callback);
     }
 
     @Override
-    public void replaceOne(final Object filter, final T replacement, final UpdateOptions options,
+    public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
-        executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE)
+        executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement), WriteRequest.Type.REPLACE)
                                   .upsert(options.isUpsert()),
                                   new SingleResultCallback<BulkWriteResult>() {
                                       @Override
@@ -331,68 +335,68 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void updateOne(final Object filter, final Object update, final SingleResultCallback<UpdateResult> callback) {
+    public void updateOne(final Bson filter, final Bson update, final SingleResultCallback<UpdateResult> callback) {
         updateOne(filter, update, new UpdateOptions(), callback);
     }
 
     @Override
-    public void updateOne(final Object filter, final Object update, final UpdateOptions options,
+    public void updateOne(final Bson filter, final Bson update, final UpdateOptions options,
                           final SingleResultCallback<UpdateResult> callback) {
         update(filter, update, options, false, callback);
     }
 
     @Override
-    public void updateMany(final Object filter, final Object update, final SingleResultCallback<UpdateResult> callback) {
+    public void updateMany(final Bson filter, final Bson update, final SingleResultCallback<UpdateResult> callback) {
         updateMany(filter, update, new UpdateOptions(), callback);
     }
 
     @Override
-    public void updateMany(final Object filter, final Object update, final UpdateOptions options,
+    public void updateMany(final Bson filter, final Bson update, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         update(filter, update, options, true, callback);
     }
 
     @Override
-    public void findOneAndDelete(final Object filter, final SingleResultCallback<T> callback) {
+    public void findOneAndDelete(final Bson filter, final SingleResultCallback<TDocument> callback) {
         findOneAndDelete(filter, new FindOneAndDeleteOptions(), callback);
     }
 
     @Override
-    public void findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options, final SingleResultCallback<T> callback) {
-        executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
-                         .filter(asBson(filter))
-                         .projection(asBson(options.getProjection()))
-                         .sort(asBson(options.getSort())), callback);
+    public void findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options, final SingleResultCallback<TDocument> callback) {
+        executor.execute(new FindAndDeleteOperation<TDocument>(namespace, getCodec())
+                         .filter(toBsonDocument(filter))
+                         .projection(toBsonDocument(options.getProjection()))
+                         .sort(toBsonDocument(options.getSort())), callback);
     }
 
     @Override
-    public void findOneAndReplace(final Object filter, final T replacement, final SingleResultCallback<T> callback) {
+    public void findOneAndReplace(final Bson filter, final TDocument replacement, final SingleResultCallback<TDocument> callback) {
         findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions(), callback);
     }
 
     @Override
-    public void findOneAndReplace(final Object filter, final T replacement, final FindOneAndReplaceOptions options,
-                                  final SingleResultCallback<T> callback) {
-        executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
-                         .filter(asBson(filter))
-                         .projection(asBson(options.getProjection()))
-                         .sort(asBson(options.getSort()))
+    public void findOneAndReplace(final Bson filter, final TDocument replacement, final FindOneAndReplaceOptions options,
+                                  final SingleResultCallback<TDocument> callback) {
+        executor.execute(new FindAndReplaceOperation<TDocument>(namespace, getCodec(), documentToBsonDocument(replacement))
+                         .filter(toBsonDocument(filter))
+                         .projection(toBsonDocument(options.getProjection()))
+                         .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnOriginal())
                          .upsert(options.isUpsert()), callback);
     }
 
     @Override
-    public void findOneAndUpdate(final Object filter, final Object update, final SingleResultCallback<T> callback) {
+    public void findOneAndUpdate(final Bson filter, final Bson update, final SingleResultCallback<TDocument> callback) {
         findOneAndUpdate(filter, update, new FindOneAndUpdateOptions(), callback);
     }
 
     @Override
-    public void findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options,
-                                 final SingleResultCallback<T> callback) {
-        executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
-                         .filter(asBson(filter))
-                         .projection(asBson(options.getProjection()))
-                         .sort(asBson(options.getSort()))
+    public void findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options,
+                                 final SingleResultCallback<TDocument> callback) {
+        executor.execute(new FindAndUpdateOperation<TDocument>(namespace, getCodec(), toBsonDocument(update))
+                         .filter(toBsonDocument(filter))
+                         .projection(toBsonDocument(options.getProjection()))
+                         .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnOriginal())
                          .upsert(options.isUpsert()), callback);
     }
@@ -403,20 +407,20 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public void createIndex(final Object key, final SingleResultCallback<Void> callback) {
+    public void createIndex(final Bson key, final SingleResultCallback<Void> callback) {
         createIndex(key, new CreateIndexOptions(), callback);
     }
 
     @Override
-    public void createIndex(final Object key, final CreateIndexOptions options, final SingleResultCallback<Void> callback) {
-        executor.execute(new CreateIndexOperation(getNamespace(), asBson(key))
+    public void createIndex(final Bson key, final CreateIndexOptions options, final SingleResultCallback<Void> callback) {
+        executor.execute(new CreateIndexOperation(getNamespace(), toBsonDocument(key))
                          .name(options.getName())
                          .background(options.isBackground())
                          .unique(options.isUnique())
                          .sparse(options.isSparse())
                          .expireAfterSeconds(options.getExpireAfterSeconds())
                          .version(options.getVersion())
-                         .weights(asBson(options.getWeights()))
+                         .weights(toBsonDocument(options.getWeights()))
                          .defaultLanguage(options.getDefaultLanguage())
                          .languageOverride(options.getLanguageOverride())
                          .textIndexVersion(options.getTextIndexVersion())
@@ -433,8 +437,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public <C> ListIndexesIterable<C> listIndexes(final Class<C> clazz) {
-        return new ListIndexesIterableImpl<C>(namespace, clazz, codecRegistry, readPreference, executor);
+    public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> clazz) {
+        return new ListIndexesIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor);
     }
 
     @Override
@@ -459,8 +463,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                          .dropTarget(options.isDropTarget()), callback);
     }
 
-    private void delete(final Object filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
-        executeSingleWriteRequest(new DeleteRequest(asBson(filter)).multi(multi), new SingleResultCallback<BulkWriteResult>() {
+    private void delete(final Bson filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
+        executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), new SingleResultCallback<BulkWriteResult>() {
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
                 if (t != null) {
@@ -477,9 +481,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         });
     }
 
-    private void update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi,
+    private void update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi,
                         final SingleResultCallback<UpdateResult> callback) {
-        executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
+        executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update), WriteRequest.Type.UPDATE)
                                   .upsert(updateOptions.isUpsert()).multi(multi), new SingleResultCallback<BulkWriteResult>() {
             @Override
             public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -523,16 +527,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
-    private Codec<T> getCodec() {
+    private Codec<TDocument> getCodec() {
         return getCodec(clazz);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
+    private <TResult> Codec<TResult> getCodec(final Class<TResult> clazz) {
         return codecRegistry.get(clazz);
     }
 
-    private BsonDocument asBson(final Object document) {
+    private BsonDocument documentToBsonDocument(final TDocument document) {
         return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
     }
 
+    private BsonDocument toBsonDocument(final Bson document) {
+        return document == null ? null : document.toBsonDocument(clazz, codecRegistry);
+    }
 }

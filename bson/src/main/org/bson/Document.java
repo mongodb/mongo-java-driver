@@ -18,6 +18,8 @@ package org.bson;
 
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
 import org.bson.types.ObjectId;
 
@@ -35,7 +37,7 @@ import java.util.Set;
  * @mongodb.driver.manual core/document document
  * @since 3.0.0
  */
-public class Document implements Map<String, Object>, Serializable {
+public class Document implements Map<String, Object>, Serializable, Bson {
     private static final long serialVersionUID = 6297731997167536582L;
 
     private final LinkedHashMap<String, Object> documentAsMap;
@@ -77,6 +79,11 @@ public class Document implements Map<String, Object>, Serializable {
     public static Document valueOf(final String s) {
         JsonReader bsonReader = new JsonReader(s);
         return new DocumentCodec().decode(bsonReader, DecoderContext.builder().build());
+    }
+
+    @Override
+    public <C> BsonDocument toBsonDocument(final Class<C> documentClass, final CodecRegistry codecRegistry) {
+        return new BsonDocumentWrapper<Document>(this, codecRegistry.get(Document.class));
     }
 
     /**

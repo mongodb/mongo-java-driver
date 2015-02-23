@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -26,30 +28,28 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
  */
 public final class ReplaceOneModel<T> extends WriteModel<T> {
-    private final Object filter;
+    private final Bson filter;
     private final T replacement;
     private final UpdateOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param filter    a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec}
-     *                    is registered
+     * @param filter    a document describing the query filter, which may not be null.
      * @param replacement the replacement document
      */
-    public ReplaceOneModel(final Object filter, final T replacement) {
+    public ReplaceOneModel(final Bson filter, final T replacement) {
         this(filter, replacement, new UpdateOptions());
     }
 
     /**
      * Construct a new instance.
      *
-     * @param filter    a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec}
-     *                    is registered
+     * @param filter    a document describing the query filter, which may not be null.
      * @param replacement the replacement document
      * @param options     the options to apply
      */
-    public ReplaceOneModel(final Object filter, final T replacement, final UpdateOptions options) {
+    public ReplaceOneModel(final Bson filter, final T replacement, final UpdateOptions options) {
         this.filter = notNull("filter", filter);
         this.replacement = notNull("replacement", replacement);
         this.options = notNull("options", options);
@@ -60,7 +60,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public Bson getFilter() {
         return filter;
     }
 

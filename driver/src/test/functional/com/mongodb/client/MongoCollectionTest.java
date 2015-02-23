@@ -47,7 +47,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
-                .withDefaultClass(Concrete.class)
+                .withDocumentClass(Concrete.class)
                 .withCodecRegistry(codecRegistry)
                 .withReadPreference(ReadPreference.primary())
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);
@@ -55,7 +55,8 @@ public class MongoCollectionTest extends DatabaseTestCase {
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insertOne(doc);
 
-        Concrete newDoc = collection.findOneAndUpdate(new Document("i", 5), new Document("$set", new Document("i", 6)));
+        Concrete newDoc = collection.findOneAndUpdate(new Document("i", 5),
+                                                      new Document("$set", new Document("i", 6)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
@@ -69,7 +70,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
-                .withDefaultClass(Concrete.class)
+                .withDocumentClass(Concrete.class)
                 .withCodecRegistry(codecRegistry)
                 .withReadPreference(ReadPreference.primary())
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);

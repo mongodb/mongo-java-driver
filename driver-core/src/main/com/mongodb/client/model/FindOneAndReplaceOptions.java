@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 /**
  * The options to apply to an operation that atomically finds a document and replaces it.
  *
@@ -23,8 +25,8 @@ package com.mongodb.client.model;
  * @since 3.0
  */
 public class FindOneAndReplaceOptions {
-    private Object projection;
-    private Object sort;
+    private Bson projection;
+    private Bson sort;
     private boolean upsert;
     private boolean returnOriginal = true;
 
@@ -34,18 +36,18 @@ public class FindOneAndReplaceOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public Object getProjection() {
+    public Bson getProjection() {
         return projection;
     }
 
     /**
      * Sets a document describing the fields to return for all matching documents.
      *
-     * @param projection the project document, which may be null. This can be of any type for which a {@code Codec} is registered
+     * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndReplaceOptions projection(final Object projection) {
+    public FindOneAndReplaceOptions projection(final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -57,18 +59,18 @@ public class FindOneAndReplaceOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public Object getSort() {
+    public Bson getSort() {
         return sort;
     }
 
     /**
      * Sets the sort criteria to apply to the query.
      *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a {@code Codec} is registered
+     * @param sort the sort criteria, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOneAndReplaceOptions sort(final Object sort) {
+    public FindOneAndReplaceOptions sort(final Bson sort) {
         this.sort = sort;
         return this;
     }

@@ -21,15 +21,16 @@ import com.mongodb.CursorType;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.FindOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +60,7 @@ class FindIterableImpl<T> implements FindIterable<T> {
     }
 
     @Override
-    public FindIterable<T> filter(final Object filter) {
+    public FindIterable<T> filter(final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -90,19 +91,19 @@ class FindIterableImpl<T> implements FindIterable<T> {
     }
 
     @Override
-    public FindIterable<T> modifiers(final Object modifiers) {
+    public FindIterable<T> modifiers(final Bson modifiers) {
         findOptions.modifiers(modifiers);
         return this;
     }
 
     @Override
-    public FindIterable<T> projection(final Object projection) {
+    public FindIterable<T> projection(final Bson projection) {
         findOptions.projection(projection);
         return this;
     }
 
     @Override
-    public FindIterable<T> sort(final Object sort) {
+    public FindIterable<T> sort(final Bson sort) {
         findOptions.sort(sort);
         return this;
     }

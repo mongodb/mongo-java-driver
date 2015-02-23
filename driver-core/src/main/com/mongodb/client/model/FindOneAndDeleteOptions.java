@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 /**
  * The options to apply to an operation that atomically finds a document and deletes it.
  *
@@ -23,8 +25,8 @@ package com.mongodb.client.model;
  * @mongodb.driver.manual reference/command/findAndModify/
  */
 public class FindOneAndDeleteOptions {
-    private Object projection;
-    private Object sort;
+    private Bson projection;
+    private Bson sort;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -32,19 +34,18 @@ public class FindOneAndDeleteOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public Object getProjection() {
+    public Bson getProjection() {
         return projection;
     }
 
     /**
      * Sets a document describing the fields to return for all matching documents.
      *
-     * @param projection the project document, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param projection the project document, which may be null.
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndDeleteOptions projection(final Object projection) {
+    public FindOneAndDeleteOptions projection(final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -56,19 +57,18 @@ public class FindOneAndDeleteOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public Object getSort() {
+    public Bson getSort() {
         return sort;
     }
 
     /**
      * Sets the sort criteria to apply to the query.
      *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param sort the sort criteria, which may be null.
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOneAndDeleteOptions sort(final Object sort) {
+    public FindOneAndDeleteOptions sort(final Bson sort) {
         this.sort = sort;
         return this;
     }
