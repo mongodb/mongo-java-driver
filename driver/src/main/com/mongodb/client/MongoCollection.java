@@ -297,7 +297,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
-    DeleteResult deleteOne(Object filter);
+    DeleteResult deleteOne(Filter filter);
 
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
@@ -308,7 +308,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
-    DeleteResult deleteMany(Object filter);
+    DeleteResult deleteMany(Filter filter);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -321,7 +321,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
-    UpdateResult replaceOne(Object filter, TDocument replacement);
+    UpdateResult replaceOne(Filter filter, TDocument replacement);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -335,7 +335,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
-    UpdateResult replaceOne(Object filter, TDocument replacement, UpdateOptions updateOptions);
+    UpdateResult replaceOne(Filter filter, TDocument replacement, UpdateOptions updateOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -351,7 +351,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object filter, Object update);
+    UpdateResult updateOne(Filter filter, Object update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -368,7 +368,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object filter, Object update, UpdateOptions updateOptions);
+    UpdateResult updateOne(Filter filter, Object update, UpdateOptions updateOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -384,7 +384,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object filter, Object update);
+    UpdateResult updateMany(Filter filter, Object update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -401,7 +401,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object filter, Object update, UpdateOptions updateOptions);
+    UpdateResult updateMany(Filter filter, Object update, UpdateOptions updateOptions);
 
     /**
      * Atomically find a document and remove it.

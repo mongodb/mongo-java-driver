@@ -40,7 +40,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         // When
         Document filter = new Document("_id", 2);
         Document newDocumentWithoutFieldForA = new Document("_id", 2).append("x", 7);
-        collection.replaceOne(filter, newDocumentWithoutFieldForA);
+        collection.replaceOne(asFilter(filter), newDocumentWithoutFieldForA);
 
         // Then
         Document document = collection.find(asFilter(filter)).first();
@@ -54,7 +54,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document replacement = new Document("_id", 3).append("x", 2);
-        collection.replaceOne(new Document(), replacement, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), replacement, new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(1L));
@@ -65,12 +65,12 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
     public void shouldReplaceTheDocumentIfReplacingWithUpsertAndDocumentIsFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 3).append("x", 2);
-        collection.replaceOne(new Document(), originalDocument, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), originalDocument, new UpdateOptions().upsert(true));
         assertThat(collection.count(), is(1L));
 
         // when
         Document replacement = originalDocument.append("y", 5);
-        collection.replaceOne(new Document(), replacement, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), replacement, new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(1L));
@@ -87,7 +87,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         Document filter = new Document("a", 1);
         Document newDocumentWithDifferentId = new Document("_id", 2).append("a", 3);
         try {
-            collection.replaceOne(filter, newDocumentWithDifferentId);
+            collection.replaceOne(asFilter(filter), newDocumentWithDifferentId);
             fail("Should have thrown an exception");
         } catch (MongoWriteException e) {
             // Then

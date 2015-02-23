@@ -371,7 +371,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.deleteOne(new Document('_id', 1))
+        def result = collection.deleteOne(asFilter(new Document('_id', 1)))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -393,7 +393,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.deleteMany(new Document('_id', 1))
+        def result = collection.deleteMany(asFilter(new Document('_id', 1)))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -415,7 +415,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.replaceOne(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -445,7 +445,7 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        def result = collection.updateOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateOne(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -453,7 +453,7 @@ class MongoCollectionSpecification extends Specification {
         result == expectedResult
 
         when:
-        result = collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateOne(asFilter(new Document('a', 1)), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -480,7 +480,7 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        def result = collection.updateMany(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateMany(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -488,7 +488,7 @@ class MongoCollectionSpecification extends Specification {
         result == expectedResult
 
         when:
-        result = collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateMany(asFilter(new Document('a', 1)), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:

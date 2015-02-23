@@ -151,7 +151,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public long count(final Filter filter, final CountOptions options) {
         CountOperation operation = new CountOperation(namespace)
-                                       .filter(filter.render(documentClass, codecRegistry))
+                                       .filter(render(filter))
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -290,43 +290,43 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public DeleteResult deleteOne(final Object filter) {
+    public DeleteResult deleteOne(final Filter filter) {
         return delete(filter, false);
     }
 
     @Override
-    public DeleteResult deleteMany(final Object filter) {
+    public DeleteResult deleteMany(final Filter filter) {
         return delete(filter, true);
     }
 
     @Override
-    public UpdateResult replaceOne(final Object filter, final TDocument replacement) {
+    public UpdateResult replaceOne(final Filter filter, final TDocument replacement) {
         return replaceOne(filter, replacement, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult replaceOne(final Object filter, final TDocument replacement, final UpdateOptions updateOptions) {
-        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(replacement), WriteRequest.Type.REPLACE)
+    public UpdateResult replaceOne(final Filter filter, final TDocument replacement, final UpdateOptions updateOptions) {
+        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(render(filter), asBson(replacement), WriteRequest.Type.REPLACE)
                                                         .upsert(updateOptions.isUpsert())));
     }
 
     @Override
-    public UpdateResult updateOne(final Object filter, final Object update) {
+    public UpdateResult updateOne(final Filter filter, final Object update) {
         return updateOne(filter, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateOne(final Object filter, final Object update, final UpdateOptions updateOptions) {
+    public UpdateResult updateOne(final Filter filter, final Object update, final UpdateOptions updateOptions) {
         return update(filter, update, updateOptions, false);
     }
 
     @Override
-    public UpdateResult updateMany(final Object filter, final Object update) {
+    public UpdateResult updateMany(final Filter filter, final Object update) {
         return updateMany(filter, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateMany(final Object filter, final Object update, final UpdateOptions updateOptions) {
+    public UpdateResult updateMany(final Filter filter, final Object update, final UpdateOptions updateOptions) {
         return update(filter, update, updateOptions, true);
     }
 
@@ -434,8 +434,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                              .dropTarget(renameCollectionOptions.isDropTarget()));
     }
 
-    private DeleteResult delete(final Object filter, final boolean multi) {
-        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(asBson(filter)).multi(multi));
+    private DeleteResult delete(final Filter filter, final boolean multi) {
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(render(filter)).multi(multi));
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
         } else {
@@ -443,8 +443,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         }
     }
 
-    private UpdateResult update(final Object filter, final Object update, final UpdateOptions updateOptions, final boolean multi) {
-        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(asBson(filter), asBson(update), WriteRequest.Type.UPDATE)
+    private BsonDocument render(final Filter filter) {
+        return filter.render(documentClass, codecRegistry);
+    }
+
+    private UpdateResult update(final Filter filter, final Object update, final UpdateOptions updateOptions, final boolean multi) {
+        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(render(filter), asBson(update),
+                                                                          WriteRequest.Type.UPDATE)
                                                         .upsert(updateOptions.isUpsert()).multi(multi)));
     }
 

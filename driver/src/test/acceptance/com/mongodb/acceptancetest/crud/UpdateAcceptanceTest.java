@@ -39,7 +39,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(originalDocument);
 
         // when
-        collection.updateOne(new Document("_id", 1), new Document("$set", new Document("x", 2)));
+        collection.updateOne(asFilter(new Document("_id", 1)), new Document("$set", new Document("x", 2)));
 
         // then
         assertThat(collection.count(), is(1L));
@@ -54,7 +54,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(originalDocument);
 
         // when
-        collection.updateOne(new Document("_id", 1), new Document("$inc", new Document("x", 1)));
+        collection.updateOne(asFilter(new Document("_id", 1)), new Document("$inc", new Document("x", 1)));
 
         // then
         assertThat(collection.count(), is(1L));
@@ -70,7 +70,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document("_id", 2);
-        collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        collection.updateMany(asFilter(filter), new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
@@ -86,7 +86,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document("_id", 2);
-        collection.updateOne(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        collection.updateOne(asFilter(filter), new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
@@ -104,7 +104,8 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document("x", 3);
-        collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        collection.updateMany(asFilter(filter), new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+
 
         // then
         assertThat(collection.count(asFilter(new Document("x", 5)), new CountOptions()), is(2L));
@@ -120,7 +121,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document("x", 3);
-        collection.updateOne(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        collection.updateOne(asFilter(filter), new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(asFilter(new Document("x", 5)), new CountOptions()), is(1L));
@@ -137,7 +138,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // When
         Document filter = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.updateOne(filter, incrementXValueByOne);
+        collection.updateOne(asFilter(filter), incrementXValueByOne);
 
         // Then
         assertThat(collection.count(asFilter(new Document("x", 4)), new CountOptions()), is(1L));
@@ -154,7 +155,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // When
         Document filter = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.updateMany(filter, incrementXValueByOne);
+        collection.updateMany(asFilter(filter), incrementXValueByOne);
 
         // Then
         assertThat(collection.count(asFilter(new Document("x", 4)), new CountOptions()), is(2L));
