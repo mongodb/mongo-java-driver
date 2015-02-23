@@ -51,6 +51,7 @@
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
+        <exclude name="ExplicitCallToAndMethod"/>
         <exclude name="ExplicitCallToCompareToMethod"/>
         <exclude name='GetterMethodCouldBeProperty'/>
      </ruleset-ref>
