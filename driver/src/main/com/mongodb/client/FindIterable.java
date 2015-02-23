@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.CursorType;
+import com.mongodb.client.model.Filter;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +36,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    FindIterable<T> filter(Object filter);
+    FindIterable<T> filter(Filter filter);
 
     /**
      * Sets the limit to apply.

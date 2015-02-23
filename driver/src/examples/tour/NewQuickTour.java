@@ -34,6 +34,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.model.Filter.asFilter;
+
 /**
  * The tutorial from the 3.0 API version of http://www.mongodb.org/display/DOCS/Java+Tutorial.
  */
@@ -105,11 +107,11 @@ public class NewQuickTour {
         }
 
         // now use a query to get 1 document out
-        myDoc = collection.find(new Document("i", 71)).first();
+        myDoc = collection.find(asFilter(new Document("i", 71))).first();
         System.out.println(myDoc);
 
         // now use a range query to get a larger subset
-        cursor = collection.find(new Document("i", new Document("$gt", 50))).iterator();
+        cursor = collection.find(asFilter(new Document("i", new Document("$gt", 50)))).iterator();
 
         try {
             while (cursor.hasNext()) {
@@ -120,7 +122,7 @@ public class NewQuickTour {
         }
 
         // range query with multiple constraints
-        cursor = collection.find(new Document("i", new Document("$gt", 50).append("$lte", 100))).iterator();
+        cursor = collection.find(asFilter(new Document("i", new Document("$gt", 50).append("$lte", 100)))).iterator();
 
         try {
             while (cursor.hasNext()) {
@@ -193,7 +195,7 @@ public class NewQuickTour {
 
         // Find the highest scoring match
         Document projection = new Document("score", new Document("$meta", "textScore"));
-        myDoc = collection.find(textSearch).projection(projection).first();
+        myDoc = collection.find(asFilter(textSearch)).projection(projection).first();
         System.out.println("Highest scoring document: " + myDoc);
 
         // release resources

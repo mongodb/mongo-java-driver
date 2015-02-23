@@ -22,6 +22,7 @@ import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -42,7 +43,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.replaceOne(filter, newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(filter).first();
+        Document document = collection.find(asFilter(filter)).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
@@ -57,7 +58,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).iterator().next(), is(replacement));
+        assertThat(collection.find(asFilter(new Document("_id", 3))).iterator().next(), is(replacement));
     }
 
     @Test
@@ -73,7 +74,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).iterator().next(),  is(replacement));
+        assertThat(collection.find(asFilter(new Document("_id", 3))).iterator().next(),  is(replacement));
     }
 
     @Test

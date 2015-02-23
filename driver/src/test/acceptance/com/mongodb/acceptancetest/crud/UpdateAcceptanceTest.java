@@ -22,6 +22,7 @@ import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -74,7 +75,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(filter).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(asFilter(filter)).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -90,7 +91,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(filter).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(asFilter(filter)).iterator().next(), is(expectedDocument));
     }
 
     @Test

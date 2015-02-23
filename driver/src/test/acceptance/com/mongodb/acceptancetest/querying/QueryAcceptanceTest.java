@@ -43,6 +43,7 @@ import java.util.List;
 
 import static com.mongodb.QueryOperators.TYPE;
 import static com.mongodb.client.QueryBuilder.query;
+import static com.mongodb.client.model.Filter.asFilter;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
@@ -55,7 +56,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("name", "Bob"));
 
         Document query = new Document("name", "Bob");
-        MongoCursor<Document> results = collection.find().filter(query).iterator();
+        MongoCursor<Document> results = collection.find().filter(asFilter(query)).iterator();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
@@ -65,7 +66,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("name", "Bob"));
 
         Document query = new Document("name", "Bob");
-        MongoCursor<Document> results = collection.find(query).iterator();
+        MongoCursor<Document> results = collection.find(asFilter(query)).iterator();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
@@ -80,7 +81,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
                 .withCodecRegistry(codecRegistry);
         collection.insertOne(new Person("Bob"));
 
-        MongoCursor<Person> results = collection.find(new Document("name", "Bob")).iterator();
+        MongoCursor<Person> results = collection.find(asFilter(new Document("name", "Bob"))).iterator();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -93,7 +94,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
 
         List<Document> results = new ArrayList<Document>();
-        collection.find(new Document("numTimesOrdered", new Document("$type", 16)))
+        collection.find(asFilter(new Document("numTimesOrdered", new Document("$type", 16))))
                   .sort(new Document("numTimesOrdered", -1)).into(results);
 
         assertThat(results.size(), is(2));
@@ -113,7 +114,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         //TODO make BSON type serializable
         Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type", INT32.getValue())),
                                                      new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
-        collection.find(filter).sort(new Document("numTimesOrdered", -1)).into(results);
+        collection.find(asFilter(filter)).sort(new Document("numTimesOrdered", -1)).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
@@ -149,7 +150,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
                                             .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
                                             .toDocument();
-        collection.find(filter).sort(new Document("numTimesOrdered", -1)).into(results);
+        collection.find(asFilter(filter)).sort(new Document("numTimesOrdered", -1)).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
