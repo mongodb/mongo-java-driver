@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.CursorType;
+import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +36,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    FindIterable<T> filter(Object filter);
+    FindIterable<T> filter(Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -71,7 +72,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
-    FindIterable<T> modifiers(Object modifiers);
+    FindIterable<T> modifiers(Bson modifiers);
 
     /**
      * Sets a document describing the fields to return for all matching documents.
@@ -80,7 +81,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    FindIterable<T> projection(Object projection);
+    FindIterable<T> projection(Bson projection);
     /**
      * Sets the sort criteria to apply to the query.
      *
@@ -88,7 +89,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    FindIterable<T> sort(Object sort);
+    FindIterable<T> sort(Bson sort);
 
     /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)

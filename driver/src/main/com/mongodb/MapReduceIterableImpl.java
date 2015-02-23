@@ -36,14 +36,15 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class MapReduceIterableImpl<T> implements MapReduceIterable<T> {
+class MapReduceIterableImpl<TResult, TDocument> implements MapReduceIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<T> clazz;
+    private final Class<TResult> clazz;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final String mapFunction;
     private final String reduceFunction;
+    private final Class<TDocument> collectionClass;
 
     private boolean inline = true;
     private String collectionName;
@@ -61,11 +62,13 @@ class MapReduceIterableImpl<T> implements MapReduceIterable<T> {
     private boolean nonAtomic;
     private int batchSize;
 
-    MapReduceIterableImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
+    MapReduceIterableImpl(final MongoNamespace namespace, final Class<TResult> clazz, final Class<TDocument> collectionClass,
+                          final CodecRegistry codecRegistry,
                           final ReadPreference readPreference, final OperationExecutor executor, final String mapFunction,
                           final String reduceFunction) {
         this.namespace = notNull("namespace", namespace);
         this.clazz = notNull("clazz", clazz);
+        this.collectionClass = notNull("collectionClass", collectionClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
@@ -74,120 +77,120 @@ class MapReduceIterableImpl<T> implements MapReduceIterable<T> {
     }
 
     @Override
-    public MapReduceIterable<T> collectionName(final String collectionName) {
+    public MapReduceIterable<TResult> collectionName(final String collectionName) {
         this.collectionName = notNull("collectionName", collectionName);
         this.inline = false;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> finalizeFunction(final String finalizeFunction) {
+    public MapReduceIterable<TResult> finalizeFunction(final String finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> scope(final Object scope) {
+    public MapReduceIterable<TResult> scope(final Object scope) {
         this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> sort(final Object sort) {
+    public MapReduceIterable<TResult> sort(final Object sort) {
         this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> filter(final Object filter) {
+    public MapReduceIterable<TResult> filter(final Object filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> limit(final int limit) {
+    public MapReduceIterable<TResult> limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> jsMode(final boolean jsMode) {
+    public MapReduceIterable<TResult> jsMode(final boolean jsMode) {
         this.jsMode = jsMode;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> verbose(final boolean verbose) {
+    public MapReduceIterable<TResult> verbose(final boolean verbose) {
         this.verbose = verbose;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public MapReduceIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> action(final MapReduceAction action) {
+    public MapReduceIterable<TResult> action(final MapReduceAction action) {
         this.action = action;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> databaseName(final String databaseName) {
+    public MapReduceIterable<TResult> databaseName(final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> sharded(final boolean sharded) {
+    public MapReduceIterable<TResult> sharded(final boolean sharded) {
         this.sharded = sharded;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> nonAtomic(final boolean nonAtomic) {
+    public MapReduceIterable<TResult> nonAtomic(final boolean nonAtomic) {
         this.nonAtomic = nonAtomic;
         return this;
     }
 
     @Override
-    public MapReduceIterable<T> batchSize(final int batchSize) {
+    public MapReduceIterable<TResult> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
     @Override
-    public MongoCursor<T> iterator() {
+    public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
 
     @Override
-    public T first() {
+    public TResult first() {
         return execute().first();
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MappingIterable<T, U>(this, mapper);
+    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
+        return new MappingIterable<TResult, U>(this, mapper);
     }
 
     @Override
-    public void forEach(final Block<? super T> block) {
+    public void forEach(final Block<? super TResult> block) {
         execute().forEach(block);
     }
 
     @Override
-    public <A extends Collection<? super T>> A into(final A target) {
+    public <A extends Collection<? super TResult>> A into(final A target) {
         return execute().into(target);
     }
 
-    MongoIterable<T> execute() {
+    MongoIterable<TResult> execute() {
         if (inline) {
-            MapReduceWithInlineResultsOperation<T> operation =
-                    new MapReduceWithInlineResultsOperation<T>(namespace,
+            MapReduceWithInlineResultsOperation<TResult> operation =
+                    new MapReduceWithInlineResultsOperation<TResult>(namespace,
                             new BsonJavaScript(mapFunction),
                             new BsonJavaScript(reduceFunction),
                             codecRegistry.get(clazz))
@@ -201,7 +204,7 @@ class MapReduceIterableImpl<T> implements MapReduceIterable<T> {
             if (finalizeFunction != null) {
                 operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
             }
-            return new OperationIterable<T>(operation, readPreference, executor);
+            return new OperationIterable<TResult>(operation, readPreference, executor);
         } else {
             MapReduceToCollectionOperation operation =
                     new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
@@ -224,8 +227,9 @@ class MapReduceIterableImpl<T> implements MapReduceIterable<T> {
             executor.execute(operation);
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
-            return new FindIterableImpl<T>(new MongoNamespace(dbName, collectionName), clazz, codecRegistry,
-                    primary(), executor, new BsonDocument(), new FindOptions()).batchSize(batchSize);
+            return new FindIterableImpl<TResult, TDocument>(new MongoNamespace(dbName, collectionName), clazz, collectionClass,
+                                                            codecRegistry, primary(), executor, new BsonDocument(),
+                                                            new FindOptions()).batchSize(batchSize);
         }
     }
 

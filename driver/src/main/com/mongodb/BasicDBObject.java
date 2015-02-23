@@ -18,6 +18,10 @@ package com.mongodb;
 
 import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Map;
 
@@ -31,7 +35,7 @@ import java.util.Map;
  * @mongodb.driver.manual core/document/ MongoDB Documents
  */
 @SuppressWarnings({"rawtypes"})
-public class BasicDBObject extends BasicBSONObject implements DBObject {
+public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     private static final long serialVersionUID = -4415279469780082174L;
 
     private boolean isPartialObject;
@@ -133,4 +137,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         return newCopy;
     }
 
+    @Override
+    public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+        return new BsonDocumentWrapper<BasicDBObject>(this, codecRegistry.get(BasicDBObject.class));
+    }
 }

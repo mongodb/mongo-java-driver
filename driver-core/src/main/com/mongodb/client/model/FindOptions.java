@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.CursorType;
+import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,11 +33,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class FindOptions {
     private int batchSize;
     private int limit;
-    private Object modifiers;
-    private Object projection;
+    private Bson modifiers;
+    private Bson projection;
     private long maxTimeMS;
     private int skip;
-    private Object sort;
+    private Bson sort;
     private CursorType cursorType = CursorType.NonTailable;
     private boolean noCursorTimeout;
     private boolean oplogReplay;
@@ -165,7 +166,7 @@ public final class FindOptions {
      * @return the query modifiers, which may be null
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
-    public Object getModifiers() {
+    public Bson getModifiers() {
         return modifiers;
     }
 
@@ -176,7 +177,7 @@ public final class FindOptions {
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
-    public FindOptions modifiers(final Object modifiers) {
+    public FindOptions modifiers(final Bson modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -187,7 +188,7 @@ public final class FindOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    public Object getProjection() {
+    public Bson getProjection() {
         return projection;
     }
 
@@ -198,7 +199,7 @@ public final class FindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    public FindOptions projection(final Object projection) {
+    public FindOptions projection(final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -210,7 +211,7 @@ public final class FindOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public Object getSort() {
+    public Bson getSort() {
         return sort;
     }
 
@@ -221,7 +222,7 @@ public final class FindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOptions sort(final Object sort) {
+    public FindOptions sort(final Bson sort) {
         this.sort = sort;
         return this;
     }

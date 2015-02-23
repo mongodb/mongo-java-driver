@@ -107,10 +107,10 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
-                executor).withDefaultClass(newClass)
+                executor).withDocumentClass(newClass)
 
         then:
-        collection.getDefaultClass() == newClass
+        collection.getDocumentClass() == newClass
         expect collection, isTheSameAs(new MongoCollectionImpl(namespace, newClass, codecRegistry, readPreference, writeConcern,
                 executor))
     }

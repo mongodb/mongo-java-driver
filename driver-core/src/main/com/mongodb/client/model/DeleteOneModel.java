@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -27,15 +29,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual tutorial/remove-documents/ Remove
  */
 public class DeleteOneModel<T> extends WriteModel<T> {
-    private final Object filter;
+    private final Bson filter;
 
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may not be null. The filter can be of any type for which a
-     * {@code Codec} is registered
+     * @param filter a document describing the query filter, which may not be null.
      */
-    public DeleteOneModel(final Object filter) {
+    public DeleteOneModel(final Bson filter) {
         this.filter = notNull("filter", filter);
     }
 
@@ -44,7 +45,7 @@ public class DeleteOneModel<T> extends WriteModel<T> {
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public Bson getFilter() {
         return filter;
     }
 }

@@ -63,8 +63,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT),
-                                                               updateOperation,
+        Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT), updateOperation,
                                                                new FindOneAndUpdateOptions().returnOriginal(false));
 
         assertThat("Document returned from updateOneAndGet should be the updated document",
@@ -114,8 +113,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
 
         String newValueThatDoesNotMatchAnythingInDatabase = "valueThatDoesNotMatch";
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase),
-                                                        updateOperation,
+        Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase), updateOperation,
                                                         new FindOneAndUpdateOptions().upsert(true).returnOriginal(false));
 
         assertThat(collection.count(), is(2L));
