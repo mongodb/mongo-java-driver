@@ -56,7 +56,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insertOne(doc);
 
-        Concrete newDoc = collection.findOneAndUpdate(new Document("i", 5), new Document("$set", new Document("i", 6)));
+        Concrete newDoc = collection.findOneAndUpdate(asFilter(new Document("i", 5)), new Document("$set", new Document("i", 6)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);

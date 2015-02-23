@@ -409,7 +409,7 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to find the document with
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
-    TDocument findOneAndDelete(Object filter);
+    TDocument findOneAndDelete(Filter filter);
 
     /**
      * Atomically find a document and remove it.
@@ -418,7 +418,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
-    TDocument findOneAndDelete(Object filter, FindOneAndDeleteOptions options);
+    TDocument findOneAndDelete(Filter filter, FindOneAndDeleteOptions options);
 
     /**
      * Atomically find a document and replace it.
@@ -429,7 +429,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
-    TDocument findOneAndReplace(Object filter, TDocument replacement);
+    TDocument findOneAndReplace(Filter filter, TDocument replacement);
 
     /**
      * Atomically find a document and replace it.
@@ -441,7 +441,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
-    TDocument findOneAndReplace(Object filter, TDocument replacement, FindOneAndReplaceOptions options);
+    TDocument findOneAndReplace(Filter filter, TDocument replacement, FindOneAndReplaceOptions options);
 
     /**
      * Atomically find a document and update it.
@@ -453,7 +453,7 @@ public interface MongoCollection<TDocument> {
      * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
      * returned
      */
-    TDocument findOneAndUpdate(Object filter, Object update);
+    TDocument findOneAndUpdate(Filter filter, Object update);
 
     /**
      * Atomically find a document and update it.
@@ -467,7 +467,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
-    TDocument findOneAndUpdate(Object filter, Object update, FindOneAndUpdateOptions options);
+    TDocument findOneAndUpdate(Filter filter, Object update, FindOneAndUpdateOptions options);
 
     /**
      * Drops this collection from the Database.

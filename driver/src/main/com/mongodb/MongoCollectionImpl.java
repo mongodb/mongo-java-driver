@@ -331,27 +331,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public TDocument findOneAndDelete(final Object filter) {
+    public TDocument findOneAndDelete(final Filter filter) {
         return findOneAndDelete(filter, new FindOneAndDeleteOptions());
     }
 
     @Override
-    public TDocument findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options) {
+    public TDocument findOneAndDelete(final Filter filter, final FindOneAndDeleteOptions options) {
         return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, getCodec())
-                                .filter(asBson(filter))
+                                .filter(render(filter))
                                 .projection(asBson(options.getProjection()))
                                 .sort(asBson(options.getSort())));
     }
 
     @Override
-    public TDocument findOneAndReplace(final Object filter, final TDocument replacement) {
+    public TDocument findOneAndReplace(final Filter filter, final TDocument replacement) {
         return findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions());
     }
 
     @Override
-    public TDocument findOneAndReplace(final Object filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
+    public TDocument findOneAndReplace(final Filter filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
         return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, getCodec(), asBson(replacement))
-                                .filter(asBson(filter))
+                                .filter(render(filter))
                                 .projection(asBson(options.getProjection()))
                                 .sort(asBson(options.getSort()))
                                 .returnOriginal(options.getReturnOriginal())
@@ -359,14 +359,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public TDocument findOneAndUpdate(final Object filter, final Object update) {
+    public TDocument findOneAndUpdate(final Filter filter, final Object update) {
         return findOneAndUpdate(filter, update, new FindOneAndUpdateOptions());
     }
 
     @Override
-    public TDocument findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options) {
+    public TDocument findOneAndUpdate(final Filter filter, final Object update, final FindOneAndUpdateOptions options) {
         return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, getCodec(), asBson(update))
-                                .filter(asBson(filter))
+                                .filter(render(filter))
                                 .projection(asBson(options.getProjection()))
                                 .sort(asBson(options.getSort()))
                                 .returnOriginal(options.getReturnOriginal())

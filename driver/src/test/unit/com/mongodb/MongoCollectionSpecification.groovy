@@ -543,14 +543,14 @@ class MongoCollectionSpecification extends Specification {
         def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndDelete(new Document('a', 1))
+        collection.findOneAndDelete(asFilter(new Document('a', 1)))
         def operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
+        collection.findOneAndDelete(asFilter(new Document('a', 1)), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
@@ -571,14 +571,14 @@ class MongoCollectionSpecification extends Specification {
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10))
+        collection.findOneAndReplace(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
+        collection.findOneAndReplace(asFilter(new Document('a', 1)), new Document('a', 10),
                                      new FindOneAndReplaceOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
@@ -600,14 +600,14 @@ class MongoCollectionSpecification extends Specification {
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10))
+        collection.findOneAndUpdate(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
+        collection.findOneAndUpdate(asFilter(new Document('a', 1)), new Document('a', 10),
                                     new FindOneAndUpdateOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 
