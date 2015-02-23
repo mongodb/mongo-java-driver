@@ -131,7 +131,7 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter
      * @return the number of documents in the collection
      */
-    long count(Object filter);
+    long count(Filter filter);
 
     /**
      * Counts the number of documents in the collection according to the given options.
@@ -140,7 +140,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options describing the count
      * @return the number of documents in the collection
      */
-    long count(Object filter, CountOptions options);
+    long count(Filter filter, CountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.

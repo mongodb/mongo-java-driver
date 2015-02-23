@@ -107,7 +107,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
-        assertThat(collection.count(new Document("x", 5), new CountOptions()), is(2L));
+        assertThat(collection.count(asFilter(new Document("x", 5)), new CountOptions()), is(2L));
     }
 
     @Test
@@ -123,7 +123,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateOne(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
-        assertThat(collection.count(new Document("x", 5), new CountOptions()), is(1L));
+        assertThat(collection.count(asFilter(new Document("x", 5)), new CountOptions()), is(1L));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateOne(filter, incrementXValueByOne);
 
         // Then
-        assertThat(collection.count(new Document("x", 4), new CountOptions()), is(1L));
+        assertThat(collection.count(asFilter(new Document("x", 4)), new CountOptions()), is(1L));
     }
 
     @Test
@@ -157,7 +157,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateMany(filter, incrementXValueByOne);
 
         // Then
-        assertThat(collection.count(new Document("x", 4), new CountOptions()), is(2L));
+        assertThat(collection.count(asFilter(new Document("x", 4)), new CountOptions()), is(2L));
     }
 
 }

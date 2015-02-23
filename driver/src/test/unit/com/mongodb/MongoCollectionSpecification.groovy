@@ -160,7 +160,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         filter = new BsonDocument('a', new BsonInt32(1))
-        collection.count(filter)
+        collection.count(asFilter(filter))
         operation = executor.getReadOperation() as CountOperation
 
         then:
@@ -168,7 +168,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def hint = new BsonDocument('hint', new BsonInt32(1))
-        collection.count(filter, new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
+        collection.count(asFilter(filter), new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
         operation = executor.getReadOperation() as CountOperation
 
         then:

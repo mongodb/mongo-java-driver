@@ -140,18 +140,18 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public long count() {
-        return count(new Document(), new CountOptions());
+        return count(asFilter(new BsonDocument()), new CountOptions());
     }
 
     @Override
-    public long count(final Object filter) {
+    public long count(final Filter filter) {
         return count(filter, new CountOptions());
     }
 
     @Override
-    public long count(final Object filter, final CountOptions options) {
+    public long count(final Filter filter, final CountOptions options) {
         CountOperation operation = new CountOperation(namespace)
-                                       .filter(asBson(filter))
+                                       .filter(filter.render(documentClass, codecRegistry))
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);

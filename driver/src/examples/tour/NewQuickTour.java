@@ -185,12 +185,12 @@ public class NewQuickTour {
         // Find using the text index
         Document search = new Document("$search", "textual content -irrelevant");
         Document textSearch = new Document("$text", search);
-        long matchCount = collection.count(textSearch);
+        long matchCount = collection.count(asFilter(textSearch));
         System.out.println("Text search matches: " + matchCount);
 
         // Find using the $language operator
         textSearch = new Document("$text", search.append("$language", "english"));
-        matchCount = collection.count(textSearch);
+        matchCount = collection.count(asFilter(textSearch));
         System.out.println("Text search matches (english): " + matchCount);
 
         // Find the highest scoring match

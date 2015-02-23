@@ -22,6 +22,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -107,7 +108,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        assertThat(collection.count(filter, new CountOptions()), is(3L));
+        assertThat(collection.count(asFilter(filter), new CountOptions()), is(3L));
 
         Document documentRetrieved = collection.findOneAndDelete(filter);
 
