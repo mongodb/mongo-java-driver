@@ -17,7 +17,9 @@
 package org.bson;
 
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 
 import java.io.Serializable;
@@ -39,6 +41,16 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     private static final long serialVersionUID = -8366220692735186027L;
 
     private final Map<String, BsonValue> map = new LinkedHashMap<String, BsonValue>();
+
+    /**
+     * Create a BsonDocument from a JSON String representation.
+     *
+     * @param json a JSON string
+     * @return a BSON document
+     */
+    public static BsonDocument parse(final String json) {
+        return new BsonDocumentCodec().decode(new JsonReader(json), DecoderContext.builder().build());
+    }
 
     /**
      * Construct a new instance with the given list {@code BsonElement}, none of which may be null.

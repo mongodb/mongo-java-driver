@@ -82,4 +82,9 @@ public class BsonDocumentTest {
     public void toStringShouldEqualToJson() {
         assertEquals(document.toJson(), document.toString());
     }
+
+    @Test
+    public void shouldParseJson() {
+        assertEquals(new BsonDocument("a", new BsonInt32(1)), BsonDocument.parse("{\"a\" : 1}"));
+    }
 }
