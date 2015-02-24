@@ -63,6 +63,7 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.client.model.Filter.asFilter
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static spock.util.matcher.HamcrestSupport.expect
@@ -90,10 +91,10 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern,
-                executor).withDefaultClass(newClass)
+                executor).withDocumentClass(newClass)
 
         then:
-        collection.getDefaultClass() == newClass
+        collection.getDocumentClass() == newClass
         expect collection, isTheSameAs(new MongoCollectionImpl(namespace, newClass, codecRegistry, readPreference, writeConcern,
                 executor))
     }
@@ -159,7 +160,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         filter = new BsonDocument('a', new BsonInt32(1))
-        collection.count(filter)
+        collection.count(asFilter(filter))
         operation = executor.getReadOperation() as CountOperation
 
         then:
@@ -167,7 +168,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def hint = new BsonDocument('hint', new BsonInt32(1))
-        collection.count(filter, new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
+        collection.count(asFilter(filter), new CountOptions().hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS))
         operation = executor.getReadOperation() as CountOperation
 
         then:
@@ -195,29 +196,29 @@ class MongoCollectionSpecification extends Specification {
         def findIterable = collection.find()
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                              asFilter(new BsonDocument()), new FindOptions()))
 
         when:
         findIterable = collection.find(BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, Document, codecRegistry, readPreference, executor,
+                                                              asFilter(new BsonDocument()), new FindOptions()))
 
         when:
-        findIterable = collection.find(new Document())
+        findIterable = collection.find(asFilter(new Document()))
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new Document(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                              asFilter(new Document()), new FindOptions()))
 
         when:
-        findIterable = collection.find(new Document(), BsonDocument)
+        findIterable = collection.find(asFilter(new Document()), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                new Document(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, Document, codecRegistry, readPreference, executor,
+                                                              asFilter(new Document()), new FindOptions()))
     }
 
     def 'should create AggregateIterable correctly'() {
@@ -229,14 +230,15 @@ class MongoCollectionSpecification extends Specification {
         def aggregateIterable = collection.aggregate([new Document('$match', 1)])
 
         then:
-        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                [new Document('$match', 1)]))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                                                                        executor, [new Document('$match', 1)]))
 
         when:
         aggregateIterable = collection.aggregate([new Document('$match', 1)], BsonDocument)
 
         then:
-        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, BsonDocument, Document, codecRegistry, readPreference,
+                                                                        executor,
                 [new Document('$match', 1)]))
     }
 
@@ -249,8 +251,8 @@ class MongoCollectionSpecification extends Specification {
         def mapReduceIterable = collection.mapReduce('map', 'reduce')
 
         then:
-        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                'map', 'reduce'))
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                                                                        executor, 'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
@@ -369,7 +371,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.deleteOne(new Document('_id', 1))
+        def result = collection.deleteOne(asFilter(new Document('_id', 1)))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -391,7 +393,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.deleteMany(new Document('_id', 1))
+        def result = collection.deleteMany(asFilter(new Document('_id', 1)))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -413,7 +415,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.replaceOne(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -443,7 +445,7 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        def result = collection.updateOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateOne(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -451,7 +453,7 @@ class MongoCollectionSpecification extends Specification {
         result == expectedResult
 
         when:
-        result = collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateOne(asFilter(new Document('a', 1)), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -478,7 +480,7 @@ class MongoCollectionSpecification extends Specification {
         }
 
         when:
-        def result = collection.updateMany(new Document('a', 1), new Document('a', 10))
+        def result = collection.updateMany(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -486,7 +488,7 @@ class MongoCollectionSpecification extends Specification {
         result == expectedResult
 
         when:
-        result = collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateMany(asFilter(new Document('a', 1)), new Document('a', 10), new UpdateOptions().upsert(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -541,14 +543,14 @@ class MongoCollectionSpecification extends Specification {
         def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndDelete(new Document('a', 1))
+        collection.findOneAndDelete(asFilter(new Document('a', 1)))
         def operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
+        collection.findOneAndDelete(asFilter(new Document('a', 1)), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
@@ -569,14 +571,14 @@ class MongoCollectionSpecification extends Specification {
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10))
+        collection.findOneAndReplace(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
+        collection.findOneAndReplace(asFilter(new Document('a', 1)), new Document('a', 10),
                                      new FindOneAndReplaceOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
@@ -598,14 +600,14 @@ class MongoCollectionSpecification extends Specification {
                 .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
-        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10))
+        collection.findOneAndUpdate(asFilter(new Document('a', 1)), new Document('a', 10))
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
+        collection.findOneAndUpdate(asFilter(new Document('a', 1)), new Document('a', 10),
                                     new FindOneAndUpdateOptions().projection(new Document('projection', 1)))
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 

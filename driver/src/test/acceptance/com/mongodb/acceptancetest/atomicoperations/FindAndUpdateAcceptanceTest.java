@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Date;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNull;
@@ -49,7 +50,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document documentBeforeChange = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT), updateOperation);
+        Document documentBeforeChange = collection.findOneAndUpdate(asFilter(new Document(KEY, VALUE_TO_CARE_ABOUT)), updateOperation);
 
         assertThat("Document returned from getOneAndUpdate should be the original document",
                    (Integer) documentBeforeChange.get("someNumber"), equalTo(11));
@@ -63,7 +64,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT),
+        Document updatedDocument = collection.findOneAndUpdate(asFilter(new Document(KEY, VALUE_TO_CARE_ABOUT)),
                                                                updateOperation,
                                                                new FindOneAndUpdateOptions().returnOriginal(false));
 
@@ -85,7 +86,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("numberOfJobs", 1));
-        Worker updatedDocument = collection.findOneAndUpdate(new Document("name", "Pat"), updateOperation,
+        Worker updatedDocument = collection.findOneAndUpdate(asFilter(new Document("name", "Pat")), updateOperation,
                                                              new FindOneAndUpdateOptions().returnOriginal(false));
 
         assertThat("Worker returned from updateOneAndGet should have the",
@@ -100,7 +101,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document document = collection.findOneAndUpdate(new Document(KEY, "someValueThatDoesNotExist"), updateOperation);
+        Document document = collection.findOneAndUpdate(asFilter(new Document(KEY, "someValueThatDoesNotExist")), updateOperation);
 
         assertNull("Document retrieved from getOneAndUpdate should be null", document);
     }
@@ -114,7 +115,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
 
         String newValueThatDoesNotMatchAnythingInDatabase = "valueThatDoesNotMatch";
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase),
+        Document document = collection.findOneAndUpdate(asFilter(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase)),
                                                         updateOperation,
                                                         new FindOneAndUpdateOptions().upsert(true).returnOriginal(false));
 

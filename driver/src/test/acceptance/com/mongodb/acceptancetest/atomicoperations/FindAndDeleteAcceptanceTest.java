@@ -22,6 +22,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -46,7 +47,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.findOneAndDelete(filter);
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter));
 
         // then
         assertThat("Document should have been deleted from the collection", collection.count(), is(0L));
@@ -67,7 +68,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.findOneAndDelete(filter);
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter));
 
         // then
         assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
@@ -87,7 +88,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.findOneAndDelete(filter);
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter));
 
         // then
         assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
@@ -107,9 +108,9 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        assertThat(collection.count(filter, new CountOptions()), is(3L));
+        assertThat(collection.count(asFilter(filter), new CountOptions()), is(3L));
 
-        Document documentRetrieved = collection.findOneAndDelete(filter);
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter));
 
         // then
         assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
@@ -131,7 +132,8 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.findOneAndDelete(filter, new FindOneAndDeleteOptions().sort(new Document(secondKey, 1)));
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter),
+                                                                 new FindOneAndDeleteOptions().sort(new Document(secondKey, 1)));
 
         // then
         assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
@@ -143,7 +145,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
     public void shouldReturnNullIfNoDocumentRemoved() {
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.findOneAndDelete(filter);
+        Document documentRetrieved = collection.findOneAndDelete(asFilter(filter));
 
         // then
         assertThat(documentRetrieved, is(nullValue()));
@@ -159,7 +161,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(sam);
 
         // when
-        Document removedDocument = collection.findOneAndDelete(new Document("name", "Pete"));
+        Document removedDocument = collection.findOneAndDelete(asFilter(new Document("name", "Pete")));
 
         // then
         assertThat(collection.count(), is(1L));

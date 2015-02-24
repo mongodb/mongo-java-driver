@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -37,7 +38,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        List<Document> filteredCollection = collection.find().filter(new Document("_id", 3))
+        List<Document> filteredCollection = collection.find().filter(asFilter(new Document("_id", 3)))
                                                              .into(new ArrayList<Document>());
         assertEquals(1, filteredCollection.size());
         assertThat((Integer) filteredCollection.get(0).get("_id"), is(3));
@@ -117,7 +118,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         initialiseCollectionWithDocuments(numberOfDocuments);
 
         MongoCursor<Document> filterResults = collection.find()
-                                                        .filter(new Document("_id", new Document("$gt", 2)))
+                                                        .filter(asFilter(new Document("_id", new Document("$gt", 2))))
                                                         .sort(new Document("_id", 1))
                                                         .iterator();
 
@@ -139,7 +140,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
     @Test(expected = MongoQueryException.class)
     public void shouldThrowQueryFailureException() {
         collection.insertOne(new Document("loc", asList(0.0, 0.0)));
-        collection.find().filter(new Document("loc", new Document("$near", asList(0.0, 0.0)))).first();
+        collection.find().filter(asFilter(new Document("loc", new Document("$near", asList(0.0, 0.0))))).first();
     }
 
     @Test

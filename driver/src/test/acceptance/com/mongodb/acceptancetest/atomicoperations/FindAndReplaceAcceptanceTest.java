@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Date;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNull;
@@ -53,7 +54,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.count(), is(1L));
 
-        Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT),
+        Document document = collection.findOneAndReplace(asFilter(new Document(KEY, VALUE_TO_CARE_ABOUT)),
                                                          new Document("foo", "bar").append("_id", documentInserted.get("_id")));
 
         assertThat("Document, retrieved from replaceAndGet should match the document inserted before",
@@ -75,7 +76,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 1);
-        Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan);
+        Worker returnedDocument = collection.findOneAndReplace(asFilter(new Document("name", "Pat")), jordan);
 
         assertThat("Document, retrieved from getOneAndReplace, should match the document inserted before",
                    returnedDocument, equalTo(pat));
@@ -95,7 +96,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
-        Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan,
+        Worker returnedDocument = collection.findOneAndReplace(asFilter(new Document("name", "Pat")), jordan,
                                                                new FindOneAndReplaceOptions().returnOriginal(false));
 
         assertThat("Worker retrieved from replaceOneAndGet should match the updated Worker",
@@ -111,7 +112,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.count(), is(1L));
 
-        Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT), documentReplacement,
+        Document document = collection.findOneAndReplace(asFilter(new Document(KEY, VALUE_TO_CARE_ABOUT)), documentReplacement,
                                                          new FindOneAndReplaceOptions().returnOriginal(false));
 
 
@@ -126,7 +127,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.count(), is(1L));
 
-        Document document = collection.findOneAndReplace(new Document(KEY, "bar"), new Document("foo", "bar"));
+        Document document = collection.findOneAndReplace(asFilter(new Document(KEY, "bar")), new Document("foo", "bar"));
 
         assertNull("Document retrieved from getOneAndReplace should be null when no matching document found", document);
     }
@@ -138,7 +139,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         assertThat(collection.count(), is(1L));
 
-        Document document = collection.findOneAndReplace(new Document(KEY, "bar"), new Document("foo", "bar"));
+        Document document = collection.findOneAndReplace(asFilter(new Document(KEY, "bar")), new Document("foo", "bar"));
 
         assertNull("Document retrieved from replaceOneAndGet should be null when no matching document found", document);
     }
@@ -152,7 +153,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         Document replacementDocument = new Document("_id", new ObjectId()).append("foo", "bar");
 
-        Document document = collection.findOneAndReplace(new Document(KEY, "valueThatDoesNotMatch"),
+        Document document = collection.findOneAndReplace(asFilter(new Document(KEY, "valueThatDoesNotMatch")),
                                                          replacementDocument,
                                                          new FindOneAndReplaceOptions()
                                                              .upsert(true)

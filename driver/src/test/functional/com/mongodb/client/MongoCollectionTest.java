@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -47,7 +48,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
-                .withDefaultClass(Concrete.class)
+                .withDocumentClass(Concrete.class)
                 .withCodecRegistry(codecRegistry)
                 .withReadPreference(ReadPreference.primary())
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);
@@ -55,7 +56,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insertOne(doc);
 
-        Concrete newDoc = collection.findOneAndUpdate(new Document("i", 5), new Document("$set", new Document("i", 6)));
+        Concrete newDoc = collection.findOneAndUpdate(asFilter(new Document("i", 5)), new Document("$set", new Document("i", 6)));
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
@@ -69,7 +70,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
-                .withDefaultClass(Concrete.class)
+                .withDocumentClass(Concrete.class)
                 .withCodecRegistry(codecRegistry)
                 .withReadPreference(ReadPreference.primary())
                 .withWriteConcern(WriteConcern.ACKNOWLEDGED);
@@ -81,7 +82,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         collection.insertOne(secondItem);
 
         // when
-        List<String> listOfStringObjectIds = collection.find(new Document("i", 1))
+        List<String> listOfStringObjectIds = collection.find(asFilter(new Document("i", 1)))
                                                        .map(new Function<Concrete, ObjectId>() {
                                                            @Override
                                                            public ObjectId apply(final Concrete concrete) {
@@ -100,7 +101,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         assertThat(listOfStringObjectIds.get(0), is(firstItem.getId().toString()));
 
         // when
-        List<ObjectId> listOfObjectIds = collection.find(new Document("i", 1))
+        List<ObjectId> listOfObjectIds = collection.find(asFilter(new Document("i", 1)))
                                                    .map(new Function<Concrete, ObjectId>() {
                                                        @Override
                                                        public ObjectId apply(final Concrete concrete) {

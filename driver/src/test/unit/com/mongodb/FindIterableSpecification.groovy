@@ -31,6 +31,7 @@ import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.client.model.Filter.asFilter
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -57,8 +58,8 @@ class FindIterableSpecification extends Specification {
                                            .oplogReplay(false)
                                            .noCursorTimeout(false)
                                            .partial(false)
-        def findIterable = new FindIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                new Document('filter', 1), findOptions)
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                          asFilter(new Document('filter', 1)), findOptions)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -82,7 +83,7 @@ class FindIterableSpecification extends Specification {
         readPreference == secondary()
 
         when: 'overriding initial options'
-        findIterable.filter(new Document('filter', 2))
+        findIterable.filter(asFilter(new Document('filter', 2)))
                   .sort(new Document('sort', 2))
                   .modifiers(new Document('modifier', 2))
                   .projection(new Document('projection', 2))
@@ -120,11 +121,11 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl<Document>(namespace,  Document, codecRegistry, readPreference, executor,
-                new Document('filter', 1), findOptions)
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                asFilter(new Document('filter', 1)), findOptions)
 
         when:
-        findIterable.filter(new Document('filter', 1))
+        findIterable.filter(asFilter(new Document('filter', 1)))
                   .sort(new BsonDocument('sort', new BsonInt32(1)))
                   .modifiers(new BasicDBObject('modifier', 1))
                   .iterator()
@@ -164,8 +165,8 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
-        def mongoIterable = new FindIterableImpl<Document>(namespace,  Document, codecRegistry, readPreference, executor, new Document(),
-                findOptions)
+        def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                           asFilter(new Document()), findOptions)
 
         when:
         def results = mongoIterable.first()

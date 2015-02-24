@@ -22,6 +22,7 @@ import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -39,10 +40,10 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         // When
         Document filter = new Document("_id", 2);
         Document newDocumentWithoutFieldForA = new Document("_id", 2).append("x", 7);
-        collection.replaceOne(filter, newDocumentWithoutFieldForA);
+        collection.replaceOne(asFilter(filter), newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(filter).first();
+        Document document = collection.find(asFilter(filter)).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
@@ -53,27 +54,27 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document replacement = new Document("_id", 3).append("x", 2);
-        collection.replaceOne(new Document(), replacement, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), replacement, new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).iterator().next(), is(replacement));
+        assertThat(collection.find(asFilter(new Document("_id", 3))).iterator().next(), is(replacement));
     }
 
     @Test
     public void shouldReplaceTheDocumentIfReplacingWithUpsertAndDocumentIsFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 3).append("x", 2);
-        collection.replaceOne(new Document(), originalDocument, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), originalDocument, new UpdateOptions().upsert(true));
         assertThat(collection.count(), is(1L));
 
         // when
         Document replacement = originalDocument.append("y", 5);
-        collection.replaceOne(new Document(), replacement, new UpdateOptions().upsert(true));
+        collection.replaceOne(asFilter(new Document()), replacement, new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).iterator().next(),  is(replacement));
+        assertThat(collection.find(asFilter(new Document("_id", 3))).iterator().next(),  is(replacement));
     }
 
     @Test
@@ -86,7 +87,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         Document filter = new Document("a", 1);
         Document newDocumentWithDifferentId = new Document("_id", 2).append("a", 3);
         try {
-            collection.replaceOne(filter, newDocumentWithDifferentId);
+            collection.replaceOne(asFilter(filter), newDocumentWithDifferentId);
             fail("Should have thrown an exception");
         } catch (MongoWriteException e) {
             // Then

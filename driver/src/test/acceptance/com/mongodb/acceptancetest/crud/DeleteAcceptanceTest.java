@@ -20,6 +20,7 @@ import com.mongodb.client.DatabaseTestCase;
 import org.bson.Document;
 import org.junit.Test;
 
+import static com.mongodb.client.model.Filter.asFilter;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
@@ -39,7 +40,7 @@ public class DeleteAcceptanceTest extends DatabaseTestCase {
 
         // When
         Document filter = new Document("a", 1);
-        collection.deleteOne(filter);
+        collection.deleteOne(asFilter(filter));
 
         // Then
         assertThat(collection.count(), is(1L));
@@ -55,7 +56,7 @@ public class DeleteAcceptanceTest extends DatabaseTestCase {
 
         // When
         Document filter = new Document("a", 1);
-        collection.deleteMany(filter);
+        collection.deleteMany(asFilter(filter));
 
         // Then
         assertThat(collection.count(), is(0L));
