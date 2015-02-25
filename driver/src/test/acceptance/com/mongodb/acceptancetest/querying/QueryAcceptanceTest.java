@@ -42,6 +42,7 @@ import java.util.List;
 
 import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Filters.type;
+import static com.mongodb.client.model.Sorts.descending;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
@@ -146,7 +147,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         List<Document> results = new ArrayList<Document>();
 
         collection.find(or(type("numTimesOrdered", INT32), type("numTimesOrdered", INT64)))
-                  .sort(new Document("numTimesOrdered", -1)).into(results);
+                  .sort(descending("numTimesOrdered")).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
