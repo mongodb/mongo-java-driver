@@ -19,7 +19,6 @@ package com.mongodb.acceptancetest.querying;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.QueryBuilder;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -41,8 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.mongodb.QueryOperators.TYPE;
-import static com.mongodb.client.QueryBuilder.query;
+import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.type;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
@@ -146,10 +145,8 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
         List<Document> results = new ArrayList<Document>();
 
-        Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
-                                            .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
-                                            .toDocument();
-        collection.find(filter).sort(new Document("numTimesOrdered", -1)).into(results);
+        collection.find(or(type("numTimesOrdered", INT32), type("numTimesOrdered", INT64)))
+                  .sort(new Document("numTimesOrdered", -1)).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
