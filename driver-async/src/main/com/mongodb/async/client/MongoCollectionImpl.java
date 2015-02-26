@@ -79,16 +79,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
-    private final Class<TDocument> clazz;
+    private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final AsyncOperationExecutor executor;
 
-    MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> clazz, final CodecRegistry codecRegistry,
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final AsyncOperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
-        this.clazz = notNull("clazz", clazz);
+        this.documentClass = notNull("clazz", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
@@ -102,7 +102,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public Class<TDocument> getDocumentClass() {
-        return clazz;
+        return documentClass;
     }
 
     @Override
@@ -127,17 +127,17 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
-        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<TDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override
@@ -172,7 +172,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public FindIterable<TDocument> find() {
-        return find(new BsonDocument(), clazz);
+        return find(new BsonDocument(), documentClass);
     }
 
     @Override
@@ -182,7 +182,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public FindIterable<TDocument> find(final Bson filter) {
-        return find(filter, clazz);
+        return find(filter, documentClass);
     }
 
     @Override
@@ -191,8 +191,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public AggregateIterable<Document> aggregate(final List<? extends Bson> pipeline) {
-        return aggregate(pipeline, Document.class);
+    public AggregateIterable<TDocument> aggregate(final List<? extends Bson> pipeline) {
+        return aggregate(pipeline, documentClass);
     }
 
     @Override
@@ -201,8 +201,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public MapReduceIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
-        return mapReduce(mapFunction, reduceFunction, Document.class);
+    public MapReduceIterable<TDocument> mapReduce(final String mapFunction, final String reduceFunction) {
+        return mapReduce(mapFunction, reduceFunction, documentClass);
     }
 
     @Override
@@ -528,7 +528,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private Codec<TDocument> getCodec() {
-        return getCodec(clazz);
+        return getCodec(documentClass);
     }
 
     private <TResult> Codec<TResult> getCodec(final Class<TResult> clazz) {
@@ -540,6 +540,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(clazz, codecRegistry);
+        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
     }
 }

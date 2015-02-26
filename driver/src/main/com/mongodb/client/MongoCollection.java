@@ -199,7 +199,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-    AggregateIterable<Document> aggregate(List<? extends Bson> pipeline);
+    AggregateIterable<TDocument> aggregate(List<? extends Bson> pipeline);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -221,7 +221,7 @@ public interface MongoCollection<TDocument> {
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
-    MapReduceIterable<Document> mapReduce(String mapFunction, String reduceFunction);
+    MapReduceIterable<TDocument> mapReduce(String mapFunction, String reduceFunction);
 
     /**
      * Aggregates documents according to the specified map-reduce function.

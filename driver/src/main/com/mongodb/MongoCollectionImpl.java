@@ -189,8 +189,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public AggregateIterable<Document> aggregate(final List<? extends Bson> pipeline) {
-        return aggregate(pipeline, Document.class);
+    public AggregateIterable<TDocument> aggregate(final List<? extends Bson> pipeline) {
+        return aggregate(pipeline, documentClass);
     }
 
     @Override
@@ -200,8 +200,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public MapReduceIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
-        return mapReduce(mapFunction, reduceFunction, Document.class);
+    public MapReduceIterable<TDocument> mapReduce(final String mapFunction, final String reduceFunction) {
+        return mapReduce(mapFunction, reduceFunction, documentClass);
     }
 
     @Override
