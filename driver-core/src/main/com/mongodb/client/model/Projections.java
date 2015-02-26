@@ -31,9 +31,9 @@ import static java.util.Arrays.asList;
 
 /**
  * A factory for projections.   A convenient way to use this class is to statically import all of its methods, which allows usage like:
- * <p/>
+ *
  * <blockquote><pre>
- *    collection.find().projection(fields(include("x", "y"), excludeId())
+ *    collection.find().projection(fields(include("x", "y"), excludeId()))
  * </pre></blockquote>
  *
  * @mongodb.driver.manual tutorial/project-fields-from-query-results/#limit-fields-to-return-from-a-query Projection
@@ -99,7 +99,7 @@ public final class Projections {
      *
      * @param fieldName the field name whose value is the array
      * @return the projection
-     * @mongodb.driver.manual reference/operator/projection/positional/#projection Project the first matchin element ($ operator)
+     * @mongodb.driver.manual reference/operator/projection/positional/#projection Project the first matching element ($ operator)
      */
     public static Bson elemMatch(final String fieldName) {
         return new BsonDocument(fieldName + ".$", new BsonInt32(1));
@@ -140,7 +140,7 @@ public final class Projections {
      * @param fieldName the field name
      * @param limit the number of elements to project.
      * @return the projection
-     * @mongodb.driver.manual
+     * @mongodb.driver.manual reference/operator/projection/slice Slice
      */
     public static Bson slice(final String fieldName, final int limit) {
         return new BsonDocument(fieldName, new BsonDocument("$slice", new BsonInt32(limit)));
@@ -153,7 +153,7 @@ public final class Projections {
      * @param skip the number of elements to skip before applying the limit
      * @param limit the number of elements to project
      * @return the projection
-     * @mongodb.driver.manual
+     * @mongodb.driver.manual reference/operator/projection/slice Slice
      */
     public static Bson slice(final String fieldName, final int skip, final int limit) {
         return new BsonDocument(fieldName, new BsonDocument("$slice", new BsonArray(asList(new BsonInt32(skip), new BsonInt32(limit)))));
@@ -163,9 +163,8 @@ public final class Projections {
      * Creates a projection that combines the list of projections into a single one.  If there are duplicate keys, the last one takes
      * precedence.
      *
-     * @param projections the list projections to combine
+     * @param projections the list of projections to combine
      * @return the combined projection
-     * @mongodb.driver.manual
      */
     public static Bson fields(final Bson... projections) {
         return fields(asList(projections));
@@ -175,7 +174,7 @@ public final class Projections {
      * Creates a projection that combines the list of projections into a single one.  If there are duplicate keys, the last one takes
      * precedence.
      *
-     * @param projections the list projections to combine
+     * @param projections the list of projections to combine
      * @return the combined projection
      * @mongodb.driver.manual
      */

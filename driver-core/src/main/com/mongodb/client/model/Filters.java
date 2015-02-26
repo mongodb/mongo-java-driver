@@ -55,12 +55,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value     the value
-     * @param <TField>  the value type
+     * @param <TItem>  the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      */
-    public static <TField> Bson eq(final String fieldName, final TField value) {
-        return new SimpleEncodingFilter<TField>(fieldName, value);
+    public static <TItem> Bson eq(final String fieldName, final TItem value) {
+        return new SimpleEncodingFilter<TItem>(fieldName, value);
     }
 
     /**
@@ -68,12 +68,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value     the value
-     * @param <TField>  the value type
+     * @param <TItem>  the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/ne $ne
      */
-    public static <TField> Bson ne(final String fieldName, final TField value) {
-        return new OperatorFilter<TField>("$ne", fieldName, value);
+    public static <TItem> Bson ne(final String fieldName, final TItem value) {
+        return new OperatorFilter<TItem>("$ne", fieldName, value);
     }
 
     /**
@@ -81,12 +81,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value the value
-     * @param <TField> the value type
+     * @param <TItem> the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/gt $gt
      */
-    public static <TField> Bson gt(final String fieldName, final TField value) {
-        return new OperatorFilter<TField>("$gt", fieldName, value);
+    public static <TItem> Bson gt(final String fieldName, final TItem value) {
+        return new OperatorFilter<TItem>("$gt", fieldName, value);
     }
 
     /**
@@ -94,12 +94,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value the value
-     * @param <TField> the value type
+     * @param <TItem> the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/lt $lt
      */
-    public static <TField> Bson lt(final String fieldName, final TField value) {
-        return new OperatorFilter<TField>("$lt", fieldName, value);
+    public static <TItem> Bson lt(final String fieldName, final TItem value) {
+        return new OperatorFilter<TItem>("$lt", fieldName, value);
     }
 
     /**
@@ -107,12 +107,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value the value
-     * @param <TField> the value type
+     * @param <TItem> the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/gte $gte
      */
-    public static <TField> Bson gte(final String fieldName, final TField value) {
-        return new OperatorFilter<TField>("$gte", fieldName, value);
+    public static <TItem> Bson gte(final String fieldName, final TItem value) {
+        return new OperatorFilter<TItem>("$gte", fieldName, value);
     }
 
     /**
@@ -120,12 +120,12 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value the value
-     * @param <TField> the value type
+     * @param <TItem> the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/lte $lte
      */
-    public static <TField> Bson lte(final String fieldName, final TField value) {
-        return new OperatorFilter<TField>("$lte", fieldName, value);
+    public static <TItem> Bson lte(final String fieldName, final TItem value) {
+        return new OperatorFilter<TItem>("$lte", fieldName, value);
     }
 
     /**
@@ -465,12 +465,12 @@ public final class Filters {
         }
     }
 
-    private static final class OperatorFilter<TField> implements Bson {
+    private static final class OperatorFilter<TItem> implements Bson {
         private final String operatorName;
         private final String fieldName;
-        private final TField value;
+        private final TItem value;
 
-        OperatorFilter(final String operatorName, final String fieldName, final TField value) {
+        OperatorFilter(final String operatorName, final String fieldName, final TItem value) {
             this.operatorName = notNull("operatorName", operatorName);
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;

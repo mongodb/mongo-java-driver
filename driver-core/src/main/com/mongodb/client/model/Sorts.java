@@ -94,7 +94,7 @@ public final class Sorts {
      *
      * @param fieldName the field name
      * @return the sort specification
-     * @mongodb.driver.manual operator/projection/meta/#sort textScore
+     * @mongodb.driver.manual reference/operator/projection/meta/#sort textScore
      */
     public static Bson metaTextScore(final String fieldName) {
         return new BsonDocument(fieldName, new BsonDocument("$meta", new BsonString("textScore")));
@@ -104,7 +104,7 @@ public final class Sorts {
      * Combine multiple sort specifications.  If any field names are repeated, the last one takes precendence.
      *
      * @param sorts the sort specifications
-     * @return the combine sort specification
+     * @return the combined sort specification
      */
     public static Bson orderBy(final Bson... sorts) {
         return orderBy(asList(sorts));
@@ -114,7 +114,7 @@ public final class Sorts {
      * Combine multiple sort specifications.  If any field names are repeated, the last one takes precendence.
      *
      * @param sorts the sort specifications
-     * @return the combine sort specification
+     * @return the combined sort specification
      */
     public static Bson orderBy(final List<Bson> sorts) {
         notNull("sorts", sorts);
