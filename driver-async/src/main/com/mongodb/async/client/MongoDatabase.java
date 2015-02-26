@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 /**
  * The MongoDatabase interface.
@@ -110,7 +111,7 @@ public interface MongoDatabase {
      * @param command  the command to be run
      * @param callback the callback that is passed the command result
      */
-    void executeCommand(Object command, SingleResultCallback<Document> callback);
+    void executeCommand(Bson command, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -119,7 +120,7 @@ public interface MongoDatabase {
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
      * @param callback       the callback that is passed the command result
      */
-    void executeCommand(Object command, ReadPreference readPreference, SingleResultCallback<Document> callback);
+    void executeCommand(Bson command, ReadPreference readPreference, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -129,7 +130,7 @@ public interface MongoDatabase {
      * @param <T>      the type of the class to use instead of {@code Document}.
      * @param callback the callback that is passed the command result
      */
-    <T> void executeCommand(Object command, Class<T> clazz, SingleResultCallback<T> callback);
+    <T> void executeCommand(Bson command, Class<T> clazz, SingleResultCallback<T> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -140,7 +141,7 @@ public interface MongoDatabase {
      * @param <T>            the type of the class to use instead of {@code Document}.
      * @param callback       the callback that is passed the command result
      */
-    <T> void executeCommand(Object command, ReadPreference readPreference, Class<T> clazz, SingleResultCallback<T> callback);
+    <T> void executeCommand(Bson command, ReadPreference readPreference, Class<T> clazz, SingleResultCallback<T> callback);
 
     /**
      * Drops this database.

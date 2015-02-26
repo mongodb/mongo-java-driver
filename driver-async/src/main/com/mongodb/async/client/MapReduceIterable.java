@@ -19,16 +19,17 @@ package com.mongodb.async.client;
 
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.MapReduceAction;
+import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for map reduce.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface MapReduceIterable<T> extends MongoIterable<T> {
+public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the collectionName for the output of the MapReduce
@@ -38,7 +39,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      * @return this
      */
-    MapReduceIterable<T> collectionName(String collectionName);
+    MapReduceIterable<TResult> collectionName(String collectionName);
 
     /**
      * Sets the JavaScript function that follows the reduce method and modifies the output.
@@ -47,7 +48,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
      */
-    MapReduceIterable<T> finalizeFunction(String finalizeFunction);
+    MapReduceIterable<TResult> finalizeFunction(String finalizeFunction);
 
     /**
      * Sets the global variables that are accessible in the map, reduce and finalize functions.
@@ -56,7 +57,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReduceIterable<T> scope(Object scope);
+    MapReduceIterable<TResult> scope(Bson scope);
 
     /**
      * Sets the sort criteria to apply to the query.
@@ -65,7 +66,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    MapReduceIterable<T> sort(Object sort);
+    MapReduceIterable<TResult> sort(Bson sort);
 
     /**
      * Sets the query filter to apply to the query.
@@ -74,7 +75,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    MapReduceIterable<T> filter(Object filter);
+    MapReduceIterable<TResult> filter(Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -83,7 +84,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
-    MapReduceIterable<T> limit(int limit);
+    MapReduceIterable<TResult> limit(int limit);
 
     /**
      * Sets the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and reduce
@@ -94,7 +95,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return jsMode
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReduceIterable<T> jsMode(boolean jsMode);
+    MapReduceIterable<TResult> jsMode(boolean jsMode);
 
     /**
      * Sets whether to include the timing information in the result information.
@@ -102,7 +103,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param verbose whether to include the timing information in the result information.
      * @return this
      */
-    MapReduceIterable<T> verbose(boolean verbose);
+    MapReduceIterable<TResult> verbose(boolean verbose);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -112,7 +113,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    MapReduceIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
+    MapReduceIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Specify the {@code MapReduceAction} to be used when writing to a collection.
@@ -120,7 +121,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @param action an {@link com.mongodb.client.model.MapReduceAction} to perform on the collection
      * @return this
      */
-    MapReduceIterable<T> action(MapReduceAction action);
+    MapReduceIterable<TResult> action(MapReduceAction action);
 
     /**
      * Sets the name of the database to output into.
@@ -129,7 +130,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> databaseName(String databaseName);
+    MapReduceIterable<TResult> databaseName(String databaseName);
     /**
      * Sets if the output database is sharded
      *
@@ -137,7 +138,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> sharded(boolean sharded);
+    MapReduceIterable<TResult> sharded(boolean sharded);
 
     /**
      * Sets if the post-processing step will prevent MongoDB from locking the database.
@@ -148,7 +149,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<T> nonAtomic(boolean nonAtomic);
+    MapReduceIterable<TResult> nonAtomic(boolean nonAtomic);
 
     /**
      * Sets the number of documents to return per batch.
@@ -157,7 +158,7 @@ public interface MapReduceIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    MapReduceIterable<T> batchSize(int batchSize);
+    MapReduceIterable<TResult> batchSize(int batchSize);
 
     /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a

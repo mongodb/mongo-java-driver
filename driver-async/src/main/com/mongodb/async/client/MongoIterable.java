@@ -18,25 +18,25 @@ package com.mongodb.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.async.SingleResultCallback;
 
 import java.util.Collection;
 
 /**
  * Operations that allow asynchronous iteration over a collection view.
  *
- * @param <T> the document type
+ * @param <TResult> the result type
  * @since 3.0
  */
-public interface MongoIterable<T> {
+public interface MongoIterable<TResult> {
 
     /**
      * Helper to return the first item in the iterator or null.
      *
      * @param callback a callback that is passed the first item or null.
      */
-    void first(SingleResultCallback<T> callback);
+    void first(SingleResultCallback<TResult> callback);
 
     /**
      * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
@@ -45,7 +45,7 @@ public interface MongoIterable<T> {
      * @param block    the block to apply to each document
      * @param callback a callback that completed once the iteration has completed
      */
-    void forEach(Block<? super T> block, SingleResultCallback<Void> callback);
+    void forEach(Block<? super TResult> block, SingleResultCallback<Void> callback);
 
     /**
      * Iterates over all the documents, adding each to the given target.
@@ -54,7 +54,7 @@ public interface MongoIterable<T> {
      * @param <A>      the collection type
      * @param callback a callback that will be passed the target containing all documents
      */
-    <A extends Collection<? super T>> void into(A target, SingleResultCallback<A> callback);
+    <A extends Collection<? super TResult>> void into(A target, SingleResultCallback<A> callback);
 
     /**
      * Maps this iterable from the source document type to the target document type.
@@ -63,7 +63,7 @@ public interface MongoIterable<T> {
      * @param <U>    the target document type
      * @return an iterable which maps T to U
      */
-    <U> MongoIterable<U> map(Function<T, U> mapper);
+    <U> MongoIterable<U> map(Function<TResult, U> mapper);
 
     /**
      * Sets the number of documents to return per batch.
@@ -72,12 +72,12 @@ public interface MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    MongoIterable<T> batchSize(int batchSize);
+    MongoIterable<TResult> batchSize(int batchSize);
 
     /**
      * Provide the underlying {@link com.mongodb.async.AsyncBatchCursor} allowing fine grained control of the cursor.
      *
      * @param callback a callback that will be passed the AsyncBatchCursor
      */
-    void batchCursor(SingleResultCallback<AsyncBatchCursor<T>> callback);
+    void batchCursor(SingleResultCallback<AsyncBatchCursor<TResult>> callback);
 }
