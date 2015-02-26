@@ -18,6 +18,8 @@ package com.mongodb;
 
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
@@ -284,6 +286,22 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public List<MongoCredential> getCredentialsList() {
         return super.getCredentialsList();
+    }
+
+    /**
+     * Get a list of the database names
+     *
+     * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     * @return an iterable containing all the names of all the databases
+     */
+    public MongoIterable<String> listDatabaseNames() {
+        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),
+                ReadPreference.primary(), createOperationExecutor()).map(new Function<BsonDocument, String>() {
+            @Override
+            public String apply(final BsonDocument result) {
+                return result.getString("name").getValue();
+            }
+        });
     }
 
     /**

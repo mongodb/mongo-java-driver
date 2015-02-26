@@ -32,6 +32,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Documents the basic functionality available for the MongoClient via the Java driver.
@@ -56,6 +57,20 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
         database.createCollection(getCollectionName());
         databases = client.listDatabases().into(new ArrayList<Document>());
         assertThat(databases.size(), is(greaterThan(size)));
+    }
+
+
+    @Test
+    public void shouldListDatabasesNamesFromDatabase() {
+        database.dropDatabase();
+
+        List<String> databases = client.listDatabaseNames().into(new ArrayList<String>());
+        int size = databases.size();
+
+        database.createCollection(getCollectionName());
+        databases = client.listDatabaseNames().into(new ArrayList<String>());
+        assertThat(databases.size(), is(greaterThan(size)));
+        assertTrue(databases.contains(getDatabaseName()));
     }
 
     @Test

@@ -31,6 +31,7 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -124,7 +125,8 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames() {
-        return listCollections(BsonDocument.class).map(new Function<BsonDocument, String>() {
+        return new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument.class, getDefaultCodecRegistry(), ReadPreference.primary(),
+                executor).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
