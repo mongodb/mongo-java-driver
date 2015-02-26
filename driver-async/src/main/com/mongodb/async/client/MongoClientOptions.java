@@ -40,7 +40,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class MongoClientOptions {
-    private final String description;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final List<MongoCredential> credentialList;
@@ -64,10 +63,19 @@ public final class MongoClientOptions {
     }
 
     /**
+     * Convenience method to create a from an existing MongoClientOptions.
+     *
+     * @param options create a builder from existing options
+     * @return a builder
+     */
+    public static Builder builder(final MongoClientOptions options) {
+        return new Builder(options);
+    }
+
+    /**
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      */
     public static final class Builder {
-        private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private CodecRegistry codecRegistry = MongoClientImpl.getDefaultCodecRegistry();
@@ -87,15 +95,21 @@ public final class MongoClientOptions {
         }
 
         /**
-         * Sets the description.
+         * Creates a Builder from an existing MongoClientOptions.
          *
-         * @param description the description of this MongoClient
-         * @return {@code this}
-         * @see MongoClientOptions#getDescription()
+         * @param options create a builder from existing options
          */
-        public Builder description(final String description) {
-            this.description = description;
-            return this;
+        private Builder(final MongoClientOptions options) {
+            readPreference = options.getReadPreference();
+            writeConcern = options.getWriteConcern();
+            credentialList = options.getCredentialList();
+            codecRegistry = options.getCodecRegistry();
+            clusterSettings = options.getClusterSettings();
+            serverSettings = options.getServerSettings();
+            socketSettings = options.getSocketSettings();
+            heartbeatSocketSettings = options.getHeartbeatSocketSettings();
+            connectionPoolSettings = options.getConnectionPoolSettings();
+            sslSettings = options.getSslSettings();
         }
 
         /**
@@ -231,17 +245,6 @@ public final class MongoClientOptions {
     }
 
     /**
-     * Gets the description for this MongoClient, which is used in various places like logging and JMX.
-     *
-     * <p>Default is null.</p>
-     *
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
      * The read preference to use for queries, map-reduce, aggregation, and count.
      *
      * <p>Default is {@code ReadPreference.primary()}.</p>
@@ -352,13 +355,10 @@ public final class MongoClientOptions {
     }
 
     private MongoClientOptions(final Builder builder) {
-        description = builder.description;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         credentialList = builder.credentialList;
-
         codecRegistry = builder.codecRegistry;
-
         clusterSettings = builder.clusterSettings;
         serverSettings = builder.serverSettings;
         socketSettings = builder.socketSettings;
