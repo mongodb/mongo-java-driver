@@ -36,27 +36,26 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class AggregateIterableImpl<TResult, TDocument> implements AggregateIterable<TResult> {
+class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<TResult> clazz;
+    private final Class<TDocument> documentClass;
+    private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final List<? extends Bson> pipeline;
-    private final Class<TDocument> collectionClass;
 
     private Boolean allowDiskUse;
     private Integer batchSize;
     private long maxTimeMS;
     private Boolean useCursor;
 
-    AggregateIterableImpl(final MongoNamespace namespace, final Class<TResult> clazz, final Class<TDocument> collectionClass,
-                          final CodecRegistry codecRegistry,
-                          final ReadPreference readPreference, final OperationExecutor executor,
+    AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
+                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
                           final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
-        this.clazz = notNull("clazz", clazz);
-        this.collectionClass = notNull("collectionClass", collectionClass);
+        this.documentClass = notNull("documentClass", documentClass);
+        this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
@@ -123,12 +122,13 @@ class AggregateIterableImpl<TResult, TDocument> implements AggregateIterable<TRe
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse);
             executor.execute(operation);
-            return new FindIterableImpl<TResult, TDocument>(new MongoNamespace(namespace.getDatabaseName(),
+            return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                outCollection.asString().getValue()),
-                    clazz, collectionClass, codecRegistry, readPreference, executor, new BsonDocument(),
+                                                            documentClass, resultClass, codecRegistry, readPreference, executor,
+                                                            new BsonDocument(),
                     new FindOptions()).batchSize(batchSize);
         } else {
-            return new OperationIterable<TResult>(new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(clazz))
+            return new OperationIterable<TResult>(new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(resultClass))
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
@@ -140,7 +140,7 @@ class AggregateIterableImpl<TResult, TDocument> implements AggregateIterable<TRe
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson obj : pipeline) {
-            aggregateList.add(obj.toBsonDocument(collectionClass, codecRegistry));
+            aggregateList.add(obj.toBsonDocument(documentClass, codecRegistry));
         }
         return aggregateList;
     }

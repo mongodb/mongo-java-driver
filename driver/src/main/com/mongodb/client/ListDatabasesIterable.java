@@ -21,10 +21,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Iterable for ListDatabases.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface ListDatabasesIterable<T> extends MongoIterable<T> {
+public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -34,7 +34,7 @@ public interface ListDatabasesIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
      */
-    ListDatabasesIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
+    ListDatabasesIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
@@ -44,5 +44,5 @@ public interface ListDatabasesIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     @Override
-    ListDatabasesIterable<T> batchSize(int batchSize);
+    ListDatabasesIterable<TResult> batchSize(int batchSize);
 }

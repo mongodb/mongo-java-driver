@@ -47,8 +47,8 @@ class AggregateIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null]);
         def pipeline = [new Document('$match', 1)]
-        def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                pipeline)
+        def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                                                            executor, pipeline)
 
         when: 'default input should be as expected'
         aggregationIterable.iterator()
@@ -83,7 +83,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                pipeline)
+                                  pipeline)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -110,8 +110,8 @@ class AggregateIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
-        def aggregationIterable = new AggregateIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry, readPreference, executor,
-                pipeline)
+        def aggregationIterable = new AggregateIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
+                                                            readPreference, executor, pipeline)
 
         when: 'The operation fails with an exception'
         aggregationIterable.iterator()
@@ -121,7 +121,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                pipeline).iterator()
+                                  pipeline).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -150,7 +150,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                [new Document('$match', 1)])
+                                                      [new Document('$match', 1)])
 
         when:
         def results = mongoIterable.first()

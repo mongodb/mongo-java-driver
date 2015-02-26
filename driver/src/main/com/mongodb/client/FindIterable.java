@@ -24,10 +24,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Iterable for find.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface FindIterable<T> extends MongoIterable<T> {
+public interface FindIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the query filter to apply to the query.
@@ -36,7 +36,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    FindIterable<T> filter(Bson filter);
+    FindIterable<TResult> filter(Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -45,7 +45,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
-    FindIterable<T> limit(int limit);
+    FindIterable<TResult> limit(int limit);
     /**
      * Sets the number of documents to skip.
      *
@@ -53,7 +53,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
-    FindIterable<T> skip(int skip);
+    FindIterable<TResult> skip(int skip);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -63,7 +63,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    FindIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
+    FindIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the query modifiers to apply to this operation.
@@ -72,7 +72,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
-    FindIterable<T> modifiers(Bson modifiers);
+    FindIterable<TResult> modifiers(Bson modifiers);
 
     /**
      * Sets a document describing the fields to return for all matching documents.
@@ -81,7 +81,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    FindIterable<T> projection(Bson projection);
+    FindIterable<TResult> projection(Bson projection);
     /**
      * Sets the sort criteria to apply to the query.
      *
@@ -89,7 +89,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    FindIterable<T> sort(Bson sort);
+    FindIterable<TResult> sort(Bson sort);
 
     /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
@@ -98,7 +98,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @param noCursorTimeout true if cursor timeout is disabled
      * @return this
      */
-    FindIterable<T> noCursorTimeout(boolean noCursorTimeout);
+    FindIterable<TResult> noCursorTimeout(boolean noCursorTimeout);
 
     /**
      * Users should not set this under normal circumstances.
@@ -106,7 +106,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @param oplogReplay if oplog replay is enabled
      * @return this
      */
-    FindIterable<T> oplogReplay(boolean oplogReplay);
+    FindIterable<TResult> oplogReplay(boolean oplogReplay);
 
     /**
      * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
@@ -114,7 +114,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @param partial if partial results for sharded clusters is enabled
      * @return this
      */
-    FindIterable<T> partial(boolean partial);
+    FindIterable<TResult> partial(boolean partial);
 
     /**
      * Sets the cursor type.
@@ -122,7 +122,7 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @param cursorType the cursor type
      * @return this
      */
-    FindIterable<T> cursorType(CursorType cursorType);
+    FindIterable<TResult> cursorType(CursorType cursorType);
 
     /**
      * Sets the number of documents to return per batch.
@@ -132,5 +132,5 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     @Override
-    FindIterable<T> batchSize(int batchSize);
+    FindIterable<TResult> batchSize(int batchSize);
 }

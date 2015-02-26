@@ -24,20 +24,20 @@ import java.util.Collection;
 /**
  *The MongoIterable is the results from an operation, such as a query.
  *
- * @param <T> The type that this iterable will decode documents to.
+ * @param <TResult> The type that this iterable will decode documents to.
  * @since 3.0
  */
-public interface MongoIterable<T> extends Iterable<T> {
+public interface MongoIterable<TResult> extends Iterable<TResult> {
 
     @Override
-    MongoCursor<T> iterator();
+    MongoCursor<TResult> iterator();
 
     /**
      * Helper to return the first item in the iterator or null.
      *
      * @return T the first item or null.
      */
-    T first();
+    TResult first();
 
     /**
      * Maps this iterable from the source document type to the target document type.
@@ -46,7 +46,7 @@ public interface MongoIterable<T> extends Iterable<T> {
      * @param <U> the target document type
      * @return an iterable which maps T to U
      */
-    <U> MongoIterable<U> map(Function<T, U> mapper);
+    <U> MongoIterable<U> map(Function<TResult, U> mapper);
 
     /**
      * Iterates over all documents in the view, applying the given block to each.
@@ -55,7 +55,7 @@ public interface MongoIterable<T> extends Iterable<T> {
      *
      * @param block the block to apply to each document of type T.
      */
-    void forEach(Block<? super T> block);
+    void forEach(Block<? super TResult> block);
 
     /**
      * Iterates over all the documents, adding each to the given target.
@@ -64,7 +64,7 @@ public interface MongoIterable<T> extends Iterable<T> {
      * @param <A> the collection type
      * @return the target
      */
-    <A extends Collection<? super T>> A into(A target);
+    <A extends Collection<? super TResult>> A into(A target);
 
     /**
      * Sets the number of documents to return per batch.
@@ -73,5 +73,5 @@ public interface MongoIterable<T> extends Iterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    MongoIterable<T> batchSize(int batchSize);
+    MongoIterable<TResult> batchSize(int batchSize);
 }

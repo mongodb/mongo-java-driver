@@ -24,8 +24,8 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.DistinctOperation;
-import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -33,21 +33,24 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class DistinctIterableImpl<T> implements DistinctIterable<T> {
+class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<T> clazz;
+    private final Class<TDocument> documentclass;
+    private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final AsyncOperationExecutor executor;
     private final String fieldName;
 
-    private Object filter;
+    private Bson filter;
     private long maxTimeMS;
 
-    DistinctIterableImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
-                         final ReadPreference readPreference, final AsyncOperationExecutor executor, final String fieldName) {
+    DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
+                         final CodecRegistry codecRegistry, final ReadPreference readPreference, final AsyncOperationExecutor executor,
+                         final String fieldName) {
         this.namespace = notNull("namespace", namespace);
-        this.clazz = notNull("clazz", clazz);
+        this.documentclass = notNull("documentClass", documentClass);
+        this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
@@ -55,53 +58,53 @@ class DistinctIterableImpl<T> implements DistinctIterable<T> {
     }
 
     @Override
-    public DistinctIterable<T> filter(final Object filter) {
+    public DistinctIterable<TResult> filter(final Bson filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public DistinctIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public DistinctIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public DistinctIterable<T> batchSize(final int batchSize) {
+    public DistinctIterable<TResult> batchSize(final int batchSize) {
         // Noop - not supported by DistinctIterable
         return this;
     }
 
     @Override
-    public void first(final SingleResultCallback<T> callback) {
+    public void first(final SingleResultCallback<TResult> callback) {
         execute().first(callback);
     }
 
     @Override
-    public void forEach(final Block<? super T> block, final SingleResultCallback<Void> callback) {
+    public void forEach(final Block<? super TResult> block, final SingleResultCallback<Void> callback) {
         execute().forEach(block, callback);
     }
 
     @Override
-    public <A extends Collection<? super T>> void into(final A target, final SingleResultCallback<A> callback) {
+    public <A extends Collection<? super TResult>> void into(final A target, final SingleResultCallback<A> callback) {
         execute().into(target, callback);
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MappingIterable<T, U>(this, mapper);
+    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
+        return new MappingIterable<TResult, U>(this, mapper);
     }
 
     @Override
-    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
         execute().batchCursor(callback);
     }
 
-    private MongoIterable<T> execute() {
-        DistinctOperation<T> operation = new DistinctOperation<T>(namespace, fieldName, codecRegistry.get(clazz))
-                .filter(BsonDocumentWrapper.asBsonDocument(filter, codecRegistry))
+    private MongoIterable<TResult> execute() {
+        DistinctOperation<TResult> operation = new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
+                .filter(filter == null ? null : filter.toBsonDocument(documentclass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS);
-        return new OperationIterable<T>(operation, readPreference, executor);
+        return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 }

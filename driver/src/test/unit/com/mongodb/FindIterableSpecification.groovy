@@ -56,7 +56,7 @@ class FindIterableSpecification extends Specification {
                                            .noCursorTimeout(false)
                                            .partial(false)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                                                          new Document('filter', 1), findOptions)
+                                                new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -163,7 +163,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                                                           new Document(), findOptions)
+                                                 new Document(), findOptions)
 
         when:
         def results = mongoIterable.first()

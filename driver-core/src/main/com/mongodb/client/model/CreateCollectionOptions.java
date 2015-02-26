@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 /**
  * Options for creating a collection
  *
@@ -28,7 +30,7 @@ public class CreateCollectionOptions {
     private boolean capped;
     private long sizeInBytes;
     private Boolean usePowerOf2Sizes;
-    private Object storageEngineOptions;
+    private Bson storageEngineOptions;
 
     /**
      * Gets if auto-index is enabled
@@ -140,7 +142,7 @@ public class CreateCollectionOptions {
      * @return the storage engine options
      * @mongodb.server.release 3.0
      */
-    public Object getStorageEngineOptions() {
+    public Bson getStorageEngineOptions() {
         return storageEngineOptions;
     }
 
@@ -151,7 +153,7 @@ public class CreateCollectionOptions {
      * @return this
      * @mongodb.server.release 3.0
      */
-    public CreateCollectionOptions storageEngineOptions(final Object storageEngineOptions) {
+    public CreateCollectionOptions storageEngineOptions(final Bson storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
         return this;
     }

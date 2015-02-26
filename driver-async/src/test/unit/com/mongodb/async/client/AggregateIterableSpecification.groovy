@@ -57,8 +57,8 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1)]
-        def aggregationIterable = new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                pipeline)
+        def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                            pipeline)
 
         when: 'default input should be as expected'
         aggregationIterable.into([]) { result, t -> }
@@ -97,8 +97,7 @@ class AggregateIterableSpecification extends Specification {
         def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
 
         when: 'aggregation includes $out'
-        new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                pipeline)
+        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, pipeline)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -121,8 +120,9 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()
-        new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                pipeline).allowDiskUse(true).toCollection(futureResultCallback)
+        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, pipeline)
+                .allowDiskUse(true)
+                .toCollection(futureResultCallback);
         futureResultCallback.get()
 
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
@@ -138,8 +138,8 @@ class AggregateIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
-        def aggregationIterable = new AggregateIterableImpl<BsonDocument>(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                pipeline)
+        def aggregationIterable = new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, executor,
+                                                            pipeline)
 
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
@@ -158,8 +158,8 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                pipeline).into([], futureResultCallback)
+        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, pipeline)
+                .into([], futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -185,8 +185,8 @@ class AggregateIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor,
-                [new BsonDocument('$match', new BsonInt32(1))])
+        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                                                      executor, [new BsonDocument('$match', new BsonInt32(1))])
 
         when:
         def results = new FutureResultCallback()
