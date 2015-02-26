@@ -26,20 +26,18 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class FindIterableSpecification extends Specification {
 
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new DBObjectCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(),  new DocumentCodecProvider(),
+                                       new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def namespace = new MongoNamespace('db', 'coll')
 
@@ -83,18 +81,18 @@ class FindIterableSpecification extends Specification {
 
         when: 'overriding initial options'
         findIterable.filter(new Document('filter', 2))
-                  .sort(new Document('sort', 2))
-                  .modifiers(new Document('modifier', 2))
-                  .projection(new Document('projection', 2))
-                  .maxTime(999, MILLISECONDS)
-                  .batchSize(99)
-                  .limit(99)
-                  .skip(9)
-                  .cursorType(CursorType.Tailable)
-                  .oplogReplay(true)
-                  .noCursorTimeout(true)
-                  .partial(true)
-                  .iterator()
+                .sort(new Document('sort', 2))
+                .modifiers(new Document('modifier', 2))
+                .projection(new Document('projection', 2))
+                .maxTime(999, MILLISECONDS)
+                .batchSize(99)
+                .limit(99)
+                .skip(9)
+                .cursorType(CursorType.Tailable)
+                .oplogReplay(true)
+                .noCursorTimeout(true)
+                .partial(true)
+                .iterator()
 
         operation = executor.getReadOperation() as FindOperation<Document>
 
@@ -194,7 +192,7 @@ class FindIterableSpecification extends Specification {
 
         when:
         target = []
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')

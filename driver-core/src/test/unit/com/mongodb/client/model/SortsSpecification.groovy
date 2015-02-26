@@ -19,7 +19,6 @@ package com.mongodb.client.model
 import org.bson.BsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.conversions.Bson
 import spock.lang.Specification
 
@@ -28,9 +27,10 @@ import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Sorts.metaTextScore
 import static com.mongodb.client.model.Sorts.orderBy
 import static org.bson.BsonDocument.parse
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class SortsSpecification extends Specification {
-    def registry = new RootCodecRegistry([new BsonValueCodecProvider(), new ValueCodecProvider()])
+    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'ascending'() {
         expect:

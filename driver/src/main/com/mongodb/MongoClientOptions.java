@@ -404,8 +404,6 @@ public class MongoClientOptions {
      * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a codec for
      * DBObject in the registry.</p>
      *
-     * Default is {@code RootCodecRegistry}
-     *
      * @return the codec registry
      * @see MongoClient#getDatabase
      * @since 3.0

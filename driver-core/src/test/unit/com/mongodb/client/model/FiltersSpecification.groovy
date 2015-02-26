@@ -23,7 +23,6 @@ import org.bson.BsonInt64
 import org.bson.BsonType
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.conversions.Bson
 import spock.lang.Specification
 
@@ -48,9 +47,10 @@ import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Filters.type
 import static com.mongodb.client.model.Filters.where
 import static org.bson.BsonDocument.parse
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class FiltersSpecification extends Specification {
-    def registry = new RootCodecRegistry([new BsonValueCodecProvider(), new ValueCodecProvider()])
+    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'eq should render without $eq'() {
         expect:

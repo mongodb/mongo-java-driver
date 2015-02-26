@@ -67,7 +67,7 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.configuration.RootCodecRegistry
+import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -79,8 +79,8 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 @SuppressWarnings('ClassSize')
@@ -117,7 +117,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should behave correctly when using withCodecRegistry'() {
         given:
-        def newCodecRegistry = new RootCodecRegistry([])
+        def newCodecRegistry = Stub(CodecRegistry)
         def executor = new TestOperationExecutor([])
 
         when:
@@ -311,7 +311,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = { boolean ordered, WriteConcern wc ->
             new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                        ordered, wc)
+                    ordered, wc)
         }
         def futureResultCallback = new FutureResultCallback<BulkWriteResult>()
 
@@ -356,7 +356,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should handle exceptions in bulkWrite correctly'() {
         given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
+        def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
@@ -371,7 +371,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                                            true, writeConcern)
+                true, writeConcern)
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
 
         when:
@@ -393,9 +393,9 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = { boolean ordered, WriteConcern wc ->
             new MixedBulkWriteOperation(namespace,
-                                [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
-                                 new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))],
-                                ordered, wc)
+                    [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                     new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))],
+                    ordered, wc)
         }
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
 
@@ -410,7 +410,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true),
-                              futureResultCallback)
+                futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
@@ -420,7 +420,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false),
-                              futureResultCallback)
+                futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
@@ -447,9 +447,9 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new MixedBulkWriteOperation(namespace,
-                                                                  [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))
-                                                                           .multi(false)],
-                                                                  true, writeConcern))
+                [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))
+                         .multi(false)],
+                true, writeConcern))
         result == expectedResult
 
         where:
@@ -471,7 +471,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new MixedBulkWriteOperation(namespace, [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))
                                                                                       .multi(true)],
-                                                                  true, writeConcern))
+                true, writeConcern))
         result == expectedResult
 
         where:
@@ -493,9 +493,9 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                                                                                                new BsonDocument('a', new BsonInt32(10)),
-                                                                                                REPLACE)],
-                                                                  true, writeConcern))
+                new BsonDocument('a', new BsonInt32(10)),
+                REPLACE)],
+                true, writeConcern))
         result == expectedResult
 
         where:
@@ -503,7 +503,7 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, null, [])]) | UpdateResult.acknowledged(1, null, null)
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1, [])])    | UpdateResult.acknowledged(1, 1, null)
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1,
-                                                                              [new BulkWriteUpsert(0, new BsonInt32( 42))])]) | UpdateResult.acknowledged(1, 1, new BsonInt32(42))
+                [new BulkWriteUpsert(0, new BsonInt32(42))])])                                        | UpdateResult.acknowledged(1, 1, new BsonInt32(42))
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])                   | UpdateResult.unacknowledged()
     }
 
@@ -512,9 +512,9 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = { boolean upsert, WriteConcern wc ->
             new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                                                                      new BsonDocument('a', new BsonInt32(10)),
-                                                                      UPDATE).multi(false).upsert(upsert)],
-                                        true, wc)
+                    new BsonDocument('a', new BsonInt32(10)),
+                    UPDATE).multi(false).upsert(upsert)],
+                    true, wc)
         }
         def futureResultCallback = new FutureResultCallback<UpdateResult>()
 
@@ -538,11 +538,11 @@ class MongoCollectionSpecification extends Specification {
         result == expectedResult
 
         where:
-        writeConcern                | executor                                                   | expectedResult
+        writeConcern                | executor                                                 | expectedResult
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(UPDATE, 1, []),
-                                                                 acknowledged(UPDATE, 1, [])])   | UpdateResult.acknowledged(1, 0, null)
+                                                                 acknowledged(UPDATE, 1, [])]) | UpdateResult.acknowledged(1, 0, null)
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(),
-                                                                 unacknowledged()])              | UpdateResult.unacknowledged()
+                                                                 unacknowledged()])            | UpdateResult.unacknowledged()
     }
 
     def 'should use UpdateOperation correctly for updateMany'() {
@@ -550,10 +550,10 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = { boolean upsert, WriteConcern wc ->
             new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                                                                      new BsonDocument('a', new BsonInt32(10)),
-                                                                      UPDATE)
+                    new BsonDocument('a', new BsonInt32(10)),
+                    UPDATE)
                                                             .multi(true).upsert(upsert)],
-                                        true, wc)
+                    true, wc)
         }
         def futureResultCallback = new FutureResultCallback<UpdateResult>()
 
@@ -599,15 +599,15 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         executor << new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []),
-                                                                           [new BulkWriteError(11000, 'oops', new BsonDocument(), 0)],
-                                                                           null, new ServerAddress())])
+                [new BulkWriteError(11000, 'oops', new BsonDocument(), 0)],
+                null, new ServerAddress())])
     }
 
     def 'write operation should translate MongoBulkWriteException to MongoWriteConcernException'() {
         given:
         def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []), [],
-                                                                              new WriteConcernError(42, 'oops', new BsonDocument()),
-                                                                              new ServerAddress())])
+                new WriteConcernError(42, 'oops', new BsonDocument()),
+                new ServerAddress())])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def futureResultCallback = new FutureResultCallback<Void>()
         collection.insertOne(new Document('_id', 1), futureResultCallback)
@@ -653,7 +653,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<Document>()
         collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)),
-                                    futureResultCallback)
+                futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
@@ -686,7 +686,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<Document>()
         collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
-                                     new FindOneAndReplaceOptions().projection(new Document('projection', 1)), futureResultCallback)
+                new FindOneAndReplaceOptions().projection(new Document('projection', 1)), futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
@@ -719,7 +719,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<Document>()
         collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
-                                    new FindOneAndUpdateOptions().projection(new Document('projection', 1)), futureResultCallback)
+                new FindOneAndUpdateOptions().projection(new Document('projection', 1)), futureResultCallback)
         futureResultCallback.get()
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 

@@ -31,13 +31,11 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.or;
@@ -46,6 +44,7 @@ import static com.mongodb.client.model.Sorts.descending;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -72,8 +71,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                new DocumentCodecProvider(),
+        CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
                 new PersonCodecProvider()));
         MongoCollection<Person> collection = database
                 .getCollection(getCollectionName(), Person.class)

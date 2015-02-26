@@ -19,7 +19,6 @@ package com.mongodb.client.model
 import org.bson.BsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.conversions.Bson
 import spock.lang.Specification
 
@@ -33,9 +32,10 @@ import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Projections.metaTextScore
 import static com.mongodb.client.model.Projections.slice
 import static org.bson.BsonDocument.parse
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class ProjectionsSpecification extends Specification {
-    def registry = new RootCodecRegistry([new BsonValueCodecProvider(), new ValueCodecProvider()])
+    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'include'() {
         expect:

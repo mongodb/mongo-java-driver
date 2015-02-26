@@ -19,28 +19,26 @@ package com.mongodb.async.client
 import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.operation.ListIndexesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ListIndexesIterableSpecification extends Specification {
 
     def namespace = new MongoNamespace('db', 'coll')
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
     def 'should build the expected listIndexesOperation'() {
@@ -55,7 +53,7 @@ class ListIndexesIterableSpecification extends Specification {
                 .batchSize(100).maxTime(1000, MILLISECONDS)
 
         when: 'default input should be as expected'
-        listIndexesIterable.into([])  { result, t -> }
+        listIndexesIterable.into([]) { result, t -> }
 
         def operation = executor.getReadOperation() as ListIndexesOperation<Document>
         def readPreference = executor.getReadPreference()
@@ -68,7 +66,7 @@ class ListIndexesIterableSpecification extends Specification {
         when: 'overriding initial options'
         listIndexesIterable.batchSize(99)
                 .maxTime(999, MILLISECONDS)
-                .into([])  { result, t -> }
+                .into([]) { result, t -> }
 
         operation = executor.getReadOperation() as ListIndexesOperation<Document>
 
@@ -130,7 +128,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         target = []
         results = new FutureResultCallback()
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')

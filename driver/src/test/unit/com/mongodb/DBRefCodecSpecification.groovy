@@ -24,19 +24,20 @@ import org.bson.BsonString
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
+import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class DBRefCodecSpecification extends Specification {
     def 'provider should return codec for DBRef class'() {
         expect:
-        new DBRefCodecProvider().get(DBRef, new RootCodecRegistry([])) instanceof DBRefCodec
+        new DBRefCodecProvider().get(DBRef, Stub(CodecRegistry)) instanceof DBRefCodec
     }
 
     def 'provider should return null for non-DBRef class'() {
         expect:
-        !new DBRefCodecProvider().get(Integer, new RootCodecRegistry([]))
+        !new DBRefCodecProvider().get(Integer, Stub(CodecRegistry))
     }
 
     def 'provider should be equal to another of the same class'() {
@@ -57,7 +58,7 @@ class DBRefCodecSpecification extends Specification {
         when:
         writer.writeStartDocument()
         writer.writeName('ref')
-        new DBRefCodec(new RootCodecRegistry([new ValueCodecProvider()])).encode(writer, ref, EncoderContext.builder().build())
+        new DBRefCodec(fromProviders([new ValueCodecProvider()])).encode(writer, ref, EncoderContext.builder().build())
         writer.writeEndDocument()
 
         then:
@@ -66,7 +67,7 @@ class DBRefCodecSpecification extends Specification {
 
     def 'codec should throw UnsupportedOperationException on decode'() {
         when:
-        new DBRefCodec(new RootCodecRegistry([new ValueCodecProvider()])).decode(new BsonDocumentReader(new BsonDocument()),
+        new DBRefCodec(fromProviders([new ValueCodecProvider()])).decode(new BsonDocumentReader(new BsonDocument()),
                                                                                  DecoderContext.builder().build());
 
         then:

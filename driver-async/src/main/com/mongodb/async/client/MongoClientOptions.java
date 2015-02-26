@@ -281,8 +281,6 @@ public final class MongoClientOptions {
      * The codec registry to use.  By default, a {@code MongoClient} will be able to encode and decode instances of {@code
      * Document}.
      *
-     * <p>Default is {@code RootCodecRegistry}</p>
-     *
      * @return the codec registry
      * @see MongoClient#getDatabase
      * @since 3.0

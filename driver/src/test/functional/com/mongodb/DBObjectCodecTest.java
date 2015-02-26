@@ -24,12 +24,12 @@ import org.bson.BsonObjectId;
 import org.bson.Transformer;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
+import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -79,8 +79,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldNotGenerateIdIfPresent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                            new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
         DBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
         document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -90,8 +89,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldGenerateIdIfAbsent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                            new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
         DBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
         document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -101,8 +99,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldRespectEncodeIdFirstPropertyInEncoderContext() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                            new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
         // given
         DBObject doc = new BasicDBObject("x", 2).append("_id", 2);
 
@@ -113,7 +110,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
                              EncoderContext.builder().isEncodingCollectibleDocument(true).build());
 
         // then
-        assertEquals(new ArrayList<String>(encodedDocument.keySet()), Arrays.asList("_id", "x"));
+        assertEquals(new ArrayList<String>(encodedDocument.keySet()), asList("_id", "x"));
 
         // when
         encodedDocument.clear();
@@ -122,6 +119,6 @@ public class DBObjectCodecTest extends DatabaseTestCase {
                              EncoderContext.builder().isEncodingCollectibleDocument(false).build());
 
         // then
-        assertEquals(new ArrayList<String>(encodedDocument.keySet()), Arrays.asList("x", "_id"));
+        assertEquals(new ArrayList<String>(encodedDocument.keySet()), asList("x", "_id"));
     }
 }

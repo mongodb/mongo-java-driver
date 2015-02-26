@@ -25,13 +25,12 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BsonOutput;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
@@ -44,7 +43,7 @@ abstract class RequestMessage {
     // a 16M document can be upserted via findAndModify
     private static final int QUERY_DOCUMENT_HEADROOM = 16 * 1024;
 
-    private static final CodecRegistry REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
+    private static final CodecRegistry REGISTRY = fromProvider(new BsonValueCodecProvider());
 
     private final String collectionName;
     private final MessageSettings settings;

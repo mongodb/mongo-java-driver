@@ -25,13 +25,13 @@ import org.bson.Document;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Date;
 
+import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNull;
@@ -73,8 +73,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldFindAndReplaceWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 7);
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                new DocumentCodecProvider(),
+        CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
                 new WorkerCodecProvider()));
         MongoCollection<Worker> collection = database
                 .getCollection(getCollectionName(), Worker.class)

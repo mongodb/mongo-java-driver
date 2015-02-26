@@ -25,11 +25,9 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 
-import java.util.Arrays;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
 
 class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     private final Decoder<T> payloadDecoder;
@@ -42,8 +40,7 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     }
 
     static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final String fieldContainingPayload) {
-        CodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(
-            new CommandResultCodecProvider<P>(decoder, fieldContainingPayload)));
+        CodecRegistry registry = fromProvider(new CommandResultCodecProvider<P>(decoder, fieldContainingPayload));
         return registry.get(BsonDocument.class);
     }
 

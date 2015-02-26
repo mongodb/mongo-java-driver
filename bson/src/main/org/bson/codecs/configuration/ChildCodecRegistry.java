@@ -23,10 +23,10 @@ import org.bson.codecs.Codec;
 class ChildCodecRegistry<T> implements CodecRegistry {
 
     private final ChildCodecRegistry<?> parent;
-    private final RootCodecRegistry registry;
+    private final ProvidersCodecRegistry registry;
     private final Class<T> codecClass;
 
-    ChildCodecRegistry(final RootCodecRegistry registry, final Class<T> codecClass) {
+    ChildCodecRegistry(final ProvidersCodecRegistry registry, final Class<T> codecClass) {
         this.codecClass = codecClass;
         this.parent = null;
         this.registry = registry;

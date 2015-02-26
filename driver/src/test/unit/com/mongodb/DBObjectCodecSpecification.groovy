@@ -27,18 +27,19 @@ import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.types.Binary
 import spock.lang.Specification
 
-import static java.util.Arrays.asList
 import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromCodec
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromRegistries
 
 class DBObjectCodecSpecification extends Specification {
 
     def bsonDoc = new BsonDocument()
-    def rootCodecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new DBObjectCodecProvider()))
-    def dbObjectCodec = new DBObjectCodec(rootCodecRegistry)
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider()])
+    def dbObjectCodec = new DBObjectCodec(codecRegistry)
 
     def 'should encode and decode UUID as Binary'() {
         given:
@@ -60,7 +61,7 @@ class DBObjectCodecSpecification extends Specification {
 
     def 'should encode and decode UUID as Binary with alternate UUID Codec'() {
         given:
-        def codecWithAlternateUUIDCodec = new DBObjectCodec(rootCodecRegistry.withCodec(new UuidCodec(STANDARD)))
+        def codecWithAlternateUUIDCodec = new DBObjectCodec(fromRegistries(fromCodec(new UuidCodec(STANDARD)), codecRegistry))
         def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
         def doc = new BasicDBObject('uuid', uuid)
 

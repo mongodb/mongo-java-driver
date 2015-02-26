@@ -31,7 +31,6 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
@@ -43,12 +42,11 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
 
     def getCodec(final Class clazz) {
         codecRegistry.get(clazz);
@@ -127,7 +125,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     def 'should be able to distinct with custom codecs'() {
         given:
         Worker pete = new Worker(new ObjectId(), 'Pete', 'handyman', new Date(), 3)
-        Worker sam = new Worker(new ObjectId(),'Sam', 'plumber', new Date(), 7)
+        Worker sam = new Worker(new ObjectId(), 'Sam', 'plumber', new Date(), 7)
 
         Document peteDocument = new Document('_id', pete.id)
                 .append('name', pete.name)
@@ -155,7 +153,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     def 'should be able to distinct with custom codecs asynchronously'() {
         given:
         Worker pete = new Worker(new ObjectId(), 'Pete', 'handyman', new Date(), 3)
-        Worker sam = new Worker(new ObjectId(),'Sam', 'plumber', new Date(), 7)
+        Worker sam = new Worker(new ObjectId(), 'Sam', 'plumber', new Date(), 7)
 
         Document peteDocument = new Document('_id', pete.id)
                 .append('name', pete.name)

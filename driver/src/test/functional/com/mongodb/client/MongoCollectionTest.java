@@ -25,14 +25,14 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -42,8 +42,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                new DocumentCodecProvider(),
+        CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
@@ -65,8 +64,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryTypedCollectionAndMapResultsIntoTypedLists() {
         // given
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                new DocumentCodecProvider(),
+        CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
                 new ConcreteCodecProvider()));
         MongoCollection<Concrete> collection = database
                 .getCollection(getCollectionName())
@@ -118,8 +116,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testMapReduceWithGenerics() {
         // given
-        // given
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new DocumentCodecProvider(), new NameCodecProvider()));
+        CodecRegistry codecRegistry = fromProviders(asList(new DocumentCodecProvider(), new NameCodecProvider()));
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document("name", "Pete").append("job", "handyman"),
                                               new Document("name", "Sam").append("job", "Plumber"),
                                               new Document("name", "Pete").append("job", "'electrician'"));

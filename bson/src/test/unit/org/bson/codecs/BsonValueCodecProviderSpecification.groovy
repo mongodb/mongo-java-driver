@@ -37,13 +37,14 @@ import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
 import org.bson.RawBsonDocument
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
+
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider
 
 class BsonValueCodecProviderSpecification extends Specification {
 
     def provider = new BsonValueCodecProvider()
-    def codecRegistry = new RootCodecRegistry([provider])
+    def codecRegistry = fromProvider(provider)
 
     def 'should get correct codec'() {
         expect:
