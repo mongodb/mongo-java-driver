@@ -87,10 +87,10 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames() {
-        return listCollections().map(new Function<Document, String>() {
+        return listCollections(BsonDocument.class).map(new Function<BsonDocument, String>() {
             @Override
-            public String apply(final Document result) {
-                return (String) result.get("name");
+            public String apply(final BsonDocument result) {
+                return result.getString("name").getValue();
             }
         });
     }
