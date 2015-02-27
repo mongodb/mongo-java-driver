@@ -27,8 +27,8 @@ import org.bson.conversions.Bson;
 
 /**
  * The MongoDatabase interface.
- * <p/>
- * <p>Note: Additions to this interface will not be considered to break binary compatibility.</p>
+ * <p>
+ * Note: Additions to this interface will not be considered to break binary compatibility.</p>
  *
  * @since 3.0
  */
