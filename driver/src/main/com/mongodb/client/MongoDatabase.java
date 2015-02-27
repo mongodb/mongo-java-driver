@@ -147,7 +147,7 @@ public interface MongoDatabase {
      *
      * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
      */
-    void dropDatabase();
+    void drop();
 
     /**
      * Gets the names of all the collections in this database.

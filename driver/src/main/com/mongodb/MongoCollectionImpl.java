@@ -377,7 +377,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void dropCollection() {
+    public void drop() {
         executor.execute(new DropCollectionOperation(namespace));
     }
 

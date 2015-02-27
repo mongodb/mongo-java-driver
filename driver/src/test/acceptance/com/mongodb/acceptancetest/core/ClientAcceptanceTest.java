@@ -49,7 +49,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldListDatabasesFromDatabase() {
-        database.dropDatabase();
+        database.drop();
 
         List<Document> databases = client.listDatabases().into(new ArrayList<Document>());
         int size = databases.size();
@@ -62,7 +62,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldListDatabasesNamesFromDatabase() {
-        database.dropDatabase();
+        database.drop();
 
         List<String> databases = client.listDatabaseNames().into(new ArrayList<String>());
         int size = databases.size();
@@ -93,8 +93,8 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
             assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
         } finally {
             //tear down
-            firstDatabase.dropDatabase();
-            secondDatabase.dropDatabase();
+            firstDatabase.drop();
+            secondDatabase.drop();
         }
     }
 }

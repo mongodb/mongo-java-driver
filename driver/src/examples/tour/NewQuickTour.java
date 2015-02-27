@@ -61,7 +61,7 @@ public class NewQuickTour {
         // get handle to "mydb" database
         MongoDatabase database = mongoClient.getDatabase("mydb");
 
-        database.dropDatabase();
+        database.drop();
 
         // get a list of the collections in this database and print them out
         List<String> collectionNames = database.listCollectionNames().into(new ArrayList<String>());
@@ -73,7 +73,7 @@ public class NewQuickTour {
         MongoCollection<Document> collection = database.getCollection("test");
 
         // drop all the data in it
-        collection.dropCollection();
+        collection.drop();
 
         // make a document and insert it
         Document doc = new Document("name", "MongoDB")
@@ -138,7 +138,7 @@ public class NewQuickTour {
         // max time
         collection.find().maxTime(1, TimeUnit.SECONDS).first();
 
-        collection.dropCollection();
+        collection.drop();
 
         // ordered bulk writes
         List<WriteModel<Document>> writes = new ArrayList<WriteModel<Document>>();
@@ -151,7 +151,7 @@ public class NewQuickTour {
 
         collection.bulkWrite(writes);
 
-        collection.dropCollection();
+        collection.drop();
 
         collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
 

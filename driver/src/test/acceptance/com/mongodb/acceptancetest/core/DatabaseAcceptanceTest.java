@@ -109,7 +109,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldListCollectionsFromDatabase() {
-        database.dropDatabase();
+        database.drop();
 
         List<Document> collections = database.listCollections().into(new ArrayList<Document>());
         assertThat(collections.size(), is(0));
@@ -146,8 +146,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
         } finally {
             //tear down
-            firstDatabase.dropDatabase();
-            secondDatabase.dropDatabase();
+            firstDatabase.drop();
+            secondDatabase.drop();
         }
     }
 }

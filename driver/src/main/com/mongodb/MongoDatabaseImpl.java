@@ -119,7 +119,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public void dropDatabase() {
+    public void drop() {
         executor.execute(new DropDatabaseOperation(name));
     }
 

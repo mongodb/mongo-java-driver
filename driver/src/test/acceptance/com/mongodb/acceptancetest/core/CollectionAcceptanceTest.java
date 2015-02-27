@@ -110,7 +110,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
         assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(collectionName), is(true));
 
-        newCollection.dropCollection();
+        newCollection.drop();
 
         assertThat(database.listCollectionNames().into(new ArrayList<String>()).contains(collectionName), is(false));
     }
@@ -294,7 +294,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         mixedList.add("d");
         mixedList.add(new Document("e", 3));
 
-        collection.dropCollection();
+        collection.drop();
         collection.insertMany(asList(new Document("id", "a"), new Document("id", 1),
                                      new Document("id", new Document("b", "c")),
                                      new Document("id", new Document("list", mixedList))));

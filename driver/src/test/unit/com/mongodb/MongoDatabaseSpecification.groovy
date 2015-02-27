@@ -136,7 +136,7 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).dropDatabase()
+        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).drop()
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:

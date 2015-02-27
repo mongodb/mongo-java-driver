@@ -462,7 +462,7 @@ public interface MongoCollection<TDocument> {
      *
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    void dropCollection();
+    void drop();
 
     /**
      * @param key an object describing the index key(s), which may not be null.

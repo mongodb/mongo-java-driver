@@ -44,13 +44,13 @@ public class DatabaseTestCase {
         client =  getMongoClient();
         database = client.getDatabase(getDefaultDatabaseName());
         collection = database.getCollection(getClass().getName());
-        collection.dropCollection();
+        collection.drop();
     }
 
     @After
     public void tearDown() {
         if (collection != null) {
-            collection.dropCollection();
+            collection.drop();
         }
         try {
             ServerHelper.checkPool(getPrimary());

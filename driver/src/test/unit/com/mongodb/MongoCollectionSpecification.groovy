@@ -637,7 +637,7 @@ class MongoCollectionSpecification extends Specification {
         def expectedOperation = new DropCollectionOperation(namespace)
 
         when:
-        collection.dropCollection()
+        collection.drop()
         def operation = executor.getWriteOperation() as DropCollectionOperation
 
         then:
