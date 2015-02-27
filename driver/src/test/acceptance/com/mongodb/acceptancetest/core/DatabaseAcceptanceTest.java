@@ -58,7 +58,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
+        Boolean isCapped = database.runCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
         assertThat("Should have the default index on _id", collection.listIndexes().into(new ArrayList<Document>()).size(), is(1));
@@ -76,7 +76,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
+        Boolean isCapped = database.runCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
         assertThat("Should NOT have the default index on _id", collection.listIndexes().into(new ArrayList<Document>()).size(), is(0));
@@ -95,7 +95,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(collections.contains(getCollectionName()), is(true));
 
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        Document collectionStatistics = database.executeCommand(collStatsCommand, ReadPreference.primary());
+        Document collectionStatistics = database.runCommand(collStatsCommand, ReadPreference.primary());
         assertThat("max is set correctly in collection statistics", collectionStatistics.getInteger("max"), is(maxDocuments));
     }
 

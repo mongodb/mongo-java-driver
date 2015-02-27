@@ -101,14 +101,14 @@ class MongoDatabaseSpecification extends Specification {
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        database.executeCommand(command)
+        database.runCommand(command)
         def operation = executor.getWriteOperation() as CommandWriteOperation<Document>
 
         then:
         operation.command == command
 
         when:
-        database.executeCommand(command, primaryPreferred())
+        database.runCommand(command, primaryPreferred())
         operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
@@ -116,14 +116,14 @@ class MongoDatabaseSpecification extends Specification {
         executor.getReadPreference() == primaryPreferred()
 
         when:
-        database.executeCommand(command, BsonDocument)
+        database.runCommand(command, BsonDocument)
         operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
 
         then:
         operation.command == command
 
         when:
-        database.executeCommand(command, primaryPreferred(), BsonDocument)
+        database.runCommand(command, primaryPreferred(), BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
