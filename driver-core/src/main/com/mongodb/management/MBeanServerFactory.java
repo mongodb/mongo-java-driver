@@ -16,7 +16,7 @@
 
 package com.mongodb.management;
 
-import com.mongodb.management.jmx.JMXMBeanServer;
+import com.mongodb.internal.management.jmx.JMXMBeanServer;
 
 /**
  * <p>This class is NOT part of the public API.  It may change at any time without notification.</p>

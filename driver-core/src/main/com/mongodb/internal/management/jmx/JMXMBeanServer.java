@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.management.jmx;
+package com.mongodb.internal.management.jmx;
 
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;

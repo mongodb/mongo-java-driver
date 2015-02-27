@@ -27,8 +27,7 @@
 
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage -->
-    <!-- TODO: This has to be enabled at some point before we release -->
-    <!--<module name="JavadocPackage"/>-->
+    <module name="JavadocPackage"/>
 
     <module name="RegexpSingleline">
         <!-- Requires a Mongodb copyright notice in each file.
