@@ -90,7 +90,7 @@ public class NewQuickTour {
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
         List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 100; i++) {
-            documents.add(new Document().append("i", i));
+            documents.add(new Document("i", i));
         }
         collection.insertMany(documents);
         System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.count());
