@@ -20,7 +20,7 @@ import org.bson.BSONObject;
 import org.bson.io.OutputBuffer;
 
 /**
- * An interface for encoders of BSONObject to BSON. 
+ * An interface for encoders of BSONObject to BSON.
  */
 public interface DBEncoder {
     /**

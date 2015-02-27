@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
  * <p>Provides Base64 encoding and decoding.</p>
  * <p>This class implements Base64 encoding</p>
  * <p>Thanks to Apache Commons project. This class refactored from org.apache.commons.codec.binary</p>
- * <p>Original Thanks to <a href="http://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/">commons</a> project in 
+ * <p>Original Thanks to <a href="http://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/">commons</a> project in
  * ws.apache.org for this code. </p>
  */
 class Base64Codec {

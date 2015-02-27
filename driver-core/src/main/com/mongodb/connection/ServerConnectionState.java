@@ -18,7 +18,7 @@ package com.mongodb.connection;
 
 /**
  * Enum of the current state of attempting to connect to a server.
- * 
+ *
  * @since 2.12
  */
 public enum ServerConnectionState {

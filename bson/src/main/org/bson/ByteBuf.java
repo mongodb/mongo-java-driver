@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 /**
  * <p>An interface wrapper around a {@code java.nio.ByteBuffer} which additionally is {@code Closeable}, so that pooled byte buffers know
  * how.</p>
- * 
+ *
  * <p>This interface is not frozen yet, and methods may be added in a minor release, so beware implementing this yourself.</p>
  *
  * @since 3.0
@@ -37,8 +37,8 @@ public interface ByteBuf  {
     int capacity();
 
     /**
-     * <p>Absolute <em>put</em> method <em>(optional operation)</em>.</p> 
-     * 
+     * <p>Absolute <em>put</em> method <em>(optional operation)</em>.</p>
+     *
      * <p>Writes the given byte into this buffer at the given index. </p>
      *
      * @param index The index at which the byte will be written
@@ -88,15 +88,15 @@ public interface ByteBuf  {
     ByteBuf put(byte[] src, int offset, int length);
 
     /**
-     * States whether there are any elements between the current position and the limit. 
+     * States whether there are any elements between the current position and the limit.
      *
      * @return {@code true} if, and only if, there is at least one element remaining in this buffer
      */
     boolean hasRemaining();
 
     /**
-     * <p>Relative <em>put</em> method <em>(optional operation)</em>.</p> 
-     * 
+     * <p>Relative <em>put</em> method <em>(optional operation)</em>.</p>
+     *
      * <p>Writes the given byte into this buffer at the current position, and then increments the position. </p>
      *
      * @param b The byte to be written
@@ -177,7 +177,7 @@ public interface ByteBuf  {
     ByteBuf order(ByteOrder byteOrder);
 
     /**
-     * Relative <em>get</em> method.  Reads the byte at this buffer's current position, and then increments the position. 
+     * Relative <em>get</em> method.  Reads the byte at this buffer's current position, and then increments the position.
      *
      * @return The byte at the buffer's current position
      * @throws java.nio.BufferUnderflowException If the buffer's current position is not smaller than its limit

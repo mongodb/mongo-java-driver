@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This class enables retrieving a GridFS file metadata and content. Operations include: 
+ * This class enables retrieving a GridFS file metadata and content. Operations include:
  * <ul>
  *     <li>Writing data to a file on disk or an OutputStream </li>
  *     <li>Creating an {@code InputStream} to stream the data into</li>

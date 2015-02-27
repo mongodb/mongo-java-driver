@@ -387,7 +387,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         this.nonAtomic = nonAtomic;
         return this;
     }
-    
+
     /**
      * Executing this will return a cursor with your results in.
      *

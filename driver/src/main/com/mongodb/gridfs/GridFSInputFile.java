@@ -31,12 +31,12 @@ import java.util.Date;
 
 /**
  * <p>This class represents a GridFS file to be written to the database. Operations include:</p>
- * 
+ *
  * <ul>
  *     <li>Writing data obtained from an InputStream</li>
  *     <li>Getting an OutputStream to stream the data out to</li>
  * </ul>
- * 
+ *
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
 public class GridFSInputFile extends GridFSFile {

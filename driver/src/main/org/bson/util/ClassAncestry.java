@@ -27,10 +27,10 @@ import static org.bson.util.CopyOnWriteMap.newHashMap;
 class ClassAncestry {
 
     /**
-     * <p>Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list. Supertypes are visited 
+     * <p>Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list. Supertypes are visited
      * left
      * to right. Duplicates are removed such that no Class will appear in the list before one of its subtypes.</p>
-     * 
+     *
      * <p>Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.</p>
      */
     public static <T> List<Class<?>> getAncestry(final Class<T> c) {

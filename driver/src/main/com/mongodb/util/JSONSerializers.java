@@ -49,7 +49,7 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in 
+     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in
      * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>, but with a few differences to keep
      * compatibility with previous versions of the driver.  Clients should generally prefer {@code getStrict} in preference to this method.
      *
@@ -69,7 +69,7 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in 
+     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in
      * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>.
      *
      * @return object serializer

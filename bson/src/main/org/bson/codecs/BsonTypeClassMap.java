@@ -39,7 +39,7 @@ import java.util.Map;
 /**
  * <p>A map from a BSON types to the Class to which it should be decoded.  This class is useful if, for example,
  * you want to change the default decoding of BSON DATE to something besides {@code java.util.Date}.</p>
- * 
+ *
  * <p>The default mappings are:</p>
  *
  * <ul>

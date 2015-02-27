@@ -652,7 +652,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
             throwInvalidState(methodName, State.VALUE);
         }
         if (currentBsonType != requiredBsonType) {
-            throw new BsonInvalidOperationException(format("%s can only be called when CurrentBSONType is %s, " 
+            throw new BsonInvalidOperationException(format("%s can only be called when CurrentBSONType is %s, "
                                                            + "not when CurrentBSONType is %s.",
                                                            methodName, requiredBsonType, currentBsonType));
         }

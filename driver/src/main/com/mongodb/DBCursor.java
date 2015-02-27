@@ -467,7 +467,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     /**
      * Returns an object containing basic information about the execution of the query that created this cursor. This creates a {@code
-     * DBObject} with a number of fields, including but not limited to: 
+     * DBObject} with a number of fields, including but not limited to:
      * <ul>
      *     <li><i>cursor:</i> cursor type</li>
      *     <li><i>nScanned:</i> number of records examined by the database for this query </li>
@@ -794,7 +794,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Gets the decoder factory that creates the decoder this cursor will use to decode objects from MongoDB. 
+     * Gets the decoder factory that creates the decoder this cursor will use to decode objects from MongoDB.
      *
      * @return the decoder factory.
      */

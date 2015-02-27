@@ -95,14 +95,14 @@ class ReplyHeader {
     /**
      * Gets additional information about the response.
      * <ul>
-     *     <li>0 - <i>CursorNotFound</i>: Set when getMore is called but the cursor id is not valid at the server. Returned with zero 
+     *     <li>0 - <i>CursorNotFound</i>: Set when getMore is called but the cursor id is not valid at the server. Returned with zero
      *     results.</li>
      *     <li>1 - <i>QueryFailure</i>: Set when query failed. Results consist of one document containing an "$err" field describing the
      *     failure.
-     *     <li>2 - <i>ShardConfigStale</i>: Drivers should ignore this. Only mongos will ever see this set, in which case, 
+     *     <li>2 - <i>ShardConfigStale</i>: Drivers should ignore this. Only mongos will ever see this set, in which case,
      *     it needs to update config from the server.
-     *     <li>3 - <i>AwaitCapable</i>: Set when the server supports the AwaitData Query option. If it doesn't, 
-     *     a client should sleep a little between getMore's of a Tailable cursor. Mongod version 1.6 supports AwaitData and thus always 
+     *     <li>3 - <i>AwaitCapable</i>: Set when the server supports the AwaitData Query option. If it doesn't,
+     *     a client should sleep a little between getMore's of a Tailable cursor. Mongod version 1.6 supports AwaitData and thus always
      *     sets AwaitCapable.
      *     <li>4-31 - <i>Reserved</i>: Ignore
      * </ul>

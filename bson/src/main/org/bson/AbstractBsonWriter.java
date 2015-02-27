@@ -649,7 +649,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                                            final BsonContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         throw new BsonInvalidOperationException(format("%s can only be called when ContextType is %s, "
-                                                       + "not when ContextType is %s.", 
+                                                       + "not when ContextType is %s.",
                                                        methodName, validContextTypesString, actualContextType));
     }
 
@@ -672,13 +672,13 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
                 if (Arrays.asList('A', 'E', 'I', 'O', 'U').contains(typeName.charAt(0))) {
                     article = "An";
                 }
-                throw new BsonInvalidOperationException(format("%s %s value cannot be written to the root level of a BSON document.", 
+                throw new BsonInvalidOperationException(format("%s %s value cannot be written to the root level of a BSON document.",
                                                                article, typeName));
             }
         }
 
         String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
-        throw new BsonInvalidOperationException(format("%s can only be called when State is %s, not when State is %s", 
+        throw new BsonInvalidOperationException(format("%s can only be called when State is %s, not when State is %s",
                                                        methodName, validStatesString, state));
     }
 

@@ -233,7 +233,7 @@ public interface BSONCallback {
     void gotBinary(String name, byte type, byte[] data);
 
     /**
-     * Called when reading a field with a {@link java.util.UUID} value.  This is a binary value of subtype 
+     * Called when reading a field with a {@link java.util.UUID} value.  This is a binary value of subtype
      * {@link org.bson.BsonBinarySubType#UUID_LEGACY}
      *
      * @param name  the name of the field

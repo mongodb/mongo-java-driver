@@ -35,9 +35,9 @@ import java.util.Set;
  * obj.put( "4", value2 );
  * obj.put( 2, value3 );
  * </pre>
- * <p>This simulates the array [ value1, null, value3, null, value2 ] by creating the {@code DBObject} {@code { "0" : value1, "1" : null, 
- * "2" : value3, "3" : null, "4" : value2 }}. </p> 
- * 
+ * <p>This simulates the array [ value1, null, value3, null, value2 ] by creating the {@code DBObject} {@code { "0" : value1, "1" : null,
+ * "2" : value3, "3" : null, "4" : value2 }}. </p>
+ *
  * <p>BasicBSONList only supports numeric keys.  Passing strings that cannot be converted to ints
  * will cause an IllegalArgumentException.</p>
  * <pre>

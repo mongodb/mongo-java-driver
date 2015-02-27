@@ -19,7 +19,7 @@ package org.bson.codecs.configuration;
 import org.bson.codecs.Codec;
 
 /**
- * A registry of Codec instances searchable by the class that the Codec can encode and decode. 
+ * A registry of Codec instances searchable by the class that the Codec can encode and decode.
  *
  * <p>While the {@code CodecRegistry} interface adds no stipulations to the general contract for the Object.equals,
  * programmers who implement the {@code CodecRegistry} interface "directly" must exercise care if they choose to override the

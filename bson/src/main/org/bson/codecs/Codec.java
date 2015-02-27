@@ -17,7 +17,7 @@
 package org.bson.codecs;
 
 /**
- * Implementations of this interface can both encode and decode values of type {@code T}. 
+ * Implementations of this interface can both encode and decode values of type {@code T}.
  *
  * @param <T> the value type
  *

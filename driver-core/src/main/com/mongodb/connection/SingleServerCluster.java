@@ -44,7 +44,7 @@ final class SingleServerCluster extends BaseCluster {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
-        
+
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {

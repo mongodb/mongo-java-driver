@@ -42,7 +42,7 @@ import static java.util.Arrays.asList;
 /**
  * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
  * be used and options.</p>
- * 
+ *
  * <p>The format of the URI is:</p>
  * <pre>
  *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
@@ -63,7 +63,7 @@ import static java.util.Arrays.asList;
  * </ul>
  *
  * <p>The following options are supported (case insensitive):</p>
- * 
+ *
  * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find

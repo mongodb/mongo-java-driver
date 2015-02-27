@@ -1051,7 +1051,7 @@ public class JsonReader extends AbstractBsonReader {
         }
     }
 
-    
+
     protected class Context extends AbstractBsonReader.Context {
         protected Context(final AbstractBsonReader.Context parentContext, final BsonContextType contextType) {
             super(parentContext, contextType);

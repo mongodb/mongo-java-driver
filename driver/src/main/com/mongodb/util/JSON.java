@@ -27,7 +27,7 @@ public class JSON {
 
     /**
      * <p>Serializes an object into its JSON form.</p>
-     * 
+     *
      * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
      *
      * @param object object to serialize
@@ -42,7 +42,7 @@ public class JSON {
 
     /**
      * <p>Serializes an object into its JSON form.</p>
-     * 
+     *
      * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
      *
      * @param object   object to serialize
@@ -120,7 +120,7 @@ public class JSON {
 
 /**
  * <p>Parser for JSON objects.</p>
- * 
+ *
  * <p>Supports all types described at www.json.org, except for numbers with "e" or "E" in them.</p>
  */
 class JSONParser {

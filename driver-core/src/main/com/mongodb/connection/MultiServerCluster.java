@@ -68,7 +68,7 @@ final class MultiServerCluster extends BaseCluster {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
-        
+
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {

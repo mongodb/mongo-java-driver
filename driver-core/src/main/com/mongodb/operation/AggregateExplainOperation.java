@@ -42,7 +42,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
 
     /**
      * Construct a new instance.
-     * 
+     *
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
      */

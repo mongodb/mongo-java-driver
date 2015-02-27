@@ -17,7 +17,7 @@
 package com.mongodb;
 
 /**
- * Creates concrete DBEncoder instances. 
+ * Creates concrete DBEncoder instances.
  */
 public interface DBEncoderFactory {
     /**

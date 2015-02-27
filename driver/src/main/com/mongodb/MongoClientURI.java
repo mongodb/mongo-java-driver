@@ -41,20 +41,20 @@ import java.util.List;
  * but should be considered as deprecated.</li>
  * </ul>
  * <p>The following options are supported (case insensitive):</p>
- * 
+ *
  * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
  * all members of the set.</li>
  * </ul>
- * 
+ *
  * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * </ul>
- * 
+ *
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
@@ -64,7 +64,7 @@ import java.util.List;
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
- * 
+ *
  * <p>Write concern configuration:</p>
  * <ul>
  *  <li>{@code safe=true|false}
@@ -88,7 +88,7 @@ import java.util.List;
  *      </ul>
  *  </li>
  * </ul>
- * 
+ *
  * <p>Read preference configuration:</p>
  * <ul>
  * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
@@ -129,7 +129,7 @@ import java.util.List;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
  * </li>
  * </ul>
- * 
+ *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
  *

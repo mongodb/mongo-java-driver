@@ -22,10 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be 
- * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have 
+ * <p>Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be
+ * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have
  * been added.</p>
- * 
+ *
  * <p>This class should not be considered a part of the public API.</p>
  */
 public abstract class IndexMap {

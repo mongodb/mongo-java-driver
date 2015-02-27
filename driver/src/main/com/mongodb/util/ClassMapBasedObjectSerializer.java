@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  * <p>Objects of type ClassMapBasedObjectSerializer are constructed to perform instance specific object to JSON serialization schemes.</p>
- * 
+ *
  * <p>This class is not thread safe</p>
  *
  * @author breinero

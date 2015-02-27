@@ -26,7 +26,7 @@ import java.io.InputStream;
 public class Bits {
 
     /**
-     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling 
+     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling
      * {@link #readFully(java.io.InputStream, byte[], int, int)} with an offset of zero and a length equal to the length of the buffer.
      *
      * @param inputStream the input stream to read from
@@ -39,7 +39,7 @@ public class Bits {
     }
 
     /**
-     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling 
+     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling
      * {@link #readFully(java.io.InputStream, byte[], int, int)} with an offset of zero.
      *
      * @param inputStream the input stream to read from
@@ -95,7 +95,7 @@ public class Bits {
      * Reads and returns a single integer value from the input stream.
      *
      * @param inputStream the input stream to read from
-     * @param buffer the buffer to write the input stream bytes into 
+     * @param buffer the buffer to write the input stream bytes into
      * @return the integer value
      * @throws IOException if there's an error reading from the {@code inputStream}
      */
@@ -105,7 +105,7 @@ public class Bits {
     }
 
     /**
-     * Reads and returns a single integer value from the buffer. The equivalent of calling {@link #readInt(byte[], int)} 
+     * Reads and returns a single integer value from the buffer. The equivalent of calling {@link #readInt(byte[], int)}
      * with an offset of zero.
      *
      * @param buffer the buffer to read from
@@ -172,7 +172,7 @@ public class Bits {
     }
 
     /**
-     * Reads and returns a single long value from the buffer. The equivalent of called {@link #readLong(byte[], int)} with an offset of 
+     * Reads and returns a single long value from the buffer. The equivalent of called {@link #readLong(byte[], int)} with an offset of
      * zero.
      *
      * @param buffer the buffer to read from
