@@ -121,8 +121,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> documentClass) {
-        return new MongoCollectionImpl<NewTDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, executor);
+    public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> newDocumentClass) {
+        return new MongoCollectionImpl<NewTDocument>(namespace, newDocumentClass, codecRegistry, readPreference, writeConcern, executor);
     }
 
     @Override

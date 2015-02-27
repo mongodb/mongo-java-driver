@@ -20,7 +20,6 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.OperationExecutor;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
@@ -31,16 +30,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 final class ListDatabasesIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
-    private final Class<TResult> clazz;
+    private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
 
     private long maxTimeMS;
 
-    ListDatabasesIterableImpl(final Class<TResult> clazz, final CodecRegistry codecRegistry,
+    ListDatabasesIterableImpl(final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                               final ReadPreference readPreference, final OperationExecutor executor) {
-        this.clazz = notNull("clazz", clazz);
+        this.resultClass = notNull("clazz", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
@@ -88,12 +87,8 @@ final class ListDatabasesIterableImpl<TResult> implements ListDatabasesIterable<
         return new OperationIterable<TResult>(createListCollectionsOperation(), readPreference, executor);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
-    }
-
     private ListDatabasesOperation<TResult> createListCollectionsOperation() {
-        return new ListDatabasesOperation<TResult>(getCodec(clazz)).maxTime(maxTimeMS, MILLISECONDS);
+        return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS);
     }
 
 }

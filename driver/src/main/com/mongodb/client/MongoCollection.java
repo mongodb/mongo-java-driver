@@ -145,13 +145,13 @@ public interface MongoCollection<TDocument> {
     /**
      * Gets the distinct values of the specified field name.
      *
-     * @param fieldName the field name
-     * @param clazz     the default class to cast any distinct items into.
-     * @param <TResult>       the target type of the iterable.
+     * @param fieldName   the field name
+     * @param resultClass the class to cast any distinct items into.
+     * @param <TResult>   the target type of the iterable.
      * @return an iterable of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    <TResult> DistinctIterable<TResult> distinct(String fieldName, Class<TResult> clazz);
+    <TResult> DistinctIterable<TResult> distinct(String fieldName, Class<TResult> resultClass);
 
     /**
      * Finds all documents in the collection.
@@ -164,12 +164,12 @@ public interface MongoCollection<TDocument> {
     /**
      * Finds all documents in the collection.
      *
-     * @param clazz the class to decode each document into
+     * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <TResult> FindIterable<TResult> find(Class<TResult> clazz);
+    <TResult> FindIterable<TResult> find(Class<TResult> resultClass);
 
     /**
      * Finds all documents in the collection.
@@ -183,13 +183,13 @@ public interface MongoCollection<TDocument> {
     /**
      * Finds all documents in the collection.
      *
-     * @param filter the query filter
-     * @param clazz  the class to decode each document into
-     * @param <TResult>    the target document type of the iterable.
+     * @param filter      the query filter
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
      * @return the find iterable interface
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <TResult> FindIterable<TResult> find(Bson filter, Class<TResult> clazz);
+    <TResult> FindIterable<TResult> find(Bson filter, Class<TResult> resultClass);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -204,14 +204,14 @@ public interface MongoCollection<TDocument> {
     /**
      * Aggregates documents according to the specified aggregation pipeline.
      *
-     * @param pipeline the aggregate pipeline
-     * @param clazz    the class to decode each document into
-     * @param <TResult>      the target document type of the iterable.
+     * @param pipeline    the aggregate pipeline
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
      * @return an iterable containing the result of the aggregation operation
      * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-    <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline, Class<TResult> clazz);
+    <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline, Class<TResult> resultClass);
 
     /**
      * Aggregates documents according to the specified map-reduce function.
@@ -228,12 +228,12 @@ public interface MongoCollection<TDocument> {
      *
      * @param mapFunction    A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
-     * @param clazz          the class to decode each resulting document into.
-     * @param <TResult>            the target document type of the iterable.
+     * @param resultClass    the class to decode each resulting document into.
+     * @param <TResult>      the target document type of the iterable.
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
-    <TResult> MapReduceIterable<TResult> mapReduce(String mapFunction, String reduceFunction, Class<TResult> clazz);
+    <TResult> MapReduceIterable<TResult> mapReduce(String mapFunction, String reduceFunction, Class<TResult> resultClass);
 
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
@@ -488,12 +488,12 @@ public interface MongoCollection<TDocument> {
     /**
      * Get all the indexes in this collection.
      *
-     * @param clazz    the class to decode each document into
-     * @param <TResult>      the target document type of the iterable.
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
      * @return the list indexes iterable interface
      * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
      */
-    <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> clazz);
+    <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> resultClass);
 
     /**
      * Drops the given index.

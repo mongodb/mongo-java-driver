@@ -163,8 +163,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> clazz) {
-        return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, clazz, codecRegistry, readPreference, executor,
+    public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> resultClass) {
+        return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference, executor,
                                                             fieldName);
     }
 
@@ -174,8 +174,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> FindIterable<TResult> find(final Class<TResult> clazz) {
-        return find(new BsonDocument(), clazz);
+    public <TResult> FindIterable<TResult> find(final Class<TResult> resultClass) {
+        return find(new BsonDocument(), resultClass);
     }
 
     @Override
@@ -184,8 +184,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> clazz) {
-        return new FindIterableImpl<TDocument, TResult>(namespace, this.documentClass, clazz, codecRegistry, readPreference, executor,
+    public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> resultClass) {
+        return new FindIterableImpl<TDocument, TResult>(namespace, this.documentClass, resultClass, codecRegistry, readPreference, executor,
                                                         filter, new FindOptions());
     }
 
@@ -260,8 +260,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             writeRequests.add(writeRequest);
         }
 
-        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(),
-                                                            this.writeConcern));
+        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern));
     }
 
     @Override
@@ -287,7 +286,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             }
             requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), this.writeConcern));
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern));
     }
 
     @Override
@@ -308,8 +307,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
         return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
-                                                                          WriteRequest.Type.REPLACE)
-                                                        .upsert(updateOptions.isUpsert())));
+                                                                          WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert())));
     }
 
     @Override
@@ -475,11 +473,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private Codec<TDocument> getCodec() {
-        return getCodec(documentClass);
-    }
-
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
+        return codecRegistry.get(documentClass);
     }
 
     private BsonDocument documentToBsonDocument(final TDocument document) {

@@ -91,9 +91,9 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, codecRegistry, readPreference, writeConcern,
-                executor);
+    public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
+        return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
+                                                  writeConcern, executor);
     }
 
     @Override
@@ -107,14 +107,14 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> T executeCommand(final Bson command, final Class<T> clazz) {
-        return executor.execute(new CommandWriteOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)));
+    public <TResult> TResult executeCommand(final Bson command, final Class<TResult> resultClass) {
+        return executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)));
     }
 
     @Override
-    public <T> T executeCommand(final Bson command, final ReadPreference readPreference, final Class<T> clazz) {
+    public <TResult> TResult executeCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass) {
         notNull("readPreference", readPreference);
-        return executor.execute(new CommandReadOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)),
+        return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference);
     }
 
@@ -140,8 +140,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <C> ListCollectionsIterable<C> listCollections(final Class<C> clazz) {
-        return new ListCollectionsIterableImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
+    public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
+        return new ListCollectionsIterableImpl<TResult>(name, resultClass, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override

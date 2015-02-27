@@ -24,7 +24,6 @@ import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -160,12 +159,8 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
         return new FindOperationIterable(createQueryOperation(), this.readPreference, executor);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
-    }
-
     private FindOperation<TResult> createQueryOperation() {
-        return new FindOperation<TResult>(namespace, getCodec(resultClass))
+        return new FindOperation<TResult>(namespace, codecRegistry.get(resultClass))
                    .filter(filter.toBsonDocument(documentClass, codecRegistry))
                    .batchSize(findOptions.getBatchSize())
                    .skip(findOptions.getSkip())

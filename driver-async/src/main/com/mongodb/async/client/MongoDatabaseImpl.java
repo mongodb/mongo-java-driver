@@ -103,8 +103,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <C> ListCollectionsIterable<C> listCollections(final Class<C> clazz) {
-        return new ListCollectionsIterableImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
+    public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
+        return new ListCollectionsIterableImpl<TResult>(name, resultClass, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override
@@ -113,9 +113,9 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, codecRegistry, readPreference, writeConcern,
-                executor);
+    public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
+        return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
+                                                  writeConcern, executor);
     }
 
     @Override
@@ -129,18 +129,19 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> void executeCommand(final Bson command, final Class<T> clazz, final SingleResultCallback<T> callback) {
+    public <TResult> void executeCommand(final Bson command, final Class<TResult> resultClass,
+                                         final SingleResultCallback<TResult> callback) {
         notNull("command", command);
-        executor.execute(new CommandWriteOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)), callback);
+        executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)), callback);
     }
 
     @Override
-    public <T> void executeCommand(final Bson command, final ReadPreference readPreference, final Class<T> clazz,
-                                   final SingleResultCallback<T> callback) {
+    public <TResult> void executeCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass,
+                                         final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
-        executor.execute(new CommandReadOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)), readPreference,
-                callback);
+        executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
+                         readPreference, callback);
     }
 
     @Override

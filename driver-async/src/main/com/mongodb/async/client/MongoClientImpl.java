@@ -107,8 +107,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clazz, options.getCodecRegistry(), ReadPreference.primary(), executor);
+    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
+        return new ListDatabasesIterableImpl<T>(resultClass, options.getCodecRegistry(), ReadPreference.primary(), executor);
     }
 
     Cluster getCluster() {

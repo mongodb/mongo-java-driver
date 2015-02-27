@@ -24,7 +24,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -107,12 +106,8 @@ final class ListCollectionsIterableImpl<TResult> implements ListCollectionsItera
         return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
-    }
-
     private ListCollectionsOperation<TResult> createListCollectionsOperation() {
-        return new ListCollectionsOperation<TResult>(databaseName, getCodec(resultClass))
+        return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
                 .filter(toBsonDocument(filter))
                 .batchSize(batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);

@@ -24,7 +24,6 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.ListIndexesOperation;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
@@ -98,12 +97,8 @@ final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TRes
         return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
-    }
-
     private ListIndexesOperation<TResult> createListIndexesOperation() {
-        return new ListIndexesOperation<TResult>(namespace, getCodec(resultClass))
+        return new ListIndexesOperation<TResult>(namespace, codecRegistry.get(resultClass))
                 .batchSize(batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }
