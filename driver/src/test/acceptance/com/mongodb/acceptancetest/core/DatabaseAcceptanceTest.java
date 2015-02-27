@@ -139,7 +139,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
 
             //when
-            List<String> databaseNames = mongoClient.getDatabaseNames();
+            List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));

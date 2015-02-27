@@ -291,6 +291,7 @@ public class MongoClient extends Mongo implements Closeable {
      *
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
+     * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
         return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),

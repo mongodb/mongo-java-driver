@@ -156,7 +156,7 @@ public class NewQuickTour {
         collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
 
         // getting a list of databases
-        for (String name: mongoClient.getDatabaseNames()) {
+        for (String name: mongoClient.listDatabaseNames()) {
             System.out.println(name);
         }
 

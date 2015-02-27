@@ -42,7 +42,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldListDatabaseNamesFromDatabase() {
         database.createCollection(getCollectionName());
-        List<String> names = client.getDatabaseNames();
+        List<String> names = client.listDatabaseNames().into(new ArrayList<String>());
 
         assertThat(names.contains(getDatabaseName()), is(true));
     }
@@ -86,7 +86,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
             secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
 
             //when
-            List<String> databaseNames = mongoClient.getDatabaseNames();
+            List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));
