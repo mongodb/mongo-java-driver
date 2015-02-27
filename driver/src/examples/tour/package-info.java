@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.test;
-
-import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
-
 /**
- *
+ * This package contains the quick tour examples
  */
-@SuppressWarnings("unchecked")
-public class WorkerCodecProvider implements CodecProvider {
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (clazz.equals(Worker.class)) {
-            return (Codec<T>) new WorkerCodec();
-        }
-        return null;
-    }
-}
+package tour;

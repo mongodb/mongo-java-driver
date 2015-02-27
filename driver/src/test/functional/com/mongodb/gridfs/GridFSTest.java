@@ -270,7 +270,7 @@ public class GridFSTest extends DatabaseTestCase {
         for (int idx = 0; idx < fileSize; ++idx) {
             assertEquals((byte) (idx % 251), (byte) inputStream.read());
         }
-        
+
         // finally
         gridFS.remove(new BasicDBObject("_id", id));
     }

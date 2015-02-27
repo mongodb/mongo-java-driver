@@ -101,7 +101,7 @@ public class SingleConnectionBindingTest  {
 
         ConnectionSource readSource = binding.getReadConnectionSource();
         Connection readConnection = readSource.getConnection();
-        
+
         // expect
         assertThat(writeConnection.getDescription().getConnectionId(), is(not(readConnection.getDescription().getConnectionId())));
 

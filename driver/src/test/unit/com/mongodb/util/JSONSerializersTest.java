@@ -81,7 +81,7 @@ public class JSONSerializersTest {
         serializer.serialize(testObj, buf);
         assertEquals(buf.toString(), "{ \"boolean\" : true}");
 
-        // test  BSON_TIMESTAMP, 
+        // test  BSON_TIMESTAMP,
         testObj = new BasicDBObject("timestamp", new BSONTimestamp());
         buf = new StringBuilder();
         serializer.serialize(testObj, buf);

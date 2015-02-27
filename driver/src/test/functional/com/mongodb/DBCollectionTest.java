@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-
 import category.Slow;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
@@ -288,7 +287,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testCreateIndexAs2dsphere() {
         assumeThat(serverVersionAtLeast(asList(2, 4, 0)), is(true));
-        
+
         // when
         DBObject index = new BasicDBObject("x", "2dsphere");
         collection.createIndex(index);

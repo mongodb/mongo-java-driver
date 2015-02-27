@@ -29,7 +29,7 @@ import static org.junit.Assert.assertThat;
 
 /**
  * Documents and tests the functionality provided for find-and-remove atomic operations.
- * 
+ *
  * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
  */
 public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {

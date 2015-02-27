@@ -331,7 +331,7 @@ public class BSONTest {
         }
 
     }
-    
+
     private class TestDateTransformer implements Transformer {
         @SuppressWarnings("deprecation")
         public Object transform(final Object objectToTransform) {
@@ -346,7 +346,7 @@ public class BSONTest {
             }
         }
     }
-    
+
     private class TestDate {
         private final int year;
         private final int month;
