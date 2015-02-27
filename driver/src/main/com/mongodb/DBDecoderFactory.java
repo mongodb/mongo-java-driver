@@ -17,7 +17,7 @@
 package com.mongodb;
 
 /**
- * Creates concrete DBDecoder instances. 
+ * Creates concrete DBDecoder instances.
  */
 public interface DBDecoderFactory {
     /**

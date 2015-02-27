@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  * Copyright (c) 2008-2014 Atlassian Pty Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  ~ Copyright (c) 2008-2014 MongoDB, Inc.
+  ~ Copyright (c) 2008-2015 MongoDB, Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -30,9 +30,25 @@
     <!-- TODO: This has to be enabled at some point before we release -->
     <!--<module name="JavadocPackage"/>-->
 
+    <module name="RegexpSingleline">
+        <!-- Requires a Mongodb copyright notice in each file.
+          <pre>
+            /*
+             * Copyright 2008-2014 MongoDB, Inc.
+             *
+          </pre>
+        -->
+        <property name="format"
+                  value="^(//| \*) Copyright (\([cC]\) )?[\d]{4}(\-[\d]{4})? (MongoDB, Inc\.).*$" />
+        <property name="minimum" value="1" />
+        <property name="maximum" value="10" />
+        <property name="message" value="MongoDB copyright is missing or malformed." />
+        <property name="severity" value="error" />
+    </module>
+
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
-    <!--<module name="NewlineAtEndOfFile"/>-->
+    <module name="NewlineAtEndOfFile"/>
 
     <!-- Checks that property files contain the same keys.         -->
     <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->

@@ -15,6 +15,6 @@
  */
 
 /**
- * Contains helper classes for working with the BSON protocol. 
+ * Contains helper classes for working with the BSON protocol.
  */
 package org.bson.util;
