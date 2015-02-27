@@ -37,8 +37,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        List<Document> filteredCollection = collection.find().filter(new Document("_id", 3))
-                                                             .into(new ArrayList<Document>());
+        List<Document> filteredCollection = collection.find().filter(new Document("_id", 3)).into(new ArrayList<Document>());
         assertEquals(1, filteredCollection.size());
         assertThat((Integer) filteredCollection.get(0).get("_id"), is(3));
     }

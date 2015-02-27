@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,7 @@ import java.io.OutputStream;
 import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -119,7 +121,18 @@ public class GridFSTest extends DatabaseTestCase {
         in.put("meta", 5);
         in.save();
         GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
-        assert (out.get("meta").equals(5));
+        assertTrue(out.get("meta").equals(5));
+    }
+
+    @Test
+    public void testFind() throws Exception {
+
+        GridFSInputFile in = gridFS.createFile(new ByteArrayInputStream("foo".getBytes(defaultCharset())), "testFind");
+        in.save();
+        assertNotNull(gridFS.find((ObjectId) in.getId()));
+        assertNotNull(gridFS.findOne((ObjectId) in.getId()));
+        assertNotNull(gridFS.findOne("testFind"));
+        assertNotNull(gridFS.findOne(new BasicDBObject("_id", in.getId())));
     }
 
     @Test

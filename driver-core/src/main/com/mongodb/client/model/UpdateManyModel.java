@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -29,32 +31,30 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/operator/update/ Update Operators
  */
 public final class UpdateManyModel<T> extends WriteModel<T> {
-    private final Object filter;
-    private final Object update;
+    private final Bson filter;
+    private final Bson update;
     private final UpdateOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators. This can be of any type for which a {@code Codec} is registered
+     * operators.
      */
-    public UpdateManyModel(final Object filter, final Object update) {
+    public UpdateManyModel(final Bson filter, final Bson update) {
         this(filter, update, new UpdateOptions());
     }
 
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators. This can be of any type for which a {@code Codec} is registered
+     * operators.
      * @param options the options to apply
      */
-    public UpdateManyModel(final Object filter, final Object update, final UpdateOptions options) {
+    public UpdateManyModel(final Bson filter, final Bson update, final UpdateOptions options) {
         this.filter = notNull("filter", filter);
         this.update = notNull("update", update);
         this.options = notNull("options", options);
@@ -65,7 +65,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @return the query filtert
      */
-    public Object getFilter() {
+    public Bson getFilter() {
         return filter;
     }
 
@@ -75,7 +75,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @return the document specifying the updates to apply
      */
-    public Object getUpdate() {
+    public Bson getUpdate() {
         return update;
     }
 

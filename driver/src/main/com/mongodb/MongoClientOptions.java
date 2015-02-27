@@ -46,8 +46,8 @@ public class MongoClientOptions {
     private final WriteConcern writeConcern;
     private final CodecRegistry codecRegistry;
 
-    private final int minConnectionPoolSize;
-    private final int maxConnectionPoolSize;
+    private final int minConnectionsPerHost;
+    private final int maxConnectionsPerHost;
     private final int threadsAllowedToBlockForConnectionMultiplier;
     private final int serverSelectionTimeout;
     private final int maxWaitTime;
@@ -77,8 +77,8 @@ public class MongoClientOptions {
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
-        minConnectionPoolSize = builder.minConnectionPoolSize;
-        maxConnectionPoolSize = builder.maxConnectionPoolSize;
+        minConnectionsPerHost = builder.minConnectionsPerHost;
+        maxConnectionsPerHost = builder.maxConnectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
         serverSelectionTimeout = builder.serverSelectionTimeout;
         maxWaitTime = builder.maxWaitTime;
@@ -141,6 +141,17 @@ public class MongoClientOptions {
     }
 
     /**
+     * Creates a builder instance.
+     *
+     * @param options existing MongoClientOptions to default the builder settings on.
+     * @return a builder
+     * @since 3.0.0
+     */
+    public static Builder builder(final MongoClientOptions options) {
+        return new Builder(options);
+    }
+
+    /**
      * <p>Gets the description for this MongoClient, which is used in various places like logging and JMX.</p>
      *
      * <p>Default is null.</p>
@@ -161,7 +172,7 @@ public class MongoClientOptions {
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
     public int getConnectionsPerHost() {
-        return maxConnectionPoolSize;
+        return maxConnectionsPerHost;
     }
 
     /**
@@ -173,7 +184,7 @@ public class MongoClientOptions {
      * @return the minimum size of the connection pool per host
      */
     public int getMinConnectionsPerHost() {
-        return minConnectionPoolSize;
+        return minConnectionsPerHost;
     }
 
     /**
@@ -294,7 +305,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>  
+     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>
      *
      * <p>The default value is 20,000 milliseconds.</p>
      *
@@ -337,15 +348,15 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p> 
-     * 
-     * <ol> 
-     *     <li>Connect in replica set mode, and discover all members of the set based on the given servers</li> 
-     *     <li>Make sure that the set name reported by all members matches the required set name.</li> 
-     *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li> 
+     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p>
+     *
+     * <ol>
+     *     <li>Connect in replica set mode, and discover all members of the set based on the given servers</li>
+     *     <li>Make sure that the set name reported by all members matches the required set name.</li>
+     *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li>
      * </ol>
      *
-     * @return the required replica set name 
+     * @return the required replica set name
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {
@@ -392,8 +403,6 @@ public class MongoClientOptions {
      *
      * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a codec for
      * DBObject in the registry.</p>
-     *
-     * Default is {@code RootCodecRegistry}
      *
      * @return the codec registry
      * @see MongoClient#getDatabase
@@ -515,7 +524,7 @@ public class MongoClientOptions {
         if (maxConnectionLifeTime != that.maxConnectionLifeTime) {
             return false;
         }
-        if (maxConnectionPoolSize != that.maxConnectionPoolSize) {
+        if (maxConnectionsPerHost != that.maxConnectionsPerHost) {
             return false;
         }
         if (serverSelectionTimeout != that.serverSelectionTimeout) {
@@ -524,7 +533,7 @@ public class MongoClientOptions {
         if (maxWaitTime != that.maxWaitTime) {
             return false;
         }
-        if (minConnectionPoolSize != that.minConnectionPoolSize) {
+        if (minConnectionsPerHost != that.minConnectionsPerHost) {
             return false;
         }
         if (socketKeepAlive != that.socketKeepAlive) {
@@ -571,8 +580,8 @@ public class MongoClientOptions {
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + codecRegistry.hashCode();
-        result = 31 * result + minConnectionPoolSize;
-        result = 31 * result + maxConnectionPoolSize;
+        result = 31 * result + minConnectionsPerHost;
+        result = 31 * result + maxConnectionsPerHost;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
         result = 31 * result + serverSelectionTimeout;
         result = 31 * result + maxWaitTime;
@@ -603,8 +612,8 @@ public class MongoClientOptions {
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", codecRegistry=" + codecRegistry
-               + ", minConnectionPoolSize=" + minConnectionPoolSize
-               + ", maxConnectionPoolSize=" + maxConnectionPoolSize
+               + ", minConnectionsPerHost=" + minConnectionsPerHost
+               + ", maxConnectionsPerHost=" + maxConnectionsPerHost
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
                + ", serverSelectionTimeout=" + serverSelectionTimeout
                + ", maxWaitTime=" + maxWaitTime
@@ -643,8 +652,8 @@ public class MongoClientOptions {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
 
-        private int minConnectionPoolSize;
-        private int maxConnectionPoolSize = 100;
+        private int minConnectionsPerHost;
+        private int maxConnectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
         private int serverSelectionTimeout = 1000 * 30;
         private int maxWaitTime = 1000 * 60 * 2;
@@ -680,6 +689,40 @@ public class MongoClientOptions {
         }
 
         /**
+         * Creates a Builder from an existing MongoClientOptions.
+         *
+         * @param options create a builder from existing options
+         */
+        public Builder(final MongoClientOptions options) {
+            description = options.getDescription();
+            minConnectionsPerHost = options.getMinConnectionsPerHost();
+            maxConnectionsPerHost = options.getConnectionsPerHost();
+            threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
+            serverSelectionTimeout = options.getServerSelectionTimeout();
+            maxWaitTime = options.getMaxWaitTime();
+            maxConnectionIdleTime = options.getMaxConnectionIdleTime();
+            maxConnectionLifeTime = options.getMaxConnectionLifeTime();
+            connectTimeout = options.getConnectTimeout();
+            socketTimeout = options.getSocketTimeout();
+            socketKeepAlive = options.isSocketKeepAlive();
+            readPreference = options.getReadPreference();
+            writeConcern = options.getWriteConcern();
+            codecRegistry = options.getCodecRegistry();
+            sslEnabled = options.isSslEnabled();
+            alwaysUseMBeans = options.isAlwaysUseMBeans();
+            heartbeatFrequency = options.getHeartbeatFrequency();
+            minHeartbeatFrequency = options.getMinHeartbeatFrequency();
+            heartbeatConnectTimeout = options.getHeartbeatConnectTimeout();
+            heartbeatSocketTimeout = options.getHeartbeatSocketTimeout();
+            localThreshold = options.getLocalThreshold();
+            requiredReplicaSetName = options.getRequiredReplicaSetName();
+            dbDecoderFactory = options.getDbDecoderFactory();
+            dbEncoderFactory = options.getDbEncoderFactory();
+            socketFactory = options.getSocketFactory();
+            cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
+        }
+
+        /**
          * Sets the description.
          *
          * @param description the description of this MongoClient
@@ -702,7 +745,7 @@ public class MongoClientOptions {
          */
         public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
             isTrueArgument("minConnectionsPerHost must be >= 0", minConnectionsPerHost >= 0);
-            this.minConnectionPoolSize = minConnectionsPerHost;
+            this.minConnectionsPerHost = minConnectionsPerHost;
             return this;
         }
 
@@ -716,7 +759,7 @@ public class MongoClientOptions {
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {
             isTrueArgument("connectionPerHost must be > 0", connectionsPerHost > 0);
-            this.maxConnectionPoolSize = connectionsPerHost;
+            this.maxConnectionsPerHost = connectionsPerHost;
             return this;
         }
 

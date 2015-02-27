@@ -32,6 +32,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Documents the basic functionality available for the MongoClient via the Java driver.
@@ -41,7 +42,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldListDatabaseNamesFromDatabase() {
         database.createCollection(getCollectionName());
-        List<String> names = client.getDatabaseNames();
+        List<String> names = client.listDatabaseNames().into(new ArrayList<String>());
 
         assertThat(names.contains(getDatabaseName()), is(true));
     }
@@ -58,6 +59,20 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
         assertThat(databases.size(), is(greaterThan(size)));
     }
 
+
+    @Test
+    public void shouldListDatabasesNamesFromDatabase() {
+        database.dropDatabase();
+
+        List<String> databases = client.listDatabaseNames().into(new ArrayList<String>());
+        int size = databases.size();
+
+        database.createCollection(getCollectionName());
+        databases = client.listDatabaseNames().into(new ArrayList<String>());
+        assertThat(databases.size(), is(greaterThan(size)));
+        assertTrue(databases.contains(getDatabaseName()));
+    }
+
     @Test
     public void shouldBeAbleToListAllTheDatabasesAvailable() {
         MongoClient mongoClient = getMongoClient();
@@ -71,7 +86,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
             secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
 
             //when
-            List<String> databaseNames = mongoClient.getDatabaseNames();
+            List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));

@@ -27,7 +27,6 @@ import org.bson.Document;
 import org.bson.Transformer;
 import org.bson.assertions.Assertions;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +34,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 
 /**
  * A Codec for Document instances.
@@ -45,9 +45,9 @@ import static java.util.Arrays.asList;
 public class DocumentCodec implements CollectibleCodec<Document> {
 
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
-                                                                                       new BsonValueCodecProvider(),
-                                                                                       new DocumentCodecProvider()));
+    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
+            new BsonValueCodecProvider(),
+            new DocumentCodecProvider()));
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
     private final BsonTypeClassMap bsonTypeClassMap;
@@ -119,10 +119,11 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final Document document) {
+    public Document generateIdIfAbsentFromDocument(final Document document) {
         if (!documentHasId(document)) {
             document.put(ID_FIELD_NAME, idGenerator.generate());
         }
+        return document;
     }
 
     @Override

@@ -27,13 +27,15 @@ import com.mongodb.operation.DropDatabaseOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.configuration.RootCodecRegistry
+import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoDatabaseSpecification extends Specification {
@@ -53,7 +55,7 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should behave correctly when using withCodecRegistry'() {
         given:
-        def newCodecRegistry = new RootCodecRegistry([])
+        def newCodecRegistry = Stub(CodecRegistry)
         def executor = new TestOperationExecutor([])
 
         when:
@@ -215,7 +217,8 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should pass the correct options to getCollection'() {
         given:
-        def database = new MongoDatabaseImpl('databaseName', new RootCodecRegistry([]), secondary(), WriteConcern.MAJORITY,
+        def codecRegistry = fromProviders([new BsonValueCodecProvider()])
+        def database = new MongoDatabaseImpl('databaseName', codecRegistry, secondary(), WriteConcern.MAJORITY,
                 new TestOperationExecutor([]))
 
         when:
@@ -226,7 +229,7 @@ class MongoDatabaseSpecification extends Specification {
 
         where:
         expectedCollection = new MongoCollectionImpl<Document>(new MongoNamespace('databaseName', 'collectionName'), Document,
-                new RootCodecRegistry([]), secondary(), WriteConcern.MAJORITY, new TestOperationExecutor([]))
+                fromProviders([new BsonValueCodecProvider()]), secondary(), WriteConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
 }

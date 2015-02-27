@@ -17,15 +17,17 @@
 package com.mongodb.async.client;
 
 
+import org.bson.conversions.Bson;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for distinct.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface DistinctIterable<T> extends MongoIterable<T> {
+public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the query filter to apply to the query.
@@ -34,7 +36,7 @@ public interface DistinctIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    DistinctIterable<T> filter(Object filter);
+    DistinctIterable<TResult> filter(Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -43,7 +45,7 @@ public interface DistinctIterable<T> extends MongoIterable<T> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    DistinctIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
+    DistinctIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
@@ -52,6 +54,6 @@ public interface DistinctIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    DistinctIterable<T> batchSize(int batchSize);
+    DistinctIterable<TResult> batchSize(int batchSize);
 
 }

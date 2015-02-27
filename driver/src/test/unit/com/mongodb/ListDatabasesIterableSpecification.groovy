@@ -23,20 +23,18 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ListDatabasesIterableSpecification extends Specification {
 
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new DBObjectCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(),
+                                       new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
     def 'should build the expected listCollectionOperation'() {
@@ -115,7 +113,7 @@ class ListDatabasesIterableSpecification extends Specification {
 
         when:
         target = []
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')

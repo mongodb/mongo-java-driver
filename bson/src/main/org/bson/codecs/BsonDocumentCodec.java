@@ -23,15 +23,14 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
 
 /**
  * A codec for BsonDocument instances.
@@ -40,12 +39,12 @@ import java.util.Map;
  */
 public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
+    private static final CodecRegistry DEFAULT_REGISTRY = fromProvider(new BsonValueCodecProvider());
 
     private final CodecRegistry codecRegistry;
 
     /**
-     * Creates a new instance with a default {@link org.bson.codecs.configuration.RootCodecRegistry}
+     * Creates a new instance with a default codec registry that uses the {@link BsonValueCodecProvider}.
      */
     public BsonDocumentCodec() {
         codecRegistry = DEFAULT_REGISTRY;
@@ -140,10 +139,11 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final BsonDocument document) {
+    public BsonDocument generateIdIfAbsentFromDocument(final BsonDocument document) {
         if (!documentHasId(document)) {
             document.put(ID_FIELD_NAME, new BsonObjectId(new ObjectId()));
         }
+        return document;
     }
 
     @Override

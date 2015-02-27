@@ -30,28 +30,25 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MapReduceIterableSpecification extends Specification {
 
     def namespace = new MongoNamespace('db', 'coll')
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
     def 'should build the expected MapReduceWithInlineResultsOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                'map', 'reduce')
+        def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                          'map', 'reduce')
 
         when: 'default input should be as expected'
         mapReduceIterable.iterator()
@@ -95,8 +92,8 @@ class MapReduceIterableSpecification extends Specification {
 
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
-        def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                'map', 'reduce')
+        def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                          'map', 'reduce')
                 .collectionName(collectionNamespace.getCollectionName())
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new Document('filter', 1))
@@ -111,7 +108,7 @@ class MapReduceIterableSpecification extends Specification {
                 .action(MapReduceAction.MERGE)
                 .sharded(true)
                 .jsMode(true)
-         mapReduceIterable.iterator()
+        mapReduceIterable.iterator()
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
         def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
@@ -142,10 +139,10 @@ class MapReduceIterableSpecification extends Specification {
 
     def 'should handle exceptions correctly'() {
         given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
+        def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
-        def mapReduceIterable = new MapReduceIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                'map', 'reduce')
+        def mapReduceIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
+                                                          readPreference, executor, 'map', 'reduce')
 
 
         when: 'The operation fails with an exception'
@@ -155,8 +152,8 @@ class MapReduceIterableSpecification extends Specification {
         thrown(MongoException)
 
         when: 'a codec is missing'
-        new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                'map', 'reduce').iterator()
+        new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                  'map', 'reduce').iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -185,8 +182,8 @@ class MapReduceIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new MapReduceIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                'map', 'reduce')
+        def mongoIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
+                                                      executor, 'map', 'reduce')
 
         when:
         def results = mongoIterable.first()
@@ -215,7 +212,7 @@ class MapReduceIterableSpecification extends Specification {
 
         when:
         target = []
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')

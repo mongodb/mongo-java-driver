@@ -406,7 +406,9 @@ public class Mongo {
      *
      * @return list of database names
      * @throws MongoException  if the operation fails
+     * @deprecated Replaced with {@link com.mongodb.MongoClient#listDatabaseNames()}
      */
+    @Deprecated
     public List<String> getDatabaseNames() {
       return new OperationIterable<DBObject>(new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec()),
           primary(), createOperationExecutor())

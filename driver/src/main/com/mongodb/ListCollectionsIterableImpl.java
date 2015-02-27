@@ -22,9 +22,8 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
-import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -32,88 +31,84 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListCollectionsIterableImpl<T> implements ListCollectionsIterable<T> {
+final class ListCollectionsIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
     private final String databaseName;
-    private final Class<T> clazz;
+    private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
 
-    private Object filter;
+    private Bson filter;
     private int batchSize;
     private long maxTimeMS;
 
-    ListCollectionsIterableImpl(final String databaseName, final Class<T> clazz, final CodecRegistry codecRegistry,
+    ListCollectionsIterableImpl(final String databaseName, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                                 final ReadPreference readPreference, final OperationExecutor executor) {
         this.databaseName = notNull("databaseName", databaseName);
-        this.clazz = notNull("clazz", clazz);
+        this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
     }
 
     @Override
-    public ListCollectionsIterable<T> filter(final Object filter) {
+    public ListCollectionsIterable<TResult> filter(final Bson filter) {
         notNull("filter", filter);
         this.filter = filter;
         return this;
     }
 
     @Override
-    public ListCollectionsIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListCollectionsIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public ListCollectionsIterable<T> batchSize(final int batchSize) {
+    public ListCollectionsIterable<TResult> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
     @Override
-    public MongoCursor<T> iterator() {
+    public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
 
     @Override
-    public T first() {
+    public TResult first() {
         return execute().first();
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MappingIterable<T, U>(this, mapper);
+    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
+        return new MappingIterable<TResult, U>(this, mapper);
     }
 
     @Override
-    public void forEach(final Block<? super T> block) {
+    public void forEach(final Block<? super TResult> block) {
         execute().forEach(block);
     }
 
     @Override
-    public <A extends Collection<? super T>> A into(final A target) {
+    public <A extends Collection<? super TResult>> A into(final A target) {
         return execute().into(target);
     }
 
-    private MongoIterable<T> execute() {
-        return new OperationIterable<T>(createListCollectionsOperation(), readPreference, executor);
+    private MongoIterable<TResult> execute() {
+        return new OperationIterable<TResult>(createListCollectionsOperation(), readPreference, executor);
     }
 
-    private <C> Codec<C> getCodec(final Class<C> clazz) {
-        return codecRegistry.get(clazz);
-    }
-
-    private ListCollectionsOperation<T> createListCollectionsOperation() {
-        return new ListCollectionsOperation<T>(databaseName, getCodec(clazz))
-                .filter(asBson(filter))
+    private ListCollectionsOperation<TResult> createListCollectionsOperation() {
+        return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
+                .filter(toBsonDocument(filter))
                 .batchSize(batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }
 
-    private BsonDocument asBson(final Object document) {
-        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
+    private BsonDocument toBsonDocument(final Bson document) {
+        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 
 }

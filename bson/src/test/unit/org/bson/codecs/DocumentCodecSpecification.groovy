@@ -30,7 +30,6 @@ import org.bson.BsonUndefined
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.Document
-import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
@@ -47,6 +46,7 @@ import spock.lang.Specification
 import java.nio.ByteBuffer
 
 import static java.util.Arrays.asList
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 
 class DocumentCodecSpecification extends Specification {
     @Shared
@@ -159,7 +159,7 @@ class DocumentCodecSpecification extends Specification {
 
     def 'should apply transformer to decoded values'() {
         given:
-        def codec = new DocumentCodec(new RootCodecRegistry([new ValueCodecProvider(), new DocumentCodecProvider()]),
+        def codec = new DocumentCodec(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider()]),
                                       new BsonTypeClassMap(),
                                       { Object value -> 5 })
         when:
@@ -175,7 +175,7 @@ class DocumentCodecSpecification extends Specification {
         def document = new Document()
 
         when:
-        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+        document = new DocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') instanceof ObjectId
@@ -186,7 +186,7 @@ class DocumentCodecSpecification extends Specification {
         def document = new Document('_id', 1)
 
         when:
-        new DocumentCodec().generateIdIfAbsentFromDocument(document)
+        document = new DocumentCodec().generateIdIfAbsentFromDocument(document)
 
         then:
         document.get('_id') == 1

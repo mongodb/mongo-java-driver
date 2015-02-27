@@ -22,6 +22,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 /**
  * The MongoDatabase interface.
@@ -97,11 +98,11 @@ public interface MongoDatabase {
      * Gets a collection, with a specific default document class.
      *
      * @param collectionName the name of the collection to return
-     * @param clazz          the default class to cast any documents returned from the database into.
-     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @param documentClass  the default class to cast any documents returned from the database into.
+     * @param <TDocument>    the type of the class to use instead of {@code Document}.
      * @return the collection
      */
-    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
+    <TDocument> MongoCollection<TDocument> getCollection(String collectionName, Class<TDocument> documentClass);
 
     /**
      * Executes command in the context of the current database.
@@ -109,7 +110,7 @@ public interface MongoDatabase {
      * @param command the command to be run
      * @return the command result
      */
-    Document executeCommand(Object command);
+    Document executeCommand(Bson command);
 
     /**
      * Executes command in the context of the current database.
@@ -118,28 +119,28 @@ public interface MongoDatabase {
      * @param readPreference the {@link ReadPreference} to be used when executing the command
      * @return the command result
      */
-    Document executeCommand(Object command, ReadPreference readPreference);
+    Document executeCommand(Bson command, ReadPreference readPreference);
 
     /**
      * Executes command in the context of the current database.
      *
-     * @param command        the command to be run
-     * @param clazz          the default class to cast any documents returned from the database into.
-     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @param command     the command to be run
+     * @param resultClass the default class to cast any documents returned from the database into.
+     * @param <TResult> the type of the class to use instead of {@code Document}.
      * @return the command result
      */
-    <T> T executeCommand(Object command, Class<T> clazz);
+    <TResult> TResult executeCommand(Bson command, Class<TResult> resultClass);
 
     /**
      * Executes command in the context of the current database.
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
-     * @param clazz          the default class to cast any documents returned from the database into.
-     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @param resultClass    the default class to cast any documents returned from the database into.
+     * @param <TResult>      the type of the class to use instead of {@code Document}.
      * @return the command result
      */
-    <T> T executeCommand(Object command, ReadPreference readPreference, Class<T> clazz);
+    <TResult> TResult executeCommand(Bson command, ReadPreference readPreference, Class<TResult> resultClass);
 
     /**
      * Drops this database.
@@ -166,12 +167,12 @@ public interface MongoDatabase {
     /**
      * Finds all the collections in this database.
      *
-     * @param clazz the class to decode each document into
-     * @param <C>   the target document type of the iterable.
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
      * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
-    <C> ListCollectionsIterable<C> listCollections(Class<C> clazz);
+    <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass);
 
     /**
      * Create a new collection with the given name.

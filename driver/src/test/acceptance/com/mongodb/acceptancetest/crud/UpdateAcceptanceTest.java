@@ -105,6 +105,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         Document filter = new Document("x", 3);
         collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
+
         // then
         assertThat(collection.count(new Document("x", 5), new CountOptions()), is(2L));
     }

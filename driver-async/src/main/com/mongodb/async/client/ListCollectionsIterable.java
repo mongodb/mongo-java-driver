@@ -16,15 +16,17 @@
 
 package com.mongodb.async.client;
 
+import org.bson.conversions.Bson;
+
 import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for ListCollections.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface ListCollectionsIterable<T> extends MongoIterable<T> {
+public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Sets the query filter to apply to the query.
@@ -33,7 +35,7 @@ public interface ListCollectionsIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    ListCollectionsIterable<T> filter(Object filter);
+    ListCollectionsIterable<TResult> filter(Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -43,7 +45,7 @@ public interface ListCollectionsIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ Max Time
      */
-    ListCollectionsIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
+    ListCollectionsIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
@@ -52,5 +54,5 @@ public interface ListCollectionsIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    ListCollectionsIterable<T> batchSize(int batchSize);
+    ListCollectionsIterable<TResult> batchSize(int batchSize);
 }

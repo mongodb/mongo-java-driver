@@ -18,27 +18,25 @@ package com.mongodb.async.client
 
 import com.mongodb.Block
 import com.mongodb.Function
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.operation.ListDatabasesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ListDatabasesIterableSpecification extends Specification {
 
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
     def 'should build the expected ListDatabasesOperation'() {
@@ -54,7 +52,7 @@ class ListDatabasesIterableSpecification extends Specification {
                 .batchSize(1) // batchSize should be silently ignored
 
         when: 'default input should be as expected'
-        listDatabasesIterable.into([])  { result, t -> }
+        listDatabasesIterable.into([]) { result, t -> }
 
         def operation = executor.getReadOperation() as ListDatabasesOperation<Document>
         def readPreference = executor.getReadPreference()
@@ -64,7 +62,7 @@ class ListDatabasesIterableSpecification extends Specification {
         readPreference == secondary()
 
         when: 'overriding initial options'
-        listDatabasesIterable.maxTime(999, MILLISECONDS).into([])  { result, t -> }
+        listDatabasesIterable.maxTime(999, MILLISECONDS).into([]) { result, t -> }
 
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
@@ -125,7 +123,7 @@ class ListDatabasesIterableSpecification extends Specification {
         when:
         target = []
         results = new FutureResultCallback()
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')

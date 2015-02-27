@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -27,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/command/count/ Count
  */
 public class CountOptions {
-    private Object hint;
+    private Bson hint;
     private String hintString;
     private long limit;
     private long maxTimeMS;
@@ -38,7 +40,7 @@ public class CountOptions {
      *
      * @return the hint, which should describe an existing
      */
-    public Object getHint() {
+    public Bson getHint() {
         return hint;
     }
 
@@ -57,7 +59,7 @@ public class CountOptions {
      * @param hint a document describing the index which should be used for this operation.
      * @return this
      */
-    public CountOptions hint(final Object hint) {
+    public CountOptions hint(final Bson hint) {
         this.hint = hint;
         return this;
     }

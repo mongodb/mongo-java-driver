@@ -19,7 +19,6 @@ package com.mongodb.acceptancetest.querying;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.QueryBuilder;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -32,20 +31,20 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.mongodb.QueryOperators.TYPE;
-import static com.mongodb.client.QueryBuilder.query;
+import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.type;
+import static com.mongodb.client.model.Sorts.descending;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -72,8 +71,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                new DocumentCodecProvider(),
+        CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
                 new PersonCodecProvider()));
         MongoCollection<Person> collection = database
                 .getCollection(getCollectionName(), Person.class)
@@ -146,10 +144,8 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
         List<Document> results = new ArrayList<Document>();
 
-        Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
-                                            .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
-                                            .toDocument();
-        collection.find(filter).sort(new Document("numTimesOrdered", -1)).into(results);
+        collection.find(or(type("numTimesOrdered", INT32), type("numTimesOrdered", INT64)))
+                  .sort(descending("numTimesOrdered")).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
@@ -188,8 +184,8 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public void generateIdIfAbsentFromDocument(final Person person) {
-
+        public Person generateIdIfAbsentFromDocument(final Person person) {
+            return person;
         }
 
         @Override

@@ -27,24 +27,26 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 
 class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientOptions options;
     private final AsyncOperationExecutor executor;
 
-    private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
-                                                                                                 new DocumentCodecProvider(),
-                                                                                                 new BsonValueCodecProvider()));
+    private static final CodecRegistry DEFAULT_CODEC_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
+            new DocumentCodecProvider(),
+            new BsonValueCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -59,7 +61,7 @@ class MongoClientImpl implements MongoClient {
      * @see MongoClientOptions#getCodecRegistry()
      * @since 3.0
      */
-    public static RootCodecRegistry getDefaultCodecRegistry() {
+    public static CodecRegistry getDefaultCodecRegistry() {
         return DEFAULT_CODEC_REGISTRY;
     }
 
@@ -90,10 +92,11 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
-        return listDatabases().map(new Function<Document, String>() {
+        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(), ReadPreference.primary(),
+                executor).map(new Function<BsonDocument, String>() {
             @Override
-            public String apply(final Document document) {
-                return document.getString("name");
+            public String apply(final BsonDocument document) {
+                return document.getString("name").getValue();
             }
         });
     }
@@ -104,8 +107,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clazz, DEFAULT_CODEC_REGISTRY, ReadPreference.primary(), executor);
+    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
+        return new ListDatabasesIterableImpl<T>(resultClass, options.getCodecRegistry(), ReadPreference.primary(), executor);
     }
 
     Cluster getCluster() {

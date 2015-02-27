@@ -32,9 +32,10 @@ import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.bson.BsonDocumentWrapper.asBsonDocument;
+import static com.mongodb.async.client.MongoClientImpl.getDefaultCodecRegistry;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
@@ -94,10 +95,11 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames() {
-        return listCollections().map(new Function<Document, String>() {
+        return new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument.class, getDefaultCodecRegistry(), ReadPreference.primary(),
+                executor).map(new Function<BsonDocument, String>() {
             @Override
-            public String apply(final Document result) {
-                return (String) result.get("name");
+            public String apply(final BsonDocument result) {
+                return result.getString("name").getValue();
             }
         });
     }
@@ -108,8 +110,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <C> ListCollectionsIterable<C> listCollections(final Class<C> clazz) {
-        return new ListCollectionsIterableImpl<C>(name, clazz, codecRegistry, ReadPreference.primary(), executor);
+    public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
+        return new ListCollectionsIterableImpl<TResult>(name, resultClass, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override
@@ -118,34 +120,35 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, codecRegistry, readPreference, writeConcern,
-                executor);
+    public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
+        return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
+                                                  writeConcern, executor);
     }
 
     @Override
-    public void executeCommand(final Object command, final SingleResultCallback<Document> callback) {
+    public void executeCommand(final Bson command, final SingleResultCallback<Document> callback) {
         executeCommand(command, Document.class, callback);
     }
 
     @Override
-    public void executeCommand(final Object command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
+    public void executeCommand(final Bson command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
         executeCommand(command, readPreference, Document.class, callback);
     }
 
     @Override
-    public <T> void executeCommand(final Object command, final Class<T> clazz, final SingleResultCallback<T> callback) {
+    public <TResult> void executeCommand(final Bson command, final Class<TResult> resultClass,
+                                         final SingleResultCallback<TResult> callback) {
         notNull("command", command);
-        executor.execute(new CommandWriteOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), callback);
+        executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)), callback);
     }
 
     @Override
-    public <T> void executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz,
-                                   final SingleResultCallback<T> callback) {
+    public <TResult> void executeCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass,
+                                         final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
-        executor.execute(new CommandReadOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), readPreference,
-                callback);
+        executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
+                         readPreference, callback);
     }
 
     @Override
@@ -167,10 +170,10 @@ class MongoDatabaseImpl implements MongoDatabase {
                          .autoIndex(createCollectionOptions.isAutoIndex())
                          .maxDocuments(createCollectionOptions.getMaxDocuments())
                          .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
-                         .storageEngineOptions(asBson(createCollectionOptions.getStorageEngineOptions())), callback);
+                         .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions())), callback);
     }
 
-    private BsonDocument asBson(final Object document) {
-        return asBsonDocument(document, codecRegistry);
+    private BsonDocument toBsonDocument(final Bson document) {
+        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 }

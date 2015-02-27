@@ -19,11 +19,9 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 
-import java.util.Arrays;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
 
 /**
  * A codec for unknown BsonValues.
@@ -37,10 +35,10 @@ public class BsonValueCodec implements Codec<BsonValue> {
     private final CodecRegistry codecRegistry;
 
     /**
-     * Creates a new instance with a default {@link org.bson.codecs.configuration.RootCodecRegistry}
+     * Creates a new instance with a default codec registry that uses the {@link BsonValueCodecProvider}.
      */
     public BsonValueCodec() {
-        this(new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider())));
+        this(fromProvider(new BsonValueCodecProvider()));
     }
 
     /**

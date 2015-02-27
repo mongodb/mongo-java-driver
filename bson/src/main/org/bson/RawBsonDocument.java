@@ -21,19 +21,18 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
 
 /**
  * An immutable BSON document that is represented using only the raw bytes.
@@ -42,9 +41,7 @@ import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
  */
 public class RawBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 5551249268878132972L;
-
-    private static BsonValueCodecProvider provider = new BsonValueCodecProvider();
-    private static RootCodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(provider));
+    private static CodecRegistry registry = fromProvider(new BsonValueCodecProvider());
 
     private final byte[] bytes;
 
@@ -67,7 +64,7 @@ public class RawBsonDocument extends BsonDocument {
      *
      * @param document the document to transform
      * @param codec    the codec to facilitate the transformation
-     * @param <T>      the BSON type that the codec encodes/decodesRootCodecRegistry
+     * @param <T>      the BSON type that the codec encodes/decodes
      */
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
@@ -96,7 +93,7 @@ public class RawBsonDocument extends BsonDocument {
      * Decode this into a document.
      *
      * @param codec the codec to facilitate the transformation
-     * @param <T>   the BSON type that the codec encodes/decodesRootCodecRegistry
+     * @param <T>   the BSON type that the codec encodes/decodes
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {

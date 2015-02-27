@@ -24,8 +24,10 @@ import spock.lang.Specification
 import javax.net.SocketFactory
 import javax.net.ssl.SSLSocketFactory
 
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
+import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientOptionsSpecification extends Specification {
 
@@ -207,6 +209,91 @@ class MongoClientOptionsSpecification extends Specification {
         builder.sslEnabled(true)
         then:
         builder.build().getSocketFactory() instanceof SSLSocketFactory
+    }
+
+    def 'should be easy to create new options from existing'() {
+        when:
+        def options = MongoClientOptions.builder()
+                .description('test')
+                .readPreference(ReadPreference.secondary())
+                .writeConcern(WriteConcern.JOURNAL_SAFE)
+                .minConnectionsPerHost(30)
+                .connectionsPerHost(500)
+                .connectTimeout(100)
+                .socketTimeout(700)
+                .serverSelectionTimeout(150)
+                .maxWaitTime(200)
+                .maxConnectionIdleTime(300)
+                .maxConnectionLifeTime(400)
+                .threadsAllowedToBlockForConnectionMultiplier(2)
+                .socketKeepAlive(true)
+                .sslEnabled(true)
+                .dbDecoderFactory(LazyDBDecoder.FACTORY)
+                .heartbeatFrequency(5)
+                .minHeartbeatFrequency(11)
+                .heartbeatConnectTimeout(15)
+                .heartbeatSocketTimeout(20)
+                .localThreshold(25)
+                .requiredReplicaSetName('test')
+                .cursorFinalizerEnabled(false)
+                .dbEncoderFactory(new MyDBEncoderFactory())
+                .build()
+
+        then:
+        expect options, isTheSameAs(MongoClientOptions.builder(options).build())
+    }
+
+    def 'should copy all methods from the existing MongoClientOptions'() {
+        given:
+        def options = Mock(MongoClientOptions)
+
+        when:
+        MongoClientOptions.builder(options)
+
+        then:
+        1 * options.isAlwaysUseMBeans()
+        1 * options.getCodecRegistry()
+        1 * options.getConnectionsPerHost()
+        1 * options.getConnectTimeout()
+        1 * options.isCursorFinalizerEnabled()
+        1 * options.getDbDecoderFactory()
+        1 * options.getDbEncoderFactory()
+        1 * options.getDescription()
+        1 * options.getHeartbeatConnectTimeout()
+        1 * options.getHeartbeatFrequency()
+        1 * options.getHeartbeatSocketTimeout()
+        1 * options.getLocalThreshold()
+        1 * options.getMaxConnectionIdleTime()
+        1 * options.getMaxConnectionLifeTime()
+        1 * options.getMaxWaitTime()
+        1 * options.getMinConnectionsPerHost()
+        1 * options.getMinHeartbeatFrequency()
+        1 * options.getReadPreference()
+        1 * options.getRequiredReplicaSetName()
+        1 * options.getServerSelectionTimeout()
+        1 * options.getSocketFactory()
+        1 * options.isSocketKeepAlive()
+        1 * options.getSocketTimeout()
+        1 * options.isSslEnabled()
+        1 * options.getThreadsAllowedToBlockForConnectionMultiplier()
+        1 * options.getWriteConcern()
+
+        0 * options._ // Ensure no other interactions
+    }
+
+    def 'should only have the following methods in the builder'() {
+        when:
+        // A regression test so that if anymore methods are added then the builder(final MongoClientOptions options) should be updated
+        def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
+        def expected = ['alwaysUseMBeans', 'codecRegistry', 'connectTimeout', 'cursorFinalizerEnabled', 'dbDecoderFactory',
+                        'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout',
+                        'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime',
+                        'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference', 'requiredReplicaSetName',
+                        'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslEnabled',
+                        'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+
+        then:
+        actual == expected
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory {

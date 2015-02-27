@@ -18,21 +18,23 @@ package com.mongodb;
 
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire
- * JVM.</p>
- *
+ * JVM.
  * <p>The following are equivalent, and all connect to the local database running on the default port:</p>
  * <pre>
  * MongoClient mongoClient1 = new MongoClient();
@@ -76,34 +78,32 @@ import static java.util.Arrays.asList;
  */
 public class MongoClient extends Mongo implements Closeable {
 
-    private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY =
-    new RootCodecRegistry(asList(new ValueCodecProvider(),
-                                 new DBRefCodecProvider(),
-                                 new DocumentCodecProvider(new DocumentToDBRefTransformer()),
-                                 new DBObjectCodecProvider(),
-                                 new BsonValueCodecProvider()));
+    private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
+            fromProviders(asList(new ValueCodecProvider(),
+                    new DBRefCodecProvider(),
+                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
+                    new DBObjectCodecProvider(),
+                    new BsonValueCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:
-     *
      * <ul>
-     *     <li>{@link org.bson.codecs.ValueCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
-     *     <li>{@link com.mongodb.DBObjectCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
+     * <li>{@link org.bson.codecs.ValueCodecProvider}</li>
+     * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
+     * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
+     * <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
      * @see MongoClientOptions#getCodecRegistry()
      * @since 3.0
      */
-    public static RootCodecRegistry getDefaultCodecRegistry() {
+    public static CodecRegistry getDefaultCodecRegistry() {
         return DEFAULT_CODEC_REGISTRY;
     }
 
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).
-     *
      */
     public MongoClient() {
         this(new ServerAddress());
@@ -284,6 +284,23 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public List<MongoCredential> getCredentialsList() {
         return super.getCredentialsList();
+    }
+
+    /**
+     * Get a list of the database names
+     *
+     * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     * @return an iterable containing all the names of all the databases
+     * @since 3.0
+     */
+    public MongoIterable<String> listDatabaseNames() {
+        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),
+                ReadPreference.primary(), createOperationExecutor()).map(new Function<BsonDocument, String>() {
+            @Override
+            public String apply(final BsonDocument result) {
+                return result.getString("name").getValue();
+            }
+        });
     }
 
     /**

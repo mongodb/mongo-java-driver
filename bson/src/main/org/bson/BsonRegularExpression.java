@@ -18,6 +18,8 @@ package org.bson;
 
 import java.io.Serializable;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * A holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
  *
@@ -36,8 +38,8 @@ public final class BsonRegularExpression extends BsonValue implements Serializab
      * @param options the options for the regular expression
      */
     public BsonRegularExpression(final String pattern, final String options) {
-        this.pattern = pattern;
-        this.options = options;
+        this.pattern = notNull("pattern", pattern);
+        this.options = options == null ? "" : options;
     }
 
     /**
@@ -98,5 +100,13 @@ public final class BsonRegularExpression extends BsonValue implements Serializab
         int result = pattern.hashCode();
         result = 31 * result + options.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "BsonRegularExpression{"
+               + "pattern='" + pattern + '\''
+               + ", options='" + options + '\''
+               + '}';
     }
 }

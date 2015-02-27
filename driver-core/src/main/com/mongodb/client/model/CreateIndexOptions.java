@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -36,7 +38,7 @@ public class CreateIndexOptions {
     private boolean sparse;
     private Integer expireAfterSeconds;
     private Integer version;
-    private Object weights;
+    private Bson weights;
     private String defaultLanguage;
     private String languageOverride;
     private Integer textIndexVersion;
@@ -177,7 +179,7 @@ public class CreateIndexOptions {
      * @return the weighting object
      * @mongodb.driver.manual tutorial/control-results-of-text-search Control Search Results with Weights
      */
-    public Object getWeights() {
+    public Bson getWeights() {
         return weights;
     }
 
@@ -191,7 +193,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/control-results-of-text-search Control Search Results with Weights
      */
-    public CreateIndexOptions weights(final Object weights) {
+    public CreateIndexOptions weights(final Bson weights) {
         this.weights = weights;
         return this;
     }

@@ -27,10 +27,10 @@ import java.util.Iterator;
  * The Mongo Cursor interface implementing the iterator protocol
  *
  * @since 3.0
- * @param <T> The type of documents the cursor contains
+ * @param <TResult> The type of documents the cursor contains
  */
 @NotThreadSafe
-public interface MongoCursor<T> extends Iterator<T>, Closeable {
+public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
     @Override
     void close();
 
@@ -38,7 +38,7 @@ public interface MongoCursor<T> extends Iterator<T>, Closeable {
     boolean hasNext();
 
     @Override
-    T next();
+    TResult next();
 
     /**
      * A special {@code next()} case that returns the next element in the iteration if available or null.
@@ -49,7 +49,7 @@ public interface MongoCursor<T> extends Iterator<T>, Closeable {
      * @return the next element in the iteration if available or null.
      * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
      */
-    T tryNext();
+    TResult tryNext();
 
     /**
      * Returns the server cursor

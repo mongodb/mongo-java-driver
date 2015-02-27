@@ -168,7 +168,7 @@ public class GridFS {
      * @throws com.mongodb.MongoException if the operation fails
      */
     public GridFSDBFile findOne(final ObjectId objectId) {
-        return findOne(new BasicDBObject("objectId", objectId));
+        return findOne(new BasicDBObject("_id", objectId));
     }
 
     /**

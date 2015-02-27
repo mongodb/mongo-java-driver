@@ -159,7 +159,7 @@ public class DocumentCodecTest {
         DocumentCodec documentCodec = new DocumentCodec();
         Document document = new Document("_id", 1);
         assertTrue(documentCodec.documentHasId(document));
-        documentCodec.generateIdIfAbsentFromDocument(document);
+        document = documentCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(documentCodec.documentHasId(document));
         assertEquals(new BsonInt32(1), documentCodec.getDocumentId(document));
     }
@@ -169,7 +169,7 @@ public class DocumentCodecTest {
         DocumentCodec documentCodec = new DocumentCodec();
         Document document = new Document();
         assertFalse(documentCodec.documentHasId(document));
-        documentCodec.generateIdIfAbsentFromDocument(document);
+        document = documentCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(documentCodec.documentHasId(document));
         assertEquals(BsonObjectId.class, documentCodec.getDocumentId(document).getClass());
     }

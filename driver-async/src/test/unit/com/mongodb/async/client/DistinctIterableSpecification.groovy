@@ -31,21 +31,18 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DistinctIterableSpecification extends Specification {
 
     def namespace = new MongoNamespace('db', 'coll')
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
     def 'should build the expected DistinctOperation'() {
@@ -56,8 +53,7 @@ class DistinctIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor, cursor]);
-        def distinctIterable = new DistinctIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor, 'field')
-
+        def distinctIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, 'field')
         when: 'default input should be as expected'
         distinctIterable.into([]) { result, t -> }
 
@@ -81,9 +77,9 @@ class DistinctIterableSpecification extends Specification {
 
     def 'should handle exceptions correctly'() {
         given:
-        def codecRegistry = new RootCodecRegistry(asList(new ValueCodecProvider(), new BsonValueCodecProvider()))
+        def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
-        def distinctIterable = new DistinctIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor, 'field')
+        def distinctIterable = new DistinctIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, executor, 'field')
 
         def futureResultCallback = new FutureResultCallback()
 
@@ -123,7 +119,7 @@ class DistinctIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new DistinctIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor, 'field')
+        def mongoIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, 'field')
 
         when:
         def results = new FutureResultCallback()

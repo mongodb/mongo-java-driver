@@ -18,8 +18,8 @@ package com.mongodb.async.client
 
 import com.mongodb.Block
 import com.mongodb.Function
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.async.FutureResultCallback
 import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -28,19 +28,17 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
-import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ListCollectionsIterableSpecification extends Specification {
 
-    def codecRegistry = new RootCodecRegistry([new ValueCodecProvider(),
-                                               new DocumentCodecProvider(),
-                                               new BsonValueCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
 
 
@@ -69,7 +67,7 @@ class ListCollectionsIterableSpecification extends Specification {
         readPreference == secondary()
 
         when: 'overriding initial options'
-        listCollectionIterable.filter(new Document('filter', 2)).batchSize(99).maxTime(999, MILLISECONDS).into([])  { result, t -> }
+        listCollectionIterable.filter(new Document('filter', 2)).batchSize(99).maxTime(999, MILLISECONDS).into([]) { result, t -> }
 
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
@@ -131,7 +129,7 @@ class ListCollectionsIterableSpecification extends Specification {
         when:
         target = []
         results = new FutureResultCallback()
-        mongoIterable.map(new Function<Document, Integer>(){
+        mongoIterable.map(new Function<Document, Integer>() {
             @Override
             Integer apply(Document document) {
                 document.getInteger('_id')
