@@ -34,8 +34,7 @@ import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire
- * JVM.</p>
- * <p/>
+ * JVM.
  * <p>The following are equivalent, and all connect to the local database running on the default port:</p>
  * <pre>
  * MongoClient mongoClient1 = new MongoClient();
@@ -54,7 +53,7 @@ import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
  * </pre>
  * <p>You can connect to a sharded cluster using the same constructor.  MongoClient will auto-detect whether the servers are a list of
  * replica set members or a list of mongos servers.</p>
- * <p/>
+ *
  * <p>By default, all read and write operations will be made on the primary, but it's possible to read from secondaries by changing the read
  * preference:</p>
  * <pre>
@@ -62,11 +61,11 @@ import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
  * </pre>
  * <p>By default, all write operations will wait for acknowledgment by the server, as the default write concern is {@code
  * WriteConcern.ACKNOWLEDGED}.</p>
- * <p/>
+ *
  * <p>Note: This class supersedes the {@code Mongo} class.  While it extends {@code Mongo}, it differs from it in that the default write
  * concern is to wait for acknowledgment from the server of all write operations.  In addition, its constructors accept instances of {@code
  * MongoClientOptions} and {@code MongoClientURI}, which both also set the same default write concern.</p>
- * <p/>
+ *
  * <p>In general, users of this class will pick up all of the default options specified in {@code MongoClientOptions}.  In particular, note
  * that the default value of the connectionsPerHost option has been increased to 100 from the old default value of 10 used by the superseded
  * {@code Mongo} class.</p>
@@ -88,7 +87,6 @@ public class MongoClient extends Mongo implements Closeable {
 
     /**
      * Gets the default codec registry.  It includes the following providers:
-     * <p/>
      * <ul>
      * <li>{@link org.bson.codecs.ValueCodecProvider}</li>
      * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
@@ -190,7 +188,7 @@ public class MongoClient extends Mongo implements Closeable {
      * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
      * standalone server, use the Mongo(ServerAddress) constructor.</p>
-     * <p/>
+     *
      * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
      * fail over to the next server if the closest is down.</p>
      *
@@ -206,7 +204,7 @@ public class MongoClient extends Mongo implements Closeable {
      * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
      * standalone server, use the Mongo(ServerAddress) constructor.</p>
-     * <p/>
+     *
      * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
      * fail over to the next server if the closest is down.</p>
      *
@@ -224,7 +222,7 @@ public class MongoClient extends Mongo implements Closeable {
      * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
      * standalone server, use the Mongo(ServerAddress) constructor.</p>
-     * <p/>
+     *
      * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
      * fail over to the next server if the closest is down.</p>
      *
@@ -241,7 +239,7 @@ public class MongoClient extends Mongo implements Closeable {
      * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
      * standalone server, use the Mongo(ServerAddress) constructor.</p>
-     * <p/>
+     *
      * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
      * fail over to the next server if the closest is down.</p>
      *
@@ -269,7 +267,7 @@ public class MongoClient extends Mongo implements Closeable {
 
     /**
      * Gets the options that this client uses to connect to server.
-     * <p/>
+     *
      * <p>Note: {@link MongoClientOptions} is immutable.</p>
      *
      * @return the options

@@ -33,7 +33,7 @@ public final class CodecRegistryHelper {
      * Creates a codec registry from the provided codec
      *
      * <p>This registry can then be used alongside other registries.  Typically used when adding extra codecs to existing codecs with the
-     * {@link this#fromRegistries} helper.</p>
+     * {@link #fromRegistries(CodecRegistry, CodecRegistry)} helper.</p>
      *
      * @param codec the codec to create a registry for
      * @param <T> the value type of the codec
@@ -44,7 +44,7 @@ public final class CodecRegistryHelper {
     }
 
     /**
-     *  A codec registry that uses a single codec provider when looking for codecs. {@see fromProviders}
+     *  A codec registry that uses a single codec provider when looking for codecs.
      *
      * @param codecProvider the codec provider
      * @return a codec registry that uses a codec provider to find codecs
