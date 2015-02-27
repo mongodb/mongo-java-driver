@@ -2,6 +2,7 @@ package com.mongodb.async.client.gridfs;
 
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.result.DeleteResult;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.List;
@@ -44,7 +45,7 @@ public interface GridFS {
      * @param sort the sort criteria, which may be null.
      * @param callback callback that is completed when the result is available
      */
-    void find(Object filter, Object sort, SingleResultCallback<List<GridFSFile>> callback);
+    void find(Bson filter, Bson sort, SingleResultCallback<List<GridFSFile>> callback);
 
     /**
      * Delete a GridFSFile by its id.

@@ -40,10 +40,11 @@ public class GridFSFileCodec implements CollectibleCodec<GridFSFile> {
     }
 
     @Override
-    public void generateIdIfAbsentFromDocument(final GridFSFile document) {
+    public GridFSFile generateIdIfAbsentFromDocument(final GridFSFile document) {
         if (!documentHasId(document)) {
             document.setId(new ObjectId());
         }
+        return document;
     }
 
     @Override

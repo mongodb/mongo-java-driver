@@ -7,7 +7,9 @@ import com.mongodb.async.client.MongoDatabase;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
-import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.CodecRegistryHelper;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -37,8 +39,9 @@ public class GridFSImpl implements GridFS {
     public GridFSImpl(final MongoDatabase database, final String bucket, final Integer chunkSize) {
 
         this.database = database;
-        RootCodecRegistry rootCodecRegistry = (RootCodecRegistry) this.database.getCodecRegistry();
-        RootCodecRegistry gridFSCodecRegistry = rootCodecRegistry.withCodec(new GridFSFileCodec(rootCodecRegistry));
+        CodecRegistry codecRegistry = this.database.getCodecRegistry();
+        CodecRegistry gridFSCodecRegistry = CodecRegistryHelper.fromRegistries(codecRegistry,
+                CodecRegistryHelper.fromCodec(new GridFSFileCodec(codecRegistry)));
 
         this.bucketName = bucket == null ? DEFAULT_BUCKET_NAME : bucket;
         this.chunkSize = chunkSize == null ? DEFAULT_CHUNK_SIZE : chunkSize;
@@ -93,7 +96,7 @@ public class GridFSImpl implements GridFS {
     }
 
     @Override
-    public void find(final Object query, final Object sort, final SingleResultCallback<List<GridFSFile>> callback) {
+    public void find(final Bson query, final Bson sort, final SingleResultCallback<List<GridFSFile>> callback) {
 
         FindIterable<GridFSFile> findFluent = filesCollection.find(query);
 
