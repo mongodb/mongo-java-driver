@@ -164,7 +164,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> clazz) {
-        return new DistinctIterableImpl<TResult>(namespace, clazz, codecRegistry, readPreference, executor, fieldName);
+        return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, clazz, codecRegistry, readPreference, executor,
+                                                            fieldName);
     }
 
     @Override
@@ -184,7 +185,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> clazz) {
-        return new FindIterableImpl<TResult, TDocument>(namespace, clazz, this.documentClass, codecRegistry, readPreference, executor,
+        return new FindIterableImpl<TDocument, TResult>(namespace, this.documentClass, clazz, codecRegistry, readPreference, executor,
                                                         filter, new FindOptions());
     }
 
@@ -194,8 +195,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> clazz) {
-        return new AggregateIterableImpl<TResult, TDocument>(namespace, clazz, this.documentClass, codecRegistry, readPreference, executor,
+    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference, executor,
                                                              pipeline);
     }
 
@@ -206,8 +207,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
-                                                          final Class<TResult> clazz) {
-        return new MapReduceIterableImpl<TResult, TDocument>(namespace, clazz, this.documentClass, codecRegistry, readPreference, executor,
+                                                          final Class<TResult> resultClass) {
+        return new MapReduceIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference, executor,
                                                              mapFunction, reduceFunction);
     }
 
@@ -410,8 +411,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> clazz) {
-        return new ListIndexesIterableImpl<TResult>(getNamespace(), clazz, codecRegistry, ReadPreference.primary(), executor);
+    public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass) {
+        return new ListIndexesIterableImpl<TResult>(getNamespace(), resultClass, codecRegistry, ReadPreference.primary(), executor);
     }
 
     @Override

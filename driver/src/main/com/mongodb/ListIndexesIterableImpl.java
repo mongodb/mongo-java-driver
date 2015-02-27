@@ -30,9 +30,9 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListIndexesIterableImpl<T> implements ListIndexesIterable<T> {
+final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<T> clazz;
+    private final Class<TResult> clazz;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
@@ -40,7 +40,7 @@ final class ListIndexesIterableImpl<T> implements ListIndexesIterable<T> {
     private int batchSize;
     private long maxTimeMS;
 
-    ListIndexesIterableImpl(final MongoNamespace namespace, final Class<T> clazz, final CodecRegistry codecRegistry,
+    ListIndexesIterableImpl(final MongoNamespace namespace, final Class<TResult> clazz, final CodecRegistry codecRegistry,
                             final ReadPreference readPreference, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.clazz = notNull("clazz", clazz);
@@ -50,53 +50,53 @@ final class ListIndexesIterableImpl<T> implements ListIndexesIterable<T> {
     }
 
     @Override
-    public ListIndexesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListIndexesIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public ListIndexesIterable<T> batchSize(final int batchSize) {
+    public ListIndexesIterable<TResult> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
     @Override
-    public MongoCursor<T> iterator() {
+    public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
 
     @Override
-    public T first() {
+    public TResult first() {
         return execute().first();
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-        return new MappingIterable<T, U>(this, mapper);
+    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
+        return new MappingIterable<TResult, U>(this, mapper);
     }
 
     @Override
-    public void forEach(final Block<? super T> block) {
+    public void forEach(final Block<? super TResult> block) {
         execute().forEach(block);
     }
 
     @Override
-    public <A extends Collection<? super T>> A into(final A target) {
+    public <A extends Collection<? super TResult>> A into(final A target) {
         return execute().into(target);
     }
 
-    private MongoIterable<T> execute() {
-        return new OperationIterable<T>(createListIndexesOperation(), readPreference, executor);
+    private MongoIterable<TResult> execute() {
+        return new OperationIterable<TResult>(createListIndexesOperation(), readPreference, executor);
     }
 
     private <C> Codec<C> getCodec(final Class<C> clazz) {
         return codecRegistry.get(clazz);
     }
 
-    private ListIndexesOperation<T> createListIndexesOperation() {
-        return new ListIndexesOperation<T>(namespace, getCodec(clazz))
+    private ListIndexesOperation<TResult> createListIndexesOperation() {
+        return new ListIndexesOperation<TResult>(namespace, getCodec(clazz))
                 .batchSize(batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }

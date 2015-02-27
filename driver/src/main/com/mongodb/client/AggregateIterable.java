@@ -21,10 +21,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Iterable for aggregate.
  *
- * @param <T> The type of the result.
+ * @param <TResult> The type of the result.
  * @since 3.0
  */
-public interface AggregateIterable<T> extends MongoIterable<T> {
+public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.
@@ -34,7 +34,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<T> allowDiskUse(final Boolean allowDiskUse);
+    AggregateIterable<TResult> allowDiskUse(final Boolean allowDiskUse);
 
     /**
      * Sets the number of documents to return per batch.
@@ -43,7 +43,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    AggregateIterable<T> batchSize(final int batchSize);
+    AggregateIterable<TResult> batchSize(final int batchSize);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -53,7 +53,7 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    AggregateIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit);
+    AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit);
 
     /**
      * Sets whether the server should use a cursor to return results.
@@ -63,6 +63,6 @@ public interface AggregateIterable<T> extends MongoIterable<T> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<T> useCursor(final Boolean useCursor);
+    AggregateIterable<TResult> useCursor(final Boolean useCursor);
 
 }

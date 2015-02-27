@@ -30,10 +30,10 @@ import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.async.client.MongoClientImpl.getDefaultCodecRegistry;
-import static org.bson.BsonDocumentWrapper.asBsonDocument;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
@@ -119,27 +119,27 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public void executeCommand(final Object command, final SingleResultCallback<Document> callback) {
+    public void executeCommand(final Bson command, final SingleResultCallback<Document> callback) {
         executeCommand(command, Document.class, callback);
     }
 
     @Override
-    public void executeCommand(final Object command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
+    public void executeCommand(final Bson command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
         executeCommand(command, readPreference, Document.class, callback);
     }
 
     @Override
-    public <T> void executeCommand(final Object command, final Class<T> clazz, final SingleResultCallback<T> callback) {
+    public <T> void executeCommand(final Bson command, final Class<T> clazz, final SingleResultCallback<T> callback) {
         notNull("command", command);
-        executor.execute(new CommandWriteOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), callback);
+        executor.execute(new CommandWriteOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)), callback);
     }
 
     @Override
-    public <T> void executeCommand(final Object command, final ReadPreference readPreference, final Class<T> clazz,
+    public <T> void executeCommand(final Bson command, final ReadPreference readPreference, final Class<T> clazz,
                                    final SingleResultCallback<T> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
-        executor.execute(new CommandReadOperation<T>(getName(), asBson(command), codecRegistry.get(clazz)), readPreference,
+        executor.execute(new CommandReadOperation<T>(getName(), toBsonDocument(command), codecRegistry.get(clazz)), readPreference,
                 callback);
     }
 
@@ -162,10 +162,10 @@ class MongoDatabaseImpl implements MongoDatabase {
                          .autoIndex(createCollectionOptions.isAutoIndex())
                          .maxDocuments(createCollectionOptions.getMaxDocuments())
                          .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
-                         .storageEngineOptions(asBson(createCollectionOptions.getStorageEngineOptions())), callback);
+                         .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions())), callback);
     }
 
-    private BsonDocument asBson(final Object document) {
-        return asBsonDocument(document, codecRegistry);
+    private BsonDocument toBsonDocument(final Bson document) {
+        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 }

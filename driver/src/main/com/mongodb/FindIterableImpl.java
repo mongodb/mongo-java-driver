@@ -24,7 +24,6 @@ import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -35,23 +34,23 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class FindIterableImpl<TResult, TDocument> implements FindIterable<TResult> {
+final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<TResult> clazz;
+    private final Class<TDocument> documentClass;
+    private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
-    private final Class<TDocument> collectionClass;
     private Bson filter;
 
-    FindIterableImpl(final MongoNamespace namespace, final Class<TResult> clazz, final Class<TDocument> collectionClass,
+    FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                      final CodecRegistry codecRegistry,
                      final ReadPreference readPreference, final OperationExecutor executor,
                      final Bson filter, final FindOptions findOptions) {
         this.namespace = notNull("namespace", namespace);
-        this.clazz = notNull("clazz", clazz);
-        this.collectionClass = notNull("collectionClass", collectionClass);
+        this.documentClass = notNull("documentClass", documentClass);
+        this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.executor = notNull("executor", executor);
@@ -166,15 +165,15 @@ final class FindIterableImpl<TResult, TDocument> implements FindIterable<TResult
     }
 
     private FindOperation<TResult> createQueryOperation() {
-        return new FindOperation<TResult>(namespace, getCodec(clazz))
-                   .filter(filter.toBsonDocument(collectionClass, codecRegistry))
+        return new FindOperation<TResult>(namespace, getCodec(resultClass))
+                   .filter(filter.toBsonDocument(documentClass, codecRegistry))
                    .batchSize(findOptions.getBatchSize())
                    .skip(findOptions.getSkip())
                    .limit(findOptions.getLimit())
                    .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(findOptions.getModifiers()))
-                   .projection(asBson(findOptions.getProjection()))
-                   .sort(asBson(findOptions.getSort()))
+                   .modifiers(toBsonDocument(findOptions.getModifiers()))
+                   .projection(toBsonDocument(findOptions.getProjection()))
+                   .sort(toBsonDocument(findOptions.getSort()))
                    .cursorType(findOptions.getCursorType())
                    .noCursorTimeout(findOptions.isNoCursorTimeout())
                    .oplogReplay(findOptions.isOplogReplay())
@@ -182,8 +181,8 @@ final class FindIterableImpl<TResult, TDocument> implements FindIterable<TResult
                    .slaveOk(readPreference.isSlaveOk());
     }
 
-    private BsonDocument asBson(final Object document) {
-        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
+    private BsonDocument toBsonDocument(final Bson document) {
+        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
     }
 
     private final class FindOperationIterable extends OperationIterable<TResult> {

@@ -236,7 +236,9 @@ class MongoCollectionSpecification extends Specification {
         def distinctIterable = collection.distinct('field', String)
 
         then:
-        expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, String, codecRegistry, readPreference, executor, 'field'))
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, Document, String, codecRegistry,
+                                                                      readPreference,
+                                                                      executor, 'field'))
     }
 
     def 'should create FindIterable correctly'() {
@@ -248,29 +250,29 @@ class MongoCollectionSpecification extends Specification {
         def findIterable = collection.find()
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                              new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference,
+                                                              executor, new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(new Document())
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, codecRegistry, readPreference, executor, new Document(),
-                new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+                                                              new Document(), new FindOptions()))
 
         when:
         findIterable = collection.find(new Document(), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, BsonDocument, codecRegistry, readPreference, executor,
-                new Document(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference,
+                                                              executor, new Document(), new FindOptions()))
     }
 
     def 'should use AggregateIterable correctly'() {
@@ -282,15 +284,15 @@ class MongoCollectionSpecification extends Specification {
         def aggregateIterable = collection.aggregate([new Document('$match', 1)])
 
         then:
-        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document>(namespace, Document, codecRegistry, readPreference,
-                executor, [new Document('$match', 1)]))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, Document, codecRegistry,
+                                                                        readPreference, executor, [new Document('$match', 1)]))
 
         when:
         aggregateIterable = collection.aggregate([new Document('$match', 1)], BsonDocument)
 
         then:
-        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<BsonDocument>(namespace, BsonDocument, codecRegistry,
-                readPreference, executor, [new Document('$match', 1)]))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry,
+                                                                        readPreference, executor, [new Document('$match', 1)]))
     }
 
     def 'should create MapReduceIterable correctly'() {
@@ -302,8 +304,8 @@ class MongoCollectionSpecification extends Specification {
         def mapReduceIterable = collection.mapReduce('map', 'reduce')
 
         then:
-        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, codecRegistry, readPreference, executor,
-                'map', 'reduce'))
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                                                                        executor, 'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {

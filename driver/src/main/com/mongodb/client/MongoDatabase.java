@@ -22,6 +22,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 /**
  * The MongoDatabase interface.
@@ -109,7 +110,7 @@ public interface MongoDatabase {
      * @param command the command to be run
      * @return the command result
      */
-    Document executeCommand(Object command);
+    Document executeCommand(Bson command);
 
     /**
      * Executes command in the context of the current database.
@@ -118,7 +119,7 @@ public interface MongoDatabase {
      * @param readPreference the {@link ReadPreference} to be used when executing the command
      * @return the command result
      */
-    Document executeCommand(Object command, ReadPreference readPreference);
+    Document executeCommand(Bson command, ReadPreference readPreference);
 
     /**
      * Executes command in the context of the current database.
@@ -128,7 +129,7 @@ public interface MongoDatabase {
      * @param <T>            the type of the class to use instead of {@code Document}.
      * @return the command result
      */
-    <T> T executeCommand(Object command, Class<T> clazz);
+    <T> T executeCommand(Bson command, Class<T> clazz);
 
     /**
      * Executes command in the context of the current database.
@@ -139,7 +140,7 @@ public interface MongoDatabase {
      * @param <T>            the type of the class to use instead of {@code Document}.
      * @return the command result
      */
-    <T> T executeCommand(Object command, ReadPreference readPreference, Class<T> clazz);
+    <T> T executeCommand(Bson command, ReadPreference readPreference, Class<T> clazz);
 
     /**
      * Drops this database.
