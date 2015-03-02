@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@ package com.mongodb.client.model;
 
 import org.bson.conversions.Bson;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * The options to apply to an operation that atomically finds a document and updates it.
  *
@@ -29,6 +34,7 @@ public class FindOneAndUpdateOptions {
     private Bson sort;
     private boolean upsert;
     private boolean returnOriginal = true;
+    private long maxTimeMS;
 
      /**
      * Gets a document describing the fields to return for all matching documents.
@@ -113,5 +119,28 @@ public class FindOneAndUpdateOptions {
     public FindOneAndUpdateOptions returnOriginal(final boolean returnOriginal) {
         this.returnOriginal = returnOriginal;
         return this;
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     */
+    public FindOneAndUpdateOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
+    /**
+     * Gets the maximum execution time for the find one and update operation.
+     *
+     * @param timeUnit the time unit for the result
+     * @return the max time
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 }

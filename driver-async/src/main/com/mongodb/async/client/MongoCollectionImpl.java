@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -370,7 +370,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executor.execute(new FindAndDeleteOperation<TDocument>(namespace, getCodec())
                          .filter(toBsonDocument(filter))
                          .projection(toBsonDocument(options.getProjection()))
-                         .sort(toBsonDocument(options.getSort())), callback);
+                         .sort(toBsonDocument(options.getSort()))
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
     }
 
     @Override
@@ -386,7 +387,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnOriginal())
-                         .upsert(options.isUpsert()), callback);
+                         .upsert(options.isUpsert())
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
     }
 
     @Override
@@ -402,7 +404,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnOriginal())
-                         .upsert(options.isUpsert()), callback);
+                         .upsert(options.isUpsert())
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
     }
 
     @Override

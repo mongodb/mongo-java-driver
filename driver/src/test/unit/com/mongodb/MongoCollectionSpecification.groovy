@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -554,11 +554,13 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1)))
+        collection.findOneAndDelete(new Document('a', 1), new FindOneAndDeleteOptions().projection(new Document('projection', 1))
+                .maxTime(100, MILLISECONDS))
         operation = executor.getWriteOperation() as FindAndDeleteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(100, MILLISECONDS))
 
         where:
         writeConcern                | executor
@@ -583,11 +585,12 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
-                new FindOneAndReplaceOptions().projection(new Document('projection', 1)))
+                new FindOneAndReplaceOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS))
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(100, MILLISECONDS))
 
         where:
         writeConcern                | executor
@@ -612,11 +615,12 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
-                new FindOneAndUpdateOptions().projection(new Document('projection', 1)))
+                new FindOneAndUpdateOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS))
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1))))
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(100, MILLISECONDS))
 
         where:
         writeConcern                | executor
