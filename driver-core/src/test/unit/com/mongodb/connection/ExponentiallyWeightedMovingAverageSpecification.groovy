@@ -35,7 +35,7 @@ class ExponentiallyWeightedMovingAverageSpecification extends Specification {
         }
 
         then:
-        average.average == result
+        average.getAverage() == result
 
         where:
         alpha << [0.2, 0.2, 0.2, 0.2, 0.2]

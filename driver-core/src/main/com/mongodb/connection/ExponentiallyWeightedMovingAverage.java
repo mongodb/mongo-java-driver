@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MongoDB, Inc.
+ * Copyright 2014-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 @NotThreadSafe
 class ExponentiallyWeightedMovingAverage {
     private final double alpha;
-    private long average;
+    private long average = -1;
 
     ExponentiallyWeightedMovingAverage(final double alpha) {
         isTrueArgument("alpha >= 0.0 and <= 1.0", alpha >= 0.0 && alpha <= 1.0);
@@ -31,11 +31,11 @@ class ExponentiallyWeightedMovingAverage {
     }
 
     void reset() {
-        average = 0;
+        average = -1;
     }
 
     long addSample(final long sample) {
-        if (average == 0) {
+        if (average == -1) {
             average = sample;
         } else {
             average = (long) (alpha * sample + (1 - alpha) * average);
@@ -45,6 +45,6 @@ class ExponentiallyWeightedMovingAverage {
     }
 
     long getAverage() {
-        return average;
+        return average == -1 ? 0 : average;
     }
 }

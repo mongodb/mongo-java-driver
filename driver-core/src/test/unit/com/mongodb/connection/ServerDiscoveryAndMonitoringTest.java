@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2014-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,11 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
-import org.bson.json.JsonReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -48,24 +43,22 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.runners.Parameterized.Parameters;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
 @RunWith(Parameterized.class)
-public class JsonPoweredClusterTest {
+public class ServerDiscoveryAndMonitoringTest extends JsonPoweredTest {
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory();
-    private final BsonDocument definition;
     private final BaseCluster cluster;
 
-    public JsonPoweredClusterTest(final File file) throws IOException {
-        definition = getTestDocument(getFileAsString(file));
-        cluster = getCluster(definition.getString("uri").getValue());
+    public ServerDiscoveryAndMonitoringTest(final File file) throws IOException {
+        super(file);
+        cluster = getCluster(getDefinition().getString("uri").getValue());
     }
 
     @Test
     public void shouldPassAllOutcomes() {
-        for (BsonValue phase : definition.getArray("phases")) {
+        for (BsonValue phase : getDefinition().getArray("phases")) {
             for (BsonValue response : phase.asDocument().getArray("responses")) {
                 applyResponse(response.asArray());
             }
@@ -73,6 +66,15 @@ public class JsonPoweredClusterTest {
             assertTopologyType(outcome.getString("topologyType").getValue());
             assertServers(outcome.getDocument("servers"));
         }
+    }
+
+    @Parameterized.Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
+    public static Collection<Object[]> data() throws URISyntaxException {
+        List<Object[]> data = new ArrayList<Object[]>();
+        for (File file : JsonPoweredTest.getTestFiles("/server-discovery-and-monitoring")) {
+            data.add(new Object[]{file});
+        }
+        return data;
     }
 
     private void assertServers(final BsonDocument servers) {
@@ -169,34 +171,6 @@ public class JsonPoweredClusterTest {
         factory.sendNotification(serverAddress, serverDescription);
     }
 
-    @Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
-    public static Collection<Object[]> data() throws URISyntaxException {
-        List<File> files = getTestFiles();
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : files) {
-            data.add(new Object[]{file});
-        }
-        return data;
-    }
-
-    BsonDocument getTestDocument(final String contents) throws IOException {
-        return new BsonDocumentCodec().decode(new JsonReader(contents), DecoderContext.builder().build());
-    }
-
-    private String getFileAsString(final File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line = null;
-        StringBuilder stringBuilder = new StringBuilder();
-        String ls = System.getProperty("line.separator");
-
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
-            stringBuilder.append(ls);
-        }
-
-        return stringBuilder.toString();
-    }
-
     BaseCluster getCluster(final String uri) {
         ConnectionString connectionString = new ConnectionString(uri);
 
@@ -227,23 +201,6 @@ public class JsonPoweredClusterTest {
             return ClusterConnectionMode.MULTIPLE;
         } else {
             return ClusterConnectionMode.SINGLE;
-        }
-    }
-
-    private static List<File> getTestFiles() throws URISyntaxException {
-        List<File> files = new ArrayList<File>();
-        addFilesFromDirectory(new File(JsonPoweredClusterTest.class.getResource("/server-discovery-and-monitoring").toURI()), files);
-        return files;
-    }
-
-    private static void addFilesFromDirectory(final File directory, final List<File> files) {
-        for (String fileName : directory.list()) {
-            File file = new File(directory, fileName);
-            if (file.isDirectory()) {
-                addFilesFromDirectory(file, files);
-            } else if (file.getName().endsWith(".json")) {
-                files.add(file);
-            }
         }
     }
 }
