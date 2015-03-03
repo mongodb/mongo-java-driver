@@ -150,7 +150,7 @@ public interface MongoDatabase {
      * @param callback the callback that is completed once the database has been dropped
      * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
      */
-    void dropDatabase(SingleResultCallback<Void> callback);
+    void drop(SingleResultCallback<Void> callback);
 
     /**
      * Gets the names of all the collections in this database.

@@ -748,7 +748,7 @@ class MongoCollectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        collection.dropCollection(futureResultCallback)
+        collection.drop(futureResultCallback)
         futureResultCallback.get()
         def operation = executor.getWriteOperation() as DropCollectionOperation
 

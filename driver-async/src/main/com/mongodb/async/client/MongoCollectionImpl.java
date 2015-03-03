@@ -409,7 +409,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void dropCollection(final SingleResultCallback<Void> callback) {
+    public void drop(final SingleResultCallback<Void> callback) {
         executor.execute(new DropCollectionOperation(namespace), callback);
     }
 

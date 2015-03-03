@@ -98,7 +98,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         def collection = database.getCollection(collectionName)
 
         when: 'clean up old database'
-        run(mongoClient.getDatabase(databaseName).&dropDatabase) == null
+        run(mongoClient.getDatabase(databaseName).&drop) == null
         def names = run(mongoClient.listDatabaseNames().&into, [])
 
         then: 'Get Database Names'
@@ -161,7 +161,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         collection = database.getCollection(newCollectionName)
 
         then: 'drop the collection'
-        run(collection.&dropCollection) == null
+        run(collection.&drop) == null
 
         then: 'there are no indexes'
         run(collection.listIndexes().&into, []).size == 0

@@ -468,7 +468,7 @@ public interface MongoCollection<TDocument> {
      * @param callback the callback that is completed once the collection has been dropped
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    void dropCollection(SingleResultCallback<Void> callback);
+    void drop(SingleResultCallback<Void> callback);
 
     /**
      * Creates an index.

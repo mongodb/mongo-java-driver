@@ -148,7 +148,7 @@ class MongoDatabaseSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).dropDatabase(futureResultCallback)
+        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, executor).drop(futureResultCallback)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
         futureResultCallback.get()
 

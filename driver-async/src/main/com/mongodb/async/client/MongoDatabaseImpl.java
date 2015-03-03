@@ -145,7 +145,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public void dropDatabase(final SingleResultCallback<Void> callback) {
+    public void drop(final SingleResultCallback<Void> callback) {
         executor.execute(new DropDatabaseOperation(name), callback);
     }
 
