@@ -74,7 +74,7 @@ public final class Fixture {
         MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
-            database.executeCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
+            database.runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
             futureResultCallback.get(10, SECONDS);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
@@ -96,7 +96,7 @@ public final class Fixture {
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(name)
-                            .executeCommand(new Document("dropDatabase", 1), futureResultCallback);
+                            .runCommand(new Document("dropDatabase", 1), futureResultCallback);
             futureResultCallback.get(10, SECONDS);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
@@ -109,7 +109,7 @@ public final class Fixture {
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(namespace.getDatabaseName())
-                            .executeCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
+                            .runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
             futureResultCallback.get();
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {

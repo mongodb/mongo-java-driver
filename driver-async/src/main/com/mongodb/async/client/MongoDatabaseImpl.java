@@ -119,25 +119,25 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public void executeCommand(final Bson command, final SingleResultCallback<Document> callback) {
-        executeCommand(command, Document.class, callback);
+    public void runCommand(final Bson command, final SingleResultCallback<Document> callback) {
+        runCommand(command, Document.class, callback);
     }
 
     @Override
-    public void executeCommand(final Bson command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
-        executeCommand(command, readPreference, Document.class, callback);
+    public void runCommand(final Bson command, final ReadPreference readPreference, final SingleResultCallback<Document> callback) {
+        runCommand(command, readPreference, Document.class, callback);
     }
 
     @Override
-    public <TResult> void executeCommand(final Bson command, final Class<TResult> resultClass,
-                                         final SingleResultCallback<TResult> callback) {
+    public <TResult> void runCommand(final Bson command, final Class<TResult> resultClass,
+                                     final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)), callback);
     }
 
     @Override
-    public <TResult> void executeCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass,
-                                         final SingleResultCallback<TResult> callback) {
+    public <TResult> void runCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass,
+                                     final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
         executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),

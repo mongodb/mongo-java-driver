@@ -111,7 +111,7 @@ public interface MongoDatabase {
      * @param command  the command to be run
      * @param callback the callback that is passed the command result
      */
-    void executeCommand(Bson command, SingleResultCallback<Document> callback);
+    void runCommand(Bson command, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -120,7 +120,7 @@ public interface MongoDatabase {
      * @param readPreference the {@link com.mongodb.ReadPreference} to be used when executing the command
      * @param callback       the callback that is passed the command result
      */
-    void executeCommand(Bson command, ReadPreference readPreference, SingleResultCallback<Document> callback);
+    void runCommand(Bson command, ReadPreference readPreference, SingleResultCallback<Document> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -130,7 +130,7 @@ public interface MongoDatabase {
      * @param <TResult>   the type of the class to use instead of {@code Document}.
      * @param callback    the callback that is passed the command result
      */
-    <TResult> void executeCommand(Bson command, Class<TResult> resultClass, SingleResultCallback<TResult> callback);
+    <TResult> void runCommand(Bson command, Class<TResult> resultClass, SingleResultCallback<TResult> callback);
 
     /**
      * Executes command in the context of the current database.
@@ -141,8 +141,8 @@ public interface MongoDatabase {
      * @param <TResult>      the type of the class to use instead of {@code Document}.
      * @param callback       the callback that is passed the command result
      */
-    <TResult> void executeCommand(Bson command, ReadPreference readPreference, Class<TResult> resultClass,
-                                  SingleResultCallback<TResult> callback);
+    <TResult> void runCommand(Bson command, ReadPreference readPreference, Class<TResult> resultClass,
+                              SingleResultCallback<TResult> callback);
 
     /**
      * Drops this database.

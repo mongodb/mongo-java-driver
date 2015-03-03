@@ -103,7 +103,7 @@ class MongoDatabaseSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
-        database.executeCommand(command, futureResultCallback)
+        database.runCommand(command, futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -114,7 +114,7 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback<Document>()
-        database.executeCommand(command, primaryPreferred(), futureResultCallback)
+        database.runCommand(command, primaryPreferred(), futureResultCallback)
         operation = executor.getReadOperation() as CommandReadOperation<Document>
         futureResultCallback.get()
 
@@ -124,7 +124,7 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback<BsonDocument>()
-        database.executeCommand(command, BsonDocument, futureResultCallback)
+        database.runCommand(command, BsonDocument, futureResultCallback)
         operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
         futureResultCallback.get()
 
@@ -133,7 +133,7 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback<BsonDocument>()
-        database.executeCommand(command, primaryPreferred(), BsonDocument, futureResultCallback)
+        database.runCommand(command, primaryPreferred(), BsonDocument, futureResultCallback)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
         futureResultCallback.get()
 
