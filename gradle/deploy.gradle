@@ -51,7 +51,7 @@ configure(subprojects - project(':util')) {
     }
 
     modifyPom { pom ->
-        pom.dependencies.find {dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' }.optional = true
+        pom.dependencies.findAll {dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' }.each { it.optional = true }
         // no need to publish test dependencies
         pom.dependencies.removeAll { it.scope == "test" }
     }
