@@ -24,10 +24,10 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
@@ -487,7 +487,7 @@ public interface MongoCollection<TDocument> {
      * @param callback the callback that is completed once the index has been created
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
-    void createIndex(Bson key, CreateIndexOptions options, SingleResultCallback<Void> callback);
+    void createIndex(Bson key, IndexOptions options, SingleResultCallback<Void> callback);
 
     /**
      * Get all the indexes in this collection.

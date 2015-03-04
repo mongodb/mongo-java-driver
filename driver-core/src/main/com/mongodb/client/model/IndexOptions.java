@@ -29,7 +29,7 @@ import static java.util.Arrays.asList;
  * @mongodb.driver.manual reference/method/db.collection.ensureIndex/#options Index options
  * @since 3.0
  */
-public class CreateIndexOptions {
+public class IndexOptions {
     private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2);
     private static final List<Integer> VALID_SPHERE_INDEX_VERSIONS = asList(1, 2);
     private boolean background;
@@ -63,7 +63,7 @@ public class CreateIndexOptions {
      * @param background true if should create the index in the background
      * @return this
      */
-    public CreateIndexOptions background(final boolean background) {
+    public IndexOptions background(final boolean background) {
         this.background = background;
         return this;
     }
@@ -83,7 +83,7 @@ public class CreateIndexOptions {
      * @param unique if the index should be unique
      * @return this
      */
-    public CreateIndexOptions unique(final boolean unique) {
+    public IndexOptions unique(final boolean unique) {
         this.unique = unique;
         return this;
     }
@@ -103,7 +103,7 @@ public class CreateIndexOptions {
      * @param name of the index
      * @return this
      */
-    public CreateIndexOptions name(final String name) {
+    public IndexOptions name(final String name) {
         this.name = name;
         return this;
     }
@@ -123,7 +123,7 @@ public class CreateIndexOptions {
      * @param sparse if true, the index only references documents with the specified field
      * @return this
      */
-    public CreateIndexOptions sparse(final boolean sparse) {
+    public IndexOptions sparse(final boolean sparse) {
         this.sparse = sparse;
         return this;
     }
@@ -145,7 +145,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public CreateIndexOptions expireAfterSeconds(final Integer expireAfterSeconds) {
+    public IndexOptions expireAfterSeconds(final Integer expireAfterSeconds) {
         this.expireAfterSeconds = expireAfterSeconds;
         return this;
     }
@@ -165,7 +165,7 @@ public class CreateIndexOptions {
      * @param version the index version number
      * @return this
      */
-    public CreateIndexOptions version(final Integer version) {
+    public IndexOptions version(final Integer version) {
         this.version = version;
         return this;
     }
@@ -193,7 +193,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/control-results-of-text-search Control Search Results with Weights
      */
-    public CreateIndexOptions weights(final Bson weights) {
+    public IndexOptions weights(final Bson weights) {
         this.weights = weights;
         return this;
     }
@@ -219,7 +219,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual reference/text-search-languages Text Search languages
      */
-    public CreateIndexOptions defaultLanguage(final String defaultLanguage) {
+    public IndexOptions defaultLanguage(final String defaultLanguage) {
         this.defaultLanguage = defaultLanguage;
         return this;
     }
@@ -245,7 +245,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/specify-language-for-text-index/#specify-language-field-text-index-example Language override
      */
-    public CreateIndexOptions languageOverride(final String languageOverride) {
+    public IndexOptions languageOverride(final String languageOverride) {
         this.languageOverride = languageOverride;
         return this;
     }
@@ -265,7 +265,7 @@ public class CreateIndexOptions {
      * @param textIndexVersion the text index version number.
      * @return this
      */
-    public CreateIndexOptions textIndexVersion(final int textIndexVersion) {
+    public IndexOptions textIndexVersion(final int textIndexVersion) {
         isTrueArgument("textIndexVersion must be 1 or 2", VALID_TEXT_INDEX_VERSIONS.contains(textIndexVersion));
         this.textIndexVersion = textIndexVersion;
         return this;
@@ -286,7 +286,7 @@ public class CreateIndexOptions {
      * @param sphereIndexVersion the 2dsphere index version number.
      * @return this
      */
-    public CreateIndexOptions twoDSphereIndexVersion(final int sphereIndexVersion) {
+    public IndexOptions twoDSphereIndexVersion(final int sphereIndexVersion) {
         isTrueArgument("sphereIndexVersion must be 1 or 2", VALID_SPHERE_INDEX_VERSIONS.contains(sphereIndexVersion));
         this.sphereIndexVersion = sphereIndexVersion;
         return this;
@@ -307,7 +307,7 @@ public class CreateIndexOptions {
      * @param bits the number of precision of the stored geohash value
      * @return this
      */
-    public CreateIndexOptions bits(final Integer bits) {
+    public IndexOptions bits(final Integer bits) {
         this.bits = bits;
         return this;
     }
@@ -327,7 +327,7 @@ public class CreateIndexOptions {
      * @param min the lower inclusive boundary for the longitude and latitude values
      * @return this
      */
-    public CreateIndexOptions min(final Double min) {
+    public IndexOptions min(final Double min) {
         this.min = min;
         return this;
     }
@@ -347,7 +347,7 @@ public class CreateIndexOptions {
      * @param max the upper inclusive boundary for the longitude and latitude values
      * @return this
      */
-    public CreateIndexOptions max(final Double max) {
+    public IndexOptions max(final Double max) {
         this.max = max;
         return this;
     }
@@ -369,7 +369,7 @@ public class CreateIndexOptions {
      * @return this
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
-    public CreateIndexOptions bucketSize(final Double bucketSize) {
+    public IndexOptions bucketSize(final Double bucketSize) {
         this.bucketSize = bucketSize;
         return this;
     }

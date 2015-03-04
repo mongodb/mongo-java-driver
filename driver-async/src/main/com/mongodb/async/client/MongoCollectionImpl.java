@@ -31,13 +31,13 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.RenameCollectionOptions;
@@ -415,11 +415,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void createIndex(final Bson key, final SingleResultCallback<Void> callback) {
-        createIndex(key, new CreateIndexOptions(), callback);
+        createIndex(key, new IndexOptions(), callback);
     }
 
     @Override
-    public void createIndex(final Bson key, final CreateIndexOptions options, final SingleResultCallback<Void> callback) {
+    public void createIndex(final Bson key, final IndexOptions options, final SingleResultCallback<Void> callback) {
         executor.execute(new CreateIndexOperation(getNamespace(), toBsonDocument(key))
                          .name(options.getName())
                          .background(options.isBackground())

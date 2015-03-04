@@ -29,13 +29,13 @@ import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.RenameCollectionOptions;
@@ -383,27 +383,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void createIndex(final Bson key) {
-        createIndex(key, new CreateIndexOptions());
+        createIndex(key, new IndexOptions());
     }
 
     @Override
-    public void createIndex(final Bson key, final CreateIndexOptions createIndexOptions) {
+    public void createIndex(final Bson key, final IndexOptions indexOptions) {
         executor.execute(new CreateIndexOperation(getNamespace(), toBsonDocument(key))
-                         .name(createIndexOptions.getName())
-                         .background(createIndexOptions.isBackground())
-                         .unique(createIndexOptions.isUnique())
-                         .sparse(createIndexOptions.isSparse())
-                         .expireAfterSeconds(createIndexOptions.getExpireAfterSeconds())
-                         .version(createIndexOptions.getVersion())
-                         .weights(toBsonDocument(createIndexOptions.getWeights()))
-                         .defaultLanguage(createIndexOptions.getDefaultLanguage())
-                         .languageOverride(createIndexOptions.getLanguageOverride())
-                         .textIndexVersion(createIndexOptions.getTextIndexVersion())
-                         .twoDSphereIndexVersion(createIndexOptions.getTwoDSphereIndexVersion())
-                         .bits(createIndexOptions.getBits())
-                         .min(createIndexOptions.getMin())
-                         .max(createIndexOptions.getMax())
-                         .bucketSize(createIndexOptions.getBucketSize()));
+                         .name(indexOptions.getName())
+                         .background(indexOptions.isBackground())
+                         .unique(indexOptions.isUnique())
+                         .sparse(indexOptions.isSparse())
+                         .expireAfterSeconds(indexOptions.getExpireAfterSeconds())
+                         .version(indexOptions.getVersion())
+                         .weights(toBsonDocument(indexOptions.getWeights()))
+                         .defaultLanguage(indexOptions.getDefaultLanguage())
+                         .languageOverride(indexOptions.getLanguageOverride())
+                         .textIndexVersion(indexOptions.getTextIndexVersion())
+                         .twoDSphereIndexVersion(indexOptions.getTwoDSphereIndexVersion())
+                         .bits(indexOptions.getBits())
+                         .min(indexOptions.getMin())
+                         .max(indexOptions.getMax())
+                         .bucketSize(indexOptions.getBucketSize()));
     }
 
     @Override

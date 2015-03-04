@@ -16,26 +16,26 @@
 
 package com.mongodb
 
-import com.mongodb.client.model.CreateIndexOptions
+import com.mongodb.client.model.IndexOptions
 import spock.lang.Specification
 
-class CreateIndexOptionsSpecification extends Specification {
+class IndexOptionsSpecification extends Specification {
 
     def 'should validate textIndexVersion'() {
         when:
-        new CreateIndexOptions().textIndexVersion(1)
+        new IndexOptions().textIndexVersion(1)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
-        new CreateIndexOptions().textIndexVersion(2)
+        new IndexOptions().textIndexVersion(2)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
-        new CreateIndexOptions().textIndexVersion(3)
+        new IndexOptions().textIndexVersion(3)
 
         then:
         thrown(IllegalArgumentException)
@@ -43,19 +43,19 @@ class CreateIndexOptionsSpecification extends Specification {
 
     def 'should validate 2dsphereIndexVersion'() {
         when:
-        new CreateIndexOptions().twoDSphereIndexVersion(1)
+        new IndexOptions().twoDSphereIndexVersion(1)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
-        new CreateIndexOptions().twoDSphereIndexVersion(2)
+        new IndexOptions().twoDSphereIndexVersion(2)
 
         then:
         notThrown(IllegalArgumentException)
 
         when:
-        new CreateIndexOptions().twoDSphereIndexVersion(3)
+        new IndexOptions().twoDSphereIndexVersion(3)
 
         then:
         thrown(IllegalArgumentException)

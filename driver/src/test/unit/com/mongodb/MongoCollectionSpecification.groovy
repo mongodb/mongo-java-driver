@@ -21,11 +21,11 @@ import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
-import com.mongodb.client.model.CreateIndexOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.FindOptions
+import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.UpdateOptions
@@ -657,7 +657,7 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.createIndex(new Document('key', 1), new CreateIndexOptions().background(true))
+        collection.createIndex(new Document('key', 1), new IndexOptions().background(true))
         operation = executor.getWriteOperation() as CreateIndexOperation
 
         then:

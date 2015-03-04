@@ -18,7 +18,7 @@ package com.mongodb.acceptancetest.index;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.IndexOptions;
 import com.mongodb.operation.OrderBy;
 import org.bson.Document;
 import org.junit.Ignore;
@@ -96,7 +96,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateIndexOfUniqueValues() {
-        collection.createIndex(new Document("field", 1), new CreateIndexOptions().unique(true));
+        collection.createIndex(new Document("field", 1), new IndexOptions().unique(true));
 
         Document newIndexDetails = collection.listIndexes().into(new ArrayList<Document>()).get(1);
         Boolean unique = (Boolean) newIndexDetails.get("unique");
@@ -199,7 +199,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldAllowAliasForIndex() {
         String indexAlias = "indexAlias";
-        collection.createIndex(new Document("theField", 1), new CreateIndexOptions().name(indexAlias));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().name(indexAlias));
 
         String nameOfCreatedIndex = collection.listIndexes().into(new ArrayList<Document>()).get(1).getString("name");
         assertThat("Should be an index named after the alias", nameOfCreatedIndex, is(indexAlias));
@@ -207,7 +207,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateASparseIndex() {
-        collection.createIndex(new Document("theField", 1), new CreateIndexOptions().sparse(true));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().sparse(true));
 
         Boolean sparse = collection.listIndexes().into(new ArrayList<Document>()).get(1).getBoolean("sparse");
         assertThat("Should be a sparse index", sparse, is(true));
@@ -216,7 +216,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     @Ignore("Ingore until SERVER-16274 if resolved")
     public void shouldCreateABackgroundIndex() {
-        collection.createIndex(new Document("theField", 1), new CreateIndexOptions().background(true));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().background(true));
 
         Boolean background = collection.listIndexes().into(new ArrayList<Document>()).get(1).getBoolean("background");
         assertThat("Should be a background index", background, is(true));
@@ -224,7 +224,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateATtlIndex() {
-        collection.createIndex(new Document("theField", 1), new CreateIndexOptions().expireAfterSeconds(1600));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().expireAfterSeconds(1600));
 
         Integer ttl = collection.listIndexes().into(new ArrayList<Document>()).get(1).getInteger("expireAfterSeconds");
         assertThat("Should be a ttl index", ttl, is(1600));
