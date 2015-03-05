@@ -44,6 +44,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 import static java.util.Arrays.asList
 import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
@@ -81,6 +84,9 @@ class DocumentCodecSpecification extends Specification {
             put('uuid', new UUID(1L, 2L))
             put('document', new Document('a', 2))
             put('map', [a:1, b:2])
+            put('atomicLong', new AtomicLong(1))
+            put('atomicInteger', new AtomicInteger(1))
+            put('atomicBoolean', new AtomicBoolean(true))
         }
 
         when:
@@ -121,6 +127,10 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('array') == originalDocument.get('array')
         decodedDoc.get('document') == originalDocument.get('document')
         decodedDoc.get('map') == originalDocument.get('map')
+        decodedDoc.get('atomicLong')  == new Long(1)
+        decodedDoc.get('atomicInteger')  == new Integer(1)
+        decodedDoc.get('atomicBoolean')  == new Boolean(true)
+
         where:
         writer << [
                 new BsonDocumentWriter(bsonDoc),

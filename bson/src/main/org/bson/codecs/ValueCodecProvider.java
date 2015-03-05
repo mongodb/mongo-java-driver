@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ import java.util.Map;
  *     <li>{@link org.bson.codecs.ShortCodec}</li>
  *     <li>{@link org.bson.codecs.ByteArrayCodec}</li>
  *     <li>{@link org.bson.codecs.FloatCodec}</li>
+ *     <li>{@link org.bson.codecs.AtomicBooleanCodec}</li>
+ *     <li>{@link org.bson.codecs.AtomicIntegerCodec}</li>
+ *     <li>{@link org.bson.codecs.AtomicLongCodec}</li>
  * </ul>
  *
  * @since 3.0
@@ -84,6 +87,9 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new ShortCodec());
         addCodec(new ByteArrayCodec());
         addCodec(new FloatCodec());
+        addCodec(new AtomicBooleanCodec());
+        addCodec(new AtomicIntegerCodec());
+        addCodec(new AtomicLongCodec());
     }
 
     private <T> void addCodec(final Codec<T> codec) {
