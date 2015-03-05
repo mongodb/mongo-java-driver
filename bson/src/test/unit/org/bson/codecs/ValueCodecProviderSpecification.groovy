@@ -17,7 +17,7 @@
 package org.bson.codecs
 
 import org.bson.Document
-import org.bson.codecs.configuration.CodecRegistryHelper
+import org.bson.codecs.configuration.CodecRegistries
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.MaxKey
@@ -33,7 +33,7 @@ import java.util.regex.Pattern
 
 class ValueCodecProviderSpecification extends Specification {
     private final provider = new ValueCodecProvider()
-    private final registry = CodecRegistryHelper.fromProvider(provider)
+    private final registry = CodecRegistries.fromProviders(provider)
 
     def 'should provide supported codecs'() {
         expect:

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A codec for BsonDocument instances.
@@ -39,7 +39,7 @@ import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
  */
 public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = fromProvider(new BsonValueCodecProvider());
+    private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final CodecRegistry codecRegistry;
 

@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A Codec for Document instances.

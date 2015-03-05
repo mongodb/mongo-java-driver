@@ -39,7 +39,7 @@ import spock.lang.Specification
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class AggregateIterableSpecification extends Specification {

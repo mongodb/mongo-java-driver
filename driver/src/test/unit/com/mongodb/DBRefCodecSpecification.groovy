@@ -27,7 +27,7 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class DBRefCodecSpecification extends Specification {
     def 'provider should return codec for DBRef class'() {

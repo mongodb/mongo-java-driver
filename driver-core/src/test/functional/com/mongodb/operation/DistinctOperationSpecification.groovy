@@ -42,7 +42,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 

@@ -123,6 +123,33 @@ class ProvidersCodecRegistrySpecification extends Specification {
         thrown(CodecConfigurationException)
         0 * provider.get(MinKey, _)
     }
+
+    def 'get with codec registry should return the codec from the first source that has one'() {
+        given:
+        def provider = new ProvidersCodecRegistry([new ClassModelCodecProvider([Simple])])
+        def registry = Mock(CodecRegistry)
+
+        expect:
+        provider.get(Simple, registry) instanceof SimpleCodec
+    }
+
+    def 'get with codec registry should return null if codec not found'() {
+        given:
+        def provider = new ProvidersCodecRegistry([new ClassModelCodecProvider([Top])])
+        def registry = Mock(CodecRegistry)
+
+        expect:
+        !provider.get(Simple, registry)
+    }
+
+    def 'get with codec registry should pass the outer registry to its providers'() {
+        given:
+        def provider = new ProvidersCodecRegistry([new ClassModelCodecProvider([Simple])])
+        def registry = Mock(CodecRegistry)
+
+        expect:
+        ((SimpleCodec) provider.get(Simple, registry)).registry.is(registry)
+    }
 }
 
 class SingleCodecProvider implements CodecProvider {
@@ -171,6 +198,8 @@ class ClassModelCodecProvider implements CodecProvider {
             } catch (CodecConfigurationException e) {
                 null
             }
+        } else if (clazz == Simple) {
+            new SimpleCodec(registry)
         } else {
             null
         }
@@ -180,8 +209,10 @@ class ClassModelCodecProvider implements CodecProvider {
 class TopCodec implements Codec<Top> {
     Codec<TopCodec> codecForOther
     Codec<Nested> codecForNested
+    CodecRegistry registry
 
     TopCodec(final CodecRegistry registry) {
+        this.registry = registry
         codecForOther = registry.get(Top)
         codecForNested = registry.get(Nested)
     }
@@ -276,6 +307,34 @@ class NestedCodec implements Codec<Nested> {
         }
         reader.readEndDocument()
         new Nested(name, top);
+    }
+}
+
+class SimpleCodec implements Codec<Simple> {
+    private final CodecRegistry registry
+
+    SimpleCodec(CodecRegistry registry) {
+        this.registry = registry
+    }
+
+    CodecRegistry getRegistry() {
+        registry
+    }
+
+    @Override
+    void encode(final BsonWriter writer, final Simple value, final EncoderContext encoderContext) {
+        writer.writeNull()
+    }
+
+    @Override
+    Class<Simple> getEncoderClass() {
+        Simple
+    }
+
+    @Override
+    Simple decode(final BsonReader reader, final DecoderContext decoderContext) {
+        reader.readNull()
+        new Simple()
     }
 }
 
@@ -377,5 +436,9 @@ class Nested {
         result = 31 * result + (top != null ? top.hashCode() : 0)
         result
     }
+}
+
+class Simple {
+    int value = 0
 }
 

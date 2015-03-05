@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 import static java.util.Arrays.asList
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class DocumentCodecSpecification extends Specification {
     @Shared

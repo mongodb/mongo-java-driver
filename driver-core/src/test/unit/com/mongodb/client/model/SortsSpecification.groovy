@@ -27,7 +27,7 @@ import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Sorts.metaTextScore
 import static com.mongodb.client.model.Sorts.orderBy
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class SortsSpecification extends Specification {
     def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])

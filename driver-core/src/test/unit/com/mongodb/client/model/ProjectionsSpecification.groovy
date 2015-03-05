@@ -32,7 +32,7 @@ import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Projections.metaTextScore
 import static com.mongodb.client.model.Projections.slice
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class ProjectionsSpecification extends Specification {
     def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])

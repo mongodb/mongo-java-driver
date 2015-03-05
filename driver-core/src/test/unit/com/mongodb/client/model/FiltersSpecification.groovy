@@ -47,7 +47,7 @@ import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Filters.type
 import static com.mongodb.client.model.Filters.where
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class FiltersSpecification extends Specification {
     def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])

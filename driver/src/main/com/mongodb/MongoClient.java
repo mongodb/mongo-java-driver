@@ -30,7 +30,7 @@ import java.io.Closeable;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire

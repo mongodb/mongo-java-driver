@@ -37,7 +37,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 class MongoClientImpl implements MongoClient {
     private final Cluster cluster;

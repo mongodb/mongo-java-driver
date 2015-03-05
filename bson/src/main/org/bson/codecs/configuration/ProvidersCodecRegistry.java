@@ -23,7 +23,7 @@ import java.util.List;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 
-final class ProvidersCodecRegistry implements CodecRegistry {
+final class ProvidersCodecRegistry implements CodecRegistry, CodecProvider {
     private final List<CodecProvider> codecProviders;
     private final CodecCache codecCache = new CodecCache();
 
@@ -35,6 +35,17 @@ final class ProvidersCodecRegistry implements CodecRegistry {
     @Override
     public <T> Codec<T> get(final Class<T> clazz) {
         return get(new ChildCodecRegistry<T>(this, clazz));
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        for (CodecProvider provider : codecProviders) {
+            Codec<T> codec = provider.get(clazz, registry);
+            if (codec != null) {
+                return codec;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -77,5 +88,4 @@ final class ProvidersCodecRegistry implements CodecRegistry {
     public int hashCode() {
         return codecProviders.hashCode();
     }
-
 }

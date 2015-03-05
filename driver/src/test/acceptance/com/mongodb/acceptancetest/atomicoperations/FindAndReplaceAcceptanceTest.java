@@ -32,7 +32,7 @@ import org.junit.Test;
 import java.util.Date;
 
 import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNull;

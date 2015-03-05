@@ -44,7 +44,7 @@ import static com.mongodb.client.model.Sorts.descending;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 

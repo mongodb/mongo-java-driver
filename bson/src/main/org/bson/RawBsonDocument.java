@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * An immutable BSON document that is represented using only the raw bytes.
@@ -41,7 +41,7 @@ import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
  */
 public class RawBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 5551249268878132972L;
-    private static CodecRegistry registry = fromProvider(new BsonValueCodecProvider());
+    private static CodecRegistry registry = fromProviders(new BsonValueCodecProvider());
 
     private final byte[] bytes;
 

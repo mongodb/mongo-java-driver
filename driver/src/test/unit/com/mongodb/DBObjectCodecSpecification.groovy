@@ -31,9 +31,9 @@ import org.bson.types.Binary
 import spock.lang.Specification
 
 import static org.bson.UuidRepresentation.STANDARD
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromCodec
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromRegistries
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class DBObjectCodecSpecification extends Specification {
 
@@ -61,7 +61,7 @@ class DBObjectCodecSpecification extends Specification {
 
     def 'should encode and decode UUID as Binary with alternate UUID Codec'() {
         given:
-        def codecWithAlternateUUIDCodec = new DBObjectCodec(fromRegistries(fromCodec(new UuidCodec(STANDARD)), codecRegistry))
+        def codecWithAlternateUUIDCodec = new DBObjectCodec(fromRegistries(fromCodecs(new UuidCodec(STANDARD)), codecRegistry))
         def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
         def doc = new BasicDBObject('uuid', uuid)
 

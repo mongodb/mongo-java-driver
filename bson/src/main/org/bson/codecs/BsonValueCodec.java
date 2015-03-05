@@ -21,7 +21,7 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A codec for unknown BsonValues.
@@ -38,7 +38,7 @@ public class BsonValueCodec implements Codec<BsonValue> {
      * Creates a new instance with a default codec registry that uses the {@link BsonValueCodecProvider}.
      */
     public BsonValueCodec() {
-        this(fromProvider(new BsonValueCodecProvider()));
+        this(fromProviders(new BsonValueCodecProvider()));
     }
 
     /**

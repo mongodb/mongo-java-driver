@@ -27,7 +27,7 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     private final Decoder<T> payloadDecoder;
@@ -40,7 +40,7 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     }
 
     static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final String fieldContainingPayload) {
-        CodecRegistry registry = fromProvider(new CommandResultCodecProvider<P>(decoder, fieldContainingPayload));
+        CodecRegistry registry = fromProviders(new CommandResultCodecProvider<P>(decoder, fieldContainingPayload));
         return registry.get(BsonDocument.class);
     }
 

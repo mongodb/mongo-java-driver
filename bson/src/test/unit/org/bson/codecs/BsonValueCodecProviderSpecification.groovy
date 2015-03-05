@@ -39,12 +39,12 @@ import org.bson.BsonUndefined
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
-import static org.bson.codecs.configuration.CodecRegistryHelper.fromProvider
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class BsonValueCodecProviderSpecification extends Specification {
 
     def provider = new BsonValueCodecProvider()
-    def codecRegistry = fromProvider(provider)
+    def codecRegistry = fromProviders(provider)
 
     def 'should get correct codec'() {
         expect:
