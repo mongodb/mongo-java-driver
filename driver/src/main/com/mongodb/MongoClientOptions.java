@@ -913,6 +913,9 @@ public class MongoClientOptions {
         /**
          * Sets the codec registry
          *
+         * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a
+         * codec for DBObject in the registry.</p>
+
          * @param codecRegistry the codec registry
          * @return {@code this}
          * @see MongoClientOptions#getCodecRegistry()
