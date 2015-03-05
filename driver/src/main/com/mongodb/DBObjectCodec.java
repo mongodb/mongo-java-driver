@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BSONObject;
 import org.bson.BsonBinary;
 import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
@@ -34,7 +35,6 @@ import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
-import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.Symbol;
@@ -192,14 +192,12 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
             bsonWriter.writeNull();
         } else if (value instanceof DBRef) {
             encodeDBRef(bsonWriter, (DBRef) value);
-        } else if (value instanceof BasicBSONList) {
-            encodeIterable(bsonWriter, (BasicBSONList) value);
-        } else if (value instanceof DBObject) {
-            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
-        } else if (value instanceof Map) {
-            encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
         } else if (value instanceof Iterable) {
             encodeIterable(bsonWriter, (Iterable) value);
+        } else if (value instanceof Map) {
+            encodeMap(bsonWriter, (Map<String, Object>) value);
+        } else if (value instanceof BSONObject) {
+            encodeBsonObject(bsonWriter, ((BSONObject) value));
         } else if (value instanceof CodeWScope) {
             encodeCodeWScope(bsonWriter, (CodeWScope) value);
         } else if (value instanceof byte[]) {
@@ -214,12 +212,22 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         }
     }
 
-    private void encodeEmbeddedObject(final BsonWriter bsonWriter, final Map<String, Object> document) {
+    private void encodeMap(final BsonWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, null, entry.getValue());
+        }
+        bsonWriter.writeEndDocument();
+    }
+
+    private void encodeBsonObject(final BsonWriter bsonWriter, final BSONObject document) {
+        bsonWriter.writeStartDocument();
+
+        for (String key : document.keySet()) {
+            bsonWriter.writeName(key);
+            writeValue(bsonWriter, null, document.get(key));
         }
         bsonWriter.writeEndDocument();
     }
@@ -252,7 +260,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     @SuppressWarnings("unchecked")
     private void encodeCodeWScope(final BsonWriter bsonWriter, final CodeWScope value) {
         bsonWriter.writeJavaScriptWithScope(value.getCode());
-        encodeEmbeddedObject(bsonWriter, value.getScope().toMap());
+        encodeBsonObject(bsonWriter, value.getScope());
     }
 
     private void encodeIterable(final BsonWriter bsonWriter, final Iterable iterable) {
@@ -322,7 +330,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         reader.readStartArray();
         BasicDBList list = new BasicDBList();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader, decoderContext, null, path));   // TODO: why is this a warning?
+            list.add(readValue(reader, decoderContext, null, path));
         }
         reader.readEndArray();
         return list;

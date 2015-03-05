@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,22 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
+import org.bson.BsonNull;
 import org.bson.BsonObjectId;
+import org.bson.LazyBSONCallback;
 import org.bson.Transformer;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistryHelper.fromProviders;
@@ -120,5 +126,55 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
         // then
         assertEquals(new ArrayList<String>(encodedDocument.keySet()), asList("x", "_id"));
+    }
+
+    @Test
+    public void shouldEncodeNull() {
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+
+        DBObject doc = new BasicDBObject("null", null);
+
+        BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+        dbObjectCodec.encode(writer, doc, EncoderContext.builder().build());
+
+        assertEquals(new BsonDocument("null", BsonNull.VALUE), writer.getDocument());
+    }
+
+    @Test
+    public void shouldEncodedNestedMapsListsAndDocuments() {
+        byte[] zeroOneDocumentBytes = new byte[]{19, 0, 0, 0, 16, 48, 0, 0, 0, 0, 0, 16, 49, 0, 1, 0, 0, 0, 0}; //  {"0" : 0, "1", 1}
+        Map<String, Object> zeroOneMap = new HashMap<String, Object>();
+        zeroOneMap.put("0", 0);
+        zeroOneMap.put("1", 1);
+        DBObject zeroOneDBObject = new BasicDBObject();
+        zeroOneDBObject.putAll(zeroOneMap);
+        DBObject zeroOneDBList = new BasicDBList();
+        zeroOneDBList.putAll(zeroOneMap);
+        List<Integer> zeroOneList = asList(0, 1);
+
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+
+        DBObject doc = new BasicDBObject()
+                       .append("map", zeroOneMap)
+                       .append("dbDocument", zeroOneDBObject)
+                       .append("dbList", zeroOneDBList)
+                       .append("list", zeroOneList)
+                       .append("array", new int[] {0, 1})
+                       .append("lazyDoc", new LazyDBObject(zeroOneDocumentBytes, new LazyBSONCallback()))
+                       .append("lazyArray", new LazyDBList(zeroOneDocumentBytes, new LazyBSONCallback()));
+
+        BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+        dbObjectCodec.encode(writer, doc, EncoderContext.builder().build());
+
+        BsonDocument zeroOneBsonDocument = new BsonDocument().append("0", new BsonInt32(0)).append("1", new BsonInt32(1));
+        BsonArray zeroOneBsonArray = new BsonArray(asList(new BsonInt32(0), new BsonInt32(1)));
+
+        assertEquals(new BsonDocument("map", zeroOneBsonDocument)
+                     .append("dbDocument", zeroOneBsonDocument)
+                     .append("dbList", zeroOneBsonArray)
+                     .append("list", zeroOneBsonArray)
+                     .append("array", zeroOneBsonArray)
+                     .append("lazyDoc", zeroOneBsonDocument)
+                     .append("lazyArray", zeroOneBsonArray), writer.getDocument());
     }
 }
