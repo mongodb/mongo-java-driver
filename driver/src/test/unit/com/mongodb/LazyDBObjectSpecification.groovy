@@ -113,22 +113,22 @@ class LazyDBObjectSpecification extends Specification {
         decodedObj instanceof LazyDBObject
         Set<String> keySet = decodedObj.keySet();
 
-        keySet.size() == 5
+        keySet.size() == 6
         !keySet.isEmpty()
 
-        keySet.toArray().length == 5
+        keySet.toArray().length == 6
 
         def typedArray = keySet.toArray(new String[0]);
-        typedArray.length == 5
+        typedArray.length == 6
 
-        def array = keySet.toArray(new String[6]);
-        array.length == 6
-        array[5] == null
+        def array = keySet.toArray(new String[7]);
+        array.length == 7
+        array[6] == null
 
         keySet.contains('first')
         !keySet.contains('x')
 
-        keySet.containsAll(['first', 'second', '_id', 'third', 'fourth'])
+        keySet.containsAll(['first', 'second', '_id', 'third', 'fourth', 'fifth'])
         !keySet.containsAll(['first', 'notFound'])
 
         obj['_id'] == decodedObj['_id']
@@ -136,6 +136,7 @@ class LazyDBObjectSpecification extends Specification {
         obj['second'] == decodedObj['second']
         obj['third'] == decodedObj['third']
         obj['fourth'] == decodedObj['fourth']
+        obj['fifth'] == decodedObj['fifth']
     }
 
     def testEntrySet() throws IOException {
@@ -149,17 +150,17 @@ class LazyDBObjectSpecification extends Specification {
 
         then:
         Set<Map.Entry<String, Object>> entrySet = decodedObj.entrySet();
-        entrySet.size() == 5
+        entrySet.size() == 6
         !entrySet.isEmpty()
 
-        entrySet.toArray().length == 5   // kind of a lame test
+        entrySet.toArray().length == 6   // kind of a lame test
 
         Map.Entry<String, Object>[] typedArray = entrySet.toArray(new Map.Entry[entrySet.size()]);
-        typedArray.length == 5
+        typedArray.length == 6
 
-        def array = entrySet.toArray(new Map.Entry[6]);
-        array.length == 6
-        array[5] == null
+        def array = entrySet.toArray(new Map.Entry[7]);
+        array.length == 7
+        array[6] == null
     }
 
     def testPipe() throws IOException {
@@ -212,7 +213,8 @@ class LazyDBObjectSpecification extends Specification {
          first : 1,
          second: 'str1',
          third : true,
-         fourth: [firstNested: 1] as BasicDBObject] as BasicDBObject;
+         fourth : null,
+         fifth: [firstNested: 1] as BasicDBObject] as BasicDBObject;
     }
 
     def getTestDocument() {

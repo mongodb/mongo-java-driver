@@ -42,8 +42,12 @@ class LazyBSONObjectSpecification extends Specification {
 
     @Unroll
     def 'should read #type'() {
+        def lazyBSONObject = new LazyBSONObject(bytes as byte[], new LazyBSONCallback())
+        given:
+
         expect:
-        value == new LazyBSONObject(bytes as byte[], new LazyBSONCallback()).get('f')
+        value == lazyBSONObject.get('f')
+        lazyBSONObject.keySet().contains('f')
 
         where:
         value                                                                 | bytes
@@ -67,6 +71,7 @@ class LazyBSONObjectSpecification extends Specification {
         false                                                                 | [9, 0, 0, 0, 8, 102, 0, 0, 0]
         new Date(582163200)                                                   | [16, 0, 0, 0, 9, 102, 0, 0, 27, -77, 34, 0, 0, 0, 0, 0]
         null                                                                  | [8, 0, 0, 0, 10, 102, 0, 0]
+        null                                                                  | [8, 0, 0, 0, 6, 102, 0, 0]
         Pattern.compile('[a]*', Pattern.CASE_INSENSITIVE)                     | [15, 0, 0, 0, 11, 102, 0, 91, 97, 93, 42, 0, 105, 0, 0]
         new Code('var i = 0')                                                 | [22, 0, 0, 0, 13, 102, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
         new Symbol('c')                                                       | [14, 0, 0, 0, 14, 102, 0, 2, 0, 0, 0, 99, 0, 0]

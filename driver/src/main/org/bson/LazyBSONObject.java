@@ -178,8 +178,11 @@ public class LazyBSONObject implements BSONObject {
                 } else {
                     return new Binary(binary.getType(), binary.getData());
                 }
-            case UNDEFINED:
             case NULL:
+                reader.readNull();
+                return null;
+            case UNDEFINED:
+                reader.readUndefined();
                 return null;
             case OBJECT_ID:
                 return reader.readObjectId();
