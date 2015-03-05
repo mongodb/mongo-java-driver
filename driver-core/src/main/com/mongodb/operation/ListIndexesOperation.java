@@ -61,6 +61,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  *
  * @param <T> the operations result type.
  * @since 3.0
+ * @mongodb.driver.manual reference/command/listIndexes/ List indexes
  */
 public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;

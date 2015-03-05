@@ -50,7 +50,7 @@ import static java.util.Arrays.asList;
 /**
  * An operation that creates an index.
  *
- * @mongodb.driver.manual reference/method/db.collection.ensureIndex/#options Index options
+ * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
  * @since 3.0
  */
 public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {

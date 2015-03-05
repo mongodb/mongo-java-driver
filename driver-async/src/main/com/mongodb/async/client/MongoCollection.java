@@ -475,7 +475,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param key      an object describing the index key(s), which may not be null.
      * @param callback the callback that is completed once the index has been created
-     * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
+     * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
      */
     void createIndex(Bson key, SingleResultCallback<Void> callback);
 
@@ -485,7 +485,7 @@ public interface MongoCollection<TDocument> {
      * @param key      an object describing the index key(s), which may not be null.
      * @param options  the options for the index
      * @param callback the callback that is completed once the index has been created
-     * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
+     * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
      */
     void createIndex(Bson key, IndexOptions options, SingleResultCallback<Void> callback);
 
@@ -493,7 +493,7 @@ public interface MongoCollection<TDocument> {
      * Get all the indexes in this collection.
      *
      * @return the list indexes iterable interface
-     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
+     * @mongodb.driver.manual reference/command/listIndexes/ List indexes
      */
     ListIndexesIterable<Document> listIndexes();
 
@@ -503,7 +503,7 @@ public interface MongoCollection<TDocument> {
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the list indexes iterable interface
-     * @mongodb.driver.manual reference/command/listIndexes/ listIndexes
+     * @mongodb.driver.manual reference/command/listIndexes/ List indexes
      */
     <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> resultClass);
 
@@ -512,7 +512,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param indexName the name of the index to remove
      * @param callback  the callback that is completed once the index has been dropped
-     * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
     void dropIndex(String indexName, SingleResultCallback<Void> callback);
 
@@ -520,7 +520,7 @@ public interface MongoCollection<TDocument> {
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @param callback the callback that is completed once all the indexes have been dropped
-     * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
     void dropIndexes(SingleResultCallback<Void> callback);
 

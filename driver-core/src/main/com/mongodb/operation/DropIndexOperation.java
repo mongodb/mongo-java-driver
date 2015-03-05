@@ -34,6 +34,7 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
  * An operation that drops an index.
  *
  * @since 3.0
+ * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
  */
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
