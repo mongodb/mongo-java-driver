@@ -127,9 +127,9 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('array') == originalDocument.get('array')
         decodedDoc.get('document') == originalDocument.get('document')
         decodedDoc.get('map') == originalDocument.get('map')
-        decodedDoc.get('atomicLong')  == new Long(1)
-        decodedDoc.get('atomicInteger')  == new Integer(1)
-        decodedDoc.get('atomicBoolean')  == new Boolean(true)
+        decodedDoc.get('atomicLong')  == ((AtomicLong) originalDocument.get('atomicLong')).get()
+        decodedDoc.get('atomicInteger')  == ((AtomicInteger) originalDocument.get('atomicInteger')).get()
+        decodedDoc.get('atomicBoolean') == ((AtomicBoolean) originalDocument.get('atomicBoolean')).get()
 
         where:
         writer << [
