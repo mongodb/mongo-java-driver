@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,12 +160,9 @@ final class DescriptionHelper {
     }
 
     private static TagSet getTagSetFromDocument(final BsonDocument tagsDocuments) {
-        if (tagsDocuments == null) {
-            return new TagSet();
-        }
         List<Tag> tagList = new ArrayList<Tag>();
         for (final Map.Entry<String, BsonValue> curEntry : tagsDocuments.entrySet()) {
-            tagList.add(new Tag(curEntry.getKey(), curEntry.getValue().toString()));
+            tagList.add(new Tag(curEntry.getKey(), curEntry.getValue().asString().getValue()));
         }
         return new TagSet(tagList);
     }
