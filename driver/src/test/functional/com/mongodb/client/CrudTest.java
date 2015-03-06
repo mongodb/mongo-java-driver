@@ -48,6 +48,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -104,9 +105,11 @@ public class CrudTest extends DatabaseTestCase {
 
     private boolean checkResult() {
         if (filename.contains("insert")) {
+            // We don't return any id's for insert commands
             return false;
         } else if (!serverVersionAtLeast(asList(3, 0, 0))
                 && description.contains("when no documents match with upsert returning the document before modification")) {
+            // Pre 3.0 versions of MongoDB return an empty document rather than a null
             return false;
         }
         return true;
@@ -150,6 +153,7 @@ public class CrudTest extends DatabaseTestCase {
         return toResult(new BsonDocument(key, value));
     }
     private BsonDocument toResult(final UpdateResult updateResult) {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0))); // ModifiedCount is not accessible pre 2.6
         BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()))
                 .append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
         if (updateResult.getUpsertedId() != null) {
@@ -224,6 +228,7 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private BsonDocument getFindOneAndReplaceResult(final BsonDocument arguments) {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0))); // in 2.4 the server can ignore the supplied _id and creates an ObjectID
         FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
         if (arguments.containsKey("projection")) {
             options.projection(arguments.getDocument("projection"));
