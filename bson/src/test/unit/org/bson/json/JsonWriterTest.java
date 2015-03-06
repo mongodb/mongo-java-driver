@@ -31,6 +31,9 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unchecked")
 public class JsonWriterTest {
@@ -51,6 +54,39 @@ public class JsonWriterTest {
             this.value = value;
             this.expected = expected;
         }
+    }
+
+    @Test
+    public void testSettings() {
+        JsonWriterSettings settings = new JsonWriterSettings();
+        assertNull(settings.getIndentCharacters());
+        assertEquals(System.getProperty("line.separator"), settings.getNewLineCharacters());
+        assertFalse(settings.isIndent());
+        assertEquals(JsonMode.STRICT, settings.getOutputMode());
+
+        settings = new JsonWriterSettings(JsonMode.SHELL);
+        assertNull(settings.getIndentCharacters());
+        assertEquals(System.getProperty("line.separator"), settings.getNewLineCharacters());
+        assertFalse(settings.isIndent());
+        assertEquals(JsonMode.SHELL, settings.getOutputMode());
+
+        settings = new JsonWriterSettings(true);
+        assertEquals("  ", settings.getIndentCharacters());
+        assertEquals(System.getProperty("line.separator"), settings.getNewLineCharacters());
+        assertTrue(settings.isIndent());
+        assertEquals(JsonMode.STRICT, settings.getOutputMode());
+
+        settings = new JsonWriterSettings(JsonMode.SHELL, true);
+        assertEquals("  ", settings.getIndentCharacters());
+        assertEquals(System.getProperty("line.separator"), settings.getNewLineCharacters());
+        assertTrue(settings.isIndent());
+        assertEquals(JsonMode.SHELL, settings.getOutputMode());
+
+        settings = new JsonWriterSettings(JsonMode.SHELL, "\t", "\r\n");
+        assertEquals("\t", settings.getIndentCharacters());
+        assertEquals("\r\n", settings.getNewLineCharacters());
+        assertTrue(settings.isIndent());
+        assertEquals(JsonMode.SHELL, settings.getOutputMode());
     }
 
     @Test(expected = BsonInvalidOperationException.class)
