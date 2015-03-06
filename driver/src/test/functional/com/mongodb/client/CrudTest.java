@@ -29,6 +29,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +44,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -77,7 +81,7 @@ public class CrudTest extends DatabaseTestCase {
         BsonDocument outcome = getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
-        if (!filename.contains("insert")) {
+        if (checkResult()) {
             assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
         }
         if (expectedOutcome.containsKey("collection")) {
@@ -96,6 +100,16 @@ public class CrudTest extends DatabaseTestCase {
             }
         }
         return data;
+    }
+
+    private boolean checkResult() {
+        if (filename.contains("insert")) {
+            return false;
+        } else if (!serverVersionAtLeast(asList(3, 0, 0))
+                && description.contains("when no documents match with upsert returning the document before modification")) {
+            return false;
+        }
+        return true;
     }
 
     private void assertCollectionEquals(final BsonDocument expectedCollection) {
@@ -117,6 +131,9 @@ public class CrudTest extends DatabaseTestCase {
         } catch (NoSuchMethodException e) {
             throw new UnsupportedOperationException("No handler for operation " + methodName);
         } catch (InvocationTargetException e) {
+            if (e.getTargetException() instanceof AssumptionViolatedException) {
+                throw (AssumptionViolatedException) e.getTargetException();
+            }
             throw new UnsupportedOperationException("Invalid handler for operation " + methodName);
         } catch (IllegalAccessException e) {
             throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
@@ -141,9 +158,13 @@ public class CrudTest extends DatabaseTestCase {
         return toResult(resultDoc);
     }
     private BsonDocument toResult(final BsonValue results) {
-        return new BsonDocument("result", results != null ? results : new BsonNull());
+        return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
     }
     private BsonDocument getAggregateResult(final BsonDocument arguments) {
+        if (!serverVersionAtLeast(asList(2, 6, 0))) {
+            assumeFalse(description.contains("$out"));
+        }
+
         List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
         for (BsonValue stage: arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
