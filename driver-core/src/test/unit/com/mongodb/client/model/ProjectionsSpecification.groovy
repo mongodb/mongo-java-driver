@@ -47,14 +47,14 @@ class ProjectionsSpecification extends Specification {
 
     def 'exclude'() {
         expect:
-        toBson(exclude('x')) == parse('{x : -1}')
-        toBson(exclude('x', 'y')) == parse('{x : -1, y : -1}')
-        toBson(exclude(['x', 'y'])) == parse('{x : -1, y : -1}')
+        toBson(exclude('x')) == parse('{x : 0}')
+        toBson(exclude('x', 'y')) == parse('{x : 0, y : 0}')
+        toBson(exclude(['x', 'y'])) == parse('{x : 0, y : 0}')
     }
 
     def 'excludeId'() {
         expect:
-        toBson(excludeId()) == parse('{_id : -1}')
+        toBson(excludeId()) == parse('{_id : 0}')
     }
 
     def 'firstElem'() {
@@ -80,9 +80,9 @@ class ProjectionsSpecification extends Specification {
 
     def 'combine fields'() {
         expect:
-        toBson(fields(include('x', 'y'), exclude('_id'))) == parse('{x : 1, y : 1, _id : -1}')
-        toBson(fields([include('x', 'y'), exclude('_id')])) == parse('{x : 1, y : 1, _id : -1}')
-        toBson(fields(include('x', 'y'), exclude('x'))) == parse('{y : 1, x : -1}')
+        toBson(fields(include('x', 'y'), exclude('_id'))) == parse('{x : 1, y : 1, _id : 0}')
+        toBson(fields([include('x', 'y'), exclude('_id')])) == parse('{x : 1, y : 1, _id : 0}')
+        toBson(fields(include('x', 'y'), exclude('x'))) == parse('{y : 1, x : 0}')
     }
 
     def toBson(Bson bson) {

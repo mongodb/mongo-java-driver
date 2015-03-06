@@ -80,7 +80,7 @@ public final class Projections {
      * @return the projection
      */
     public static Bson exclude(final List<String> fieldNames) {
-        return combine(fieldNames, new BsonInt32(-1));
+        return combine(fieldNames, new BsonInt32(0));
     }
 
     /**
@@ -90,7 +90,7 @@ public final class Projections {
      * @return the projection
      */
     public static Bson excludeId() {
-        return new BsonDocument("_id", new BsonInt32(-1));
+        return new BsonDocument("_id", new BsonInt32(0));
     }
 
     /**
