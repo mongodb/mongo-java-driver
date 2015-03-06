@@ -31,9 +31,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class CountOptions {
     private Bson hint;
     private String hintString;
-    private long limit;
+    private int limit;
+    private int skip;
     private long maxTimeMS;
-    private long skip;
 
     /**
      * Gets the hint to apply.
@@ -81,7 +81,7 @@ public class CountOptions {
      * @return the limit
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
-    public long getLimit() {
+    public int getLimit() {
         return limit;
     }
 
@@ -92,7 +92,7 @@ public class CountOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
-    public CountOptions limit(final long limit) {
+    public CountOptions limit(final int limit) {
         this.limit = limit;
         return this;
     }
@@ -103,7 +103,7 @@ public class CountOptions {
      * @return the number of documents to skip
      * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
-    public long getSkip() {
+    public int getSkip() {
         return skip;
     }
 
@@ -114,7 +114,7 @@ public class CountOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
-    public CountOptions skip(final long skip) {
+    public CountOptions skip(final int skip) {
         this.skip = skip;
         return this;
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
@@ -29,22 +29,19 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-abstract class JsonPoweredTest {
-    private final BsonDocument definition;
+public final class JsonPoweredTestHelper {
 
-    public JsonPoweredTest(final File file) throws IOException {
-        definition = getTestDocument(getFileAsString(file));
+    public static BsonDocument getTestDocument(final File file) throws IOException {
+        return new BsonDocumentCodec().decode(new JsonReader(getFileAsString(file)), DecoderContext.builder().build());
     }
 
-    public BsonDocument getDefinition() {
-        return definition;
+    public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
+        List<File> files = new ArrayList<File>();
+        addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);
+        return files;
     }
 
-    BsonDocument getTestDocument(final String contents) throws IOException {
-        return new BsonDocumentCodec().decode(new JsonReader(contents), DecoderContext.builder().build());
-    }
-
-    private String getFileAsString(final File file) throws IOException {
+    private static String getFileAsString(final File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;
         StringBuilder stringBuilder = new StringBuilder();
@@ -58,12 +55,6 @@ abstract class JsonPoweredTest {
         return stringBuilder.toString();
     }
 
-    static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
-        List<File> files = new ArrayList<File>();
-        addFilesFromDirectory(new File(JsonPoweredTest.class.getResource(resourcePath).toURI()), files);
-        return files;
-    }
-
     private static void addFilesFromDirectory(final File directory, final List<File> files) {
         for (String fileName : directory.list()) {
             File file = new File(directory, fileName);
@@ -73,5 +64,8 @@ abstract class JsonPoweredTest {
                 files.add(file);
             }
         }
+    }
+
+    private JsonPoweredTestHelper() {
     }
 }

@@ -33,7 +33,7 @@ public class FindOneAndReplaceOptions {
     private Bson projection;
     private Bson sort;
     private boolean upsert;
-    private boolean returnOriginal = true;
+    private ReturnDocument returnDocument = ReturnDocument.BEFORE;
     private long maxTimeMS;
 
     /**
@@ -102,22 +102,22 @@ public class FindOneAndReplaceOptions {
     }
 
     /**
-     * When true, return the original document from before it was replaced. The default is true.
+     * Gets the {@link ReturnDocument} value indicating whether to return the document before it was replaced or after
      *
-     * @return true if the original document should be returned
+     * @return {@link ReturnDocument#BEFORE} if returning the document before it was replaced otherwise return {@link ReturnDocument#AFTER}
      */
-    public boolean getReturnOriginal() {
-        return returnOriginal;
+    public ReturnDocument getReturnDocument() {
+        return returnDocument;
     }
 
     /**
-     * Set whether to return the original document from before it was replaced.
+     * Set whether to return the document before it was replaced or after
      *
-     * @param returnOriginal set whether to return the original document from before it was replaced
+     * @param returnDocument set whether to return the document before it was replaced or after
      * @return this
      */
-    public FindOneAndReplaceOptions returnOriginal(final boolean returnOriginal) {
-        this.returnOriginal = returnOriginal;
+    public FindOneAndReplaceOptions returnDocument(final ReturnDocument returnDocument) {
+        this.returnDocument = returnDocument;
         return this;
     }
 

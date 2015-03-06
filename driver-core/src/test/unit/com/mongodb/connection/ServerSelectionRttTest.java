@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.JsonPoweredTestHelper;
+import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,32 +34,33 @@ import static org.junit.Assert.assertEquals;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
-public class ServerSelectionRttTest extends JsonPoweredTest {
+public class ServerSelectionRttTest {
+    private final BsonDocument definition;
 
-    public ServerSelectionRttTest(final File file) throws IOException {
-        super(file);
+    public ServerSelectionRttTest(final String description, final BsonDocument definition) {
+        this.definition = definition;
     }
 
     @Test
     public void shouldPassAllOutcomes() {
         ExponentiallyWeightedMovingAverage subject = new ExponentiallyWeightedMovingAverage(0.2);
 
-        BsonValue current = getDefinition().get("avg_rtt_ms");
+        BsonValue current = definition.get("avg_rtt_ms");
         if (current.isNumber()) {
             subject.addSample(current.asNumber().longValue());
         }
 
-        subject.addSample(getDefinition().getNumber("new_rtt_ms").longValue());
-        long expected = getDefinition().getNumber("new_avg_rtt").asNumber().longValue();
+        subject.addSample(definition.getNumber("new_rtt_ms").longValue());
+        long expected = definition.getNumber("new_avg_rtt").asNumber().longValue();
 
         assertEquals(subject.getAverage(), expected);
     }
 
-    @Parameterized.Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
-    public static Collection<Object[]> data() throws URISyntaxException {
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTest.getTestFiles("/server-selection/rtt")) {
-            data.add(new Object[]{file});
+        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/rtt")) {
+            data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.mongodb.acceptancetest.atomicoperations;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
@@ -64,7 +65,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
         Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT), updateOperation,
-                                                               new FindOneAndUpdateOptions().returnOriginal(false));
+                                                               new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER));
 
         assertThat("Document returned from updateOneAndGet should be the updated document",
                    (Integer) updatedDocument.get("someNumber"), equalTo(12));
@@ -84,7 +85,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
 
         Document updateOperation = new Document("$inc", new Document("numberOfJobs", 1));
         Worker updatedDocument = collection.findOneAndUpdate(new Document("name", "Pat"), updateOperation,
-                                                             new FindOneAndUpdateOptions().returnOriginal(false));
+                                                             new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER));
 
         assertThat("Worker returned from updateOneAndGet should have the",
                    updatedDocument.getNumberOfJobs(), equalTo(8));
@@ -113,7 +114,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         String newValueThatDoesNotMatchAnythingInDatabase = "valueThatDoesNotMatch";
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
         Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase), updateOperation,
-                                                        new FindOneAndUpdateOptions().upsert(true).returnOriginal(false));
+                                                        new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER));
 
         assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from updateOneAndGet and upsert true should have the new values",

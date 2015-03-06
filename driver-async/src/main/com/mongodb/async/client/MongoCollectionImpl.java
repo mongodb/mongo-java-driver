@@ -42,6 +42,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -386,7 +387,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .filter(toBsonDocument(filter))
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
-                         .returnOriginal(options.getReturnOriginal())
+                         .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
     }
@@ -403,7 +404,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .filter(toBsonDocument(filter))
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
-                         .returnOriginal(options.getReturnOriginal())
+                         .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
     }

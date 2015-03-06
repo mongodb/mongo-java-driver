@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.mongodb.acceptancetest.atomicoperations;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
@@ -94,7 +95,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
         Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan,
-                                                               new FindOneAndReplaceOptions().returnOriginal(false));
+                                                               new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER));
 
         assertThat("Worker retrieved from replaceOneAndGet should match the updated Worker",
                    returnedDocument, equalTo(jordan));
@@ -110,7 +111,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT), documentReplacement,
-                                                         new FindOneAndReplaceOptions().returnOriginal(false));
+                                                         new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER));
 
 
         assertThat("Document, retrieved from replaceAndGet after change applied should match the document used as replacement",
@@ -154,7 +155,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
                                                          replacementDocument,
                                                          new FindOneAndReplaceOptions()
                                                              .upsert(true)
-                                                             .returnOriginal(false));
+                                                             .returnDocument(ReturnDocument.AFTER));
 
         assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from replaceOneAndGet with filter that doesn't match should match the replacement document",

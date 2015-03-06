@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.JsonPoweredTestHelper;
 import com.mongodb.ServerAddress;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -46,19 +47,19 @@ import static org.junit.Assert.assertNotNull;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
 @RunWith(Parameterized.class)
-public class ServerDiscoveryAndMonitoringTest extends JsonPoweredTest {
-
+public class ServerDiscoveryAndMonitoringTest {
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory();
+    private final BsonDocument definition;
     private final BaseCluster cluster;
 
-    public ServerDiscoveryAndMonitoringTest(final File file) throws IOException {
-        super(file);
-        cluster = getCluster(getDefinition().getString("uri").getValue());
+    public ServerDiscoveryAndMonitoringTest(final String description, final BsonDocument definition) {
+        this.definition = definition;
+        cluster = getCluster(definition.getString("uri").getValue());
     }
 
     @Test
     public void shouldPassAllOutcomes() {
-        for (BsonValue phase : getDefinition().getArray("phases")) {
+        for (BsonValue phase : definition.getArray("phases")) {
             for (BsonValue response : phase.asDocument().getArray("responses")) {
                 applyResponse(response.asArray());
             }
@@ -68,11 +69,12 @@ public class ServerDiscoveryAndMonitoringTest extends JsonPoweredTest {
         }
     }
 
-    @Parameterized.Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
-    public static Collection<Object[]> data() throws URISyntaxException {
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTest.getTestFiles("/server-discovery-and-monitoring")) {
-            data.add(new Object[]{file});
+        for (File file : JsonPoweredTestHelper.getTestFiles("/server-discovery-and-monitoring")) {
+            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+            data.add(new Object[]{testDocument.getString("description").getValue(), testDocument});
         }
         return data;
     }

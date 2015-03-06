@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.JsonPoweredTestHelper;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
@@ -46,35 +47,35 @@ import static org.junit.Assert.assertTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
-public class ServerSelectionSelectionTest extends JsonPoweredTest {
-
+public class ServerSelectionSelectionTest {
+    private final BsonDocument definition;
     private final ClusterDescription clusterDescription;
 
-    public ServerSelectionSelectionTest(final File file) throws IOException {
-        super(file);
-        this.clusterDescription = buildClusterDescription(getDefinition().getDocument("topology_description"));
+    public ServerSelectionSelectionTest(final String description, final BsonDocument definition) {
+        this.definition = definition;
+        this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"));
     }
 
     @Test
     public void shouldPassAllOutcomes() {
         ServerSelector serverSelector = getServerSelector();
 
-        List<ServerDescription> suitableServers = buildServerDescriptions(getDefinition().getArray("suitable_servers"));
+        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers"));
         List<ServerDescription> selectedServers = serverSelector.select(clusterDescription);
         assertServers(selectedServers, suitableServers);
 
         ServerSelector latencyBasedServerSelector = new CompositeServerSelector(asList(serverSelector,
                 new LatencyMinimizingServerSelector(15, TimeUnit.MILLISECONDS)));
-        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(getDefinition().getArray("in_latency_window"));
+        List<ServerDescription> inLatencyWindowServers = buildServerDescriptions(definition.getArray("in_latency_window"));
         List<ServerDescription> latencyBasedSelectedServers = latencyBasedServerSelector.select(clusterDescription);
         assertServers(latencyBasedSelectedServers, inLatencyWindowServers);
     }
 
-    @Parameterized.Parameters // (name = "{1}")  for when we update to JUnit >= 4.11
-    public static Collection<Object[]> data() throws URISyntaxException {
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTest.getTestFiles("/server-selection/server_selection")) {
-            data.add(new Object[]{file});
+        for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
+            data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;
     }
@@ -164,10 +165,10 @@ public class ServerSelectionSelectionTest extends JsonPoweredTest {
     }
 
     private ServerSelector getServerSelector() {
-        if (getDefinition().getString("operation").getValue().equals("write")) {
+        if (definition.getString("operation").getValue().equals("write")) {
             return new PrimaryServerSelector();
         } else {
-            BsonDocument readPreferenceDefinition = getDefinition().getDocument("read_preference");
+            BsonDocument readPreferenceDefinition = definition.getDocument("read_preference");
             ReadPreference readPreference;
             if (readPreferenceDefinition.getString("mode").getValue().equals("Primary")) {
                 readPreference = ReadPreference.valueOf("Primary");

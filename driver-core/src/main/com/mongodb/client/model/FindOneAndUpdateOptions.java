@@ -33,7 +33,7 @@ public class FindOneAndUpdateOptions {
     private Bson projection;
     private Bson sort;
     private boolean upsert;
-    private boolean returnOriginal = true;
+    private ReturnDocument returnDocument = ReturnDocument.BEFORE;
     private long maxTimeMS;
 
      /**
@@ -102,22 +102,23 @@ public class FindOneAndUpdateOptions {
     }
 
     /**
-     * When true, return the original document from before it was updated. The default is true.
+     * Gets the {@link ReturnDocument} value indicating whether to return the document before it was updated / inserted or after
      *
-     * @return true if the original document should be returned
+     * @return {@link ReturnDocument#BEFORE} if returning the document before it was updated or inserted otherwise
+     * returns {@link ReturnDocument#AFTER}
      */
-    public boolean getReturnOriginal() {
-        return returnOriginal;
+    public ReturnDocument getReturnDocument() {
+        return returnDocument;
     }
 
     /**
-     * Set whether to return the original document from before it was updated.
+     * Set whether to return the document before it was updated / inserted or after
      *
-     * @param returnOriginal set whether to return the original document from before it was updated
+     * @param returnDocument set whether to return the document before it was updated / inserted or after
      * @return this
      */
-    public FindOneAndUpdateOptions returnOriginal(final boolean returnOriginal) {
-        this.returnOriginal = returnOriginal;
+    public FindOneAndUpdateOptions returnDocument(final ReturnDocument returnDocument) {
+        this.returnDocument = returnDocument;
         return this;
     }
 
