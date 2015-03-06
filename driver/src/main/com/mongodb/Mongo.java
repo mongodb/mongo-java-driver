@@ -658,8 +658,11 @@ public class Mongo {
         return new DefaultClusterFactory().create(settings,
                                                   options.getServerSettings(),
                                                   options.getConnectionPoolSettings(),
-                                                  new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
+                                                  new SocketStreamFactory(options.getSocketSettings(),
+                                                                          options.getSslSettings(),
+                                                                          options.getSocketFactory()),
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
+                                                                          options.getSslSettings(),
                                                                           options.getSocketFactory()),
                                                   credentialsList,
                                                   null, new JMXConnectionPoolListener(), null);

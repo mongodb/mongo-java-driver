@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -19,6 +19,8 @@ package com.mongodb
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
+import com.mongodb.connection.SslSettings
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import javax.net.SocketFactory
@@ -45,6 +47,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         !options.isSocketKeepAlive()
         !options.isSslEnabled()
+        !options.isSslInvalidHostNameAllowed()
         options.getSocketFactory() != null
         !(options.getSocketFactory() instanceof SSLSocketFactory)
         options.getDbDecoderFactory() == DefaultDBDecoder.FACTORY
@@ -61,6 +64,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.serverSettings == ServerSettings.builder().heartbeatFrequency(10000, MILLISECONDS)
                                                 .minHeartbeatFrequency(500, MILLISECONDS)
                                                 .build()
+        options.sslSettings == SslSettings.builder().build();
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -143,6 +147,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .threadsAllowedToBlockForConnectionMultiplier(2)
                                         .socketKeepAlive(true)
                                         .sslEnabled(true)
+                                        .sslInvalidHostNameAllowed(true)
                                         .dbDecoderFactory(LazyDBDecoder.FACTORY)
                                         .heartbeatFrequency(5)
                                         .minHeartbeatFrequency(11)
@@ -169,6 +174,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
         options.isSocketKeepAlive()
         options.isSslEnabled()
+        options.isSslInvalidHostNameAllowed()
         options.getDbDecoderFactory() == LazyDBDecoder.FACTORY
         options.getDbEncoderFactory() == encoderFactory
         options.getHeartbeatFrequency() == 5
@@ -190,9 +196,11 @@ class MongoClientOptionsSpecification extends Specification {
                                                          .keepAlive(true).build()
         options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
                                                 .build()
+        options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()
     }
 
-    def 'should sslEnabled based on socketFactory'() {
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    def 'should set sslEnabled based on socketFactory'() {
         given:
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
         SocketFactory socketFactory = SSLSocketFactory.getDefault()
@@ -228,6 +236,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .threadsAllowedToBlockForConnectionMultiplier(2)
                 .socketKeepAlive(true)
                 .sslEnabled(true)
+                .sslInvalidHostNameAllowed(true)
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
                 .heartbeatFrequency(5)
                 .minHeartbeatFrequency(11)
@@ -241,6 +250,22 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         expect options, isTheSameAs(MongoClientOptions.builder(options).build())
+    }
+
+    def 'should throw MongoInternalException mentioning MongoClientOptions if sslEnabled is true and sslInvalidHostNameAllowed is false'() {
+        given:
+        String javaVersion = System.getProperty('java.version')
+        when:
+
+        System.setProperty('java.version', '1.6.0_45')
+        MongoClientOptions.builder().sslEnabled(true).build()
+
+        then:
+        def e = thrown(MongoInternalException)
+        e.message.contains('MongoClientOptions.sslInvalidHostNameAllowed')
+
+        cleanup:
+        System.setProperty('java.version', javaVersion)
     }
 
     def 'should copy all methods from the existing MongoClientOptions'() {
@@ -275,6 +300,7 @@ class MongoClientOptionsSpecification extends Specification {
         1 * options.isSocketKeepAlive()
         1 * options.getSocketTimeout()
         1 * options.isSslEnabled()
+        1 * options.isSslInvalidHostNameAllowed()
         1 * options.getThreadsAllowedToBlockForConnectionMultiplier()
         1 * options.getWriteConcern()
 
@@ -290,7 +316,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime',
                         'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference', 'requiredReplicaSetName',
                         'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslEnabled',
-                        'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+                        'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:
         actual == expected

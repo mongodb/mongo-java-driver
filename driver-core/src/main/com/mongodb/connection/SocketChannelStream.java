@@ -27,25 +27,29 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 
 class SocketChannelStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;
+    private final SslSettings sslSettings;
     private final BufferProvider bufferProvider;
     private volatile SocketChannel socketChannel;
     private volatile boolean isClosed;
 
-    public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final BufferProvider bufferProvider) {
-        this.address = address;
-        this.settings = settings;
-        this.bufferProvider = bufferProvider;
+    public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
+                               final BufferProvider bufferProvider) {
+        this.address = notNull("address", address);
+        this.settings = notNull("settings", settings);
+        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 
     @Override
     public void open() throws IOException {
         try {
             socketChannel = SocketChannel.open();
-            SocketStreamHelper.initialize(socketChannel.socket(), address, settings);
+            SocketStreamHelper.initialize(socketChannel.socket(), address, settings, sslSettings);
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);

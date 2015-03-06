@@ -16,15 +16,19 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 
+import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class SocketStreamHelper {
-    static void initialize(final Socket socket, final ServerAddress address, final SocketSettings settings) throws IOException {
+    static void initialize(final Socket socket, final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings)
+    throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeout(MILLISECONDS));
         socket.setKeepAlive(settings.isKeepAlive());
@@ -33,6 +37,15 @@ final class SocketStreamHelper {
         }
         if (settings.getSendBufferSize() > 0) {
             socket.setSendBufferSize(settings.getSendBufferSize());
+        }
+        if (sslSettings.isEnabled()) {
+            if (!(socket instanceof SSLSocket)) {
+                throw new MongoInternalException("SSL is enabled but the socket is not an instance of javax.net.ssl.SSLSocket");
+            }
+            if (!sslSettings.isInvalidHostNameAllowed()) {
+                SSLSocket sslSocket = (SSLSocket) socket;
+                sslSocket.setSSLParameters(enableHostNameVerification(sslSocket.getSSLParameters()));
+            }
         }
         socket.connect(address.getSocketAddress(), settings.getConnectTimeout(MILLISECONDS));
     }

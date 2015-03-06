@@ -42,34 +42,33 @@ public class SocketStreamFactory implements StreamFactory {
      * @param sslSettings whether SSL is enabled.
      */
     public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
-        this.settings = notNull("settings", settings);
-        this.sslSettings = notNull("sslSettings", sslSettings);
-        this.socketFactory = null;
+        this(settings, sslSettings, null);
     }
 
     /**
      * Creates a new factory with the given settings for connecting to servers and a factory for creating connections.
      *
      * @param settings      the SocketSettings for connecting to a MongoDB server
+     * @param sslSettings   the SSL for connecting to a MongoDB server
      * @param socketFactory a SocketFactory for creating connections to servers.
      */
-    public SocketStreamFactory(final SocketSettings settings, final SocketFactory socketFactory) {
+    public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final SocketFactory socketFactory) {
         this.settings = notNull("settings", settings);
-        this.sslSettings = null;
-        this.socketFactory = notNull("socketFactory", socketFactory);
+        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.socketFactory = socketFactory;
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
         Stream stream;
         if (socketFactory != null) {
-            stream = new SocketStream(serverAddress, settings, socketFactory, bufferProvider);
+            stream = new SocketStream(serverAddress, settings, sslSettings, socketFactory, bufferProvider);
         } else if (sslSettings.isEnabled()) {
-            stream = new SocketStream(serverAddress, settings, SSLSocketFactory.getDefault(), bufferProvider);
+            stream = new SocketStream(serverAddress, settings, sslSettings, SSLSocketFactory.getDefault(), bufferProvider);
         } else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
-            stream = new SocketStream(serverAddress, settings, SocketFactory.getDefault(), bufferProvider);
+            stream = new SocketStream(serverAddress, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
         } else {
-            stream = new SocketChannelStream(serverAddress, settings, bufferProvider);
+            stream = new SocketChannelStream(serverAddress, settings, sslSettings, bufferProvider);
         }
 
         return stream;

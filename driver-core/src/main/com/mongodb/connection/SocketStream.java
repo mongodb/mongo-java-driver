@@ -28,9 +28,12 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 class SocketStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;
+    private final SslSettings sslSettings;
     private final SocketFactory socketFactory;
     private final BufferProvider bufferProvider;
     private volatile Socket socket;
@@ -38,19 +41,21 @@ class SocketStream implements Stream {
     private volatile InputStream inputStream;
     private volatile boolean isClosed;
 
-    public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory,
+    public SocketStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
+                        final SocketFactory socketFactory,
                         final BufferProvider bufferProvider) {
-        this.address = address;
-        this.settings = settings;
-        this.socketFactory = socketFactory;
-        this.bufferProvider = bufferProvider;
+        this.address = notNull("address", address);
+        this.settings = notNull("settings", settings);
+        this.sslSettings = notNull("sslSettings", sslSettings);
+        this.socketFactory = notNull("socketFactory", socketFactory);
+        this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 
     @Override
     public void open() throws IOException {
         try {
             socket = socketFactory.createSocket();
-            SocketStreamHelper.initialize(socket, address, settings);
+            SocketStreamHelper.initialize(socket, address, settings, sslSettings);
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
         } catch (IOException e) {

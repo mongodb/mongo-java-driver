@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -119,6 +120,7 @@ class MongoClientURISpecification extends Specification {
 
     }
 
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
     @Unroll
     def 'should correctly parse URI options for #type'() {
         expect:
@@ -243,6 +245,7 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 250
     }
 
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
     def 'should be equal to another MongoClientURI with the same string values'() {
         expect:
         uri1 == uri2
@@ -279,7 +282,7 @@ class MongoClientURISpecification extends Specification {
                          + 'socketTimeoutMS=5500;'
                          + 'safe=false;w=1;wtimeout=2500;'
                          + 'fsync=true;readPreference=primary;'
-                         + 'ssl=true')                              |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
+                         + 'ssl=true')                               |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
                                                                                          + 'maxPoolSize=10&waitQueueMultiple=7;'
                                                                                          + 'waitQueueTimeoutMS=150;'
                                                                                          + 'maxIdleTimeMS=200&maxLifeTimeMS=300'

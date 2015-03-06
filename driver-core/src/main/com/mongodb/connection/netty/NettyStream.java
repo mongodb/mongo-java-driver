@@ -22,8 +22,8 @@ import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.Stream;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -52,6 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -116,7 +117,9 @@ final class NettyStream implements Stream {
                 if (sslSettings.isEnabled()) {
                     SSLEngine engine = SSLContext.getDefault().createSSLEngine();
                     engine.setUseClientMode(true);
-
+                    if (!sslSettings.isInvalidHostNameAllowed()) {
+                        engine.setSSLParameters(enableHostNameVerification(engine.getSSLParameters()));
+                    }
                     ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
                 }
                 ch.pipeline().addLast("readTimeoutHandler", new ReadTimeoutHandler(settings.getReadTimeout(MILLISECONDS), MILLISECONDS));

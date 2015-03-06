@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoInternalException;
 import com.mongodb.annotations.Immutable;
 
 /**
@@ -27,6 +28,7 @@ import com.mongodb.annotations.Immutable;
 @Immutable
 public class SslSettings {
     private final boolean enabled;
+    private final boolean invalidHostNameAllowed;
 
     /**
      * Gets a Builder for creating a new SSLSettings instance.
@@ -42,6 +44,7 @@ public class SslSettings {
      */
     public static class Builder {
         private boolean enabled;
+        private boolean invalidHostNameAllowed;
 
         /**
          * Define whether SSL should be enabled.
@@ -51,6 +54,18 @@ public class SslSettings {
          */
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        /**
+         * Define whether invalid host names should be allowed.  Defaults to false.  Take care before setting this to true, as it makes
+         * the application susceptible to man-in-the-middle attacks.
+         *
+         * @param invalidHostNameAllowed whether invalid host names are allowed.
+         * @return this
+         */
+        public Builder invalidHostNameAllowed(final boolean invalidHostNameAllowed) {
+            this.invalidHostNameAllowed = invalidHostNameAllowed;
             return this;
         }
 
@@ -71,6 +86,8 @@ public class SslSettings {
          * Create a new SSLSettings from the settings in this builder.
          *
          * @return a new SSL settings
+         * @throws com.mongodb.MongoInternalException if enabled is true, invalidHostNameAllowed is false, and the {@code "java.version"}
+         * system property starts with 1.6
          */
         public SslSettings build() {
             return new SslSettings(this);
@@ -86,14 +103,61 @@ public class SslSettings {
         return enabled;
     }
 
+    /**
+     * Returns whether invalid host names should be allowed.  Defaults to false.  Take care before setting this to true, as it makes
+     * the application susceptible to man-in-the-middle attacks.
+     *
+     * @return true if invalid host names are allowed.
+     */
+    public boolean isInvalidHostNameAllowed() {
+        return invalidHostNameAllowed;
+    }
+
     SslSettings(final Builder builder) {
         enabled = builder.enabled;
+        invalidHostNameAllowed = builder.invalidHostNameAllowed;
+        if (enabled && !invalidHostNameAllowed) {
+            if (System.getProperty("java.version").startsWith("1.6.")) {
+                throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
+                                                 + "must run on Java 6, you must set the SslSettings.invalidHostNameAllowed property to "
+                                                 + "false");
+            }
+        }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SslSettings that = (SslSettings) o;
+
+        if (enabled != that.enabled) {
+            return false;
+        }
+        if (invalidHostNameAllowed != that.invalidHostNameAllowed) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (enabled ? 1 : 0);
+        result = 31 * result + (invalidHostNameAllowed ? 1 : 0);
+        return result;
     }
 
     @Override
     public String toString() {
-        return "SSLSettings{"
+        return "SslSettings{"
                + "enabled=" + enabled
+               + ", invalidHostNameAllowed=" + invalidHostNameAllowed
                + '}';
     }
 }

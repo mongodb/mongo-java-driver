@@ -20,6 +20,11 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import org.bson.Document;
 
 import java.util.concurrent.ExecutionException;
@@ -45,7 +50,28 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = (MongoClientImpl) MongoClients.create(getConnectionString());
+            SslSettings.Builder sslSettingsBuilder = SslSettings.builder().applyConnectionString(getConnectionString());
+            if (System.getProperty("java.version").startsWith("1.6.")) {
+                sslSettingsBuilder.invalidHostNameAllowed(true);
+            }
+            ClusterSettings clusterSettings = ClusterSettings.builder()
+                                                             .applyConnectionString(getConnectionString())
+                                                             .build();
+            ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder()
+                                                                                  .applyConnectionString(getConnectionString())
+                                                                                  .build();
+            SocketSettings socketSettings = SocketSettings.builder()
+                                                          .applyConnectionString(getConnectionString())
+                                                          .build();
+            MongoClientSettings settings = MongoClientSettings.builder()
+                                                           .clusterSettings(clusterSettings)
+                                                           .connectionPoolSettings(connectionPoolSettings)
+                                                           .serverSettings(ServerSettings.builder().build())
+                                                           .credentialList(getConnectionString().getCredentialList())
+                                                           .sslSettings(sslSettingsBuilder.build())
+                                                           .socketSettings(socketSettings)
+                                                           .build();
+            mongoClient = (MongoClientImpl) MongoClients.create(settings);
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;

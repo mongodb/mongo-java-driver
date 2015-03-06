@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
@@ -33,16 +34,15 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
-import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CommandWriteOperation;
@@ -202,7 +202,11 @@ public final class ClusterFixture {
     }
 
     public static SslSettings getSslSettings() {
-        return SslSettings.builder().applyConnectionString(getConnectionString()).build();
+        SslSettings.Builder builder = SslSettings.builder().applyConnectionString(getConnectionString());
+        if (System.getProperty("java.version").startsWith("1.6.")) {
+            builder.invalidHostNameAllowed(true);
+        }
+        return builder.build();
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {

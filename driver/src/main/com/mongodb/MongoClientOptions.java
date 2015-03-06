@@ -20,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
@@ -58,6 +59,7 @@ public class MongoClientOptions {
     private final int socketTimeout;
     private final boolean socketKeepAlive;
     private final boolean sslEnabled;
+    private final boolean sslInvalidHostNameAllowed;
     private final boolean alwaysUseMBeans;
     private final int heartbeatFrequency;
     private final int minHeartbeatFrequency;
@@ -74,6 +76,7 @@ public class MongoClientOptions {
     private final SocketSettings socketSettings;
     private final ServerSettings serverSettings;
     private final SocketSettings heartbeatSocketSettings;
+    private final SslSettings sslSettings;
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
@@ -91,6 +94,7 @@ public class MongoClientOptions {
         writeConcern = builder.writeConcern;
         codecRegistry = builder.codecRegistry;
         sslEnabled = builder.sslEnabled;
+        sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
@@ -128,6 +132,17 @@ public class MongoClientOptions {
                                        .minHeartbeatFrequency(getMinHeartbeatFrequency(), MILLISECONDS)
                                        .build();
 
+        try {
+            sslSettings = SslSettings.builder()
+                                     .enabled(sslEnabled)
+                                     .invalidHostNameAllowed(sslInvalidHostNameAllowed)
+                                     .build();
+        } catch (MongoInternalException e) {
+            // The error message from SslSettings needs to be translated to make sense for users of MongoClientOptions
+            throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
+                                             + "must run on Java 6, you must set the MongoClientOptions.sslInvalidHostNameAllowed "
+                                             + "property to false");
+        }
     }
 
     /**
@@ -374,6 +389,17 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns whether invalid host names should be allowed if SSL is enabled.  Defaults to false.  Take care before setting this to
+     * true, as it makes the application susceptible to man-in-the-middle attacks.  Note that host name verification currently requires
+     * Java 7, so if your application is using SSL and must run on Java 6, this property must be set to {@code true}.
+     *
+     * @return true if invalid host names are allowed.
+     */
+    public boolean isSslInvalidHostNameAllowed() {
+        return sslInvalidHostNameAllowed;
+    }
+
+    /**
      * <p>The read preference to use for queries, map-reduce, aggregation, and count.</p>
      *
      * <p>Default is {@code ReadPreference.primary()}.</p>
@@ -483,6 +509,10 @@ public class MongoClientOptions {
         return heartbeatSocketSettings;
     }
 
+    SslSettings getSslSettings() {
+        return sslSettings;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -545,6 +575,9 @@ public class MongoClientOptions {
         if (sslEnabled != that.sslEnabled) {
             return false;
         }
+        if (sslInvalidHostNameAllowed != that.sslInvalidHostNameAllowed) {
+            return false;
+        }
         if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
             return false;
         }
@@ -591,6 +624,7 @@ public class MongoClientOptions {
         result = 31 * result + socketTimeout;
         result = 31 * result + (socketKeepAlive ? 1 : 0);
         result = 31 * result + (sslEnabled ? 1 : 0);
+        result = 31 * result + (sslInvalidHostNameAllowed ? 1 : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         result = 31 * result + heartbeatFrequency;
         result = 31 * result + minHeartbeatFrequency;
@@ -623,6 +657,7 @@ public class MongoClientOptions {
                + ", socketTimeout=" + socketTimeout
                + ", socketKeepAlive=" + socketKeepAlive
                + ", sslEnabled=" + sslEnabled
+               + ", sslInvalidHostNamesAllowed=" + sslInvalidHostNameAllowed
                + ", alwaysUseMBeans=" + alwaysUseMBeans
                + ", heartbeatFrequency=" + heartbeatFrequency
                + ", minHeartbeatFrequency=" + minHeartbeatFrequency
@@ -663,6 +698,7 @@ public class MongoClientOptions {
         private int socketTimeout = 0;
         private boolean socketKeepAlive = false;
         private boolean sslEnabled = false;
+        private boolean sslInvalidHostNameAllowed = false;
         private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
@@ -709,6 +745,7 @@ public class MongoClientOptions {
             writeConcern = options.getWriteConcern();
             codecRegistry = options.getCodecRegistry();
             sslEnabled = options.isSslEnabled();
+            sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
             alwaysUseMBeans = options.isAlwaysUseMBeans();
             heartbeatFrequency = options.getHeartbeatFrequency();
             minHeartbeatFrequency = options.getMinHeartbeatFrequency();
@@ -885,6 +922,19 @@ public class MongoClientOptions {
             this.socketFactory(sslEnabled ? SSLSocketFactory.getDefault() : SocketFactory.getDefault());
             return this;
         }
+
+        /**
+         * Define whether invalid host names should be allowed.  Defaults to false.  Take care before setting this to true, as it makes
+         * the application susceptible to man-in-the-middle attacks.
+         *
+         * @param sslInvalidHostNameAllowed whether invalid host names are allowed in SSL certificates.
+         * @return this
+         */
+        public Builder sslInvalidHostNameAllowed(final boolean sslInvalidHostNameAllowed) {
+            this.sslInvalidHostNameAllowed = sslInvalidHostNameAllowed;
+            return this;
+        }
+
 
         /**
          * Sets the read preference.
