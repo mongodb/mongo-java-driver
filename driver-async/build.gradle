@@ -18,6 +18,11 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'mongodb-driver-async'
 
+
+sourceSets {
+    test.java.srcDirs += 'src/examples'
+}
+
 dependencies {
     compile project(':bson')
     compile project(':driver-core')

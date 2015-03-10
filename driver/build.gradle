@@ -21,7 +21,7 @@ apply plugin: 'clirr'
 archivesBaseName = 'mongodb-driver'
 
 sourceSets {
-    test.java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/examples']
+    test.java.srcDirs += ['src/test/acceptance', 'src/examples']
 }
 
 test {
