@@ -21,7 +21,6 @@ import org.junit.Test;
 // @imports: start
 import org.bson.Document;
 import com.mongodb.Block;
-import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 
 import static com.mongodb.client.model.Filters.*;

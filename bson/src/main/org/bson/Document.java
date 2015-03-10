@@ -18,12 +18,16 @@ package org.bson;
 
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -217,6 +221,58 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     public Date getDate(final Object key) {
         return (Date) get(key);
+    }
+
+    /**
+     * Gets a JSON representation of this document
+     *
+     * <p>With the default {@link JsonWriterSettings} and {@link DocumentCodec}.</p>
+     *
+     * @return a JSON representation of this document
+     * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
+     */
+    public String toJson() {
+        return toJson(new JsonWriterSettings());
+    }
+
+    /**
+     * Gets a JSON representation of this document
+     *
+     * <p>With the default {@link DocumentCodec}.</p>
+     *
+     * @param writerSettings the json writer settings to use when encoding
+     * @return a JSON representation of this document
+     * @throws org.bson.codecs.configuration.CodecConfigurationException if the document contains types not in the default registry
+     */
+    public String toJson(final JsonWriterSettings writerSettings) {
+        return toJson(writerSettings, new DocumentCodec());
+    }
+
+    /**
+     * Gets a JSON representation of this document
+     *
+     * <p>With the default {@link JsonWriterSettings}.</p>
+     *
+     * @param documentCodec the document codec instance to use to encode the document
+     * @return a JSON representation of this document
+     * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
+     */
+    public String toJson(final DocumentCodec documentCodec) {
+        return toJson(new JsonWriterSettings(), documentCodec);
+    }
+
+    /**
+     * Gets a JSON representation of this document
+     *
+     * @param writerSettings the json writer settings to use when encoding
+     * @param documentCodec the document codec instance to use to encode the document
+     * @return a JSON representation of this document
+     * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
+     */
+    public String toJson(final JsonWriterSettings writerSettings, final DocumentCodec documentCodec) {
+        JsonWriter writer = new JsonWriter(new StringWriter(), writerSettings);
+        documentCodec.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        return writer.getWriter().toString();
     }
 
     // Vanilla Map methods delegate to map field

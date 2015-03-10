@@ -26,6 +26,12 @@
 
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
 
+    <!--Do not check primer classes -->
+    <suppress checks="Javadoc*" files=".*primer.*"/>
+    <suppress checks="Regexp" files=".*primer.*"/>
+    <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
+    <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
+
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
 
