@@ -17,15 +17,22 @@
 package primer;
 
 import org.junit.Test;
-
 // @import: start
 import org.bson.Document;
+
+import static java.util.Arrays.asList;
 // @import: end
+
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static org.junit.Assume.assumeTrue;
+
 
 public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateTopLevelFields() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+
         // @begin: update-top-level-fields
         db.getCollection("restaurants").updateOne(new Document("name", "Juni"),
                 new Document("$set", new Document("cuisine", "American (New)"))
@@ -58,6 +65,8 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateMultipleDocuments() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+
         // @begin: update-multiple-documents
         db.getCollection("restaurants").updateMany(new Document("address.zipcode", "10016"),
                 new Document("$set", new Document("borough", "Midtown"))
