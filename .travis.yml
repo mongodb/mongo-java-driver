@@ -1,13 +1,12 @@
 language: java
-jdk: 
+jdk:
 - oraclejdk8
 
-notifications: 
-  email: 
-    recipients: 
-    - jeff.yemin@10gen.com
-    - ross@10gen.com
-    - trisha.gee@10gen.com
+notifications:
+  email:
+    recipients:
+    - jeff.yemin@mongodb.com
+    - ross@mongodb.com
     on_success: change
     on_failure: always
   flowdock:
@@ -16,7 +15,6 @@ notifications:
 branches:
   only:
   - master
-  - 3.0.x
 
 env:
   global:
