@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.DeleteRequest
 import org.bson.BsonBinary
@@ -61,6 +62,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count() == 0
     }
 
+    @Category(Slow)
     def 'should split removes into batches'() {
         given:
         def bigDoc = new BsonDocument('bytes', new BsonBinary(new byte[1024 * 1024 * 16 - 2127]))
@@ -78,7 +80,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count() == 0
     }
 
-    @Category(Async)
+    @Category([Slow, Async])
     def 'should split removes into batches asynchronously'() {
         given:
         def bigDoc = new BsonDocument('bytes', new BsonBinary(new byte[1024 * 1024 * 16 - 2127]))

@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
@@ -118,6 +119,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @Category(Slow)
     def 'should allow update larger than 16MB'() {
         // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
         def binary = new BsonBinary(new byte[16 * 1024 * 1024 - 24])

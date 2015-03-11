@@ -178,6 +178,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         }
     }
 
+    @Category(Slow)
     def 'test try next with tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))

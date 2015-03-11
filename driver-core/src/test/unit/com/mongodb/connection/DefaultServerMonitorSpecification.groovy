@@ -16,8 +16,10 @@
 
 package com.mongodb.connection
 
+import category.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -60,6 +62,7 @@ class DefaultServerMonitorSpecification extends Specification {
         monitor?.close()
     }
 
+    @Category(Slow)
     def 'invalidate should not send a sendStateChangedEvent'() {
         given:
         def stateChanged = false
