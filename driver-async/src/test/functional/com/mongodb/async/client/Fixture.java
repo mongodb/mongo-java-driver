@@ -51,9 +51,9 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             SslSettings.Builder sslSettingsBuilder = SslSettings.builder().applyConnectionString(getConnectionString());
-            if (System.getProperty("java.version").startsWith("1.6.")) {
+//            if (System.getProperty("java.version").startsWith("1.6.")) {
                 sslSettingsBuilder.invalidHostNameAllowed(true);
-            }
+//            }
             ClusterSettings clusterSettings = ClusterSettings.builder()
                                                              .applyConnectionString(getConnectionString())
                                                              .build();
