@@ -459,13 +459,13 @@ class InternalStreamConnection implements InternalConnection {
                                               reading.release();
                                               processUnknownFailedRead(t);
                                           } else {
-                                              reading.release();
                                               if (LOGGER.isTraceEnabled()) {
                                                   LOGGER.trace(format("Read message: %s", result.getReplyHeader().getResponseTo()));
                                               }
-                                              messages.put(result.getReplyHeader().getResponseTo(),
-                                                           new Response(result, t));
+                                              messages.put(result.getReplyHeader().getResponseTo(), new Response(result, t));
+                                              reading.release();
                                           }
+                                          processPendingResults();
                                           processPendingReads();
                                       }
                                   }), LOGGER));
