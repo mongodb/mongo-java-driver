@@ -49,11 +49,12 @@ public class AggregatePrimer extends PrimerTestCase {
 
         /*
         // @results: start
-        { "_id" : "11377", "count" : 1 }
-        { "_id" : "11368", "count" : 1 }
-        { "_id" : "11101", "count" : 2 }
-        { "_id" : "11106", "count" : 3 }
-        { "_id" : "11103", "count" : 1 }
+        { "_id" : "Missing", "count" : 51 }
+        { "_id" : "Staten Island", "count" : 969 }
+        { "_id" : "Manhattan", "count" : 10259 }
+        { "_id" : "Brooklyn", "count" : 6086 }
+        { "_id" : "Queens", "count" : 5656 }
+        { "_id" : "Bronx", "count" : 2338 }
         // @results: end
        */
 
@@ -82,12 +83,11 @@ public class AggregatePrimer extends PrimerTestCase {
 
         /*
         // @results: start
-        { "_id" : "Missing", "count" : 51 }
-        { "_id" : "Staten Island", "count" : 969 }
-        { "_id" : "Manhattan", "count" : 10259 }
-        { "_id" : "Brooklyn", "count" : 6086 }
-        { "_id" : "Queens", "count" : 5656 }
-        { "_id" : "Bronx", "count" : 2338 }
+        { "_id" : "11377", "count" : 1 }
+        { "_id" : "11368", "count" : 1 }
+        { "_id" : "11101", "count" : 2 }
+        { "_id" : "11106", "count" : 3 }
+        { "_id" : "11103", "count" : 1 }
         // @results: end
         */
 
