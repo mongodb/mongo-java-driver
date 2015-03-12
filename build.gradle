@@ -170,8 +170,10 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         }
 
         afterTest { descr, result ->
-            logger.info("[Test ${descr.className} > ${descr.name}] ${result.getResultType()} "
-                                + "(${result.getEndTime() - result.getStartTime()} ms)" )
+                def failureStartTime = result.getResultType().toString() == "FAILURE" ? " Started at: ${result.getStartTime()}" : ""
+                logger.info("[Test ${descr.className} > ${descr.name}] ${result.getResultType()} "
+                        + "(${result.getEndTime() - result.getStartTime()} ms) ${failureStartTime}")
+
         }
 
         testLogging { exceptionFormat = 'full' }
