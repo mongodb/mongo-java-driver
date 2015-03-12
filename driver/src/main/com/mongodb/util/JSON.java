@@ -391,6 +391,9 @@ class JSONParser {
                 if (current == ':' || current == ' ') {
                     break;
                 }
+                if (current == '\"') {
+                    throw new JSONParseException(s, pos);
+                }
             }
 
             if (current == '\\') {
