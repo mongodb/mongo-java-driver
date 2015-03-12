@@ -243,6 +243,9 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         notNull("open", stream);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(format("Queuing send message: %s", lastRequestId));
+        }
         writeQueue.add(new SendMessageAsync(byteBuffers, lastRequestId, errorHandlingCallback(callback, LOGGER)));
         processPendingWrites();
     }
@@ -250,6 +253,9 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         notNull("open", stream);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(format("Queuing read message: %s", responseTo));
+        }
         readQueue.put(responseTo, errorHandlingCallback(callback, LOGGER));
         processPendingReads();
     }
@@ -454,6 +460,9 @@ class InternalStreamConnection implements InternalConnection {
                                               processUnknownFailedRead(t);
                                           } else {
                                               reading.release();
+                                              if (LOGGER.isTraceEnabled()) {
+                                                  LOGGER.trace(format("Read message: %s", result.getReplyHeader().getResponseTo()));
+                                              }
                                               messages.put(result.getReplyHeader().getResponseTo(),
                                                            new Response(result, t));
                                           }
@@ -483,6 +492,9 @@ class InternalStreamConnection implements InternalConnection {
 
             } else {
                 final SendMessageAsync message = writeQueue.poll();
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Sending Message: %s", message.getMessageId()));
+                }
                 stream.writeAsync(message.getByteBuffers(), new AsyncCompletionHandler<Void>() {
                     @Override
                     public void completed(final Void v) {
@@ -515,6 +527,9 @@ class InternalStreamConnection implements InternalConnection {
         while (it.hasNext()) {
             Map.Entry<Integer, Response> pairs = it.next();
             int messageId = pairs.getKey();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Processing read message: %s", messageId));
+            }
             SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
             if (callback != null) {
                 if (pairs.getValue().hasError()) {
@@ -541,6 +556,9 @@ class InternalStreamConnection implements InternalConnection {
         Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, SingleResultCallback<ResponseBuffers>> pairs = it.next();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Processing unknown failed message: %s", pairs.getKey()));
+            }
             SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
             it.remove();
             try {

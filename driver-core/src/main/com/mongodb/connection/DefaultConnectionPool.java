@@ -185,6 +185,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void invalidate() {
+        LOGGER.debug("Invalidating the connection pool");
         generation.incrementAndGet();
     }
 
