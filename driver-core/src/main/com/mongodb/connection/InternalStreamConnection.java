@@ -426,8 +426,9 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void processPendingReads() {
-        processPendingResults();
         if (reading.tryAcquire()) {
+            processPendingResults();
+
             if (readQueue.isEmpty()) {
                 reading.release();
                 return;
@@ -455,14 +456,16 @@ class InternalStreamConnection implements InternalConnection {
                                       @Override
                                       public void onResult(final ResponseBuffers result, final Throwable t) {
                                           if (result == null) {
+                                              reading.release();
                                               processUnknownFailedRead(t);
                                           } else {
+                                              reading.release();
                                               if (LOGGER.isTraceEnabled()) {
                                                   LOGGER.trace(format("Read message: %s", result.getReplyHeader().getResponseTo()));
                                               }
-                                              messages.put(result.getReplyHeader().getResponseTo(), new Response(result, t));
+                                              messages.put(result.getReplyHeader().getResponseTo(),
+                                                           new Response(result, t));
                                           }
-                                          reading.release();
                                           processPendingReads();
                                       }
                                   }), LOGGER));
@@ -520,30 +523,29 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void processPendingResults() {
-        if (!messages.isEmpty()) {
-            for (Map.Entry<Integer, Response> messageResponse : messages.entrySet()) {
-                int messageId = messageResponse.getKey();
-                SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
-                if (callback != null) {
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Processing read message: %s", messageId));
+        Iterator<Map.Entry<Integer, Response>> it = messages.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, Response> pairs = it.next();
+            int messageId = pairs.getKey();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Processing read message: %s", messageId));
+            }
+            SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
+            if (callback != null) {
+                if (pairs.getValue().hasError()) {
+                    try {
+                        callback.onResult(null, pairs.getValue().getError());
+                    } catch (Throwable t) {
+                        LOGGER.warn("Exception calling callback", t);
                     }
-                    Response response = messageResponse.getValue();
-                    messages.remove(messageId);
-                    if (response.hasError()) {
-                        try {
-                            callback.onResult(null, response.getError());
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception calling callback", t);
-                        }
-                    } else {
-                        try {
-                            callback.onResult(response.getResult(), null);
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception calling callback", t);
-                        }
+                } else {
+                    try {
+                        callback.onResult(pairs.getValue().getResult(), null);
+                    } catch (Throwable t) {
+                        LOGGER.warn("Exception calling callback", t);
                     }
                 }
+                it.remove();
             }
         }
     }
