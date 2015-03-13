@@ -46,10 +46,12 @@ class CustomMatchers {
                 return actual."$it".class == expected."$it".class
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
-                if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
+                if ([a1, e1].contains(null) && [a1, e1] != [null, null]) {
+                    return false
+                } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
                     return a1.collect { a -> i++; compare(a, e1[i]) }.every { it }
-                } else if (a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
+                } else if (a1.class != null && a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
                     return compare(a1, e1)
                 }
                 return false
@@ -80,7 +82,9 @@ class CustomMatchers {
                 }
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
-                if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
+                if ([a1, e1].contains(null) && [a1, e1] != [null, null]) {
+                    return false
+                } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
                     a1.each { a ->
                         i++; if (!compare(a, e1[i])) {

@@ -21,6 +21,8 @@ import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.DeleteManyModel
+import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
@@ -28,6 +30,9 @@ import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
+import com.mongodb.client.model.ReplaceOneModel
+import com.mongodb.client.model.UpdateManyModel
+import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
@@ -263,12 +268,29 @@ class MongoCollectionSpecification extends Specification {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
         def expectedOperation = { boolean ordered, WriteConcern wc ->
-            new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
+            new MixedBulkWriteOperation(namespace, [
+                    new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                    new UpdateRequest(new BsonDocument('a', new BsonInt32(2)),
+                            new BsonDocument('a', new BsonInt32(200)), REPLACE).multi(false).upsert(true),
+                    new UpdateRequest(new BsonDocument('a', new BsonInt32(3)),
+                            new BsonDocument('$set', new BsonDocument('a', new BsonInt32(300))), UPDATE).multi(false).upsert(true),
+                    new UpdateRequest(new BsonDocument('a', new BsonInt32(4)),
+                            new BsonDocument('$set', new BsonDocument('a', new BsonInt32(400))), UPDATE).multi(true).upsert(true),
+                    new DeleteRequest(new BsonDocument('a', new BsonInt32(5))).multi(false),
+                    new DeleteRequest(new BsonDocument('a', new BsonInt32(6))).multi(true)
+            ],
                     ordered, wc)
         }
+        def updateOptions = new UpdateOptions().upsert(true)
+        def bulkOperations = [new InsertOneModel(new Document('_id', 1)),
+                              new ReplaceOneModel(new Document('a', 2), new Document('a', 200), updateOptions),
+                              new UpdateOneModel(new Document('a', 3), new Document('$set', new Document('a', 300)), updateOptions),
+                              new UpdateManyModel(new Document('a', 4), new Document('$set', new Document('a', 400)), updateOptions),
+                              new DeleteOneModel(new Document('a', 5)),
+                              new DeleteManyModel(new Document('a', 6))]
 
         when:
-        def result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
+        def result = collection.bulkWrite(bulkOperations)
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -276,7 +298,7 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation(true, writeConcern))
 
         when:
-        result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(true))
+        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
@@ -284,7 +306,7 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation(true, writeConcern))
 
         when:
-        result = collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new BulkWriteOptions().ordered(false))
+        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(false))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
