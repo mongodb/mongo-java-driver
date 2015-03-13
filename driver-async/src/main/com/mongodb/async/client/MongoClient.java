@@ -47,13 +47,13 @@ public interface MongoClient extends Closeable {
     void close();
 
     /**
-     * Gets the options that this client uses to connect to server.
+     * Gets the settings that this client uses to connect to server.
      *
-     * <p>Note: {@link MongoClientOptions} is immutable.</p>
+     * <p>Note: {@link MongoClientSettings} is immutable.</p>
      *
-     * @return the options
+     * @return the settings
      */
-    MongoClientOptions getOptions();
+    MongoClientSettings getSettings();
 
     /**
      * Get a list of the database names

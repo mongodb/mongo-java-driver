@@ -41,7 +41,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
-    private final MongoClientOptions options;
+    private final MongoClientSettings settings;
     private final AsyncOperationExecutor executor;
 
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
@@ -58,26 +58,26 @@ class MongoClientImpl implements MongoClient {
      * </ul>
      *
      * @return the default codec registry
-     * @see MongoClientOptions#getCodecRegistry()
+     * @see MongoClientSettings#getCodecRegistry()
      * @since 3.0
      */
     public static CodecRegistry getDefaultCodecRegistry() {
         return DEFAULT_CODEC_REGISTRY;
     }
 
-    MongoClientImpl(final MongoClientOptions options, final Cluster cluster) {
-        this(options, cluster, createOperationExecutor(options, cluster));
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster) {
+        this(settings, cluster, createOperationExecutor(settings, cluster));
     }
 
-    MongoClientImpl(final MongoClientOptions options, final Cluster cluster, final AsyncOperationExecutor executor) {
-        this.options = notNull("options", options);
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor) {
+        this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.executor = notNull("executor", executor);
     }
 
     @Override
     public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(name, options.getCodecRegistry(), options.getReadPreference(), options.getWriteConcern(), executor);
+        return new MongoDatabaseImpl(name, settings.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(), executor);
     }
 
     @Override
@@ -86,8 +86,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoClientOptions getOptions() {
-        return options;
+    public MongoClientSettings getSettings() {
+        return settings;
     }
 
     @Override
@@ -108,20 +108,20 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
-        return new ListDatabasesIterableImpl<T>(resultClass, options.getCodecRegistry(), ReadPreference.primary(), executor);
+        return new ListDatabasesIterableImpl<T>(resultClass, settings.getCodecRegistry(), ReadPreference.primary(), executor);
     }
 
     Cluster getCluster() {
         return cluster;
     }
 
-    private static AsyncOperationExecutor createOperationExecutor(final MongoClientOptions options, final Cluster cluster) {
+    private static AsyncOperationExecutor createOperationExecutor(final MongoClientSettings settings, final Cluster cluster) {
         return new AsyncOperationExecutor(){
             @Override
             public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
                                     final SingleResultCallback<T> callback) {
                 final SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
-                final AsyncReadBinding binding = getReadWriteBinding(readPreference, options, cluster);
+                final AsyncReadBinding binding = getReadWriteBinding(readPreference, cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
                     public void onResult(final T result, final Throwable t) {
@@ -136,7 +136,7 @@ class MongoClientImpl implements MongoClient {
 
             @Override
             public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
-                final AsyncWriteBinding binding = getReadWriteBinding(ReadPreference.primary(), options, cluster);
+                final AsyncWriteBinding binding = getReadWriteBinding(ReadPreference.primary(), cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
                     public void onResult(final T result, final Throwable t) {
@@ -151,8 +151,7 @@ class MongoClientImpl implements MongoClient {
         };
     }
 
-    private static AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final MongoClientOptions options,
-                                                             final Cluster cluster) {
+    private static AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final Cluster cluster) {
         notNull("readPreference", readPreference);
         return new AsyncClusterBinding(cluster, readPreference);
     }

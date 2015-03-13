@@ -33,10 +33,10 @@ class MongoClientSpecification extends Specification {
 
     def 'should use ListCollectionsOperation correctly'() {
         given:
-        def options = MongoClientOptions.builder().build()
+        def settings = MongoClientSettings.builder().build()
         def cluster = Stub(Cluster)
         def executor = new TestOperationExecutor([null, null, null])
-        def client = new MongoClientImpl(options, cluster, executor)
+        def client = new MongoClientImpl(settings, cluster, executor)
         def codecRegistry = client.getDefaultCodecRegistry()
 
         when:
@@ -54,26 +54,26 @@ class MongoClientSpecification extends Specification {
                 executor))
     }
 
-    def 'should provide the same options'() {
+    def 'should provide the same settings'() {
         given:
-        def options = MongoClientOptions.builder().build()
+        def settings = MongoClientSettings.builder().build()
 
         when:
-        def clientOptions = new MongoClientImpl(options, Stub(Cluster), new TestOperationExecutor([])).getOptions()
+        def clientSettings = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([])).getSettings()
 
         then:
-        options == clientOptions
+        settings == clientSettings
     }
 
-    def 'should pass the correct options to getDatabase'() {
+    def 'should pass the correct settings to getDatabase'() {
         given:
         def codecRegistry = fromProviders([new BsonValueCodecProvider()])
-        def options = MongoClientOptions.builder()
-                .readPreference(secondary())
-                .writeConcern(WriteConcern.MAJORITY)
-                .codecRegistry(codecRegistry)
-                .build()
-        def client = new MongoClientImpl(options, Stub(Cluster), new TestOperationExecutor([]))
+        def settings = MongoClientSettings.builder()
+                                          .readPreference(secondary())
+                                          .writeConcern(WriteConcern.MAJORITY)
+                                          .codecRegistry(codecRegistry)
+                                          .build()
+        def client = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([]))
 
         when:
         def database = client.getDatabase('name');

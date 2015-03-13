@@ -39,7 +39,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 @Immutable
-public final class MongoClientOptions {
+public final class MongoClientSettings {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final List<MongoCredential> credentialList;
@@ -63,17 +63,18 @@ public final class MongoClientOptions {
     }
 
     /**
-     * Convenience method to create a from an existing MongoClientOptions.
+     * Convenience method to create a from an existing {@code MongoClientSettings}.
      *
-     * @param options create a builder from existing options
+     * @param settings create a builder from existing settings
      * @return a builder
      */
-    public static Builder builder(final MongoClientOptions options) {
-        return new Builder(options);
+    public static Builder builder(final MongoClientSettings settings) {
+        return new Builder(settings);
     }
 
     /**
-     * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
+     * A builder for {@code MongoClientSettings} so that {@code MongoClientSettings} can be immutable, and to support easier construction
+     * through chaining.
      */
     public static final class Builder {
         private ReadPreference readPreference = ReadPreference.primary();
@@ -95,21 +96,21 @@ public final class MongoClientOptions {
         }
 
         /**
-         * Creates a Builder from an existing MongoClientOptions.
+         * Creates a Builder from an existing {@code MongoClientSettings}.
          *
-         * @param options create a builder from existing options
+         * @param settings create a builder from existing settings
          */
-        private Builder(final MongoClientOptions options) {
-            readPreference = options.getReadPreference();
-            writeConcern = options.getWriteConcern();
-            credentialList = options.getCredentialList();
-            codecRegistry = options.getCodecRegistry();
-            clusterSettings = options.getClusterSettings();
-            serverSettings = options.getServerSettings();
-            socketSettings = options.getSocketSettings();
-            heartbeatSocketSettings = options.getHeartbeatSocketSettings();
-            connectionPoolSettings = options.getConnectionPoolSettings();
-            sslSettings = options.getSslSettings();
+        private Builder(final MongoClientSettings settings) {
+            readPreference = settings.getReadPreference();
+            writeConcern = settings.getWriteConcern();
+            credentialList = settings.getCredentialList();
+            codecRegistry = settings.getCodecRegistry();
+            clusterSettings = settings.getClusterSettings();
+            serverSettings = settings.getServerSettings();
+            socketSettings = settings.getSocketSettings();
+            heartbeatSocketSettings = settings.getHeartbeatSocketSettings();
+            connectionPoolSettings = settings.getConnectionPoolSettings();
+            sslSettings = settings.getSslSettings();
         }
 
         /**
@@ -117,7 +118,7 @@ public final class MongoClientOptions {
          *
          * @param clusterSettings the cluster settings
          * @return {@code this}
-         * @see MongoClientOptions#getClusterSettings()
+         * @see MongoClientSettings#getClusterSettings()
          */
         public Builder clusterSettings(final ClusterSettings clusterSettings) {
             this.clusterSettings = notNull("clusterSettings", clusterSettings);
@@ -129,7 +130,7 @@ public final class MongoClientOptions {
          *
          * @param socketSettings the socket settings
          * @return {@code this}
-         * @see MongoClientOptions#getSocketSettings()
+         * @see MongoClientSettings#getSocketSettings()
          */
         public Builder socketSettings(final SocketSettings socketSettings) {
             this.socketSettings = notNull("socketSettings", socketSettings);
@@ -141,7 +142,7 @@ public final class MongoClientOptions {
          *
          * @param heartbeatSocketSettings the socket settings
          * @return {@code this}
-         * @see MongoClientOptions#getHeartbeatSocketSettings()
+         * @see MongoClientSettings#getHeartbeatSocketSettings()
          */
         public Builder heartbeatSocketSettings(final SocketSettings heartbeatSocketSettings) {
             this.heartbeatSocketSettings = notNull("heartbeatSocketSettings", heartbeatSocketSettings);
@@ -153,7 +154,7 @@ public final class MongoClientOptions {
          *
          * @param connectionPoolSettings the connection settings
          * @return {@code this}
-         * @see MongoClientOptions#getConnectionPoolSettings() ()
+         * @see MongoClientSettings#getConnectionPoolSettings() ()
          */
         public Builder connectionPoolSettings(final ConnectionPoolSettings connectionPoolSettings) {
             this.connectionPoolSettings = notNull("connectionPoolSettings", connectionPoolSettings);
@@ -165,7 +166,7 @@ public final class MongoClientOptions {
          *
          * @param serverSettings the server settings
          * @return {@code this}
-         * @see MongoClientOptions#getServerSettings() ()
+         * @see MongoClientSettings#getServerSettings() ()
          */
         public Builder serverSettings(final ServerSettings serverSettings) {
             this.serverSettings = notNull("serverSettings", serverSettings);
@@ -177,7 +178,7 @@ public final class MongoClientOptions {
          *
          * @param sslSettings the SSL settings
          * @return {@code this}
-         * @see MongoClientOptions#getSslSettings() ()
+         * @see MongoClientSettings#getSslSettings() ()
          */
         public Builder sslSettings(final SslSettings sslSettings) {
             this.sslSettings = notNull("sslSettings", sslSettings);
@@ -190,7 +191,7 @@ public final class MongoClientOptions {
          *
          * @param readPreference read preference
          * @return {@code this}
-         * @see MongoClientOptions#getReadPreference()
+         * @see MongoClientSettings#getReadPreference()
          */
         public Builder readPreference(final ReadPreference readPreference) {
             this.readPreference = notNull("readPreference", readPreference);
@@ -202,7 +203,7 @@ public final class MongoClientOptions {
          *
          * @param writeConcern the write concern
          * @return {@code this}
-         * @see MongoClientOptions#getWriteConcern()
+         * @see MongoClientSettings#getWriteConcern()
          */
         public Builder writeConcern(final WriteConcern writeConcern) {
             this.writeConcern = notNull("writeConcern", writeConcern);
@@ -214,7 +215,7 @@ public final class MongoClientOptions {
          *
          * @param credentialList the credential list
          * @return {@code this}
-         * @see MongoClientOptions#getCredentialList()
+         * @see MongoClientSettings#getCredentialList()
          */
         public Builder credentialList(final List<MongoCredential> credentialList) {
             this.credentialList = Collections.unmodifiableList(notNull("credentialList", credentialList));
@@ -226,7 +227,7 @@ public final class MongoClientOptions {
          *
          * @param codecRegistry the codec registry
          * @return {@code this}
-         * @see MongoClientOptions#getCodecRegistry()
+         * @see MongoClientSettings#getCodecRegistry()
          * @since 3.0
          */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
@@ -235,12 +236,12 @@ public final class MongoClientOptions {
         }
 
         /**
-         * Build an instance of MongoClientOptions.
+         * Build an instance of {@code MongoClientSettings}.
          *
-         * @return the options from this builder
+         * @return the settings from this builder
          */
-        public MongoClientOptions build() {
-            return new MongoClientOptions(this);
+        public MongoClientSettings build() {
+            return new MongoClientSettings(this);
         }
     }
 
@@ -311,7 +312,7 @@ public final class MongoClientOptions {
      * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout,
      * socketTimeout and socketKeepAlive.
      *
-     * @return a SocketSettings object populated with the connection settings from this MongoClientOptions instance.
+     * @return a SocketSettings object populated with the connection settings from this {@code MongoClientSettings} instance.
      * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getSocketSettings() {
@@ -322,7 +323,7 @@ public final class MongoClientOptions {
      * Gets the connection settings for the heartbeat thread (the background task that checks the state of the cluster) wrapped in a
      * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
      *
-     * @return a SocketSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
+     * @return a SocketSettings object populated with the heartbeat connection settings from this {@code MongoClientSettings} instance.
      * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getHeartbeatSocketSettings() {
@@ -334,7 +335,8 @@ public final class MongoClientOptions {
      * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
      * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
      *
-     * @return a ConnectionPoolSettings populated with the settings from this options instance that relate to the connection provider.
+     * @return a ConnectionPoolSettings populated with the settings from this {@code MongoClientSettings} instance that relate to the
+     * connection provider.
      * @see com.mongodb.connection.ConnectionPoolSettings
      */
     public ConnectionPoolSettings getConnectionPoolSettings() {
@@ -343,7 +345,7 @@ public final class MongoClientOptions {
 
     /**
      * Gets the server-specific settings wrapped in a settings object.  This settings object uses the heartbeatFrequency and
-     * minHeartbeatFrequency values from this MongoClientOptions instance.
+     * minHeartbeatFrequency values from this {@code MongoClientSettings} instance.
      *
      * @return a ServerSettings
      * @see com.mongodb.connection.ServerSettings
@@ -352,7 +354,7 @@ public final class MongoClientOptions {
         return serverSettings;
     }
 
-    private MongoClientOptions(final Builder builder) {
+    private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         credentialList = builder.credentialList;

@@ -31,11 +31,11 @@ import spock.lang.Specification
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
-class MongoClientOptionsSpecification extends Specification {
+class MongoClientSettingsSpecification extends Specification {
 
     def 'should set the correct default values'() {
         given:
-        def options = MongoClientOptions.builder().build()
+        def options = MongoClientSettings.builder().build()
 
         expect:
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
@@ -49,7 +49,7 @@ class MongoClientOptionsSpecification extends Specification {
     @SuppressWarnings('UnnecessaryObjectReferences')
     def 'should handle illegal arguments'() {
         given:
-        def builder = MongoClientOptions.builder()
+        def builder = MongoClientSettings.builder()
 
         when:
         builder.clusterSettings(null)
@@ -113,7 +113,7 @@ class MongoClientOptionsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
 
-        def options = MongoClientOptions.builder()
+        def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNAL_SAFE)
                 .sslSettings(sslSettings)
@@ -150,7 +150,7 @@ class MongoClientOptionsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
 
-        def options = MongoClientOptions.builder()
+        def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNAL_SAFE)
                 .sslSettings(sslSettings)
@@ -164,13 +164,13 @@ class MongoClientOptionsSpecification extends Specification {
                 .build()
 
         then:
-        expect options, isTheSameAs(MongoClientOptions.builder(options).build())
+        expect options, isTheSameAs(MongoClientSettings.builder(options).build())
     }
 
     def 'should only have the following methods in the builder'() {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoClientOptions options) should be updated
-        def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
+        def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['clusterSettings', 'codecRegistry', 'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings',
                         'readPreference', 'serverSettings', 'socketSettings', 'sslSettings', 'writeConcern']
 

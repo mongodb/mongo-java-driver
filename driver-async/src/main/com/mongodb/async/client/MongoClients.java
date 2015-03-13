@@ -41,7 +41,7 @@ public final class MongoClients {
      * @param settings the settings
      * @return the client
      */
-    public static MongoClient create(final MongoClientOptions settings) {
+    public static MongoClient create(final MongoClientSettings settings) {
         return new MongoClientImpl(settings, createCluster(settings, getStreamFactory(settings)));
     }
 
@@ -52,7 +52,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final ConnectionString connectionString) {
-        return create(MongoClientOptions.builder()
+        return create(MongoClientSettings.builder()
                                          .clusterSettings(ClusterSettings.builder()
                                                                          .applyConnectionString(connectionString)
                                                                          .build())
@@ -71,7 +71,7 @@ public final class MongoClients {
     }
 
 
-    private static Cluster createCluster(final MongoClientOptions settings, final StreamFactory streamFactory) {
+    private static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {
         StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(settings);
         return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
                                                   settings.getConnectionPoolSettings(), streamFactory,
@@ -79,11 +79,11 @@ public final class MongoClients {
                                                   settings.getCredentialList(), null, new JMXConnectionPoolListener(), null);
     }
 
-    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions settings) {
+    private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {
         return getStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings());
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientOptions settings) {
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
         return getStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
     }
 
