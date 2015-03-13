@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.util.Arrays.asList;
@@ -36,13 +37,13 @@ public class IndexOptions {
     private boolean unique;
     private String name;
     private boolean sparse;
-    private Integer expireAfterSeconds;
+    private Long expireAfterSeconds;
     private Integer version;
     private Bson weights;
     private String defaultLanguage;
     private String languageOverride;
-    private Integer textIndexVersion;
-    private Integer sphereIndexVersion;
+    private Integer textVersion;
+    private Integer sphereVersion;
     private Integer bits;
     private Double min;
     private Double max;
@@ -134,19 +135,27 @@ public class IndexOptions {
      * @return the time to live for documents in the collection
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public Integer getExpireAfterSeconds() {
-        return expireAfterSeconds;
+    public Long getExpireAfter(TimeUnit timeUnit) {
+        if (expireAfterSeconds == null) {
+            return null;
+        }
+        return timeUnit.convert(expireAfterSeconds, TimeUnit.SECONDS);
     }
 
     /**
-     * s the time to live for documents in the collection
+     * Sets the time to live for documents in the collection
      *
-     * @param expireAfterSeconds the time to live for documents in the collection
+     * @param expireAfter the time to live for documents in the collection
+     * @param timeUnit the time unit for expireAfter
      * @return this
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public IndexOptions expireAfterSeconds(final Integer expireAfterSeconds) {
-        this.expireAfterSeconds = expireAfterSeconds;
+    public IndexOptions expireAfter(final Integer expireAfter, final TimeUnit timeUnit) {
+        if (expireAfter == null) {
+            this.expireAfterSeconds = null;
+        } else {
+            this.expireAfterSeconds = TimeUnit.SECONDS.convert(expireAfter, timeUnit);
+        }
         return this;
     }
 
@@ -255,19 +264,19 @@ public class IndexOptions {
      *
      * @return the text index version number.
      */
-    public Integer getTextIndexVersion() {
-        return textIndexVersion;
+    public Integer getTextVersion() {
+        return textVersion;
     }
 
     /**
      * Set the text index version number.
      *
-     * @param textIndexVersion the text index version number.
+     * @param textVersion the text index version number.
      * @return this
      */
-    public IndexOptions textIndexVersion(final int textIndexVersion) {
-        isTrueArgument("textIndexVersion must be 1 or 2", VALID_TEXT_INDEX_VERSIONS.contains(textIndexVersion));
-        this.textIndexVersion = textIndexVersion;
+    public IndexOptions textVersion(final int textVersion) {
+        isTrueArgument("textVersion must be 1 or 2", VALID_TEXT_INDEX_VERSIONS.contains(textVersion));
+        this.textVersion = textVersion;
         return this;
     }
 
@@ -276,19 +285,19 @@ public class IndexOptions {
      *
      * @return the 2dsphere index version number
      */
-    public Integer getTwoDSphereIndexVersion() {
-        return sphereIndexVersion;
+    public Integer getSphereVersion() {
+        return sphereVersion;
     }
 
     /**
      * Sets the 2dsphere index version number.
      *
-     * @param sphereIndexVersion the 2dsphere index version number.
+     * @param sphereVersion the 2dsphere index version number.
      * @return this
      */
-    public IndexOptions twoDSphereIndexVersion(final int sphereIndexVersion) {
-        isTrueArgument("sphereIndexVersion must be 1 or 2", VALID_SPHERE_INDEX_VERSIONS.contains(sphereIndexVersion));
-        this.sphereIndexVersion = sphereIndexVersion;
+    public IndexOptions sphereVersion(final int sphereVersion) {
+        isTrueArgument("sphereIndexVersion must be 1 or 2", VALID_SPHERE_INDEX_VERSIONS.contains(sphereVersion));
+        this.sphereVersion = sphereVersion;
         return this;
     }
 

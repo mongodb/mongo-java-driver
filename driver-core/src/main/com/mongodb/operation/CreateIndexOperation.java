@@ -33,6 +33,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -61,7 +62,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     private boolean unique;
     private String name;
     private boolean sparse;
-    private Integer expireAfterSeconds;
+    private Long expireAfterSeconds;
     private Integer version;
     private BsonDocument weights;
     private String defaultLanguage;
@@ -182,7 +183,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      * @return the time to live for documents in the collection
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public Integer getExpireAfterSeconds() {
+    public Long getExpireAfterSeconds() {
         return expireAfterSeconds;
     }
 
@@ -193,7 +194,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      * @return this
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public CreateIndexOperation expireAfterSeconds(final Integer expireAfterSeconds) {
+    public CreateIndexOperation expireAfterSeconds(final Long expireAfterSeconds) {
         this.expireAfterSeconds = expireAfterSeconds;
         return this;
     }
@@ -534,7 +535,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
             index.append("sparse", BsonBoolean.TRUE);
         }
         if (expireAfterSeconds != null) {
-            index.append("expireAfterSeconds", new BsonInt32(expireAfterSeconds));
+            index.append("expireAfterSeconds", new BsonInt64(expireAfterSeconds));
         }
         if (version != null) {
             index.append("v", new BsonInt32(version));

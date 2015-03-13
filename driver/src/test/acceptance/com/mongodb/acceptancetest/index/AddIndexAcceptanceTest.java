@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.operation.OrderBy.ASC;
 import static com.mongodb.operation.OrderBy.DESC;
@@ -224,10 +225,10 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateATtlIndex() {
-        collection.createIndex(new Document("theField", 1), new IndexOptions().expireAfterSeconds(1600));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().expireAfter(1600, TimeUnit.SECONDS));
 
-        Integer ttl = collection.listIndexes().into(new ArrayList<Document>()).get(1).getInteger("expireAfterSeconds");
-        assertThat("Should be a ttl index", ttl, is(1600));
+        Long ttl = collection.listIndexes().into(new ArrayList<Document>()).get(1).getLong("expireAfterSeconds");
+        assertThat("Should be a ttl index", ttl, is(1600L));
     }
 
     //TODO: other ordering options

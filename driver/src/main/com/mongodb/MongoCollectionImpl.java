@@ -69,6 +69,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
@@ -394,13 +395,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .background(indexOptions.isBackground())
                          .unique(indexOptions.isUnique())
                          .sparse(indexOptions.isSparse())
-                         .expireAfterSeconds(indexOptions.getExpireAfterSeconds())
+                         .expireAfterSeconds(indexOptions.getExpireAfter(TimeUnit.SECONDS))
                          .version(indexOptions.getVersion())
                          .weights(toBsonDocument(indexOptions.getWeights()))
                          .defaultLanguage(indexOptions.getDefaultLanguage())
                          .languageOverride(indexOptions.getLanguageOverride())
-                         .textIndexVersion(indexOptions.getTextIndexVersion())
-                         .twoDSphereIndexVersion(indexOptions.getTwoDSphereIndexVersion())
+                         .textIndexVersion(indexOptions.getTextVersion())
+                         .twoDSphereIndexVersion(indexOptions.getSphereVersion())
                          .bits(indexOptions.getBits())
                          .min(indexOptions.getMin())
                          .max(indexOptions.getMax())

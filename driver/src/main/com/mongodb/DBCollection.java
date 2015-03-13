@@ -1998,6 +1998,10 @@ public class DBCollection {
             if (value instanceof Number) {
                 transformedValue = ((Number) value).intValue();
             }
+        } else if (clazz == Long.class) {
+            if (value instanceof Number) {
+                transformedValue = ((Number) value).longValue();
+            }
         }
 
         if (!clazz.isAssignableFrom(transformedValue.getClass())) {
@@ -2022,7 +2026,7 @@ public class DBCollection {
             operation.sparse(convertOptionsToType(options, "sparse", Boolean.class));
         }
         if (options.containsField("expireAfterSeconds")) {
-            operation.expireAfterSeconds(convertOptionsToType(options, "expireAfterSeconds", Integer.class));
+            operation.expireAfterSeconds(convertOptionsToType(options, "expireAfterSeconds", Long.class));
         }
         if (options.containsField("v")) {
             operation.version(convertOptionsToType(options, "v", Integer.class));

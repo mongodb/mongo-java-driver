@@ -77,6 +77,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
@@ -426,13 +427,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .background(options.isBackground())
                          .unique(options.isUnique())
                          .sparse(options.isSparse())
-                         .expireAfterSeconds(options.getExpireAfterSeconds())
+                         .expireAfterSeconds(options.getExpireAfter(SECONDS))
                          .version(options.getVersion())
                          .weights(toBsonDocument(options.getWeights()))
                          .defaultLanguage(options.getDefaultLanguage())
                          .languageOverride(options.getLanguageOverride())
-                         .textIndexVersion(options.getTextIndexVersion())
-                         .twoDSphereIndexVersion(options.getTwoDSphereIndexVersion())
+                         .textIndexVersion(options.getTextVersion())
+                         .twoDSphereIndexVersion(options.getSphereVersion())
                          .bits(options.getBits())
                          .min(options.getMin())
                          .max(options.getMax())
