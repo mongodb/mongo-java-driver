@@ -22,6 +22,7 @@ import org.hamcrest.Description
 @SuppressWarnings('NoDef')
 class CustomMatchers {
 
+    def nullList = [null, null]
     static isTheSameAs(final Object e) {
         [
                 matches         : { a -> compare(e, a) },
@@ -46,7 +47,7 @@ class CustomMatchers {
                 return actual."$it".class == expected."$it".class
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
-                if ([a1, e1].contains(null) && [a1, e1] != [null, null]) {
+                if ([a1, e1].contains(null) && [a1, e1] != nullList) {
                     return false
                 } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
@@ -82,7 +83,7 @@ class CustomMatchers {
                 }
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
-                if ([a1, e1].contains(null) && [a1, e1] != [null, null]) {
+                if ([a1, e1].contains(null) && [a1, e1] != nullList) {
                     return false
                 } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
