@@ -34,3 +34,7 @@ codereview.rc
 
 # local settings
 **/gradle.properties
+
+# doc settings
+docs/public
+docs/hugo*

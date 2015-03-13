@@ -1,0 +1,24 @@
+.toggle-nav .fa {
+  cursor: pointer;
+  display: inline-block;
+  font-size: 20px;
+}
+
+.logo {
+  margin-left: 10px;
+}
+
+.sidebar-menu .fa {
+  margin: auto 10px;
+}
+
+.sidebar-closed #sidebar {
+  margin-left: -270px;
+}
+.sidebar-closed .option-popup {
+  display: none;
+}
+
+.sidebar-closed .content .main-column {
+  margin-left: 5px;
+}
