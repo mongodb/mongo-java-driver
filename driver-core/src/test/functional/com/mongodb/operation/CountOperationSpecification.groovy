@@ -21,6 +21,7 @@ import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.bulk.IndexRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -137,7 +138,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use hint with the count'() {
         given:
-        def createIndexOperation = new CreateIndexOperation(getNamespace(), new BsonDocument('x', new BsonInt32(1))).sparse(true)
+        def createIndexOperation = new CreateIndexesOperation(getNamespace(),
+                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
         def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
 
         when:
@@ -150,7 +152,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should use hint with the count asynchronously'() {
         given:
-        def createIndexOperation = new CreateIndexOperation(getNamespace(), new BsonDocument('x', new BsonInt32(1))).sparse(true)
+        def createIndexOperation = new CreateIndexesOperation(getNamespace(),
+                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
         def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
 
         when:

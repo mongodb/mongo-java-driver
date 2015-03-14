@@ -17,6 +17,7 @@
 package com.mongodb
 
 import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.IndexRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.model.BulkWriteOptions
@@ -27,6 +28,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.FindOptions
+import com.mongodb.client.model.IndexModel
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
@@ -39,7 +41,7 @@ import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
-import com.mongodb.operation.CreateIndexOperation
+import com.mongodb.operation.CreateIndexesOperation
 import com.mongodb.operation.DropCollectionOperation
 import com.mongodb.operation.DropIndexOperation
 import com.mongodb.operation.FindAndDeleteOperation
@@ -50,6 +52,7 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
@@ -58,6 +61,8 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
@@ -668,22 +673,72 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use CreateIndexOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
+        def executor = new TestOperationExecutor([null, null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new CreateIndexOperation(namespace, new BsonDocument('key', new BsonInt32(1)))
+
         when:
+        def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))])
         collection.createIndex(new Document('key', 1))
-        def operation = executor.getWriteOperation() as CreateIndexOperation
+        def operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
 
         when:
-        collection.createIndex(new Document('key', 1), new IndexOptions().background(true))
-        operation = executor.getWriteOperation() as CreateIndexOperation
+        expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
+                                                                   new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))])
+        collection.createIndexes([new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))])
+        operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation.background(true))
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        expectedOperation =
+                new CreateIndexesOperation(namespace,
+                                           [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))
+                                                    .background(true)
+                                                    .unique(true)
+                                                    .sparse(true)
+                                                    .name('aIndex')
+                                                    .expireAfter(100, TimeUnit.SECONDS)
+                                                    .version(1)
+                                                    .weights(new BsonDocument('a', new BsonInt32(1000)))
+                                                    .defaultLanguage('es')
+                                                    .languageOverride('language')
+                                                    .textVersion(1)
+                                                    .sphereVersion(2)
+                                                    .bits(1)
+                                                    .min(-180.0)
+                                                    .max(180.0)
+                                                    .bucketSize(200.0)
+                                                    .storageEngine(new BsonDocument('wiredTiger',
+                                                                                    new BsonDocument('configString',
+                                                                                                     new BsonString(
+                                                                                                             'block_compressor=zlib'))))
+                                           ])
+        collection.createIndex(new Document('key', 1), new IndexOptions()
+                .background(true)
+                .unique(true)
+                .sparse(true)
+                .name('aIndex')
+                .expireAfter(100, TimeUnit.SECONDS)
+                .version(1)
+                .weights(new BsonDocument('a', new BsonInt32(1000)))
+                .defaultLanguage('es')
+                .languageOverride('language')
+                .textVersion(1)
+                .sphereVersion(2)
+                .bits(1)
+                .min(-180.0)
+                .max(180.0)
+                .bucketSize(200.0)
+                .storageEngine(new BsonDocument('wiredTiger',
+                                                new BsonDocument('configString', new BsonString('block_compressor=zlib')))))
+        operation = executor.getWriteOperation() as CreateIndexesOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
     }
 
     def 'should use ListIndexesOperations correctly'() {

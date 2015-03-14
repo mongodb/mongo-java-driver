@@ -26,6 +26,7 @@ import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
@@ -37,6 +38,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
@@ -51,7 +53,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexOperation;
+import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
@@ -71,13 +73,13 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
@@ -421,23 +423,35 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void createIndex(final Bson key, final IndexOptions options, final SingleResultCallback<Void> callback) {
-        executor.execute(new CreateIndexOperation(getNamespace(), toBsonDocument(key))
-                         .name(options.getName())
-                         .background(options.isBackground())
-                         .unique(options.isUnique())
-                         .sparse(options.isSparse())
-                         .expireAfterSeconds(options.getExpireAfter(SECONDS))
-                         .version(options.getVersion())
-                         .weights(toBsonDocument(options.getWeights()))
-                         .defaultLanguage(options.getDefaultLanguage())
-                         .languageOverride(options.getLanguageOverride())
-                         .textIndexVersion(options.getTextVersion())
-                         .twoDSphereIndexVersion(options.getSphereVersion())
-                         .bits(options.getBits())
-                         .min(options.getMin())
-                         .max(options.getMax())
-                         .bucketSize(options.getBucketSize()), callback);
+    public void createIndex(final Bson key, final IndexOptions indexOptions, final SingleResultCallback<Void> callback) {
+        createIndexes(asList(new IndexModel(key, indexOptions)), callback);
+    }
+
+    @Override
+    public void createIndexes(final List<IndexModel> indexes, final SingleResultCallback<Void> callback) {
+        notNull("indexes", indexes);
+
+        List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
+        for (IndexModel model : indexes) {
+            indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
+                              .name(model.getOptions().getName())
+                              .background(model.getOptions().isBackground())
+                              .unique(model.getOptions().isUnique())
+                              .sparse(model.getOptions().isSparse())
+                              .expireAfter(model.getOptions().getExpireAfter(TimeUnit.SECONDS), TimeUnit.SECONDS)
+                              .version(model.getOptions().getVersion())
+                              .weights(toBsonDocument(model.getOptions().getWeights()))
+                              .defaultLanguage(model.getOptions().getDefaultLanguage())
+                              .languageOverride(model.getOptions().getLanguageOverride())
+                              .textVersion(model.getOptions().getTextVersion())
+                              .sphereVersion(model.getOptions().getSphereVersion())
+                              .bits(model.getOptions().getBits())
+                              .min(model.getOptions().getMin())
+                              .max(model.getOptions().getMax())
+                              .bucketSize(model.getOptions().getBucketSize())
+                              .storageEngine(toBsonDocument(model.getOptions().getStorageEngine())));
+        }
+        executor.execute(new CreateIndexesOperation(getNamespace(), indexRequests), callback);
     }
 
     @Override

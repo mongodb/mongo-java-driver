@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.connection.BufferProvider;
@@ -26,7 +27,7 @@ import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BaseWriteOperation;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexOperation;
+import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DeleteOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
@@ -1480,6 +1481,9 @@ public class DBCollection {
     /**
      * Creates an index on the field specified, if that index does not already exist.
      *
+     * <p>Prior to MongoDB 3.0 the dropDups option could be used with unique indexes allowing documents with duplicate values to be dropped
+     * when building the index. Later versions of MongoDB will silently ignore this setting. </p>
+     *
      * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
      * @param options a document that controls the creation of the index.
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
@@ -2011,57 +2015,61 @@ public class DBCollection {
     }
 
 
-    private CreateIndexOperation createIndexOperation(final DBObject key, final DBObject options) {
-        CreateIndexOperation operation = new CreateIndexOperation(getNamespace(), wrap(key));
+    private CreateIndexesOperation createIndexOperation(final DBObject key, final DBObject options) {
+        IndexRequest request = new IndexRequest(wrap(key));
         if (options.containsField("name")) {
-            operation.name(convertOptionsToType(options, "name", String.class));
+            request.name(convertOptionsToType(options, "name", String.class));
         }
         if (options.containsField("background")) {
-            operation.background(convertOptionsToType(options, "background", Boolean.class));
+            request.background(convertOptionsToType(options, "background", Boolean.class));
         }
         if (options.containsField("unique")) {
-            operation.unique(convertOptionsToType(options, "unique", Boolean.class));
+            request.unique(convertOptionsToType(options, "unique", Boolean.class));
         }
         if (options.containsField("sparse")) {
-            operation.sparse(convertOptionsToType(options, "sparse", Boolean.class));
+            request.sparse(convertOptionsToType(options, "sparse", Boolean.class));
         }
         if (options.containsField("expireAfterSeconds")) {
-            operation.expireAfterSeconds(convertOptionsToType(options, "expireAfterSeconds", Long.class));
+            request.expireAfter(convertOptionsToType(options, "expireAfterSeconds", Long.class), TimeUnit.SECONDS);
         }
         if (options.containsField("v")) {
-            operation.version(convertOptionsToType(options, "v", Integer.class));
+            request.version(convertOptionsToType(options, "v", Integer.class));
         }
         if (options.containsField("weights")) {
-            operation.weights(wrap(convertOptionsToType(options, "weights", DBObject.class)));
+            request.weights(wrap(convertOptionsToType(options, "weights", DBObject.class)));
         }
         if (options.containsField("default_language")) {
-            operation.defaultLanguage(convertOptionsToType(options, "default_language", String.class));
+            request.defaultLanguage(convertOptionsToType(options, "default_language", String.class));
         }
         if (options.containsField("language_override")) {
-            operation.languageOverride(convertOptionsToType(options, "language_override", String.class));
+            request.languageOverride(convertOptionsToType(options, "language_override", String.class));
         }
         if (options.containsField("textIndexVersion")) {
-            operation.textIndexVersion(convertOptionsToType(options, "textIndexVersion", Integer.class));
+            request.textVersion(convertOptionsToType(options, "textIndexVersion", Integer.class));
         }
         if (options.containsField("2dsphereIndexVersion")) {
-            operation.twoDSphereIndexVersion(convertOptionsToType(options, "2dsphereIndexVersion", Integer.class));
+            request.sphereVersion(convertOptionsToType(options, "2dsphereIndexVersion", Integer.class));
         }
         if (options.containsField("bits")) {
-            operation.bits(convertOptionsToType(options, "bits", Integer.class));
+            request.bits(convertOptionsToType(options, "bits", Integer.class));
         }
         if (options.containsField("min")) {
-            operation.min(convertOptionsToType(options, "min", Double.class));
+            request.min(convertOptionsToType(options, "min", Double.class));
         }
         if (options.containsField("max")) {
-            operation.max(convertOptionsToType(options, "max", Double.class));
+            request.max(convertOptionsToType(options, "max", Double.class));
         }
         if (options.containsField("bucketSize")) {
-            operation.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
+            request.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
         }
         if (options.containsField("dropDups")) {
-            operation.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));
+            request.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));
         }
-        return operation;
+        if (options.containsField("storageEngine")) {
+            request.storageEngine(wrap(convertOptionsToType(options, "storageEngine", DBObject.class)));
+        }
+
+        return new CreateIndexesOperation(getNamespace(), asList(request));
     }
 
     private String getIndexNameFromIndexFields(final DBObject index) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model;
+package com.mongodb.bulk;
 
-import org.bson.conversions.Bson;
+import org.bson.BsonDocument;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
- * The options to apply to the creation of an index.
+ * The settings to apply to the creation of an index.
  *
- * @mongodb.driver.manual reference/command/createIndexes Index options
+ * @mongodb.driver.manual reference/method/db.collection.ensureIndex/#options Index options
  * @since 3.0
  */
-public class IndexOptions {
+public class IndexRequest {
+    private final BsonDocument keys;
     private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2);
     private static final List<Integer> VALID_SPHERE_INDEX_VERSIONS = asList(1, 2);
     private boolean background;
@@ -39,7 +41,7 @@ public class IndexOptions {
     private boolean sparse;
     private Long expireAfterSeconds;
     private Integer version;
-    private Bson weights;
+    private BsonDocument weights;
     private String defaultLanguage;
     private String languageOverride;
     private Integer textVersion;
@@ -48,7 +50,24 @@ public class IndexOptions {
     private Double min;
     private Double max;
     private Double bucketSize;
-    private Bson storageEngine;
+    private boolean dropDups;
+    private BsonDocument storageEngine;
+
+    /**
+     * Construct a new instance with the given keys
+     * @param keys the index keys
+     */
+    public IndexRequest(final BsonDocument keys) {
+        this.keys = notNull("keys", keys);
+    }
+
+    /**
+     * Gets the index keys
+     * @return the index keys
+     */
+    public BsonDocument getKeys() {
+        return keys;
+    }
 
     /**
      * Create the index in the background
@@ -65,7 +84,7 @@ public class IndexOptions {
      * @param background true if should create the index in the background
      * @return this
      */
-    public IndexOptions background(final boolean background) {
+    public IndexRequest background(final boolean background) {
         this.background = background;
         return this;
     }
@@ -85,7 +104,7 @@ public class IndexOptions {
      * @param unique if the index should be unique
      * @return this
      */
-    public IndexOptions unique(final boolean unique) {
+    public IndexRequest unique(final boolean unique) {
         this.unique = unique;
         return this;
     }
@@ -105,7 +124,7 @@ public class IndexOptions {
      * @param name of the index
      * @return this
      */
-    public IndexOptions name(final String name) {
+    public IndexRequest name(final String name) {
         this.name = name;
         return this;
     }
@@ -125,7 +144,7 @@ public class IndexOptions {
      * @param sparse if true, the index only references documents with the specified field
      * @return this
      */
-    public IndexOptions sparse(final boolean sparse) {
+    public IndexRequest sparse(final boolean sparse) {
         this.sparse = sparse;
         return this;
     }
@@ -133,8 +152,8 @@ public class IndexOptions {
     /**
      * Gets the time to live for documents in the collection
      *
-     * @return the time to live for documents in the collection
      * @param timeUnit the time unit
+     * @return the time to live for documents in the collection
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
     public Long getExpireAfter(final TimeUnit timeUnit) {
@@ -148,11 +167,11 @@ public class IndexOptions {
      * Sets the time to live for documents in the collection
      *
      * @param expireAfter the time to live for documents in the collection
-     * @param timeUnit the time unit for expireAfter
+     * @param timeUnit the time unit
      * @return this
      * @mongodb.driver.manual tutorial/expire-data TTL
      */
-    public IndexOptions expireAfter(final Long expireAfter, final TimeUnit timeUnit) {
+    public IndexRequest expireAfter(final Long expireAfter, final TimeUnit timeUnit) {
         if (expireAfter == null) {
             this.expireAfterSeconds = null;
         } else {
@@ -176,7 +195,7 @@ public class IndexOptions {
      * @param version the index version number
      * @return this
      */
-    public IndexOptions version(final Integer version) {
+    public IndexRequest version(final Integer version) {
         this.version = version;
         return this;
     }
@@ -190,7 +209,7 @@ public class IndexOptions {
      * @return the weighting object
      * @mongodb.driver.manual tutorial/control-results-of-text-search Control Search Results with Weights
      */
-    public Bson getWeights() {
+    public BsonDocument getWeights() {
         return weights;
     }
 
@@ -204,7 +223,7 @@ public class IndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/control-results-of-text-search Control Search Results with Weights
      */
-    public IndexOptions weights(final Bson weights) {
+    public IndexRequest weights(final BsonDocument weights) {
         this.weights = weights;
         return this;
     }
@@ -230,7 +249,7 @@ public class IndexOptions {
      * @return this
      * @mongodb.driver.manual reference/text-search-languages Text Search languages
      */
-    public IndexOptions defaultLanguage(final String defaultLanguage) {
+    public IndexRequest defaultLanguage(final String defaultLanguage) {
         this.defaultLanguage = defaultLanguage;
         return this;
     }
@@ -256,7 +275,7 @@ public class IndexOptions {
      * @return this
      * @mongodb.driver.manual tutorial/specify-language-for-text-index/#specify-language-field-text-index-example Language override
      */
-    public IndexOptions languageOverride(final String languageOverride) {
+    public IndexRequest languageOverride(final String languageOverride) {
         this.languageOverride = languageOverride;
         return this;
     }
@@ -276,7 +295,7 @@ public class IndexOptions {
      * @param textVersion the text index version number.
      * @return this
      */
-    public IndexOptions textVersion(final Integer textVersion) {
+    public IndexRequest textVersion(final Integer textVersion) {
         if (textVersion != null) {
             isTrueArgument("textVersion must be 1 or 2", VALID_TEXT_INDEX_VERSIONS.contains(textVersion));
         }
@@ -299,7 +318,7 @@ public class IndexOptions {
      * @param sphereVersion the 2dsphere index version number.
      * @return this
      */
-    public IndexOptions sphereVersion(final Integer sphereVersion) {
+    public IndexRequest sphereVersion(final Integer sphereVersion) {
         if (sphereVersion != null) {
             isTrueArgument("sphereIndexVersion must be 1 or 2", VALID_SPHERE_INDEX_VERSIONS.contains(sphereVersion));
         }
@@ -322,7 +341,7 @@ public class IndexOptions {
      * @param bits the number of precision of the stored geohash value
      * @return this
      */
-    public IndexOptions bits(final Integer bits) {
+    public IndexRequest bits(final Integer bits) {
         this.bits = bits;
         return this;
     }
@@ -342,7 +361,7 @@ public class IndexOptions {
      * @param min the lower inclusive boundary for the longitude and latitude values
      * @return this
      */
-    public IndexOptions min(final Double min) {
+    public IndexRequest min(final Double min) {
         this.min = min;
         return this;
     }
@@ -362,7 +381,7 @@ public class IndexOptions {
      * @param max the upper inclusive boundary for the longitude and latitude values
      * @return this
      */
-    public IndexOptions max(final Double max) {
+    public IndexRequest max(final Double max) {
         this.max = max;
         return this;
     }
@@ -384,30 +403,58 @@ public class IndexOptions {
      * @return this
      * @mongodb.driver.manual core/geohaystack/ geoHaystack Indexes
      */
-    public IndexOptions bucketSize(final Double bucketSize) {
+    public IndexRequest bucketSize(final Double bucketSize) {
         this.bucketSize = bucketSize;
         return this;
     }
 
+    /**
+     * Returns the legacy dropDups setting
+     *
+     * <p>Prior to MongoDB 3.0 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * building the index. Later versions of MongoDB will silently ignore this setting.</p>
+     *
+     * @return the legacy dropDups setting
+     * @mongodb.driver.manual core/index-creation/#index-creation-duplicate-dropping duplicate dropping
+     */
+    public boolean getDropDups() {
+        return dropDups;
+    }
+
+    /**
+     * Sets the legacy dropDups setting
+     *
+     * <p>Prior to MongoDB 3.0 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * building the index. Later versions of MongoDB will silently ignore this setting.</p>
+     *
+     * @param dropDups the legacy dropDups setting
+     * @return this
+     * @mongodb.driver.manual core/index-creation/#index-creation-duplicate-dropping duplicate dropping
+     */
+    public IndexRequest dropDups(final boolean dropDups) {
+        this.dropDups = dropDups;
+        return this;
+    }
     /**
      * Gets the storage engine options document for this index.
      *
      * @return the storage engine options
      * @mongodb.server.release 3.0
      */
-    public Bson getStorageEngine() {
+    public BsonDocument getStorageEngine() {
         return storageEngine;
     }
 
     /**
      * Sets the storage engine options document for this index.
      *
-     * @param storageEngine the storate engine options
+     * @param storageEngineOptions the storate engine options
      * @return this
      * @mongodb.server.release 3.0
      */
-    public IndexOptions storageEngine(final Bson storageEngine) {
-        this.storageEngine = storageEngine;
+    public IndexRequest storageEngine(final BsonDocument storageEngineOptions) {
+        this.storageEngine = storageEngineOptions;
         return this;
     }
+
 }

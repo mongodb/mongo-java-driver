@@ -22,12 +22,13 @@ import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateIndexOperation;
+import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.FindOperation;
@@ -175,10 +176,10 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndex(final BsonDocument key) {
-        new CreateIndexOperation(namespace, key).execute(getBinding());
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(key))).execute(getBinding());
     }
 
     public void createIndex(final Document key) {
-        new CreateIndexOperation(namespace, wrap(key)).execute(getBinding());
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)))).execute(getBinding());
     }
 }

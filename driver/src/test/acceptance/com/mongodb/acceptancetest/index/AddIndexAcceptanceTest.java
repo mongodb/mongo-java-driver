@@ -225,7 +225,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateATtlIndex() {
-        collection.createIndex(new Document("theField", 1), new IndexOptions().expireAfter(1600, TimeUnit.SECONDS));
+        collection.createIndex(new Document("theField", 1), new IndexOptions().expireAfter(1600L, TimeUnit.SECONDS));
 
         Long ttl = collection.listIndexes().into(new ArrayList<Document>()).get(1).getLong("expireAfterSeconds");
         assertThat("Should be a ttl index", ttl, is(1600L));

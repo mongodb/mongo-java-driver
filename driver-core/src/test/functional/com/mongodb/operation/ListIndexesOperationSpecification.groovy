@@ -21,6 +21,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.bulk.IndexRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -101,7 +102,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
+        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
+                .execute(getBinding())
 
         when:
         BatchCursor cursor = operation.execute(getBinding())
@@ -120,7 +122,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
-        new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
+        new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)])
+                .execute(getBinding())
 
         when:
         def cursor = executeAsync(operation)

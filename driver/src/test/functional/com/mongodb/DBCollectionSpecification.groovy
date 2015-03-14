@@ -16,12 +16,18 @@
 
 package com.mongodb
 
-import com.mongodb.operation.CreateIndexOperation
+import com.mongodb.bulk.IndexRequest
+import com.mongodb.operation.CreateIndexesOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.Fixture.getMongoClient
+import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
 
@@ -34,53 +40,43 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.createIndex(keys)
+        def request = (executor.getWriteOperation() as CreateIndexesOperation).requests[0]
 
         then:
-        def operation = executor.getWriteOperation() as CreateIndexOperation
-        operation.getKey() == new BsonDocument('a', new BsonInt32(1))
-        !operation.isBackground()
-        !operation.isUnique()
-        !operation.isSparse()
-        operation.getName() == null
-        operation.getExpireAfterSeconds() == null
-        operation.getVersion() == null
-        operation.getWeights() == null
-        operation.getDefaultLanguage() == null
-        operation.getLanguageOverride() == null
-        operation.getTextIndexVersion() == null
-        operation.getTwoDSphereIndexVersion() == null
-        operation.getBits() == null
-        operation.getMin() == null
-        operation.getMax() == null
-        operation.getBucketSize() == null
-        !operation.getDropDups()
+        expect request, isTheSameAs(new IndexRequest(new BsonDocument('a', new BsonInt32(1))))
 
         when:
         collection.createIndex(keys, new BasicDBObject(['background': true, 'unique': true, 'sparse': true, 'name': 'aIndex',
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
-                                                      'max': new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true]))
+                                                      'max'          : new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true,
+                                                      'storageEngine': new BasicDBObject('wiredTiger',
+                                                                                         new BasicDBObject('configString',
+                                                                                                           'block_compressor=zlib'))]))
+        request = (executor.getWriteOperation() as CreateIndexesOperation).requests[0]
 
         then:
-        def operation2 = executor.getWriteOperation() as CreateIndexOperation
-        operation2.getKey() == new BsonDocument('a', new BsonInt32(1))
-        operation2.isBackground()
-        operation2.isUnique()
-        operation2.isSparse()
-        operation2.getName() == 'aIndex'
-        operation2.getExpireAfterSeconds() == 100
-        operation2.getVersion() == 1
-        operation2.getWeights() == new BsonDocument('a', new BsonInt32(1000))
-        operation2.getDefaultLanguage() == 'es'
-        operation2.getLanguageOverride() == 'language'
-        operation2.getTextIndexVersion() == 1
-        operation2.getTwoDSphereIndexVersion() == 1
-        operation2.getBits() == 1
-        operation2.getMin() == -180.0
-        operation2.getMax() == 180.0
-        operation2.getBucketSize() == 200.0
-        operation2.getDropDups()
+        expect request, isTheSameAs(new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
+                                            .background(true)
+                                            .unique(true)
+                                            .sparse(true)
+                                            .name('aIndex')
+                                            .expireAfter(100, TimeUnit.SECONDS)
+                                            .version(1)
+                                            .weights(new BsonDocument('a', new BsonInt32(1000)))
+                                            .defaultLanguage('es')
+                                            .languageOverride('language')
+                                            .textVersion(1)
+                                            .sphereVersion(1)
+                                            .bits(1)
+                                            .min(-180.0)
+                                            .max(180.0)
+                                            .bucketSize(200.0)
+                                            .dropDups(true)
+                                            .storageEngine(new BsonDocument('wiredTiger',
+                                                                            new BsonDocument('configString', new BsonString(
+                                                                                    'block_compressor=zlib')))))
     }
 
     def 'should support boolean index options that are numbers'() {
@@ -93,8 +89,8 @@ class DBCollectionSpecification extends Specification {
         collection.createIndex(new BasicDBObject('y', 1), options);
 
         then:
-        def operation = executor.getWriteOperation() as CreateIndexOperation
-        operation.sparse == expectedValue
+        def operation = executor.getWriteOperation() as CreateIndexesOperation
+        operation.requests[0].sparse == expectedValue
 
         where:
         value | expectedValue
@@ -118,8 +114,8 @@ class DBCollectionSpecification extends Specification {
         collection.createIndex(new BasicDBObject('y', 1), options);
 
         then:
-        def operation = executor.getWriteOperation() as CreateIndexOperation
-        operation.expireAfterSeconds == integerValue
+        def operation = executor.getWriteOperation() as CreateIndexesOperation
+        operation.requests[0].getExpireAfter(TimeUnit.SECONDS) == integerValue
 
         where:
         integerValue << [4, 4L, (double) 4.0]
@@ -135,8 +131,8 @@ class DBCollectionSpecification extends Specification {
         collection.createIndex(new BasicDBObject('y', '2d'), options);
 
         then:
-        def operation = executor.getWriteOperation() as CreateIndexOperation
-        operation.max == doubleValue
+        def operation = executor.getWriteOperation() as CreateIndexesOperation
+        operation.requests[0].max == doubleValue
 
         where:
         doubleValue << [4, 4L, (double) 4.0]

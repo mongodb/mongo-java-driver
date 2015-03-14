@@ -26,6 +26,7 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
@@ -465,17 +466,30 @@ public interface MongoCollection<TDocument> {
     void drop();
 
     /**
-     * @param key an object describing the index key(s), which may not be null.
+     * Create an index with the given keys.
+     *
+     * @param keys an object describing the index key(s), which may not be null.
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
-    void createIndex(Bson key);
+    void createIndex(Bson keys);
 
     /**
-     * @param key                an object describing the index key(s), which may not be null.
+     * Create an index with the given keys and options.
+     *
+     * @param keys                an object describing the index key(s), which may not be null.
      * @param indexOptions the options for the index
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
-    void createIndex(Bson key, IndexOptions indexOptions);
+    void createIndex(Bson keys, IndexOptions indexOptions);
+
+    /**
+     * Create multiple indexes.
+     *
+     * @param indexes the list of indexes
+     * @mongodb.driver.manual reference/command/createIndexes Create indexes
+     * @mongodb.server.release 2.6
+     */
+    void createIndexes(List<IndexModel> indexes);
 
     /**
      * Get all the indexes in this collection.

@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
@@ -35,6 +36,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
@@ -48,7 +50,7 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexOperation;
+import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.FindAndDeleteOperation;
@@ -384,28 +386,40 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void createIndex(final Bson key) {
-        createIndex(key, new IndexOptions());
+    public void createIndex(final Bson keys) {
+        createIndex(keys, new IndexOptions());
     }
 
     @Override
-    public void createIndex(final Bson key, final IndexOptions indexOptions) {
-        executor.execute(new CreateIndexOperation(getNamespace(), toBsonDocument(key))
-                         .name(indexOptions.getName())
-                         .background(indexOptions.isBackground())
-                         .unique(indexOptions.isUnique())
-                         .sparse(indexOptions.isSparse())
-                         .expireAfterSeconds(indexOptions.getExpireAfter(TimeUnit.SECONDS))
-                         .version(indexOptions.getVersion())
-                         .weights(toBsonDocument(indexOptions.getWeights()))
-                         .defaultLanguage(indexOptions.getDefaultLanguage())
-                         .languageOverride(indexOptions.getLanguageOverride())
-                         .textIndexVersion(indexOptions.getTextVersion())
-                         .twoDSphereIndexVersion(indexOptions.getSphereVersion())
-                         .bits(indexOptions.getBits())
-                         .min(indexOptions.getMin())
-                         .max(indexOptions.getMax())
-                         .bucketSize(indexOptions.getBucketSize()));
+    public void createIndex(final Bson keys, final IndexOptions indexOptions) {
+       createIndexes(asList(new IndexModel(keys, indexOptions)));
+    }
+
+    @Override
+    public void createIndexes(final List<IndexModel> indexes) {
+        notNull("indexes", indexes);
+
+        List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
+        for (IndexModel model : indexes) {
+            indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
+                         .name(model.getOptions().getName())
+                         .background(model.getOptions().isBackground())
+                         .unique(model.getOptions().isUnique())
+                         .sparse(model.getOptions().isSparse())
+                         .expireAfter(model.getOptions().getExpireAfter(TimeUnit.SECONDS), TimeUnit.SECONDS)
+                         .version(model.getOptions().getVersion())
+                         .weights(toBsonDocument(model.getOptions().getWeights()))
+                         .defaultLanguage(model.getOptions().getDefaultLanguage())
+                         .languageOverride(model.getOptions().getLanguageOverride())
+                         .textVersion(model.getOptions().getTextVersion())
+                         .sphereVersion(model.getOptions().getSphereVersion())
+                         .bits(model.getOptions().getBits())
+                         .min(model.getOptions().getMin())
+                         .max(model.getOptions().getMax())
+                         .bucketSize(model.getOptions().getBucketSize())
+                         .storageEngine(toBsonDocument(model.getOptions().getStorageEngine())));
+        }
+        executor.execute(new CreateIndexesOperation(getNamespace(), indexRequests));
     }
 
     @Override
