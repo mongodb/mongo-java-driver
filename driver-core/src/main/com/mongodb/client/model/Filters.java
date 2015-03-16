@@ -151,7 +151,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/in $in
      */
     public static <TItem> Bson in(final String fieldName, final Iterable<TItem> values) {
-        return new ArrayOperatorFilter<TItem>("$in", fieldName, values);
+        return new SimpleEncodingFilter<Bson>(fieldName , new IterableOperatorFilter<TItem>("$in", values));
     }
 
     /**
@@ -177,7 +177,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/nin $nin
      */
     public static <TItem> Bson nin(final String fieldName, final Iterable<TItem> values) {
-        return new ArrayOperatorFilter<TItem>("$nin", fieldName, values);
+        return new SimpleEncodingFilter<Bson>(fieldName, new IterableOperatorFilter<TItem>("$nin", values));
     }
 
     /**
@@ -247,8 +247,48 @@ public final class Filters {
         return or(asList(filters));
     }
 
-    // TODO: $not
-    // TODO: $nor
+    /**
+     * Creates a filter that matches all documents that do not match the passed in filter.
+     * Requires the field name to passed as part of the value passed in and lifts it to create a valid "$not" query:
+     *
+     * <blockquote><pre>
+     *    not(eq("x", 1))
+     * </pre></blockquote>
+     *
+     * will generate a MongoDB query like:
+     * <blockquote><pre>
+     *    {x : $not: {$eq : 1}}
+     * </pre></blockquote>
+     *
+     * @param filter     the value
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/not $not
+     */
+    public static Bson not(final Bson filter) {
+        return new NotFilter(filter);
+    }
+
+    /**
+     * Creates a filter that performs a logical NOR operation on all the specified filters.
+     *
+     * @param filters    the list of values
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/nor $nor
+     */
+    public static Bson nor(final Bson... filters) {
+        return nor(asList(filters));
+    }
+
+    /**
+     * Creates a filter that performs a logical NOR operation on all the specified filters.
+     *
+     * @param filters    the list of values
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/nor $nor
+     */
+    public static Bson nor(final Iterable<Bson> filters) {
+        return new IterableOperatorFilter<Bson>("$nor", filters);
+    }
 
     /**
      * Creates a filter that matches all documents that contain the given field.
@@ -412,7 +452,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/all $all
      */
     public static <TItem> Bson all(final String fieldName, final Iterable<TItem> values) {
-        return new ArrayOperatorFilter<TItem>("$all", fieldName, values);
+        return new SimpleEncodingFilter<Bson>(fieldName, new IterableOperatorFilter<TItem>("$all", values));
     }
 
     /**
@@ -581,14 +621,12 @@ public final class Filters {
         }
     }
 
-    private static class ArrayOperatorFilter<TItem> implements Bson {
+    private static class IterableOperatorFilter<TItem> implements Bson {
         private final String operatorName;
-        private final String fieldName;
         private final Iterable<TItem> values;
 
-        ArrayOperatorFilter(final String operatorName, final String fieldName, final Iterable<TItem> values) {
+        IterableOperatorFilter(final String operatorName, final Iterable<TItem> values) {
             this.operatorName = notNull("operatorName", operatorName);
-            this.fieldName = notNull("fieldName", fieldName);
             this.values = notNull("values", values);
         }
 
@@ -596,15 +634,12 @@ public final class Filters {
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName(fieldName);
-            writer.writeStartDocument();
             writer.writeName(operatorName);
             writer.writeStartArray();
             for (TItem value : values) {
                 encodeValue(writer, value, codecRegistry);
             }
             writer.writeEndArray();
-            writer.writeEndDocument();
             writer.writeEndDocument();
 
             return writer.getDocument();
@@ -637,12 +672,14 @@ public final class Filters {
     private static <TItem> void encodeValue(final BsonDocumentWriter writer, final TItem value, final CodecRegistry codecRegistry) {
         if (value == null) {
             writer.writeNull();
+        } else if (value instanceof Bson) {
+            ((Encoder) codecRegistry.get(BsonDocument.class)).encode(writer,
+                    ((Bson) value).toBsonDocument(BsonDocument.class, codecRegistry), EncoderContext.builder().build());
         } else {
             ((Encoder) codecRegistry.get(value.getClass())).encode(writer, value, EncoderContext.builder().build());
         }
     }
 
-    // WIP, to be used later by not/nor methods
     private static class NotFilter implements Bson {
         private final Bson filter;
 
@@ -652,48 +689,69 @@ public final class Filters {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-            BsonDocument filterDocument = filter.toBsonDocument(documentClass, codecRegistry);
-            if (filterDocument.size() == 1) {
-                return negateSingleElementFilter(filterDocument);
-            } else {
-                return negateArbitraryFilter(filterDocument);
+            BsonDocument bsonFilter = toFilter(filter.toBsonDocument(documentClass, codecRegistry));
+            if (bsonFilter.keySet().iterator().next().startsWith("$")) {
+                throw new IllegalArgumentException("Invalid $not document, the filter document must start with the field name that "
+                        + "the $not operator applies to: " + filter);
             }
+            return bsonFilter;
         }
 
-        private BsonDocument negateSingleElementFilter(final BsonDocument filterDocument) {
-            String name = filterDocument.keySet().iterator().next();
-            BsonValue value = filterDocument.get(name);
-
-            if (name.equals("$")) {
-                return negateSingleElementTopLevelOperatorFilter(filterDocument, name, value);
+        public BsonDocument toFilter(final BsonDocument filterDocument) {
+            BsonDocument combinedDocument = new BsonDocument();
+            for (Map.Entry<String, BsonValue> docs : filterDocument.entrySet()) {
+                combinedDocument = combineDocuments(combinedDocument, createFilter(docs.getKey(), docs.getValue()));
             }
-
-            if (value.isDocument()) {
-                // TODO: figure out what to do here
-            }
-
-            if (value.isRegularExpression()) {
-                return new BsonDocument(name, new BsonDocument("$not", value));
-            }
-
-            return new BsonDocument(name, new BsonDocument("$ne", value));
+            return combinedDocument;
         }
 
-        private BsonDocument negateArbitraryFilter(final BsonDocument filterDocument) {
-            // $not only works as a meta operator on a single operator so simulate using $nor
-            return new BsonDocument("$nor", new BsonArray(asList(filterDocument)));
-        }
-
-        BsonDocument negateSingleElementTopLevelOperatorFilter(final BsonDocument filterDocument, final String name,
-                                                               final BsonValue value) {
-            if (name.equals("$or")) {
-                return new BsonDocument("$nor", value);
-            } else if (name.equals("$nor")) {
-                return new BsonDocument("$or", value);
-            } else {
-                return negateArbitraryFilter(filterDocument);
+        private BsonDocument createFilter(final String fieldName, final BsonValue value) {
+            if (fieldName.equals("$and")) {
+                return toFilter(flattenBsonArray(value.asArray()));
+            } else if (value.isDocument() && ((BsonDocument) value).keySet().iterator().next().startsWith("$")) {
+                return new BsonDocument(fieldName, new BsonDocument("$not", value));
+            } else if (value.isRegularExpression()) {
+                return new BsonDocument(fieldName, new BsonDocument("$not", value));
             }
+            return new BsonDocument(fieldName, new BsonDocument("$not", new BsonDocument("$eq", value)));
         }
 
+        private BsonDocument combineDocuments(final BsonDocument document1, final BsonDocument document2) {
+            BsonDocument combinedDocument = document1;
+            for (Map.Entry<String, BsonValue> entry : document2.entrySet()) {
+                String key = entry.getKey();
+                BsonValue val = entry.getValue();
+                BsonDocument document = combinedDocument.getDocument(key, new BsonDocument());
+                if (!val.isDocument()) {
+                    if (document.containsKey("$in")) {
+                        BsonArray inArray = document.getArray("$in");
+                        inArray.add(val);
+                        document.put("$in", inArray);
+                    } else if (document.containsKey("$eq")) {
+                        BsonArray inArray = document.getArray("$in", new BsonArray());
+                        inArray.add(document.remove("$eq"));
+                        inArray.add(val);
+                        document.put("$in", inArray);
+                    } else {
+                        document.put("$eq", val);
+                    }
+                } else {
+                    document = val.asDocument();
+                }
+                combinedDocument.put(key, document);
+            }
+            return combinedDocument;
+        }
+
+        private BsonDocument flattenBsonArray(final BsonArray bsonArray) {
+            BsonDocument combinedDocument = new BsonDocument();
+            for (BsonValue bsonValue : bsonArray) {
+                if (!bsonValue.isDocument()) {
+                    throw new IllegalArgumentException("Invalid $not document " + bsonValue);
+                }
+                combinedDocument = combineDocuments(combinedDocument, bsonValue.asDocument());
+            }
+            return combinedDocument;
+        }
     }
 }
