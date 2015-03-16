@@ -20,6 +20,7 @@ package org.bson.types
 
 import org.bson.BsonRegularExpression
 import org.bson.Document
+import org.bson.codecs.DocumentCodec
 import org.bson.json.JsonParseException
 import spock.lang.Specification
 
@@ -46,9 +47,18 @@ class DocumentSpecification extends Specification {
         doc.get('objectId', ObjectId) == objectId;
     }
 
-    def 'should convert valid JSON string to a Document'() {
+    def 'should parse a valid JSON string to a Document'() {
         when:
-        Document document = Document.valueOf("{ 'int' : 1, 'string' : 'abc' }");
+        Document document = Document.parse("{ 'int' : 1, 'string' : 'abc' }");
+
+        then:
+        document != null;
+        document.keySet().size() == 2;
+        document.getInteger('int') == 1;
+        document.getString('string') == 'abc';
+
+        when:
+        document = Document.parse("{ 'int' : 1, 'string' : 'abc' }", new DocumentCodec());
 
         then:
         document != null;
@@ -57,9 +67,9 @@ class DocumentSpecification extends Specification {
         document.getString('string') == 'abc';
     }
 
-    def 'test value of method with mode'() {
+    def 'test parse method with mode'() {
         when:
-        Document document = Document.valueOf("{'regex' : /abc/im }");
+        Document document = Document.parse("{'regex' : /abc/im }");
 
         then:
         document != null;
@@ -72,7 +82,7 @@ class DocumentSpecification extends Specification {
 
     def 'should throw an exception when parsing an invalid JSON String'() {
         when:
-        Document.valueOf("{ 'int' : 1, 'string' : }");
+        Document.parse("{ 'int' : 1, 'string' : }");
 
         then:
         thrown(JsonParseException)

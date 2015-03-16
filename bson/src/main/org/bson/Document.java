@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.EncoderContext;
@@ -33,6 +34,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A representation of a document as a {@code Map}.  All iterators will traverse the elements in insertion order, as with {@code
@@ -75,14 +78,28 @@ public class Document implements Map<String, Object>, Serializable, Bson {
 
 
     /**
-     * Converts a string in JSON format to a {@code Document}
+     * Parses a string in JSON format to a {@code Document}
      *
-     * @param s document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
+     * @param json document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
      * @return a corresponding {@code Document} object
+     * @see org.bson.json.JsonReader
      */
-    public static Document valueOf(final String s) {
-        JsonReader bsonReader = new JsonReader(s);
-        return new DocumentCodec().decode(bsonReader, DecoderContext.builder().build());
+    public static Document parse(final String json) {
+        return parse(json, new DocumentCodec());
+    }
+
+    /**
+     * Parses a string in JSON format to a {@code Document}
+     *
+     * @param json document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
+     * @param decoder the {@code Decoder} to use to parse the JSON string into a {@code Document}
+     * @return a corresponding {@code Document} object
+     * @see org.bson.json.JsonReader
+     */
+    public static Document parse(final String json, final Decoder<Document> decoder) {
+        notNull("codec", decoder);
+        JsonReader bsonReader = new JsonReader(json);
+        return decoder.decode(bsonReader, DecoderContext.builder().build());
     }
 
     @Override
