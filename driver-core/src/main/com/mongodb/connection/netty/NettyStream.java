@@ -115,7 +115,7 @@ final class NettyStream implements Stream {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
                 if (sslSettings.isEnabled()) {
-                    SSLEngine engine = SSLContext.getDefault().createSSLEngine();
+                    SSLEngine engine = SSLContext.getDefault().createSSLEngine(address.getHost(), address.getPort());
                     engine.setUseClientMode(true);
                     if (!sslSettings.isInvalidHostNameAllowed()) {
                         engine.setSSLParameters(enableHostNameVerification(engine.getSSLParameters()));
