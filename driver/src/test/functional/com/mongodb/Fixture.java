@@ -77,9 +77,9 @@ public final class Fixture {
             String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                     ? DEFAULT_URI : mongoURIProperty;
             MongoClientOptions.Builder builder = MongoClientOptions.builder();
-//            if (System.getProperty("java.version").startsWith("1.6.")) {
+            if (System.getProperty("java.version").startsWith("1.6.")) {
                 builder.sslInvalidHostNameAllowed(true);
-//            }
+            }
 
             mongoClientURI = new MongoClientURI(mongoURIString, builder);
         }
