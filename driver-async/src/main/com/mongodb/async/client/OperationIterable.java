@@ -19,10 +19,8 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 
@@ -30,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 
 class OperationIterable<T> implements MongoIterable<T> {
-    private static final Logger LOGGER = Loggers.getLogger("async.client");
 
     private final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation;
     private final ReadPreference readPreference;
