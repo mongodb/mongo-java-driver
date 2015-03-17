@@ -31,7 +31,7 @@ public class IndexesPrimer extends PrimerTestCase {
 
         // @begin: single-field-index
         // @code: start
-        db.getCollection("resturants").createIndex(new Document("cuisine", 1), new SingleResultCallback<Void>() {
+        db.getCollection("restaurants").createIndex(new Document("cuisine", 1), new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 System.out.println("Operation Finished");
@@ -47,7 +47,7 @@ public class IndexesPrimer extends PrimerTestCase {
     public void  createCompoundIndex() {
         // @begin: create-compound-index
         // @code: start
-        db.getCollection("resturants").createIndex(new Document("cuisine", 1).append("address.zipcode", 1),
+        db.getCollection("restaurants").createIndex(new Document("cuisine", 1).append("address.zipcode", 1),
                 new SingleResultCallback<Void>() {
                     @Override
                     public void onResult(final Void result, final Throwable t) {

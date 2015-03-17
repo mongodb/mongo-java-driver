@@ -68,8 +68,8 @@ public class UpdatePrimer extends PrimerTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
 
         // @begin: update-multiple-documents
-        db.getCollection("restaurants").updateMany(new Document("address.zipcode", "10016"),
-                new Document("$set", new Document("borough", "Midtown"))
+        db.getCollection("restaurants").updateMany(new Document("address.zipcode", "10016").append("cuisine", "Other"),
+                new Document("$set", new Document("cuisine", "Category To Be Determined"))
                         .append("$currentDate", new Document("lastModified", true)));
 
         /*
