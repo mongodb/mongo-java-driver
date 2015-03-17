@@ -19,7 +19,7 @@ apply plugin: 'idea'
 
 def configDir = new File(rootDir, 'config')
 
-ext.nettyVersion = '4.0.24.Final'
+ext.nettyVersion = '4.0.26.Final'
 
 buildscript {
     repositories {
