@@ -218,6 +218,107 @@ class InternalStreamConnectionSpecification extends Specification {
 
     }
 
+    def 'should handle out of order messages on the stream'() {
+        // Connect then: Send(1), Send(2), Send(3), Receive(3), Receive(2), Receive(1)
+        given:
+        def connection = getOpenedConnection()
+        def (buffers1, messageId1) = helper.isMaster()
+        def (buffers2, messageId2) = helper.isMaster()
+        def (buffers3, messageId3) = helper.isMaster()
+        stream.read(_) >>> helper.read([messageId1, messageId2, messageId3], ordered)
+
+        when:
+        connection.sendMessage(buffers1, messageId1)
+        connection.sendMessage(buffers2, messageId2)
+        connection.sendMessage(buffers3, messageId3)
+
+        then:
+        connection.receiveMessage(messageId3).replyHeader.responseTo == messageId3
+        connection.receiveMessage(messageId2).replyHeader.responseTo == messageId2
+        connection.receiveMessage(messageId1).replyHeader.responseTo == messageId1
+
+        where:
+        ordered << [true, false]
+    }
+
+    @Category(Async)
+    @IgnoreIf({ javaVersion < 1.7 })
+    def 'should handle out of order messages on the stream asynchronously'() {
+        // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
+        given:
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
+        def headers = helper.generateHeaders([messageId1, messageId2, messageId3], ordered)
+
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+            callback.completed(null)
+        }
+
+        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+            handler.completed(headers.pop())
+        }
+        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+            handler.completed(helper.body())
+        }
+
+        def connection = getOpenedConnection()
+
+        when:
+        connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
+        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
+        connection.sendMessageAsync(buffers3, messageId3, sndCallbck3)
+        connection.receiveMessageAsync(messageId3, rcvdCallbck3)
+        connection.receiveMessageAsync(messageId2, rcvdCallbck2)
+        connection.receiveMessageAsync(messageId1, rcvdCallbck1)
+
+        then:
+        rcvdCallbck1.get().replyHeader.responseTo == messageId1
+        rcvdCallbck2.get().replyHeader.responseTo == messageId2
+        rcvdCallbck3.get().replyHeader.responseTo == messageId3
+
+        where:
+        ordered << [true, false]
+    }
+
+    @Category(Async)
+    @IgnoreIf({ javaVersion < 1.7 })
+    def 'should handle out of order messages on the stream mixed synchronicity'() {
+        // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
+        given:
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
+        def headers = helper.generateHeaders([messageId1, messageId2, messageId3])
+
+        stream.read(36) >> { helper.header(messageId2) }
+        stream.read(74) >> { helper.body() }
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+            callback.completed(null)
+        }
+        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+            handler.completed(headers.pop())
+        }
+        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+            handler.completed(helper.body())
+        }
+
+        def connection = getOpenedConnection()
+
+        when:
+        connection.sendMessage(buffers1, messageId1)
+        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
+        connection.sendMessage(buffers3, messageId3)
+        connection.receiveMessageAsync(messageId3, rcvdCallbck3)
+        ResponseBuffers responseBuffers2 = connection.receiveMessage(messageId2)
+        connection.receiveMessageAsync(messageId1, rcvdCallbck1)
+
+        then:
+        rcvdCallbck1.get().replyHeader.responseTo == messageId1
+        responseBuffers2.replyHeader.responseTo == messageId2
+        rcvdCallbck3.get().replyHeader.responseTo == messageId3
+    }
+
     def 'should close the stream when initialization throws an exception'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
