@@ -96,13 +96,13 @@ class InternalStreamConnection implements InternalConnection {
         try {
             stream.open();
             description = connectionInitializer.initialize(this);
-            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
             try {
                 connectionListener.connectionOpened(new ConnectionEvent(getId()));
             } catch (Throwable t) {
                 LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
             }
             opened.set(true);
+            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         } catch (Throwable t) {
             close();
             if (t instanceof MongoException) {
@@ -130,13 +130,13 @@ class InternalStreamConnection implements InternalConnection {
                             description = result;
                             opened.set(true);
                             callback.onResult(null, null);
-                            if (LOGGER.isInfoEnabled()) {
-                                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
-                            }
                             try {
                                 connectionListener.connectionOpened(new ConnectionEvent(getId()));
                             } catch (Throwable tr) {
                                 LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", tr);
+                            }
+                            if (LOGGER.isInfoEnabled()) {
+                                LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
                             }
                         }
                     }
@@ -459,7 +459,8 @@ class InternalStreamConnection implements InternalConnection {
                                           } else {
                                               reading.release();
                                               if (LOGGER.isTraceEnabled()) {
-                                                  LOGGER.trace(format("Read message: %s", result.getReplyHeader().getResponseTo()));
+                                                  LOGGER.trace(format("Message added to pending results: %s",
+                                                                      result.getReplyHeader().getResponseTo()));
                                               }
                                               messages.put(result.getReplyHeader().getResponseTo(), new Response(result, t));
                                           }
