@@ -209,7 +209,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
         when:
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         connection.opened()
@@ -346,7 +346,7 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         thrown MongoInternalException

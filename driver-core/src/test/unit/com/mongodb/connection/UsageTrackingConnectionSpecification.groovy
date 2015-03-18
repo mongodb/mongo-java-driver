@@ -62,7 +62,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         connection.openedAt <= System.currentTimeMillis()
@@ -94,7 +94,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.openAsync(futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
@@ -125,7 +125,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.sendMessageAsync(Arrays.asList(), 1, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -154,7 +154,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.receiveMessageAsync(1, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt

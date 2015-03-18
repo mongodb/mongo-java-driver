@@ -196,7 +196,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
                                    futureResultCallback);
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         thrown(MongoNotPrimaryException)
@@ -207,7 +207,7 @@ class DefaultServerSpecification extends Specification {
         futureResultCallback = new FutureResultCallback()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
                                    futureResultCallback);
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         thrown(MongoNotPrimaryException)
@@ -269,7 +269,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
                                    futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         thrown(MongoSocketException)
@@ -306,7 +306,7 @@ class DefaultServerSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
         testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
                                    futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         thrown(MongoSocketReadTimeoutException)

@@ -446,7 +446,7 @@ public class CrudTest {
         public TResult get() {
             execute();
             try {
-                return callback.get(10, TimeUnit.SECONDS);
+                return callback.get(60, TimeUnit.SECONDS);
             } catch (Throwable t) {
                 throw new RuntimeException(t);
             }

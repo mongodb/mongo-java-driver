@@ -174,7 +174,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         def futureResultCallback = new FutureResultCallback()
         def opArgs = (args != null) ? args : []
         operation.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
     }
 
 }

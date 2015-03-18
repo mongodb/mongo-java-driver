@@ -101,7 +101,7 @@ public final class Fixture {
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             database.runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);
-            futureResultCallback.get(10, SECONDS);
+            futureResultCallback.get(60, SECONDS);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
@@ -123,7 +123,7 @@ public final class Fixture {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             getMongoClient().getDatabase(name)
                             .runCommand(new Document("dropDatabase", 1), futureResultCallback);
-            futureResultCallback.get(10, SECONDS);
+            futureResultCallback.get(60, SECONDS);
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;

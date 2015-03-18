@@ -32,7 +32,7 @@ class MapSpecification extends FunctionalSpecification {
     def setup() {
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
         collection.insertMany(documents, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
     }
 
     def 'should map source document into target document with into'() {
@@ -41,7 +41,7 @@ class MapSpecification extends FunctionalSpecification {
         collection.find(new Document())
                   .map(new MappingFunction())
                   .into([], futureResultCallback)
-        futureResultCallback.get(10, SECONDS) == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
+        futureResultCallback.get(60, SECONDS) == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
     }
 
     def 'should map source document into target document with forEach'() {
@@ -51,7 +51,7 @@ class MapSpecification extends FunctionalSpecification {
         collection.find(new Document())
                   .map(new MappingFunction())
                   .forEach({ TargetDocument document -> targetDocuments += document } as Block<TargetDocument>, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
         then:
         targetDocuments == [new TargetDocument(documents[0]), new TargetDocument(documents[1])]
     }
@@ -68,7 +68,7 @@ class MapSpecification extends FunctionalSpecification {
                 targetDocument.getId()
             }
         }).forEach({ ObjectId id -> targetIdStrings += id.toString() } as Block<ObjectId>, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         targetIdStrings == [new TargetDocument(documents[0]).getId().toString(), new TargetDocument(documents[1]).getId().toString()]

@@ -206,7 +206,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     List<Document> nextBatch() {
         def futureResultCallback = new FutureResultCallback()
         cursor.next(futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
     }
 
     private QueryResult<Document> executeQuery() {
@@ -224,7 +224,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
             connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
                                   false, tailable, awaitData, false, false, false,
                                   new DocumentCodec(), futureResultCallback);
-            futureResultCallback.get(10, SECONDS);
+            futureResultCallback.get(60, SECONDS);
         } finally {
             connection.release()
         }

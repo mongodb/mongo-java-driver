@@ -81,7 +81,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         def futureResult = new FutureResultCallback()
         executeAsync(op).next(futureResult)
-        def result = futureResult.get(1, SECONDS)
+        def result = futureResult.get(60, SECONDS)
 
         then:
         result == ['Pete', 'Sam']
@@ -116,7 +116,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         op.filter(new BsonDocument('age', new BsonInt32(25)))
         def futureResult = new FutureResultCallback()
         executeAsync(op).next(futureResult)
-        def result = futureResult.get(1, SECONDS)
+        def result = futureResult.get(60, SECONDS)
 
         then:
         result == ['Pete']
@@ -173,7 +173,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         DistinctOperation op = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
         def futureResult = new FutureResultCallback()
         executeAsync(op).next(futureResult)
-        def result = futureResult.get(1, SECONDS)
+        def result = futureResult.get(60, SECONDS)
 
         then:
         result == [pete, sam]

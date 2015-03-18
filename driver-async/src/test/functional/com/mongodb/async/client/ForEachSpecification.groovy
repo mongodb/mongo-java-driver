@@ -29,7 +29,7 @@ class ForEachSpecification extends FunctionalSpecification {
         expect:
         def futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document()).forEach({ } as Block, futureResultCallback)
-        futureResultCallback.get(10, SECONDS) == null
+        futureResultCallback.get(60, SECONDS) == null
     }
 
     def 'should apply block and complete'() {
@@ -37,13 +37,13 @@ class ForEachSpecification extends FunctionalSpecification {
         def document = new Document()
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
         collection.insertOne(document, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         when:
         def queriedDocuments = []
         futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document()).forEach({ doc -> queriedDocuments += doc } as Block, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         queriedDocuments == [document]
@@ -54,13 +54,13 @@ class ForEachSpecification extends FunctionalSpecification {
         def documents = [new Document(), new Document()]
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
         collection.insertMany([documents[0], documents[1]], futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         when:
         def queriedDocuments = []
         futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document()).forEach({ doc -> queriedDocuments += doc } as Block, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         queriedDocuments == documents
@@ -71,12 +71,12 @@ class ForEachSpecification extends FunctionalSpecification {
         def document = new Document()
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>();
         collection.insertOne(document, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         when:
         futureResultCallback = new FutureResultCallback<Void>();
         collection.find(new Document()).forEach({ doc -> throw new IllegalArgumentException() } as Block, futureResultCallback)
-        futureResultCallback.get(10, SECONDS)
+        futureResultCallback.get(60, SECONDS)
 
         then:
         def ex = thrown(MongoException)
