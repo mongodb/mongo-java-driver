@@ -126,6 +126,9 @@ abstract class BaseCluster implements Cluster {
     public void selectServerAsync(final ServerSelector serverSelector, final SingleResultCallback<Server> callback) {
         isTrue("open", !isClosed());
 
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(String.format("Asynchronously selecting server with selector %s", serverSelector));
+        }
         ServerSelectionRequest request = new ServerSelectionRequest(serverSelector, getCompositeServerSelector(serverSelector),
                                                                     getUseableTimeoutInNanoseconds(), callback);
 
@@ -254,12 +257,18 @@ abstract class BaseCluster implements Cluster {
                 CountDownLatch prevPhase = request.phase;
                 request.phase = currentPhase;
                 if (!description.isCompatibleWithDriver()) {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(String.format("Asynchronously failed server selection due to driver incompatibility with server"));
+                    }
                     request.onResult(null, createIncompatibleException(description));
                     return true;
                 }
 
                 Server server = selectRandomServer(request.compositeSelector, description);
                 if (server != null) {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(String.format("Asynchronously selected server %s", server.getDescription().getAddress()));
+                    }
                     request.onResult(server, null);
                     return true;
                 }
@@ -269,6 +278,9 @@ abstract class BaseCluster implements Cluster {
             }
 
             if (request.timedOut()) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(String.format("Asynchronously failed server selection after timeout"));
+                }
                 request.onResult(null, createTimeoutException(request.originalSelector, description));
                 return true;
             }

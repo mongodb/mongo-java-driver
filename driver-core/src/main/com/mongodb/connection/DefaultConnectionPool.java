@@ -110,6 +110,10 @@ class DefaultConnectionPool implements ConnectionPool {
 
     @Override
     public void getAsync(final SingleResultCallback<InternalConnection> callback) {
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(String.format("Asynchronously getting a connection from the pool for server %s", serverId));
+        }
+
         final SingleResultCallback<InternalConnection> wrappedCallback = errorHandlingCallback(callback);
         PooledConnection connection = null;
 
@@ -120,9 +124,17 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         if (connection != null) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Asynchronously opening pooled connection %s to server %s",
+                                           connection.getDescription().getConnectionId(), serverId));
+            }
             openAsync(connection, wrappedCallback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Asynchronously failing to get a pooled connection to %s because the wait queue is full",
+                                           serverId));
+            }
             callback.onResult(null, createWaitQueueFullException());
         } else {
             final long startTimeMillis = System.currentTimeMillis();
@@ -155,14 +167,30 @@ class DefaultConnectionPool implements ConnectionPool {
     private void openAsync(final PooledConnection pooledConnection,
                            final SingleResultCallback<InternalConnection> callback) {
         if (pooledConnection.opened()) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Pooled connection %s to server %s is already open",
+                                           pooledConnection.getDescription().getConnectionId(), serverId));
+            }
             callback.onResult(pooledConnection, null);
         } else {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Pooled connection %s to server %s is not yet open",
+                                           pooledConnection.getDescription().getConnectionId(), serverId));
+            }
             pooledConnection.openAsync(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
                     if (t != null) {
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(String.format("Pooled connection %s to server %s failed to open",
+                                                       pooledConnection.getDescription().getConnectionId(), serverId));
+                        }
                         callback.onResult(null, t);
                     } else {
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(String.format("Pooled connection %s to server %s is now open",
+                                                       pooledConnection.getDescription().getConnectionId(), serverId));
+                        }
                         callback.onResult(pooledConnection, null);
                     }
                 }
