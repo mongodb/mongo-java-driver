@@ -69,7 +69,6 @@ class InternalStreamConnection implements InternalConnection {
     private final Semaphore writing = new Semaphore(1);
     private final Semaphore reading = new Semaphore(1);
 
-
     private volatile ConnectionDescription description;
     private volatile Stream stream;
 
@@ -116,7 +115,7 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        isTrue("Open already called", stream == null);
+        isTrue("Open already called", stream == null, callback);
         stream = streamFactory.create(serverId.getAddress());
         stream.openAsync(new AsyncCompletionHandler<Void>() {
             @Override
@@ -244,7 +243,7 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        notNull("open", stream);
+        notNull("open", stream, callback);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Queuing send message: %s", lastRequestId));
         }
@@ -254,7 +253,7 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        notNull("open", stream);
+        notNull("open", stream, callback);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Queuing read message: %s", responseTo));
         }
@@ -271,7 +270,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void fillAndFlipBuffer(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
-        notNull("open", stream);
+        notNull("open", stream, callback);
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress()));
         } else {
