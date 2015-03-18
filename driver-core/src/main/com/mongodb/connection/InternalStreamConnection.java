@@ -116,7 +116,12 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
         isTrue("Open already called", stream == null, callback);
-        stream = streamFactory.create(serverId.getAddress());
+        try {
+            stream = streamFactory.create(serverId.getAddress());
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+            return;
+        }
         stream.openAsync(new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void aVoid) {
