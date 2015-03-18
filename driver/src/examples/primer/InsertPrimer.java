@@ -59,7 +59,7 @@ public class InsertPrimer extends PrimerTestCase {
                         .append("restaurant_id", "41704620"));
         // @code: end
 
-        // @post: The method does not return a result
+        // @post: The method does not return a result.
         // @end: insert-a-document
     }
 }

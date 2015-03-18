@@ -27,7 +27,9 @@ public class RemovePrimer extends PrimerTestCase {
     @Test
     public void removeMatchingDocuments() {
         // @begin: remove-matching-documents
+        // @code: start
         db.getCollection("restaurants").deleteMany(new Document("borough", "Manhattan"));
+        // @code: end
 
         /*
         // @post: start
@@ -41,7 +43,9 @@ public class RemovePrimer extends PrimerTestCase {
     @Test
     public void removeAllDocuments() {
         // @begin: remove-all-documents
+        // @code: start
         db.getCollection("restaurants").deleteMany(new Document());
+        // @code: end
 
         /*
         // @post: start
@@ -55,7 +59,9 @@ public class RemovePrimer extends PrimerTestCase {
     @Test
     public void dropCollection() {
         // @begin: drop-collection
+        // @code: start
         db.getCollection("restaurants").drop();
+        // @code: end
         // @end: drop-collection
     }
 }

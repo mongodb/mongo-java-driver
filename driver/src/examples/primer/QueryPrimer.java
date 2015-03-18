@@ -38,7 +38,7 @@ public class QueryPrimer extends PrimerTestCase {
         FindIterable<Document> iterable = db.getCollection("restaurants").find();
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -60,7 +60,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("cuisine", "Italian").append("address.zipcode", "10075"));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -88,7 +88,7 @@ public class QueryPrimer extends PrimerTestCase {
                         new Document("address.zipcode", "10075"))));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -114,7 +114,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("borough", "Manhattan"));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -139,7 +139,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("address.zipcode", "10075"));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -164,7 +164,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("grades.grade", "B"));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -189,7 +189,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("grades.score", new Document("$gt", 30)));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
@@ -214,7 +214,7 @@ public class QueryPrimer extends PrimerTestCase {
                 new Document("grades.score", new Document("$lt", 10)));
         // @code: end
 
-        // @pre: Iterate the results and apply a block to each resulting document
+        // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
         iterable.forEach(new Block<Document>() {
             @Override
