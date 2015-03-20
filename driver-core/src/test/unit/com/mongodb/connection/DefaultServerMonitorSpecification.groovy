@@ -16,10 +16,8 @@
 
 package com.mongodb.connection
 
-import category.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -62,7 +60,6 @@ class DefaultServerMonitorSpecification extends Specification {
         monitor?.close()
     }
 
-    @Category(Slow)
     def 'invalidate should not send a sendStateChangedEvent'() {
         given:
         def stateChanged = false
@@ -72,10 +69,14 @@ class DefaultServerMonitorSpecification extends Specification {
                 stateChanged = true;
             }
         }
+        def latch = new CountDownLatch(1)
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(1000); }
+                    open() >> {
+                        latch.countDown()
+                        Thread.sleep(Long.MAX_VALUE);
+                    }
                 }
             }
         }
@@ -83,6 +84,7 @@ class DefaultServerMonitorSpecification extends Specification {
                                            changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
         def monitorThread = monitor.monitorThread
+        latch.await()
 
         when:
         monitor.invalidate()
