@@ -73,7 +73,7 @@ class DefaultServerSpecification extends Specification {
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
-        def connection = Stub(Connection)
+        def connection = Stub(AsyncConnection)
 
         connectionPool.getAsync(_) >> {
             it[0].onResult(internalConnection, null)
@@ -92,7 +92,7 @@ class DefaultServerSpecification extends Specification {
         then:
         receivedConnection
         !receivedThrowable
-        1 * connectionFactory.create(_, _, mode) >> connection
+        1 * connectionFactory.createAsync(_, _, mode) >> connection
 
         where:
         mode << [SINGLE, MULTIPLE]

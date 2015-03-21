@@ -26,6 +26,7 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -35,8 +36,8 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 
@@ -261,13 +262,13 @@ final class CommandOperationHelper {
 
     static void executeWrappedCommandProtocolAsync(final String database,
                                                    final BsonDocument command,
-                                                   final Connection connection,
+                                                   final AsyncConnection connection,
                                                    final SingleResultCallback<BsonDocument> callback) {
         executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, callback);
     }
 
     static <T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                       final Connection connection,
+                                                       final AsyncConnection connection,
                                                        final Function<BsonDocument, T> transformer,
                                                        final SingleResultCallback<T> callback) {
         executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(), transformer, callback);
@@ -276,14 +277,14 @@ final class CommandOperationHelper {
     static <T> void executeWrappedCommandProtocolAsync(final String database,
                                                        final BsonDocument command,
                                                        final Decoder<T> decoder,
-                                                       final Connection connection,
+                                                       final AsyncConnection connection,
                                                        final SingleResultCallback<T> callback) {
         executeWrappedCommandProtocolAsync(database, command, decoder, connection, primary(), new IdentityTransformer<T>(), callback);
     }
 
     static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                           final Decoder<D> decoder,
-                                                          final Connection connection,
+                                                          final AsyncConnection connection,
                                                           final ReadPreference readPreference,
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
@@ -365,9 +366,9 @@ final class CommandOperationHelper {
             if (t != null) {
                 callback.onResult(null, t);
             } else {
-                source.getConnection(new SingleResultCallback<Connection>() {
+                source.getConnection(new SingleResultCallback<AsyncConnection>() {
                     @Override
-                    public void onResult(final Connection connection, final Throwable t) {
+                    public void onResult(final AsyncConnection connection, final Throwable t) {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {

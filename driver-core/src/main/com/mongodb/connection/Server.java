@@ -54,5 +54,5 @@ public interface Server {
      *
      * @param callback the callback to execute when the connection is available or an error occurs
      */
-    void getConnectionAsync(SingleResultCallback<Connection> callback);
+    void getConnectionAsync(SingleResultCallback<AsyncConnection> callback);
 }

@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
@@ -74,7 +74,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     @Override
-    public void getConnectionAsync(final SingleResultCallback<Connection> callback) {
+    public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
         isTrue("open", !isClosed());
         connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
             @Override
@@ -85,7 +85,8 @@ class DefaultServer implements ClusterableServer {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(connectionFactory.create(result, new DefaultServerProtocolExecutor(), clusterConnectionMode), null);
+                    callback.onResult(connectionFactory.createAsync(result, new DefaultServerProtocolExecutor(), clusterConnectionMode),
+                                      null);
                 }
             }
         });

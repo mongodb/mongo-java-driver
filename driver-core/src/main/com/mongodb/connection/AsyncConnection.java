@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
@@ -31,19 +32,19 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 
-
 /**
- * A synchronous connection to a MongoDB server with blocking operations.
+ *
+ * An asynchronous connection to a MongoDB server with non-blocking operations.
  *
  * <p> Implementations of this class are thread safe.  </p>
  *
  * @since 3.0
  */
 @ThreadSafe
-public interface Connection extends ReferenceCounted {
+public interface AsyncConnection extends ReferenceCounted {
 
     @Override
-    Connection retain();
+    AsyncConnection retain();
 
     /**
      * Gets the description of the connection.
@@ -53,89 +54,93 @@ public interface Connection extends ReferenceCounted {
     ConnectionDescription getDescription();
 
     /**
-     * Insert the documents using the insert wire protocol and apply the write concern.
+     * Insert the documents using the insert wire protocol and apply the write concern asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param inserts      the inserts
-     * @return the write concern result
+     * @param callback     the callback to be passed the write result
      */
-    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts);
+    void insertAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
+                                                List<InsertRequest> inserts, SingleResultCallback<WriteConcernResult> callback);
 
     /**
-     * Update the documents using the update wire protocol and apply the write concern.
+     * Update the documents using the update wire protocol and apply the write concern asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param updates      the updates
-     * @return the write concern result
+     * @param callback     the callback to be passed the write result
      */
-    WriteConcernResult update(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                              List<UpdateRequest> updates);
+    void updateAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates,
+                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
-     * Delete the documents using the delete wire protocol and apply the write concern.
+     * Delete the documents using the delete wire protocol and apply the write concern asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param deletes      the deletes
-     * @return the write concern result
+     * @param callback     the callback to be passed the write result
      */
-    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                              List<DeleteRequest> deletes);
+    void deleteAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
-     * Insert the documents using the insert command.
+     * Insert the documents using the insert command asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param inserts      the inserts
-     * @return the bulk write result
+     * @param callback     the callback to be passed the bulk write result
      */
-    BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts);
+    void insertCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
-     * Update the documents using the update command.
+     * Update the documents using the update command asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param updates      the updates
-     * @return the bulk write result
+     * @param callback     the callback to be passed the BulkWriteResult
      */
-    BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates);
+    void updateCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
-     * Delete the documents using the delete command.
+     * Delete the documents using the delete command asynchronously.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
      * @param writeConcern the write concern
      * @param deletes      the deletes
-     * @return the bulk write result
+     * @param callback     the callback to be passed the BulkWriteResult
      */
-    BulkWriteResult deleteCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes);
+    void deleteCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+                            SingleResultCallback<BulkWriteResult> callback);
 
     /**
-     * Execute the command.
+     * Execute the command asynchronously.
      *
      * @param database             the database to execute the command in
      * @param command              the command document
      * @param slaveOk              whether the command can run on a secondary
      * @param fieldNameValidator   the field name validator for the command document
      * @param commandResultDecoder the decoder for the result
+     * @param callback             the callback to be passed the command result
      * @param <T>                  the type of the result
-     * @return the command result
      */
-    <T> T command(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
-                  Decoder<T> commandResultDecoder);
+    <T> void commandAsync(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
+                                    Decoder<T> commandResultDecoder, SingleResultCallback<T> callback);
 
     /**
-     * Execute the query.
+     * Execute the query asynchronously.
      *
      * @param namespace       the namespace to query
      * @param queryDocument   the query document
@@ -150,30 +155,30 @@ public interface Connection extends ReferenceCounted {
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
      * @param <T>             the query result document type
-     * @return the query results
+     * @param callback     the callback to be passed the write result
      */
-    <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-                             int numberToReturn, int skip,
-                             boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                             boolean partial, boolean oplogReplay,
-                             Decoder<T> resultDecoder);
+    <T> void queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
+                        int numberToReturn, int skip, boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
+                        boolean partial, boolean oplogReplay, Decoder<T> resultDecoder, SingleResultCallback<QueryResult<T>> callback);
 
     /**
-     * Get more result documents from a cursor.
+     * Get more result documents from a cursor asynchronously.
      *
      * @param namespace      the namespace to get more documents from
      * @param cursorId       the cursor id
      * @param numberToReturn the number of documents to return
-     * @param resultDecoder  the decoder for the query results
+     * @param resultDecoder  the decoder for the query result documents
+     * @param callback       the callback to be passed the query result
      * @param <T>            the type of the query result documents
-     * @return the query results
      */
-    <T> QueryResult<T> getMore(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
+    <T> void getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
+                                                 SingleResultCallback<QueryResult<T>> callback);
 
     /**
-     * Kills the given list of cursors.
+     * Asynchronously Kills the given list of cursors.
      *
-     * @param cursors the cursors
+     * @param cursors   the cursors
+     * @param callback  the callback that is called once the cursors have been killed
      */
-    void killCursor(List<Long> cursors);
+    void killCursorAsync(List<Long> cursors, SingleResultCallback<Void> callback);
 }

@@ -26,12 +26,12 @@ import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleConnectionBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
@@ -332,8 +332,8 @@ public final class ClusterFixture {
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
-    public static Connection getConnection(final AsyncConnectionSource source) throws Throwable {
-        final FutureResultCallback<Connection> futureResultCallback = new FutureResultCallback<Connection>();
+    public static AsyncConnection getConnection(final AsyncConnectionSource source) throws Throwable {
+        final FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<AsyncConnection>();
         source.getConnection(futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }

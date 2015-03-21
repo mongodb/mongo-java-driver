@@ -19,7 +19,13 @@ package com.mongodb.connection;
 class TestConnectionFactory implements ConnectionFactory {
     @Override
     public Connection create(final InternalConnection internalConnection, final ProtocolExecutor executor,
-                             final ClusterConnectionMode clusterConnectionMode) {
+                                 final ClusterConnectionMode clusterConnectionMode) {
+        return new TestConnection(internalConnection, executor);
+    }
+
+    @Override
+    public AsyncConnection createAsync(final InternalConnection internalConnection, final ProtocolExecutor executor,
+                                       final ClusterConnectionMode clusterConnectionMode) {
         return new TestConnection(internalConnection, executor);
     }
 }

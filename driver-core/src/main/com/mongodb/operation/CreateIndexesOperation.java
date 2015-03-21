@@ -29,6 +29,7 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -93,7 +94,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     try {
                         executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
                     } catch (MongoCommandException e) {
@@ -114,12 +115,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final Connection connection, final Throwable t) {
+            public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
-                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                    if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection,
                                                            new SingleResultCallback<BsonDocument>() {
                                                                @Override

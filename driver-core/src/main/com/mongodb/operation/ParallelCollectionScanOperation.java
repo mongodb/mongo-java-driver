@@ -25,6 +25,7 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
 import org.bson.BsonArray;
@@ -128,7 +129,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<List<AsyncBatchCursor<T>>> callback) {
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {

@@ -26,6 +26,7 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
@@ -135,7 +136,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                if (serverIsAtLeastVersionThreeDotZero(connection)) {
+                if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
                         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(), connection,
                                                              transformer(source));
@@ -157,13 +158,13 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
-                    if (serverIsAtLeastVersionThreeDotZero(connection)) {
+                    if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
                                                            connection, binding.getReadPreference(), asyncTransformer(source),
                                                            new SingleResultCallback<AsyncBatchCursor<T>>() {

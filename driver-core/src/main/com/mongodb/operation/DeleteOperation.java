@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected void executeProtocolAsync(final Connection connection,
+    protected void executeProtocolAsync(final AsyncConnection connection,
                                         final SingleResultCallback<WriteConcernResult> callback) {
         connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
     }
@@ -77,7 +78,7 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected void executeCommandProtocolAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
         connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
     }
 
