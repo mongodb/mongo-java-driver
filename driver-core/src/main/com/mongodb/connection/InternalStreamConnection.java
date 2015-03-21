@@ -273,11 +273,12 @@ class InternalStreamConnection implements InternalConnection {
             callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
         }
 
+        Response response = null;
         readerLock.lock();
 
-        Response response = messages.get(responseTo);
-
         try {
+            response = messages.get(responseTo);
+
             if (response == null) {
                 readQueue.put(responseTo, callback);
             }
