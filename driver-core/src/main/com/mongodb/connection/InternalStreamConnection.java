@@ -275,7 +275,7 @@ class InternalStreamConnection implements InternalConnection {
 
         Response response = null;
         readerLock.lock();
-
+        boolean mustRead = false;
         try {
             response = messages.get(responseTo);
 
@@ -285,8 +285,7 @@ class InternalStreamConnection implements InternalConnection {
 
             if (!readQueue.isEmpty() && !isReading) {
                 isReading = true;
-                fillAndFlipBuffer(REPLY_HEADER_LENGTH,
-                                  errorHandlingCallback(new ResponseHeaderCallback(new ResponseBuffersCallback()), LOGGER));
+                mustRead = true;
             }
         } finally {
             readerLock.unlock();
@@ -294,6 +293,10 @@ class InternalStreamConnection implements InternalConnection {
 
         if (response != null) {
             callback.onResult(response.getResult(), response.getError());
+        }
+
+        if (mustRead) {
+            receiveResponseAsync();
         }
     }
 
@@ -305,8 +308,12 @@ class InternalStreamConnection implements InternalConnection {
         return description.getServerAddress();
     }
 
-    private void fillAndFlipBuffer(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
-        notNull("open", stream, callback);
+    private void receiveResponseAsync() {
+        readAsync(REPLY_HEADER_LENGTH,
+                  errorHandlingCallback(new ResponseHeaderCallback(new ResponseBuffersCallback()), LOGGER));
+    }
+
+    private void readAsync(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
         if (isClosed()) {
             callback.onResult(null, new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress()));
         } else {
@@ -404,8 +411,8 @@ class InternalStreamConnection implements InternalConnection {
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
                     onSuccess(new ResponseBuffers(replyHeader, null));
                 } else {
-                    fillAndFlipBuffer(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
-                                      new ResponseBodyCallback(replyHeader));
+                    readAsync(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
+                              new ResponseBodyCallback(replyHeader));
                 }
             }
         }
@@ -509,7 +516,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void processFailedRead(final Throwable t) {
+    private void failAllQueuedReads(final Throwable t) {
         close();
         Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
         while (it.hasNext()) {
@@ -585,28 +592,31 @@ class InternalStreamConnection implements InternalConnection {
         @Override
         public void onResult(final ResponseBuffers result, final Throwable t) {
             if (t != null) {
-                processFailedRead(t);
+                failAllQueuedReads(t);
             } else {
                 SingleResultCallback<ResponseBuffers> callback = null;
                 readerLock.lock();
                 try {
-                    isReading = false;
                     callback = readQueue.remove(result.getReplyHeader().getResponseTo());
+
+                    if (readQueue.isEmpty()) {
+                        isReading = false;
+                    }
 
                     if (callback == null) {
                         messages.put(result.getReplyHeader().getResponseTo(), new Response(result, null));
                     }
 
-                    if (!readQueue.isEmpty()) {
-                        isReading = true;
-                        fillAndFlipBuffer(REPLY_HEADER_LENGTH, new ResponseHeaderCallback(this));
-                    }
                 } finally {
                     readerLock.unlock();
                 }
 
                 if (callback != null) {
                     callback.onResult(result, null);
+                }
+
+                if (isReading) {
+                    receiveResponseAsync();
                 }
             }
         }
