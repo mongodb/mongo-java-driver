@@ -46,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -67,7 +69,9 @@ class InternalStreamConnection implements InternalConnection {
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicBoolean opened = new AtomicBoolean();
     private final Semaphore writing = new Semaphore(1);
-    private final Semaphore reading = new Semaphore(1);
+    private final Lock readerLock = new ReentrantLock(false);
+
+    private boolean isReading;
 
     private volatile ConnectionDescription description;
     private volatile Stream stream;
@@ -212,7 +216,7 @@ class InternalStreamConnection implements InternalConnection {
         } else {
             while (!messages.containsKey(responseTo)) {
                 try {
-                    reading.acquire();
+                    readerLock.lock();
                     if (messages.containsKey(responseTo)) {
                         break;
                     }
@@ -231,7 +235,7 @@ class InternalStreamConnection implements InternalConnection {
                     close();
                     messages.put(responseTo, new Response(null, translateReadException(e)));
                 } finally {
-                    reading.release();
+                    readerLock.unlock();
                 }
             }
             Response response = messages.remove(responseTo);
@@ -259,12 +263,37 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        notNull("open", stream, callback);
+        isTrue("stream is open", stream != null, callback);
+
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Queuing read message: %s. ([%s] %s)", responseTo, getId(), serverId));
         }
-        readQueue.put(responseTo, errorHandlingCallback(callback, LOGGER));
-        processPendingReads();
+
+        if (isClosed()) {
+            callback.onResult(null, new MongoSocketClosedException("Can not read from a closed socket", getServerAddress()));
+        }
+
+        readerLock.lock();
+
+        Response response = messages.get(responseTo);
+
+        try {
+            if (response == null) {
+                readQueue.put(responseTo, callback);
+            }
+
+            if (!readQueue.isEmpty() && !isReading) {
+                isReading = true;
+                fillAndFlipBuffer(REPLY_HEADER_LENGTH,
+                                  errorHandlingCallback(new ResponseHeaderCallback(new ResponseBuffersCallback()), LOGGER));
+            }
+        } finally {
+            readerLock.unlock();
+        }
+
+        if (response != null) {
+            callback.onResult(response.getResult(), response.getError());
+        }
     }
 
     private ConnectionId getId() {
@@ -432,51 +461,6 @@ class InternalStreamConnection implements InternalConnection {
         return messageSize;
     }
 
-    private void processPendingReads() {
-        if (reading.tryAcquire()) {
-            processPendingResults();
-
-            if (readQueue.isEmpty()) {
-                reading.release();
-            } else if (isClosed()) {
-                Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
-                try {
-                    while (it.hasNext()) {
-                        Map.Entry<Integer, SingleResultCallback<ResponseBuffers>> pairs = it.next();
-                        SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
-                        it.remove();
-                        try {
-                            callback.onResult(null, new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress()));
-                        } catch (Throwable t) {
-                            LOGGER.warn("Exception calling callback", t);
-                        }
-                    }
-                } finally {
-                    reading.release();
-                }
-            } else {
-                fillAndFlipBuffer(REPLY_HEADER_LENGTH,
-                                  errorHandlingCallback(new ResponseHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
-                                      @Override
-                                      public void onResult(final ResponseBuffers result, final Throwable t) {
-                                          if (result == null) {
-                                              reading.release();
-                                              processUnknownFailedRead(t);
-                                          } else {
-                                              reading.release();
-                                              if (LOGGER.isTraceEnabled()) {
-                                                  LOGGER.trace(format("Message added to pending results: %s. ([%s] %s)",
-                                                                      result.getReplyHeader().getResponseTo(), getId(), serverId));
-                                              }
-                                              messages.put(result.getReplyHeader().getResponseTo(), new Response(result, t));
-                                          }
-                                          processPendingReads();
-                                      }
-                                  }), LOGGER));
-            }
-        }
-    }
-
     private void processPendingWrites() {
         if (writing.tryAcquire()) {
             if (writeQueue.isEmpty()) {
@@ -524,36 +508,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void processPendingResults() {
-        Iterator<Map.Entry<Integer, Response>> it = messages.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Integer, Response> pairs = it.next();
-            int messageId = pairs.getKey();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Processing read message: %s. ([%s] %s)", messageId, getId(), serverId));
-            }
-            SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
-            if (callback != null) {
-                if (pairs.getValue().hasError()) {
-                    try {
-                        callback.onResult(null, pairs.getValue().getError());
-                    } catch (Throwable t) {
-                        LOGGER.warn("Exception calling callback", t);
-                    }
-                } else {
-                    try {
-                        callback.onResult(pairs.getValue().getResult(), null);
-                    } catch (Throwable t) {
-                        LOGGER.warn("Exception calling callback", t);
-                    }
-                }
-                it.remove();
-            }
-        }
-    }
-
-    private void processUnknownFailedRead(final Throwable t) {
-        processPendingResults();
+    private void processFailedRead(final Throwable t) {
         close();
         Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
         while (it.hasNext()) {
@@ -622,6 +577,37 @@ class InternalStreamConnection implements InternalConnection {
 
         public boolean hasError() {
             return t != null;
+        }
+    }
+
+    private class ResponseBuffersCallback implements SingleResultCallback<ResponseBuffers> {
+        @Override
+        public void onResult(final ResponseBuffers result, final Throwable t) {
+            if (t != null) {
+                processFailedRead(t);
+            } else {
+                SingleResultCallback<ResponseBuffers> callback = null;
+                readerLock.lock();
+                try {
+                    isReading = false;
+                    callback = readQueue.remove(result.getReplyHeader().getResponseTo());
+
+                    if (callback == null) {
+                        messages.put(result.getReplyHeader().getResponseTo(), new Response(result, null));
+                    }
+
+                    if (!readQueue.isEmpty()) {
+                        isReading = true;
+                        fillAndFlipBuffer(REPLY_HEADER_LENGTH, new ResponseHeaderCallback(this));
+                    }
+                } finally {
+                    readerLock.unlock();
+                }
+
+                if (callback != null) {
+                    callback.onResult(result, null);
+                }
+            }
         }
     }
 }
