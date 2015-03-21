@@ -162,6 +162,9 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void close() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(String.format("Closing connection %s", getId()));
+        }
         if (stream != null) {
             stream.close();
         }
@@ -280,10 +283,21 @@ class InternalStreamConnection implements InternalConnection {
             response = messages.get(responseTo);
 
             if (response == null) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("No response yet for messeage %s on connection %s", responseTo, getId()));
+                }
                 readQueue.put(responseTo, callback);
             }
 
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Read queue empty? [%s].  Is reading? [%s] on connection %s", readQueue.isEmpty(), isReading, getId()));
+            }
+
+
             if (!readQueue.isEmpty() && !isReading) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Must read message on connection %s", getId()));
+                }
                 isReading = true;
                 mustRead = true;
             }
@@ -292,10 +306,17 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         if (response != null) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Executing callback for message %s on connection %s",
+                                           response.getResult().getReplyHeader().getResponseTo(), getId()));
+            }
             callback.onResult(response.getResult(), response.getError());
         }
 
         if (mustRead) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(String.format("Receiving next response on connection %s", getId()));
+            }
             receiveResponseAsync();
         }
     }
@@ -596,11 +617,18 @@ class InternalStreamConnection implements InternalConnection {
             } else {
                 SingleResultCallback<ResponseBuffers> callback = null;
                 readerLock.lock();
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(String.format("Read response to message %s on connection %s", result.getReplyHeader().getResponseTo(),
+                                               getId()));
+                }
                 try {
                     callback = readQueue.remove(result.getReplyHeader().getResponseTo());
 
                     if (readQueue.isEmpty()) {
                         isReading = false;
+                        if (LOGGER.isTraceEnabled()) {
+                            LOGGER.trace(String.format("No more queued messages on connection %s", getId()));
+                        }
                     }
 
                     if (callback == null) {
@@ -612,10 +640,17 @@ class InternalStreamConnection implements InternalConnection {
                 }
 
                 if (callback != null) {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(String.format("Executing callback for message %s on connection %s from response callback",
+                                                   result.getReplyHeader().getResponseTo(), getId()));
+                    }
                     callback.onResult(result, null);
                 }
 
                 if (isReading) {
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(String.format("Receiving next response on connection %s from response callback", getId()));
+                    }
                     receiveResponseAsync();
                 }
             }
