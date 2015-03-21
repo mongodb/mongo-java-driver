@@ -221,6 +221,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream'() {
         // Connect then: Send(1), Send(2), Send(3), Receive(3), Receive(2), Receive(1)
         given:
+        ExecutorService pool = Executors.newFixedThreadPool(3)
         def connection = getOpenedConnection()
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
@@ -233,9 +234,19 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessage(buffers3, messageId3)
 
         then:
-        connection.receiveMessage(messageId3).replyHeader.responseTo == messageId3
-        connection.receiveMessage(messageId2).replyHeader.responseTo == messageId2
-        connection.receiveMessage(messageId1).replyHeader.responseTo == messageId1
+        def conds = new AsyncConditions()
+        [messageId1, messageId2, messageId3].each { messageId ->
+            pool.submit({
+                            conds.evaluate {
+                                assert connection.receiveMessage(messageId).replyHeader.responseTo == messageId
+                            }
+                        } as Runnable)
+
+        }
+        conds.await(10000)
+
+        cleanup:
+        pool.shutdown()
 
         where:
         ordered << [true, false]
@@ -279,44 +290,6 @@ class InternalStreamConnectionSpecification extends Specification {
 
         where:
         ordered << [true, false]
-    }
-
-    @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
-    def 'should handle out of order messages on the stream mixed synchronicity'() {
-        // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
-        given:
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
-        def headers = helper.generateHeaders([messageId1, messageId2, messageId3])
-
-        stream.read(36) >> { helper.header(messageId2) }
-        stream.read(74) >> { helper.body() }
-        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            callback.completed(null)
-        }
-        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(headers.pop())
-        }
-        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.body())
-        }
-
-        def connection = getOpenedConnection()
-
-        when:
-        connection.sendMessage(buffers1, messageId1)
-        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        connection.sendMessage(buffers3, messageId3)
-        connection.receiveMessageAsync(messageId3, rcvdCallbck3)
-        ResponseBuffers responseBuffers2 = connection.receiveMessage(messageId2)
-        connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-
-        then:
-        rcvdCallbck1.get().replyHeader.responseTo == messageId1
-        responseBuffers2.replyHeader.responseTo == messageId2
-        rcvdCallbck3.get().replyHeader.responseTo == messageId3
     }
 
     def 'should close the stream when initialization throws an exception'() {
@@ -541,6 +514,49 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    def 'should notify all asynchronous writers of an exception'() {
+        given:
+        int numberOfOperations = 3
+        ExecutorService streamPool = Executors.newFixedThreadPool(1)
+
+        def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
+        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.header(messageId) }
+
+        def streamLatch = new CountDownLatch(1)
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+            streamPool.submit {
+                streamLatch.await()
+                callback.failed(new IOException())
+            }
+        }
+
+        when:
+        def connection = getOpenedConnection()
+        def callbacks = []
+        (1..numberOfOperations).each { n ->
+            def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
+            connection.sendMessageAsync(buffers, messageId, sndCallbck)
+            callbacks.add(sndCallbck)
+        }
+        streamLatch.countDown()
+
+        then:
+        expectException(callbacks.pop())
+        expectException(callbacks.pop())
+        expectException(callbacks.pop())
+
+        cleanup:
+        streamPool.shutdown()
+    }
+
+    private static boolean expectException(rcvdCallbck) {
+        try {
+            rcvdCallbck.get()
+            false
+        } catch (MongoSocketWriteException e) {
+            true
+        }
+    }
 
     @Category(Slow)
     def 'should have threadsafe connection pipelining'() {
@@ -557,18 +573,21 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = getOpenedConnection()
 
         then:
+        def conds = new AsyncConditions()
+        def latch = new CountDownLatch(numberOfOperations)
         (1..numberOfOperations).each { n ->
-            def conds = new AsyncConditions()
             def (buffers, messageId) = messages.pop()
             pool.submit({ connection.sendMessage(buffers, messageId) } as Runnable)
             pool.submit({
                             conds.evaluate {
                                 assert connection.receiveMessage(messageId).replyHeader.responseTo == messageId
                             }
+                            latch.countDown()
                         } as Runnable)
 
-            conds.await(10)
         }
+        latch.await(10, SECONDS)
+        conds.await(10)
 
         cleanup:
         pool.shutdown()
@@ -581,41 +600,54 @@ class InternalStreamConnectionSpecification extends Specification {
         int threads = 10
         int numberOfOperations = 10000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
+        ExecutorService streamPool = Executors.newFixedThreadPool(4)
 
         def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
         def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.header(messageId) }
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            callback.completed(null)
+            streamPool.submit {
+                callback.completed(null)
+            }
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(headers.pop())
+            streamPool.submit {
+                handler.completed(headers.pop())
+            }
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.body())
+            streamPool.submit {
+                handler.completed(helper.body())
+            }
         }
 
         when:
         def connection = getOpenedConnection()
 
         then:
+        def latch = new CountDownLatch(numberOfOperations)
+        def conds = new AsyncConditions()
         (1..numberOfOperations).each { n ->
-            def conds = new AsyncConditions()
             def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
 
-            pool.submit({ connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable)
-            pool.submit({
+            pool.submit {
+                connection.sendMessageAsync(buffers, messageId, sndCallbck)
+            }
+            pool.submit {
                             connection.receiveMessageAsync(messageId, rcvdCallbck)
                             conds.evaluate {
                                 assert rcvdCallbck.get().replyHeader.responseTo == messageId
                             }
-                        } as Runnable
-            )
-            conds.await(10)
+                            latch.countDown()
+                        }
         }
+
+        latch.await(10, SECONDS)
+        conds.await(10)
 
         cleanup:
         pool.shutdown()
+        streamPool.shutdown()
     }
 
     class StreamHelper {
