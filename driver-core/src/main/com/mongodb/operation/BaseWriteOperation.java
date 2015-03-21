@@ -30,6 +30,7 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -37,11 +38,11 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -106,7 +107,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             @Override
             public WriteConcernResult call(final Connection connection) {
                 try {
-                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
+                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         return translateBulkWriteResult(executeCommandProtocol(connection));
                     } else {
                         return executeProtocol(connection);
@@ -122,13 +123,13 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<WriteConcernResult> callback) {
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final Connection connection, final Throwable t) {
+            public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                        connection);
-                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
+                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
                             @Override
                             public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -166,11 +167,10 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     /**
      * Asynchronously executes the write protocol
-     *
-     * @param connection the connection
+     *  @param connection the connection
      * @param callback   the callback to be passed the WriteConcernResult
      */
-    protected abstract void executeProtocolAsync(Connection connection, SingleResultCallback<WriteConcernResult> callback);
+    protected abstract void executeProtocolAsync(AsyncConnection connection, SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Executes the write command protocol.
@@ -182,11 +182,10 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     /**
      * Asynchronously executes the write command protocol.
-     *
-     * @param connection the connection
+     *  @param connection the connection
      * @param callback   the callback to be passed the BulkWriteResult
      */
-    protected abstract void executeCommandProtocolAsync(Connection connection, SingleResultCallback<BulkWriteResult> callback);
+    protected abstract void executeCommandProtocolAsync(AsyncConnection connection, SingleResultCallback<BulkWriteResult> callback);
 
     private MongoException translateException(final Throwable t) {
         MongoException checkedError = MongoException.fromThrowable(t);

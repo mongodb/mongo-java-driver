@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
 import org.bson.BsonDocument;
@@ -62,7 +63,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         return withConnection(binding, new CallableWithConnection<Boolean>() {
             @Override
             public Boolean call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     return executeWrappedCommandProtocol(databaseName, getCommand(), connection, binding.getReadPreference(),
                                                          transformer());
                 } else {
@@ -80,12 +81,12 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Boolean> callback) {
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final Connection connection, final Throwable t) {
+            public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     final SingleResultCallback<Boolean> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
-                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                    if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer(), wrappedCallback);
                     } else {
                         connection.queryAsync(new MongoNamespace(databaseName, "system.users"),

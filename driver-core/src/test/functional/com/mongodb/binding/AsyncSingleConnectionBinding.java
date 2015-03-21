@@ -20,8 +20,8 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
@@ -41,8 +41,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class AsyncSingleConnectionBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final ReadPreference readPreference;
-    private final Connection readConnection;
-    private final Connection writeConnection;
+    private AsyncConnection readConnection;
+    private AsyncConnection writeConnection;
     private volatile Server readServer;
     private volatile Server writeServer;
 
@@ -67,6 +67,9 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
      */
     public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
                                         final long maxWaitTime, final TimeUnit timeUnit) {
+
+        // TODO: handle errors in callbacks
+
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         final CountDownLatch latch = new CountDownLatch(2);
@@ -89,6 +92,32 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             }
         });
 
+        awaitLatch(maxWaitTime, timeUnit, latch);
+
+        final CountDownLatch writeServerLatch = new CountDownLatch(1);
+        writeServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection result, final Throwable t) {
+                writeConnection = result;
+                writeServerLatch.countDown();
+            }
+        });
+
+        awaitLatch(maxWaitTime, timeUnit, writeServerLatch);
+
+        final CountDownLatch readServerLatch = new CountDownLatch(1);
+
+        readServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
+            @Override
+            public void onResult(final AsyncConnection result, final Throwable t) {
+                readConnection = result;
+                readServerLatch.countDown();
+            }
+        });
+        awaitLatch(maxWaitTime, timeUnit, readServerLatch);
+    }
+
+    private void awaitLatch(final long maxWaitTime, final TimeUnit timeUnit, final CountDownLatch latch) {
         try {
             if (!latch.await(maxWaitTime, timeUnit)) {
                 throw new MongoTimeoutException("Failed to get servers");
@@ -96,8 +125,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         } catch (InterruptedException e) {
             throw new MongoInternalException(e.getMessage(), e);
         }
-        writeConnection = writeServer.getConnection();
-        readConnection = readServer.getConnection();
     }
 
     @Override
@@ -138,9 +165,9 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
     private final class SingleAsyncConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
-        private final Connection connection;
+        private final AsyncConnection connection;
 
-        private SingleAsyncConnectionSource(final Server server, final Connection connection) {
+        private SingleAsyncConnectionSource(final Server server, final AsyncConnection connection) {
             this.server = server;
             this.connection = connection;
             AsyncSingleConnectionBinding.this.retain();
@@ -152,7 +179,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<Connection> callback) {
+        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             isTrue("open", super.getCount() > 0);
             callback.onResult(connection.retain(), null);
         }

@@ -24,6 +24,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.InsertRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 
@@ -84,7 +85,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     executeWrappedCommandProtocol(getCredential().getSource(), getCommand(), connection);
                 } else {
                     connection.insert(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getInsertRequest()));
@@ -98,12 +99,12 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final Connection connection, final Throwable t) {
+            public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
-                    if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                    if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
                                                            new VoidTransformer<BsonDocument>(), wrappedCallback);
                     } else {

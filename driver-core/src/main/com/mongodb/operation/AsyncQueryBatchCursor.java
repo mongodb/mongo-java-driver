@@ -21,7 +21,7 @@ import com.mongodb.ServerCursor;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
-import com.mongodb.connection.Connection;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.QueryResult;
 import org.bson.codecs.Decoder;
 
@@ -120,9 +120,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private void getMore(final SingleResultCallback<List<T>> callback) {
-        connectionSource.getConnection(new SingleResultCallback<Connection>() {
+        connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
             @Override
-            public void onResult(final Connection connection, final Throwable t) {
+            public void onResult(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
@@ -137,9 +137,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         if (cursor != null) {
             final ServerCursor localCursor = cursor;
             cursor = null;
-            connectionSource.getConnection(new SingleResultCallback<Connection>() {
+            connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
                 @Override
-                public void onResult(final Connection connection, final Throwable connectionException) {
+                public void onResult(final AsyncConnection connection, final Throwable connectionException) {
                     connection.killCursorAsync(asList(localCursor.getId()), new SingleResultCallback<Void>() {
                                   @Override
                                   public void onResult(final Void result, final Throwable t) {
@@ -157,10 +157,10 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
-        private final Connection connection;
+        private final AsyncConnection connection;
         private final SingleResultCallback<List<T>> callback;
 
-        public QueryResultSingleResultCallback(final Connection connection, final SingleResultCallback<List<T>> callback) {
+        public QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
             this.callback = errorHandlingCallback(callback);
         }

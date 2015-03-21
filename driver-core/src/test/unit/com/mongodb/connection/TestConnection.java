@@ -31,7 +31,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-class TestConnection implements Connection {
+class TestConnection implements Connection, AsyncConnection {
     private final InternalConnection internalConnection;
     private final ProtocolExecutor executor;
     private Protocol enqueuedProtocol;
@@ -47,7 +47,7 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public Connection retain() {
+    public TestConnection retain() {
         return this;
     }
 

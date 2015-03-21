@@ -18,7 +18,7 @@ package com.mongodb.binding;
 
 import category.ReplicaSet;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.Connection;
+import com.mongodb.connection.AsyncConnection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,12 +52,12 @@ public class AsyncSingleConnectionBindingTest  {
     @Test
     public void shouldReturnTheSameConnection() throws Throwable {
         AsyncConnectionSource asyncConnectionSource = getReadConnectionSource(binding);
-        Connection asyncConnection = getConnection(asyncConnectionSource);
+        AsyncConnection asyncConnection = getConnection(asyncConnectionSource);
 
         // Check we get the same connection
         for (int i = 0; i < 100; i++) {
             AsyncConnectionSource connectionSource = getReadConnectionSource(binding);
-            Connection connection = getConnection(connectionSource);
+            AsyncConnection connection = getConnection(connectionSource);
             assertEquals(connection.getDescription().getConnectionId(), asyncConnection.getDescription().getConnectionId());
             connection.release();
             connectionSource.release();
@@ -70,10 +70,10 @@ public class AsyncSingleConnectionBindingTest  {
     @Test
     public void shouldHaveTheSameConnectionForReadsAndWritesWithPrimaryReadPreference() throws Throwable {
         AsyncConnectionSource writeSource = getWriteConnectionSource(binding);
-        Connection writeConnection = getConnection(writeSource);
+        AsyncConnection writeConnection = getConnection(writeSource);
 
         AsyncConnectionSource readSource = getReadConnectionSource(binding);
-        Connection readConnection = getConnection(readSource);
+        AsyncConnection readConnection = getConnection(readSource);
         assertEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
 
         writeConnection.release();
@@ -100,10 +100,10 @@ public class AsyncSingleConnectionBindingTest  {
     public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws Throwable {
         AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
         AsyncConnectionSource writeSource = getWriteConnectionSource(binding);
-        Connection writeConnection = getConnection(writeSource);
+        AsyncConnection writeConnection = getConnection(writeSource);
 
         AsyncConnectionSource readSource = getReadConnectionSource(binding);
-        Connection readConnection = getConnection(readSource);
+        AsyncConnection readConnection = getConnection(readSource);
         assertThat(writeConnection.getDescription().getConnectionId(), is(not(readConnection.getDescription().getConnectionId())));
 
         writeConnection.release();
@@ -128,9 +128,9 @@ public class AsyncSingleConnectionBindingTest  {
     }
 
     private void getAndReleaseConnectionSourceAndConnection(final AsyncConnectionSource connectionSource) {
-        connectionSource.getConnection(new SingleResultCallback<Connection>() {
+        connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
             @Override
-            public void onResult(final Connection connection, final Throwable t) {
+            public void onResult(final AsyncConnection connection, final Throwable t) {
                 connection.release();
                 connectionSource.release();
             }

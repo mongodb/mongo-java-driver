@@ -18,8 +18,8 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
@@ -98,7 +98,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<Connection> callback) {
+        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
             server.getConnectionAsync(callback);
         }
 

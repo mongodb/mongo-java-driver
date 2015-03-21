@@ -18,4 +18,7 @@ package com.mongodb.connection;
 
 interface ConnectionFactory {
     Connection create(InternalConnection internalConnection, ProtocolExecutor executor, ClusterConnectionMode clusterConnectionMode);
+
+    AsyncConnection createAsync(InternalConnection internalConnection, ProtocolExecutor executor,
+                                ClusterConnectionMode clusterConnectionMode);
 }
