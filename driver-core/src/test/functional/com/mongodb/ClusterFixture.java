@@ -73,6 +73,7 @@ public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
+    public static final long TIMEOUT = 60L;
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
@@ -265,7 +266,7 @@ public final class ClusterFixture {
     public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
-        return futureResultCallback.get(60, SECONDS);
+        return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
@@ -275,7 +276,7 @@ public final class ClusterFixture {
     public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
-        return futureResultCallback.get(60, SECONDS);
+        return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
@@ -286,14 +287,14 @@ public final class ClusterFixture {
             loopCursor(batchCursor, block, futureResultCallback);
         }
         for (int i = 0; i < batchCursors.size(); i++) {
-            futures.get(i).get(60, SECONDS);
+            futures.get(i).get(TIMEOUT, SECONDS);
         }
     }
 
     public static <T> void loopCursor(final AsyncReadOperation<AsyncBatchCursor<T>> op, final Block<T> block) throws Throwable {
         final FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
         loopCursor(executeAsync(op), block, futureResultCallback);
-        futureResultCallback.get(60, SECONDS);
+        futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static <T> void loopCursor(final AsyncBatchCursor<T> batchCursor, final Block<T> block,
@@ -322,18 +323,18 @@ public final class ClusterFixture {
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
         binding.getWriteConnectionSource(futureResultCallback);
-        return futureResultCallback.get(60, SECONDS);
+        return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         final FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<AsyncConnectionSource>();
         binding.getReadConnectionSource(futureResultCallback);
-        return futureResultCallback.get(60, SECONDS);
+        return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static Connection getConnection(final AsyncConnectionSource source) throws Throwable {
         final FutureResultCallback<Connection> futureResultCallback = new FutureResultCallback<Connection>();
         source.getConnection(futureResultCallback);
-        return futureResultCallback.get(60, SECONDS);
+        return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 }
