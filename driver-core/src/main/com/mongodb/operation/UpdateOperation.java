@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected void executeProtocolAsync(final Connection connection, final SingleResultCallback<WriteConcernResult> callback) {
+    protected void executeProtocolAsync(final AsyncConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
         connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
     }
 
@@ -76,7 +77,7 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected void executeCommandProtocolAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
         connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
     }
 

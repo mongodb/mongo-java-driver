@@ -32,6 +32,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.BulkWriteBatchCombiner;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -49,11 +50,11 @@ import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -75,10 +76,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     /**
      * Construct a new instance.
      *
-     * @param namespace the database and collection namespace for the operation.
+     * @param namespace     the database and collection namespace for the operation.
      * @param writeRequests the list of writeRequests to execute.
      * @param ordered       whether the writeRequests must be executed in order.
-     * @param writeConcern the write concern for the operation.
+     * @param writeConcern  the write concern for the operation.
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests, final boolean ordered,
                                    final WriteConcern writeConcern) {
@@ -163,7 +164,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         final SingleResultCallback<BulkWriteResult> wrappedCallback = errorHandlingCallback(callback);
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
-            public void call(final Connection connection, final Throwable t) {
+            public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     wrappedCallback.onResult(null, t);
                 } else {
@@ -175,7 +176,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
-    private void executeRunsAsync(final Iterator<Run> runs, final Connection connection,
+    private void executeRunsAsync(final Iterator<Run> runs, final AsyncConnection connection,
                                   final BulkWriteBatchCombiner bulkWriteBatchCombiner,
                                   final SingleResultCallback<BulkWriteResult> callback) {
 
@@ -209,8 +210,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         });
     }
 
-    private boolean shouldUseWriteCommands(final Connection connection) {
-        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection.getDescription());
+    private boolean shouldUseWriteCommands(final ConnectionDescription description) {
+        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(description);
     }
 
     private boolean serverSupportsWriteCommands(final ConnectionDescription connectionDescription) {
@@ -367,7 +368,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         @SuppressWarnings("unchecked")
-        void executeAsync(final Connection connection, final SingleResultCallback<BulkWriteResult> callback) {
+        void executeAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
             if (type == UPDATE || type == REPLACE) {
                 getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).executeAsync(callback);
             } else if (type == INSERT) {
@@ -388,18 +389,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
-                    connection.deleteAsync(namespace, ordered, writeConcern, asList(deleteRequests.get(index)), callback);
-                }
-
-                @Override
                 BulkWriteResult executeWriteCommandProtocol() {
                     return connection.deleteCommand(namespace, ordered, writeConcern, deleteRequests);
-                }
-
-                @Override
-                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests, callback);
                 }
 
                 @Override
@@ -419,18 +410,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
-                    connection.insertAsync(namespace, ordered, writeConcern, asList(insertRequests.get(index)), callback);
-                }
-
-                @Override
                 BulkWriteResult executeWriteCommandProtocol() {
                     return connection.insertCommand(namespace, ordered, writeConcern, insertRequests);
-                }
-
-                @Override
-                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.insertCommandAsync(namespace, ordered, writeConcern, insertRequests, callback);
                 }
 
                 @Override
@@ -453,13 +434,69 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
 
                 @Override
-                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
-                    connection.updateAsync(namespace, ordered, writeConcern, asList(updates.get(index)), callback);
+                BulkWriteResult executeWriteCommandProtocol() {
+                    return connection.updateCommand(namespace, ordered, writeConcern, updates);
                 }
 
                 @Override
-                BulkWriteResult executeWriteCommandProtocol() {
-                    return connection.updateCommand(namespace, ordered, writeConcern, updates);
+                WriteRequest.Type getType() {
+                    return UPDATE;
+                }
+
+            };
+        }
+
+        AsyncRunExecutor getDeletesRunExecutor(final List<DeleteRequest> deleteRequests, final AsyncConnection connection) {
+            return new AsyncRunExecutor(connection) {
+
+                @Override
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.deleteAsync(namespace, ordered, writeConcern, asList(deleteRequests.get(index)), callback);
+                }
+
+                @Override
+                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
+                    connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests, callback);
+                }
+
+                @Override
+                WriteRequest.Type getType() {
+                    return DELETE;
+                }
+            };
+        }
+
+        @SuppressWarnings("unchecked")
+        AsyncRunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final AsyncConnection connection) {
+            return new AsyncRunExecutor(connection) {
+
+                @Override
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.insertAsync(namespace, ordered, writeConcern, asList(insertRequests.get(index)), callback);
+                }
+
+                @Override
+                void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
+                    connection.insertCommandAsync(namespace, ordered, writeConcern, insertRequests, callback);
+                }
+
+                @Override
+                WriteRequest.Type getType() {
+                    return INSERT;
+                }
+
+                int getCount(final WriteConcernResult writeConcernResult) {
+                    return 1;
+                }
+            };
+        }
+
+        AsyncRunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final AsyncConnection connection) {
+            return new AsyncRunExecutor(connection) {
+
+                @Override
+                void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
+                    connection.updateAsync(namespace, ordered, writeConcern, asList(updates.get(index)), callback);
                 }
 
                 @Override
@@ -484,11 +521,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
             abstract WriteConcernResult executeWriteProtocol(int index);
 
-            abstract void executeWriteProtocolAsync(int index, SingleResultCallback<WriteConcernResult> callback);
-
             abstract BulkWriteResult executeWriteCommandProtocol();
-
-            abstract void executeWriteCommandProtocolAsync(SingleResultCallback<BulkWriteResult> callback);
 
             abstract WriteRequest.Type getType();
 
@@ -497,7 +530,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             }
 
             BulkWriteResult execute() {
-                if (shouldUseWriteCommands(connection)) {
+                if (shouldUseWriteCommands(connection.getDescription())) {
                     return executeWriteCommandProtocol();
                 } else {
                     BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
@@ -532,8 +565,91 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
             }
 
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult) {
+                return getResult(writeConcernResult, getUpsertedItems(writeConcernResult));
+            }
+
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult, final UpdateRequest updateRequest) {
+                return getResult(writeConcernResult, getUpsertedItems(writeConcernResult, updateRequest));
+            }
+
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult, final List<BulkWriteUpsert> upsertedItems) {
+                int count = getCount(writeConcernResult);
+                Integer modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? null : 0;
+                return BulkWriteResult.acknowledged(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
+            }
+
+            List<BulkWriteUpsert> getUpsertedItems(final WriteConcernResult writeConcernResult) {
+                return writeConcernResult.getUpsertedId() == null
+                       ? Collections.<BulkWriteUpsert>emptyList()
+                       : asList(new BulkWriteUpsert(0, writeConcernResult.getUpsertedId()));
+            }
+
+            @SuppressWarnings("unchecked")
+            List<BulkWriteUpsert> getUpsertedItems(final WriteConcernResult writeConcernResult,
+                                                   final UpdateRequest updateRequest) {
+                if (writeConcernResult.getUpsertedId() == null) {
+                    if (writeConcernResult.isUpdateOfExisting() || !updateRequest.isUpsert()) {
+                        return Collections.emptyList();
+                    } else {
+                        BsonDocument update = updateRequest.getUpdate();
+                        BsonDocument filter = updateRequest.getFilter();
+
+                        if (update.containsKey("_id")) {
+                            return asList(new BulkWriteUpsert(0, update.get("_id")));
+                        } else if (filter.containsKey("_id")) {
+                            return asList(new BulkWriteUpsert(0, filter.get("_id")));
+                        } else {
+                            return Collections.emptyList();
+                        }
+                    }
+                } else {
+                    return asList(new BulkWriteUpsert(0, writeConcernResult.getUpsertedId()));
+                }
+            }
+
+            private BulkWriteError getBulkWriteError(final WriteConcernException writeException) {
+                return new BulkWriteError(writeException.getErrorCode(), writeException.getErrorMessage(),
+                                          translateGetLastErrorResponseToErrInfo(writeException.getResponse()), 0);
+            }
+
+            private WriteConcernError getWriteConcernError(final WriteConcernException writeException) {
+                return new WriteConcernError(writeException.getErrorCode(),
+                                             ((BsonString) writeException.getResponse().get("err")).getValue(),
+                                             translateGetLastErrorResponseToErrInfo(writeException.getResponse()));
+            }
+
+            private BsonDocument translateGetLastErrorResponseToErrInfo(final BsonDocument response) {
+                BsonDocument errInfo = new BsonDocument();
+                for (Map.Entry<String, BsonValue> entry : response.entrySet()) {
+                    if (IGNORED_KEYS.contains(entry.getKey())) {
+                        continue;
+                    }
+                    errInfo.put(entry.getKey(), entry.getValue());
+                }
+                return errInfo;
+            }
+        }
+
+        private abstract class AsyncRunExecutor {
+            private final AsyncConnection connection;
+
+            AsyncRunExecutor(final AsyncConnection connection) {
+                this.connection = connection;
+            }
+
+            abstract void executeWriteProtocolAsync(int index, SingleResultCallback<WriteConcernResult> callback);
+
+            abstract void executeWriteCommandProtocolAsync(SingleResultCallback<BulkWriteResult> callback);
+
+            abstract WriteRequest.Type getType();
+
+            int getCount(final WriteConcernResult writeConcernResult) {
+                return getType() == INSERT ? 1 : writeConcernResult.getCount();
+            }
+
             void executeAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                if (shouldUseWriteCommands(connection)) {
+                if (shouldUseWriteCommands(connection.getDescription())) {
                     executeWriteCommandProtocolAsync(callback);
                 } else {
                     BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()

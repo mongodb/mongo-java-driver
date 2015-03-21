@@ -17,7 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.Connection;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
 
 /**
@@ -39,7 +39,7 @@ public interface AsyncConnectionSource extends ReferenceCounted {
      *
      * @param callback the to be passed the connection
      */
-    void getConnection(SingleResultCallback<Connection> callback);
+    void getConnection(SingleResultCallback<AsyncConnection> callback);
 
     @Override
     AsyncConnectionSource retain();

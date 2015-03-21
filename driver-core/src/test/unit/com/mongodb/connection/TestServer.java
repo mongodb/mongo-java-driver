@@ -81,7 +81,7 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
-    public void getConnectionAsync(final SingleResultCallback<Connection> callback) {
+    public void getConnectionAsync(final SingleResultCallback<AsyncConnection> callback) {
         throw new UnsupportedOperationException();
     }
 

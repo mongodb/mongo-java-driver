@@ -23,7 +23,9 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -108,7 +110,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
-            public void call(final AsyncConnectionSource source, final Connection connection, final Throwable t) {
+            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
@@ -124,24 +126,25 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return new Function<BsonDocument, BatchCursor<T>>() {
             @Override
             public BatchCursor<T> apply(final BsonDocument result) {
-                return new QueryBatchCursor<T>(createQueryResult(result, connection), 0, 0, decoder, source);
+                return new QueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, source);
             }
         };
     }
 
-    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source, final Connection connection) {
+    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
+                                                                         final AsyncConnection connection) {
         return new Function<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
-                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection), 0, 0, decoder, source);
+                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, source);
             }
         };
     }
 
     @SuppressWarnings("unchecked")
-    private QueryResult<T> createQueryResult(final BsonDocument result, final Connection connection) {
+    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
         return new QueryResult<T>(null, BsonDocumentWrapperHelper.<T>toList(result, "databases"), 0,
-                connection.getDescription().getServerAddress());
+                description.getServerAddress());
     }
 
     private BsonDocument getCommand() {
