@@ -275,6 +275,43 @@ public class GridFSTest extends DatabaseTestCase {
         gridFS.remove(new BasicDBObject("_id", id));
     }
 
+    @Test
+    public void testRemove() throws Exception {
+        int target = GridFS.DEFAULT_CHUNKSIZE * 3;
+        StringBuilder buf = new StringBuilder(target);
+        while (buf.length() < target) {
+            buf.append("asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad");
+        }
+        String s = buf.toString();
+
+        int nbFiles = 100;
+        for (int idx = 0; idx < nbFiles; ++idx) {
+            GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
+            in.save();
+        }
+        long start = System.currentTimeMillis();
+        gridFS.remove(new BasicDBObject());
+        //System.out.println("Legacy remove took : " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    @Test
+    public void testBulkRemove() throws Exception {
+        int target = GridFS.DEFAULT_CHUNKSIZE * 3;
+        StringBuilder buf = new StringBuilder(target);
+        while (buf.length() < target) {
+            buf.append("asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad");
+        }
+        String s = buf.toString();
+        int nbFiles = 100;
+        for (int idx = 0; idx < nbFiles; ++idx) {
+            GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
+            in.save();
+        }
+        long start = System.currentTimeMillis();
+        gridFS.remove(new BasicDBObject(), false);
+        //System.out.println("Bulk remove took : " + (System.currentTimeMillis() - start) + " ms");
+    }
+
     void testInOut(final String s) throws Exception {
 
         int[] start = getCurrentCollectionCounts();

@@ -303,12 +303,32 @@ public class GridFS {
      * @throws com.mongodb.MongoException if the operation fails
      */
     public void remove(final DBObject query) {
+        remove(query, true);
+    }
+
+    /**
+     * Removes all files matching the given query.
+     *
+     * @param query filter to apply
+     * @param fileByFile if true : for each file remove the file and it's chunks
+     *                   if false select all files remove them all, then remove all chunks
+     * @throws com.mongodb.MongoException if the operation fails
+     */
+    public void remove(final DBObject query, final boolean fileByFile) {
         if (query == null) {
             throw new IllegalArgumentException("query can not be null");
         }
-
-        for (final GridFSDBFile f : find(query)) {
-            f.remove();
+        if (fileByFile){
+            for (final GridFSDBFile f : find(query)) {
+                f.remove();
+            }
+        } else {
+            List<ObjectId> filesIds = new ArrayList<ObjectId>();
+            for (GridFSDBFile f : find(query)) {
+                filesIds.add((ObjectId) f.getId());
+            }
+            getFilesCollection().remove(query);
+            getChunksCollection().remove(new BasicDBObject("files_id", new BasicDBObject("$in", filesIds)));
         }
     }
 
