@@ -438,6 +438,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    public void dropIndex(final Bson keys) {
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry)));
+    }
+
+    @Override
     public void dropIndexes() {
         dropIndex("*");
     }

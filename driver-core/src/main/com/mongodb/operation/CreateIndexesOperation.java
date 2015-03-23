@@ -38,7 +38,6 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +47,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -227,27 +227,4 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             return e;
         }
     }
-
-    /**
-     * Convenience method to generate an index name from the set of fields it is over.
-     *
-     * @return a string representation of this index's fields
-     */
-    private String generateIndexName(final BsonDocument index) {
-        StringBuilder indexName = new StringBuilder();
-        for (final String keyNames : index.keySet()) {
-            if (indexName.length() != 0) {
-                indexName.append('_');
-            }
-            indexName.append(keyNames).append('_');
-            BsonValue ascOrDescValue = index.get(keyNames);
-            if (ascOrDescValue instanceof BsonInt32) {
-                indexName.append(((BsonInt32) ascOrDescValue).getValue());
-            } else if (ascOrDescValue instanceof BsonString) {
-                indexName.append(((BsonString) ascOrDescValue).getValue().replace(' ', '_'));
-            }
-        }
-        return indexName.toString();
-    }
-
 }

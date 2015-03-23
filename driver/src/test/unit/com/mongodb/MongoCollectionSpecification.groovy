@@ -772,13 +772,22 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use DropIndexOperation correctly for dropIndex'() {
         given:
-        def executor = new TestOperationExecutor([null])
+        def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new DropIndexOperation(namespace, 'indexName')
 
         when:
+        def expectedOperation = new DropIndexOperation(namespace, 'indexName')
         collection.dropIndex('indexName')
         def operation = executor.getWriteOperation() as DropIndexOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        def keys = new BsonDocument('x', new BsonInt32(1))
+        expectedOperation = new DropIndexOperation(namespace, keys)
+        collection.dropIndex(keys)
+        operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)

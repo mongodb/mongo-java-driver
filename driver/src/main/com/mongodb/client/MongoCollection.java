@@ -510,12 +510,20 @@ public interface MongoCollection<TDocument> {
     <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> resultClass);
 
     /**
-     * Drops the given index.
+     * Drops the index given its name.
      *
      * @param indexName the name of the index to remove
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
     void dropIndex(String indexName);
+
+    /**
+     * Drops the index given the keys used to create it.
+     *
+     * @param keys the keys of the index to remove
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     */
+    void dropIndex(Bson keys);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.

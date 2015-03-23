@@ -28,6 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
+import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
 
 /**
@@ -49,6 +50,17 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param keys the keys of the index to be dropped
+     */
+    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument keys) {
+        this.namespace = notNull("namespace", namespace);
+        this.indexName = generateIndexName(notNull("keys", keys));
     }
 
     @Override

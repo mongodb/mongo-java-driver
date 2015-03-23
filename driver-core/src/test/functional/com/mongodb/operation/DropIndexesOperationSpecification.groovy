@@ -70,12 +70,26 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
         thrown(MongoException)
     }
 
-    def 'should drop existing index'() {
+    def 'should drop existing index by name'() {
         given:
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
 
         when:
         new DropIndexOperation(getNamespace(), 'theField_1').execute(getBinding())
+        List<Document> indexes = getIndexes()
+
+        then:
+        indexes.size() == 1
+        indexes[0].name == '_id_'
+    }
+
+    def 'should drop existing index by keys'() {
+        def keys = new BsonDocument('theField', new BsonInt32(1))
+        given:
+        collectionHelper.createIndex(keys)
+
+        when:
+        new DropIndexOperation(getNamespace(), keys).execute(getBinding())
         List<Document> indexes = getIndexes()
 
         then:

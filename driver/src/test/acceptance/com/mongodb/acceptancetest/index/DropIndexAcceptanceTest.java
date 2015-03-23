@@ -55,6 +55,23 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
+    public void shouldDropSingleIndexByKeys() {
+        // Given
+        Document keys = new Document("field", 1);
+        collection.createIndex(keys);
+
+        assertThat("Should be default index and new index on the database now",
+                   collection.listIndexes().into(new ArrayList<Document>()).size(),
+                   is(2));
+
+        // When
+        collection.dropIndex(keys);
+
+        // Then
+        assertThat("Should be one less index", collection.listIndexes().into(new ArrayList<Document>()).size(), is(1));
+    }
+
+    @Test
     public void shouldDropAllIndexesForCollection() {
         // Given
         collection.createIndex(new Document("field", 1));
