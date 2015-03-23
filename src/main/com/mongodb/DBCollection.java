@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <pre>
  * {@code
  * MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
- * DB db = mongo.getDB("mydb");
+ * DB db = mongoClient.getDB("mydb");
  * DBCollection collection = db.getCollection("test"); }
  * </pre>
  * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
@@ -178,8 +178,8 @@ public abstract class DBCollection {
      * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
      * does not contain an '_id' field, it will be added.</p>
      *
-     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true, 
-     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise, 
+     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true,
+     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise,
      * the value of the continueOnError property of the given {@code WriteConcern} will take effect. </p>
      *
      * @param documents     a list of {@code DBObject}'s to be inserted
@@ -658,7 +658,7 @@ public abstract class DBCollection {
      * @param keys an object with a key set of the fields desired for the index
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
-     * 
+     *
      * @deprecated use {@link DBCollection#createIndex(DBObject)} instead
      */
     @Deprecated
@@ -938,7 +938,7 @@ public abstract class DBCollection {
         }
 
         Iterator<DBObject> i = find(queryOpBuilder.get(), fields, 0, -1, 0, getOptions(), readPref, getDecoder());
-        
+
         DBObject obj = (i.hasNext() ? i.next() : null);
         if ( obj != null && ( fields != null && fields.keySet().size() > 0 ) ){
             obj.markAsPartialObject();
@@ -997,12 +997,12 @@ public abstract class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
      * <ul>
-     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in
      *     the document.</li>
-     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
-     *     replacing all field in the existing record with the fields from the document.</li> 
+     *     <li>If a document exists with the specified '_id' value, the method performs an update,
+     *     replacing all field in the existing record with the fields from the document.</li>
      * </ul>
      *
      * @param jo {@link DBObject} to save to the collection.
@@ -1017,12 +1017,12 @@ public abstract class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field:
      * <ul>
-     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in
      *     the document.</li>
-     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
-     *     replacing all field in the existing record with the fields from the document.</li> 
+     *     <li>If a document exists with the specified '_id' value, the method performs an update,
+     *     replacing all field in the existing record with the fields from the document.</li>
      * </ul>
      *
      * @param jo      {@link DBObject} to save to the collection.
@@ -1281,7 +1281,7 @@ public abstract class DBCollection {
 
         return res.getLong("n");
     }
-    
+
     CommandResult command(DBObject cmd, int options, ReadPreference readPrefs){
     	return _db.command(cmd,getOptions(),readPrefs);
     }
@@ -1580,7 +1580,7 @@ public abstract class DBCollection {
         res.throwOnError();
         return new MapReduceOutput( this , command, res );
     }
-    
+
     /**
      * Method implements aggregation framework.
      *
@@ -1631,7 +1631,7 @@ public abstract class DBCollection {
 
         CommandResult res = _db.command(command, getOptions(), readPreference);
         res.throwOnError();
-        
+
         return new AggregationOutput(command, res);
     }
 
@@ -1676,12 +1676,12 @@ public abstract class DBCollection {
         command.put("explain", true);
         final CommandResult res = _db.command(command, getOptions(), getReadPreference());
         res.throwOnError();
-        
+
         return res;
     }
 
     /**
-     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p> 
+     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p>
      *
      * <p>Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos. </p>
      *
