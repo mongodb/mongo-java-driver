@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <pre>
  * {@code
  * MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
- * DB db = mongo.getDB("mydb");
+ * DB db = mongoClient.getDB("mydb");
  * DBCollection collection = db.getCollection("test"); }
  * </pre>
  * To get a collection to use, just specify the name of the collection to the getCollection(String collectionName) method:
