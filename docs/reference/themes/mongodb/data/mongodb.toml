@@ -1,0 +1,5 @@
+githubRepo = ""
+googleAnalytics = false
+currentVersion = ""
+driverVersions = []
+highlightTheme = "default.css"

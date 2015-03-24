@@ -1,0 +1,5 @@
+githubRepo = "mongo-java-driver"
+googleAnalytics = false
+currentVersion = "3.0"
+driverVersions = ["3.0"]
+highlightTheme = "idea.css"
