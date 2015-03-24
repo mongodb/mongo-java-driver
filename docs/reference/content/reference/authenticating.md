@@ -29,17 +29,23 @@ MongoDB 3.0 changed the default authentication mechanism from
 authenticate properly regardless of server version, create a credential using the following static factory method:
 
  ```java
-   import com.mongodb.MongoCredential;
+import com.mongodb.MongoCredential;
 
-    // ...
+// ...
 
-    String user;        // the user name
-    String database;    // the name of the database in which the user is defined
-    char[] password;    // the password as a character array
-    // ...
-    MongoCredential credential = MongoCredential.createCredential(user,
-                                                                  database,
-                                                                  password);
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1");
 ```
 
 This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the
@@ -52,9 +58,15 @@ To explicitly create a credential of type [SCRAM-SHA-1](http://docs.mongodb .org
 use the following static factory method:
 
 ```java
-    MongoCredential credential = MongoCredential.createScramSha1Credential(user,
-                                                                           database,
-                                                                           password);
+MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1");
 ```
 
 ## MONGODB-CR
@@ -63,9 +75,15 @@ To explicitly create a credential of type [MONGODB-CR](http://docs.mongodb.org/m
 use the following static factory method:
 
 ```java
-    MongoCredential credential = MongoCredential.createMongoCRCredential(user,
-                                                                         database,
-                                                                         password);
+MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=MONGODB-CR");
 ```
 
 Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
@@ -79,8 +97,14 @@ authentication method requires the use of SSL connections with certificate valid
 create a credential of this type use the following static factory method:
 
 ```java
-    String user;     // The x.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
-    MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+String user;     // The x.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://subjectName@host1/?authMechanism=MONGODB-X509");
 ```
 
 See the MongoDB server
@@ -94,9 +118,15 @@ create a credential of type [Kerberos (GSSAPI)](http://docs.mongodb.org/manual/c
 following static factory method:
 
 ```java
-    String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREALM.ME"
-    // ...
-    MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREALM.ME"
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI");
 ```
 
 > The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating
@@ -116,10 +146,16 @@ Access Protocol (LDAP) service.  To create a credential of type [LDAP](http://do
 .org/manual/core/authentication/#ldap-proxy-authority-authentication) use the following static factory method:
 
 ```java
-    String user;          // The LDAP user name
-    char[] password;      // The LDAP password
-    // ...
-    MongoCredential credential = MongoCredential.createPlainCredential(user, "$external", password);
+String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, "$external", password);
+```
+
+or with a connection string:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
 > The method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating
