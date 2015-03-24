@@ -68,8 +68,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     public AsyncSingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
                                         final long maxWaitTime, final TimeUnit timeUnit) {
 
-        // TODO: handle errors in callbacks
-
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         final CountDownLatch latch = new CountDownLatch(2);
@@ -94,6 +92,10 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         awaitLatch(maxWaitTime, timeUnit, latch);
 
+        if (writeServer == null || readServer == null) {
+            throw new MongoInternalException("Failure to select server");
+        }
+
         final CountDownLatch writeServerLatch = new CountDownLatch(1);
         writeServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
             @Override
@@ -105,6 +107,10 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         awaitLatch(maxWaitTime, timeUnit, writeServerLatch);
 
+        if (writeConnection == null) {
+            throw new MongoInternalException("Failure to get connection");
+        }
+
         final CountDownLatch readServerLatch = new CountDownLatch(1);
 
         readServer.getConnectionAsync(new SingleResultCallback<AsyncConnection>() {
@@ -115,6 +121,10 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
             }
         });
         awaitLatch(maxWaitTime, timeUnit, readServerLatch);
+
+        if (readConnection == null) {
+            throw new MongoInternalException("Failure to get connection");
+        }
     }
 
     private void awaitLatch(final long maxWaitTime, final TimeUnit timeUnit, final CountDownLatch latch) {

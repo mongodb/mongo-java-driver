@@ -40,8 +40,6 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import java.util.concurrent.TimeUnit
-
 import static ClusterFixture.getBinding
 import static ClusterFixture.getSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
@@ -329,7 +327,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'unacknowledged upserts with custom _id should not error'() {
         given:
-        def binding = new SingleConnectionBinding(getCluster(), ReadPreference.primary(), 10, TimeUnit.SECONDS)
+        def binding = new SingleConnectionBinding(getCluster(), ReadPreference.primary())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),

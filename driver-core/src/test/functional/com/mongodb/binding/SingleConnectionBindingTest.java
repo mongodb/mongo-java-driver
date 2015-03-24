@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category;
 
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.ReadPreference.secondary;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
@@ -37,7 +36,7 @@ public class SingleConnectionBindingTest  {
 
     @Before
     public void setUp() {
-        binding = new SingleConnectionBinding(getCluster(), 1, SECONDS);
+        binding = new SingleConnectionBinding(getCluster());
     }
 
     @After
@@ -81,7 +80,7 @@ public class SingleConnectionBindingTest  {
     @Test
     public void shouldNotDevourAllConnections() {
         for (int i = 0; i < 250; i++) {
-            SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), 1, SECONDS);
+            SingleConnectionBinding binding = new SingleConnectionBinding(getCluster());
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
             getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource());
@@ -95,7 +94,7 @@ public class SingleConnectionBindingTest  {
     @Test
     public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws InterruptedException {
         // given
-        SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), secondary(), 1, SECONDS);
+        SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), secondary());
         ConnectionSource writeSource = binding.getWriteConnectionSource();
         Connection writeConnection = writeSource.getConnection();
 
@@ -116,7 +115,7 @@ public class SingleConnectionBindingTest  {
     @Test
     public void shouldNotDevourAllConnectionsWhenUsingNonPrimaryReadPreference() {
         for (int i = 0; i < 500; i++) {
-            SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), secondary(), 1, SECONDS);
+            SingleConnectionBinding binding = new SingleConnectionBinding(getCluster(), secondary());
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
             getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
             getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource());

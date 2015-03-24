@@ -24,8 +24,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -48,11 +46,9 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      * Create a new binding with the given cluster.
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
-     * @param maxWaitTime the maximum time to wait for a connection to become available.
-     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
      */
-    public SingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
-        this(cluster, primary(), maxWaitTime, timeUnit);
+    public SingleConnectionBinding(final Cluster cluster) {
+        this(cluster, primary());
     }
 
     /**
@@ -60,13 +56,9 @@ public class SingleConnectionBinding implements ReadWriteBinding {
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param readPreference the readPreference for reads, if not primary a separate connection will be used for reads
-     * @param maxWaitTime the maximum time to wait for a connection to become available
-     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
      */
-    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference,
-                                   final long maxWaitTime, final TimeUnit timeUnit) {
+    public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
         notNull("cluster", cluster);
-        notNull("timeUnit", timeUnit);
         this.readPreference = notNull("readPreference", readPreference);
         writeServer = cluster.selectServer(new PrimaryServerSelector());
         writeConnection = writeServer.getConnection();

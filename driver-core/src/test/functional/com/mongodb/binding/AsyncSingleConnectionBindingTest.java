@@ -17,6 +17,7 @@
 package com.mongodb.binding;
 
 import category.ReplicaSet;
+import com.mongodb.ClusterFixture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import org.junit.After;
@@ -41,7 +42,7 @@ public class AsyncSingleConnectionBindingTest  {
 
     @Before
     public void setUp() {
-        binding = new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
+        binding = new AsyncSingleConnectionBinding(getAsyncCluster(), ClusterFixture.TIMEOUT, SECONDS);
     }
 
     @After
