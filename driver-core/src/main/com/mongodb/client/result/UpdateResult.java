@@ -156,6 +156,15 @@ public abstract class UpdateResult {
             result = 31 * result + (upsertedId != null ? upsertedId.hashCode() : 0);
             return result;
         }
+
+        @Override
+        public String toString() {
+            return "AcknowledgedUpdateResult{"
+                   + "matchedCount=" + matchedCount
+                   + ", modifiedCount=" + modifiedCount
+                   + ", upsertedId=" + upsertedId
+                   + '}';
+        }
     }
 
     private static class UnacknowledgedUpdateResult extends UpdateResult {
@@ -203,6 +212,11 @@ public abstract class UpdateResult {
         @Override
         public int hashCode() {
             return 0;
+        }
+
+        @Override
+        public String toString() {
+            return "UnacknowledgedUpdateResult{}";
         }
     }
 }

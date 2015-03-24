@@ -98,6 +98,13 @@ public abstract class DeleteResult {
         public int hashCode() {
             return (int) (deletedCount ^ (deletedCount >>> 32));
         }
+
+        @Override
+        public String toString() {
+            return "AcknowledgedDeleteResult{"
+                   + "deletedCount=" + deletedCount
+                   + '}';
+        }
     }
 
     private static class UnacknowledgedDeleteResult extends DeleteResult {
@@ -126,6 +133,11 @@ public abstract class DeleteResult {
         @Override
         public int hashCode() {
             return 0;
+        }
+
+        @Override
+        public String toString() {
+            return "UnacknowledgedDeleteResult{}";
         }
     }
 }
