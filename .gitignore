@@ -36,5 +36,6 @@ codereview.rc
 **/gradle.properties
 
 # doc settings
-docs/public
+docs/reference/public
+docs/landing/public
 docs/hugo*
