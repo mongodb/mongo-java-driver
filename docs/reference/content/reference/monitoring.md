@@ -3,7 +3,7 @@ date = "2015-03-19T12:53:26-04:00"
 title = "Monitoring"
 [menu.main]
   parent = "Reference"
-  weight = 50
+  weight = 100
   pre = "<i class='fa'></i>"
 +++
 
