@@ -58,8 +58,11 @@ MongoDB server:
 - `javax.net.ssl.keyStore`: the path to a key store containing the client's SSL certificates
 - `javax.net.ssl.keyStorePassword`: the password to access this key store
  
-The key store is typically created with [keytool](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) or with the
+The key store is typically created with the [keytool](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) or the
 [openssl](https://www.openssl.org/docs/apps/openssl.html) command line program.
+
+For more information on configuring a Java application for SSL, please refer to the  
+[JSSE Reference Guide](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html).
 
 
 
