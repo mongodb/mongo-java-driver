@@ -34,9 +34,8 @@ throws declarations.
 the 2.x series and there is no way to make work reliably, so it has been removed.
 * The [autoConnectRetry](https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html#isAutoConnectRetry--) and
 [maxAutoConnectRetryTime](https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html#getMaxAutoConnectRetryTime--) properties in
-[MongoClientOptions](http://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html) have been removed: these methods have been the
-source of much confusion to users, who typically think it's about re-connecting to the primary during an election.  As no other
-MongoDB-supported drivers support these properties, they have been removed.
+[MongoClientOptions](http://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html) have been removed: these options turned out to
+ have little practical value, and as no other MongoDB-support driver provides these options, they have been removed from the Java driver. 
 * The [authenticate](https://api.mongodb.org/java/2.13/com/mongodb/DB.html#authenticate-java.lang.String-char:A-) method in the
 [DB](https://api.mongodb.org/java/2.13/com/mongodb/DB.html) class has been removed: replace with use of
 [MongoClient constructors](http://api.mongodb.org/java/2.13/com/mongodb/MongoClient.html#MongoClient-java.util.List-java.util.List-) that
