@@ -3,3 +3,4 @@ githubBranch = "master"
 currentVersion = "3.0"
 driverVersions = ["3.0"]
 highlightTheme = "idea.css"
+apiUrl = "http://api.mongodb.org/java/3.0/"
