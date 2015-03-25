@@ -12,7 +12,7 @@ type = "index"
 Quick guide to getting started...
 
 
-## Whats new in 3.0
+## What's New in 3.0
 
 Summary and link to the 3.0 docs
 
