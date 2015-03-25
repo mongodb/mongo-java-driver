@@ -19,6 +19,7 @@ package org.bson;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -270,25 +271,25 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      *
      * <p>With the default {@link JsonWriterSettings}.</p>
      *
-     * @param documentCodec the document codec instance to use to encode the document
+     * @param encoder the document codec instance to use to encode the document
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    public String toJson(final DocumentCodec documentCodec) {
-        return toJson(new JsonWriterSettings(), documentCodec);
+    public String toJson(final Encoder<Document> encoder) {
+        return toJson(new JsonWriterSettings(), encoder);
     }
 
     /**
      * Gets a JSON representation of this document
      *
      * @param writerSettings the json writer settings to use when encoding
-     * @param documentCodec the document codec instance to use to encode the document
+     * @param encoder the document codec instance to use to encode the document
      * @return a JSON representation of this document
      * @throws org.bson.codecs.configuration.CodecConfigurationException if the registry does not contain a codec for the document values.
      */
-    public String toJson(final JsonWriterSettings writerSettings, final DocumentCodec documentCodec) {
+    public String toJson(final JsonWriterSettings writerSettings, final Encoder<Document> encoder) {
         JsonWriter writer = new JsonWriter(new StringWriter(), writerSettings);
-        documentCodec.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        encoder.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
         return writer.getWriter().toString();
     }
 

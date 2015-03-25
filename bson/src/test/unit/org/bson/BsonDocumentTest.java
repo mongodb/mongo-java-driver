@@ -18,9 +18,14 @@ package org.bson;
 
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
 
+import java.io.StringWriter;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -76,6 +81,21 @@ public class BsonDocumentTest {
     public void toJsonShouldReturnEquivalent() {
         assertEquals(new BsonDocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()),
                      document);
+    }
+
+    @Test
+    public void toJsonShouldRespectDefaultJsonWriterSettings() {
+        StringWriter writer = new StringWriter();
+        new BsonDocumentCodec().encode(new JsonWriter(writer), document, EncoderContext.builder().build());
+        assertEquals(writer.toString(), document.toJson());
+    }
+
+    @Test
+    public void toJsonShouldRespectJsonWriterSettings() {
+        StringWriter writer = new StringWriter();
+        JsonWriterSettings settings = new JsonWriterSettings(JsonMode.SHELL);
+        new BsonDocumentCodec().encode(new JsonWriter(writer, settings), document, EncoderContext.builder().build());
+        assertEquals(writer.toString(), document.toJson(settings));
     }
 
     @Test

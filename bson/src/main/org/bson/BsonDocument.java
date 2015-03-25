@@ -23,6 +23,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -738,12 +739,21 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     }
 
     /**
-     * Gets a JSON representation of this document
+     * Gets a JSON representation of this document using the default settings of {@code JsonWriterSettings}.
      * @return a JSON representation of this document
+     * @see JsonWriterSettings
      */
     public String toJson() {
+        return toJson(new JsonWriterSettings());
+    }
+
+    /**
+     * Gets a JSON representation of this document using the given {@code JsonWriterSettings}.
+     * @return a JSON representation of this document
+     */
+    public String toJson(final JsonWriterSettings settings) {
         StringWriter writer = new StringWriter();
-        new BsonDocumentCodec().encode(new JsonWriter(writer), this, EncoderContext.builder().build());
+        new BsonDocumentCodec().encode(new JsonWriter(writer, settings), this, EncoderContext.builder().build());
         return writer.toString();
     }
 
