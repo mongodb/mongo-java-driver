@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T12:53:39-04:00"
-draft = true
 title = "Upgrading to 3.0"
 [menu.main]
   weight = 40
@@ -10,11 +9,14 @@ title = "Upgrading to 3.0"
 
 # Upgrading to 3.0
 
-Compatibility with the 2.x driver release series has been intentionally broken by this release.  Where possible, breaking changes have been
-deprecated in the 2.13 driver series, so before upgrading to 3.0.0 please first compile against 2.13.0 with deprecation warnings enabled and
-remove use of any deprecated methods or classes.
+The 3.0 release is **incompatible** with the 2.x release series. However, where possible, the 2.13.0 driver has deprecated classes or 
+methods that have been removed in 3.0.0.
 
-Here's a list of the most significant backwards-breaking changes:
+Before upgrading to 3.0.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.
+
+## Incompatiblities
+
+The following lists the most significant backwards-breaking changes, along with the recommended solutions:
 
 * SSL host name verification has been enabled by default: the driver now enables host name verification by default for SSL connections.  If
 you are using an invalid certificate or are using Java 6 (with which the driver does not support host name verification), set the

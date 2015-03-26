@@ -1,6 +1,5 @@
 +++
 date = "2015-03-17T15:36:56Z"
-draft = true
 title = "Reference"
 [menu.main]
   weight = 50

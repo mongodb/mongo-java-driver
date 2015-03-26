@@ -1,6 +1,5 @@
 +++
 date = "2015-03-18T21:14:20-04:00"
-draft = true
 title = "Logging"
 [menu.main]
   parent = "Reference"
@@ -10,8 +9,9 @@ title = "Logging"
 
 # Logging
 
-By default logging is enabled via the popular [SLF4J](http://www.slf4j.org/) API.  But it's optional: if the driver detects the presence of
-SLF4J on the classpath it will use it. Otherwise, it will fall back to JUL (`java.util.logging`).
+By default, logging is enabled via the popular [SLF4J](http://www.slf4j.org/) API. The use of [SLF4J](http://www.slf4j.org/) is optional;
+the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to 
+JUL (`java.util.logging`).
 
 The driver uses the following logger names:
 

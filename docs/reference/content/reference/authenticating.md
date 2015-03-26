@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T14:27:51-04:00"
-draft = true
 title = "Authenticating"
 [menu.main]
   parent = "Reference"
@@ -10,15 +9,17 @@ title = "Authenticating"
 
 # Authenticating
 
-The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those
-included only in the [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).
+The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those 
+only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).
 
-Authentication credentials are created by the application as instances of
-[MongoCredential](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html), which includes static factory methods for each
-of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
- [MongoClient](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) constructors that take a
- parameter of type `List<MongoCredential>`.   Note that due to the flexibilty of role-based access control in MongoDB, it is usually
- sufficient to authenticate with a single user, but for completeness the driver takes a list of credentials is always accepted.
+An authentication credential is represented as an instance of the 
+[MongoCredential](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) class, which includes static factory methods for 
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
+[MongoClient](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) constructors that take a
+parameter of type `List<MongoCredential>`. 
+
+> Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for 
+completeness, the driver accepts a list of credentials.
 
 ## Default authentication mechanism
 
@@ -78,7 +79,7 @@ authentication method requires the use of SSL connections with certificate valid
 create a credential of this type use the following static factory method:
 
 ```java
-    String user;     // The x.509 certificate derived user name
+    String user;     // The x.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
     MongoCredential credential = MongoCredential.createMongoX509Credential(user);
 ```
 
@@ -98,11 +99,11 @@ following static factory method:
     MongoCredential credential = MongoCredential.createGSSAPICredential(user);
 ```
 
-Note that the method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating
+> The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating
 via the [GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
 
 To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
- Java libraries can acquire a Kerberos ticket:
+Java libraries can acquire a Kerberos ticket:
 
     java.security.krb5.realm=MYREALM.ME
     java.security.krb5.kdc=mykdc.myrealm.me
@@ -121,5 +122,5 @@ Access Protocol (LDAP) service.  To create a credential of type [LDAP](http://do
     MongoCredential credential = MongoCredential.createPlainCredential(user, "$external", password);
 ```
 
-Note that the method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating
+> The method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating
 via the [PLAIN](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.

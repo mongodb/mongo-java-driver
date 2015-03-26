@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T12:53:35-04:00"
-draft = true
 title = "What's New"
 [menu.main]
   weight = 30
