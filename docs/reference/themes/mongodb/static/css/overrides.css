@@ -49,6 +49,10 @@
   display: block;
 }
 
+.sidebar-menu ul ul {
+  margin: 0;
+}
+
 .right-column .toc {
   display: none;
   padding: 12px 20px;
@@ -70,4 +74,9 @@
 .body div.admonition h5 {
   font-weight: 800;
   text-transform: uppercase;
+}
+
+code {
+  background-color: #ddd;
+  color: #494747;
 }
