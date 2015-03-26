@@ -58,6 +58,8 @@
     <suppress checks="ConstantName" files="Mongo"/>
     <suppress checks="ConstantName" files="ReflectionDBObject"/>
 
+    <suppress checks="JavadocMethod" files="BasicDBObject"/>
+
     <suppress checks="MethodName" files="BasicBSONCallback"/>
     <suppress checks="MethodName" files="BasicBSONEncoder"/>
     <suppress checks="MethodName" files="BasicBSONList"/>
