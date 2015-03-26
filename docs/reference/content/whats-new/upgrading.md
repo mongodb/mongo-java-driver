@@ -14,6 +14,16 @@ methods that have been removed in 3.0.0.
 
 Before upgrading to 3.0.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.
 
+## System Requirements
+
+The minimum JVM is now Java 6: however, specific features require Java 7:
+
+- SSL support requires Java 7 in order to perform host name verification, which is enabled by default.  See
+[SSL]({{< relref "connecting.md#SSL" >}}) for details on how to disable host name verification.
+- The asynchronous API requires Java 7, as by default it relies on
+[AsynchronousSocketChannel](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) for
+its implementation.  See [Async]({{< ref "async" >}}) for details on configuring the driver to use [Netty](http://netty.io/) instead.
+
 ## Incompatiblities
 
 The following lists the most significant backwards-breaking changes, along with the recommended solutions:
