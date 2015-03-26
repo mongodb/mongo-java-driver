@@ -1,4 +1,5 @@
 githubRepo = "mongo-java-driver"
+githubBranch = "master"
 googleAnalytics = false
 currentVersion = "3.0"
 driverVersions = ["3.0"]

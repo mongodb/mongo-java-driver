@@ -1,4 +1,5 @@
 githubRepo = ""
+githubBranch = ""
 googleAnalytics = false
 currentVersion = ""
 driverVersions = []
