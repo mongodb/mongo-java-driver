@@ -19,6 +19,8 @@
           {{ $.Scratch.Set "menu.Item.L2" false }}
           {{ $.Scratch.Set "menu.Item.L1" false }}
           {{ $.Scratch.Set "menu.Item.L0" false }}
+          {{ $.Scratch.Set "menu.Prev" false }}
+          {{ $.Scratch.Set "menu.Next" false }}
 
           {{ $currentNode := . }}
           {{ range $menu.ByWeight }}

@@ -49,18 +49,27 @@
   {{end}}
 {{ else }}
   {{ if $menuItem.HasChildren }}
+    {{$found := $.Scratch.Get "menu.Found" }}
     {{ range $menuItem.Children }}
       {{ $.Scratch.Set "menu.Item" . }}
       {{if eq ($.Scratch.Get "menu.Found") false }}
-      {{ $.Scratch.Set "menu.Item.L6" $menuItemL5}}
-      {{ $.Scratch.Set "menu.Item.L5" $menuItemL4}}
-      {{ $.Scratch.Set "menu.Item.L4" $menuItemL3}}
-      {{ $.Scratch.Set "menu.Item.L3" $menuItemL2}}
-      {{ $.Scratch.Set "menu.Item.L2" $menuItemL1}}
-      {{ $.Scratch.Set "menu.Item.L1" $menuItem}}
-      {{ $.Scratch.Set "menu.Item" . }}
-      {{ partial "menu/currentItem.html" $currentNode }}
+        {{ $.Scratch.Set "menu.Item.L6" $menuItemL5}}
+        {{ $.Scratch.Set "menu.Item.L5" $menuItemL4}}
+        {{ $.Scratch.Set "menu.Item.L4" $menuItemL3}}
+        {{ $.Scratch.Set "menu.Item.L3" $menuItemL2}}
+        {{ $.Scratch.Set "menu.Item.L2" $menuItemL1}}
+        {{ $.Scratch.Set "menu.Item.L1" $menuItem}}
+        {{ $.Scratch.Set "menu.Item" . }}
+        {{ partial "menu/currentItem.html" $currentNode }}
+        {{if eq ($.Scratch.Get "menu.Found") false }}
+          {{ $.Scratch.Set "menu.Prev" . }}
+        {{ end }}
+      {{ else if and (eq $found false) (eq ($.Scratch.Get "menu.Next") false) }}
+        {{ $.Scratch.Set "menu.Next" . }}
       {{ end }}
+    {{ end }}
+    {{if eq ($.Scratch.Get "menu.Found") false }}
+      {{ $.Scratch.Set "menu.Prev" false }}
     {{ end }}
   {{ end }}
 {{ end }}
