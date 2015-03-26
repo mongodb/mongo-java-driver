@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T12:53:30-04:00"
-draft = true
 title = "Connecting"
 [menu.main]
   parent = "Reference"

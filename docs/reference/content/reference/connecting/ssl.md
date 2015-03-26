@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T12:53:26-04:00"
-draft = true
 title = "SSL"
 [menu.main]
   parent = "Connecting"

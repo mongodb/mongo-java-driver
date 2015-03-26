@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T14:27:51-04:00"
-draft = true
 title = "Extended JSON"
 [menu.main]
   parent = "BSON"
@@ -10,7 +9,7 @@ title = "Extended JSON"
 
 ## MongoDB Extended JSON
 
-The Java driver supports reading and writing JSON documents with the [JsonReader]({{< apiref "org/bson/json/JsonReader" >}}) and
+The Java driver supports reading and writing JSON-like documents with the [JsonReader]({{< apiref "org/bson/json/JsonReader" >}}) and
 [JsonWriter]({{< apiref "org/bson/json/JsonWriter" >}}) classes, which can read/write both flavors of 
 [MongoDB Extended JSON](http://docs.mongodb.org/manual/reference/mongodb-extended-json/): 
 

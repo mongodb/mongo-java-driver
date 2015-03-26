@@ -1,6 +1,5 @@
 +++
 date = "2015-03-19T12:53:30-04:00"
-draft = true
 title = "BSON"
 [menu.main]
   parent = "Reference"
@@ -10,6 +9,7 @@ title = "BSON"
 
 ## BSON
 
-The driver comprehensively supports [BSON](http://www.bsonspec.org), the data storage and network transfer format for “documents”.
+The driver comprehensively supports [BSON](http://www.bsonspec.org), the data storage and network transfer format that MongoDB uses for 
+“documents". BSON, short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
 
 - [MongoDB Extended JSON]({{< relref "extended-json.md" >}})
