@@ -1,0 +1,1948 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Drivers on MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.3/driver/</link>
+    <description>Recent content in Drivers on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 05 Aug 2015 12:00:00 +0000</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.3/driver/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>GridFS</title>
+      <link>/mongo-java-driver/3.3/driver/reference/gridfs/</link>
+      <pubDate>Wed, 05 Aug 2015 12:00:00 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/gridfs/</guid>
+      <description>
+
+&lt;h2 id=&#34;gridfs&#34;&gt;GridFS&lt;/h2&gt;
+
+&lt;p&gt;GridFS is a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB.&lt;/p&gt;
+
+&lt;p&gt;Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document. By default GridFS limits chunk size to 255k. GridFS uses two collections to store files. The chunks collection stores the file chunks, and the files collection stores the file metadata.&lt;/p&gt;
+
+&lt;p&gt;When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having to load the entire file into memory.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;For more information about GridFS see the &lt;a href=&#34;http://docs.mongodb.org/manual/core/gridfs/&#34;&gt;MongoDB GridFS documentation&lt;/a&gt;.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;GridFSTour.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/gridfs/GridFSTour.java
+&#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;connecting-to-gridfs&#34;&gt;Connecting to GridFS&lt;/h2&gt;
+
+&lt;p&gt;Interactions with GridFS are done via the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html
+&#34;&gt;&lt;code&gt;GridFSBucket&lt;/code&gt;&lt;/a&gt; class. To create a &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBuckets.html
+&#34;&gt;&lt;code&gt;GridFSBuckets&lt;/code&gt;&lt;/a&gt; factory class.&lt;/p&gt;
+
+&lt;p&gt;Creating a &lt;code&gt;GridFSBucket&lt;/code&gt; requires an instance of a
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoDatabase.html
+&#34;&gt;&lt;code&gt;MongoDatabase&lt;/code&gt;&lt;/a&gt; and you can optionally provide a custom bucket name.&lt;/p&gt;
+
+&lt;p&gt;The following example shows how to create a &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Create a gridFSBucket using the default bucket name &amp;quot;fs&amp;quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
+
+// Create a gridFSBucket with a custom bucket name &amp;quot;files&amp;quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase, &amp;quot;files&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;uploading-to-gridfs&#34;&gt;Uploading to GridFS&lt;/h2&gt;
+
+&lt;p&gt;There are two main ways to upload data into GridFS.&lt;/p&gt;
+
+&lt;h3 id=&#34;uploadfromstream&#34;&gt;UploadFromStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+&#34;&gt;&lt;code&gt;uploadFromStream&lt;/code&gt;&lt;/a&gt; method reads the contents of an &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html&#34;&gt;&lt;code&gt;InputStream&lt;/code&gt;&lt;/a&gt; and saves it to the &lt;code&gt;GridFSBucket&lt;/code&gt;.  The size of the chunks defaults to 255 bytes, but can be configured via the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/model/GridFSUploadOptions.html
+&#34;&gt;&lt;code&gt;GridFSUploadOptions&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The following example uploads an &lt;code&gt;InputStream&lt;/code&gt; into &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Get the input stream
+InputStream streamToUploadFrom = new FileInputStream(new File(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;));
+
+// Create some custom options
+GridFSUploadOptions options = new GridFSUploadOptions()
+                                    .chunkSizeBytes(1024)
+                                    .metadata(new Document(&amp;quot;type&amp;quot;, &amp;quot;presentation&amp;quot;));
+
+ObjectId fileId = gridFSBucket.uploadFromStream(&amp;quot;mongodb-tutorial&amp;quot;, streamToUploadFrom, options);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;openuploadstream&#34;&gt;OpenUploadStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+&#34;&gt;&lt;code&gt;openUploadStream&lt;/code&gt;&lt;/a&gt; method returns a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?mongodb/client/gridfs/GridFSUploadStream.html
+&#34;&gt;&lt;code&gt;GridFSUploadStream&lt;/code&gt;&lt;/a&gt; which extends &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html&#34;&gt;&lt;code&gt;OutputStream&lt;/code&gt;&lt;/a&gt; and can be written to.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;GridFSUploadStream&lt;/code&gt; buffers data until it reaches the &lt;code&gt;chunkSizeBytes&lt;/code&gt; and then inserts the chunk into the chunks collection.  When the &lt;code&gt;GridFSUploadStream&lt;/code&gt; is closed, the final chunk is written and the file metadata is inserted into the files collection.&lt;/p&gt;
+
+&lt;p&gt;The following example uploads an into &lt;code&gt;GridFSBucket&lt;/code&gt; via the returned &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;byte[] data = &amp;quot;Data to upload into GridFS&amp;quot;.getBytes(StandardCharsets.UTF_8);
+GridFSUploadStream uploadStream = gridFSBucket.openUploadStream(&amp;quot;sampleData&amp;quot;, options);
+uploadStream.write(data);
+uploadStream.close();
+System.out.println(&amp;quot;The fileId of the uploaded file is: &amp;quot; + uploadStream.getFileId().toHexString());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;GridFS will automatically create indexes on the files and chunks collections on first upload of data into the GridFS bucket.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;finding-files-stored-in-gridfs&#34;&gt;Finding files stored in GridFS&lt;/h2&gt;
+
+&lt;p&gt;To find the files stored in the &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#find--
+&#34;&gt;&lt;code&gt;find&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;p&gt;The following example prints out the filename of each file stored:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.find().forEach(
+  new Block&amp;lt;GridFSFile&amp;gt;() {
+    @Override
+    public void apply(final GridFSFile gridFSFile) {
+        System.out.println(gridFSFile.getFilename());
+    }
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can also provide a custom filter to limit the results returned. The following example prints out the filenames of all files with a &amp;ldquo;image/png&amp;rdquo; value set as the contentType in the user defined metadata document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.find(eq(&amp;quot;metadata.contentType&amp;quot;, &amp;quot;image/png&amp;quot;)).forEach(
+  new Block&amp;lt;GridFSFile&amp;gt;() {
+      @Override
+      public void apply(final GridFSFile gridFSFile) {
+          System.out.println(gridFSFile.getFilename());
+      }
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;downloading-from-gridfs&#34;&gt;Downloading from GridFS&lt;/h2&gt;
+
+&lt;p&gt;There are four main ways to download data from GridFS.&lt;/p&gt;
+
+&lt;h3 id=&#34;downloadfromstream&#34;&gt;DownloadFromStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream-org.bson.types.ObjectId-java.io.OutputStream-
+&#34;&gt;&lt;code&gt;downloadToStream&lt;/code&gt;&lt;/a&gt; method reads the contents from MongoDB and writes the data directly to the provided &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html&#34;&gt;&lt;code&gt;OutputStream&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads a file into the provided &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;FileOutputStream streamToDownloadTo = new FileOutputStream(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;);
+gridFSBucket.downloadToStream(fileId, streamToDownloadTo);
+streamToDownloadTo.close();
+System.out.println(streamToDownloadTo.toString());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you don&amp;rsquo;t know the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?org/bson/types/ObjectId.html
+&#34;&gt;&lt;code&gt;ObjectId&lt;/code&gt;&lt;/a&gt; of the file but know the filename, you can use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+&#34;&gt;&lt;code&gt;downloadToStream&lt;/code&gt;&lt;/a&gt; method. By default it will download the latest version of the file. Use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html
+&#34;&gt;&lt;code&gt;GridFSDownloadByNameOptions&lt;/code&gt;&lt;/a&gt; to configure which version to download.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads the original version of the file named &amp;ldquo;mongodb-tutorial&amp;rdquo; into the &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;FileOutputStream streamToDownloadTo = new FileOutputStream(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;);
+GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
+gridFSBucket.downloadToStream(&amp;quot;mongodb-tutorial&amp;quot;, streamToDownloadTo, downloadOptions);
+streamToDownloadTo.close();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;opendownloadstream&#34;&gt;OpenDownloadStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-
+&#34;&gt;&lt;code&gt;openDownloadStream&lt;/code&gt;&lt;/a&gt; method returns a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?mongodb/client/gridfs/GridFSDownloadStream.html
+&#34;&gt;&lt;code&gt;GridFSDownloadStream&lt;/code&gt;&lt;/a&gt; which extends &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html&#34;&gt;&lt;code&gt;InputStream&lt;/code&gt;&lt;/a&gt; and can be read from.&lt;/p&gt;
+
+&lt;p&gt;The following example reads from the &lt;code&gt;GridFSBucket&lt;/code&gt; via the returned &lt;code&gt;InputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
+int fileLength = (int) downloadStream.getGridFSFile().getLength();
+byte[] bytesToWriteTo = new byte[fileLength];
+downloadStream.read(bytesToWriteTo);
+downloadStream.close();
+
+System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can also open a &lt;code&gt;GridFSDownloadStream&lt;/code&gt; by searching against the filename, using the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+&#34;&gt;&lt;code&gt;openDownloadStream&lt;/code&gt;&lt;/a&gt; method. By default it will download the latest version of the file. Use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html
+&#34;&gt;&lt;code&gt;GridFSDownloadByNameOptions&lt;/code&gt;&lt;/a&gt; to configure which version to download.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads the latest version of the file named &amp;ldquo;sampleData&amp;rdquo; into the &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(&amp;quot;sampleData&amp;quot;);
+int fileLength = (int) downloadStream.getGridFSFile().getLength();
+byte[] bytesToWriteTo = new byte[fileLength];
+downloadStream.read(bytesToWriteTo);
+downloadStream.close();
+
+System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;renaming-files&#34;&gt;Renaming files&lt;/h2&gt;
+
+&lt;p&gt;If you should need to rename a file, then the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#rename-org.bson.types.ObjectId-java.lang.String-
+&#34;&gt;&lt;code&gt;rename&lt;/code&gt;&lt;/a&gt; method can be used.&lt;/p&gt;
+
+&lt;p&gt;The following example renames a file to &amp;ldquo;mongodbTutorial&amp;rdquo;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.rename(fileId, &amp;quot;mongodbTutorial&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;rename&lt;/code&gt; method requires an &lt;code&gt;ObjectId&lt;/code&gt; rather than a &lt;code&gt;filename&lt;/code&gt; to ensure the correct file is renamed.&lt;/p&gt;
+
+&lt;p&gt;To rename multiple revisions of the same filename, first retrieve the full list of files. Then for every file that should be renamed then execute &lt;code&gt;rename&lt;/code&gt; with the corresponding &lt;code&gt;_id&lt;/code&gt;.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;deleting-files&#34;&gt;Deleting files&lt;/h2&gt;
+
+&lt;p&gt;To delete a file from the &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/gridfs/GridFSBucket.html#delete-org.bson.types.ObjectId-
+&#34;&gt;&lt;code&gt;delete&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;p&gt;The following example deletes a file from the &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.delete(fileId);
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Authenticating</title>
+      <link>/mongo-java-driver/3.3/driver/reference/connecting/authenticating/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/connecting/authenticating/</guid>
+      <description>
+
+&lt;h1 id=&#34;authentication&#34;&gt;Authentication&lt;/h1&gt;
+
+&lt;p&gt;The Java driver supports all MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/&#34;&gt;authentication mechanisms&lt;/a&gt;, including those
+only available in the MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/administration/install-enterprise/&#34;&gt;Enterprise Edition&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;An authentication credential is represented as an instance of the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; class, which includes static factory methods for
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; constructors that take a
+parameter of type &lt;code&gt;List&amp;lt;MongoCredential&amp;gt;&lt;/code&gt;.  Alternatively, a single &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt;
+can be created implicity via a
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; and passed to a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt;
+constructor that takes a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;default-authentication-mechanism&#34;&gt;Default authentication mechanism&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 3.0 changed the default authentication mechanism from
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt; to
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;.  To create a credential that will
+authenticate properly regardless of server version, create a credential using the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.MongoCredential;
+
+// ...
+
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.0-scram/#upgrade-mongodb-cr-to-scram&#34;&gt;upgrading the
+authentication schema&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;scram-sha-1&#34;&gt;SCRAM-SHA-1&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb .org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=SCRAM-SHA-1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;mongodb-cr&#34;&gt;MONGODB-CR&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=MONGODB-CR&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
+from MONGODB-CR to SCRAM-SHA-1.&lt;/p&gt;
+
+&lt;h2 id=&#34;x-509&#34;&gt;x.509&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication&#34;&gt;x.509&lt;/a&gt; mechanism authenticates a user
+whose name is derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This
+authentication method requires the use of SSL connections with certificate validation and is available in MongoDB 2.6 and newer. To
+create a credential of this type use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;     // The x.509 certificate derived user name, e.g. &amp;quot;CN=user,OU=OrgUnit,O=myOrg,...&amp;quot;
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;See the MongoDB server
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user&#34;&gt;x.509 tutorial&lt;/a&gt; for
+more information about determining the subject name from the certificate.&lt;/p&gt;
+
+&lt;h2 id=&#34;gssapi&#34;&gt;Kerberos (GSSAPI)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Kerberos service.  To
+create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication&#34;&gt;Kerberos (GSSAPI)&lt;/a&gt; use the
+following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;   // The Kerberos user name, including the realm, e.g. &amp;quot;user1@MYREALM.ME&amp;quot;
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Or via the connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://username%40MYREALM.com@host1/?authMechanism=GSSAPI&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism instead of &lt;code&gt;Kerberos&lt;/code&gt; because technically the driver is authenticating via the
+&lt;a href=&#34;https://tools.ietf.org/html/rfc4752&#34;&gt;GSSAPI&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
+Java libraries can acquire a Kerberos ticket:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java.security.krb5.realm=MYREALM.ME
+java.security.krb5.kdc=mykdc.myrealm.me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Depending on the Kerberos setup, it may be required to specify additional properties, either via code or, in some cases,
+the connection string.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html#SERVICE_NAME_KEY
+&#34;&gt;&lt;code&gt;SERVICE_NAME&lt;/code&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This property is used when the service&amp;rsquo;s name is different that the default of &lt;code&gt;mongodb&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;credential = credential.withMechanismProperty(MongoCredential.SERVICE_NAME_KEY, &amp;quot;othername&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Or via the connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&amp;amp;authMechanismProperties=SERVICE_NAME:othername
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html#CANONICALIZE_HOST_NAME_KEY
+&#34;&gt;&lt;code&gt;CANONICALIZE_HOST_NAME&lt;/code&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This property is used when the fully qualified domain name (FQDN) of the host is required to properly authenticate.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;credential = credential.withMechanismProperty(MongoCredential.CANONICALIZE_HOST_NAME_KEY, true);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Or via the connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&amp;amp;authMechanismProperties=CANONICALIZE_HOST_NAME:true
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html#JAVA_SUBJECT_KEY
+&#34;&gt;&lt;code&gt;JAVA_SUBJECT&lt;/code&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;This property is used for overriding the &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/javax/security/auth/Subject.html&#34;&gt;Subject&lt;/a&gt;
+under which GSSAPI authentication executes.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;LoginContext loginContext;
+// ...
+loginContext.login();
+Subject subject = loginContext.getSubject()
+
+
+credential = credential.withMechanismProperty(MongoCredential.JAVA_SUBJECT_KEY, subject);
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoCredential.html#JAVA_SASL_CLIENT_PROPERTIES_KEY
+&#34;&gt;&lt;code&gt;JAVA_SASL_CLIENT_PROPERTIES&lt;/code&gt;&lt;/a&gt;&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;While rarely needed, this property is used to replace the
+&lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/javax/security/sasl/SaslClient.html&#34;&gt;SasClient&lt;/a&gt; properties.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Map&amp;lt;String, Object&amp;gt; saslClientProperties;
+// ...
+
+
+credential = credential.withMechanismProperty(MongoCredential.JAVA_SASL_CLIENT_PROPERTIES_KEY, saslClientProperties);
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism is supported only in the following environments:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Linux: Java 6 and above&lt;/li&gt;
+&lt;li&gt;Windows: Java 7 and above with &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493&#34;&gt;SSPI&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;OS X: Java 7 and above&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;ldap-plain&#34;&gt;LDAP (PLAIN)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service.  To create a credential of type &lt;a href=&#34;http://docs.mongodb
+.org/manual/core/authentication/#ldap-proxy-authority-authentication&#34;&gt;LDAP&lt;/a&gt; use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;quot;$external&amp;quot;, password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1@host1/?authSource=$external&amp;amp;authMechanism=PLAIN&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;plain&lt;/code&gt; authentication mechanism instead of &lt;code&gt;LDAP&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://www.ietf.org/rfc/rfc4616.txt&#34;&gt;PLAIN&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Management</title>
+      <link>/mongo-java-driver/3.3/driver/reference/management/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/management/</guid>
+      <description>
+
+&lt;h2 id=&#34;management&#34;&gt;Management&lt;/h2&gt;
+
+&lt;p&gt;The driver provides two mechanisms for examining its state:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/management/logging/&#34;&gt;Logging&lt;/a&gt;: Comprehensive logging of all operations using &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/management/monitoring/&#34;&gt;Monitoring&lt;/a&gt;: Built on &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/&#34;&gt;JMX&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>CRUD Operations</title>
+      <link>/mongo-java-driver/3.3/driver/reference/crud/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/crud/</guid>
+      <description>
+
+&lt;h2 id=&#34;crud&#34;&gt;CRUD&lt;/h2&gt;
+
+&lt;p&gt;For a walkthrough of the main CRUD operations please refer to the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/quick-tour/&#34;&gt;Quick Tour&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;All CRUD-related methods in the Java driver are accessed through the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html
+&#34;&gt;&lt;code&gt;MongoCollection&lt;/code&gt;&lt;/a&gt; interface.  Instances of
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html
+&#34;&gt;&lt;code&gt;MongoCollection&lt;/code&gt;&lt;/a&gt; can be obtained from a&lt;br /&gt;
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; instance by way of a
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoDatabase.html
+&#34;&gt;&lt;code&gt;MongoDatabase&lt;/code&gt;&lt;/a&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient client = new MongoClient();
+MongoDatabase database = client.getDatabase(&amp;quot;mydb&amp;quot;);
+MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html
+&#34;&gt;&lt;code&gt;MongoCollection&lt;/code&gt;&lt;/a&gt; is a generic interface: the &lt;code&gt;TDocument&lt;/code&gt; type parameter
+is the class that clients use to insert or replace documents in a collection, and the default type returned from &lt;code&gt;find&lt;/code&gt; and &lt;code&gt;aggregate&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The single-argument &lt;code&gt;getCollection&lt;/code&gt; method returns an instance of &lt;code&gt;MongoCollection&amp;lt;Document&amp;gt;&lt;/code&gt;, and so with this type of collection
+an application uses instances of the &lt;code&gt;Document&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;);
+
+// insert a document
+Document document = new Document(&amp;quot;x&amp;quot;, 1)
+collection.insertOne(document);
+document.append(&amp;quot;x&amp;quot;, 2).append(&amp;quot;y&amp;quot;, 3);
+
+// replace a document
+collection.replaceOne(Filters.eq(&amp;quot;_id&amp;quot;, document.get(&amp;quot;_id&amp;quot;)), document);
+
+// find documents
+List&amp;lt;Document&amp;gt; foundDocument = collection.find().into(new ArrayList&amp;lt;Document&amp;gt;());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;codecregistry&#34;&gt;CodecRegistry&lt;/h3&gt;
+
+&lt;p&gt;An overload of the &lt;code&gt;getCollection&lt;/code&gt; method allows clients to specify a different class for representing BSON documents.  For example,
+users of the legacy CRUD API from the 2.x driver series may wish to continue using &lt;code&gt;BasicDBObject&lt;/code&gt; in order to ease the transition to the
+new
+CRUD API:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Pass BasicDBObject.class as the second argument
+MongoCollection&amp;lt;BasicDBObject&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;, BasicDBObject.class);
+
+// insert a document
+BasicDBObject document = new BasicDBObject(&amp;quot;x&amp;quot;, 1)
+collection.insertOne(document);
+document.append(&amp;quot;x&amp;quot;, 2).append(&amp;quot;y&amp;quot;, 3);
+
+// replace a document
+collection.replaceOne(Filters.eq(&amp;quot;_id&amp;quot;, document.get(&amp;quot;_id&amp;quot;), document);
+
+// find documents
+List&amp;lt;BasicDBObject&amp;gt; foundDocument = collection.find().into(new ArrayList&amp;lt;BasicDBObject&amp;gt;());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are two requirements that must be met for any class used in this way:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;a &lt;code&gt;Codec&lt;/code&gt; for it must be registered in the &lt;code&gt;MongoCollection&lt;/code&gt;&amp;rsquo;s &lt;code&gt;CodecRegistry&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;the &lt;code&gt;Codec&lt;/code&gt; must be one that encodes and decodes a full BSON document (and not just, for example, a single BSON value like an Int32)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;By default, a &lt;code&gt;MongoCollection&lt;/code&gt; is configured with &lt;code&gt;Codec&lt;/code&gt;s for three classes:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Document&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BasicDBObject&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BsonDocument&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Applications, however, are free to register &lt;code&gt;Codec&lt;/code&gt; implementations for other classes by customizing the &lt;code&gt;CodecRegistry&lt;/code&gt;.  New
+&lt;code&gt;CodecRegistry&lt;/code&gt; instances are configurable at three levels:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;In a &lt;code&gt;MongoClient&lt;/code&gt; via &lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoDatabase&lt;/code&gt; via its &lt;code&gt;withCodecRegistry&lt;/code&gt; method&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoCollection&lt;/code&gt; via its &lt;code&gt;withCodecRegistry&lt;/code&gt; method&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Consider the case of encoding and decoding instances of the &lt;code&gt;UUID&lt;/code&gt; class.  The Java driver by default encodes instances of &lt;code&gt;UUID&lt;/code&gt; using a
+byte ordering that is not compatible with other MongoDB drivers, and changing the default would be quite dangerous.  But it is
+possible for new applications that require interoperability across multiple drivers to be able to change that default, and they can do
+that with a &lt;code&gt;CodecRegistry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Replaces the default UuidCodec with one that uses the new standard UUID representation
+CodecRegistry codecRegistry = 
+CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
+                               MongoClient.getDefaultCodecRegistry());
+
+// globally
+MongoClientOptions options = MongoClientOptions.builder()
+                                                .codecRegistry(codecRegistry).build();
+MongoClient client = new MongoClient(new ServerAddress(), options);  
+
+// or per database
+MongoDatabase database = client.getDatabase(&amp;quot;mydb&amp;quot;)
+                               .withCodecRegistry(codecRegistry);
+
+// or per collection
+MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;)
+                                               .withCodecRegistry(codecRegistry);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;write-concern&#34;&gt;Write Concern&lt;/h3&gt;
+
+&lt;p&gt;Applications can configure the &lt;code&gt;WriteConcern&lt;/code&gt; that a &lt;code&gt;MongoCollection&lt;/code&gt; uses for write operations.  Like &lt;code&gt;CodecRegistry&lt;/code&gt;, the
+&lt;code&gt;WriteConcern&lt;/code&gt; can be configured at three levels:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;In a &lt;code&gt;MongoClient&lt;/code&gt; via &lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoDatabase&lt;/code&gt; via its &lt;code&gt;withWriteConcern&lt;/code&gt; method&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoCollection&lt;/code&gt; via its &lt;code&gt;withWriteConcern&lt;/code&gt; method&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;read-preference&#34;&gt;Read Preference&lt;/h3&gt;
+
+&lt;p&gt;Applications can configure the &lt;code&gt;ReadPreference&lt;/code&gt; that a &lt;code&gt;MongoCollection&lt;/code&gt; uses for read operations.  Like &lt;code&gt;WriteConcern&lt;/code&gt;, the
+&lt;code&gt;ReadPreference&lt;/code&gt; can be configured at three levels:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;In a &lt;code&gt;MongoClient&lt;/code&gt; via &lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoDatabase&lt;/code&gt; via its &lt;code&gt;withReadPreference&lt;/code&gt; method&lt;/li&gt;
+&lt;li&gt;In a &lt;code&gt;MongoCollection&lt;/code&gt; via its &lt;code&gt;withReadPreference&lt;/code&gt; method&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;immutability-of-mongodatabase-and-mongocollection&#34;&gt;Immutability of MongoDatabase and MongoCollection&lt;/h3&gt;
+
+&lt;p&gt;Instance of &lt;code&gt;MongoDatabase&lt;/code&gt; and &lt;code&gt;MongoCollection&lt;/code&gt; are immutable, so rather than mutate the state of the &lt;code&gt;MongoCollection&lt;/code&gt; on which they
+are invoked, the three methods discussed above return new instances.  Applications should therefore be sure to store the result of the
+method call.  For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// CORRECT: The results of the method calls are chained and the final one is referenced 
+// by collection 
+MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;)
+                                                .withWriteConcern(WriteConcern.JOURNALED)
+                                                .withReadPreference(ReadPreference.primary())
+                                                .withCodecRegistry(newRegistry);
+
+// INCORRECT: withReadPreference returns a new instance of MongoCollection
+// It does not modify the collection it&#39;s called on.  So this will
+// have no effect
+collection.withReadPreference(ReadPreference.secondary());
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Connecting</title>
+      <link>/mongo-java-driver/3.3/driver/reference/connecting/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/connecting/</guid>
+      <description>
+
+&lt;h2 id=&#34;connecting&#34;&gt;Connecting&lt;/h2&gt;
+
+&lt;p&gt;The reference documentation for connecting to a MongoDB server deployment is divided into the following sections:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/connecting/connection-settings/&#34;&gt;Connection Settings&lt;/a&gt;: documentation of the various ways to specify the properties of a connection&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/connecting/authenticating/&#34;&gt;Authenticating&lt;/a&gt;: detailed documentation of the various ways to specify authentication credentials&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/connecting/ssl/&#34;&gt;SSL&lt;/a&gt;: Detailed documentation of the various ways to specify the properties of an SSL connection&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/connecting/jndi/&#34;&gt;JNDI&lt;/a&gt;: Detailed documentation of the various ways to configure JNDI to return MongoClient instances&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Connection Settings</title>
+      <link>/mongo-java-driver/3.3/driver/reference/connecting/connection-settings/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/connecting/connection-settings/</guid>
+      <description>
+
+&lt;h2 id=&#34;connection-settings&#34;&gt;Connection Settings&lt;/h2&gt;
+
+&lt;p&gt;The Java driver has two ways of specifying the settings of a connection to a MongoDB server deployment.&lt;/p&gt;
+
+&lt;h3 id=&#34;connection-string&#34;&gt;Connection String&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/connection-string/&#34;&gt;connection string&lt;/a&gt; is the simplest way to specify the properties of a
+connection. . A connection string mostly follows &lt;a href=&#34;http://tools.ietf.org/html/rfc3986&#34;&gt;RFC 3986&lt;/a&gt;, with the exception of the domain name.
+ For MongoDB, it is possible to list multiple domain names separated by a comma. Below are some example connection strings.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;For a standalone mongod, mongos, or a direct connection to a member of a replica set:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;mongodb://host:27017
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;To connect to multiple mongos or a replica set:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;mongodb://host1:27017,host2:27017
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/connecting/authenticating/&#34;&gt;authentication guide&lt;/a&gt; contains information on how to provide credentials in the connection string.&lt;/p&gt;
+
+&lt;h4 id=&#34;the-database-component&#34;&gt;The Database Component&lt;/h4&gt;
+
+&lt;p&gt;The database component is optional and is used to indicate which database to authenticate against. When the database component is not
+provided, the &amp;ldquo;admin&amp;rdquo; database is used.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;mongodb://host:27017/mydb
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Above, the database by the name of &amp;ldquo;mydb&amp;rdquo; is where the credentials are stored for the application.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Some drivers utilize the database component to indicate which database to work with by default. The Java driver, while it parses the
+database component, does not use the database component for anything other than authentication.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h4 id=&#34;options&#34;&gt;Options&lt;/h4&gt;
+
+&lt;p&gt;Many options can be provided via the connection string. The ones that cannot may be provided in a
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; instance. To
+provide an option, append a &lt;code&gt;?&lt;/code&gt; to the connection string and separate options by an &lt;code&gt;&amp;amp;&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;mongodb://host:27017/?replicaSet=rs0&amp;amp;maxPoolSize=200
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The above connection string sets the &amp;ldquo;replicaSet&amp;rdquo; value to &amp;ldquo;rs0&amp;rdquo; and the &amp;ldquo;maxPoolSize&amp;rdquo; to &amp;ldquo;200&amp;rdquo;.&lt;/p&gt;
+
+&lt;p&gt;For a comprehensive list of the available options, see the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; documentation.&lt;/p&gt;
+
+&lt;h3 id=&#34;mongoclient&#34;&gt;MongoClient&lt;/h3&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; instance will be the root object for all interaction with MongoDB. It is all
+that is needed to handle connecting to servers, monitoring servers, and performing operations against those servers. Without any
+arguments, constructing a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; instance will connect to &amp;ldquo;localhost&amp;rdquo; port 27017.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient client = new MongoClient();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Alternatively, a connection string may be provided:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient client = new MongoClient(new MongoClientURI(&amp;quot;mongodb://host:27017,host2:27017/?replicaSet=rs0&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally, the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; class provides an in-code way to set the same
+options from a connection string.  This is sometimes
+necessary, as the connection string does not allow an application to configure as many properties of the connection as
+&lt;code&gt;MongoClientOptions&lt;/code&gt;.&lt;br /&gt;
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; instances are immutable, so to create one an application uses a
+ builder:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientOptions options = MongoClientOptions.builder().cursorFinalizerEnabled(false).build();
+MongoClient client = new MongoClient(options);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It&amp;rsquo;s also possible to combine &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; with
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt;, for situations in which an application needs to set some options
+in code but others via the connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;
+MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://host:27017,host2:27017/?replicaSet=rs0&amp;quot;,
+                                        MongoClientOptions.builder().cursorFinalizerEnabled(false))
+MongoClient client = new MongoClient(uri);
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>JNDI</title>
+      <link>/mongo-java-driver/3.3/driver/reference/connecting/jndi/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/connecting/jndi/</guid>
+      <description>
+
+&lt;h2 id=&#34;java-naming-and-directory-interface-jndi&#34;&gt;Java Naming and Directory Interface (JNDI)&lt;/h2&gt;
+
+&lt;p&gt;The driver includes a &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html&#34;&gt;JNDI&lt;/a&gt; ObjectFactory implementation,
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/jndi/MongoClientFactory.html
+&#34;&gt;&lt;code&gt;MongoClientFactory&lt;/code&gt;&lt;/a&gt;, that returns &lt;code&gt;MongoClient&lt;/code&gt; instances based on a
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/connection-string/&#34;&gt;connection string&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;examples&#34;&gt;Examples&lt;/h2&gt;
+
+&lt;p&gt;The configuration of the &lt;code&gt;MongoClientFactory&lt;/code&gt; differs depending on the application server. Below are examples of a few popular ones.&lt;/p&gt;
+
+&lt;h3 id=&#34;wildfly-formerly-jboss&#34;&gt;Wildfly (formerly JBoss)&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;In a &lt;a href=&#34;http://wildfly.org/&#34;&gt;Wildfly&lt;/a&gt; installation, create a new module for MongoDB at &lt;code&gt;modules/system/layers/base/org/mongodb/main&lt;/code&gt;.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Copy the mongo-java-driver jar file into the module.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Add the following module.xml file into the module:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;module xmlns=&amp;quot;urn:jboss:module:1.3&amp;quot; name=&amp;quot;org.mongodb&amp;quot;&amp;gt;
+   &amp;lt;resources&amp;gt;
+       &amp;lt;resource-root path=&amp;quot;mongo-java-driver-3.3.0.jar&amp;quot;/&amp;gt;
+   &amp;lt;/resources&amp;gt;
+   &amp;lt;dependencies&amp;gt;
+       &amp;lt;module name=&amp;quot;javax.api&amp;quot;/&amp;gt;
+       &amp;lt;module name=&amp;quot;javax.transaction.api&amp;quot;/&amp;gt;
+       &amp;lt;module name=&amp;quot;javax.servlet.api&amp;quot; optional=&amp;quot;true&amp;quot;/&amp;gt;
+   &amp;lt;/dependencies&amp;gt;
+&amp;lt;/module&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Add a binding to JBoss&amp;rsquo;s naming subsystem configuration that references the above module, the &lt;code&gt;MongoClientFactory&lt;/code&gt; class, and the
+connection string for the MongoDB cluster.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;subsystem xmlns=&amp;quot;urn:jboss:domain:naming:2.0&amp;quot;&amp;gt;
+    &amp;lt;bindings&amp;gt;
+        &amp;lt;object-factory name=&amp;quot;java:global/MyMongoClient&amp;quot; module=&amp;quot;org.mongodb&amp;quot; class=&amp;quot;com.mongodb.client.jndi.MongoClientFactory&amp;quot;&amp;gt;
+            &amp;lt;environment&amp;gt;
+                &amp;lt;property name=&amp;quot;connectionString&amp;quot; value=&amp;quot;mongodb://localhost:27017&amp;quot;/&amp;gt;
+            &amp;lt;/environment&amp;gt;
+         &amp;lt;/object-factory&amp;gt;
+    &amp;lt;/bindings&amp;gt;
+    &amp;lt;remote-naming/&amp;gt;
+&amp;lt;/subsystem&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;A MongoClient instance will be accessible via the JNDI name &lt;code&gt;java:global/LocalMongoClient&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;tomcat&#34;&gt;Tomcat&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;In a &lt;a href=&#34;http://tomcat.apache.org/&#34;&gt;Tomcat&lt;/a&gt; installation, copy the mongo-java-driver jar file into the lib directory.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;In context.xml of a web application, add a resource that references the &lt;code&gt;MongoClientFactory&lt;/code&gt; class, and the connection string for the
+MongoDB cluster:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;Resource name=&amp;quot;mongodb/MyMongoClient&amp;quot;
+          auth=&amp;quot;Container&amp;quot;
+          type=&amp;quot;com.mongodb.MongoClient&amp;quot;
+          closeMethod=&amp;quot;close&amp;quot;
+          factory=&amp;quot;com.mongodb.client.jndi.MongoClientFactory&amp;quot;
+          singleton=&amp;quot;true&amp;quot;
+          connectionString=&amp;quot;mongodb://localhost&amp;quot;/&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;In web.xml of a web application, add a reference to the above resource:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;resource-ref&amp;gt;
+    &amp;lt;res-ref-name&amp;gt;
+        mongodb/MyMongoClient
+    &amp;lt;/res-ref-name&amp;gt;
+    &amp;lt;res-type&amp;gt;
+        com.mongodb.MongoClient
+    &amp;lt;/res-type&amp;gt;
+    &amp;lt;res-auth&amp;gt;
+        Container
+    &amp;lt;/res-auth&amp;gt;
+&amp;lt;/resource-ref&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;A MongoClient instance will be accessible via the JNDI name &lt;code&gt;mongodb/MyMongoClient&lt;/code&gt; in the &lt;code&gt;java:comp/env&lt;/code&gt; context.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>/mongo-java-driver/3.3/driver/reference/management/monitoring/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/management/monitoring/</guid>
+      <description>
+
+&lt;h1 id=&#34;jmx-monitoring&#34;&gt;JMX Monitoring&lt;/h1&gt;
+
+&lt;p&gt;The driver uses &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/&#34;&gt;JMX&lt;/a&gt; to create
+&lt;a href=&#34;http://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html&#34;&gt;MXBeans&lt;/a&gt; that allow an
+application or end user to monitor various aspects of the driver.&lt;/p&gt;
+
+&lt;p&gt;The driver creates MXBean instances of a single type:
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/management/ConnectionPoolStatisticsMBean.html
+&#34;&gt;ConnectionPoolStatisticsMBean&lt;/a&gt;.
+ The driver registers one &lt;code&gt;ConnectionPoolStatisticsMBean&lt;/code&gt; instance per each server it connects to. For example, in the case of a replica
+ set, the driver creates an instance per each non-hidden member of the replica set.&lt;/p&gt;
+
+&lt;p&gt;Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties. All
+MXBean instances created by the driver are under the domain &lt;code&gt;&amp;quot;org.mongodb.driver&amp;quot;&lt;/code&gt;.  Instances of &lt;code&gt;ConnectionPoolStatisticsMBean&lt;/code&gt; will have
+the following properties:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;clusterId&lt;/code&gt;: a client-generated unique identifier, required to ensure object name uniqueness in situations where an
+application has multiple &lt;code&gt;MongoClient&lt;/code&gt; instances connected to the same MongoDB server deployment&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;host&lt;/code&gt;: the host name of the server&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;port&lt;/code&gt;: the port on which the server is listening&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;minSize&lt;/code&gt;: the minimum allowed size of the pool, including idle and in-use members&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;maxSize&lt;/code&gt;: the maximum allowed size of the pool, including idle and in-use members&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;size&lt;/code&gt;: the current size of the pool, including idle and and in-use members&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;waitQueueSize&lt;/code&gt;: the current size of the wait queue for a connection from this pool&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;checkedOutCount&lt;/code&gt;: the current count of connections that are currently in use&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;command-monitoring&#34;&gt;Command Monitoring&lt;/h1&gt;
+
+&lt;p&gt;The driver implements the
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst&#34;&gt;command monitoring specification&lt;/a&gt;,
+allowing an application to be notified when a command starts and when it either succeeds or fails.&lt;/p&gt;
+
+&lt;p&gt;An application registers command listeners with a &lt;code&gt;MongoClient&lt;/code&gt; by configuring &lt;code&gt;MongoClientOptions&lt;/code&gt; with instances of classes
+that implement the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/event/CommandListener.html
+&#34;&gt;&lt;code&gt;CommandListener&lt;/code&gt;&lt;/a&gt; interface. Consider the following, somewhat
+simplistic, implementation of the &lt;code&gt;CommandListener&lt;/code&gt; interface:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class TestCommandListener implements CommandListener {                        
+    @Override                                                                                                        
+    public void commandStarted(final CommandStartedEvent event) {                                                    
+        System.out.println(String.format(&amp;quot;Sent command &#39;%s:%s&#39; with id %s to database &#39;%s&#39; &amp;quot;                         
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,                                      
+                                         event.getCommandName(),                                                     
+                                         event.getCommand().get(event.getCommandName()),                             
+                                         event.getRequestId(),                                                       
+                                         event.getDatabaseName(),                                                    
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress()));                      
+    }                                                                                                                
+                                                                                                                     
+    @Override                                                                                                        
+    public void commandSucceeded(final CommandSucceededEvent event) {                                                
+        System.out.println(String.format(&amp;quot;Successfully executed command &#39;%s&#39; with id %s &amp;quot;                            
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,                                      
+                                         event.getCommandName(),                                                     
+                                         event.getRequestId(),                                                       
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress()));                      
+    }                                                                                                                
+                                                                                                                     
+    @Override                                                                                                        
+    public void commandFailed(final CommandFailedEvent event) {                                                      
+        System.out.println(String.format(&amp;quot;Failed execution of command &#39;%s&#39; with id %s &amp;quot;                              
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39; with exception &#39;%s&#39;&amp;quot;,                  
+                                         event.getCommandName(),                                                     
+                                         event.getRequestId(),                                                       
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress(),                        
+                                         event.getThrowable()));                                                     
+    }                                                                                                                
+}                                                                                                                            
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and an instance of &lt;code&gt;MongoClientOptions&lt;/code&gt; configured with an instance of &lt;code&gt;TestCommandListener&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientOptions options = MongoClientOptions.builder()                            
+                                           .addCommandListener(new TestCommandListener())
+                                           .build();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A &lt;code&gt;MongoClient&lt;/code&gt; configured with these options will print a message to &lt;code&gt;System.out&lt;/code&gt; before sending each command to a MongoDB server, and
+another message upon either successful completion or failure of each command.&lt;/p&gt;
+
+&lt;h1 id=&#34;cluster-monitoring&#34;&gt;Cluster Monitoring&lt;/h1&gt;
+
+&lt;p&gt;The driver implements the
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst&#34;&gt;SDAM Monitoring specification&lt;/a&gt;,
+allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.&lt;/p&gt;
+
+&lt;p&gt;An application registers listeners with a &lt;code&gt;MongoClient&lt;/code&gt; by configuring  &lt;code&gt;MongoClientOptions&lt;/code&gt; with instances of classes that
+implement any of the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/event/ClusterListener.html
+&#34;&gt;&lt;code&gt;ClusterListener&lt;/code&gt;&lt;/a&gt;,
+ &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/event/ServerListener.html
+&#34;&gt;&lt;code&gt;ServerListener&lt;/code&gt;&lt;/a&gt;,
+or &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/event/ServerMonitorListener.html
+&#34;&gt;&lt;code&gt;ServerMonitorListener&lt;/code&gt;&lt;/a&gt; interfaces.&lt;/p&gt;
+
+&lt;p&gt;Consider the following, somewhat simplistic, example of a cluster listener:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class TestClusterListener implements ClusterListener {
+    private final ReadPreference readPreference;
+    private boolean isWritable;
+    private boolean isReadable;
+
+    public TestClusterListener(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
+    }
+
+    @Override
+    public void clusterOpening(final ClusterOpeningEvent clusterOpeningEvent) {
+        System.out.println(String.format(&amp;quot;Cluster with unique client identifier %s opening&amp;quot;,
+                clusterOpeningEvent.getClusterId()));
+    }
+
+    @Override
+    public void clusterClosed(final ClusterClosedEvent clusterClosedEvent) {
+        System.out.println(String.format(&amp;quot;Cluster with unique client identifier %s closed&amp;quot;,
+                clusterClosedEvent.getClusterId()));
+    }
+
+    @Override
+    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+        if (!isWritable) {
+            if (event.getNewDescription().hasWritableServer()) {
+                isWritable = true;
+                System.out.println(&amp;quot;Writable server available!&amp;quot;);
+            }
+        } else {
+            if (!event.getNewDescription().hasWritableServer()) {
+                isWritable = false;
+                System.out.println(&amp;quot;No writable server available!&amp;quot;);
+            }
+        }
+
+        if (!isReadable) {
+            if (event.getNewDescription().hasReadableServer(readPreference)) {
+                isReadable = true;
+                System.out.println(&amp;quot;Readable server available!&amp;quot;);
+            }
+        } else {
+            if (!event.getNewDescription().hasReadableServer(readPreference)) {
+                isReadable = false;
+                System.out.println(&amp;quot;No readable server available!&amp;quot;);
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and an instance of &lt;code&gt;MongoClientOptions&lt;/code&gt; configured with an instance of &lt;code&gt;TestClusterListener&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;List&amp;lt;ServerAddress&amp;gt; seedList = ...
+MongoClientOptions options = MongoClientOptions.builder()
+                                           .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
+                                           .build();
+MongoClient client = new MongoClient(seedList, options);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A &lt;code&gt;MongoClient&lt;/code&gt; configured with these options will print a message to &lt;code&gt;System.out&lt;/code&gt; when the MongoClient is constructed with these options,
+and when that MongoClient is closed.  In addition, it will print a message when the client enters a state:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;with an available server that will accept writes&lt;/li&gt;
+&lt;li&gt;without an available server that will accept writes&lt;/li&gt;
+&lt;li&gt;with an available server that will accept reads using the configured &lt;code&gt;ReadPreference&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;without an available server that will accept reads using the configured &lt;code&gt;ReadPreference&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>SSL</title>
+      <link>/mongo-java-driver/3.3/driver/reference/connecting/ssl/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/connecting/ssl/</guid>
+      <description>
+
+&lt;h2 id=&#34;ssl&#34;&gt;SSL&lt;/h2&gt;
+
+&lt;p&gt;The Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by the JDK. You can configure
+the driver to use SSL either with &lt;code&gt;MongoClientURI&lt;/code&gt; or with &lt;code&gt;MongoClientOptions&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;With &lt;code&gt;MongoClientURI&lt;/code&gt;, specify `ssl=true as a query parameter, as in:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    new MongoClientURI(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With &lt;code&gt;MongoClientOptions&lt;/code&gt;, set the sslEnabled property to true, as in:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    MongoClientOptions.builder().sslEnabled(true).build()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;host-name-verification&#34;&gt;Host name verification&lt;/h3&gt;
+
+&lt;p&gt;By default, the driver ensures that the host name included in the server&amp;rsquo;s SSL certificate(s) matches the host name(s) provided when
+constructing a &lt;code&gt;MongoClient&lt;/code&gt;.  However, this host name verification requires a Java 7 JVM, as it relies on additions to the
+&lt;code&gt;javax.net.SSLParameters&lt;/code&gt; class that were introduced in Java 7.  If your application must run on Java 6, or for some other reason you need
+ to disable host name verification, you must expicitly indicate this in &lt;code&gt;MongoClientOptions&lt;/code&gt; using the &lt;code&gt;sslInvalidHostNameAllowed&lt;/code&gt; property:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    MongoClientOptions.builder().sslEnabled(true).sslInvalidHostNameAllowed(true).build()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;jvm-system-properties&#34;&gt;JVM system properties&lt;/h3&gt;
+
+&lt;p&gt;A typical application will need to set several JVM system properties to ensure that the client is able to validate the SSL certificate
+presented by the server:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;javax.net.ssl.trustStore&lt;/code&gt;: the path to a trust store containing the certificate of the signing authority&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;javax.net.ssl.trustStorePassword&lt;/code&gt;: the password to access this trust store&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The trust store is typically created with the &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html&#34;&gt;keytool&lt;/a&gt;
+command line program provided as part of the JDK.  For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;    keytool -importcert -trustcacerts -file &amp;lt;path to certificate authority file&amp;gt; 
+        -keystore &amp;lt;path to trust store&amp;gt; -storepass &amp;lt;password&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A typical application will also need to set several JVM system properties to ensure that the client presents an SSL certificate to the
+MongoDB server:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;javax.net.ssl.keyStore&lt;/code&gt;: the path to a key store containing the client&amp;rsquo;s SSL certificates&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;javax.net.ssl.keyStorePassword&lt;/code&gt;: the password to access this key store&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The key store is typically created with the &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html&#34;&gt;keytool&lt;/a&gt; or the
+&lt;a href=&#34;https://www.openssl.org/docs/apps/openssl.html&#34;&gt;openssl&lt;/a&gt; command line program.&lt;/p&gt;
+
+&lt;p&gt;For more information on configuring a Java application for SSL, please refer to the&lt;br /&gt;
+&lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html&#34;&gt;JSSE Reference Guide&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Logging</title>
+      <link>/mongo-java-driver/3.3/driver/reference/management/logging/</link>
+      <pubDate>Wed, 18 Mar 2015 21:14:20 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/reference/management/logging/</guid>
+      <description>
+
+&lt;h1 id=&#34;logging&#34;&gt;Logging&lt;/h1&gt;
+
+&lt;p&gt;By default, logging is enabled via the popular &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt; API. The use of &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt; is optional;
+the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to
+JUL (&lt;code&gt;java.util.logging&lt;/code&gt;).&lt;/p&gt;
+
+&lt;p&gt;The driver uses the following logger names:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;org.mongodb.driver&lt;/code&gt;: the root logger
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cluster&lt;/code&gt;: for logs related to monitoring of the MongoDB servers to which the driver connects&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;connection&lt;/code&gt;: for logs related to connections and connection pools&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;protocol&lt;/code&gt;: for logs related to protocol message sent to and received from a MongoDB server
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;insert&lt;/code&gt;: for logs related to insert messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;update&lt;/code&gt;: for logs related to update messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;delete&lt;/code&gt;: for logs related to delete messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;query&lt;/code&gt;: for logs related to query messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;getmore&lt;/code&gt;: for logs related to getmore messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;killcursor&lt;/code&gt;: for logs related to killcursor messages and responses&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;command&lt;/code&gt;: for logs related to command messages and responses&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;uri&lt;/code&gt;: for logs related to connection string parsing&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;management&lt;/code&gt;: for logs related to JMX&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Admin Quick Tour</title>
+      <link>/mongo-java-driver/3.3/driver/getting-started/quick-tour-admin/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/getting-started/quick-tour-admin/</guid>
+      <description>
+
+&lt;h1 id=&#34;mongodb-driver-admin-quick-tour&#34;&gt;MongoDB Driver Admin Quick Tour&lt;/h1&gt;
+
+&lt;p&gt;This is the second part of the MongoDB driver quick tour. In the
+&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/quick-tour/&#34;&gt;quick tour&lt;/a&gt; we looked at how to
+use the Java driver to execute basic CRUD operations.  In this section we&amp;rsquo;ll look at some of the
+administrative features available in the driver.&lt;/p&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTourAdmin.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTourAdmin.java
+&#34;&gt;driver
+source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/installation-guide/&#34;&gt;installation guide&lt;/a&gt;
+for instructions on how to install the MongoDB Driver.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;setup&#34;&gt;Setup&lt;/h2&gt;
+
+&lt;p&gt;To get started we&amp;rsquo;ll quickly connect and create a &lt;code&gt;mongoClient&lt;/code&gt;, &lt;code&gt;database&lt;/code&gt; and &lt;code&gt;collection&lt;/code&gt;
+variable for use in the examples below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient mongoClient = new MongoClient();
+MongoDatabase database = mongoClient.getDatabase(&amp;quot;mydb&amp;quot;);
+MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;test&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Calling the &lt;code&gt;getDatabase()&lt;/code&gt; on &lt;code&gt;MongoClient&lt;/code&gt; does not create a database.
+Only when a database is written to will a database be created.  Examples include the creation of an index or the insertion of a document
+into a previously non-existent collection.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;get-a-list-of-databases&#34;&gt;Get A List of Databases&lt;/h2&gt;
+
+&lt;p&gt;You can get a list of the available databases:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (String name: mongoClient.listDatabaseNames()) {
+    System.out.println(name);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;drop-a-database&#34;&gt;Drop A Database&lt;/h2&gt;
+
+&lt;p&gt;You can drop a database by name using a &lt;code&gt;MongoClient&lt;/code&gt; instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;mongoClient.getDatabase(&amp;quot;databaseToBeDropped&amp;quot;).drop();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;create-a-collection&#34;&gt;Create A Collection&lt;/h2&gt;
+
+&lt;p&gt;Collections in MongoDB are created automatically simply by inserted a document into it. Using the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoDatabase.html#createCollection-java.lang.String-
+&#34;&gt;&lt;code&gt;createCollection&lt;/code&gt;&lt;/a&gt;
+method, you can also create a collection explicitly in order to customize its configuration. For example, to create a capped collection sized to 1 megabyte:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;database.createCollection(&amp;quot;cappedCollection&amp;quot;,
+  new CreateCollectionOptions().capped(true).sizeInBytes(0x100000));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;get-a-list-of-collections&#34;&gt;Get A List of Collections&lt;/h2&gt;
+
+&lt;p&gt;You can get a list of the available collections in a database:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (String name : database.listCollectionNames()) {
+    System.out.println(name);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;drop-a-collection&#34;&gt;Drop A Collection&lt;/h2&gt;
+
+&lt;p&gt;You can drop a collection by using the drop() method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.drop();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;create-an-index&#34;&gt;Create An Index&lt;/h2&gt;
+
+&lt;p&gt;MongoDB supports secondary indexes. To create an index, you just
+specify the field or combination of fields, and for each field specify the direction of the index for that field.
+We can use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/indexes/&#34;&gt;&lt;code&gt;Indexes&lt;/code&gt;&lt;/a&gt; helpers to create index keys:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// create an ascending index on the &amp;quot;i&amp;quot; field
+ collection.createIndex(Indexes.ascending(&amp;quot;i&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;get-a-list-of-indexes-on-a-collection&#34;&gt;Get a List of Indexes on a Collection&lt;/h2&gt;
+
+&lt;p&gt;Use the &lt;code&gt;listIndexes()&lt;/code&gt; method to get a list of indexes. The following lists
+ the indexes on the collection &lt;code&gt;test&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (final Document index : collection.listIndexes()) {
+    System.out.println(index.toJson());
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The example should print the following indexes:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;v&amp;quot; : 1, &amp;quot;key&amp;quot; : { &amp;quot;_id&amp;quot; : 1 }, &amp;quot;name&amp;quot; : &amp;quot;_id_&amp;quot;, &amp;quot;ns&amp;quot; : &amp;quot;mydb.test&amp;quot; }
+{ &amp;quot;v&amp;quot; : 1, &amp;quot;key&amp;quot; : { &amp;quot;i&amp;quot; : 1 }, &amp;quot;name&amp;quot; : &amp;quot;i_1&amp;quot;, &amp;quot;ns&amp;quot; : &amp;quot;mydb.test&amp;quot; }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;text-indexes&#34;&gt;Text indexes&lt;/h2&gt;
+
+&lt;p&gt;MongoDB also provides text indexes to support text search of string
+content. Text indexes can include any field whose value is a string or
+an array of string elements. To create a text index use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/indexes/#text-index&#34;&gt;&lt;code&gt;Indexes.text&lt;/code&gt;&lt;/a&gt;
+static helper:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// create a text index on the &amp;quot;content&amp;quot; field
+coll.createIndex(Indexes.text(&amp;quot;content&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As of MongoDB 2.6, text indexes are now integrated into the main query
+language and enabled by default (here we use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/filters/#evaluation&#34;&gt;&lt;code&gt;Filters.text&lt;/code&gt;&lt;/a&gt; helper):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Insert some documents
+collection.insertOne(new Document(&amp;quot;_id&amp;quot;, 0).append(&amp;quot;content&amp;quot;, &amp;quot;textual content&amp;quot;));
+collection.insertOne(new Document(&amp;quot;_id&amp;quot;, 1).append(&amp;quot;content&amp;quot;, &amp;quot;additional content&amp;quot;));
+collection.insertOne(new Document(&amp;quot;_id&amp;quot;, 2).append(&amp;quot;content&amp;quot;, &amp;quot;irrelevant content&amp;quot;));
+
+// Find using the text index
+long matchCount = collection.count(Filters.text(&amp;quot;textual content -irrelevant&amp;quot;));
+System.out.println(&amp;quot;Text search matches: &amp;quot; + matchCount);
+
+// Find using the $language operator
+Bson textSearch = Filters.text(&amp;quot;textual content -irrelevant&amp;quot;, new TextSearchOptions().language(&amp;quot;english&amp;quot;));
+matchCount = collection.count(textSearch);
+System.out.println(&amp;quot;Text search matches (english): &amp;quot; + matchCount);
+
+// Find the highest scoring match
+Document projection = new Document(&amp;quot;score&amp;quot;, new Document(&amp;quot;$meta&amp;quot;, &amp;quot;textScore&amp;quot;));
+Document myDoc = collection.find(textSearch).projection(projection).first();
+System.out.println(&amp;quot;Highest scoring document: &amp;quot; + myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and it should print:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;Text search matches: 2
+Text search matches (english): 2
+Highest scoring document: { &amp;quot;_id&amp;quot; : 1, &amp;quot;content&amp;quot; : &amp;quot;additional content&amp;quot;, &amp;quot;score&amp;quot; : 0.75 }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For more information about text search see the &lt;a href=&#34;http://docs.mongodb.org/manual//core/index-text
+&#34;&gt;text index&lt;/a&gt; and
+&lt;a href=&#34;http://docs.mongodb.org/manual//reference/operator/query/text
+&#34;&gt;$text query operator&lt;/a&gt; documentation.&lt;/p&gt;
+
+&lt;h2 id=&#34;running-a-command&#34;&gt;Running a command&lt;/h2&gt;
+
+&lt;p&gt;While not all commands have a specific helper, however you can run any &lt;a href=&#34;http://docs.mongodb.org/manual//reference/command
+&#34;&gt;command&lt;/a&gt;
+by using the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-
+&#34;&gt;&lt;code&gt;runCommand()&lt;/code&gt;&lt;/a&gt;
+method.  Here we call the &lt;a href=&#34;{{ docsref &amp;quot;reference/command/buildInfo&amp;quot; }}&#34;&gt;buildInfo&lt;/a&gt; command:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Document buildInfo = database.runCommand(new Document(&amp;quot;buildInfo&amp;quot;, 1));
+System.out.println(buildInfo);
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>/mongo-java-driver/3.3/driver/getting-started/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/getting-started/</guid>
+      <description>
+
+&lt;h2 id=&#34;getting-started&#34;&gt;Getting Started&lt;/h2&gt;
+
+&lt;p&gt;To help you get started quickly on the new driver, follow:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/installation-guide/&#34;&gt;Installation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/quick-tour/&#34;&gt;Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/quick-tour-admin/&#34;&gt;Admin Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To help you get started with the legacy &lt;code&gt;DB&lt;/code&gt; and &lt;code&gt;DBCollection&lt;/code&gt; API, follow:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://mongodb.github.io/mongo-java-driver/2.13/getting-started/quick-tour/&#34;&gt;Legacy Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://mongodb.github.io/mongo-java-driver/2.13/getting-started/quick-tour-admin/&#34;&gt;Legacy Admin Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Installation Guide</title>
+      <link>/mongo-java-driver/3.3/driver/getting-started/installation-guide/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/getting-started/installation-guide/</guid>
+      <description>
+
+&lt;h1 id=&#34;installation&#34;&gt;Installation&lt;/h1&gt;
+
+&lt;p&gt;There are two Maven artifacts available in the 3.3 release. The preferred artifact for new applications is &lt;code&gt;mongodb-driver&lt;/code&gt;;
+however, we still publish the legacy &lt;code&gt;mongo-java-driver&lt;/code&gt; uber-jar.
+The recommended way to get started using one of the drivers in your project is with a dependency management system.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;pull-right&#34;&gt;
+  &lt;input type=&#34;checkbox&#34; checked=&#34;&#34; class=&#34;distroPicker&#34; data-toggle=&#34;toggle&#34; data-on=&#34;Maven&#34; data-off=&#34;Gradle&#34; data-offstyle=&#34;success&#34;&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;mongodb-driver&#34;&gt;MongoDB Driver&lt;/h2&gt;
+
+&lt;p&gt;The MongoDB Driver is the updated synchronous Java driver that includes the
+legacy API as well as a new generic MongoCollection interface that complies with
+a new cross-driver CRUD specification.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;For OSGi-based applications: due to the fact that there are classes from the &lt;code&gt;com.mongodb&lt;/code&gt; package in both this artifact and in the
+&lt;code&gt;mongodb-driver-core&lt;/code&gt; artifact, on which this depends, this artifact is &lt;em&gt;not&lt;/em&gt; an OSGi bundle.  Please use the &lt;code&gt;mongo-java-driver&lt;/code&gt; uber
+jar (described below) instead.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+
+
+&lt;section class=&#34;maven&#34;&gt;
+&lt;pre&gt;&lt;code class=&#34;ini&#34;&gt;
+&amp;lt;dependencies&amp;gt;
+    &amp;lt;dependency&amp;gt;
+        &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt;
+        &amp;lt;artifactId&amp;gt;mongodb-driver&amp;lt;/artifactId&amp;gt;
+        &amp;lt;version&amp;gt;3.3.0&amp;lt;/version&amp;gt;
+    &amp;lt;/dependency&amp;gt;
+&amp;lt;/dependencies&amp;gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;gradle hidden&#34;&gt;
+&lt;pre&gt;&lt;code&gt;
+  dependencies {
+      compile &#39;org.mongodb:mongodb-driver:3.3.0&#39;
+  }
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;downloadInfo small&#34;&gt;
+    &lt;p&gt;You can also download the jars
+        &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/3.3.0&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
+        from sonatype.&lt;/a&gt;&lt;/p&gt;
+    
+    &lt;p&gt;
+        &lt;strong&gt;Note:&lt;/strong&gt; &lt;code&gt;mongodb-driver&lt;/code&gt; requires the following dependencies:
+        &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.3.0&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;bson&lt;/code&gt;&lt;/a&gt; and
+        &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.3.0&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;mongodb-driver-core&lt;/code&gt;&lt;/a&gt;
+    &lt;/p&gt;
+    
+&lt;/section&gt;
+
+&lt;/p&gt;
+
+&lt;h2 id=&#34;uber-mongodb-java-driver&#34;&gt;Uber MongoDB Java Driver&lt;/h2&gt;
+
+&lt;p&gt;An uber jar that contains everything you need; the BSON library, the core library and the mongodb-driver.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;For OSGi-based applications: this artifact is a valid OSGi bundle.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;
+
+
+&lt;section class=&#34;maven&#34;&gt;
+&lt;pre&gt;&lt;code class=&#34;ini&#34;&gt;
+&amp;lt;dependencies&amp;gt;
+    &amp;lt;dependency&amp;gt;
+        &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt;
+        &amp;lt;artifactId&amp;gt;mongo-java-driver&amp;lt;/artifactId&amp;gt;
+        &amp;lt;version&amp;gt;3.3.0&amp;lt;/version&amp;gt;
+    &amp;lt;/dependency&amp;gt;
+&amp;lt;/dependencies&amp;gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;gradle hidden&#34;&gt;
+&lt;pre&gt;&lt;code&gt;
+  dependencies {
+      compile &#39;org.mongodb:mongo-java-driver:3.3.0&#39;
+  }
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;downloadInfo small&#34;&gt;
+    &lt;p&gt;You can also download the jars
+        &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongo-java-driver/3.3.0&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
+        from sonatype.&lt;/a&gt;&lt;/p&gt;
+    
+&lt;/section&gt;
+
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>MongoDB Driver</title>
+      <link>/mongo-java-driver/3.3/driver/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/</guid>
+      <description>
+
+&lt;h2 id=&#34;mongodb-driver-documentation&#34;&gt;MongoDB Driver Documentation&lt;/h2&gt;
+
+&lt;p&gt;Welcome to the MongoDB Driver documentation hub.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-s-new-in-3-3&#34;&gt;What&amp;rsquo;s New in 3.3&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/whats-new/&#34;&gt;What&amp;rsquo;s New&lt;/a&gt; guide explains the major new features of the driver.&lt;/p&gt;
+
+&lt;p&gt;If you are upgrading from the 2.x series of the driver, consult the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/whats-new/upgrading/&#34;&gt;Upgrading&lt;/a&gt; documentation for
+information on breaking changes.&lt;/p&gt;
+
+&lt;h3 id=&#34;getting-started&#34;&gt;Getting Started&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/&#34;&gt;Getting Started&lt;/a&gt; guide contains installation instructions
+and a simple tutorial to get up and running quickly.&lt;/p&gt;
+
+&lt;h3 id=&#34;reference&#34;&gt;Reference&lt;/h3&gt;
+
+&lt;p&gt;For more detailed documentation, see the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/reference/&#34;&gt;Reference&lt;/a&gt; guide.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Quick Tour</title>
+      <link>/mongo-java-driver/3.3/driver/getting-started/quick-tour/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.3/driver/getting-started/quick-tour/</guid>
+      <description>
+
+&lt;h1 id=&#34;mongodb-driver-quick-tour&#34;&gt;MongoDB Driver Quick Tour&lt;/h1&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTour.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTour.java
+&#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/driver/getting-started/installation-guide/&#34;&gt;installation guide&lt;/a&gt;
+for instructions on how to install the MongoDB Driver.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;make-a-connection&#34;&gt;Make a Connection&lt;/h2&gt;
+
+&lt;p&gt;The following example shows five ways to connect to the
+database &lt;code&gt;mydb&lt;/code&gt; on the local machine. If the database does not exist, MongoDB
+will create it for you.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// To directly connect to a single MongoDB server
+// (this will not auto-discover the primary even if it&#39;s a member of a replica set)
+MongoClient mongoClient = new MongoClient();
+
+// or
+MongoClient mongoClient = new MongoClient( &amp;quot;localhost&amp;quot; );
+
+// or
+MongoClient mongoClient = new MongoClient( &amp;quot;localhost&amp;quot; , 27017 );
+
+// or, to connect to a replica set, with auto-discovery of the primary, supply a seed list of members
+MongoClient mongoClient = new MongoClient(
+  Arrays.asList(new ServerAddress(&amp;quot;localhost&amp;quot;, 27017),
+                new ServerAddress(&amp;quot;localhost&amp;quot;, 27018),
+                new ServerAddress(&amp;quot;localhost&amp;quot;, 27019)));
+
+// or use a connection string
+MongoClientURI connectionString = new MongoClientURI(&amp;quot;mongodb://localhost:27017,localhost:27018,localhost:27019&amp;quot;);
+MongoClient mongoClient = new MongoClient(connectionString);
+
+MongoDatabase database = mongoClient.getDatabase(&amp;quot;mydb&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point, the &lt;code&gt;database&lt;/code&gt; object will be a connection to a MongoDB
+server for the specified database.&lt;/p&gt;
+
+&lt;h3 id=&#34;mongoclient&#34;&gt;MongoClient&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;MongoClient&lt;/code&gt; instance actually represents a pool of connections
+to the database; you will only need one instance of class
+&lt;code&gt;MongoClient&lt;/code&gt; even with multiple threads.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;Typically you only create one &lt;code&gt;MongoClient&lt;/code&gt; instance for a given database
+cluster and use it across your application. When creating multiple instances:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;All resource usage limits (max connections, etc) apply per
+&lt;code&gt;MongoClient&lt;/code&gt; instance&lt;/li&gt;
+&lt;li&gt;To dispose of an instance, make sure you call &lt;code&gt;MongoClient.close()&lt;/code&gt;
+to clean up resources&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;get-a-collection&#34;&gt;Get a Collection&lt;/h2&gt;
+
+&lt;p&gt;To get a collection to operate upon, specify the name of the collection to
+the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoDatabase.html#getCollection-java.lang.String-
+&#34;&gt;&lt;code&gt;getCollection()&lt;/code&gt;&lt;/a&gt;
+method:&lt;/p&gt;
+
+&lt;p&gt;The following example gets the collection &lt;code&gt;test&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;test&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;insert-a-document&#34;&gt;Insert a Document&lt;/h2&gt;
+
+&lt;p&gt;Once you have the collection object, you can insert documents into the
+collection. For example, consider the following JSON document; the document
+contains a field &lt;code&gt;info&lt;/code&gt; which is an embedded document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{
+   &amp;quot;name&amp;quot; : &amp;quot;MongoDB&amp;quot;,
+   &amp;quot;type&amp;quot; : &amp;quot;database&amp;quot;,
+   &amp;quot;count&amp;quot; : 1,
+   &amp;quot;info&amp;quot; : {
+               x : 203,
+               y : 102
+             }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To create the document using the Java driver, use the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?org/bson/Document.html
+&#34;&gt;&lt;code&gt;Document&lt;/code&gt;&lt;/a&gt; class. You
+can use this class to create the embedded document as well.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Document doc = new Document(&amp;quot;name&amp;quot;, &amp;quot;MongoDB&amp;quot;)
+               .append(&amp;quot;type&amp;quot;, &amp;quot;database&amp;quot;)
+               .append(&amp;quot;count&amp;quot;, 1)
+               .append(&amp;quot;info&amp;quot;, new Document(&amp;quot;x&amp;quot;, 203).append(&amp;quot;y&amp;quot;, 102));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To insert the document into the collection, use the &lt;code&gt;insertOne()&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.insertOne(doc);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;add-multiple-documents&#34;&gt;Add Multiple Documents&lt;/h2&gt;
+
+&lt;p&gt;To add multiple documents, you can use the &lt;code&gt;insertMany()&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;The following example will add multiple documents of the form:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ &amp;quot;i&amp;quot; : value }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Create the documents in a loop.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;List&amp;lt;Document&amp;gt; documents = new ArrayList&amp;lt;Document&amp;gt;();
+for (int i = 0; i &amp;lt; 100; i++) {
+    documents.add(new Document(&amp;quot;i&amp;quot;, i));
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To insert these documents to the collection, pass the list of documents to the
+&lt;code&gt;insertMany()&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.insertMany(documents);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;count-documents-in-a-collection&#34;&gt;Count Documents in A Collection&lt;/h2&gt;
+
+&lt;p&gt;Now that we&amp;rsquo;ve inserted 101 documents (the 100 we did in the loop, plus
+the first one), we can check to see if we have them all using the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection#count--.html
+&#34;&gt;&lt;code&gt;count()&lt;/code&gt;&lt;/a&gt;
+method. The following code should print &lt;code&gt;101&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;System.out.println(collection.count());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;query-the-collection&#34;&gt;Query the Collection&lt;/h2&gt;
+
+&lt;p&gt;Use the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html#find--
+&#34;&gt;&lt;code&gt;find()&lt;/code&gt;&lt;/a&gt;
+method to query the collection.&lt;/p&gt;
+
+&lt;h3 id=&#34;find-the-first-document-in-a-collection&#34;&gt;Find the First Document in a Collection&lt;/h3&gt;
+
+&lt;p&gt;To get the first document in the collection, call the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoIterable.html#first--
+&#34;&gt;&lt;code&gt;first()&lt;/code&gt;&lt;/a&gt;
+method on the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html#find--
+&#34;&gt;&lt;code&gt;find()&lt;/code&gt;&lt;/a&gt;
+operation. &lt;code&gt;collection.find().first()&lt;/code&gt; returns the first document or null rather than a cursor.
+This is useful for queries that should only match a single document, or if you are
+interested in the first document only.&lt;/p&gt;
+
+&lt;p&gt;The following example prints the first document found in the collection.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Document myDoc = collection.find().first();
+System.out.println(myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The example should print the following document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;_id&amp;quot; : { &amp;quot;$oid&amp;quot; : &amp;quot;551582c558c7b4fbacf16735&amp;quot; },
+  &amp;quot;name&amp;quot; : &amp;quot;MongoDB&amp;quot;, &amp;quot;type&amp;quot; : &amp;quot;database&amp;quot;, &amp;quot;count&amp;quot; : 1,
+  &amp;quot;info&amp;quot; : { &amp;quot;x&amp;quot; : 203, &amp;quot;y&amp;quot; : 102 } }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;_id&lt;/code&gt; element has been added automatically by MongoDB to your
+document and your value will differ from that shown. MongoDB reserves field
+names that start with
+&amp;ldquo;_&amp;rdquo; and &amp;ldquo;$&amp;rdquo; for internal use.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h3 id=&#34;find-all-documents-in-a-collection&#34;&gt;Find All Documents in a Collection&lt;/h3&gt;
+
+&lt;p&gt;To retrieve all the documents in the collection, we will use the
+&lt;code&gt;find()&lt;/code&gt; method. The &lt;code&gt;find()&lt;/code&gt; method returns a &lt;code&gt;FindIterable&lt;/code&gt; instance that
+provides a fluent interface for chaining or controlling find operations. Use the
+&lt;code&gt;iterator()&lt;/code&gt; method to get an iterator over the set of documents that matched the
+query and iterate. The following code retrieves all documents in the collection
+and prints them out (101 documents):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCursor&amp;lt;Document&amp;gt; cursor = collection.find().iterator();
+try {
+    while (cursor.hasNext()) {
+        System.out.println(cursor.next().toJson());
+    }
+} finally {
+    cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Although the following idiom is permissible, its use is discouraged as the
+application can leak a cursor if the loop
+terminates early:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (Document cur : collection.find()) {
+    System.out.println(cur.toJson());
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;get-a-single-document-with-a-query-filter&#34;&gt;Get A Single Document with a Query Filter&lt;/h2&gt;
+
+&lt;p&gt;We can create a filter to pass to the find() method to get a subset of
+the documents in our collection. For example, if we wanted to find the
+document for which the value of the &amp;ldquo;i&amp;rdquo; field is 71, we would do the
+following:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import static com.mongodb.client.model.Filters.*;
+
+myDoc = collection.find(eq(&amp;quot;i&amp;quot;, 71)).first();
+System.out.println(myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and it should just print just one document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;_id&amp;quot; : { &amp;quot;$oid&amp;quot; : &amp;quot;5515836e58c7b4fbc756320b&amp;quot; }, &amp;quot;i&amp;quot; : 71 }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/filters/&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt;, &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/sorts/&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt;,
+&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/projections/&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/updates/&#34;&gt;&lt;code&gt;Updates&lt;/code&gt;&lt;/a&gt;
+helpers for simple and concise ways of building up queries.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;get-a-set-of-documents-with-a-query&#34;&gt;Get a Set of Documents with a Query&lt;/h2&gt;
+
+&lt;p&gt;We can use the query to get a set of documents from our collection. For
+example, if we wanted to get all documents where &lt;code&gt;&amp;quot;i&amp;quot; &amp;gt; 50&lt;/code&gt;, we could
+write:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// now use a range query to get a larger subset
+Block&amp;lt;Document&amp;gt; printBlock = new Block&amp;lt;Document&amp;gt;() {
+     @Override
+     public void apply(final Document document) {
+         System.out.println(document.toJson());
+     }
+};
+collection.find(gt(&amp;quot;i&amp;quot;, 50)).forEach(printBlock);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice we use the &lt;code&gt;forEach&lt;/code&gt; method on &lt;code&gt;FindIterable&lt;/code&gt; which applies a block to each
+document and we print all documents where &lt;code&gt;i &amp;gt; 50&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;We could also get a range, say &lt;code&gt;50 &amp;lt; i &amp;lt;= 100&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.find(and(gt(&amp;quot;i&amp;quot;, 50), lte(&amp;quot;i&amp;quot;, 100))).forEach(printBlock);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;sorting-documents&#34;&gt;Sorting documents&lt;/h2&gt;
+
+&lt;p&gt;We can also use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/sorts/&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; helpers to sort documents.
+We add a sort to a find query by calling the &lt;code&gt;sort()&lt;/code&gt; method on a &lt;code&gt;FindIterable&lt;/code&gt;.  Below we use the
+&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/filters/#elements&#34;&gt;&lt;code&gt;exists()&lt;/code&gt;&lt;/a&gt; helper and sort
+&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/sorts/#descending&#34;&gt;&lt;code&gt;descending(&amp;quot;i&amp;quot;)&lt;/code&gt;&lt;/a&gt; helper to
+sort our documents:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;myDoc = collection.find(exists(&amp;quot;i&amp;quot;)).sort(descending(&amp;quot;i&amp;quot;)).first();
+System.out.println(myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;projecting-fields&#34;&gt;Projecting fields&lt;/h2&gt;
+
+&lt;p&gt;Sometimes we don&amp;rsquo;t need all the data contained in a document, the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/projections/&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt;
+helpers help build the projection parameter for the find operation.  Below we&amp;rsquo;ll sort the collection, exclude the &lt;code&gt;_id&lt;/code&gt; field by using the
+&lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/projections/#exclusion&#34;&gt;&lt;code&gt;Projections.excludeId&lt;/code&gt;&lt;/a&gt; and output the first matching document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;myDoc = collection.find().projection(excludeId()).first();
+System.out.println(myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;aggregations&#34;&gt;Aggregations&lt;/h2&gt;
+
+&lt;p&gt;Sometimes we need to aggregate the data stored in MongoDB. The &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/aggregation/&#34;&gt;&lt;code&gt;Aggregates&lt;/code&gt;&lt;/a&gt; helper provides
+builders for each of type of aggregation stage.&lt;/p&gt;
+
+&lt;p&gt;Below we&amp;rsquo;ll do a simple two step transformation that will calculate the value of &lt;code&gt;i * 10&lt;/code&gt;. First we find all Documents
+where &lt;code&gt;i &amp;gt; 0&lt;/code&gt; by using the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/aggregation/#match&#34;&gt;&lt;code&gt;Aggregates.match&lt;/code&gt;&lt;/a&gt;
+helper. Then we reshape the document by using &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/aggregation/#project&#34;&gt;&lt;code&gt;Aggregates.project&lt;/code&gt;&lt;/a&gt;
+in conjunction with the &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/multiply/
+&#34;&gt;&lt;code&gt;$multiply&lt;/code&gt;&lt;/a&gt; operator to calculate the &amp;ldquo;&lt;code&gt;ITimes10&lt;/code&gt;&amp;rdquo;
+value:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.aggregate(asList(
+        match(gt(&amp;quot;i&amp;quot;, 0)),
+        project(Document.parse(&amp;quot;{ITimes10: {$multiply: [&#39;$i&#39;, 10]}}&amp;quot;)))
+).forEach(printBlock);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/aggregation/#group&#34;&gt;&lt;code&gt;$group&lt;/code&gt;&lt;/a&gt; operations use the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/model/Accumulators.html
+&#34;&gt;&lt;code&gt;Accumulators&lt;/code&gt;&lt;/a&gt; helper for any
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
+&#34;&gt;accumulator operations&lt;/a&gt;. Below we sum up all the values of
+&lt;code&gt;i&lt;/code&gt; by using the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/aggregation/#group&#34;&gt;&lt;code&gt;Aggregates.group&lt;/code&gt;&lt;/a&gt; helper in conjunction with the
+&lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/model/Accumulators#sum-java.lang.String-TExpression-.html
+&#34;&gt;&lt;code&gt;Accumulators.sum&lt;/code&gt;&lt;/a&gt; helper:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;myDoc = collection.aggregate(singletonList(group(null, sum(&amp;quot;total&amp;quot;, &amp;quot;$i&amp;quot;)))).first();
+System.out.println(myDoc.toJson());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Currently, there are no helpers for &lt;a href=&#34;http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions&#34;&gt;aggregation expressions&lt;/a&gt;.
+Use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/bson/extended-json/&#34;&gt;&lt;code&gt;Document.parse()&lt;/code&gt;&lt;/a&gt; helper to quickly build aggregation expressions from extended JSON.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;updating-documents&#34;&gt;Updating documents&lt;/h2&gt;
+
+&lt;p&gt;There are numerous &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update-field/&#34;&gt;update operators&lt;/a&gt;
+supported by MongoDB.&lt;/p&gt;
+
+&lt;p&gt;To update at most a single document (may be 0 if none match the filter), use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-
+&#34;&gt;&lt;code&gt;updateOne&lt;/code&gt;&lt;/a&gt;
+method to specify the filter and the update document. Here we use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/updates/#set&#34;&gt;&lt;code&gt;Updates.set&lt;/code&gt;&lt;/a&gt; helper to update the first document that meets the filter &lt;code&gt;i&lt;/code&gt; equals &lt;code&gt;10&lt;/code&gt; and set the value of &lt;code&gt;i&lt;/code&gt; to &lt;code&gt;110&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.updateOne(eq(&amp;quot;i&amp;quot;, 10), set(&amp;quot;i&amp;quot;, 110));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To update all documents matching the filter use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-
+&#34;&gt;&lt;code&gt;updateMany&lt;/code&gt;&lt;/a&gt;
+method. Here we use the &lt;a href=&#34;/mongo-java-driver/3.3/mongo-java-driver/3.3/builders/updates/#increment&#34;&gt;&lt;code&gt;Updates.inc&lt;/code&gt;&lt;/a&gt; helper to increment the value of &lt;code&gt;i&lt;/code&gt; by &lt;code&gt;100&lt;/code&gt;
+where &lt;code&gt;i&lt;/code&gt; is less than &lt;code&gt;100&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;UpdateResult updateResult = collection.updateMany(lt(&amp;quot;i&amp;quot;, 100), inc(&amp;quot;i&amp;quot;, 100));
+System.out.println(updateResult.getModifiedCount());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The update methods return an &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/result/UpdateResult.html
+&#34;&gt;&lt;code&gt;UpdateResult&lt;/code&gt;&lt;/a&gt;
+which provides information about the operation including the number of documents modified by the update.&lt;/p&gt;
+
+&lt;h2 id=&#34;deleting-documents&#34;&gt;Deleting documents&lt;/h2&gt;
+
+&lt;p&gt;To delete at most a single document (may be 0 if none match the filter) use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-
+&#34;&gt;&lt;code&gt;deleteOne&lt;/code&gt;&lt;/a&gt;
+method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.deleteOne(eq(&amp;quot;i&amp;quot;, 110));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To delete all documents matching the filter use the &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-
+&#34;&gt;&lt;code&gt;deleteMany&lt;/code&gt;&lt;/a&gt; method.&lt;br /&gt;
+Here we delete all documents where &lt;code&gt;i&lt;/code&gt; is greater or equal to &lt;code&gt;100&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;DeleteResult deleteResult = collection.deleteMany(gte(&amp;quot;i&amp;quot;, 100));
+System.out.println(deleteResult.getDeletedCount());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The delete methods return a &lt;a href=&#34;http://api.mongodb.com/java/3.3/?com/mongodb/client/result/DeleteResult.html
+&#34;&gt;&lt;code&gt;DeleteResult&lt;/code&gt;&lt;/a&gt;
+which provides information about the operation including the number of documents deleted.&lt;/p&gt;
+
+&lt;h2 id=&#34;bulk-operations&#34;&gt;Bulk operations&lt;/h2&gt;
+
+&lt;p&gt;These new commands allow for the execution of bulk
+insert/update/delete operations. There are two types of bulk operations:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Ordered bulk operations.&lt;/p&gt;
+
+&lt;p&gt;Executes all the operation in order and error out on the first write error.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Unordered bulk operations.&lt;/p&gt;
+
+&lt;p&gt;Executes all the operations and reports any the errors.&lt;/p&gt;
+
+&lt;p&gt;Unordered bulk operations do not guarantee order of execution.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at two simple examples using ordered and unordered
+operations:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// 2. Ordered bulk operation - order is guarenteed
+collection.bulkWrite(
+  Arrays.asList(new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 4)),
+                new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 5)),
+                new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 6)),
+                new UpdateOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 1),
+                                     new Document(&amp;quot;$set&amp;quot;, new Document(&amp;quot;x&amp;quot;, 2))),
+                new DeleteOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 2)),
+                new ReplaceOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 3),
+                                      new Document(&amp;quot;_id&amp;quot;, 3).append(&amp;quot;x&amp;quot;, 4))));
+
+
+ // 2. Unordered bulk operation - no guarantee of order of operation
+collection.bulkWrite(
+  Arrays.asList(new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 4)),
+                new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 5)),
+                new InsertOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 6)),
+                new UpdateOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 1),
+                                     new Document(&amp;quot;$set&amp;quot;, new Document(&amp;quot;x&amp;quot;, 2))),
+                new DeleteOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 2)),
+                new ReplaceOneModel&amp;lt;&amp;gt;(new Document(&amp;quot;_id&amp;quot;, 3),
+                                      new Document(&amp;quot;_id&amp;quot;, 3).append(&amp;quot;x&amp;quot;, 4))),
+  new BulkWriteOptions().ordered(false));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;Use of the bulkWrite methods is not recommended when connected to pre-2.6 MongoDB servers, as this was the first server version to support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException. The methods will still work for pre-2.6 servers, but performance will suffer, as each write operation has to be executed one at a time.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

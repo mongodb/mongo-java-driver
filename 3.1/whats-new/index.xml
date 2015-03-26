@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Whats-News on MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.1/whats-new/</link>
+    <description>Recent content in Whats-News on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 19 Mar 2015 12:53:39 -0400</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.1/whats-new/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Upgrading to 3.1</title>
+      <link>/mongo-java-driver/3.1/whats-new/upgrading/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:39 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/whats-new/upgrading/</guid>
+      <description>
+
+&lt;h1 id=&#34;upgrading-from-3-0-x&#34;&gt;Upgrading from 3.0.x&lt;/h1&gt;
+
+&lt;p&gt;The 3.1 release is binary and source compatible with the 3.0 release, with the following exceptions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Other than BsonDocument, subclasses of BsonValue no longer implement Serializable&lt;/li&gt;
+&lt;li&gt;BsonDocumentWrapper and RawBsonDocument are now final&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&#34;upgrading-from-2-x&#34;&gt;Upgrading from 2.x&lt;/h1&gt;
+
+&lt;p&gt;Please see the Upgrading guide in the 3.0 driver reference documentation.&lt;/p&gt;
+
+&lt;h2 id=&#34;system-requirements&#34;&gt;System Requirements&lt;/h2&gt;
+
+&lt;p&gt;The minimum JVM is now Java 6: however, specific features require Java 7:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;SSL support requires Java 7 in order to perform host name verification, which is enabled by default.  See below and on
+&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver/reference/connecting/ssl/&#34;&gt;SSL&lt;/a&gt; for details on how to disable host name verification.&lt;/li&gt;
+&lt;li&gt;The asynchronous API requires Java 7, as by default it relies on
+&lt;a href=&#34;http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html&#34;&gt;&lt;code&gt;AsynchronousSocketChannel&lt;/code&gt;&lt;/a&gt; for
+its implementation.  See &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver-async/&#34;&gt;Async&lt;/a&gt; for details on configuring the driver to use &lt;a href=&#34;http://netty.io/&#34;&gt;Netty&lt;/a&gt; instead.&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New</title>
+      <link>/mongo-java-driver/3.1/whats-new/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:35 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/whats-new/</guid>
+      <description>
+
+&lt;h1 id=&#34;what-s-new-in-3-1&#34;&gt;What&amp;rsquo;s New in 3.1&lt;/h1&gt;
+
+&lt;p&gt;Key new features of the 3.1 driver include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Builder support for &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/updates/&#34;&gt;updates&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Builder support for &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/aggregation/&#34;&gt;aggregation stages and accumulators&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Builder support for &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/filters/#geospatial&#34;&gt;geospatial query filters&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Builder support for &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/indexes/&#34;&gt;index keys&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;A new &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver/reference/gridfs/&#34;&gt;GridFS API&lt;/a&gt; that is compatible with the CRUD API introduced in the 3.0
+driver release
+(not yet available in the async driver)&lt;/li&gt;
+&lt;li&gt;An &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver/reference/management/monitoring/#command-monitoring&#34;&gt;event-based API&lt;/a&gt; for monitoring all commands that the
+driver sends to a MongoDB server and all responses received (not yet available in the async driver)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;upgrading&#34;&gt;Upgrading&lt;/h2&gt;
+
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/whats-new/upgrading/&#34;&gt;upgrading guide&lt;/a&gt; on how to upgrade to 3.1&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

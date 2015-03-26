@@ -1,0 +1,999 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Builders on MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.1/builders/</link>
+    <description>Recent content in Builders on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 16 Jul 2015 14:27:51 -0400</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.1/builders/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Indexes</title>
+      <link>/mongo-java-driver/3.1/builders/indexes/</link>
+      <pubDate>Thu, 16 Jul 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/indexes/</guid>
+      <description>
+
+&lt;h2 id=&#34;indexes&#34;&gt;Indexes&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Indexes.html
+&#34;&gt;&lt;code&gt;Indexes&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB Index key types.&lt;br /&gt;
+Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be used with the &lt;code&gt;createIndex&lt;/code&gt;
+methods.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Indexes&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Indexes.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;ascending&#34;&gt;Ascending&lt;/h3&gt;
+
+&lt;p&gt;To specify an ascending index key, use one of the &lt;code&gt;ascending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending index key for the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in ascending order and the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in ascending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;descending&#34;&gt;Descending&lt;/h3&gt;
+
+&lt;p&gt;To specify a descending index key, use one of the &lt;code&gt;descending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a descending index key on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in descending order and the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in descending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;compound-indexes&#34;&gt;Compound indexes&lt;/h3&gt;
+
+&lt;p&gt;To specify a compound index, use the &lt;code&gt;compoundIndex&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in ascending order, followed by the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in ascending order, followed by the &lt;code&gt;orderDate&lt;/code&gt; field sorted in descending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;compoundIndex(ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), descending(&amp;quot;orderDate&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-index&#34;&gt;Text Index&lt;/h3&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/index-text
+&#34;&gt;text&lt;/a&gt; index key, use the &lt;code&gt;text&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a text index key for the &lt;code&gt;description&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;text(&amp;quot;description&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;hashed-index&#34;&gt;Hashed Index&lt;/h3&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/index-hashed
+&#34;&gt;hashed&lt;/a&gt; index key, use the &lt;code&gt;hashed&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a hashed index key for the &lt;code&gt;timestamp&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;hashed(&amp;quot;timestamp&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;geospatial-indexes&#34;&gt;Geospatial Indexes&lt;/h3&gt;
+
+&lt;p&gt;There are also helpers for creating the index keys for the various &lt;a href=&#34;http://docs.mongodb.org/manual/applications/geospatial-indexes
+&#34;&gt;geospatial indexes&lt;/a&gt;
+supported by mongodb.&lt;/p&gt;
+
+&lt;h4 id=&#34;2dsphere&#34;&gt;2dsphere&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/2dsphere/
+&#34;&gt;2dsphere&lt;/a&gt; index key, use one of the &lt;code&gt;geo2dsphere&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a 2dsphere index on the &lt;code&gt;location&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geo2dsphere(&amp;quot;location&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;2d&#34;&gt;2d&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/2d/
+&#34;&gt;2d&lt;/a&gt; index key, use the &lt;code&gt;geo2d&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;A 2d index is for data stored as points on a two-dimensional plane and is intended for legacy coordinate pairs used in MongoDB 2.2 and earlier.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This example specifies a 2d index on the &lt;code&gt;points&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geo2d(&amp;quot;points&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;geohaystack&#34;&gt;geoHaystack&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/geohaystack/
+&#34;&gt;geoHaystack&lt;/a&gt; index key, use the &lt;code&gt;geoHaystack&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering;
+geoHaystack indexes require the first field to be the location field. Also, geoHaystack indexes are only usable via commands and so always
+return all results at once.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This example specifies a geoHaystack index on the &lt;code&gt;position&lt;/code&gt; field and an ascending index on the &lt;code&gt;type&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geoHaystack(&amp;quot;position&amp;quot;, ascending(&amp;quot;type&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Aggregation</title>
+      <link>/mongo-java-driver/3.1/builders/aggregation/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/aggregation/</guid>
+      <description>
+
+&lt;h2 id=&#34;aggregation&#34;&gt;Aggregation&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Aggregates.html
+&#34;&gt;&lt;code&gt;Aggregates&lt;/code&gt;&lt;/a&gt; class provides static factory methods that build &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/
+&#34;&gt;aggregation
+pipeline operators&lt;/a&gt;.  Each method returns an instance of the
+&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to the &lt;code&gt;aggregate&lt;/code&gt; method of &lt;code&gt;MongoCollection&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Aggregates&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Aggregates.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;match&#34;&gt;Match&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+&#34;&gt;&lt;code&gt;$match&lt;/code&gt;&lt;/a&gt; pipeline stage passes all documents matching the
+specified filter to the next stage.  Though the filter can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to
+combine with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Filters.html
+&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;eq&lt;/code&gt; method of the &lt;code&gt;Filters&lt;/code&gt; class has been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that matches all documents where the &lt;code&gt;author&lt;/code&gt; field is equal to &lt;code&gt;&amp;quot;Dave&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;match(eq(&amp;quot;author&amp;quot;, &amp;quot;Dave&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;project&#34;&gt;Project&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/project/
+&#34;&gt;&lt;code&gt;$project&lt;/code&gt;&lt;/a&gt; pipeline stage passes the projected fields of all
+documents to the next stage.  Though the projection can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to combine
+with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Projections.html
+&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;include&lt;/code&gt;, &lt;code&gt;excludeId&lt;/code&gt;, and &lt;code&gt;fields&lt;/code&gt; methods of the &lt;code&gt;Projections&lt;/code&gt; class have been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that excludes the &lt;code&gt;_id&lt;/code&gt; field but includes the &lt;code&gt;title&lt;/code&gt; and &lt;code&gt;author&lt;/code&gt; fields:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;project(fields(include(&amp;quot;title&amp;quot;, &amp;quot;author&amp;quot;), excludeId()))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;projecting-computed-fields&#34;&gt;Projecting Computed Fields&lt;/h4&gt;
+
+&lt;p&gt;The &lt;code&gt;$project&lt;/code&gt; stage can project computed fields as well.&lt;/p&gt;
+
+&lt;p&gt;This example simply projects the &lt;code&gt;qty&lt;/code&gt; field into a new field called &lt;code&gt;quantity&lt;/code&gt;.  In other words, it renames the field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;project(computed(&amp;quot;quantity&amp;quot;, &amp;quot;$qty&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sort&#34;&gt;Sort&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/sort/
+&#34;&gt;&lt;code&gt;$sort&lt;/code&gt;&lt;/a&gt; pipeline stage passes all documents to the next stage,
+sorted by the specified sort criteria. Though the sort criteria can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to
+combine with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Sorts.html
+&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;descending&lt;/code&gt;, &lt;code&gt;ascending&lt;/code&gt;, and &lt;code&gt;orderBy&lt;/code&gt; methods of the &lt;code&gt;Sorts&lt;/code&gt; class have been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that sorts in descending order according to the value of the &lt;code&gt;age&lt;/code&gt; field and then in ascending order
+according to the value of the &lt;code&gt;posts&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;sort(orderBy(descending(&amp;quot;age&amp;quot;), ascending(&amp;quot;posts&amp;quot;)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;skip&#34;&gt;Skip&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/skip/
+&#34;&gt;&lt;code&gt;$skip&lt;/code&gt;&lt;/a&gt; pipeline stage skips over the specified number of
+documents that pass into the stage and passes the remaining documents to the next stage.&lt;/p&gt;
+
+&lt;p&gt;This example skips the first &lt;code&gt;5&lt;/code&gt; documents:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;skip(5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;limit&#34;&gt;Limit&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/limit/
+&#34;&gt;&lt;code&gt;$limit&lt;/code&gt;&lt;/a&gt; pipeline stage limits the number of documents passed
+to the next stage.&lt;/p&gt;
+
+&lt;p&gt;This example limits the number of documents to &lt;code&gt;10&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;limit(10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;group&#34;&gt;Group&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+&#34;&gt;&lt;code&gt;$group&lt;/code&gt;&lt;/a&gt; pipeline stage groups documents by some specified
+expression and outputs to the next stage a document for each distinct grouping.  A group consists of an &lt;code&gt;_id&lt;/code&gt; which specifies the
+expression on which to group, and zero or more
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
+&#34;&gt;accumulators&lt;/a&gt; which are evaluated for each
+grouping.  To simplify the expression of accumulators, the driver includes an
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Accumulators.html
+&#34;&gt;&lt;code&gt;Accumulators&lt;/code&gt;&lt;/a&gt; class with static factory methods for each of the supported
+accumulators. In the example below, it&amp;rsquo;s assumed that the &lt;code&gt;sum&lt;/code&gt; and &lt;code&gt;avg&lt;/code&gt; methods of the &lt;code&gt;Accumulators&lt;/code&gt; class have been statically
+imported.&lt;/p&gt;
+
+&lt;p&gt;This example groups documents by the value of the &lt;code&gt;customerId&lt;/code&gt; field, and for each group accumulates the sum and average of the values of
+the &lt;code&gt;quantity&lt;/code&gt; field into the &lt;code&gt;totalQuantity&lt;/code&gt; and &lt;code&gt;averageQuantity&lt;/code&gt; fields, respectively.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;group(&amp;quot;$customerId&amp;quot;, sum(&amp;quot;totalQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;), avg(&amp;quot;averageQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;unwind&#34;&gt;Unwind&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/
+&#34;&gt;&lt;code&gt;$unwind&lt;/code&gt;&lt;/a&gt; pipeline stage deconstructs an array field from the
+input documents to output a document for each element.&lt;/p&gt;
+
+&lt;p&gt;This example outputs, for each document, a document for each element in the &lt;code&gt;sizes&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;unwind(&amp;quot;$sizes&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;out&#34;&gt;Out&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/out/
+&#34;&gt;&lt;code&gt;$out&lt;/code&gt;&lt;/a&gt; pipeline stage outputs all documents to the specified
+collection.  It must be the last stage in any aggregate pipeline:&lt;/p&gt;
+
+&lt;p&gt;This example writes the pipeline to the &lt;code&gt;authors&lt;/code&gt; collection:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;out(&amp;quot;authors&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;creating-a-pipeline&#34;&gt;Creating a Pipeline&lt;/h3&gt;
+
+&lt;p&gt;The above pipeline operators are typically combined into a list and passed to the &lt;code&gt;aggregate&lt;/code&gt; method of a &lt;code&gt;MongoCollection&lt;/code&gt;.  For instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.aggregate(Arrays.asList(match(eq(&amp;quot;author&amp;quot;, &amp;quot;Dave&amp;quot;)),
+                                   group(&amp;quot;$customerId&amp;quot;, sum(&amp;quot;totalQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;),
+                                                        avg(&amp;quot;averageQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;))
+                                   out(&amp;quot;authors&amp;quot;)));
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Filters</title>
+      <link>/mongo-java-driver/3.1/builders/filters/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/filters/</guid>
+      <description>
+
+&lt;h2 id=&#34;filters&#34;&gt;Filters&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Filters.html
+&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB query
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects a query filter.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Filters&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Filters.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;comparison&#34;&gt;Comparison&lt;/h3&gt;
+
+&lt;p&gt;The comparison operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eq&lt;/code&gt;: Matches values that are equal to a specified value.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gt&lt;/code&gt;: Matches values that are greater than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gte&lt;/code&gt;: Matches values that are greater than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lt&lt;/code&gt;: Matches values that are less than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lte&lt;/code&gt;: Matches values that are less than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ne&lt;/code&gt;: Matches all values that are not equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;in&lt;/code&gt;: Matches any of the values specified in an array.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nin&lt;/code&gt;: Matches none of the values specified in an array.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field equals &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;eq(&amp;quot;qty&amp;quot;, 20)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{  
+   &amp;quot;qty&amp;quot; : 20
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field is either &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;in(&amp;quot;qty&amp;quot;, 5, 15)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;logical&#34;&gt;Logical&lt;/h3&gt;
+
+&lt;p&gt;The logical operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;and&lt;/code&gt;: Joins filters with a logical AND and selects all documents that match the conditions of both filters.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;or&lt;/code&gt;: Joins filters with a logical OR and selects all documents that match the conditions of either filters.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;not&lt;/code&gt;: Inverts the effect of a query expression and selects documents that do not match the filter.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nor&lt;/code&gt;: Joins filters with a logical NOR and selects all documents that fail to match both filters.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-1&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where ther value of the &lt;code&gt;qty&lt;/code&gt; field is greater than &lt;code&gt;20&lt;/code&gt; and the value of the
+&lt;code&gt;user&lt;/code&gt; field equals &lt;code&gt;&amp;quot;jdoe&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(gt(&amp;quot;qty&amp;quot;, 20), eq(&amp;quot;user&amp;quot;, &amp;quot;jdoe&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;and&lt;/code&gt; method generates a &lt;code&gt;$and&lt;/code&gt; operator only if necessary, as the query language implicity ands together all the elements in a
+filter. So the above example will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ 
+   &amp;quot;qty&amp;quot; : { &amp;quot;$gt&amp;quot; : 20 },
+   &amp;quot;user&amp;quot; : &amp;quot;jdoe&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the &lt;code&gt;price&lt;/code&gt; field value equals &lt;code&gt;0.99&lt;/code&gt; or &lt;code&gt;1.99&lt;/code&gt;; and the &lt;code&gt;sale&lt;/code&gt; field value
+is equal to &lt;code&gt;true&lt;/code&gt; or the &lt;code&gt;qty&lt;/code&gt; field value is less than &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(or(eq(&amp;quot;price&amp;quot;, 0.99), eq(&amp;quot;price&amp;quot;, 1.99)
+    or(eq(&amp;quot;sale&amp;quot;, true), lt(&amp;quot;qty&amp;quot;, 20)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This query cannot be constructed using an implicit and operation, because it uses the &lt;code&gt;$or&lt;/code&gt; operator more than once.  So it will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+ &amp;quot;$and&amp;quot; : 
+    [
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;price&amp;quot; : 0.99 }, { &amp;quot;price&amp;quot; : 1.99 } ] },
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;sale&amp;quot; : true }, { &amp;quot;qty&amp;quot; : { &amp;quot;$lt&amp;quot; : 20 } } ] }
+    ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;arrays&#34;&gt;Arrays&lt;/h3&gt;
+
+&lt;p&gt;The array operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;all&lt;/code&gt;: Matches arrays that contain all elements specified in the query&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;elemMatch&lt;/code&gt;: Selects documents if element in the array field matches all the specified $elemMatch conditions&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;size&lt;/code&gt;: Selects documents if the array field is a specified size&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-2&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents with a &lt;code&gt;tags&lt;/code&gt; array containing both &lt;code&gt;&amp;quot;ssl&amp;quot;&lt;/code&gt; and &lt;code&gt;&amp;quot;security&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;all(&amp;quot;tags&amp;quot;, Arrays.asList(&amp;quot;ssl&amp;quot;, &amp;quot;security&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;elements&#34;&gt;Elements&lt;/h3&gt;
+
+&lt;p&gt;The elements operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exists&lt;/code&gt;: Selects documents that have the specified field.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;type&lt;/code&gt;: Selects documents if a field is of the specified type.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-3&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents that have a &lt;code&gt;qty&lt;/code&gt; field and its value does not equal &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;15&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(exists(&amp;quot;qty&amp;quot;), nin(&amp;quot;qty&amp;quot;, 5, 15))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;evaluation&#34;&gt;Evaluation&lt;/h3&gt;
+
+&lt;p&gt;The evaluation operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;mod&lt;/code&gt;: Performs a modulo operation on the value of a field and selects documents with a specified result.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;: Selects documents where values match a specified regular expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;text&lt;/code&gt;: Selects documemts matching a full-text search expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;where&lt;/code&gt;: Matches documents that satisfy a JavaScript expression.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-4&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example assumes a collection that has a text index in the field &lt;code&gt;abstract&lt;/code&gt;.  It selects documents that have a &lt;code&gt;abstract&lt;/code&gt; field
+containing the term &lt;code&gt;coffee&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;text(&amp;quot;abstract&amp;quot;, &amp;quot;coffee&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;geospatial&#34;&gt;Geospatial&lt;/h3&gt;
+
+&lt;p&gt;The geospatial operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;geoWithin&lt;/code&gt;: Selects all documents containing a field whose value is a GeoJSON geometry that falls within within a bounding GeoJSON
+geometry.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinBox&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified box.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinPolygon&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified polygon.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinCenter&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified circle.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinCenterSphere&lt;/code&gt;: Selects geometries containing a field with geospatial data (GeoJSON or legacy coordinate pairs) that exist
+entirely within the specified circle, using spherical geometry.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoIntersects&lt;/code&gt;: Selects geometries that intersect with a GeoJSON geometry. The 2dsphere index supports $geoIntersects.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;near&lt;/code&gt;: Returns geospatial objects in proximity to a point. Requires a geospatial index. The 2dsphere and 2d indexes support $near.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nearSphere&lt;/code&gt;: Returns geospatial objects in proximity to a point on a sphere. Requires a geospatial index. The 2dsphere and 2d
+indexes support $nearSphere.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To make it easier to construct GeoJSON-based filters, the driver also include a full GeoJSON class hierarchy:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/Point.html
+&#34;&gt;&lt;code&gt;Point&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON Point.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiPoint.html
+&#34;&gt;&lt;code&gt;MultiPoint&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiPoint.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/LineString.html
+&#34;&gt;&lt;code&gt;LineString&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON LineString.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiLineString.html
+&#34;&gt;&lt;code&gt;MultiLineString&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiLineString.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/Polygon.html
+&#34;&gt;&lt;code&gt;Polygon&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON Polygon.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiPolygon.html
+&#34;&gt;&lt;code&gt;MultiPolygon&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiPolygon.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/GeometryCollection.html
+&#34;&gt;&lt;code&gt;GeometryCollection&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON
+GeometryCollection.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-5&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the &lt;code&gt;geo&lt;/code&gt; field contains a GeoJSON Geometry object that falls within the
+given polygon:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Polygon polygon = new Polygon(Arrays.asList(new Position(0, 0), 
+                                            new Position(4, 0), 
+                                            new Position(4, 4), 
+                                            new Position(0, 4),
+                                            new Position(0, 0)));
+geoWithin(&amp;quot;geo&amp;quot;, polygon))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Similarly, this example creates a filter that selects all documents where the &lt;code&gt;geo&lt;/code&gt; field contains a GeoJSON Geometry object that
+intersects the given Point:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geoIntersects(&amp;quot;geo&amp;quot;, new Point(new Position(4, 0)))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Projections</title>
+      <link>/mongo-java-driver/3.1/builders/projections/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/projections/</guid>
+      <description>
+
+&lt;h2 id=&#34;projections&#34;&gt;Projections&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Projections.html
+&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB
+projection opererators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn
+be passed to any method that expects a projection.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Projections&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import static com.mongodb.client.model.Projections.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;inclusion&#34;&gt;Inclusion&lt;/h3&gt;
+
+&lt;p&gt;By default, all fields of each document are projected.  To specify the inclusion of one or more fields (which implicitly excludes all
+other fields except &lt;code&gt;_id&lt;/code&gt;), use the &lt;code&gt;include&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; field and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion&#34;&gt;Exclusion&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of one or more fields (which implicitly includes all other fields), use the &lt;code&gt;exclude&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion-of-id&#34;&gt;Exclusion of _id&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of the &lt;code&gt;_id&lt;/code&gt; field, use the &lt;code&gt;excludeId&lt;/code&gt; method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;excludeId()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which is just shorthand for:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;_id&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-a-supplied-filter&#34;&gt;Array Element Match with a Supplied Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches a supplied query filter (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/elemMatch
+&#34;&gt;elemMatch&lt;/a&gt; operator), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes a
+field name and a filter.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array where the &lt;code&gt;quantity&lt;/code&gt; field is greater that &lt;code&gt;3&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;, Filters.gt(&amp;quot;quantity&amp;quot;, 3))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-an-implicit-filter&#34;&gt;Array Element Match with an Implicit Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches the filter supplied as part of the query (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/positional/#projection
+&#34;&gt;positional $ operator&lt;/a&gt;), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes
+just a field name.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array that matches the query filter:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;slice&#34;&gt;Slice&lt;/h3&gt;
+
+&lt;p&gt;To project &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/slice
+&#34;&gt;a slice of an array&lt;/a&gt;, use one of the &lt;code&gt;slice&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first &lt;code&gt;7&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 7)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example skips the first &lt;code&gt;2&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array and projects the next &lt;code&gt;5&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 2, 5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection of &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#return-the-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;,
+use the &lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example projects the text score as the value of the &lt;code&gt;score&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;score&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-projections&#34;&gt;Combining Projections&lt;/h3&gt;
+
+&lt;p&gt;To combine multiple projections, use the &lt;code&gt;fields&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and excludes the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;fields(include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), excludeId()) 
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Sort Criteria  </title>
+      <link>/mongo-java-driver/3.1/builders/sorts/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/sorts/</guid>
+      <description>
+
+&lt;h2 id=&#34;sorts&#34;&gt;Sorts&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Sorts.html
+&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB sort criteria
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects sort criteria.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Sorts&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Sorts.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;ascending&#34;&gt;Ascending&lt;/h3&gt;
+
+&lt;p&gt;To specify an ascending sort, use one of the &lt;code&gt;ascending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;descending&#34;&gt;Descending&lt;/h3&gt;
+
+&lt;p&gt;To specify a descending sort, use one of the &lt;code&gt;descending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by a descending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a sort by &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#sort-by-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;, use the
+&lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a sort on the score of a &lt;code&gt;$text&lt;/code&gt; query that will be projected into the &lt;code&gt;scoreValue&lt;/code&gt; field in a projection on the
+same query:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;scoreValue&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-sort-criteria&#34;&gt;Combining sort criteria&lt;/h3&gt;
+
+&lt;p&gt;To specify the combination of multiple sort criteria, use the &lt;code&gt;orderBy&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field, followed by a
+descending sort on the &lt;code&gt;orderDate&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;orderBy(ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), descending(&amp;quot;orderDate&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Updates</title>
+      <link>/mongo-java-driver/3.1/builders/updates/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/updates/</guid>
+      <description>
+
+&lt;h2 id=&#34;updates&#34;&gt;Updates&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Updates.html
+&#34;&gt;&lt;code&gt;Updates&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB update
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects an update.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Updates&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Updates.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;field-updates&#34;&gt;Field Updates&lt;/h3&gt;
+
+&lt;p&gt;This section describes update operators that apply to the value of an entire field.&lt;/p&gt;
+
+&lt;h4 id=&#34;set&#34;&gt;Set&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/set/
+&#34;&gt;&lt;code&gt;$set&lt;/code&gt;&lt;/a&gt; update operator sets the value of a field to to the specified value.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;quantity&lt;/code&gt; field to &lt;code&gt;11&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;set(&amp;quot;quantity&amp;quot;, 11)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;unset&#34;&gt;Unset&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/unset/
+&#34;&gt;&lt;code&gt;$unset&lt;/code&gt;&lt;/a&gt; update operator deletes the field with the given name.&lt;/p&gt;
+
+&lt;p&gt;This example deletes the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;unset(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;set-on-insert&#34;&gt;Set On Insert&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/setOnInsert/
+&#34;&gt;&lt;code&gt;$setOnInsert&lt;/code&gt;&lt;/a&gt; update operator sets the value of a field to the given
+value, but only if the update is an
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/modify-documents/#specify-upsert-true-for-the-update-specific-fields-operation
+&#34;&gt;upsert&lt;/a&gt; that results in an
+insert of a document.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;defaultQuantity&lt;/code&gt; field to &lt;code&gt;10&lt;/code&gt; if an upsert resulted in the insert of a document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;setOnInsert(&amp;quot;defaultQuantity&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;increment&#34;&gt;Increment&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/inc/
+&#34;&gt;&lt;code&gt;$inc&lt;/code&gt;&lt;/a&gt; update operator increments the value of a numeric field by a specified
+value.&lt;/p&gt;
+
+&lt;p&gt;This example increments the value of the &lt;code&gt;quantity&lt;/code&gt; field by &lt;code&gt;5&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;inc(&amp;quot;quantity&amp;quot;, 5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;multiply&#34;&gt;Multiply&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/mul/
+&#34;&gt;&lt;code&gt;$mul&lt;/code&gt;&lt;/a&gt; update operator multiplies the value of a numeric field by a specified value.&lt;/p&gt;
+
+&lt;p&gt;This example multiplies the value of the &lt;code&gt;price&lt;/code&gt; field by &lt;code&gt;1.2&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;mul(&amp;quot;price&amp;quot;, 1.2)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;rename&#34;&gt;Rename&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/rename/
+&#34;&gt;&lt;code&gt;$rename&lt;/code&gt;&lt;/a&gt; update operator renames a field.&lt;/p&gt;
+
+&lt;p&gt;This example renames the &lt;code&gt;qty&lt;/code&gt; field to &lt;code&gt;quantity&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;rename(&amp;quot;qty&amp;quot;, &amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;min&#34;&gt;Min&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/min/
+&#34;&gt;&lt;code&gt;$min&lt;/code&gt;&lt;/a&gt; update operator updates the value of the field to a specified value &lt;em&gt;if&lt;/em&gt; the
+specified value is less than the current value of the field .&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lowScore&lt;/code&gt; field to the minimum of its current value and 150:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;min(&amp;quot;lowScore&amp;quot;, 150)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;max&#34;&gt;Max&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/max/
+&#34;&gt;&lt;code&gt;$max&lt;/code&gt;&lt;/a&gt; update operator updates the value of the field to a specified value &lt;em&gt;if&lt;/em&gt;
+the specified value is greater than the current value of the field .&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;highScore&lt;/code&gt; field to the maximum of its current value and 900:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;max(&amp;quot;highScore&amp;quot;, 900)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;current-date&#34;&gt;Current Date&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/currentDate/
+&#34;&gt;&lt;code&gt;$currentDate&lt;/code&gt;&lt;/a&gt; update operator sets the value of the field with the
+specified name to the current date, either as a BSON &lt;a href=&#34;http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-date
+&#34;&gt;date&lt;/a&gt; or as a BSON
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-timestamp
+&#34;&gt;timestamp&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lastModified&lt;/code&gt; field to the current date as a BSON date type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;currentDate(&amp;quot;lastModified&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lastModified&lt;/code&gt; field to the current date as a BSON timestamp type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;currentTimestamp(&amp;quot;lastModified&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;bit&#34;&gt;Bit&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/bit/
+&#34;&gt;&lt;code&gt;$bit&lt;/code&gt;&lt;/a&gt; update operator performs a bitwise update of the integral value of a field.&lt;/p&gt;
+
+&lt;p&gt;This example performs a bitwise AND between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseAnd(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example performs a bitwise OR between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseOr(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example performs a bitwise XOR between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseXor(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-updates&#34;&gt;Array Updates&lt;/h3&gt;
+
+&lt;p&gt;This section describes update operators that apply to the contents of the array value of a field.&lt;/p&gt;
+
+&lt;h4 id=&#34;add-to-set&#34;&gt;Add to Set&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/addToSet/
+&#34;&gt;&lt;code&gt;$addToSet&lt;/code&gt;&lt;/a&gt; update operator adds a value to an array unless the value is
+already present, in which case $addToSet does nothing to that array.&lt;/p&gt;
+
+&lt;p&gt;This example adds the value &lt;code&gt;&amp;quot;a&amp;quot;&lt;/code&gt; to the array value of the `letters&amp;rsquo; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;addToSet(&amp;quot;letters&amp;quot;, &amp;quot;a&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example adds each of the values &lt;code&gt;&amp;quot;a&amp;quot;&lt;/code&gt;, &lt;code&gt;&amp;quot;b&amp;quot;&lt;/code&gt;, and &lt;code&gt;&amp;quot;c&amp;quot;&lt;/code&gt; to the array value of the `letters&amp;rsquo; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;addEachToSet(&amp;quot;letters&amp;quot;, Arrays.asList(&amp;quot;a&amp;quot;, &amp;quot;b&amp;quot;, &amp;quot;c&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pop&#34;&gt;Pop&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pop/
+&#34;&gt;&lt;code&gt;$pop&lt;/code&gt;&lt;/a&gt; update operator removes the first or last element of an array.&lt;/p&gt;
+
+&lt;p&gt;This example pops the first element off of the array value of the &lt;code&gt;scores&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;popFirst(&amp;quot;scores&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pops the last element off of the array value of the &lt;code&gt;scores&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;popLast(&amp;quot;scores&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pull-all&#34;&gt;Pull All&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pullAll/
+&#34;&gt;&lt;code&gt;$pullAll&lt;/code&gt;&lt;/a&gt; update operator removes all instances of the specified values from
+an existing array.&lt;/p&gt;
+
+&lt;p&gt;This example removes the scores &lt;code&gt;0&lt;/code&gt; and &lt;code&gt;5&lt;/code&gt; from the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pullAll(&amp;quot;scores&amp;quot;, Arrays.asList(0, 5))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pull&#34;&gt;Pull&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pull/
+&#34;&gt;&lt;code&gt;$pull&lt;/code&gt;&lt;/a&gt; update operator removes from an existing array all instances of a value
+or values that match a specified query.&lt;/p&gt;
+
+&lt;p&gt;This example removes the value &lt;code&gt;0&lt;/code&gt; from the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pull(&amp;quot;scores&amp;quot;, 0)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example removes all elements from the &lt;code&gt;votes&lt;/code&gt; array that are greater than or equal to &lt;code&gt;6&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pullByFilter(Filters.gte(&amp;quot;votes&amp;quot;, 6))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;push&#34;&gt;Push&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/push/
+&#34;&gt;&lt;code&gt;$push&lt;/code&gt;&lt;/a&gt; update operator appends a specified value to an array.&lt;/p&gt;
+
+&lt;p&gt;This examples pushes the value &lt;code&gt;89&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;push(&amp;quot;scores&amp;quot;, 89)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This examples pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the start of the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92), new PushOptions().position(0))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array, sorts the array in descending order, and removes all
+but the first 5 elements of the array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92), new PushOptions().sort(-1).slice(5))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the documents &lt;code&gt;{ wk: 5, score: 8 }&lt;/code&gt;, &lt;code&gt;{ wk: 6, score: 7 }&lt;/code&gt;, and &lt;code&gt;{ wk: 7, score: 6 }&lt;/code&gt; to the &lt;code&gt;quizzes&lt;/code&gt; array,
+sorts the array in descending order by &lt;code&gt;score&lt;/code&gt;, and removes all but the last 3 elements of the array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;quizzes&amp;quot;,
+                 Arrays.asList(new Document(&amp;quot;week&amp;quot;, 5).append(&amp;quot;score&amp;quot;, 8),
+                               new Document(&amp;quot;week&amp;quot;, 6).append(&amp;quot;score&amp;quot;, 7),
+                               new Document(&amp;quot;week&amp;quot;, 7).append(&amp;quot;score&amp;quot;, 6)),
+                 new PushOptions().sortDocument(Sorts.descending(&amp;quot;score&amp;quot;)).slice(-3))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-multiple-update-operators&#34;&gt;Combining Multiple Update Operators&lt;/h3&gt;
+
+&lt;p&gt;Often, an application will need to atomically update multiple fields of a single document by combine two or more of the update operators
+described above.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;quantity&lt;/code&gt; field to 11, the value of the &lt;code&gt;total&lt;/code&gt; field to &lt;code&gt;30.40&lt;/code&gt;, and pushes each of the values
+&lt;code&gt;4.99&lt;/code&gt;, &lt;code&gt;5.99&lt;/code&gt;, and &lt;code&gt;10.99&lt;/code&gt; to the array value of the &lt;code&gt;prices&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;combine(set(&amp;quot;quantity&amp;quot;, 11), 
+        set(&amp;quot;total&amp;quot;, 30.40),
+        pushEach(&amp;quot;prices&amp;quot;, Arrays.asList(4.99, 5.99, 10.99)))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Builders</title>
+      <link>/mongo-java-driver/3.1/builders/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/</guid>
+      <description>
+
+&lt;h2 id=&#34;builders&#34;&gt;Builders&lt;/h2&gt;
+
+&lt;p&gt;The driver provides several classes that make it easier to use the CRUD API.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/filters/&#34;&gt;Filters&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building query filters&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/projections/&#34;&gt;Projections&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building projections&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/sorts/&#34;&gt;Sorts&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building sort criteria&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/aggregation/&#34;&gt;Aggregation&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building aggregation pipelines&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/updates/&#34;&gt;Updates&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building updates&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/builders/indexes/&#34;&gt;Indexes&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for creating index keys&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

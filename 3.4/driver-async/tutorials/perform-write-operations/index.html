@@ -1,0 +1,3586 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+
+    <link rel="shortcut icon" href="/mongo-java-driver/3.4/img/favicon.png">
+
+    <title>Write Operations</title>
+
+    <link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/java.css" type="text/css" />
+
+
+  </head>
+
+  <body>
+  
+  <section id="container" class="">
+      
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.4/../">
+        <img src="/mongo-java-driver/3.4/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.4">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+      
+
+      
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.4/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.4">3.4</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu">
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+    
+    
+    
+      
+      
+      
+        
+      
+    
+    
+  
+  
+
+
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+        
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+
+          
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/whats-new/">
+        <i class='fa fa-level-up'></i>
+        What&#39;s New
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/driver/" class="">
+      <i class='fa fa-arrows-h'></i>
+      <span>MongoDB Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/installation/">
+        <i class='fa'></i>
+        Installation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/quick-start/">
+        <i class='fa'></i>
+        Quick Start
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/" class="">
+      <i class='fa fa-thumb-tack'></i>
+      <span>Tutorials</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/connect-to-mongodb/" class="">
+      <i class='fa'></i>
+      <span>Connect to MongoDB</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/ssl/">
+        <i class='fa'></i>
+        TLS/SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/authentication/">
+        <i class='fa'></i>
+        Authentication
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/jndi/">
+        <i class='fa'></i>
+        JNDI
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/databases-collections/">
+        <i class='fa'></i>
+        Databases and Collections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/indexes/">
+        <i class='fa'></i>
+        Create Indexes
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/perform-read-operations/">
+        <i class='fa'></i>
+        Read Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/perform-write-operations/" class="">
+      <i class='fa'></i>
+      <span>Write Operations</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/bulk-writes/">
+        <i class='fa'></i>
+        Bulk Writes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/text-search/">
+        <i class='fa'></i>
+        Text Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/geospatial-search/">
+        <i class='fa'></i>
+        Geospatial Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/commands/">
+        <i class='fa'></i>
+        Run Commands
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l1  current">
+  <a href="/mongo-java-driver/3.4/driver-async/" class="">
+      <i class='fa fa-refresh'></i>
+      <span>MongoDB Async Driver</span>
+      <span class="menu-arrow fa fa-angle-down"></span>
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-async/getting-started/installation/">
+        <i class='fa'></i>
+        Installation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-async/getting-started/quick-start/">
+        <i class='fa'></i>
+        Quick Start
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l2  current">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/" class="">
+      <i class='fa fa-thumb-tack'></i>
+      <span>Tutorials</span>
+      
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/connect-to-mongodb/" class="">
+      <i class='fa'></i>
+      <span>Connect to MongoDB</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/authentication/">
+        <i class='fa'></i>
+        Authentication
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/databases-collections/">
+        <i class='fa'></i>
+        Databases and Collections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/indexes/">
+        <i class='fa'></i>
+        Create Indexes
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/perform-read-operations/">
+        <i class='fa'></i>
+        Read Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l3  current">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/perform-write-operations/" class="">
+      <i class='fa'></i>
+      <span>Write Operations</span>
+      
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/bulk-writes/">
+        <i class='fa'></i>
+        Bulk Writes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/text-search/">
+        <i class='fa'></i>
+        Text Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/geospatial-search/">
+        <i class='fa'></i>
+        Geospatial Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/commands/">
+        <i class='fa'></i>
+        Run Commands
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver-async/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/observables/">
+        <i class='fa'></i>
+        Observables
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/bson/" class="">
+      <i class='fa fa-th'></i>
+      <span>BSON</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/documents/">
+        <i class='fa'></i>
+        Documents
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/readers-and-writers/">
+        <i class='fa'></i>
+        Readers and Writers
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/codecs/">
+        <i class='fa'></i>
+        Codec and CodecRegistry
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/extended-json/">
+        <i class='fa'></i>
+        Extended JSON
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/builders/" class="">
+      <i class='fa fa-wrench'></i>
+      <span>Builders</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/filters/">
+        <i class='fa'></i>
+        Filters
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/projections/">
+        <i class='fa'></i>
+        Projections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/sorts/">
+        <i class='fa'></i>
+        Sort Criteria  
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/aggregation/">
+        <i class='fa'></i>
+        Aggregates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/updates/">
+        <i class='fa'></i>
+        Updates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/indexes/">
+        <i class='fa'></i>
+        Indexes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/upgrading/">
+        <i class='fa fa-level-up'></i>
+        Upgrade Considerations
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/javadoc/">
+        <i class='fa fa-file-text-o'></i>
+        API Documentation
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master">
+        <i class='fa fa-github'></i>
+        Source Code
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/issues-help/">
+        <i class='fa fa-life-ring'></i>
+        Issues &amp; Help
+    </a>
+  </li>
+
+
+          
+        </ul>
+        
+    </div>
+  </div>
+  
+</aside>
+
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+
+
+      
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+
+
+   
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-async/tutorials/perform-write-operations.md" target="_blank" title="Edit driver-async/tutorials/perform-write-operations.md on GitHub"><i class="fa fa-pencil-square-o"></i></a>
+
+
+
+
+
+
+
+
+
+
+<div class="bc">
+<ul>
+  
+  
+  
+  
+  <li><a href="/mongo-java-driver/3.4/driver-async/">MongoDB Async Driver</a> <i class="fa fa-angle-right"></i></li>
+  <li><a href="/mongo-java-driver/3.4/driver-async/tutorials/">Tutorials</a> <i class="fa fa-angle-right"></i></li>
+  <li>Write Operations</li>
+</ul>
+</div>
+
+
+
+
+<h2 id="write-operations-insert-update-replace-delete">Write Operations (Insert, Update, Replace, Delete)</h2>
+
+<p>Perform write operations to insert new documents into a collection, update existing document or documents in a collection, replace an existing document in a collection, or delete existing document or documents from a collection.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+<li><p>The example below requires a <code>restaurants</code> collection in the <code>test</code> database. To create and populate the collection, follow the directions in <a href="https://github.com/mongodb/docs-assets/tree/drivers">github</a>.</p></li>
+
+<li><p>Include the following import statements:</p></li>
+</ul>
+
+<pre><code class="language-java">import com.mongodb.ConnectionString;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
+import com.mongodb.async.client.*;
+import com.mongodb.async.SingleResultCallback;
+
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import com.mongodb.connection.ClusterSettings;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.currentDate;
+import static com.mongodb.client.model.Updates.set;
+import static java.util.Arrays.asList;
+</code></pre>
+
+<h2 id="considerations">Considerations</h2>
+
+<p><div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>Always check for errors in any <code>SingleResultCallback&lt;T&gt;</code> implementation
+and handle them appropriately.</p>
+
+<p>For sake of brevity, this tutorial omits the error check logic in the code examples.</p>
+
+</div>
+</p>
+
+<h2 id="connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</h2>
+
+<p>Connect to a MongoDB deployment and declare and define a <code>MongoDatabase</code> and a <code>MongoCollection</code> instances.</p>
+
+<p>For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port <code>27017</code> and define <code>database</code> to refer to the <code>test</code> database and <code>collection</code> to refer to the <code>restaurants</code> collection:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create();
+MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
+MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restaurants&quot;);
+</code></pre>
+
+<p>For additional information on connecting to MongoDB, see <a href="/mongo-java-driver/3.4/driver-async/tutorials/connect-to-mongodb/">Connect to MongoDB</a>.</p>
+
+<h2 id="insert-new-document">Insert New Document</h2>
+
+<p>To insert the document into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#insertOne-TDocument-com.mongodb.async.SingleResultCallback-
+"><code>insertOne()</code></a> method.</p>
+
+<pre><code class="language-java">Document document = new Document(&quot;name&quot;, &quot;Café Con Leche&quot;)
+               .append(&quot;contact&quot;, new Document(&quot;phone&quot;, &quot;228-555-0149&quot;)
+                                       .append(&quot;email&quot;, &quot;cafeconleche@example.com&quot;)
+                                       .append(&quot;location&quot;,Arrays.asList(-73.92502, 40.8279556)))
+               .append(&quot;stars&quot;, 3)
+               .append(&quot;categories&quot;, Arrays.asList(&quot;Bakery&quot;, &quot;Coffee&quot;, &quot;Pastries&quot;));
+
+
+collection.insertOne(document, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Inserted!&quot;);
+    }
+});
+</code></pre>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>If no top-level <code>_id</code> field is specified in the document, the driver automatically adds the <code>_id</code> field to the inserted document.</p>
+
+</div>
+</p>
+
+<h3 id="insert-multiple-documents">Insert Multiple Documents</h3>
+
+<p>To add multiple documents, you can use the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#insertMany-java.util.List-com.mongodb.async.SingleResultCallback-
+"><code>insertMany()</code></a> method which takes a list of documents to insert.</p>
+
+<p>The following example inserts two documents to the collection:</p>
+
+<pre><code class="language-java">Document doc1 = new Document(&quot;name&quot;, &quot;Amarcord Pizzeria&quot;)
+               .append(&quot;contact&quot;, new Document(&quot;phone&quot;, &quot;264-555-0193&quot;)
+                                       .append(&quot;email&quot;, &quot;amarcord.pizzeria@example.net&quot;)
+                                       .append(&quot;location&quot;,Arrays.asList(-73.88502, 40.749556)))
+               .append(&quot;stars&quot;, 2)
+               .append(&quot;categories&quot;, Arrays.asList(&quot;Pizzeria&quot;, &quot;Italian&quot;, &quot;Pasta&quot;));
+
+
+Document doc2 = new Document(&quot;name&quot;, &quot;Blue Coffee Bar&quot;)
+               .append(&quot;contact&quot;, new Document(&quot;phone&quot;, &quot;604-555-0102&quot;)
+                                       .append(&quot;email&quot;, &quot;bluecoffeebar@example.com&quot;)
+                                       .append(&quot;location&quot;,Arrays.asList(-73.97902, 40.8479556)))
+               .append(&quot;stars&quot;, 5)
+               .append(&quot;categories&quot;, Arrays.asList(&quot;Coffee&quot;, &quot;Pastries&quot;));
+
+List&lt;Document&gt; documents = new ArrayList&lt;Document&gt;();
+documents.add(doc1);
+documents.add(doc2);
+
+collection.insertMany(documents, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Documents inserted!&quot;);
+    }
+});
+</code></pre>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>If no top-level <code>_id</code> field is specified in the document, the driver automatically adds the <code>_id</code> field to the inserted document.</p>
+
+</div>
+</p>
+
+<h2 id="update-existing-documents">Update Existing Documents</h2>
+
+<p>To update existing documents in a collection, you can use the collection&rsquo;s
+<a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>updateOne</code></a> and <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>updateMany</code></a> methods.</p>
+
+<h3 id="filters">Filters</h3>
+
+<p>You can pass in a filter document to the methods to specify which documents to update. The filter document specification is the same as for <a href="/mongo-java-driver/3.4/driver-async/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper.</p>
+
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/3.4/javadoc?org/bson/Document.html
+"><code>Document</code></a> object.</p>
+
+<h3 id="update-operators">Update Operators</h3>
+
+<p>To change a field in a document, MongoDB provides <a href="http://docs.mongodb.org/manual/reference/operator/update
+">update operators</a>.  To specify the modification to perform using the update operators, use an updates document.</p>
+
+<p>To facilitate the creation of updates documents, the Java driver provides the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Updates.html
+"><code>Updates</code></a> class.</p>
+
+<p><div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>The <code>_id</code> field is immutable; i.e. you cannot change the value of the <code>_id</code> field.</p>
+
+</div>
+</p>
+
+<h3 id="update-a-single-document">Update a Single Document</h3>
+
+<p>The <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>updateOne</code></a>  method updates at most a single document, even if the filter condition matches multiple documents in the collection.</p>
+
+<p>The following operation on the <code>restaurants</code> collection updates a document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
+
+<pre><code class="language-java">collection.updateOne(
+                eq(&quot;_id&quot;, new ObjectId(&quot;57506d62f57802807471dd41&quot;)),
+                combine(set(&quot;stars&quot;, 1),
+                        set(&quot;contact.phone&quot;, &quot;228-555-9999&quot;),
+                        currentDate(&quot;lastModified&quot;)),
+                new SingleResultCallback&lt;UpdateResult&gt;() {
+                        @Override
+                        public void onResult(final UpdateResult result, final Throwable t) {
+                            System.out.println(result.getModifiedCount());
+                        }
+                });
+</code></pre>
+
+<p>Specifically, the operation uses:</p>
+
+<ul>
+<li><p><a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Updates.html#set-java.lang.String-TItem-
+"><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>1</code> and the <code>contact.phone</code> field to <code>&quot;228-555-9999&quot;</code>, and</p></li>
+
+<li><p><a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Updates.html#currentDate-java.lang.String-
+"><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
+</ul>
+
+<p><div class="admonition tip">
+<h5 class="admonition-title">tip</h5>
+<p>In some cases where you may need to update many fields in a document, it may be more efficient to replace the document.  See <a href="#replace-a-document">Replace a Document</a>.</p>
+
+</div>
+</p>
+
+<h3 id="update-multiple-documents">Update Multiple Documents</h3>
+
+<p>The   <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>updateMany</code></a> method updates all documents that match the filter condition.</p>
+
+<p>The following operation on the <code>restaurants</code> collection updates all documents whose <code>stars</code> field equals <code>2</code>.</p>
+
+<pre><code class="language-java">collection.updateMany(
+              eq(&quot;stars&quot;, 2),
+              combine(set(&quot;stars&quot;, 0), currentDate(&quot;lastModified&quot;)),
+              new SingleResultCallback&lt;UpdateResult&gt;() {
+                      @Override
+                      public void onResult(final UpdateResult result, final Throwable t) {
+                          System.out.println(result.getModifiedCount());
+                      }
+              });
+</code></pre>
+
+<p>Specifically, the operation uses:</p>
+
+<ul>
+<li><p><a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Updates.html#set-java.lang.String-TItem-
+"><code>Updates.set</code></a> to set the value of the <code>stars</code> field to <code>0</code> , and</p></li>
+
+<li><p><a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Updates.html#currentDate-java.lang.String-
+"><code>Updates.currentDate</code></a> to modify the <code>lastModified</code> field to the current date. If the <code>lastModified</code> field does not exist, the operator adds the field to the document.</p></li>
+</ul>
+
+<h3 id="update-operations">Update operations</h3>
+
+<p>With the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.client.model.UpdateOptions-com.mongodb.async.SingleResultCallback-
+"><code>updateOne()</code></a>  and  <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.client.model.UpdateOptions-com.mongodb.async.SingleResultCallback-
+"><code>updateMany</code></a> methods, you can include an <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/UpdateOptions.html
+"><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
+"><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
+"><code>bypassDocumentationValidation</code></a> option.</p>
+
+<pre><code class="language-java">collection.updateOne(
+                eq(&quot;_id&quot;, 1),
+                combine(set(&quot;name&quot;, &quot;Fresh Breads and Tulips&quot;),     
+                        currentDate(&quot;lastModified&quot;)),
+                new UpdateOptions().upsert(true).bypassDocumentValidation(true),
+                new SingleResultCallback&lt;UpdateResult&gt;(){
+                        @Override
+                        public void onResult(final UpdateResult result, final Throwable t) {
+                            System.out.println(result.getModifiedCount());
+                        }
+                });
+</code></pre>
+
+<h2 id="replace-an-existing-document">Replace an Existing Document</h2>
+
+<p>To replace an existing document in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-com.mongodb.async.SingleResultCallback-
+"><code>replaceOne</code></a> method.</p>
+
+<p><div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>The <code>_id</code> field is immutable; i.e. you cannot replace the <code>_id</code> field value.</p>
+
+</div>
+</p>
+
+<h3 id="filters-1">Filters</h3>
+
+<p>You can pass in a filter document to the method to specify which document to replace. The filter document specification is the same as for <a href="/mongo-java-driver/3.4/driver/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper.</p>
+
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/3.4/javadoc?org/bson/Document.html
+"><code>Document</code></a> object.</p>
+
+<p>The <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-com.mongodb.async.SingleResultCallback-
+"><code>replaceOne</code></a> method replaces at most a single document, even if the filter condition matches multiple documents in the collection.</p>
+
+<h3 id="replace-a-document">Replace a Document</h3>
+
+<p>To replace a document, pass a new document to the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-com.mongodb.async.SingleResultCallback-
+"><code>replaceOne</code></a>  method.</p>
+
+<p><div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>The replacement document can have different fields from the original document. In the replacement document, you can omit the <code>_id</code> field since the <code>_id</code> field is immutable; however, if you do include the <code>_id</code> field, you cannot specify a different value for the <code>_id</code> field.</p>
+
+</div>
+</p>
+
+<p>The following operation on the <code>restaurants</code> collection replaces the document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
+
+<pre><code class="language-java">collection.replaceOne(
+                eq(&quot;_id&quot;, new ObjectId(&quot;57506d62f57802807471dd41&quot;)),
+                new Document(&quot;name&quot;, &quot;Green Salads Buffet&quot;)
+                        .append(&quot;contact&quot;, &quot;TBD&quot;)
+                        .append(&quot;categories&quot;, Arrays.asList(&quot;Salads&quot;, &quot;Health Foods&quot;, &quot;Buffet&quot;)),
+                new SingleResultCallback&lt;UpdateResult&gt;() {
+                        @Override
+                        public void onResult(final UpdateResult result, final Throwable t) {
+                            System.out.println(result.getModifiedCount());
+                        }
+                });
+</code></pre>
+
+<p>See also <a href="#update-a-single-document">Update a Document</a>.</p>
+
+<h3 id="update-options">Update Options</h3>
+
+<p>With the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-com.mongodb.client.model.UpdateOptions-com.mongodb.async.SingleResultCallback-
+"><code>replaceOne</code></a> method, you can include an <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/UpdateOptions.html
+"><code>UpdateOptions</code></a> document to specify the <a href="http://docs.mongodb.org/manual/reference/method/db.collection.update/#upsert-option
+"><code>upsert</code></a> option or the <a href="http://docs.mongodb.org/manual/core/document-validation/#bypass-document-validation
+"><code>bypassDocumentationValidation</code></a> option.</p>
+
+<pre><code class="language-java">collection.replaceOne(
+                eq(&quot;name&quot;, &quot;Orange Patisserie and Gelateria&quot;),
+                new Document(&quot;stars&quot;, 5)
+                        .append(&quot;contact&quot;, &quot;TBD&quot;)
+                        .append(&quot;categories&quot;, Arrays.asList(&quot;Cafe&quot;, &quot;Pastries&quot;, &quot;Ice Cream&quot;)),
+                new UpdateOptions().upsert(true).bypassDocumentValidation(true),
+                new SingleResultCallback&lt;UpdateResult&gt;() {
+                    @Override
+                    public void onResult(final UpdateResult result, final Throwable t) {
+                        System.out.println(result.getModifiedCount());
+                    }
+                });
+</code></pre>
+
+<h2 id="delete-documents">Delete Documents</h2>
+
+<p>To delete documents in a collection, you can use the
+<a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>deleteOne</code></a> and <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>deleteMany</code></a> methods.</p>
+
+<h3 id="filters-2">Filters</h3>
+
+<p>You can pass in a filter document to the methods to specify which documents to delete. The filter document specification is the same as for <a href="/mongo-java-driver/3.4/driver/tutorials/perform-read-operations/">read operations</a>. To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper.</p>
+
+<p>To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/3.4/javadoc?org/bson/Document.html
+"><code>Document</code></a> object.</p>
+
+<h3 id="delete-a-single-document">Delete a Single Document</h3>
+
+<p>The <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>deleteOne</code></a> method deletes at most a single document, even if the filter condition matches multiple documents in the collection.</p>
+
+<p>The following operation on the <code>restaurants</code> collection deletes a document whose <code>_id</code> field equals <code>ObjectId(&quot;57506d62f57802807471dd41&quot;)</code>.</p>
+
+<pre><code class="language-java">collection.deleteOne(eq(&quot;_id&quot;, new ObjectId(&quot;57506d62f57802807471dd41&quot;)),
+      new SingleResultCallback&lt;DeleteResult&gt;(){
+          @Override
+          public void onResult(final DeleteResult result, final Throwable t) {
+              System.out.println(result.getDeletedCount());
+          }
+      });
+</code></pre>
+
+<h3 id="delete-multiple-documents">Delete Multiple Documents</h3>
+
+<p>The <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-
+"><code>deleteMany</code></a> method deletes all documents that match the filter condition.</p>
+
+<p>The following operation on the <code>restaurants</code> collection deletes all documents whose <code>stars</code> field equals <code>4</code>.</p>
+
+<pre><code class="language-java">collection.deleteMany(eq(&quot;stars&quot;, 4),new SingleResultCallback&lt;DeleteResult&gt;(){
+    @Override
+    public void onResult(final DeleteResult result, final Throwable t) {
+        System.out.println(result.getDeletedCount());
+    }
+});
+</code></pre>
+
+<p>See also <a href="/mongo-java-driver/3.4/driver-async/tutorials/databases-collections/">Drop a Collection</a>.</p>
+
+<h2 id="write-concern">Write Concern</h2>
+
+<p><a href="http://docs.mongodb.org/manual/reference/write-concern
+">Write concern</a> describes the level of acknowledgement requested from MongoDB for write operations.</p>
+
+<p>Applications can configure <a href="http://docs.mongodb.org/manual/reference/write-concern
+">write concern</a> at three levels:</p>
+
+<ul>
+<li><p>In a <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoClient.html
+"><code>MongoClient()</code></a></p>
+
+<ul>
+<li>Via <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoClientSettings.html
+"><code>MongoClientSettings</code></a>, as in the following example:</li>
+</ul>
+
+<pre><code class="language-java">  ClusterSettings clusterSettings = ClusterSettings.builder()
+                            .hosts(asList(
+                            new ServerAddress(&quot;host1&quot;, 27017),
+                            new ServerAddress(&quot;host2&quot;, 27017))).build();
+  MongoClientSettings settings = MongoClientSettings.builder()
+                                    .clusterSettings(clusterSettings)
+                                    .writeConcern(WriteConcern.MAJORITY).build();
+  MongoClient mongoClient = MongoClients.create(settings);
+</code></pre>
+
+<ul>
+<li>Via a <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/ConnectionString.html
+"><code>ConnectionString</code></a> object.</li>
+</ul>
+
+<pre><code class="language-java">  MongoClient mongoClient = MongoClients.create(
+        new ConnectionString(&quot;mongodb://host1:27017,host2:27017/?w=majority&quot;));
+</code></pre>
+
+<ul>
+<li>Via string that specifies the connection URI:</li>
+</ul>
+
+<pre><code class="language-java">  MongoClient mongoClient = MongoClients.create(
+        &quot;mongodb://host1:27017,host2:27017/?w=majority&quot;);
+</code></pre></li>
+
+<li><p>In a <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoDatabase.html
+"><code>MongoDatabase</code></a> via its
+<a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoDatabase.html#withWriteConcern-com.mongodb.WriteConcern-
+"><code>withWriteConcern</code></a> method, as in the following example:</p>
+
+<pre><code class="language-java"> MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;)
+                                     .withWriteConcern(WriteConcern.MAJORITY);
+</code></pre></li>
+
+<li><p>In a <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html
+"><code>MongoCollection</code></a> via its <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/async/client/MongoCollection.html#withWriteConcern-com.mongodb.WriteConcern-
+"><code>withWriteConcern</code></a> method, as in the following example:</p>
+
+<pre><code class="language-java"> MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restaurants&quot;)
+                                        .withWriteConcern(WriteConcern.MAJORITY);
+</code></pre></li>
+</ul>
+
+<p><code>MongoDatabase</code> and <code>MongoCollection</code> instances are immutable. Calling <code>.withWriteConcern()</code> on an existing <code>MongoDatabase</code> or <code>MongoCollection</code> instance returns a new instance and does not affect the instance on which the method is called.</p>
+
+<p>For example, in the following, the <code>collWithWriteConcern</code> instance has the write concern of majority whereas the write concern of the <code>collection</code> is unaffected.</p>
+
+<pre><code class="language-java">MongoCollection&lt;Document&gt; collWithWriteConcern = collection
+                                                  .withWriteConcern(WriteConcern.MAJORITY);
+</code></pre>
+
+<p>You can build <code>MongoClientOptions</code>, <code>MongoDatabase</code>, or <code>MongoCollection</code> to include a combination of write concern, <a href="http://docs.mongodb.org/manual/reference/read-concern
+">read concern</a>, and <a href="http://docs.mongodb.org/manual/reference/read-preference
+">read preference</a>.</p>
+
+<p>For example, the following sets all three at the collection level:</p>
+
+<pre><code class="language-java">collection = database.getCollection(&quot;restaurants&quot;)
+                .withReadPreference(ReadPreference.primary())
+                .withReadConcern(ReadConcern.MAJORITY)
+                .withWriteConcern(WriteConcern.MAJORITY);
+</code></pre>
+
+
+
+
+
+
+<div id="btnv">
+  
+  <div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.4/driver-async/tutorials/perform-read-operations/">
+      <i class="fa fa-long-arrow-left"> </i> Read Operations
+  </a>
+  </div>
+  
+  
+  <div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.4/driver-async/tutorials/aggregation/">
+    Aggregation <i class="fa fa-long-arrow-right"> </i>
+  </a>
+  
+</div>
+</div>
+
+
+</div>
+<div class="right-column">
+<div class="wrapper">
+  
+  <div class="toc">
+    <span class="toc-header">On this page</span>
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#write-operations-insert-update-replace-delete">Write Operations (Insert, Update, Replace, Delete)</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#considerations">Considerations</a></li>
+<li><a href="#connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</a></li>
+<li><a href="#insert-new-document">Insert New Document</a>
+<ul>
+<li><a href="#insert-multiple-documents">Insert Multiple Documents</a></li>
+</ul></li>
+<li><a href="#update-existing-documents">Update Existing Documents</a>
+<ul>
+<li><a href="#filters">Filters</a></li>
+<li><a href="#update-operators">Update Operators</a></li>
+<li><a href="#update-a-single-document">Update a Single Document</a></li>
+<li><a href="#update-multiple-documents">Update Multiple Documents</a></li>
+<li><a href="#update-operations">Update operations</a></li>
+</ul></li>
+<li><a href="#replace-an-existing-document">Replace an Existing Document</a>
+<ul>
+<li><a href="#filters-1">Filters</a></li>
+<li><a href="#replace-a-document">Replace a Document</a></li>
+<li><a href="#update-options">Update Options</a></li>
+</ul></li>
+<li><a href="#delete-documents">Delete Documents</a>
+<ul>
+<li><a href="#filters-2">Filters</a></li>
+<li><a href="#delete-a-single-document">Delete a Single Document</a></li>
+<li><a href="#delete-multiple-documents">Delete Multiple Documents</a></li>
+</ul></li>
+<li><a href="#write-concern">Write Concern</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+  
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.4",
+   VERSION:     "3.4",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/java.js"></script>
+
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+
+</body>
+</html>
+
