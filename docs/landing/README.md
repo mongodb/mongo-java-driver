@@ -1,10 +1,6 @@
-# MongoDB Java Driver Documentation
+# MongoDB Java Driver Front page
 
-## Quick Start
-
- 1. Install hugo
- 2. Create `./data/mongodb.toml`
- 3. Create content
+The static front page site for the Java documentation portal.
 
 ## Requirements
 Hugo version 0.13 [download here](https://github.com/spf13/hugo/releases/tag/v0.13)
@@ -29,24 +25,4 @@ For more hugo server options run: `hugo --help`
 
 ### Data
 
-You *should* create `./data/mongodb.toml` and copy the `themes/mongodb/data/mongodb.toml` file and set the values as needed.
-
-## Creating new content
-
-Handy [markdown cheat sheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Here-Cheatsheet) will help with markdown issues and in markdown you can fall back to html if needed.
-
-To create new content run: `hugo new <contentFileName>.md`  and the new file will created in the `./content` directory and marked as a `draft`.
-
-Its a good idea to group similar content together by placing it in a directory which can also be done by the `new` command eg: `hugo new tutorial/newTutorial.md`
-
-### Menus
-Menu configuration generally goes in the content
-[front matter](http://gohugo.io/content/front-matter/).  See the hugo [menu](http://gohugo.io/extras/menus/) docs, menus can also be configured in the top level `config.toml`.
-
-The weight parameter relates to where it will appear in the menu starting with the lowest at the top and the highest at the bottom (heavy things sink).
-
-## MongoDB Theme
-**Do not delete / change anything in themes**.<br>
-Currently, `./themes/mongodb` provides all templates and configuration.  You can override *anything* by providing a top level version in the top level directory (`data, layouts, static`), so feel free to copy or add your own layouts.  
-
-You shouldn't edit the mongodb theme directly this will eventually be removed and live in its own repo for ease of sharing.
+All dynamic / changing data lives in  `./data/mongodb.toml`

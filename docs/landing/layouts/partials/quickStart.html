@@ -1,0 +1,83 @@
+<h2 id="quickStart">Quick Start</h2>
+
+<p>
+  The recommended way to get started using one of the drivers in your project is with a dependency management system.
+  Select the driver, version and dependency management system below and the snippet can be copied and pasted into your build.
+</p>
+<p>
+  Alternatively, head over to our documentation to learn more about getting started with Java and MongoDB.
+</p>
+
+{{ range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current  }}{{ $.Scratch.Set "currentReleasedVersion" . }}{{end }}
+{{$currentReleasedVersion := $.Scratch.Get "currentReleasedVersion"}}
+
+<div id="downloadWidget">
+  <form class="form-inline">
+    <a id="downloadLink" href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/{{$currentReleasedVersion.version}}/"
+          class="btn btn-large btn-dark btn-download" target="_blank">Download</a>
+      {{ $.Scratch.Set "pos" 0 }}
+      {{ with $.Site.Data.releases.drivers }}
+        <select class="driverPicker">
+          {{ range . }}
+          <option value="{{$.Scratch.Get "pos"}}">{{.name}}</option>
+          {{ $.Scratch.Add "pos" 1 }}
+          {{ end }}
+        </select>
+      {{ end }}
+
+    {{ $.Scratch.Set "pos" 0 }}
+    {{ with $.Site.Data.releases.versions }}
+      <select class="releasePicker">
+        {{ range . }}
+        <option value="{{$.Scratch.Get "pos"}}">{{.version}}</option>
+        {{ $.Scratch.Add "pos" 1 }}
+        {{ end }}
+      </select>
+    {{ end }}
+    <input type="checkbox" checked class="distroPicker" data-toggle="toggle" data-on="Maven" data-off="Gradle" data-offstyle="success">
+  </form>
+  <div class="clipboard" title="copy">
+  <button class="btn btn-dark"><i class="fa fa-clipboard fa-2"></i></button>
+  </div>
+  {{ $currentNode := . }}
+  {{ with $currentNode.Site.Data.releases.drivers }}
+    {{ $.Scratch.Set "driverPos" 0 }}
+    {{ range . }}
+      {{ $currentDriver := . }}
+      {{ with $.Site.Data.releases.versions }}
+        {{ $.Scratch.Set "versionPos" 0 }}
+        {{ range . }}
+          {{ $currentVersion := . }}
+          {{ $driverPos := $.Scratch.Get "driverPos" }}
+          {{ $versionPos := $.Scratch.Get "versionPos" }}
+<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if or (ne $currentVersion $currentReleasedVersion) (ne $driverPos 0)}} hidden{{end}}">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;{{$currentDriver.name}}&lt;/artifactId&gt;
+        &lt;version&gt;{{$currentVersion.version}}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-{{$versionPos}}-{{$driverPos}}" class="download hidden">
+<pre><code>
+  dependencies {
+      compile 'org.mongodb:{{$currentDriver.name}}:{{$currentVersion.version}}'
+  }
+
+</code></pre>
+</div>
+            {{ $.Scratch.Add "versionPos" 1 }}
+          {{ end }}
+          {{ end }}
+          {{ $driverPos := $.Scratch.Get "driverPos" }}
+          <div id="driver-{{$driverPos}}" class="download description{{if ne $driverPos 0}} hidden{{end}}">
+            {{$currentDriver.description}}
+          </div>
+          {{ $.Scratch.Add "driverPos" 1 }}
+      {{ end }}
+      {{ end }}
+</div>
