@@ -1,0 +1,823 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MongoDB Java Driver</title>
+    <link>/mongo-java-driver/2.14/</link>
+    <description>Recent content on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 18 Mar 2015 16:56:14 +0000</lastBuildDate>
+    <atom:link href="/mongo-java-driver/2.14/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Issues &amp; Help</title>
+      <link>/mongo-java-driver/2.14/issues-help/</link>
+      <pubDate>Wed, 18 Mar 2015 16:56:14 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/issues-help/</guid>
+      <description>
+
+&lt;h1 id=&#34;issues-help:ce90a820d60b3f485edfd34eecd462d1&#34;&gt;Issues &amp;amp; Help&lt;/h1&gt;
+
+&lt;p&gt;We are lucky to have a vibrant MongoDB Java community with lots of varying
+experience of using the Java driver.  We often find the quickest way to get support for
+general questions is through the &lt;a href=&#34;http://groups.google.com/group/mongodb-user&#34;&gt;mongodb-user google group&lt;/a&gt;
+or through &lt;a href=&#34;http://stackoverflow.com/questions/tagged/mongodb+java&#34;&gt;stackoverflow&lt;/a&gt;.  Please also
+refer to our own &lt;a href=&#34;http://www.mongodb.org/about/support&#34;&gt;support channels&lt;/a&gt; documentation.&lt;/p&gt;
+
+&lt;h2 id=&#34;bugs-feature-requests:ce90a820d60b3f485edfd34eecd462d1&#34;&gt;Bugs / Feature Requests&lt;/h2&gt;
+
+&lt;p&gt;If you think you’ve found a bug or want to see a new feature in the Java driver,
+please open a case in our issue management tool, JIRA:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://jira.mongodb.org&#34;&gt;Create an account and login&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Navigate to &lt;a href=&#34;https://jira.mongodb.org/browse/JAVA&#34;&gt;the JAVA project&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Click &lt;strong&gt;Create Issue&lt;/strong&gt; - Please provide as much information as possible about the issue type and how to reproduce it.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Bug reports in JIRA for the Java driver and the Core Server (i.e. SERVER) project are &lt;strong&gt;public&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you’ve identified a security vulnerability in a driver or any other
+MongoDB project, please report it according to the &lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report&#34;&gt;instructions here&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;pull-requests:ce90a820d60b3f485edfd34eecd462d1&#34;&gt;Pull Requests&lt;/h2&gt;
+
+&lt;p&gt;We are happy to accept contributions to help improve the driver.
+We will guide user contributions to ensure they meet the standards of the codebase.
+Please ensure that any pull requests include documentation, tests and also pass
+a the gradle checks.&lt;/p&gt;
+
+&lt;p&gt;To get started check out the source and work on a branch:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ git clone https://github.com/mongodb/mongo-java-driver.git
+$ cd mongo-java-driver
+$ git checkout -b myNewFeature
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally, ensure that the code passes gradle checks.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;$ ./gradlew check
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Installation Guide</title>
+      <link>/mongo-java-driver/2.14/getting-started/installation-guide/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/getting-started/installation-guide/</guid>
+      <description>
+
+&lt;h1 id=&#34;installation:9d4f5debee078ff2736b8039cc26277c&#34;&gt;Installation&lt;/h1&gt;
+
+&lt;p&gt;The recommended way to get started using one of the drivers in your project is with a dependency management system.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;pull-right&#34;&gt;
+  &lt;input type=&#34;checkbox&#34; checked=&#34;&#34; class=&#34;distroPicker&#34; data-toggle=&#34;toggle&#34; data-on=&#34;Maven&#34; data-off=&#34;Gradle&#34; data-offstyle=&#34;success&#34;&gt;
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;mongodb-java-driver:9d4f5debee078ff2736b8039cc26277c&#34;&gt;MongoDB Java Driver&lt;/h2&gt;
+
+&lt;p&gt;This jar that contains everything you need including the BSON library.&lt;/p&gt;
+
+&lt;p&gt;
+&lt;section class=&#34;maven&#34;&gt;
+&lt;pre&gt;&lt;code class=&#34;ini&#34;&gt;
+&amp;lt;dependencies&amp;gt;
+    &amp;lt;dependency&amp;gt;
+        &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt;
+        &amp;lt;artifactId&amp;gt;mongo-java-driver&amp;lt;/artifactId&amp;gt;
+        &amp;lt;version&amp;gt;2.14.2&amp;lt;/version&amp;gt;
+    &amp;lt;/dependency&amp;gt;
+&amp;lt;/dependencies&amp;gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;gradle hidden&#34;&gt;
+&lt;pre&gt;&lt;code&gt;
+  dependencies {
+      compile &#39;org.mongodb:mongo-java-driver:2.14.2&#39;
+  }
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;downloadInfo&#34;&gt;
+&lt;p class=&#34;small&#34;&gt;You can also download the jars
+  &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongo-java-driver/2.14.2&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
+  from sonatype.&lt;/a&gt;
+&lt;/p&gt;
+&lt;/section&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;bson:9d4f5debee078ff2736b8039cc26277c&#34;&gt;BSON&lt;/h2&gt;
+
+&lt;p&gt;This library comprehensively supports &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt;,
+the data storage and network transfer format that MongoDB uses for &amp;ldquo;documents&amp;rdquo;.
+BSON is short for Binary &lt;a href=&#34;http://json.org/&#34;&gt;JSON&lt;/a&gt;, is a binary-encoded serialization of JSON-like documents.&lt;/p&gt;
+
+&lt;p&gt;
+&lt;section class=&#34;maven&#34;&gt;
+&lt;pre&gt;&lt;code class=&#34;ini&#34;&gt;
+&amp;lt;dependencies&amp;gt;
+    &amp;lt;dependency&amp;gt;
+        &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt;
+        &amp;lt;artifactId&amp;gt;bson&amp;lt;/artifactId&amp;gt;
+        &amp;lt;version&amp;gt;2.14.2&amp;lt;/version&amp;gt;
+    &amp;lt;/dependency&amp;gt;
+&amp;lt;/dependencies&amp;gt;
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;gradle hidden&#34;&gt;
+&lt;pre&gt;&lt;code&gt;
+  dependencies {
+      compile &#39;org.mongodb:bson:2.14.2&#39;
+  }
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/section&gt;
+&lt;section class=&#34;downloadInfo&#34;&gt;
+&lt;p class=&#34;small&#34;&gt;You can also download the jars
+  &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/2.14.2&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
+  from sonatype.&lt;/a&gt;
+&lt;/p&gt;
+&lt;/section&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Getting Started</title>
+      <link>/mongo-java-driver/2.14/getting-started/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/getting-started/</guid>
+      <description>
+
+&lt;h2 id=&#34;getting-started:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Getting Started&lt;/h2&gt;
+
+&lt;p&gt;To help you get started quickly on the new driver, follow:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/installation-guide/&#34;&gt;Installation&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/quick-tour/&#34;&gt;Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/quick-tour-admin/&#34;&gt;Admin Quick Tour&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Quick Tour</title>
+      <link>/mongo-java-driver/2.14/getting-started/quick-tour/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/getting-started/quick-tour/</guid>
+      <description>
+
+&lt;h1 id=&#34;mongodb-driver-quick-tour:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;MongoDB Driver Quick Tour&lt;/h1&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTour.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/2.x/src/examples/example/QuickTour.java
+&#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/installation-guide/&#34;&gt;installation guide&lt;/a&gt;
+for instructions on how to install the MongoDB Driver.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;making-a-connection:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Making a Connection&lt;/h2&gt;
+
+&lt;p&gt;To make a connection to a MongoDB, you need to have at the minimum, the
+name of a database to connect to. The database doesn&amp;rsquo;t have to exist -if
+it doesn&amp;rsquo;t, MongoDB will create it for you.&lt;/p&gt;
+
+&lt;p&gt;Additionally, you can specify the server address and port when
+connecting. The following example shows four ways to connect to the
+database &lt;code&gt;mydb&lt;/code&gt; on the local machine :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
+import com.mongodb.Cursor;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
+import com.mongodb.ParallelScanOptions;
+import com.mongodb.ServerAddress;
+
+import java.util.List;
+import java.util.Set;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+// To directly connect to a single MongoDB server (note that this will not auto-discover the primary even
+// if it&#39;s a member of a replica set:
+MongoClient mongoClient = new MongoClient();
+// or
+MongoClient mongoClient = new MongoClient( &amp;quot;localhost&amp;quot; );
+// or
+MongoClient mongoClient = new MongoClient( &amp;quot;localhost&amp;quot; , 27017 );
+// or, to connect to a replica set, with auto-discovery of the primary, supply a seed list of members
+MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress(&amp;quot;localhost&amp;quot;, 27017),
+                                      new ServerAddress(&amp;quot;localhost&amp;quot;, 27018),
+                                      new ServerAddress(&amp;quot;localhost&amp;quot;, 27019)));
+
+DB db = mongoClient.getDB( &amp;quot;mydb&amp;quot; );
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point, the &lt;code&gt;db&lt;/code&gt; object will be a connection to a MongoDB server
+for the specified database. With it, you can do further operations.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;MongoClient&lt;/code&gt; class is designed to be thread safe and shared among
+threads. Typically you create only 1 instance for a given database
+cluster and use it across your application.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;When creating many &lt;code&gt;MongoClient&lt;/code&gt; instances:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;All resource usage limits (max connections, etc) apply per
+&lt;code&gt;MongoClient&lt;/code&gt; instance&lt;/li&gt;
+&lt;li&gt;To dispose of an instance, make sure you call &lt;code&gt;MongoClient.close()&lt;/code&gt;
+to clean up resources&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;authentication-optional:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Authentication (Optional)&lt;/h2&gt;
+
+&lt;p&gt;MongoDB can be run in a secure mode where access to databases is
+controlled via authentication. When run in this mode, any client
+application must provide a list of credentials which will be used to
+authenticate against. In the Java driver, you simply provide the
+credentials when creating a &lt;code&gt;MongoClient&lt;/code&gt; instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createCredential(userName, database, password);
+MongoClient mongoClient = new MongoClient(new ServerAddress(), Arrays.asList(credential));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;MongoDB supports various different authentication mechanisms see the
+&lt;a href=&#34;http://docs.mongodb.org/manual/administration/security-access-control&#34;&gt;access control tutorials&lt;/a&gt;
+for more information.&lt;/p&gt;
+
+&lt;h2 id=&#34;getting-a-collection:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Getting a Collection&lt;/h2&gt;
+
+&lt;p&gt;To get a collection to use, just specify the name of the collection to
+the &lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/DB.html#getCollection%28java.lang.String%29&#34;&gt;getCollection(String
+collectionName)&lt;/a&gt;
+method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;DBCollection coll = db.getCollection(&amp;quot;testCollection&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once you have this collection object, you can now do things like insert
+data, query for data, etc&lt;/p&gt;
+
+&lt;h2 id=&#34;setting-write-concern:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Setting Write Concern&lt;/h2&gt;
+
+&lt;p&gt;As of version 2.10.0, the default write concern is
+&lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/WriteConcern.html#ACKNOWLEDGED&#34;&gt;WriteConcern.ACKNOWLEDGED&lt;/a&gt;,
+but it can be easily changed:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;mongoClient.setWriteConcern(WriteConcern.JOURNALED);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are many options for write concern. Additionally, the default
+write concern can be overridden on the database, collection, and
+individual update operations. Please consult the &lt;a href=&#34;http://api.mongodb.org/java/2.14/index.html&#34;&gt;API
+Documentation&lt;/a&gt; for
+details.&lt;/p&gt;
+
+&lt;h2 id=&#34;inserting-a-document:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Inserting a Document&lt;/h2&gt;
+
+&lt;p&gt;Once you have the collection object, you can insert documents into the
+collection. For example, lets make a little document that in JSON would
+be represented as&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+   &amp;quot;name&amp;quot; : &amp;quot;MongoDB&amp;quot;,
+   &amp;quot;type&amp;quot; : &amp;quot;database&amp;quot;,
+   &amp;quot;count&amp;quot; : 1,
+   &amp;quot;info&amp;quot; : {
+               x : 203,
+               y : 102
+             }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice that the above has an &amp;ldquo;inner&amp;rdquo; document embedded within it. To do
+this, we can use the
+&lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/BasicDBObject.html&#34;&gt;BasicDBObject&lt;/a&gt;
+class to create the document (including the inner document), and then
+just simply insert it into the collection using the &lt;code&gt;insert()&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BasicDBObject doc = new BasicDBObject(&amp;quot;name&amp;quot;, &amp;quot;MongoDB&amp;quot;)
+        .append(&amp;quot;type&amp;quot;, &amp;quot;database&amp;quot;)
+        .append(&amp;quot;count&amp;quot;, 1)
+        .append(&amp;quot;info&amp;quot;, new BasicDBObject(&amp;quot;x&amp;quot;, 203).append(&amp;quot;y&amp;quot;, 102));
+coll.insert(doc);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;finding-the-first-document-in-a-collection-using-findone:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Finding the First Document in a Collection Using &lt;code&gt;findOne()&lt;/code&gt;&lt;/h2&gt;
+
+&lt;p&gt;To show that the document we inserted in the previous step is there, we
+can do a simple
+&lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/DBCollection.html#findOne%28java.lang.Object%29&#34;&gt;findOne()&lt;/a&gt;
+operation to get the first document in the collection. This method
+returns a single document (rather than the &lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/DBCursor.html&#34;&gt;DBCursor&lt;/a&gt;
+that the &lt;a href=&#34;http://api.mongodb.org/java/2.14/com/mongodb/DBCollection.html#find(&#34;&gt;find()&lt;/a&gt;&amp;rsquo;)
+operation returns), and it&amp;rsquo;s useful for things where there only is one
+document, or you are only interested in the first. You don&amp;rsquo;t have to
+deal with the cursor.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;DBObject myDoc = coll.findOne();
+System.out.println(myDoc);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and you should see&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;_id&amp;quot; : &amp;quot;49902cde5162504500b45c2c&amp;quot; ,
+  &amp;quot;name&amp;quot; : &amp;quot;MongoDB&amp;quot; ,
+  &amp;quot;type&amp;quot; : &amp;quot;database&amp;quot; ,
+  &amp;quot;count&amp;quot; : 1 ,
+  &amp;quot;info&amp;quot; : { &amp;quot;x&amp;quot; : 203 , &amp;quot;y&amp;quot; : 102}}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;_id&lt;/code&gt; element has been added automatically by MongoDB to your
+document and your value will differ from that shown. MongoDB reserves field
+names that start with &amp;ldquo;_&amp;rdquo; and &amp;ldquo;$&amp;rdquo; for internal use.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;adding-multiple-documents:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Adding Multiple Documents&lt;/h2&gt;
+
+&lt;p&gt;In order to do more interesting things with queries, let&amp;rsquo;s add multiple
+simple documents to the collection. These documents will just be&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+   &amp;quot;i&amp;quot; : value
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and we can do this fairly efficiently in a loop&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (int i=0; i &amp;lt; 100; i++) {
+    coll.insert(new BasicDBObject(&amp;quot;i&amp;quot;, i));
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notice that we can insert documents of different &amp;ldquo;shapes&amp;rdquo; into the same
+collection. This aspect is what we mean when we say that MongoDB is
+&amp;ldquo;schema-free&amp;rdquo;&lt;/p&gt;
+
+&lt;h2 id=&#34;counting-documents-in-a-collection:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Counting Documents in A Collection&lt;/h2&gt;
+
+&lt;p&gt;Now that we&amp;rsquo;ve inserted 101 documents (the 100 we did in the loop, plus
+the first one), we can check to see if we have them all using the
+&lt;code&gt;getCount()&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;System.out.println(coll.getCount());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and it should print &lt;code&gt;101&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;using-a-cursor-to-get-all-the-documents:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Using a Cursor to Get All the Documents&lt;/h2&gt;
+
+&lt;p&gt;In order to get all the documents in the collection, we will use the
+&lt;code&gt;find()&lt;/code&gt; method. The &lt;code&gt;find()&lt;/code&gt; method returns a &lt;code&gt;DBCursor&lt;/code&gt; object which
+allows us to iterate over the set of documents that matched our query.
+So to query all of the documents and print them out :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;DBCursor cursor = coll.find();
+try {
+   while(cursor.hasNext()) {
+       System.out.println(cursor.next());
+   }
+} finally {
+   cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and that should print all 101 documents in the collection.&lt;/p&gt;
+
+&lt;h2 id=&#34;getting-a-single-document-with-a-query:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Getting A Single Document with A Query&lt;/h2&gt;
+
+&lt;p&gt;We can create a query to pass to the find() method to get a subset of
+the documents in our collection. For example, if we wanted to find the
+document for which the value of the &amp;ldquo;i&amp;rdquo; field is 71, we would do the
+following ;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BasicDBObject query = new BasicDBObject(&amp;quot;i&amp;quot;, 71);
+
+cursor = coll.find(query);
+
+try {
+   while(cursor.hasNext()) {
+       System.out.println(cursor.next());
+   }
+} finally {
+   cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and it should just print just one document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;_id&amp;quot; : &amp;quot;49903677516250c1008d624e&amp;quot; , &amp;quot;i&amp;quot; : 71 }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You may commonly see examples and documentation in MongoDB which use &lt;code&gt;$&lt;/code&gt; Operators, such as this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;db.things.find({j: {$ne: 3}, k: {$gt: 10} });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;These are represented as regular &lt;code&gt;String&lt;/code&gt; keys in the Java driver, using
+embedded &lt;code&gt;DBObjects&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;query = new BasicDBObject(&amp;quot;j&amp;quot;, new BasicDBObject(&amp;quot;$ne&amp;quot;, 3))
+        .append(&amp;quot;k&amp;quot;, new BasicDBObject(&amp;quot;$gt&amp;quot;, 10));
+
+cursor = coll.find(query);
+
+try {
+    while(cursor.hasNext()) {
+        System.out.println(cursor.next());
+    }
+} finally {
+    cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-a-set-of-documents-with-a-query:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Getting A Set of Documents With a Query&lt;/h2&gt;
+
+&lt;p&gt;We can use the query to get a set of documents from our collection. For
+example, if we wanted to get all documents where &lt;code&gt;&amp;quot;i&amp;quot; &amp;gt; 50&lt;/code&gt;, we could
+write:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// find all where i &amp;gt; 50
+query = new BasicDBObject(&amp;quot;i&amp;quot;, new BasicDBObject(&amp;quot;$gt&amp;quot;, 50));
+
+cursor = coll.find(query);
+try {
+    while (cursor.hasNext()) {
+        System.out.println(cursor.next());
+    }
+} finally {
+    cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which should print the documents where &lt;code&gt;i &amp;gt; 50&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;We could also get a range, say &lt;code&gt;20 &amp;lt; i &amp;lt;= 30&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;query = new BasicDBObject(&amp;quot;i&amp;quot;, new BasicDBObject(&amp;quot;$gt&amp;quot;, 20).append(&amp;quot;$lte&amp;quot;, 30));
+cursor = coll.find(query);
+
+try {
+    while (cursor.hasNext()) {
+        System.out.println(cursor.next());
+    }
+} finally {
+    cursor.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;maxtime:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;MaxTime&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 2.6 introduced the ability to timeout individual queries:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;coll.find().maxTime(1, SECONDS).count();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the example above the maxTime is set to one second and the query will
+be aborted after the full second is up.&lt;/p&gt;
+
+&lt;h2 id=&#34;bulk-operations:b8bcd3c4cba9ac16433f82561ee44461&#34;&gt;Bulk operations&lt;/h2&gt;
+
+&lt;p&gt;Under the covers MongoDB is moving away from the combination of a write
+operation followed by get last error (GLE) and towards a write commands
+API. These new commands allow for the execution of bulk
+insert/update/remove operations. There are two types of bulk operations:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Ordered bulk operations.&lt;/p&gt;
+
+&lt;p&gt;Executes all the operation in order and error out on the first write error.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Unordered bulk operations.&lt;/p&gt;
+
+&lt;p&gt;Executes all the operations and reports any the errors.&lt;/p&gt;
+
+&lt;p&gt;Unordered bulk operations do not guarantee order of execution.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at two simple examples using ordered and unordered
+operations:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// 1. Ordered bulk operation
+BulkWriteOperation builder = coll.initializeOrderedBulkOperation();
+builder.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 1));
+builder.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 2));
+builder.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 3));
+
+builder.find(new BasicDBObject(&amp;quot;_id&amp;quot;, 1)).updateOne(new BasicDBObject(&amp;quot;$set&amp;quot;, new BasicDBObject(&amp;quot;x&amp;quot;, 2)));
+builder.find(new BasicDBObject(&amp;quot;_id&amp;quot;, 2)).removeOne();
+builder.find(new BasicDBObject(&amp;quot;_id&amp;quot;, 3)).replaceOne(new BasicDBObject(&amp;quot;_id&amp;quot;, 3).append(&amp;quot;x&amp;quot;, 4));
+
+BulkWriteResult result = builder.execute();
+
+// 2. Unordered bulk operation - no guarantee of order of operation
+builder = coll.initializeUnorderedBulkOperation();
+builder.find(new BasicDBObject(&amp;quot;_id&amp;quot;, 1)).removeOne();
+builder.find(new BasicDBObject(&amp;quot;_id&amp;quot;, 2)).removeOne();
+
+result = builder.execute();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;Use of the bulkWrite methods is not recommended when connected to pre-2.6 MongoDB servers, as this was the first server version to support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException. The methods will still work for pre-2.6 servers, but performance will suffer, as each write operation has to be executed one at a time.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>index</title>
+      <link>/mongo-java-driver/2.14/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/</guid>
+      <description>
+
+&lt;h2 id=&#34;mongodb-java-driver-documentation:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;MongoDB Java Driver Documentation&lt;/h2&gt;
+
+&lt;p&gt;Welcome to the MongoDB Java driver documentation hub for the 2.14 driver release.&lt;/p&gt;
+
+&lt;h3 id=&#34;getting-started:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;Getting Started&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/&#34;&gt;Getting Started&lt;/a&gt; guide contains installation instructions
+and a simple tutorial to get up  and running quickly.&lt;/p&gt;
+
+&lt;h3 id=&#34;api-documentation:d680e8a854a7cbad6d490c445cba2eba&#34;&gt;API Documentation&lt;/h3&gt;
+
+&lt;p&gt;For more detailed API documentation, see the &lt;a href=&#34;http://api.mongodb.org/java/2.14/&#34;&gt;Java Docs&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Admin Quick Tour</title>
+      <link>/mongo-java-driver/2.14/getting-started/quick-tour-admin/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/2.14/getting-started/quick-tour-admin/</guid>
+      <description>
+
+&lt;h1 id=&#34;mongodb-driver-admin-quick-tour:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;MongoDB Driver Admin Quick Tour&lt;/h1&gt;
+
+&lt;p&gt;This is the second part of the MongoDB driver quick tour. In the
+&lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/quick-tour/&#34;&gt;quick tour&lt;/a&gt; we looked at how to
+use the Java driver to execute basic CRUD operations.  In this section we&amp;rsquo;ll look at some of the
+administrative features available in the driver.&lt;/p&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTourAdmin.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/2.x/src/examples/example/QuickTourAdmin.java
+&#34;&gt;driver
+source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/2.14/mongo-java-driver/2.14/getting-started/installation-guide/&#34;&gt;installation guide&lt;/a&gt;
+for instructions on how to install the MongoDB Driver.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;setup:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Setup&lt;/h2&gt;
+
+&lt;p&gt;To get use started we&amp;rsquo;ll quickly connect and create a &lt;code&gt;mongoClient&lt;/code&gt;, &lt;code&gt;database&lt;/code&gt; and &lt;code&gt;collection&lt;/code&gt;
+variable for use in the examples below:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient mongoClient = new MongoClient();
+MongoDatabase database = mongoClient.getDatabase(&amp;quot;mydb&amp;quot;);
+MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;test&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-a-list-of-databases:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Getting A List of Databases&lt;/h2&gt;
+
+&lt;p&gt;You can get a list of the available databases:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient mongoClient = new MongoClient();
+
+for (String s : mongoClient.getDatabaseNames()) {
+   System.out.println(s);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Calling &lt;code&gt;mongoClient.getDB()&lt;/code&gt; does not create a database. Only when a
+database is written to will a database be created. Examples would be
+creating an index or collection or inserting a document.&lt;/p&gt;
+
+&lt;h2 id=&#34;dropping-a-database:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Dropping A Database&lt;/h2&gt;
+
+&lt;p&gt;You can drop a database by name using a &lt;code&gt;MongoClient&lt;/code&gt; instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClient mongoClient = new MongoClient();
+mongoClient.dropDatabase(&amp;quot;databaseToBeDropped&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;creating-a-collection:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Creating A Collection&lt;/h2&gt;
+
+&lt;p&gt;There are two ways to create a collection. Inserting a document will
+create the collection if it doesn&amp;rsquo;t exist or calling the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/method/db.createCollection&#34;&gt;createCollection&lt;/a&gt;
+command.&lt;/p&gt;
+
+&lt;p&gt;An example of creating a capped sized to 1 megabyte:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;db = mongoClient.getDB(&amp;quot;mydb&amp;quot;);
+db.createCollection(&amp;quot;testCollection&amp;quot;, new BasicDBObject(&amp;quot;capped&amp;quot;, true)
+        .append(&amp;quot;size&amp;quot;, 1048576));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;getting-a-list-of-collections:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Getting A List of Collections&lt;/h2&gt;
+
+&lt;p&gt;You can get a list of the available collections in a database:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;for (String s : db.getCollectionNames()) {
+   System.out.println(s);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It should output&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;system.indexes
+testCollection
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The system.indexes collection is automatically created and lists all
+the indexes in the database and shouldn&amp;rsquo;t be accessed directly.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;dropping-a-collection:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Dropping A Collection&lt;/h2&gt;
+
+&lt;p&gt;You can drop a collection by using the drop() method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;DBCollection coll = db.getCollection(&amp;quot;testCollection&amp;quot;);
+coll.drop();
+System.out.println(db.getCollectionNames());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And you should notice that testCollection has been dropped.&lt;/p&gt;
+
+&lt;h2 id=&#34;getting-a-list-of-indexes-on-a-collection:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Getting a List of Indexes on a Collection&lt;/h2&gt;
+
+&lt;p&gt;You can get a list of the indexes on a collection:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;List&amp;lt;DBObject&amp;gt; list = coll.getIndexInfo();
+
+for (DBObject o : list) {
+   System.out.println(o.get(&amp;quot;key&amp;quot;));
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and you should see something like&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ &amp;quot;v&amp;quot; : 1 , &amp;quot;key&amp;quot; : { &amp;quot;_id&amp;quot; : 1} , &amp;quot;name&amp;quot; : &amp;quot;_id_&amp;quot; , &amp;quot;ns&amp;quot; : &amp;quot;mydb.testCollection&amp;quot;}
+{ &amp;quot;v&amp;quot; : 1 , &amp;quot;key&amp;quot; : { &amp;quot;i&amp;quot; : 1} , &amp;quot;name&amp;quot; : &amp;quot;i_1&amp;quot; , &amp;quot;ns&amp;quot; : &amp;quot;mydb.testCollection&amp;quot;}
+{ &amp;quot;v&amp;quot; : 1 , &amp;quot;key&amp;quot; : { &amp;quot;loc&amp;quot; : &amp;quot;2dsphere&amp;quot;} , &amp;quot;name&amp;quot; : &amp;quot;loc_2dsphere&amp;quot; , ... }
+{ &amp;quot;v&amp;quot; : 1 , &amp;quot;key&amp;quot; : { &amp;quot;_fts&amp;quot; : &amp;quot;text&amp;quot; , &amp;quot;_ftsx&amp;quot; : 1} , &amp;quot;name&amp;quot; : &amp;quot;content_text&amp;quot; , ... }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;creating-an-index:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Creating An Index&lt;/h2&gt;
+
+&lt;p&gt;MongoDB supports indexes, and they are very easy to add on a collection.
+To create an index, you just specify the field that should be indexed,
+and specify if you want the index to be ascending (&lt;code&gt;1&lt;/code&gt;) or descending
+(&lt;code&gt;-1&lt;/code&gt;). The following creates an ascending index on the &lt;code&gt;i&lt;/code&gt; field :&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;coll.createIndex(new BasicDBObject(&amp;quot;i&amp;quot;, 1));  // create index on &amp;quot;i&amp;quot;, ascending
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;geo-indexes:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Geo indexes&lt;/h2&gt;
+
+&lt;p&gt;MongoDB supports various &lt;a href=&#34;http://docs.mongodb.org/manual/core/geospatial-indexes/
+&#34;&gt;geospatial indexes&lt;/a&gt;
+in this example we&amp;rsquo;ll be creating a 2dsphere index which we can query using standard
+GeoJson markup. To create a 2dsphere index specify the string literal
+&amp;ldquo;2dsphere&amp;rdquo; in the index document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;coll.createIndex(new BasicDBObject(&amp;quot;loc&amp;quot;, &amp;quot;2dsphere&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There are various ways to
+query a [2dsphere index](http://docs.mongodb.org/manual//tutorial/query-a-2dsphere-index
+ this example
+finds places within 500 meters of a location:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BasicDBList coordinates = new BasicDBList();
+coordinates.put(0, -73.97);
+coordinates.put(1, 40.77);
+coll.insert(new BasicDBObject(&amp;quot;name&amp;quot;, &amp;quot;Central Park&amp;quot;)
+                .append(&amp;quot;loc&amp;quot;, new BasicDBObject(&amp;quot;type&amp;quot;, &amp;quot;Point&amp;quot;).append(&amp;quot;coordinates&amp;quot;, coordinates))
+                .append(&amp;quot;category&amp;quot;, &amp;quot;Parks&amp;quot;));
+
+coordinates.put(0, -73.88);
+coordinates.put(1, 40.78);
+coll.insert(new BasicDBObject(&amp;quot;name&amp;quot;, &amp;quot;La Guardia Airport&amp;quot;)
+        .append(&amp;quot;loc&amp;quot;, new BasicDBObject(&amp;quot;type&amp;quot;, &amp;quot;Point&amp;quot;).append(&amp;quot;coordinates&amp;quot;, coordinates))
+        .append(&amp;quot;category&amp;quot;, &amp;quot;Airport&amp;quot;));
+
+
+// Find whats within 500m of my location
+BasicDBList myLocation = new BasicDBList();
+myLocation.put(0, -73.965);
+myLocation.put(1, 40.769);
+myDoc = coll.findOne(
+            new BasicDBObject(&amp;quot;loc&amp;quot;,
+                new BasicDBObject(&amp;quot;$near&amp;quot;,
+                        new BasicDBObject(&amp;quot;$geometry&amp;quot;,
+                                new BasicDBObject(&amp;quot;type&amp;quot;, &amp;quot;Point&amp;quot;)
+                                    .append(&amp;quot;coordinates&amp;quot;, myLocation))
+                             .append(&amp;quot;$maxDistance&amp;quot;,  500)
+                        )
+                )
+            );
+System.out.println(myDoc.get(&amp;quot;name&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;It should print &lt;em&gt;Central Park&lt;/em&gt;. See the
+&lt;a href=&#34;http://docs.mongodb.org/manual//reference/operator/query-geospatial
+&#34;&gt;geospatial documentation&lt;/a&gt; for
+more information.&lt;/p&gt;
+
+&lt;h2 id=&#34;text-indexes:72db0d7d9b72569ab1f7da8f74305055&#34;&gt;Text indexes&lt;/h2&gt;
+
+&lt;p&gt;MongoDB also provides text indexes to support text search of string
+content. Text indexes can include any field whose value is a string or
+an array of string elements. To create a text index specify the string
+literal &amp;ldquo;text&amp;rdquo; in the index document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// create a text index on the &amp;quot;content&amp;quot; field
+coll.createIndex(new BasicDBObject(&amp;quot;content&amp;quot;, &amp;quot;text&amp;quot;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As of MongoDB 2.6 text indexes are now integrated into the main query
+language and enabled by default:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Insert some documents
+coll.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 0).append(&amp;quot;content&amp;quot;, &amp;quot;textual content&amp;quot;));
+coll.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 1).append(&amp;quot;content&amp;quot;, &amp;quot;additional content&amp;quot;));
+coll.insert(new BasicDBObject(&amp;quot;_id&amp;quot;, 2).append(&amp;quot;content&amp;quot;, &amp;quot;irrelevant content&amp;quot;));
+
+// Find using the text index
+BasicDBObject search = new BasicDBObject(&amp;quot;$search&amp;quot;, &amp;quot;textual content -irrelevant&amp;quot;);
+BasicDBObject textSearch = new BasicDBObject(&amp;quot;$text&amp;quot;, search);
+int matchCount = coll.find(textSearch).count();
+System.out.println(&amp;quot;Text search matches: &amp;quot;+ matchCount);
+
+// Find using the $language operator
+textSearch = new BasicDBObject(&amp;quot;$text&amp;quot;, search.append(&amp;quot;$language&amp;quot;, &amp;quot;english&amp;quot;));
+matchCount = coll.find(textSearch).count();
+System.out.println(&amp;quot;Text search matches (english): &amp;quot;+ matchCount);
+
+// Find the highest scoring match
+BasicDBObject projection = new BasicDBObject(&amp;quot;score&amp;quot;, new BasicDBObject(&amp;quot;$meta&amp;quot;, &amp;quot;textScore&amp;quot;));
+myDoc = coll.findOne(textSearch, projection);
+System.out.println(&amp;quot;Highest scoring document: &amp;quot;+ myDoc);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;and it should print:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-ini&#34;&gt;Text search matches: 2
+Text search matches (english): 2
+Highest scoring document: { &amp;quot;_id&amp;quot; : 1 , &amp;quot;content&amp;quot; : &amp;quot;additional content&amp;quot; , &amp;quot;score&amp;quot; : 0.75}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;For more information about text search see the &lt;a href=&#34;http://docs.mongodb.org/manual//core/index-text
+&#34;&gt;text index&lt;/a&gt; and
+&lt;a href=&#34;http://docs.mongodb.org/manual//reference/operator/query/text
+&#34;&gt;$text query operator&lt;/a&gt; documentation.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

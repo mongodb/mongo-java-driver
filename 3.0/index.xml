@@ -1,0 +1,1461 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.0/</link>
+    <description>Recent content on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 19 Mar 2015 14:27:51 -0400</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.0/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Codec and CodecRegistry</title>
+      <link>/mongo-java-driver/3.0/bson/codecs/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/bson/codecs/</guid>
+      <description>
+
+&lt;h2 id=&#34;codec-and-codecregistry&#34;&gt;Codec and CodecRegistry&lt;/h2&gt;
+
+&lt;p&gt;In the last section we saw how to use the &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonReader.html
+&#34;&gt;&lt;code&gt;BsonReader&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonWriter.html
+&#34;&gt;&lt;code&gt;BsonWriter&lt;/code&gt;&lt;/a&gt; API to read and write BSON documents.  But writing code at that
+low a level is tedious and error-prone, so in practice these algorithms are packaged in implementations of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/codecs/Codec.html
+&#34;&gt;&lt;code&gt;Codec&lt;/code&gt;&lt;/a&gt; interface.&lt;/p&gt;
+
+&lt;h3 id=&#34;codec&#34;&gt;Codec&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;Codec&lt;/code&gt; interface abstracts the processes of decoding a BSON value into a Java object using a &lt;code&gt;BsonReader&lt;/code&gt; and encoding a Java object
+ into a BSON value using a &lt;code&gt;BsonWriter&lt;/code&gt;.  The BSON value can be as simple as a boolean or as complex as a document or array.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at a simple &lt;code&gt;Codec&lt;/code&gt; implementation that encodes a Java &lt;code&gt;Integer&lt;/code&gt; to a BSON Int32, and vice versa:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class IntegerCodec implements Codec&amp;lt;Integer&amp;gt; {
+    @Override
+    public void encode(final BsonWriter writer, final Integer value, final EncoderContext encoderContext) {
+        writer.writeInt32(value);
+    }
+
+    @Override
+    public Integer decode(final BsonReader reader, final DecoderContext decoderContext) {
+        return reader.readInt32();
+    }
+
+    @Override
+    public Class&amp;lt;Integer&amp;gt; getEncoderClass() {
+        return Integer.class;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;encode&lt;/code&gt; method takes a &lt;code&gt;BsonWriter&lt;/code&gt; and an &lt;code&gt;Integer&lt;/code&gt; and calls the &lt;code&gt;writeInt32&lt;/code&gt; method on the &lt;code&gt;BsonWriter&lt;/code&gt; with the value of the
+&lt;code&gt;Integer&lt;/code&gt;, while the &lt;code&gt;decode&lt;/code&gt; method takes a &lt;code&gt;BsonReader&lt;/code&gt; and calls the &lt;code&gt;readInt32&lt;/code&gt; method on the &lt;code&gt;BsonReader&lt;/code&gt;, returning the value as an
+&lt;code&gt;Integer&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;A &lt;code&gt;Codec&lt;/code&gt; implementation than encodes to and decodes from a BSON document or array is more complicated, and would typically
+rely on a set of simpler &lt;code&gt;Codec&lt;/code&gt; implementations for the basic BSON value types.  For this, it can rely on a &lt;code&gt;CodecRegistry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;codecregistry&#34;&gt;CodecRegistry&lt;/h3&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/codecs/configuration/CodecRegistry.html
+&#34;&gt;&lt;code&gt;CodecRegistry&lt;/code&gt;&lt;/a&gt; contains a set of &lt;code&gt;Codec&lt;/code&gt; instances that are accessed
+according to the Java classes that they encode from and decode to. Instances of &lt;code&gt;CodecRegistry&lt;/code&gt; are generally created via static factory
+methods on the &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/codecs/configuration/CodecRegistries.html
+&#34;&gt;&lt;code&gt;CodecRegistries&lt;/code&gt;&lt;/a&gt; class.  Consider the simplest of these
+methods, one that takes a list of &lt;code&gt;Codec&lt;/code&gt;s:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;CodecRegistry registry = CodecRegistries.fromCodecs(new IntegerCodec(), new LongCodec(), ...);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This returns an immutable &lt;code&gt;CodecRegistry&lt;/code&gt; instance containing all the &lt;code&gt;Codec&lt;/code&gt; instances passed to the &lt;code&gt;fromCodecs&lt;/code&gt; method.  They can be
+accessed like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Codec&amp;lt;Integer&amp;gt; integerCodec = codecRegistry.get(Integer.class);
+Codec&amp;lt;Long&amp;gt; longCodec = codecRegistry.get(Long.class);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now consider a &lt;code&gt;Codec&lt;/code&gt; for the &lt;code&gt;Document&lt;/code&gt; class.  This &lt;code&gt;Codec&lt;/code&gt; implementation, in order to decode and
+encode the values for each field in the document, must be constructed with a &lt;code&gt;CodecRegistry&lt;/code&gt; to look up the &lt;code&gt;Codec&lt;/code&gt; instances for each type
+of value.  But how could one construct an instance of that &lt;code&gt;Codec&lt;/code&gt;?  You would have to pass an instance to the
+&lt;code&gt;CodecRegistries.fromCodecs&lt;/code&gt; method, but you don&amp;rsquo;t have a &lt;code&gt;CodecRegistry&lt;/code&gt; yet to pass to the constructor.  You need some way to delay the
+construction  of the &lt;code&gt;Document&lt;/code&gt; &lt;code&gt;Codec&lt;/code&gt; until after the &lt;code&gt;CodecRegistry&lt;/code&gt; has been constructed.  For that we use a &lt;code&gt;CodecProvider&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;codecprovider&#34;&gt;CodecProvider&lt;/h3&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/codecs/configuration/CodecProvider.html
+&#34;&gt;&lt;code&gt;CodecProvider&lt;/code&gt;&lt;/a&gt; is a factory for &lt;code&gt;Codec&lt;/code&gt; instances.  Unlike
+&lt;code&gt;CodecRegistry&lt;/code&gt;, its &lt;code&gt;get&lt;/code&gt; method takes not only a Class, but also a &lt;code&gt;CodecRegistry&lt;/code&gt;, allowing a &lt;code&gt;CodecProvider&lt;/code&gt; implementation to
+construct &lt;code&gt;Codec&lt;/code&gt; instances that require a &lt;code&gt;CodecRegistry&lt;/code&gt; to look up &lt;code&gt;Codec&lt;/code&gt; instances for the values contained within it.  Consider a
+&lt;code&gt;CodecProvider&lt;/code&gt; for the &lt;code&gt;Document&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class DocumentCodecProvider implements CodecProvider {
+    @Override                                                                                          
+    public &amp;lt;T&amp;gt; Codec&amp;lt;T&amp;gt; get(final Class&amp;lt;T&amp;gt; clazz, final CodecRegistry registry) {                      
+        if (clazz == Document.class) {                      
+            // construct DocumentCodec with a CodecRegistry
+            return (Codec&amp;lt;T&amp;gt;) new DocumentCodec(registry);           
+        }                                                                                              
+                                                                                                       
+        // CodecProvider returns null if it&#39;s not a provider for the requresed Class 
+        return null;                                          
+    }                                                                                                  
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;DocumentCodec&lt;/code&gt;, because it is constructed with a &lt;code&gt;CodecRegistry&lt;/code&gt;, can now use that registry to look up &lt;code&gt;Codec&lt;/code&gt; instances for the
+values contained in each Document that it encodes.&lt;/p&gt;
+
+&lt;p&gt;One more problem remains, however.  Consider the problem of encoding values to a BSON DateTime.  An application may want  to
+encode to a BSON DateTime instances of both the original Java &lt;code&gt;Date&lt;/code&gt; class as well as the Java 8 &lt;code&gt;Instant&lt;/code&gt; class.  It&amp;rsquo;s easy to create
+implemenations of &lt;code&gt;Codec&amp;lt;Date&amp;gt;&lt;/code&gt; and &lt;code&gt;Codec&amp;lt;Instant&amp;gt;&lt;/code&gt;, and either one can be used for encoding.  But when decoding, a Document &lt;code&gt;Codec&lt;/code&gt;
+also has to choose which Java type to decode a BSON DateTime to.  Rather than hard-coding it in the &lt;code&gt;DocumentCodec&lt;/code&gt;, the decision is
+abstracted via the &lt;code&gt;BsonTypeClassMap&lt;/code&gt; class.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsontypeclassmap&#34;&gt;BsonTypeClassMap&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/codecs/BsonTypeClassMap.html
+&#34;&gt;&lt;code&gt;BsonTypeClassMap&lt;/code&gt;&lt;/a&gt; class simply maps each value in the &lt;code&gt;BsonType&lt;/code&gt;
+enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a &lt;code&gt;Map&amp;lt;BsonType, 
+Class&amp;lt;?&amp;gt;&amp;gt;&lt;/code&gt; instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode
+all BSON DateTime values to a Java 8 &lt;code&gt;Instant&lt;/code&gt; instead of the default &lt;code&gt;Date&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Map&amp;lt;BsonType, Class&amp;lt;?&amp;gt;&amp;gt; replacements = new HashMap&amp;lt;BsonType, Class&amp;lt;?&amp;gt;&amp;gt;();
+replacements.put(BsonType.DATE_TIME, Instant.class);
+BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(replacements);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will replace the default mapping of BSON DateTime to &lt;code&gt;Date&lt;/code&gt; to one from BSON DateTime to &lt;code&gt;Instant&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Putting it all together, we can added a BsonTypeClassMap to the DocumentCodecProvider shown above:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class DocumentCodecProvider implements CodecProvider {
+    private final BsonTypeClassMap bsonTypeClassMap;
+    
+    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) { 
+        this.bsonTypeClassMap = bsonTypeClassMap;                                       
+    }                                                                       
+    
+    @Override                                                                                          
+    public &amp;lt;T&amp;gt; Codec&amp;lt;T&amp;gt; get(final Class&amp;lt;T&amp;gt; clazz, final CodecRegistry registry) {                      
+        if (clazz == Document.class) {                      
+            // construct DocumentCodec with a CodecRegistry and a BsonTypeClassMap
+            return (Codec&amp;lt;T&amp;gt;) new DocumentCodec(registry, bsonTypeClassMap);           
+        }                                                                                              
+                                                                                                       
+        return null;                                                                                   
+    }                                                                                                  
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;DocumentCodec&lt;/code&gt;, because it is constructed with both a &lt;code&gt;BsonTypeClassMap&lt;/code&gt; and a &lt;code&gt;CodecRegistry&lt;/code&gt;, can first use the &lt;code&gt;BsonTypeClassMap&lt;/code&gt;
+to determine with type to decode each BSON value to, then use the &lt;code&gt;CodecRegistry&lt;/code&gt; to look up the &lt;code&gt;Codec&lt;/code&gt; for that Java type.&lt;/p&gt;
+
+&lt;p&gt;Finally, we create a &lt;code&gt;CodecRegistry&lt;/code&gt; instance&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;CodecRegistry defaultCodecRegistry = ... 
+DocumentCodecProvider documentCodecProvider = ... 
+Codec&amp;lt;Instant&amp;gt; instantCodec = ...   
+codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(instantCodec),
+                                               CodecRegistries.fromProviders(documentCodecProvider),
+                                               defaultCodecRegistry);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;using two additional static factory methods from the &lt;code&gt;CodecRegistries&lt;/code&gt; class: one that takes a list of &lt;code&gt;CodecProvider&lt;/code&gt;s and one which
+takes a list of &lt;code&gt;CodecRegistry&lt;/code&gt;s.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Extended JSON</title>
+      <link>/mongo-java-driver/3.0/bson/extended-json/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/bson/extended-json/</guid>
+      <description>
+
+&lt;h2 id=&#34;mongodb-extended-json&#34;&gt;MongoDB Extended JSON&lt;/h2&gt;
+
+&lt;p&gt;As discussed earlier, the Java driver supports reading and writing BSON documents represented as&lt;br /&gt;
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.  Both variants are supported:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Strict Mode: representations of BSON types that conform to the &lt;a href=&#34;http://www.json.org/&#34;&gt;JSON RFC&lt;/a&gt;. This is the
+format that &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoexport/&#34;&gt;mongoexport&lt;/a&gt; produces and
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoimport/&#34;&gt;mongoimport&lt;/a&gt; consumes.&lt;/li&gt;
+&lt;li&gt;Shell Mode: a superset of JSON that the
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/&#34;&gt;MongoDB shell&lt;/a&gt; can parse.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Furthermore, the &lt;code&gt;Document&lt;/code&gt; class provides two sets of convenience methods for this purpose:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;toJson(): a set of overloaded methods that convert a &lt;code&gt;Document&lt;/code&gt; instance to a JSON string&lt;/li&gt;
+&lt;li&gt;parse(): a set of overloaded static factory methods that convert a JSON string to a &lt;code&gt;Document&lt;/code&gt; instance&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;writing-json&#34;&gt;Writing JSON&lt;/h2&gt;
+
+&lt;p&gt;Consider the task of implementing a &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoexport/&#34;&gt;mongoexport&lt;/a&gt;-like tool using the
+Java driver.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String outputFilename;                 // initialize to the path of the file to write to
+MongoCollection&amp;lt;Document&amp;gt; collection;  // initialize to the collection from which you want to query
+
+BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilename));
+
+try {
+    for (Document doc : collection.find()) {
+        writer.write(doc.toJson());
+        writer.newLine();
+} finally {
+   writer.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;Document.toJson()&lt;/code&gt; method constructs an instance of a &lt;code&gt;JsonWriter&lt;/code&gt; with its default settings, which will write in strict mode with
+no new lines or indentation.&lt;/p&gt;
+
+&lt;p&gt;You can override this default behavior by using one of the overloads of &lt;code&gt;toJson()&lt;/code&gt;.  As an example, consider the task of writing a
+ JSON string that can be copied and pasted into the MongoDB shell:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;SimpleDateFormat fmt = new SimpleDateFormat(&amp;quot;dd/MM/yy&amp;quot;);
+Date first = fmt.parse(&amp;quot;01/01/2014&amp;quot;);
+Date second = fmt.parse(&amp;quot;01/01/2015&amp;quot;);
+Document doc = new Document(&amp;quot;startDate&amp;quot;, new Document(&amp;quot;$gt&amp;quot;, first).append(&amp;quot;$lt&amp;quot;, second)); 
+System.out.println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL))); 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This code snippet will print out MongoDB shell-compatible JSON, which can then be pasted into the shell:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ &amp;quot;startDate&amp;quot; : { &amp;quot;$gt&amp;quot; : ISODate(&amp;quot;2014-01-01T05:00:00.000Z&amp;quot;), &amp;quot;$lt&amp;quot; : ISODate(&amp;quot;2015-01-01T05:00:00.000Z&amp;quot;) } }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;reading-json&#34;&gt;Reading JSON&lt;/h2&gt;
+
+&lt;p&gt;Consider the task of implementing a &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoimport/&#34;&gt;mongoimport&lt;/a&gt;-like tool using the
+Java driver.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String inputFilename;                  // initialize to the path of the file to read from
+MongoCollection&amp;lt;Document&amp;gt; collection;  // initialize to the collection to which you want to write
+
+BufferedReader reader = new BufferedReader(new FileReader(inputFilename));
+
+try {
+    String json;
+
+    while ((json = reader.readLine()) != null) {
+        collection.insertOne(Document.parse(json));
+    } 
+} finally {
+    reader.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;Document.parse()&lt;/code&gt; static factory method constructs an instance of a &lt;code&gt;JsonReader&lt;/code&gt; with the given string and returns an instance of an
+equivalent Document instance. &lt;code&gt;JsonReader&lt;/code&gt; automatically detects the JSON flavor in the string, so you do not need to specify it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Documents</title>
+      <link>/mongo-java-driver/3.0/bson/documents/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/bson/documents/</guid>
+      <description>
+
+&lt;h2 id=&#34;documents&#34;&gt;Documents&lt;/h2&gt;
+
+&lt;p&gt;The driver includes several classes and interfaces used for representing BSON documents.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsondocument&#34;&gt;BsonDocument&lt;/h3&gt;
+
+&lt;p&gt;Although generally not needed by users of the high-level driver API, the &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonDocument.html
+&#34;&gt;&lt;code&gt;BsonDocument&lt;/code&gt;&lt;/a&gt; class is
+central to the way that documents are managed internally by the driver.  The &lt;code&gt;BsonDocument&lt;/code&gt; class can represent dynamically structured
+documents of any complexity with a type-safe API.  For instance, the document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ 
+  &amp;quot;a&amp;quot; : &amp;quot;MongoDB&amp;quot;, 
+  &amp;quot;b&amp;quot; : [ 1, 2 ] 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;can be constructed as a BsonDocument as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;new BsonDocument().append(&amp;quot;a&amp;quot;, new BsonString(&amp;quot;MongoDB&amp;quot;))
+                  .append(&amp;quot;b&amp;quot;, new BsonArray(Arrays.asList(new BsonInt32(1), new BsonInt32(2))));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The type safety comes from &lt;code&gt;BsonDocument&lt;/code&gt; implementing &lt;code&gt;Map&amp;lt;String, BsonValue&amp;gt;&lt;/code&gt;, so even built-in types like &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;String&lt;/code&gt; and &lt;code&gt;List&lt;/code&gt; must
+be wrapped in a sub-class of &lt;code&gt;BsonValue&lt;/code&gt;.  For a complete list of &lt;code&gt;BsonValue&lt;/code&gt; sub-types, please consult the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonValue.html
+&#34;&gt;&lt;code&gt;BsonValue&lt;/code&gt;&lt;/a&gt; API documentation.&lt;/p&gt;
+
+&lt;h3 id=&#34;document&#34;&gt;Document&lt;/h3&gt;
+
+&lt;p&gt;Most applications will use the &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/Document.html
+&#34;&gt;&lt;code&gt;Document&lt;/code&gt;&lt;/a&gt; class instead.  Like &lt;code&gt;BsonDocument&lt;/code&gt;, the
+&lt;code&gt;Document&lt;/code&gt; class can represent dynamically structured documents of any complexity; however, the typing is much looser, as &lt;code&gt;Document&lt;/code&gt;
+implements &lt;code&gt;Map&amp;lt;String, Object&amp;gt;&lt;/code&gt;. As a result, the same document as above can be constructed using the Document class as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;new Document().append(&amp;quot;a&amp;quot;, &amp;quot;MongoDB&amp;quot;)
+              .append(&amp;quot;b&amp;quot;, Arrays.asList(1, 2));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.&lt;/p&gt;
+
+&lt;p&gt;The most commonly used value types are:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;BSON type&lt;/th&gt;
+&lt;th&gt;Java type&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Document&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.Document&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Array&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.util.List&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Date&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.util.Date&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Boolean&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Boolean&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Double&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Double&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Int32&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Integer&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Int64&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Long&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;String&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.String&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Binary&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.types.Binary&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;ObjectId&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.types.ObjectId&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Null&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;It is actually possible to change these mappings; the mechanism for doing so is covered &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/codecs/&#34;&gt;later&lt;/a&gt; in this
+reference .&lt;/p&gt;
+
+&lt;h3 id=&#34;dbobject&#34;&gt;DBObject&lt;/h3&gt;
+
+&lt;p&gt;Although not recommended for new applications, those upgrading from the 2.x driver series may continue to use the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DBObject.html
+&#34;&gt;&lt;code&gt;DBObject&lt;/code&gt;&lt;/a&gt; interface to represent BSON documents.  &lt;code&gt;DBObject&lt;/code&gt; is similar to Document in that it
+represents BSON values as &lt;code&gt;Object&lt;/code&gt;, but it has a few shortcomings that were impossible to overcome:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;it is an interface rather than a class, so it&amp;rsquo;s API can not be extended without breaking binary compatibility&lt;/li&gt;
+&lt;li&gt;it doesn&amp;rsquo;t actually implement &lt;code&gt;Map&amp;lt;String, Object&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;because it is an interface, a separate concrete class called &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/BasicDBObject.html
+&#34;&gt;&lt;code&gt;BasicDBObject&lt;/code&gt;&lt;/a&gt; which
+implements that interface, is required&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;bson&#34;&gt;Bson&lt;/h3&gt;
+
+&lt;p&gt;To tie these all together, the driver contains a small but powerful interface called &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/conversions/Bson.html
+&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt;.
+Any class that represents a BSON document, whether included in the driver itself or from a third party, can implement this interface and
+can then be used any place in the high-level API where a BSON document is required. The three classes discussed above all implement this
+interface and so can be used interchangeably based on the needs of a given application.  For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.find(new BsonDocument(&amp;quot;x&amp;quot;, new BsonInt32(1)));
+collection.find(new Document(&amp;quot;x&amp;quot;, 1));
+collection.find(new BasicDBObject(&amp;quot;x&amp;quot;, 1));
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Readers and Writers</title>
+      <link>/mongo-java-driver/3.0/bson/readers-and-writers/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/bson/readers-and-writers/</guid>
+      <description>
+
+&lt;h2 id=&#34;bsonwriter-and-bsonreader&#34;&gt;BsonWriter and BsonReader&lt;/h2&gt;
+
+&lt;p&gt;The various implementations of the &lt;code&gt;Bson&lt;/code&gt; interface discussed in the previous section all represent BSON documents using an underlying
+Java &lt;code&gt;Map&lt;/code&gt; instance. However, they are not directly responsible for reading and writing their representations from and to BSON.  Instead,
+this process is delegated to &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonWriter.html
+&#34;&gt;&lt;code&gt;BsonWriter&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonReader.html
+&#34;&gt;&lt;code&gt;BsonReader&lt;/code&gt;&lt;/a&gt;, abstract classes that expose methods for iterative, stream-based processing of
+BSON documents.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsonwriter&#34;&gt;BsonWriter&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;BsonWriter&lt;/code&gt; class exposes methods for writing a BSON document.  Consider the task of writing the document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ 
+  &amp;quot;a&amp;quot; : &amp;quot;MongoDB&amp;quot;, 
+  &amp;quot;b&amp;quot; : [ 
+          { &amp;quot;c&amp;quot;: 1 } 
+        ] 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The following code will stream a document of this structure to a &lt;code&gt;BsonWriter&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BsonWriter writer = ... // Construct a BsonWriter
+
+writer.writeStartDocument();           
+    writer.writeName(&amp;quot;a&amp;quot;);             
+    writer.writeString(&amp;quot;MongoDB&amp;quot;);     
+    writer.writeName(&amp;quot;b&amp;quot;);             
+    writer.writeStartArray();          
+        writer.writeStartDocument();   
+            writer.writeName(&amp;quot;c&amp;quot;);     
+            writer.writeInt32(1);      
+        writer.writeEndDocument();     
+    writer.writeEndArray();            
+writer.writeEndDocument();             
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The indentation is not necessary: it&amp;rsquo;s just to clarify that the stream of events written to the &lt;code&gt;BsonWriter&lt;/code&gt;, although written
+iteratively, have an implicit hierarchical structure.  The BsonWriter validates that the events create only properly structured BSON
+documents.  Otherwise, it throws a &lt;code&gt;BsonSerializationException&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The two most important classes to extend &lt;code&gt;BsonWriter&lt;/code&gt; are &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonBinaryWriter.html
+&#34;&gt;&lt;code&gt;BsonBinaryWriter&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/json/JsonWriter.html
+&#34;&gt;&lt;code&gt;JsonWriter&lt;/code&gt;&lt;/a&gt;.  &lt;code&gt;BsonBinaryWriter&lt;/code&gt; writes the BSON
+document as a stream of bytes in accordance with the &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt; specification, while &lt;code&gt;JsonWriter&lt;/code&gt; writes the BSON
+document as a stream of characters in accordance with
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsonreader&#34;&gt;BsonReader&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;BsonReader&lt;/code&gt; class exposes methods for reading a BSON document.  Consider the task of reading the document written above with a
+&lt;code&gt;BsonReader&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BsonReader reader = ... // Construct a BsonReader
+
+reader.readStartDocument();                           
+    reader.readName();      // read the name &amp;quot;a&amp;quot;      
+    reader.readString();    // read string &amp;quot;MongoDB&amp;quot;  
+    reader.readName();      // read the name &amp;quot;b&amp;quot;      
+    reader.readStartArray();                          
+        reader.readStartDocument();                   
+            reader.readName();   // read the name &amp;quot;c&amp;quot; 
+            reader.readInt32();  // read the integer 1
+        reader.readEndDocument();                     
+    reader.readEndArray();                            
+reader.readEndDocument();                             
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As with the writer example, the indentation is not necessary: it&amp;rsquo;s just to clarify that the stream of events read from the &lt;code&gt;BsonWriter&lt;/code&gt;,
+although written iteratively, have an implicit hierarchical structure.  The BsonReader will throw a &lt;code&gt;BsonSerializationException&lt;/code&gt; if the
+events read do not match the structure of the document that is being read from.&lt;/p&gt;
+
+&lt;p&gt;In most situations an application will not know the exact structure of the document being read.  For that reason, &lt;code&gt;BsonReader&lt;/code&gt;
+exposes a few methods that allow an application to peak ahead so that it can figure out what method to call next.  Consider a situation
+where an application must read a BSON document with an unknown structure:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;reader.readStartDocument();
+
+while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+    String fieldName = reader.readName();
+    switch (reader.getCurrentBsonType()) {
+        case INT32:
+            int intValue = reader.readInt32();
+            break;
+        case INT64:
+            long longValue = reader.readInt64();
+            break;
+        // ... handle each supported field type
+    }
+}
+
+reader.readEndDocument();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this example, the application iterates through the fields of the document until it reaches &lt;code&gt;END_OF_DOCUMENT&lt;/code&gt;.  For each field, it
+reads the name and then the value based on the &lt;code&gt;BsonType&lt;/code&gt; of the field.&lt;/p&gt;
+
+&lt;p&gt;A similar pattern can be used to read a BSON array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;reader.readStartArray();
+
+while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+    switch (reader.getCurrentBsonType()) {
+        case INT32:
+            int intValue = reader.readInt32();
+            break;
+        case INT64:
+            long longValue = reader.readInt64();
+            break;
+        // ... handle each supported field type
+    }
+}
+
+reader.readEndArray();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The only significant difference between reading an array and reading a document is that, since the elements of an array do not have names,
+there is no field name to read, only a series of values.&lt;/p&gt;
+
+&lt;p&gt;The two most important classes to extend &lt;code&gt;BsonReader&lt;/code&gt; are &lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/BsonBinaryReader.html
+&#34;&gt;&lt;code&gt;BsonBinaryReader&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?org/bson/json/JsonReader.html
+&#34;&gt;&lt;code&gt;JsonReader&lt;/code&gt;&lt;/a&gt;. &lt;code&gt;BsonBinaryReader&lt;/code&gt; reads the BSON
+document as a stream of bytes in accordance with the &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt; specification, while &lt;code&gt;JsonReader&lt;/code&gt; reads the BSON
+document as a stream of characters in accordance with
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Projections</title>
+      <link>/mongo-java-driver/3.0/builders/projections/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/builders/projections/</guid>
+      <description>
+
+&lt;h2 id=&#34;filters&#34;&gt;Filters&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/client/model/Projections.html
+&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB
+projection opererators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn
+be passed to any method that expects a projection.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Projections&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import static com.mongodb.client.model.Projections.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;inclusion&#34;&gt;Inclusion&lt;/h3&gt;
+
+&lt;p&gt;By default, all fields of each document are projected.  To specify the inclusion of one or more fields (which implicitly excludes all
+other fields except &lt;code&gt;_id&lt;/code&gt;), use the &lt;code&gt;include&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; field and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion&#34;&gt;Exclusion&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of one or more fields (which implicitly includes all other fields), use the &lt;code&gt;exclude&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion-of-id&#34;&gt;Exclusion of _id&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of the &lt;code&gt;_id&lt;/code&gt; field, use the &lt;code&gt;excludeId&lt;/code&gt; method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;excludeId()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which is just shorthand for:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;_id&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-a-supplied-filter&#34;&gt;Array Element Match with a Supplied Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches a supplied query filter (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/elemMatch
+&#34;&gt;elemMatch&lt;/a&gt; operator), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes a
+field name and a filter.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array where the &lt;code&gt;quantity&lt;/code&gt; field is greater that &lt;code&gt;3&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;, Filters.gt(&amp;quot;quantity&amp;quot;, 3))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-an-implicit-filter&#34;&gt;Array Element Match with an Implicit Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches the filter supplied as part of the query (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/positional/#projection
+&#34;&gt;positional $ operator&lt;/a&gt;), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes
+just a field name.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array that matches the query filter:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;slice&#34;&gt;Slice&lt;/h3&gt;
+
+&lt;p&gt;To project &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/slice
+&#34;&gt;a slice of an array&lt;/a&gt;, use one of the &lt;code&gt;slice&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first &lt;code&gt;7&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 7)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example skips the first &lt;code&gt;2&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array and projects the next &lt;code&gt;5&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 2, 5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection of &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#return-the-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;,
+use the &lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example projects the text score as the value of the &lt;code&gt;score&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;score&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-projections&#34;&gt;Combining Projections&lt;/h3&gt;
+
+&lt;p&gt;To combine multiple projections, use the &lt;code&gt;fields&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and excludes the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;fields(include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), excludeId()) 
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Filters</title>
+      <link>/mongo-java-driver/3.0/builders/filters/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/builders/filters/</guid>
+      <description>
+
+&lt;h2 id=&#34;filters&#34;&gt;Filters&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/client/model/Filters.html
+&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB query
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects a query filter.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Filters&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Filters.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;comparison&#34;&gt;Comparison&lt;/h3&gt;
+
+&lt;p&gt;The comparison operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eq&lt;/code&gt;: Matches values that are equal to a specified value.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gt&lt;/code&gt;: Matches values that are greater than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gte&lt;/code&gt;: Matches values that are greater than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lt&lt;/code&gt;: Matches values that are less than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lte&lt;/code&gt;: Matches values that are less than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ne&lt;/code&gt;: Matches all values that are not equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;in&lt;/code&gt;: Matches any of the values specified in an array.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nin&lt;/code&gt;: Matches none of the values specified in an array.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field equals &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;eq(&amp;quot;qty&amp;quot;, 20)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{  
+   &amp;quot;qty&amp;quot; : 20
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field is either &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;in(&amp;quot;qty&amp;quot;, 5, 15)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;logical&#34;&gt;Logical&lt;/h3&gt;
+
+&lt;p&gt;The logical operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;and&lt;/code&gt;: Joins filters with a logical AND and selects all documents that match the conditions of both filters.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;or&lt;/code&gt;: Joins filters with a logical OR and selects all documents that match the conditions of either filters.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;not&lt;/code&gt;: Inverts the effect of a query expression and selects documents that do not match the filter.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nor&lt;/code&gt;: Joins filters with a logical NOR and selects all documents that fail to match both filters.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-1&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where ther value of the &lt;code&gt;qty&lt;/code&gt; field is greater than &lt;code&gt;20&lt;/code&gt; and the value of the
+&lt;code&gt;user&lt;/code&gt; field equals &lt;code&gt;&amp;quot;jdoe&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(gt(&amp;quot;qty&amp;quot;, 20), eq(&amp;quot;user&amp;quot;, &amp;quot;jdoe&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;and&lt;/code&gt; method generates a &lt;code&gt;$and&lt;/code&gt; operator only if necessary, as the query language implicity ands together all the elements in a
+filter. So the above example will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ 
+   &amp;quot;qty&amp;quot; : { &amp;quot;$gt&amp;quot; : 20 },
+   &amp;quot;user&amp;quot; : &amp;quot;jdoe&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the &lt;code&gt;price&lt;/code&gt; field value equals &lt;code&gt;0.99&lt;/code&gt; or &lt;code&gt;1.99&lt;/code&gt;; and the &lt;code&gt;sale&lt;/code&gt; field value
+is equal to &lt;code&gt;true&lt;/code&gt; or the &lt;code&gt;qty&lt;/code&gt; field value is less than &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(or(eq(&amp;quot;price&amp;quot;, 0.99), eq(&amp;quot;price&amp;quot;, 1.99)
+    or(eq(&amp;quot;sale&amp;quot;, true), lt(&amp;quot;qty&amp;quot;, 20)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This query cannot be constructed using an implicit and operation, because it uses the &lt;code&gt;$or&lt;/code&gt; operator more than once.  So it will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+ &amp;quot;$and&amp;quot; : 
+    [
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;price&amp;quot; : 0.99 }, { &amp;quot;price&amp;quot; : 1.99 } ] },
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;sale&amp;quot; : true }, { &amp;quot;qty&amp;quot; : { &amp;quot;$lt&amp;quot; : 20 } } ] }
+    ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;arrays&#34;&gt;Arrays&lt;/h3&gt;
+
+&lt;p&gt;The array operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;all&lt;/code&gt;: Matches arrays that contain all elements specified in the query&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;elemMatch&lt;/code&gt;: Selects documents if element in the array field matches all the specified $elemMatch conditions&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;size&lt;/code&gt;: Selects documents if the array field is a specified size&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-2&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents with a &lt;code&gt;tags&lt;/code&gt; array containing both &lt;code&gt;&amp;quot;ssl&amp;quot;&lt;/code&gt; and &lt;code&gt;&amp;quot;security&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;all(&amp;quot;tags&amp;quot;, Arrays.asList(&amp;quot;ssl&amp;quot;, &amp;quot;security&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;elements&#34;&gt;Elements&lt;/h3&gt;
+
+&lt;p&gt;The elements operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exists&lt;/code&gt;: Selects documents that have the specified field.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;type&lt;/code&gt;: Selects documents if a field is of the specified type.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-3&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents that have a &lt;code&gt;qty&lt;/code&gt; field and its value does not equal &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;15&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(exists(&amp;quot;qty&amp;quot;), nin(&amp;quot;qty&amp;quot;, 5, 15))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;evaluation&#34;&gt;Evaluation&lt;/h3&gt;
+
+&lt;p&gt;The evaluation operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;mod&lt;/code&gt;: Performs a modulo operation on the value of a field and selects documents with a specified result.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;: Selects documents where values match a specified regular expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;text&lt;/code&gt;: Selects documemts matching a full-text search expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;where&lt;/code&gt;: Matches documents that satisfy a JavaScript expression.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-4&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example assumes a collection that has a text index in the field &lt;code&gt;abstract&lt;/code&gt;.  It selects documents that have a &lt;code&gt;abstract&lt;/code&gt; field
+containing the term &lt;code&gt;coffee&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;text(&amp;quot;abstract&amp;quot;, &amp;quot;coffee&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Sort Criteria  </title>
+      <link>/mongo-java-driver/3.0/builders/sorts/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/builders/sorts/</guid>
+      <description>
+
+&lt;h2 id=&#34;sorts&#34;&gt;Sorts&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/client/model/Sorts.html
+&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB sort criteria
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects sort criteria.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Sorts&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Sorts.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;ascending&#34;&gt;Ascending&lt;/h3&gt;
+
+&lt;p&gt;To specify an ascending sort, use one of the &lt;code&gt;ascending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;descending&#34;&gt;Descending&lt;/h3&gt;
+
+&lt;p&gt;To specify a descending sort, use one of the &lt;code&gt;descending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by a descending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a sort by &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#sort-by-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;, use the
+&lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a sort on the score of a &lt;code&gt;$text&lt;/code&gt; query that will be projected into the &lt;code&gt;scoreValue&lt;/code&gt; field in a projection on the
+same query:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;scoreValue&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-sort-criteria&#34;&gt;Combining sort criteria&lt;/h3&gt;
+
+&lt;p&gt;To specify the combination of multiple sort criteria, use the &lt;code&gt;orderBy&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field, followed by a
+descending sort on the &lt;code&gt;orderDate&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;orderBy(ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), descending(&amp;quot;orderDate&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Authenticating</title>
+      <link>/mongo-java-driver/3.0/driver/reference/connecting/authenticating/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/driver/reference/connecting/authenticating/</guid>
+      <description>
+
+&lt;h1 id=&#34;authentication&#34;&gt;Authentication&lt;/h1&gt;
+
+&lt;p&gt;The Java driver supports all MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/&#34;&gt;authentication mechanisms&lt;/a&gt;, including those
+only available in the MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/administration/install-enterprise/&#34;&gt;Enterprise Edition&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;An authentication credential is represented as an instance of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; class, which includes static factory methods for
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; constructors that take a
+parameter of type &lt;code&gt;List&amp;lt;MongoCredential&amp;gt;&lt;/code&gt;.  Alternatively, a single &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt;
+can be created implicity via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; and passed to a &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt;
+constructor that takes a &lt;code&gt;[&lt;/code&gt;MongoClientURI`](http://api.mongodb.org/java/3.0/?com/mongodb/MongoClientURI.html
+) parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;default-authentication-mechanism&#34;&gt;Default authentication mechanism&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 3.0 changed the default authentication mechanism from
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt; to
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;.  To create a credential that will
+authenticate properly regardless of server version, create a credential using the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.MongoCredential;
+
+// ...
+
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.0-scram/#upgrade-mongodb-cr-to-scram&#34;&gt;upgrading the
+authentication schema&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;scram-sha-1&#34;&gt;SCRAM-SHA-1&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb .org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=SCRAM-SHA-1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;mongodb-cr&#34;&gt;MONGODB-CR&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=MONGODB-CR&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
+from MONGODB-CR to SCRAM-SHA-1.&lt;/p&gt;
+
+&lt;h2 id=&#34;x-509&#34;&gt;x.509&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication&#34;&gt;x.509&lt;/a&gt; mechanism authenticates a user
+whose name is derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This
+authentication method requires the use of SSL connections with certificate validation and is available in MongoDB 2.6 and newer. To
+create a credential of this type use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;     // The x.509 certificate derived user name, e.g. &amp;quot;CN=user,OU=OrgUnit,O=myOrg,...&amp;quot;
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;See the MongoDB server
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user&#34;&gt;x.509 tutorial&lt;/a&gt; for
+more information about determining the subject name from the certificate.&lt;/p&gt;
+
+&lt;h2 id=&#34;kerberos-gssapi&#34;&gt;Kerberos (GSSAPI)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through Kerberos service.  To
+create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication&#34;&gt;Kerberos (GSSAPI)&lt;/a&gt; use the
+following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;   // The Kerberos user name, including the realm, e.g. &amp;quot;user1@MYREALM.ME&amp;quot;
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism instead of &lt;code&gt;Kerberos&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://tools.ietf.org/html/rfc4752&#34;&gt;GSSAPI&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
+Java libraries can acquire a Kerberos ticket:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java.security.krb5.realm=MYREALM.ME
+java.security.krb5.kdc=mykdc.myrealm.me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;ldap-plain&#34;&gt;LDAP (PLAIN)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service.  To create a credential of type &lt;a href=&#34;http://docs.mongodb
+.org/manual/core/authentication/#ldap-proxy-authority-authentication&#34;&gt;LDAP&lt;/a&gt; use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;quot;$external&amp;quot;, password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1@host1/?authSource=$external&amp;amp;authMechanism=PLAIN&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;plain&lt;/code&gt; authentication mechanism instead of &lt;code&gt;LDAP&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://www.ietf.org/rfc/rfc4616.txt&#34;&gt;PLAIN&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Management</title>
+      <link>/mongo-java-driver/3.0/driver/reference/management/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/driver/reference/management/</guid>
+      <description>
+
+&lt;h2 id=&#34;management&#34;&gt;Management&lt;/h2&gt;
+
+&lt;p&gt;The driver provides two mechanisms for examining its state:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver/reference/management/logging/&#34;&gt;Logging&lt;/a&gt;: Comprehensive logging of all operations using &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver/reference/management/monitoring/&#34;&gt;Monitoring&lt;/a&gt;: Built on &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/&#34;&gt;JMX&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Authenticating</title>
+      <link>/mongo-java-driver/3.0/driver-async/reference/connecting/authenticating/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/driver-async/reference/connecting/authenticating/</guid>
+      <description>
+
+&lt;h1 id=&#34;authentication&#34;&gt;Authentication&lt;/h1&gt;
+
+&lt;p&gt;The Java driver supports all MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/&#34;&gt;authentication mechanisms&lt;/a&gt;, including those
+only available in the MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/administration/install-enterprise/&#34;&gt;Enterprise Edition&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;An authentication credential is represented as an instance of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; class, which includes static factory methods for
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/async/client/MongoClients.html
+&#34;&gt;&lt;code&gt;MongoClients&lt;/code&gt;&lt;/a&gt; static factory method that takes a
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/async/client/MongoClientSettings.html
+&#34;&gt;&lt;code&gt;MongoClientSettings&lt;/code&gt;&lt;/a&gt; parameter.  Alternatively, a single
+&lt;code&gt;MongoCredential&lt;/code&gt; can be created implicity via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/ConnectionString.html
+&#34;&gt;&lt;code&gt;ConnectionString&lt;/code&gt;&lt;/a&gt; and passed to a
+&lt;code&gt;MongoClients&lt;/code&gt; static factory method that takes a &lt;code&gt;ConnectionString&lt;/code&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;default-authentication-mechanism&#34;&gt;Default authentication mechanism&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 3.0 changed the default authentication mechanism from
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt; to
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;.  To create a credential that will
+authenticate properly regardless of server version, create a credential using the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.MongoCredential;
+
+// ...
+
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.0-scram/#upgrade-mongodb-cr-to-scram&#34;&gt;upgrading the
+authentication schema&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;scram-sha-1&#34;&gt;SCRAM-SHA-1&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb .org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=SCRAM-SHA-1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;mongodb-cr&#34;&gt;MONGODB-CR&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=MONGODB-CR&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
+from MONGODB-CR to SCRAM-SHA-1.&lt;/p&gt;
+
+&lt;h2 id=&#34;x-509&#34;&gt;x.509&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication&#34;&gt;x.509&lt;/a&gt; mechanism authenticates a user
+whose name is derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This
+authentication method requires the use of SSL connections with certificate validation and is available in MongoDB 2.6 and newer. To
+create a credential of this type use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;     // The x.509 certificate derived user name, e.g. &amp;quot;CN=user,OU=OrgUnit,O=myOrg,...&amp;quot;
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;See the MongoDB server
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user&#34;&gt;x.509 tutorial&lt;/a&gt; for
+more information about determining the subject name from the certificate.&lt;/p&gt;
+
+&lt;h2 id=&#34;kerberos-gssapi&#34;&gt;Kerberos (GSSAPI)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through Kerberos service.  To
+create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication&#34;&gt;Kerberos (GSSAPI)&lt;/a&gt; use the
+following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;   // The Kerberos user name, including the realm, e.g. &amp;quot;user1@MYREALM.ME&amp;quot;
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism instead of &lt;code&gt;Kerberos&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://tools.ietf.org/html/rfc4752&#34;&gt;GSSAPI&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
+Java libraries can acquire a Kerberos ticket:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java.security.krb5.realm=MYREALM.ME
+java.security.krb5.kdc=mykdc.myrealm.me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;ldap-plain&#34;&gt;LDAP (PLAIN)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service.  To create a credential of type &lt;a href=&#34;http://docs.mongodb
+.org/manual/core/authentication/#ldap-proxy-authority-authentication&#34;&gt;LDAP&lt;/a&gt; use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;quot;$external&amp;quot;, password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1@host1/?authSource=$external&amp;amp;authMechanism=PLAIN&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;plain&lt;/code&gt; authentication mechanism instead of &lt;code&gt;LDAP&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://www.ietf.org/rfc/rfc4616.txt&#34;&gt;PLAIN&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Management</title>
+      <link>/mongo-java-driver/3.0/driver-async/reference/management/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/driver-async/reference/management/</guid>
+      <description>
+
+&lt;h2 id=&#34;management&#34;&gt;Management&lt;/h2&gt;
+
+&lt;p&gt;The driver provides two mechanisms for examining its state:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver-async/reference/management/logging/&#34;&gt;Logging&lt;/a&gt;: Comprehensive logging of all operations using &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver-async/reference/management/monitoring/&#34;&gt;Monitoring&lt;/a&gt;: Built on &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/&#34;&gt;JMX&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Upgrading to 3.0</title>
+      <link>/mongo-java-driver/3.0/whats-new/upgrading/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:39 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/whats-new/upgrading/</guid>
+      <description>
+
+&lt;h1 id=&#34;upgrading-to-3-0&#34;&gt;Upgrading to 3.0&lt;/h1&gt;
+
+&lt;p&gt;The 3.0 release is &lt;strong&gt;incompatible&lt;/strong&gt; with the 2.x release series. However, where possible, the 2.13.0 driver has deprecated classes or
+methods that have been removed in 3.0.&lt;/p&gt;
+
+&lt;p&gt;Before upgrading to 3.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.&lt;/p&gt;
+
+&lt;h2 id=&#34;system-requirements&#34;&gt;System Requirements&lt;/h2&gt;
+
+&lt;p&gt;The minimum JVM is now Java 6: however, specific features require Java 7:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;SSL support requires Java 7 in order to perform host name verification, which is enabled by default.  See below and on
+&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver/reference/connecting/ssl/&#34;&gt;SSL&lt;/a&gt; for details on how to disable host name verification.&lt;/li&gt;
+&lt;li&gt;The asynchronous API requires Java 7, as by default it relies on
+&lt;a href=&#34;http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html&#34;&gt;&lt;code&gt;AsynchronousSocketChannel&lt;/code&gt;&lt;/a&gt; for
+its implementation.  See &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver-async/&#34;&gt;Async&lt;/a&gt; for details on configuring the driver to use &lt;a href=&#34;http://netty.io/&#34;&gt;Netty&lt;/a&gt; instead.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;incompatibilities&#34;&gt;Incompatibilities&lt;/h2&gt;
+
+&lt;p&gt;The following lists the most significant backwards-breaking changes, along with the recommended solutions.&lt;/p&gt;
+
+&lt;h3 id=&#34;general&#34;&gt;General&lt;/h3&gt;
+
+&lt;p&gt;The driver now enables host name verification by default for SSL connections.  If you are knowingly using an invalid certificate, or are
+using Java 6 (see above), set the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/com/mongodb/MongoClientOptions.html#isSslInvalidHostNameAllowed--&#34;&gt;&lt;code&gt;sslInvalidHostNameAllowed&lt;/code&gt;&lt;/a&gt;
+property to true.&lt;/p&gt;
+
+&lt;h3 id=&#34;mongoclientoptions&#34;&gt;MongoClientOptions&lt;/h3&gt;
+
+&lt;p&gt;Providing little practical value,
+the &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions .html#isAutoConnectRetry--&#34;&gt;&lt;code&gt;autoConnectRetry&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html#getMaxAutoConnectRetryTime--&#34;&gt;&lt;code&gt;maxAutoConnectRetryTime&lt;/code&gt;&lt;/a&gt;
+properties in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; have been removed from the Java driver to be consistent with other
+MongoDB-supported drivers .&lt;/p&gt;
+
+&lt;h4 id=&#34;mongoclient&#34;&gt;MongoClient&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; (and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/ServerAddress.html
+&#34;&gt;&lt;code&gt;ServerAddress&lt;/code&gt;&lt;/a&gt;) constructors no longer throw
+&lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/java/net/UnknownHostException.html&#34;&gt;&lt;code&gt;UnknownHostException&lt;/code&gt;&lt;/a&gt;: This breaks source but not binary
+compatibility, so re-compilation with 3.0 will only succeed after removing any reference to this exception in catch blocks or method
+throws declarations.&lt;/p&gt;
+
+&lt;h3 id=&#34;db&#34;&gt;DB&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#requestStart--&#34;&gt;&lt;code&gt;requestStart&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#requestDone--&#34;&gt;&lt;code&gt;requestDone&lt;/code&gt;&lt;/a&gt; methods in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DB.html
+&#34;&gt;&lt;code&gt;DB&lt;/code&gt;&lt;/a&gt; have been removed: These methods have been removed in accordance with the
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#what-happened-to-pinning&#34;&gt;server selection specification&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#authenticate-java.lang.String-char:A-&#34;&gt;&lt;code&gt;authenticate&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DB.html
+&#34;&gt;&lt;code&gt;DB&lt;/code&gt;&lt;/a&gt; has been replaced with
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/com/mongodb/MongoClient.html#MongoClient-java.util.List-java.util.List-&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; constructors that
+take &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; instances.&lt;/p&gt;
+
+&lt;h3 id=&#34;dbcollection&#34;&gt;DBCollection&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#ensureIndex-com.mongodb.DBObject-&#34;&gt;&lt;code&gt;ensureIndex&lt;/code&gt;&lt;/a&gt; methods in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DBCollection.html
+&#34;&gt;&lt;code&gt;DBCollection&lt;/code&gt;&lt;/a&gt; have been removed:
+replace with the corresponding
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#createIndex-com.mongodb.DBObject-&#34;&gt;&lt;code&gt;createIndex&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;h3 id=&#34;writeresult&#34;&gt;WriteResult&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/2.13/com/mongodb/WriteResult.html#getLastError--&#34;&gt;&lt;code&gt;getLastError&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/WriteResult.html
+&#34;&gt;&lt;code&gt;WriteResult&lt;/code&gt;&lt;/a&gt; has been removed: this method does not work reliably in
+the 2.x series and there is no way to make work reliably, so it has been removed.  Replace with use of an acknowledged
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/WriteConcern.html
+&#34;&gt;&lt;code&gt;WriteConcern&lt;/code&gt;&lt;/a&gt; when executing the write operation.&lt;/p&gt;
+
+&lt;h3 id=&#34;dbref&#34;&gt;DBRef&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBRefBase.html#fetch--&#34;&gt;&lt;code&gt;fetch&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DBRef.html
+&#34;&gt;&lt;code&gt;DBRef&lt;/code&gt;&lt;/a&gt; has been removed: use the
+&lt;a href=&#34;https://api.mongodb.org/java/3.0/com/mongodb/DBCollection.html#findOne-java.lang.Object-&#34;&gt;&lt;code&gt;findOne&lt;/code&gt;&lt;/a&gt; method instead.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New</title>
+      <link>/mongo-java-driver/3.0/whats-new/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:35 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/whats-new/</guid>
+      <description>
+
+&lt;h1 id=&#34;what-s-new-in-3-0&#34;&gt;What&amp;rsquo;s New in 3.0&lt;/h1&gt;
+
+&lt;p&gt;Key features of the 3.0 driver include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;A generic &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/client/MongoCollection.html
+&#34;&gt;&lt;code&gt;MongoCollection&lt;/code&gt;&lt;/a&gt; interface that complies with a new cross-driver
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst&#34;&gt;CRUD specification&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;A new &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/tree/master/driver-async&#34;&gt;asynchronous API&lt;/a&gt; that can leverage either
+&lt;a href=&#34;http://netty.io/&#34;&gt;Netty&lt;/a&gt; or Java 7&amp;rsquo;s
+&lt;a href=&#34;http://docs.oracle .com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html&#34;&gt;AsynchronousSocketChannel&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;A new &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/codecs/&#34;&gt;Codec&lt;/a&gt; infrastructure that you can use to build high-performance
+encoders and decoders without requiring an intermediate Map instance.&lt;/li&gt;
+&lt;li&gt;A new core driver on top of which you can build alternative or experimental driver APIs&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;upgrading&#34;&gt;Upgrading&lt;/h2&gt;
+
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/whats-new/upgrading/&#34;&gt;upgrading guide&lt;/a&gt; on how to upgrade to 3.0&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>BSON</title>
+      <link>/mongo-java-driver/3.0/bson/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/bson/</guid>
+      <description>
+
+&lt;h2 id=&#34;bson&#34;&gt;BSON&lt;/h2&gt;
+
+&lt;p&gt;The BSON library comprehensively supports &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt;, the data storage and network transfer format that MongoDB uses for
+“documents&amp;rdquo;. BSON, short for Binary &lt;a href=&#34;http://json.org/&#34;&gt;JSON&lt;/a&gt;, is a binary-encoded serialization of JSON-like documents.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/documents/&#34;&gt;Documents&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for BSON document representations&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/readers-and-writers/&#34;&gt;Readers and Writers&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for stream-based reading and writing
+of BSON documents&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/codecs/&#34;&gt;Codec and CodecRegistry&lt;/a&gt;: Documentation of the driver&amp;rsquo;s &lt;code&gt;Codec&lt;/code&gt; API, an abstraction for producing and
+consuming  BSON document representations using the stream-based readers and writers&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/extended-json/&#34;&gt;Extended JSON&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for MongoDB Extended JSON&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Builders</title>
+      <link>/mongo-java-driver/3.0/builders/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/builders/</guid>
+      <description>
+
+&lt;h2 id=&#34;builders&#34;&gt;Builders&lt;/h2&gt;
+
+&lt;p&gt;The driver provides several classes that make it easier to use the CRUD API.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/builders/filters/&#34;&gt;Filters&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building query filters&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/builders/projections/&#34;&gt;Projections&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building projections&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/builders/sorts/&#34;&gt;Sorts&lt;/a&gt;: Documentation of the driver&amp;rsquo;s support for building sort criteria&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

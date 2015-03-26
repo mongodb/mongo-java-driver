@@ -1,0 +1,3343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+
+    <link rel="shortcut icon" href="/mongo-java-driver/3.4/img/favicon.png">
+
+    <title>Text Search</title>
+
+    <link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.4/css/java.css" type="text/css" />
+
+
+  </head>
+
+  <body>
+  
+  <section id="container" class="">
+      
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.4/../">
+        <img src="/mongo-java-driver/3.4/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.4">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+      
+
+      
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.4/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.4">3.4</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu">
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+    
+    
+    
+      
+      
+      
+        
+      
+    
+    
+  
+  
+
+
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+        
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+
+          
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/whats-new/">
+        <i class='fa fa-level-up'></i>
+        What&#39;s New
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/driver/" class="">
+      <i class='fa fa-arrows-h'></i>
+      <span>MongoDB Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/installation/">
+        <i class='fa'></i>
+        Installation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver/getting-started/quick-start/">
+        <i class='fa'></i>
+        Quick Start
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/" class="">
+      <i class='fa fa-thumb-tack'></i>
+      <span>Tutorials</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/connect-to-mongodb/" class="">
+      <i class='fa'></i>
+      <span>Connect to MongoDB</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/ssl/">
+        <i class='fa'></i>
+        TLS/SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/authentication/">
+        <i class='fa'></i>
+        Authentication
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/jndi/">
+        <i class='fa'></i>
+        JNDI
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/databases-collections/">
+        <i class='fa'></i>
+        Databases and Collections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/indexes/">
+        <i class='fa'></i>
+        Create Indexes
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/perform-read-operations/">
+        <i class='fa'></i>
+        Read Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver/tutorials/perform-write-operations/" class="">
+      <i class='fa'></i>
+      <span>Write Operations</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/bulk-writes/">
+        <i class='fa'></i>
+        Bulk Writes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/text-search/">
+        <i class='fa'></i>
+        Text Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/geospatial-search/">
+        <i class='fa'></i>
+        Geospatial Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/tutorials/commands/">
+        <i class='fa'></i>
+        Run Commands
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver/reference/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l1  current">
+  <a href="/mongo-java-driver/3.4/driver-async/" class="">
+      <i class='fa fa-refresh'></i>
+      <span>MongoDB Async Driver</span>
+      <span class="menu-arrow fa fa-angle-down"></span>
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-async/getting-started/installation/">
+        <i class='fa'></i>
+        Installation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/driver-async/getting-started/quick-start/">
+        <i class='fa'></i>
+        Quick Start
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l2  current">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/" class="">
+      <i class='fa fa-thumb-tack'></i>
+      <span>Tutorials</span>
+      
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/connect-to-mongodb/" class="">
+      <i class='fa'></i>
+      <span>Connect to MongoDB</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/authentication/">
+        <i class='fa'></i>
+        Authentication
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/databases-collections/">
+        <i class='fa'></i>
+        Databases and Collections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/indexes/">
+        <i class='fa'></i>
+        Create Indexes
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/perform-read-operations/">
+        <i class='fa'></i>
+        Read Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.4/driver-async/tutorials/perform-write-operations/" class="">
+      <i class='fa'></i>
+      <span>Write Operations</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/bulk-writes/">
+        <i class='fa'></i>
+        Bulk Writes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/text-search/">
+        <i class='fa'></i>
+        Text Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/geospatial-search/">
+        <i class='fa'></i>
+        Geospatial Search
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/tutorials/commands/">
+        <i class='fa'></i>
+        Run Commands
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.4/driver-async/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.4/driver-async/reference/observables/">
+        <i class='fa'></i>
+        Observables
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/bson/" class="">
+      <i class='fa fa-th'></i>
+      <span>BSON</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/documents/">
+        <i class='fa'></i>
+        Documents
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/readers-and-writers/">
+        <i class='fa'></i>
+        Readers and Writers
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/codecs/">
+        <i class='fa'></i>
+        Codec and CodecRegistry
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/extended-json/">
+        <i class='fa'></i>
+        Extended JSON
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/bson/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.4/builders/" class="">
+      <i class='fa fa-wrench'></i>
+      <span>Builders</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/filters/">
+        <i class='fa'></i>
+        Filters
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/projections/">
+        <i class='fa'></i>
+        Projections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/sorts/">
+        <i class='fa'></i>
+        Sort Criteria  
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/aggregation/">
+        <i class='fa'></i>
+        Aggregates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/updates/">
+        <i class='fa'></i>
+        Updates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.4/builders/indexes/">
+        <i class='fa'></i>
+        Indexes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/upgrading/">
+        <i class='fa fa-level-up'></i>
+        Upgrade Considerations
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/javadoc/">
+        <i class='fa fa-file-text-o'></i>
+        API Documentation
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master">
+        <i class='fa fa-github'></i>
+        Source Code
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.4/issues-help/">
+        <i class='fa fa-life-ring'></i>
+        Issues &amp; Help
+    </a>
+  </li>
+
+
+          
+        </ul>
+        
+    </div>
+  </div>
+  
+</aside>
+
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+
+
+      
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+
+
+   
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-async/tutorials/text-search.md" target="_blank" title="Edit driver-async/tutorials/text-search.md on GitHub"><i class="fa fa-pencil-square-o"></i></a>
+
+
+
+
+
+
+
+
+
+
+<div class="bc">
+<ul>
+  
+  
+  
+  
+  <li><a href="/mongo-java-driver/3.4/driver-async/">MongoDB Async Driver</a> <i class="fa fa-angle-right"></i></li>
+  <li><a href="/mongo-java-driver/3.4/driver-async/tutorials/">Tutorials</a> <i class="fa fa-angle-right"></i></li>
+  <li>Text Search</li>
+</ul>
+</div>
+
+
+
+
+<h2 id="text-search">Text Search</h2>
+
+<p>MongoDB supports query operations that perform a <a href="http://docs.mongodb.org/manual/text-search
+">text search</a> of string content. To perform text search, MongoDB uses a <a href="http://docs.mongodb.org/manual/core/index-text
+">text index</a> and the <a href="http://docs.mongodb.org/manual/reference/operator/query/text
+"><code>$text</code> query operator</a>.</p>
+
+<p>The Java driver provides the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html#text-java.lang.String-com.mongodb.client.model.TextSearchOptions-
+"><code>Filters.text()</code></a> helper to facilitate the creation of text search query filters.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+<li><p>The example below requires a <code>restaurants</code> collection in the <code>test</code> database. To create and populate the collection, follow the directions in <a href="https://github.com/mongodb/docs-assets/tree/drivers">github</a>.</p></li>
+
+<li><p>Include the following import statements:</p></li>
+</ul>
+
+<pre><code class="language-java">import com.mongodb.Block;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.client.model.*;
+import org.bson.Document;
+</code></pre>
+
+<ul>
+<li>Include the following code which the examples in the tutorials will use to print the results of the aggregation:</li>
+</ul>
+
+<pre><code class="language-java">Block&lt;Document&gt; printBlock = new Block&lt;Document&gt;() {
+    @Override
+    public void apply(final Document document) {
+        System.out.println(document.toJson());
+    }
+};
+</code></pre>
+
+<h2 id="connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</h2>
+
+<p>Connect to a MongoDB deployment and declare and define a <code>MongoDatabase</code> and a <code>MongoCollection</code> instances.</p>
+
+<p>For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port <code>27017</code> and define <code>database</code> to refer to the <code>test</code> database and <code>collection</code> to refer to the <code>restaurants</code> collection:</p>
+
+<pre><code class="language-java">MongoClient mongoClient = MongoClients.create();
+MongoDatabase database = mongoClient.getDatabase(&quot;test&quot;);
+MongoCollection&lt;Document&gt; collection = database.getCollection(&quot;restaurants&quot;);
+</code></pre>
+
+<p>For additional information on connecting to MongoDB, see <a href="/mongo-java-driver/3.4/driver-async/tutorials/connect-to-mongodb/">Connect to MongoDB</a>.</p>
+
+<h2 id="create-the-text-index">Create the <code>text</code> Index</h2>
+
+<p>To create a <a href="http://docs.mongodb.org/manual/core/index-text
+">text index</a>, use the <a href="/mongo-java-driver/3.4/builders/indexes/#text-index"><code>Indexes.text</code></a>
+static helper to create a specification for a text index and pass to <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/MongoCollection.html#createIndex-org.bson.conversions.Bson-
+"><code>MongoCollection.createIndex()</code></a> method.</p>
+
+<p>The following example creates a text index on the <code>name</code> field for the <code>restaurants</code> collection.</p>
+
+<pre><code class="language-java">collection.createIndex(Indexes.text(&quot;name&quot;), new SingleResultCallback&lt;String&gt;() {
+    @Override
+    public void onResult(final String result, final Throwable t) {
+        System.out.println(&quot;Operation Finished!&quot;);
+    }
+});
+</code></pre>
+
+<h2 id="perform-text-search">Perform Text Search</h2>
+
+<p>To perform text search, use the <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html#text-java.lang.String-com.mongodb.client.model.TextSearchOptions-
+"><code>Filters.text()</code></a> helper to specify the text search query filter.</p>
+
+<p>For example, the following code performs a text search on the <code>name</code> field for the word <code>&quot;bakery&quot;</code> or <code>&quot;coffee&quot;</code>.</p>
+
+<pre><code class="language-java">collection.count(Filters.text(&quot;bakery coffee&quot;), new SingleResultCallback&lt;Long&gt;()  {
+    @Override
+    public void onResult(final Long count, final Throwable t) {
+        System.out.println(&quot;Text search matches: &quot; +count);
+    }
+});
+</code></pre>
+
+<p>The example should print the following output:</p>
+
+<pre><code class="language-json">Text search matches: 2
+</code></pre>
+
+<p>For more information on the text search, see <a href="http://docs.mongodb.org/manual/reference/operator/query/text
+"><code>$text</code> operator</a>.</p>
+
+<h3 id="text-score">Text Score</h3>
+
+<p>For each matching document, text search assigns a score, representing the relevance of a document to the specified text search query filter. To return and sort by score, use the <a href="http://docs.mongodb.org/manual/reference/operator/query/text/#sort-by-text-search-score
+"><code>$meta</code></a> operator in the projection document and the sort expression.</p>
+
+<pre><code class="language-java">collection.find(Filters.text(&quot;bakery cafe&quot;))
+                       .projection(Projections.metaTextScore(&quot;score&quot;))
+                       .sort(Sorts.metaTextScore(&quot;score&quot;))
+          .forEach(printBlock, new SingleResultCallback&lt;Void&gt;() {
+              @Override
+              public void onResult(final Void result, final Throwable t) {
+                  System.out.println(&quot;Operation Finished!&quot;);
+              }
+          });
+</code></pre>
+
+<h3 id="specify-a-text-search-option">Specify a Text Search Option</h3>
+
+<p>The  <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/Filters.html#text-java.lang.String-com.mongodb.client.model.TextSearchOptions-
+"><code>Filters.text()</code></a> helper can accept various <a href="http://docs.mongodb.org/manual/reference/operator/query/text
+">text search options</a>. The Java driver provides <a href="/mongo-java-driver/3.4/javadoc?com/mongodb/client/model/TextSearchOptions.html
+"><code>TextSearchOptions</code></a> class to specify these options.</p>
+
+<p>For example, the following text search specifies the <a href="http://docs.mongodb.org/manual/reference/text-search-languages
+">text search language</a> option when performing text search for the word <code>cafe</code>:</p>
+
+<pre><code class="language-java">collection.count(Filters.text(&quot;cafe&quot;,
+      new TextSearchOptions().language(&quot;english&quot;)),
+      new SingleResultCallback&lt;Long&gt;()  {
+            @Override
+            public void onResult(final Long count, final Throwable t) {
+                System.out.println(&quot;Text search matches: &quot; +count);
+            }
+});
+</code></pre>
+
+<p>The example should print the following output:</p>
+
+<pre><code class="language-json">Text search matches: 1
+</code></pre>
+
+<p>For more information about text search see the following sections in the MongoDB Server Manual:</p>
+
+<ul>
+<li><p><a href="http://docs.mongodb.org/manual//reference/operator/query/text
+"><code>$text</code> query operator</a></p></li>
+
+<li><p><a href="http://docs.mongodb.org/manual//core/index-text
+"><code>text</code> index</a></p></li>
+
+<li><p><a href="http://docs.mongodb.org/manual/reference/text-search-languages
+">Text Search Languages</a></p></li>
+</ul>
+
+
+
+
+
+
+<div id="btnv">
+  
+  <div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.4/driver-async/tutorials/aggregation/">
+      <i class="fa fa-long-arrow-left"> </i> Aggregation
+  </a>
+  </div>
+  
+  
+  <div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.4/driver-async/tutorials/geospatial-search/">
+    Geospatial Search <i class="fa fa-long-arrow-right"> </i>
+  </a>
+  
+</div>
+</div>
+
+
+</div>
+<div class="right-column">
+<div class="wrapper">
+  
+  <div class="toc">
+    <span class="toc-header">On this page</span>
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#text-search">Text Search</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#connect-to-a-mongodb-deployment">Connect to a MongoDB Deployment</a></li>
+<li><a href="#create-the-text-index">Create the <code>text</code> Index</a></li>
+<li><a href="#perform-text-search">Perform Text Search</a>
+<ul>
+<li><a href="#text-score">Text Score</a></li>
+<li><a href="#specify-a-text-search-option">Specify a Text Search Option</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+  
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.4",
+   VERSION:     "3.4",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.4/js/java.js"></script>
+
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+
+</body>
+</html>
+

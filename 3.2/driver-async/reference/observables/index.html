@@ -1,0 +1,2874 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+
+    <link rel="shortcut icon" href="/mongo-java-driver/3.2/img/favicon.png">
+
+    <title>Observables</title>
+
+    <link rel="stylesheet" href="/mongo-java-driver/3.2/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.2/css/java.css" type="text/css" />
+
+
+  </head>
+
+  <body>
+  
+  <section id="container" class="">
+      
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.2/../">
+        <img src="/mongo-java-driver/3.2/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.2">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+      
+
+      
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.2/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.2">3.2</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu">
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+    
+    
+    
+      
+      
+      
+        
+      
+    
+    
+  
+  
+
+
+        
+      
+    
+    
+  
+
+
+        
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+
+          
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.2/whats-new/" class="">
+      <i class='fa fa-cog'></i>
+      <span>What&#39;s New</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/whats-new/upgrading/">
+        <i class='fa fa-wrench'></i>
+        Upgrading to 3.2
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.2/driver/" class="">
+      <i class='fa fa-arrows-h'></i>
+      <span>MongoDB Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.2/driver/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.2/driver/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.2/driver/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver/reference/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.2/driver/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l1  current">
+  <a href="/mongo-java-driver/3.2/driver-async/" class="">
+      <i class='fa fa-refresh'></i>
+      <span>MongoDB Async Driver</span>
+      <span class="menu-arrow fa fa-angle-down"></span>
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.2/driver-async/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-async/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-async/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-async/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l2  current">
+  <a href="/mongo-java-driver/3.2/driver-async/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.2/driver-async/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.2/driver-async/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.2/driver-async/reference/observables/">
+        <i class='fa'></i>
+        Observables
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.2/bson/" class="">
+      <i class='fa fa-th'></i>
+      <span>BSON</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/documents/">
+        <i class='fa'></i>
+        Documents
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/readers-and-writers/">
+        <i class='fa'></i>
+        Readers and Writers
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/codecs/">
+        <i class='fa'></i>
+        Codec and CodecRegistry
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/extended-json/">
+        <i class='fa'></i>
+        Extended JSON
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/bson/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.2/builders/" class="">
+      <i class='fa fa-wrench'></i>
+      <span>Builders</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/filters/">
+        <i class='fa'></i>
+        Filters
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/projections/">
+        <i class='fa'></i>
+        Projections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/sorts/">
+        <i class='fa'></i>
+        Sort Criteria  
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/updates/">
+        <i class='fa'></i>
+        Updates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.2/builders/indexes/">
+        <i class='fa'></i>
+        Indexes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="http://api.mongodb.org/java/3.2">
+        <i class='fa fa-file-text-o'></i>
+        API Documentation
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master">
+        <i class='fa fa-github'></i>
+        Source Code
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.2/issues-help/">
+        <i class='fa fa-life-ring'></i>
+        Issues &amp; Help
+    </a>
+  </li>
+
+
+          
+        </ul>
+        
+    </div>
+  </div>
+  
+</aside>
+
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+
+
+      
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+
+
+   
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-async/reference/observables.md" target="_blank" title="Edit driver-async/reference/observables.md on GitHub"><i class="fa fa-pencil-square-o"></i></a>
+
+
+
+
+
+
+
+
+
+
+<div class="bc">
+<ul>
+  
+  
+  
+  
+  <li><a href="/mongo-java-driver/3.2/driver-async/">MongoDB Async Driver</a> <i class="fa fa-angle-right"></i></li>
+  <li><a href="/mongo-java-driver/3.2/driver-async/reference/">Reference</a> <i class="fa fa-angle-right"></i></li>
+  <li>Observables</li>
+</ul>
+</div>
+
+
+
+
+<h2 id="observables">Observables</h2>
+
+<p>The MongoDB Async Driver is fully callback based and makes extensive use of <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/SingleResultCallback.html
+"><code>SingleResultCallback&lt;T&gt;</code></a> to achieve this. The <code>SingleResultCallback&lt;T&gt;</code> interface requires the implementation of a single method <code>onResult(T result, Throwable t)</code> which is called once the operation has completed or errored. The <code>result</code> parameter contains the result of the operation if successful. If the operation failed for any reason then the <code>t</code> contains the <code>Throwable</code> reason for the failure. This pattern allows the users application logic to be deferred until the underlying network IO to MongoDB has been completed.</p>
+
+<p>The callback pattern is extremely flexible but can quickly become unwieldy if the application logic requires a chain of operations. Nesting of callbacks can make code harder to read and give the appearance of making the codebase more complex that it actually is. To help with this we also have released two observable based asynchronous drivers:</p>
+
+<ol>
+<li><a href="http://mongodb.github.io/mongo-java-driver-reactivestreams/">MongoDB Reactive Streams Driver</a></li>
+<li><a href="http://mongodb.github.io/mongo-java-driver-rx/">MongoDB RxJava Driver</a></li>
+</ol>
+
+<p>These observable drivers follow similar patterns that split the logic into <code>onNext</code>, <code>onError</code> and <code>onComplete(d)</code> methods. These methods split out the logic used by <code>SingleResultCallback&lt;T&gt;.onResult(T result, Throwable t)</code> into individual components that can make the code  easier to reason with.</p>
+
+<p>The MongoDB Async Driver provides a factory and interfaces that do the heavy lifting of converting callback based operations into an observable operations.  There are three interfaces <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observable.html
+"><code>Observable</code></a>, <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Subscription.html
+"><code>Subscription</code></a> and <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observer.html
+"><code>Observer</code></a>. The <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observables.html
+"><code>Observables</code></a> helpers convert any callback based operations into observable operations.</p>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The interfaces are similar to <code>Publisher</code>, <code>Subscription</code> and <code>Subscriber</code> interfaces from the <a href="http://www.reactive-streams.org/">reactive streams</a> JVM implementation.  However, we prefer the name <code>Observerable</code> to <code>Publisher</code> and <code>Observer</code> to <code>Subscriber</code> for readability purposes.</p>
+
+</div>
+</p>
+
+<h2 id="observable">Observable</h2>
+
+<p>The <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observable.html
+"><code>Observable</code></a> represents a MongoDB operation which emits its results to the <code>Observer</code> based on demand requested by the <code>Subscription</code> to the <code>Observable</code>.</p>
+
+<h2 id="subscription">Subscription</h2>
+
+<p>A <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Subscription.html
+"><code>Subscription</code></a> represents a one-to-one lifecycle of an <code>Observer</code> subscribing to an <code>Observable</code>.  A <code>Subscription</code> to an <code>Observable</code> can only be used by a single <code>Observer</code>.  The purpose of a <code>Subscription</code> is to control demand and to allow unsubscribing from the <code>Observable</code>.</p>
+
+<h2 id="observer">Observer</h2>
+
+<p>An <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observer.html
+"><code>Observer</code></a> provides the mechanism for receiving push-based notifications from the <code>Observable</code>.  Demand for these events is signalled by its <code>Subscription</code>. On subscription to an <code>Observable</code> the <code>Observer</code> will be passed the <code>Subscription</code> via the <code>onSubscribe(Subscription subscription)</code>.
+Demand for results is signaled via the <code>Subscription</code> and any results are passed to the <code>onNext(TResult result)</code> method.  If there is an error for any reason the <code>onError(Throwable e)</code> will be called and no more events passed to the <code>Observer</code>. Alternatively, when the <code>Observer</code> has consumed all the results from the <code>Observable</code> the <code>onComplete()</code> method will be called.</p>
+
+<h2 id="wrapping-a-mongoiterable">Wrapping a MongoIterable</h2>
+
+<p>With the <a href="http://api.mongodb.org/java/3.2/?com/mongodb/async/client/Observables.html
+"><code>Observables</code></a> factory creating an <code>Observable</code> from a <code>MongoIterable</code> is simple.</p>
+
+<p>In the following example we iterate and print out all json forms of documents in a collection:</p>
+
+<pre><code class="language-java">    Observables.observe(collection.find()).subscribe(new Observer&lt;Document&gt;(){
+        @Override
+        void onSubscribe(final Subscription subscription) {
+            System.out.println(&quot;Subscribed and requesting all documents&quot;);
+            subscription.request(Long.MAX_VALUE);
+        }
+
+        @Override
+        void onNext(final Document document) {
+            System.out.println(document.toJson());
+        }
+
+        @Override
+        void onError(final Throwable e) {
+            System.out.println(&quot;There was an error: &quot; + e.getMessage());
+        }
+
+        @Override
+        void onComplete() {
+            System.out.println(&quot;Finished iterating all documents&quot;);
+        }
+    });
+</code></pre>
+
+<h2 id="wrapping-a-callback-based-method">Wrapping a callback based method</h2>
+
+<p>Creating an <code>Observable</code> from any callback based methods requires the wrapping of the method inside a <a href="http://api.mongodb.org/java/3.2/?com/mongodb/Block.html
+"><code>Block</code></a>. This allows the execution of the operation to be delayed, until demand is request by the <code>Subscription</code>.  The method <em>must</em> use the supplied callback to convert the results into an <code>Observable</code>.</p>
+
+<p>In the following example we print out the count of the number of documents in a collection:</p>
+
+<pre><code class="language-java">    Block&lt;SingleResultCallback&lt;Long&gt;&gt; operation = new Block&lt;SingleResultCallback&lt;Long&gt;&gt;() {
+        @Override
+        void apply(final SingleResultCallback&lt;Long&gt; callback) {
+            collection.count(callback);
+        }
+    };
+
+    // Or in Java 8 syntax:
+    operation = (Block&lt;SingleResultCallback&lt;Long&gt;&gt;) collection::count;
+
+    Observables.observe(operation).subscribe(new Observer&lt;Long&gt;(){
+        @Override
+        void onSubscribe(final Subscription subscription) {
+            System.out.println(&quot;Subscribed and requesting the count&quot;);
+            subscription.request(1);
+        }
+
+        @Override
+        void onNext(final Long count) {
+            System.out.println(&quot;The collection has &quot; + count + &quot; documents&quot;);
+        }
+
+        @Override
+        void onError(final Throwable e) {
+            System.out.println(&quot;There was an error: &quot; + e.getMessage());
+        }
+
+        @Override
+        void onComplete() {
+            System.out.println(&quot;Finished&quot;);
+        }
+    });
+</code></pre>
+
+<h2 id="back-pressure">Back Pressure</h2>
+
+<p>In the following example, the <code>Subscription</code> is used to control demand when iterating an <code>Observable</code>. This is similar in concept to the <code>MongoIterable.forEach</code> method but allows demand-driven iteration:</p>
+
+<pre><code class="language-java"> Observables.observe(collection.find()).subscribe(new Observer&lt;Document&gt;(){
+        private long batchSize = 10;
+        private long seen = 0;
+        private Subscription subscription;
+
+         @Override
+         void onSubscribe(final Subscription subscription) {
+             this.subscription = subscription;
+             subscription.request(batchSize);
+         }
+
+         @Override
+         void onNext(final Document document) {
+             System.out.println(document.toJson());
+             seen += 1;
+             if (seen == batchSize) {
+                seen = 0;
+                subscription.request(batchSize);
+             }
+         }
+
+         @Override
+         void onError(final Throwable e) {
+             System.out.println(&quot;There was an error: &quot; + e.getMessage());
+         }
+
+         @Override
+         void onComplete() {
+             System.out.println(&quot;Finished iterating all documents&quot;);
+         }
+     });
+</code></pre>
+
+
+
+
+
+
+<div id="btnv">
+  
+  <div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.2/driver-async/reference/management/">
+      <i class="fa fa-long-arrow-left"> </i> Management
+  </a>
+  </div>
+  
+  
+</div>
+</div>
+
+
+</div>
+<div class="right-column">
+<div class="wrapper">
+  
+  <div class="toc">
+    <span class="toc-header">On this page</span>
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#observables">Observables</a></li>
+<li><a href="#observable">Observable</a></li>
+<li><a href="#subscription">Subscription</a></li>
+<li><a href="#observer">Observer</a></li>
+<li><a href="#wrapping-a-mongoiterable">Wrapping a MongoIterable</a></li>
+<li><a href="#wrapping-a-callback-based-method">Wrapping a callback based method</a></li>
+<li><a href="#back-pressure">Back Pressure</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+  
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.2",
+   VERSION:     "3.2",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.2/js/java.js"></script>
+
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+
+</body>
+</html>
+

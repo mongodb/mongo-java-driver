@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+<link rel="shortcut icon" href="/mongo-java-driver//s/img/favicon.png">
+
+    <title>MongoDB Java Driver</title><link rel="stylesheet" href="/mongo-java-driver//s/lib/bootstrap.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver//s/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver//s/lib/highlight/styles/vs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver//s/lib/bootstrap-select/bootstrap-select.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver//s/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver//s/css/frontpage.css" type="text/css" />
+</head>
+
+  <body>
+  <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/">
+        <img src="/mongo-java-driver//s/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right hidden-xs">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+</div>
+</div>
+
+  </div>
+</header>
+<div id="hero" class="jumbotron">
+  <div class="container">
+  <div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-6">
+      <h2>MongoDB Java Driver</h2>
+      <p>
+        The next generation Java driver for MongoDB
+      </p>
+      <p><a href="./3.9" class="btn btn-success btn-dark btn-mongo">Latest documentation</a>
+      </p>
+
+    </div>
+    <div class="col-md-2" id="mongodbJVMlogo"></div>
+  </div>
+  </div>
+</div>
+
+  <div class="container" id="mainContent">
+    <div class="row">
+      <div class="col-md-8"><h2>Introduction</h2>
+
+<p>
+  The official MongoDB Java Driver providing both synchronous and asynchronous interaction with MongoDB.
+  Powering the drivers is a new driver core and BSON library.
+</p>
+<h2>Features</h2>
+
+<dl>
+  <dt>BSON Library</dt>
+  <dd>A standalone BSON library, with a new Codec infrastructure that you can
+    use to build high-performance encoders and decoders without requiring an
+    intermediate Map instance.</dd>
+  <dt>MongoDB Driver</dt>
+  <dd>An updated Java driver that includes the legacy API as well as a new generic MongoCollection interface that complies with a new cross-driver CRUD specification.</dd>
+  <dt>MongoDB Async Driver</dt>
+  <dd>A new asynchronous API that can leverage either Netty or Java 7's AsynchronousSocketChannel for fast and non-blocking IO.</dd>
+  <dt>Core driver</dt>
+  <dd>The MongoDB Driver and Async Driver are both built on top of a new core library, which anyone can use to build alternative or experimental high-level APIs.</dd>
+</dl>
+<h2 id="quickStart">Quick Start</h2>
+
+<p>
+  The recommended way to get started using one of the drivers in your project is with a dependency management system.
+  Select the driver, version and dependency management system below and the snippet can be copied and pasted into your build.
+</p>
+<p>
+  Alternatively, head over to our documentation to learn more about getting started with Java and MongoDB.
+</p><div id="downloadWidget">
+  <div class="container">
+    <div class="row downloadForm">
+      <form>
+        <div class="col-xs-5 col-lg-4 col-lg-push-2 "><select class="driverPicker"><option value="0" data-versions="3.9.1,3.8.2,3.7.1">mongodb-driver-sync</option><option value="1" data-versions="3.9.1">mongodb-driver-legacy</option><option value="2" data-versions="3.9.1,3.8.2,3.7.1,3.6.4,3.5.0,3.4.3,3.3.0,3.2.2,3.1.1,3.0.4">mongodb-driver-async</option></select></div>
+    <div class="col-xs-5 col-lg-4 col-lg-push-2 "><select class="releasePicker"><option value="0" selected>3.9.1</option><option value="1" >3.8.2</option><option value="2" >3.7.1</option><option value="3" disabled="disabled">3.6.4</option><option value="4" disabled="disabled">3.5.0</option><option value="5" disabled="disabled">3.4.3</option><option value="6" disabled="disabled">3.3.0</option><option value="7" disabled="disabled">3.2.2</option><option value="8" disabled="disabled">3.1.1</option><option value="9" disabled="disabled">3.0.4</option><option value="10" disabled="disabled">2.14.2</option><option value="11" disabled="disabled">2.13.3</option></select></div>
+    <div class="col-lg-2 col-lg-push-2 ">
+    <input type="checkbox" checked class="distroPicker" data-toggle="toggle" data-on="Maven" data-off="Gradle" data-offstyle="success">
+    </div>
+  </form>
+  <div class="hidden-md hidden-sm hidden-xs col-lg-2 col-lg-pull-10 downloadLink">
+  <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/3.9.1/"
+     id="downloadLink" class="btn btn-dark btn-download" target="_blank">Download</a>
+  </div>
+  </div>
+
+
+  <div class="row">
+  <div class="clipboard" title="copy">
+  <button class="btn btn-dark"><i class="fa fa-clipboard fa-2"></i></button>
+  </div><div id="maven-0-0" class="download ">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-sync&lt;/artifactId&gt;
+        &lt;version&gt;3.9.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-0-0" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-sync:3.9.1'
+  }
+
+
+</code></pre>
+</div><div id="maven-1-0" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-sync&lt;/artifactId&gt;
+        &lt;version&gt;3.8.2&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-1-0" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-sync:3.8.2'
+  }
+
+
+</code></pre>
+</div><div id="maven-2-0" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-sync&lt;/artifactId&gt;
+        &lt;version&gt;3.7.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-2-0" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-sync:3.7.1'
+  }
+
+
+</code></pre>
+</div><div id="driver-0" class="download description">The synchronous driver, new in 3.7.</div><div id="maven-0-1" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-legacy&lt;/artifactId&gt;
+        &lt;version&gt;3.9.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-0-1" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-legacy:3.9.1'
+  }
+
+
+</code></pre>
+</div><div id="driver-1" class="download description hidden">The legacy API for the synchronous driver.<br/>Prefer mongodb-driver-sync for new applications</div><div id="maven-0-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.9.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-0-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.9.1'
+  }
+
+
+</code></pre>
+</div><div id="maven-1-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.8.2&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-1-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.8.2'
+  }
+
+
+</code></pre>
+</div><div id="maven-2-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.7.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-2-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.7.1'
+  }
+
+
+</code></pre>
+</div><div id="maven-3-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.6.4&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-3-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.6.4'
+  }
+
+
+</code></pre>
+</div><div id="maven-4-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.5.0&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-4-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.5.0'
+  }
+
+
+</code></pre>
+</div><div id="maven-5-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.4.3&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-5-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.4.3'
+  }
+
+
+</code></pre>
+</div><div id="maven-6-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.3.0&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-6-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.3.0'
+  }
+
+
+</code></pre>
+</div><div id="maven-7-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.2.2&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-7-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.2.2'
+  }
+
+
+</code></pre>
+</div><div id="maven-8-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.1.1&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-8-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.1.1'
+  }
+
+
+</code></pre>
+</div><div id="maven-9-2" class="download  hidden">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;mongodb-driver-async&lt;/artifactId&gt;
+        &lt;version&gt;3.0.4&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-9-2" class="download hidden">
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.0.4'
+  }
+
+
+</code></pre>
+</div><div id="driver-2" class="download description hidden">The callback-based asynchronous driver.<br/>Prefer the Reactive Streams driver for new applications.</div></div>
+    </div>
+  </div>
+</div>
+      <div class="col-md-4"><section id="releases">
+  <h2>Releases</h2>
+  <table class="table table-striped">
+    <thead><tr><th>Release</th><th>Documentation</th></tr></thead>
+    <tbody><tr>
+        <th class="current">3.9.1</th>
+        <td><a href="./3.9" class="reference">Reference</a> &#124; <a href="./3.9/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.8.2</th>
+        <td><a href="./3.8" class="reference">Reference</a> &#124; <a href="./3.8/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.7.1</th>
+        <td><a href="./3.7" class="reference">Reference</a> &#124; <a href="./3.7/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.6.4</th>
+        <td><a href="./3.6" class="reference">Reference</a> &#124; <a href="./3.6/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.5.0</th>
+        <td><a href="./3.5" class="reference">Reference</a> &#124; <a href="./3.5/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.4.3</th>
+        <td><a href="./3.4" class="reference">Reference</a> &#124; <a href="./3.4/javadoc">API</a></td>
+      </tr><tr>
+        <th class="">3.3.0</th>
+        <td><a href="./3.3" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/3.3">API</a></td>
+      </tr><tr>
+        <th class="">3.2.2</th>
+        <td><a href="./3.2" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/3.2">API</a></td>
+      </tr><tr>
+        <th class="">3.1.1</th>
+        <td><a href="./3.1" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/3.1">API</a></td>
+      </tr><tr>
+        <th class="">3.0.4</th>
+        <td><a href="./3.0" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/3.0">API</a></td>
+      </tr><tr>
+        <th class="">2.14.2</th>
+        <td><a href="./2.14" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/2.14">API</a></td>
+      </tr><tr>
+        <th class="">2.13.3</th>
+        <td><a href="./2.13" class="reference">Reference</a> &#124; <a href="http://api.mongodb.com/java/2.13">API</a></td>
+      </tr></tbody>
+  </table>
+</section><section id="universityPromo">
+<h3><span>MongoDB University</span></h3>
+
+<h4>M101J: MongoDB for Java Developers</h4>
+<p>Learn everything you need to know to get started building a MongoDB-based app. From basic installation, JSON, schema design, querying, insertion of data, indexing and working with the Java driver.
+</p>
+<p>
+<a href="https://university.mongodb.com/courses/M101J/about" target="_blank" class="btn btn-success btn-mongo">Learn More</a>
+</p>
+</section>
+</div>
+    </div>
+  </div>
+  
+
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12"><div class="footer">
+  <div class="copyright">
+    <p>Copyright © 2008-present <a class="smalltext" href="http://www.mongodb.com">MongoDB, Inc</a>.
+       MongoDB, Mongo, and the leaf logo are registered trademarks of MongoDB, Inc.
+    </p>
+  </div>
+</div>
+</div>
+    </div>
+  </div>
+  
+
+
+<script type="text/javascript" src="/mongo-java-driver//s/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/lib/bootstrap-select/bootstrap-select.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/lib/zeroclipboard/ZeroClipboard.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver//s/js/frontpage.js"></script>
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+</body>
+</html>

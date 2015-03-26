@@ -1,0 +1,3355 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+
+    <link rel="shortcut icon" href="/mongo-java-driver/3.3/img/favicon.png">
+
+    <title>Updates</title>
+
+    <link rel="stylesheet" href="/mongo-java-driver/3.3/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/java.css" type="text/css" />
+
+
+  </head>
+
+  <body>
+  
+  <section id="container" class="">
+      
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.3/../">
+        <img src="/mongo-java-driver/3.3/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.3">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+      
+
+      
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.3/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.3">3.3</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu">
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+    
+    
+    
+      
+    
+  
+  
+
+
+        
+      
+    
+      
+      
+        
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+
+          
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/whats-new/" class="">
+      <i class='fa fa-cog'></i>
+      <span>What&#39;s New</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/whats-new/upgrading/">
+        <i class='fa fa-wrench'></i>
+        Upgrading to 3.3
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/driver/" class="">
+      <i class='fa fa-arrows-h'></i>
+      <span>MongoDB Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/jndi/">
+        <i class='fa'></i>
+        JNDI
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/reference/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/driver-async/" class="">
+      <i class='fa fa-refresh'></i>
+      <span>MongoDB Async Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver-async/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/observables/">
+        <i class='fa'></i>
+        Observables
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/bson/" class="">
+      <i class='fa fa-th'></i>
+      <span>BSON</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/documents/">
+        <i class='fa'></i>
+        Documents
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/readers-and-writers/">
+        <i class='fa'></i>
+        Readers and Writers
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/codecs/">
+        <i class='fa'></i>
+        Codec and CodecRegistry
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/extended-json/">
+        <i class='fa'></i>
+        Extended JSON
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l1  current">
+  <a href="/mongo-java-driver/3.3/builders/" class="">
+      <i class='fa fa-wrench'></i>
+      <span>Builders</span>
+      <span class="menu-arrow fa fa-angle-down"></span>
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/filters/">
+        <i class='fa'></i>
+        Filters
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/projections/">
+        <i class='fa'></i>
+        Projections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/sorts/">
+        <i class='fa'></i>
+        Sort Criteria  
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/updates/">
+        <i class='fa'></i>
+        Updates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/indexes/">
+        <i class='fa'></i>
+        Indexes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="http://api.mongodb.com/java/3.3">
+        <i class='fa fa-file-text-o'></i>
+        API Documentation
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master">
+        <i class='fa fa-github'></i>
+        Source Code
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.3/issues-help/">
+        <i class='fa fa-life-ring'></i>
+        Issues &amp; Help
+    </a>
+  </li>
+
+
+          
+        </ul>
+        
+    </div>
+  </div>
+  
+</aside>
+
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+
+
+      
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+
+
+   
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/builders/updates.md" target="_blank" title="Edit builders/updates.md on GitHub"><i class="fa fa-pencil-square-o"></i></a>
+
+
+
+
+
+
+
+
+
+
+<div class="bc">
+<ul>
+  
+  
+  
+  
+  
+  <li><a href="/mongo-java-driver/3.3/builders/">Builders</a> <i class="fa fa-angle-right"></i></li>
+  <li>Updates</li>
+</ul>
+</div>
+
+
+
+
+<h2 id="updates">Updates</h2>
+
+<p>The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/client/model/Updates.html
+"><code>Updates</code></a> class provides static factory methods for all the MongoDB update
+operators.  Each method returns an instance of the <a href="/mongo-java-driver/3.3/bson/documents/#bson"><code>Bson</code></a> type, which can in turn be passed to
+any method that expects an update.</p>
+
+<p>For brevity, you may choose to import the methods of the <code>Updates</code> class statically:</p>
+
+<pre><code class="language-java">import com.mongodb.client.model.Updates.*;
+</code></pre>
+
+<p>All the examples below assume this static import.</p>
+
+<h3 id="field-updates">Field Updates</h3>
+
+<p>This section describes update operators that apply to the value of an entire field.</p>
+
+<h4 id="set">Set</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/set/
+"><code>$set</code></a> update operator sets the value of a field to to the specified value.</p>
+
+<p>This example sets the value of the <code>quantity</code> field to <code>11</code>:</p>
+
+<pre><code class="language-java">set(&quot;quantity&quot;, 11)
+</code></pre>
+
+<h4 id="unset">Unset</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/unset/
+"><code>$unset</code></a> update operator deletes the field with the given name.</p>
+
+<p>This example deletes the <code>quantity</code> field:</p>
+
+<pre><code class="language-java">unset(&quot;quantity&quot;)
+</code></pre>
+
+<h4 id="set-on-insert">Set On Insert</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/setOnInsert/
+"><code>$setOnInsert</code></a> update operator sets the value of a field to the given
+value, but only if the update is an
+<a href="http://docs.mongodb.org/manual/tutorial/modify-documents/#specify-upsert-true-for-the-update-specific-fields-operation
+">upsert</a> that results in an
+insert of a document.</p>
+
+<p>This example sets the value of the <code>defaultQuantity</code> field to <code>10</code> if an upsert resulted in the insert of a document:</p>
+
+<pre><code class="language-java">setOnInsert(&quot;defaultQuantity&quot;, 10)
+</code></pre>
+
+<h4 id="increment">Increment</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/inc/
+"><code>$inc</code></a> update operator increments the value of a numeric field by a specified
+value.</p>
+
+<p>This example increments the value of the <code>quantity</code> field by <code>5</code>:</p>
+
+<pre><code class="language-java">inc(&quot;quantity&quot;, 5)
+</code></pre>
+
+<h4 id="multiply">Multiply</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/mul/
+"><code>$mul</code></a> update operator multiplies the value of a numeric field by a specified value.</p>
+
+<p>This example multiplies the value of the <code>price</code> field by <code>1.2</code>:</p>
+
+<pre><code class="language-java">mul(&quot;price&quot;, 1.2)
+</code></pre>
+
+<h4 id="rename">Rename</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/rename/
+"><code>$rename</code></a> update operator renames a field.</p>
+
+<p>This example renames the <code>qty</code> field to <code>quantity</code>:</p>
+
+<pre><code class="language-java">rename(&quot;qty&quot;, &quot;quantity&quot;)
+</code></pre>
+
+<h4 id="min">Min</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/min/
+"><code>$min</code></a> update operator updates the value of the field to a specified value <em>if</em> the
+specified value is less than the current value of the field .</p>
+
+<p>This example sets the value of the <code>lowScore</code> field to the minimum of its current value and 150:</p>
+
+<pre><code class="language-java">min(&quot;lowScore&quot;, 150)
+</code></pre>
+
+<h4 id="max">Max</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/max/
+"><code>$max</code></a> update operator updates the value of the field to a specified value <em>if</em>
+the specified value is greater than the current value of the field .</p>
+
+<p>This example sets the value of the <code>highScore</code> field to the maximum of its current value and 900:</p>
+
+<pre><code class="language-java">max(&quot;highScore&quot;, 900)
+</code></pre>
+
+<h4 id="current-date">Current Date</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/currentDate/
+"><code>$currentDate</code></a> update operator sets the value of the field with the
+specified name to the current date, either as a BSON <a href="http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-date
+">date</a> or as a BSON
+<a href="http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-timestamp
+">timestamp</a>.</p>
+
+<p>This example sets the value of the <code>lastModified</code> field to the current date as a BSON date type:</p>
+
+<pre><code class="language-java">currentDate(&quot;lastModified&quot;)
+</code></pre>
+
+<p>This example sets the value of the <code>lastModified</code> field to the current date as a BSON timestamp type:</p>
+
+<pre><code class="language-java">currentTimestamp(&quot;lastModified&quot;)
+</code></pre>
+
+<h4 id="bit">Bit</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/bit/
+"><code>$bit</code></a> update operator performs a bitwise update of the integral value of a field.</p>
+
+<p>This example performs a bitwise AND between the number <code>10</code> and the integral value of the <code>mask</code> field:</p>
+
+<pre><code class="language-java">bitwiseAnd(&quot;mask&quot;, 10)
+</code></pre>
+
+<p>This example performs a bitwise OR between the number <code>10</code> and the integral value of the <code>mask</code> field:</p>
+
+<pre><code class="language-java">bitwiseOr(&quot;mask&quot;, 10)
+</code></pre>
+
+<p>This example performs a bitwise XOR between the number <code>10</code> and the integral value of the <code>mask</code> field:</p>
+
+<pre><code class="language-java">bitwiseXor(&quot;mask&quot;, 10)
+</code></pre>
+
+<h3 id="array-updates">Array Updates</h3>
+
+<p>This section describes update operators that apply to the contents of the array value of a field.</p>
+
+<h4 id="add-to-set">Add to Set</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/addToSet/
+"><code>$addToSet</code></a> update operator adds a value to an array unless the value is
+already present, in which case $addToSet does nothing to that array.</p>
+
+<p>This example adds the value <code>&quot;a&quot;</code> to the array value of the `letters&rsquo; field:</p>
+
+<pre><code class="language-java">addToSet(&quot;letters&quot;, &quot;a&quot;)
+</code></pre>
+
+<p>This example adds each of the values <code>&quot;a&quot;</code>, <code>&quot;b&quot;</code>, and <code>&quot;c&quot;</code> to the array value of the `letters&rsquo; field:</p>
+
+<pre><code class="language-java">addEachToSet(&quot;letters&quot;, Arrays.asList(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))
+</code></pre>
+
+<h4 id="pop">Pop</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pop/
+"><code>$pop</code></a> update operator removes the first or last element of an array.</p>
+
+<p>This example pops the first element off of the array value of the <code>scores</code> field:</p>
+
+<pre><code class="language-java">popFirst(&quot;scores&quot;)
+</code></pre>
+
+<p>This example pops the last element off of the array value of the <code>scores</code> field:</p>
+
+<pre><code class="language-java">popLast(&quot;scores&quot;)
+</code></pre>
+
+<h4 id="pull-all">Pull All</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pullAll/
+"><code>$pullAll</code></a> update operator removes all instances of the specified values from
+an existing array.</p>
+
+<p>This example removes the scores <code>0</code> and <code>5</code> from the <code>scores</code> array:</p>
+
+<pre><code class="language-java">pullAll(&quot;scores&quot;, Arrays.asList(0, 5))
+</code></pre>
+
+<h4 id="pull">Pull</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/pull/
+"><code>$pull</code></a> update operator removes from an existing array all instances of a value
+or values that match a specified query.</p>
+
+<p>This example removes the value <code>0</code> from the <code>scores</code> array:</p>
+
+<pre><code class="language-java">pull(&quot;scores&quot;, 0)
+</code></pre>
+
+<p>This example removes all elements from the <code>votes</code> array that are greater than or equal to <code>6</code>:</p>
+
+<pre><code class="language-java">pullByFilter(Filters.gte(&quot;votes&quot;, 6))
+</code></pre>
+
+<h4 id="push">Push</h4>
+
+<p>The <a href="http://docs.mongodb.org/manual/reference/operator/update/push/
+"><code>$push</code></a> update operator appends a specified value to an array.</p>
+
+<p>This examples pushes the value <code>89</code> to the <code>scores</code> array:</p>
+
+<pre><code class="language-java">push(&quot;scores&quot;, 89)
+</code></pre>
+
+<p>This examples pushes each of the values <code>89</code>, <code>90</code>, and <code>92</code> to the <code>scores</code> array:</p>
+
+<pre><code class="language-java">pushEach(&quot;scores&quot;, Arrays.asList(89, 90, 92))
+</code></pre>
+
+<p>This example pushes each of the values <code>89</code>, <code>90</code>, and <code>92</code> to the start of the <code>scores</code> array:</p>
+
+<pre><code class="language-java">pushEach(&quot;scores&quot;, Arrays.asList(89, 90, 92), new PushOptions().position(0))
+</code></pre>
+
+<p>This example pushes each of the values <code>89</code>, <code>90</code>, and <code>92</code> to the <code>scores</code> array, sorts the array in descending order, and removes all
+but the first 5 elements of the array:</p>
+
+<pre><code class="language-java">pushEach(&quot;scores&quot;, Arrays.asList(89, 90, 92), new PushOptions().sort(-1).slice(5))
+</code></pre>
+
+<p>This example pushes each of the documents <code>{ wk: 5, score: 8 }</code>, <code>{ wk: 6, score: 7 }</code>, and <code>{ wk: 7, score: 6 }</code> to the <code>quizzes</code> array,
+sorts the array in descending order by <code>score</code>, and removes all but the last 3 elements of the array:</p>
+
+<pre><code class="language-java">pushEach(&quot;quizzes&quot;,
+                 Arrays.asList(new Document(&quot;week&quot;, 5).append(&quot;score&quot;, 8),
+                               new Document(&quot;week&quot;, 6).append(&quot;score&quot;, 7),
+                               new Document(&quot;week&quot;, 7).append(&quot;score&quot;, 6)),
+                 new PushOptions().sortDocument(Sorts.descending(&quot;score&quot;)).slice(-3))
+</code></pre>
+
+<h3 id="combining-multiple-update-operators">Combining Multiple Update Operators</h3>
+
+<p>Often, an application will need to atomically update multiple fields of a single document by combine two or more of the update operators
+described above.</p>
+
+<p>This example sets the value of the <code>quantity</code> field to 11, the value of the <code>total</code> field to <code>30.40</code>, and pushes each of the values
+<code>4.99</code>, <code>5.99</code>, and <code>10.99</code> to the array value of the <code>prices</code> field:</p>
+
+<pre><code class="language-java">combine(set(&quot;quantity&quot;, 11), 
+        set(&quot;total&quot;, 30.40),
+        pushEach(&quot;prices&quot;, Arrays.asList(4.99, 5.99, 10.99)))
+</code></pre>
+
+
+
+
+
+
+<div id="btnv">
+  
+  <div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.3/builders/aggregation/">
+      <i class="fa fa-long-arrow-left"> </i> Aggregation
+  </a>
+  </div>
+  
+  
+  <div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.3/builders/indexes/">
+    Indexes <i class="fa fa-long-arrow-right"> </i>
+  </a>
+  
+</div>
+</div>
+
+
+</div>
+<div class="right-column">
+<div class="wrapper">
+  
+  <div class="toc">
+    <span class="toc-header">On this page</span>
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#updates">Updates</a>
+<ul>
+<li><a href="#field-updates">Field Updates</a>
+<ul>
+<li><a href="#set">Set</a></li>
+<li><a href="#unset">Unset</a></li>
+<li><a href="#set-on-insert">Set On Insert</a></li>
+<li><a href="#increment">Increment</a></li>
+<li><a href="#multiply">Multiply</a></li>
+<li><a href="#rename">Rename</a></li>
+<li><a href="#min">Min</a></li>
+<li><a href="#max">Max</a></li>
+<li><a href="#current-date">Current Date</a></li>
+<li><a href="#bit">Bit</a></li>
+</ul></li>
+<li><a href="#array-updates">Array Updates</a>
+<ul>
+<li><a href="#add-to-set">Add to Set</a></li>
+<li><a href="#pop">Pop</a></li>
+<li><a href="#pull-all">Pull All</a></li>
+<li><a href="#pull">Pull</a></li>
+<li><a href="#push">Push</a></li>
+</ul></li>
+<li><a href="#combining-multiple-update-operators">Combining Multiple Update Operators</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+  
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.3",
+   VERSION:     "3.3",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/java.js"></script>
+
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+
+</body>
+</html>
+

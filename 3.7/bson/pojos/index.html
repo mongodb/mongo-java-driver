@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+<link rel="shortcut icon" href="/mongo-java-driver/3.7/img/favicon.png">
+
+    <title>POJOs</title><link rel="stylesheet" href="/mongo-java-driver/3.7/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.7/css/java.css" type="text/css" />
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.7/../">
+        <img src="/mongo-java-driver/3.7/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.7">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.7/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.7">3.7</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/driver/" class=""><i class='fa fa-arrows-h'></i><span>MongoDB Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/driver-async/" class=""><i class='fa fa-refresh'></i><span>MongoDB Async Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-async/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-async/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/driver-async/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-async/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver-async/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/ssl/"><i class='fa'></i>SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.7/driver-async/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.7/driver-async/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.7/driver-async/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1 current">
+  <a href="/mongo-java-driver/3.7/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-down"></span></a>
+    <ul  class="current"><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.7/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.7/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.7/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+ 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/bson/pojos.md" target="_blank" title="Edit bson/pojos.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li><a href="/mongo-java-driver/3.7/bson/">BSON</a> <i class="fa fa-angle-right"></i></li><li>POJOs</li>
+</ul>
+</div>
+
+<h2 id="pojos-plain-old-java-objects">POJOs - Plain Old Java Objects</h2>
+
+<p>The 3.5 release of the driver adds POJO support via the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/PojoCodec.html
+"><code>PojoCodec</code></a>, which allows for
+direct serialization of POJOs and Java Beans to and from BSON. Internally, each <code>PojoCodec</code> utilizes a
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/ClassModel.html
+"><code>ClassModel</code></a> instance to store metadata about how the POJO should be serialized.</p>
+
+<p>A <code>ClassModel</code> for a POJO includes:</p>
+
+<ul>
+<li>The class of the POJO.</li>
+<li>A new instance factory. Handling the creation of new instances of the POJO. By default it requires the POJO to have an empty constructor.</li>
+<li>Property information, a list of <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/PropertyModel.html
+"><code>PropertyModel</code></a> instances that contain all the
+property metadata. By default this includes; any public getter methods with any corresponding setter methods and any public fields.</li>
+<li>An optional IdProperty. By default the <code>_id</code> or <code>id</code> property in the POJO.</li>
+<li>Type data for the POJO and its fields to work around type erasure.</li>
+<li>An optional discriminator value. The discriminator is the value used to represent the POJO class being stored.</li>
+<li>An optional discriminator key. The document key name for the discriminator.</li>
+<li>The use discriminator flag. This determines if the discriminator should be serialized. By default it is off.
+<br /></li>
+</ul>
+
+<p>Each <code>PropertyModel</code> includes:</p>
+
+<ul>
+<li>The property name.</li>
+<li>The read name, the name of the property to use as the key when serializing into BSON.</li>
+<li>The write name, the name of the property to use as the key when deserializing from BSON.</li>
+<li>Type data, to work around type erasure.</li>
+<li>An optional <code>Codec</code> for the property. The codec allows for fine grained control over how the property is encoded and decoded.</li>
+<li>A serialization checker. This checks if the value should be serialized. By default, <code>null</code> values are not serialized.</li>
+<li>A property accessor. Used to access the property values from the POJO instance.</li>
+<li>Use discriminator flag, only used when serializing other POJOs. By default it is off. When on the <code>PojoCodecProvider</code> copies the
+<code>ClassModel</code> for the field&rsquo;s type and turns on the use discriminator flag. The corresponding <code>ClassModel</code> must be configured with a
+discriminator key and value.</li>
+</ul>
+
+<p>ClassModels are built using the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/ClassModelBuilder.html
+"><code>ClassModelBuilder</code></a> which can be accessed via
+ the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/ClassModel.html#builder-java.lang.Class-
+"><code>ClassModel.builder(clazz)</code></a> method. The builder
+ initially uses reflection to create the required metadata.</p>
+
+<p><code>PojoCodec</code> instances are created by the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/PojoCodecProvider.html
+"><code>PojoCodecProvider</code></a> which is a
+<code>CodecProvider</code>. CodecProviders are used by the <code>CodecRegistry</code> to find the correct <code>Codec</code> for any given class.</p>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>By default all POJOs <strong>must</strong> include a public or protected, empty, no arguments, constructor. The
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonCreator.html"><code>BsonCreator</code></a> annotation can be used to support constructors or
+public static methods to create new instances of a POJO.</p>
+
+<p>All properties in a POJO must have a <a href="/mongo-java-driver/3.7/bson/codecs/"><code>Codec</code></a> registered in the <code>CodecRegistry</code> so that their values can be
+encoded and decoded.</p>
+
+</div>
+
+
+<h2 id="pojo-support">POJO support</h2>
+
+<p>Automatic POJO support can be provided by setting <code>PojoCodecProvider.Builder#automatic(true)</code>, once built the <code>PojoCodecProvider</code> will
+automatically create a <code>PojoCodec</code> for any class that contains at least one serializable or deserializable
+property.</p>
+
+<p>The entry point for customisable POJO support is the <code>PojoCodecProvider</code>. New instances can be created via the
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/PojoCodecProvider.html#builder
+"><code>PojoCodecProvider.builder()</code></a> method. The <code>builder</code> allows users to
+register any combination of:</p>
+
+<ul>
+<li>Individual POJO classes.</li>
+<li>Package names containing POJO classes.</li>
+<li><code>ClassModel</code> instances which allow fine grained control over how a POJO is encoded and decoded.
+<br /></li>
+</ul>
+
+<p>The <code>builder</code> also allows the user to register default <a href="#conventions">Conventions</a> for any POJOs that are automatically mapped, either
+the individual POJO classes or POJOs found from registered packages. The <code>PojoCodecProvider</code> will lookup PojoCodecs and return the first
+that matches the POJO class:</p>
+
+<ul>
+<li>Registered ClassModels</li>
+<li>Registered POJO classes</li>
+<li>Registered POJO classes contained in one of the registered packages</li>
+</ul>
+
+<p>Once the <code>PojoCodecProvider</code> has been built, by calling <code>builder.build()</code>, it can be combined with an existing <code>CodecRegistry</code> to create a
+new registry that will also support the registered POJOs. The following example registers the package <code>org.example.pojos</code> and creates a new
+<code>CodecRegistry</code>.</p>
+
+<pre><code class="language-java">import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+
+// Create a CodecRegistry containing the PojoCodecProvider instance.
+CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(&quot;org.example.pojos&quot;).build();
+CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+</code></pre>
+
+<div class="admonition tip">
+<h5 class="admonition-title">tip</h5>
+<p>In general only one instance of a <code>PojoCodecProvider</code> should be created.</p>
+
+<p>This is because each <code>PojoCodecProvider</code> instance contains a look up table for discriminator names. If multiple PojoCodecProviders are
+used, care should be taken to ensure that each provider contains a holistic view of POJO classes, otherwise discriminator lookups can fail.
+Alternatively, using the full class name as the discriminator value will ensure successful POJO lookups.</p>
+
+</div>
+
+
+<h2 id="default-configuration">Default configuration</h2>
+
+<p>By default the <code>PojoCodec</code> will not store <code>null</code> values or a discriminator when converting a POJO to BSON.</p>
+
+<p>Take the following <code>Person</code> class:</p>
+
+<pre><code class="language-java">public class Person {
+    private String firstName;
+    private String lastName;
+    private Address address = null;
+ 
+    public Person() { }
+    
+    public Person(final String firstName, final String lastName) {  /* Set values... */ }
+
+    public String getFirstName() {
+        return firstName;
+    }
+    
+    public void setFirstName(final String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+    
+    public void setLastName(final String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(final Address address) {
+        this.address = address;
+    }
+    
+}
+</code></pre>
+
+<p>The instance of <code>new Person(&quot;Ada&quot;, &quot;Lovelace&quot;);</code> would be serialized to the equivalent of <code>{ firstName: &quot;Ada&quot;, lastName: &quot;Lovelace&quot;}</code>.</p>
+
+<p>Notice the <code>address</code> property is omitted because it hasn&rsquo;t been set and has a <code>null</code> value. If the person instance contained an address, it
+would be stored as a sub document and use the <code>CodecRegistry</code> to look up the <code>Codec</code> for the <code>Address</code> class and use that to
+encode and decode the address value.</p>
+
+<div class="admonition note">
+<h5 class="admonition-title">note</h5>
+<h4 id="pojo-properties">POJO Properties</h4>
+
+<p>Properties are identified by <strong>public</strong> getter methods, <strong>public</strong> setter methods and <strong>public</strong> fields.</p>
+
+<p>Any properties with an underlying field that is transient or static will be ignored and not serialized or deserialized.</p>
+
+<p><strong>Serializing to BSON</strong></p>
+
+<p>If a public getter methods exists, it is used to obtain the value for the property, otherwise the field is used directly.</p>
+
+<p><strong>Deserializing from BSON</strong></p>
+
+<p>If a public setter method exists it is used to set the value, otherwise the field is set directly.</p>
+
+</div>
+
+
+<h3 id="generics-support">Generics support</h3>
+
+<p>Generics are fully supported. During the creation of a <code>ClassModelBuilder</code> type parameters are inspected and saved to work around type
+erasure. The only requirement is the top level POJO <strong>cannot</strong> contain any type parameters.</p>
+
+<p>Take the following classes:</p>
+
+<pre><code class="language-java">public class GenericClass&lt;T&gt; {
+    T genericField;
+    // Rest of implementation
+}
+
+public class GenericTree&lt;A, B&gt; {
+    GenericTree&lt;A, B&gt; left;
+    GenericTree&lt;A, B&gt; right;
+    // Rest of implementation
+}
+
+public final class Tree extends GenericTree&lt;Integer, String&gt; {
+    GenericClass&lt;Long&gt; genericClass;
+    // Rest of implementation
+}
+</code></pre>
+
+<p>The <code>Tree</code> POJO is serializable because it doesn&rsquo;t have any unknown type parameters. The <code>left</code>, <code>right</code> and <code>genericClass</code> properties are
+all serializable because they are bound to the concrete types <code>Integer</code>, <code>String</code> and <code>Long</code>.</p>
+
+<p>On their own, instances of <code>GenericTree</code> or <code>GenericClass</code> are not serializable by the <code>PojoCodec</code>. This is because the runtime type parameter
+information is erased by the JVM, and the type parameters cannot be specialized accurately.</p>
+
+<p>The 3.6 release of the driver further improves generic support with the addition of PropertyCodecProviders. The <code>PropertyCodecProvider</code> API
+allows type-safe support of container types by providing concrete type parameters for the generic types as declared in the POJO.</p>
+
+<p>A great use of the <code>PropertyCodecProvider</code> API could be to add support for Guava&rsquo;s <code>Optional</code> class. The following example creates a
+<code>OptionalPropertyCodecProvider</code>:</p>
+
+<pre><code class="language-java">public class OptionalPropertyCodecProvider implements PropertyCodecProvider {
+
+    @Override
+    @SuppressWarnings({&quot;rawtypes&quot;, &quot;unchecked&quot;})
+    public &lt;T&gt; Codec&lt;T&gt; get(final TypeWithTypeParameters&lt;T&gt; type, final PropertyCodecRegistry registry) {
+        // Check the main type and number of generic parameters
+        if (Optional.class.isAssignableFrom(type.getType()) &amp;&amp; type.getTypeParameters().size() == 1) {
+            // Get the codec for the concrete type of the Optional, as its declared in the POJO.
+            Codec&lt;?&gt; valueCodec = registry.get(type.getTypeParameters().get(0));
+            return new OptionalCodec(type.getType(), valueCodec);
+        } else {
+            return null;
+        }
+    }
+
+    private static final class OptionalCodec&lt;T&gt; implements Codec&lt;Optional&lt;T&gt;&gt; {
+        private final Class&lt;Optional&lt;T&gt;&gt; encoderClass;
+        private final Codec&lt;T&gt; codec;
+
+        private OptionalCodec(final Class&lt;Optional&lt;T&gt;&gt; encoderClass, final Codec&lt;T&gt; codec) {
+            this.encoderClass = encoderClass;
+            this.codec = codec;
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final Optional&lt;T&gt; optionalValue, final EncoderContext encoderContext) {
+            if (optionalValue != null &amp;&amp; optionalValue.isPresent()) {
+                codec.encode(writer, optionalValue.get(), encoderContext);
+            } else {
+                writer.writeNull();
+            }
+        }
+
+        @Override
+        public Optional&lt;T&gt; decode(final BsonReader reader, final DecoderContext context) {
+            return Optional.of(codec.decode(reader, context));
+        }
+
+        @Override
+        public Class&lt;Optional&lt;T&gt;&gt; getEncoderClass() {
+            return encoderClass;
+        }
+    }
+}
+</code></pre>
+
+<p>The <code>OptionalPropertyCodecProvider</code> can be registered via the <code>PojoCodecProvider.builder().register</code> method:</p>
+
+<pre><code class="language-java">CodecProvider pojoCodecProvider = PojoCodecProvider.builder()
+        .register(&quot;org.example.pojos&quot;)
+        .register(new OptionalPropertyCodecProvider())
+        .build();
+</code></pre>
+
+<p>Then <code>Optional</code> classes are fully supported in the POJOs. In the following example a <code>Person</code> has an <code>Optional</code> address and an <code>Optional</code>
+membership id:</p>
+
+<pre><code class="language-java">public class Person {
+    ... 
+    private Optional&lt;Address&gt; optionalAddress;
+    private Optional&lt;Integer&gt;  optionalMembershipId;
+}
+</code></pre>
+
+<h3 id="enum-support">Enum support</h3>
+
+<p>Enums are fully supported. The <code>PojoCodec</code> uses the name of the enum constant as the property value. This is then converted back into an Enum
+value by the codec using the static <code>Enum.valueOf</code> method.</p>
+
+<p>Take the following example:</p>
+
+<pre><code class="language-Java">
+public enum Membership {
+    UNREGISTERED,
+    SUBSCRIBER,
+    PREMIUM
+}
+
+public class Person {
+    private String firstName;
+    private String lastName;
+    private Member membership = Member.UNREGISTERED;
+
+    public Person() { }
+
+    public Person(final String firstName, final String lastName, final Membership membership) { }
+
+    // Rest of implementation
+}
+</code></pre>
+
+<p>The instance of <code>new Person(&quot;Bryan&quot;, &quot;May&quot;, SUBSCRIBER);</code> would be serialized to the equivalent of
+<code>{ firstName: &quot;Bryan&quot;, lastName: &quot;May&quot;, membership: &quot;SUBSCRIBER&quot;}</code>.</p>
+
+<p>If you require an alternative representation of the Enum, you can override how a Enum is stored by registering a custom <code>Codec</code> for the
+Enum in the <code>CodecRegistry</code>.</p>
+
+<h3 id="conventions">Conventions</h3>
+
+<p>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Convention.html
+"><code>Convention</code></a> interface provides a mechanism for <code>ClassModelBuilder</code>
+instances to be configured during the build stage and the creation of the <code>ClassModel</code>.</p>
+
+<p>The following Conventions are available from the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html
+"><code>Conventions</code></a> class:</p>
+
+<ul>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#ANNOTATION_CONVENTION
+"><code>ANNOTATION_CONVENTION</code></a>. Applies all the
+default annotations.</li>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION
+"><code>CLASS_AND_PROPERTY_CONVENTION</code></a>. Sets the
+    discriminator key if not set to <code>_t</code> and the discriminator value if not set to the ClassModels simple type name. Also, configures
+    the PropertyModels. If the <code>idProperty</code> isn&rsquo;t set and there is a property named <code>_id</code> or <code>id</code> then it will be marked as the <code>idProperty</code>.</li>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION
+"><code>SET_PRIVATE_FIELDS_CONVENTION</code></a>.  Enables
+    private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.</li>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS
+"><code>USE_GETTERS_FOR_SETTERS</code></a>. Allows getters to be used
+    for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.</li>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS
+"><code>DEFAULT_CONVENTIONS</code></a>, a list containing the
+<code>ANNOTATION_CONVENTION</code> and the <code>CLASS_AND_PROPERTY_CONVENTION</code>.</li>
+<li>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS
+"><code>NO_CONVENTIONS</code></a> an empty list.</li>
+</ul>
+
+<p>Custom Conventions can either be set globally via the
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/PojoCodecProvider.Builder.html#conventions-java.util.List-
+"><code>PojoCodecProvider.Builder.conventions(conventions)</code></a>
+method, or via the <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/ClassModelBuilder.html#conventions-java.util.List-
+"><code>ClassModelBuilder.conventions(conventions)</code></a>
+method.</p>
+
+<div class="admonition note">
+<h5 class="admonition-title">note</h5>
+<p>Conventions are applied in order during the build stage when creating a <code>ClassModel</code>.</p>
+
+<p>Each <code>Convention</code> can mutate the underlying <code>ClassModelBuilder</code>, so care should be taken that Conventions do not conflict with each other
+in their intent.</p>
+
+</div>
+
+
+<h3 id="annotations">Annotations</h3>
+
+<p>Annotations require the <code>ANNOTATION_CONVENTION</code> and provide an easy way to configure how POJOs are serialized.</p>
+
+<p>The following annotations are available from the
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/package-summary.html
+"><code>org.bson.codecs.pojo.annotations</code></a> package:</p>
+
+<ul>
+<li><a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonCreator.html
+"><code>BsonCreator</code></a>, marks a public constructor or a public static method as
+the creator for new instances of the class. Can be combined with the <code>BsonProperty</code> annotation to link the parameters with properties.</li>
+<li><a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonDiscriminator.html
+"><code>BsonDiscriminator</code></a>, enables using a discriminator.
+Also allows for setting a custom discriminator key and value.</li>
+<li><a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonId.html
+"><code>BsonId</code></a>, marks a property to be serialized as the <code>_id</code> property.</li>
+<li><a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonIgnore.html
+"><code>BsonIgnore</code></a>, marks a property to be ignored. Can be used to
+configure if a property is serialized and / or deserialized.</li>
+<li><a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonProperty.html
+"><code>BsonProperty</code></a>. Allows for an alternative document key
+name when converting the POJO field to BSON. Also, allows a field to turn on using a discriminator when storing a POJO value.</li>
+</ul>
+
+<p>Annotations can be applied to read and / or write contexts by configuring the getter / setter methods. Any annotations applied to a field
+are applied to both read and write contexts.</p>
+
+<p>Take the following <code>Person</code> class:</p>
+
+<pre><code class="language-java">import org.bson.codecs.pojo.annotations.*;
+
+@BsonDiscriminator
+public final class Person {
+    public String personId;
+    public String firstName;
+    public String lastName;
+    
+    @BsonProperty(useDiscriminator = true)
+    public Address addr;
+    
+    public Person(){
+    }
+
+}
+</code></pre>
+
+<p>The <code>Person</code> POJO Will produce BSON similar to:</p>
+
+<pre><code class="language-json">{ &quot;_id&quot;: &quot;1234567890&quot;, &quot;_t&quot;: &quot;Person&quot;, &quot;firstName&quot;: &quot;Alan&quot;, &quot;lastName&quot;: &quot;Turing&quot;,
+  &quot;address&quot;: { &quot;_t&quot;: &quot;Address&quot;, &quot;address&quot;: &quot;The Mansion&quot;, &quot;street&quot;: &quot;Sherwood Drive&quot;, 
+               &quot;town&quot;: &quot;Bletchley&quot;, &quot;postcode&quot;: &quot;MK3 6EB&quot; } }
+</code></pre>
+
+<p>The getter methods are used to configure the document keys used when storing the data in MongoDB. The <code>_id</code> document key maps to the POJO&rsquo;s
+<code>personId</code> property. The <code>_t</code> field contains the discriminator and the <code>address</code> field also contains a discriminator.</p>
+
+<h2 id="advanced-configuration">Advanced configuration</h2>
+
+<p>For most scenarios there is no need for further configuration. However, there are some scenarios where custom configuration is required.</p>
+
+<h3 id="properties-with-abstract-or-interface-types">Properties with abstract or interface types.</h3>
+
+<p>If a POJO contains a field that has an abstract type or has an interface as its type, then a discriminator is required. The type and all
+subtypes / implementations need to be registered with the <code>PojoCodecProvider</code> so that values can be encoded and decoded correctly.</p>
+
+<p>The easiest way to enable a discriminator is to annotate the abstract class with the <code>Discriminator</code> annotation. Alternatively, the
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/ClassModelBuilder.html#enableDiscriminator-boolean-
+"><code>ClassModelBuilder.enableDiscriminator(true)</code></a>
+method can be used to enable the use of a discriminator.</p>
+
+<p>The following example creates a <code>CodecRegistry</code> with discriminators enabled for a <code>User</code> interface and its concrete <code>FreeUser</code> and
+<code>SubscriberUser</code> implementations:</p>
+
+<pre><code class="language-java">ClassModel&lt;User&gt; userModel = ClassModel.builder(User.class).enableDiscriminator(true).build();
+ClassModel&lt;FreeUser&gt; freeUserModel = ClassModel.builder(FreeUser.class).enableDiscriminator(true).build();
+ClassModel&lt;SubscriberUser&gt; subscriberUserModel = ClassModel.builder(SubscriberUser.class).enableDiscriminator(true).build();
+
+PojoCodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(userModel, freeUserModel, subscriberUserModel).build();
+
+CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+</code></pre>
+
+<h3 id="supporting-pojos-without-no-args-constructors">Supporting POJOs without no args constructors</h3>
+
+<p>By default PojoCodecs work with POJOs that have an empty, no arguments, constructor. POJOs with alternative constructors are supported
+via the <code>ANNOTATION_CONVENTION</code> and the <code>@BsonCreator</code> annotation. Any parameters for the creator constructor should be annotated with the
+<code>@BsonProperty</code> annotation. Below is an example of a <code>Person</code> POJO that contains final fields that are set via the annotated constructor:</p>
+
+<pre><code class="language-java">import org.bson.codecs.pojo.annotations.*;
+
+@BsonDiscriminator
+public final class Person {
+    private final String pid;
+    private final String fName;
+    private final String lName;
+    
+    @BsonProperty(useDiscriminator = true)
+    private final Address addr;
+    
+    @BsonCreator
+    public Person(@BsonProperty(&quot;personId&quot;) final String personId, @BsonProperty(&quot;firstName&quot;) final String firstName,
+                  @BsonProperty(&quot;lastName&quot;) final String lastName, @BsonProperty(&quot;address&quot;) final Address address) {
+        this.pid = personId;
+        this.fName = firstName;
+        this.lName = lastName;
+        this.addr = address;
+    }
+
+    @Id
+    public String getPersonId() {
+        return pid;
+    }
+
+    public String getFirstName() {
+        return fName;
+    }
+
+    public String getLastName() {
+        return lName;
+    }
+
+    public String getAddress() {
+        return addr;
+    }
+}
+</code></pre>
+
+<h3 id="changing-what-is-serialized">Changing what is serialized</h3>
+
+<p>By default <code>null</code> values aren&rsquo;t serialized. This is controlled by the default implementation of the
+<a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/FieldSerialization.html
+"><code>FieldSerialization</code></a> interface. Custom implementations can be set on
+the <code>PropertyModelBuilder</code> which is available from the <code>ClassModelBuilder</code>.</p>
+
+<p>The <a href="/mongo-java-driver/3.7/javadoc?org/bson/codecs/pojo/annotations/BsonIgnore.html
+"><code>BsonIgnore</code></a> can be used along with the <code>DEFAULT_CONVENTIONS</code> to mark
+a property to be ignored when serializing and or deserializing.</p>
+<div id="btnv"><div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.7/bson/codecs/">
+      <i class="fa fa-long-arrow-left"> </i> Codec and CodecRegistry
+  </a>
+  </div><div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.7/bson/extended-json/">
+    Extended JSON <i class="fa fa-long-arrow-right"> </i>
+  </a></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#pojos-plain-old-java-objects">POJOs - Plain Old Java Objects</a></li>
+<li><a href="#pojo-support">POJO support</a></li>
+<li><a href="#default-configuration">Default configuration</a>
+<ul>
+<li><a href="#generics-support">Generics support</a></li>
+<li><a href="#enum-support">Enum support</a></li>
+<li><a href="#conventions">Conventions</a></li>
+<li><a href="#annotations">Annotations</a></li>
+</ul></li>
+<li><a href="#advanced-configuration">Advanced configuration</a>
+<ul>
+<li><a href="#properties-with-abstract-or-interface-types">Properties with abstract or interface types.</a></li>
+<li><a href="#supporting-pojos-without-no-args-constructors">Supporting POJOs without no args constructors</a></li>
+<li><a href="#changing-what-is-serialized">Changing what is serialized</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.7",
+   VERSION:     "3.7",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.7/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+</body>
+</html>

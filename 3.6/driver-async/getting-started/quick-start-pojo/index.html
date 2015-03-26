@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+<link rel="shortcut icon" href="/mongo-java-driver/3.6/img/favicon.png">
+
+    <title>Quick Start - POJOs</title><link rel="stylesheet" href="/mongo-java-driver/3.6/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.6/css/java.css" type="text/css" />
+
+</head>
+
+  <body>
+  
+  <section id="container" class="">
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.6/../">
+        <img src="/mongo-java-driver/3.6/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.6">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.6/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.6">3.6</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu"><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.6/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.6/driver/" class=""><i class='fa fa-arrows-h'></i><span>MongoDB Driver</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.6/driver/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.6/driver/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/ssl/"><i class='fa'></i>TLS/SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/jndi/"><i class='fa'></i>JNDI</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.6/driver/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.6/driver/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1 current">
+  <a href="/mongo-java-driver/3.6/driver-async/" class=""><i class='fa fa-refresh'></i><span>MongoDB Async Driver</span><span class="menu-arrow fa fa-angle-down"></span></a>
+    <ul  class="current"><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver-async/getting-started/installation/"><i class='fa'></i>Installation</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver-async/getting-started/quick-start/"><i class='fa'></i>Quick Start</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/driver-async/getting-started/quick-start-pojo/"><i class='fa'></i>Quick Start - POJOs</a>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.6/driver-async/tutorials/" class=""><i class='fa fa-thumb-tack'></i><span>Tutorials</span></a>
+    <ul ><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.6/driver-async/tutorials/connect-to-mongodb/" class=""><i class='fa'></i><span>Connect to MongoDB</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/ssl/"><i class='fa'></i>SSL</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/authentication/"><i class='fa'></i>Authentication</a>
+  </li><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/compression/"><i class='fa'></i>Compression</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/databases-collections/"><i class='fa'></i>Databases and Collections</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/indexes/"><i class='fa'></i>Create Indexes</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/perform-read-operations/"><i class='fa'></i>Read Operations</a>
+  </li><li class="toctree-l3">
+  <a href="/mongo-java-driver/3.6/driver-async/tutorials/perform-write-operations/" class=""><i class='fa'></i><span>Write Operations</span></a>
+    <ul ><li class="toctree-l4">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/bulk-writes/"><i class='fa'></i>Bulk Writes</a>
+  </li></ul>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/aggregation/"><i class='fa'></i>Aggregation</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/change-streams/"><i class='fa'></i>Change Streams</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/text-search/"><i class='fa'></i>Text Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/geospatial-search/"><i class='fa'></i>Geospatial Search</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/gridfs/"><i class='fa'></i>GridFS</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/tutorials/commands/"><i class='fa'></i>Run Commands</a>
+  </li></ul>
+  </li><li class="toctree-l2">
+  <a href="/mongo-java-driver/3.6/driver-async/reference/" class=""><i class='fa fa-book'></i><span>Reference</span></a>
+    <ul ><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/reference/logging/"><i class='fa'></i>Logging</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/reference/monitoring/"><i class='fa'></i>Monitoring</a>
+  </li><li class="toctree-l3">
+    <a href="/mongo-java-driver/3.6/driver-async/reference/observables/"><i class='fa'></i>Observables</a>
+  </li></ul>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.6/bson/" class=""><i class='fa fa-th'></i><span>BSON</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/documents/"><i class='fa'></i>Documents</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/readers-and-writers/"><i class='fa'></i>Readers and Writers</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/codecs/"><i class='fa'></i>Codec and CodecRegistry</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/pojos/"><i class='fa fa-star'></i>POJOs</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/extended-json/"><i class='fa'></i>Extended JSON</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/bson/installation-guide/"><i class='fa'></i>Installation Guide</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+  <a href="/mongo-java-driver/3.6/builders/" class=""><i class='fa fa-wrench'></i><span>Builders</span><span class="menu-arrow fa fa-angle-right"></span></a>
+    <ul ><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/filters/"><i class='fa'></i>Filters</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/projections/"><i class='fa'></i>Projections</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/sorts/"><i class='fa'></i>Sort Criteria  </a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/aggregation/"><i class='fa'></i>Aggregates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/updates/"><i class='fa'></i>Updates</a>
+  </li><li class="toctree-l2">
+    <a href="/mongo-java-driver/3.6/builders/indexes/"><i class='fa'></i>Indexes</a>
+  </li></ul>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.6/upgrading/"><i class='fa fa-level-up'></i>Upgrade Considerations</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.6/javadoc"><i class='fa fa-file-text-o'></i>API Documentation</a>
+  </li><li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master"><i class='fa fa-github'></i>Source Code</a>
+  </li><li class="toctree-l1">
+    <a href="/mongo-java-driver/3.6/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
+  </li></ul>
+        
+    </div>
+  </div></aside>
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+ 
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-async/getting-started/quick-start-pojo.md" target="_blank" title="Edit driver-async/getting-started/quick-start-pojo.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+<ul><li><a href="/mongo-java-driver/3.6/driver-async/">MongoDB Async Driver</a> <i class="fa fa-angle-right"></i></li><li>Quick Start - POJOs</li>
+</ul>
+</div>
+
+<h1 id="mongodb-async-driver-quick-start-pojos">MongoDB Async Driver Quick Start - POJOs</h1>
+
+<div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>POJOs stands for Plain Old Java Objects.</p>
+
+<p>The following code snippets come from the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-async/src/examples/tour/PojoQuickTour.java"><code>PojoQuickTour.java</code></a> example code
+that can be found with the driver source on github.</p>
+
+</div>
+
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+<li><p>A running MongoDB on localhost using the default port for MongoDB <code>27017</code></p></li>
+
+<li><p>MongoDB Driver. See <a href="/mongo-java-driver/3.6/driver/getting-started/installation/">Installation</a> for instructions on how to install the MongoDB driver.</p></li>
+
+<li><p>Quick Start. This guide follows on from the <a href="/mongo-java-driver/3.6/driver/getting-started/quick-start/">Quick Start</a>.</p></li>
+
+<li><p>The following import statements:</p></li>
+</ul>
+
+<pre><code class="language-java">import com.mongodb.Block;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
+
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Updates.*;
+import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+</code></pre>
+
+<ul>
+<li>The following POJO classes. The full source is available on github for the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-async/src/examples/tour/Person.java
+">Person</a> and <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-async/src/examples/tour/Address.java
+">Address</a>
+POJOs. Here are the main implementation details:</li>
+</ul>
+
+<pre><code class="language-java">public final class Person {
+    private ObjectId id;
+    private String name;
+    private int age;
+    private Address address;
+
+    public Person() {
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(final ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(final int age) {
+        this.age = age;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(final Address address) {
+        this.address = address;
+    }
+    
+    // Rest of implementation
+}
+
+public final class Address {
+    private String street;
+    private String city;
+    private String zip;
+
+    public Address() {
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(final String street) {
+        this.street = street;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(final String city) {
+        this.city = city;
+    }
+
+    public String getZip() {
+        return zip;
+    }
+
+    public void setZip(final String zip) {
+        this.zip = zip;
+    }
+    
+    // Rest of implementation
+}
+</code></pre>
+
+<h2 id="creating-a-custom-codecregistry">Creating a Custom CodecRegistry</h2>
+
+<p>Before you can use a POJO with the driver, you need to configure the <a href="/mongo-java-driver/3.6/bson/codecs/"><code>CodecRegistry</code> </a> to include a codecs
+to handle the translation to and from <a href="/mongo-java-driver/3.6/bson/"><code>bson</code></a> for your POJOs. The simplest way to do that is to use the
+<a href="/mongo-java-driver/3.6/javadoc?org/bson/codecs/pojo/PojoCodecProvider.html
+"><code>PojoCodecProvider.builder()</code></a> to create and configure a <code>CodecProvider</code>.</p>
+
+<p>The following example will combine the default codec registry, with the <code>PojoCodecProvider</code> configured to automatically create <code>PojoCodecs</code>:</p>
+
+<pre><code class="language-java">CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+                                        fromProviders(PojoCodecProvider.builder().automatic().build()));
+</code></pre>
+
+<h3 id="using-the-codecregistry">Using the CodecRegistry</h3>
+
+<p>There are multiple ways to set the <code>pojoCodecRegistry</code> for use:</p>
+
+<ul>
+<li>You can set it when instantiating a MongoClient object:</li>
+</ul>
+
+<pre><code class="language-java"> MongoClient mongoClient = new MongoClient(&quot;localhost&quot;, MongoClientOptions.builder().codecRegistry(pojoCodecRegistry).build());
+</code></pre>
+
+<ul>
+<li>You can use an alternative <code>CodecRegistry</code> with a <code>MongoDatabase</code>:</li>
+</ul>
+
+<pre><code class="language-java">database = database.withCodecRegistry(pojoCodecRegistry);
+</code></pre>
+
+<ul>
+<li>You can use an alternative <code>CodecRegistry</code> with a <code>MongoCollection</code>:</li>
+</ul>
+
+<pre><code class="language-java">collection = collection.withCodecRegistry(pojoCodecRegistry);
+</code></pre>
+
+<h2 id="inserting-a-pojo-into-mongodb">Inserting a POJO into MongoDB</h2>
+
+<p>The codec registry will automatically try to create a <code>PojoCodec</code> for unknown classes. This allows you to use POJOs out of the
+box without any extra configuration. See the <a href="/mongo-java-driver/3.6/bson/pojos/">Bson POJO page</a> for information on configuring <code>PojoCodecs</code>.</p>
+
+<p>Before you can insert a POJO into MongoDB, you need a <code>MongoCollection</code> instance configured with the Pojo&rsquo;s type:</p>
+
+<pre><code class="language-java">MongoCollection&lt;Person&gt; collection = database.getCollection(&quot;people&quot;, Person.class);
+</code></pre>
+
+<h3 id="insert-a-person">Insert a Person</h3>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>Remember, always check for errors in any <code>SingleResultCallback&lt;T&gt;</code> implementation and handle them appropriately.</p>
+
+<p>For sake of brevity, this tutorial omits the error check logic in the code examples.</p>
+
+</div>
+
+
+<p>To insert a Person into the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#insertOne-TDocument-
+"><code>insertOne()</code></a> method.</p>
+
+<pre><code class="language-java">Person ada = new Person(&quot;Ada Byron&quot;, 20, new Address(&quot;St James Square&quot;, &quot;London&quot;, &quot;W1&quot;));
+collection.insertOne(ada, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Inserted!&quot;);
+    }
+});
+</code></pre>
+
+<h3 id="insert-many-persons">Insert Many Persons</h3>
+
+<p>To add multiple Person instances, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#insertMany-java.util.List-
+"><code>insertMany()</code></a> method
+which takes a list of <code>Person</code>.</p>
+
+<p>The following example will add multiple Person instances into the collection:</p>
+
+<pre><code class="language-java">List&lt;Person&gt; people = asList(
+        new Person(&quot;Charles Babbage&quot;, 45, new Address(&quot;5 Devonshire Street&quot;, &quot;London&quot;, &quot;W11&quot;)),
+        new Person(&quot;Alan Turing&quot;, 28, new Address(&quot;Bletchley Hall&quot;, &quot;Bletchley Park&quot;, &quot;MK12&quot;)),
+        new Person(&quot;Timothy Berners-Lee&quot;, 61, new Address(&quot;Colehill&quot;, &quot;Wimborne&quot;, null))
+);
+
+collection.insertMany(people, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        collection.count(new SingleResultCallback&lt;Long&gt;() {
+            @Override
+            public void onResult(final Long count, final Throwable t) {
+                System.out.println(&quot;total # of people &quot; + count);
+            }
+        });
+    }
+});
+</code></pre>
+
+<h2 id="query-the-collection">Query the Collection</h2>
+
+<p>To query the collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#find--
+"><code>find()</code></a> method.</p>
+
+<p>The following example prints all the Person instances in the collection:</p>
+
+<pre><code class="language-java">Block&lt;Person&gt; printBlock = new Block&lt;Person&gt;() {
+    @Override
+    public void apply(final Person person) {
+        System.out.println(person);
+    }
+};
+
+SingleResultCallback&lt;Void&gt; callbackWhenFinished = new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Operation Finished!&quot;);
+    }
+};
+
+collection.find().forEach(printBlock, callbackWhenFinished);
+</code></pre>
+
+<p>The example uses the <a href="{{ &lt;apiref &quot;com/mongodb/client/MongoIterable.html#forEach-com.mongodb.Block-&quot;&gt;}}"><code>forEach</code></a> method on the <code>FindIterable</code>
+object to apply a block to each Person and outputs the following:</p>
+
+<pre><code class="language-bash">Person{id='591dbc2550852fa685b3ad17', name='Ada Byron', age=20, address=Address{street='St James Square', city='London', zip='W1'}}
+Person{id='591dbc2550852fa685b3ad18', name='Charles Babbage', age=45, address=Address{street='5 Devonshire Street', city='London', zip='W11'}}
+Person{id='591dbc2550852fa685b3ad19', name='Alan Turing', age=28, address=Address{street='Bletchley Hall', city='Bletchley Park', zip='MK12'}}
+Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61, address=Address{street='Colehill', city='Wimborne', zip='null'}}
+</code></pre>
+
+<h2 id="specify-a-query-filter">Specify a Query Filter</h2>
+
+<p>To query for Person instance that match certain conditions, pass a filter object to the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#find--
+"><code>find()</code></a> method.
+To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper.</p>
+
+<div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>When querying POJOs you <em>must</em> query against the document field name and not the Pojo&rsquo;s property name.
+By default they are the same but it is possible to change how POJO property names are mapped.</p>
+
+</div>
+
+
+<h3 id="get-a-single-person-that-matches-a-filter">Get A Single Person That Matches a Filter</h3>
+
+<p>For example, to find the first <code>Person</code> in the database that lives in <code>Wimborne</code> pass an <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/model/Filters.html#eq-java.lang.String-TItem-
+"><code>eq</code></a>
+filter object to specify the equality condition:</p>
+
+<pre><code class="language-java">SingleResultCallback&lt;Person&gt; printCallback = new SingleResultCallback&lt;Person&gt;() {
+    @Override
+    public void onResult(final Person person, final Throwable t) {
+        System.out.println(person);
+    }
+};
+collection.find(eq(&quot;address.city&quot;, &quot;Wimborne&quot;)).first(printCallback);
+</code></pre>
+
+<p>The example prints one document:</p>
+
+<pre><code class="language-bash">Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61, 
+       address=Address{street='Colehill', city='Wimborne', zip='null'}}
+</code></pre>
+
+<h3 id="get-all-person-instances-that-match-a-filter">Get All Person Instances That Match a Filter</h3>
+
+<p>The following example returns and prints everyone where <code>&quot;age&quot; &gt; 30</code>:</p>
+
+<pre><code class="language-java">collection.find(gt(&quot;age&quot;, 30)).forEach(printBlock, callbackWhenFinished);
+</code></pre>
+
+<h2 id="update-documents">Update Documents</h2>
+
+<p>To update documents in a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-
+"><code>updateOne</code></a>  and  <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-
+"><code>updateMany</code></a> methods.</p>
+
+<p>Pass to the methods:</p>
+
+<ul>
+<li><p>A filter object to determine the document or documents to update. To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty <a href="/mongo-java-driver/3.6/javadoc?org/bson/Document.html
+"><code>Document</code></a> object.</p></li>
+
+<li><p>An update document that specifies the modifications. For a list of the available operators, see <a href="http://docs.mongodb.org/manual/reference/operator/update-field
+">update operators</a>.</p></li>
+</ul>
+
+<p>The update methods return an <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/result/UpdateResult.html
+"><code>UpdateResult</code></a> which provides information about the operation including the number of documents modified by the update.</p>
+
+<h3 id="update-a-single-person">Update a Single Person</h3>
+
+<p>To update at most a single <code>Person</code>, use the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-
+"><code>updateOne</code></a> method.</p>
+
+<p>The following example updates <code>Ada Byron</code> setting their age to <code>23</code> and name to <code>Ada Lovelace</code>:</p>
+
+<pre><code class="language-java">SingleResultCallback&lt;UpdateResult&gt; printModifiedCount = new SingleResultCallback&lt;UpdateResult&gt;() {
+    @Override
+    public void onResult(final UpdateResult result, final Throwable t) {
+        System.out.println(result.getModifiedCount());
+    }
+};
+collection.updateOne(eq(&quot;name&quot;, &quot;Ada Byron&quot;), combine(set(&quot;age&quot;, 23), set(&quot;name&quot;, &quot;Ada Lovelace&quot;)), printModifiedCount);
+</code></pre>
+
+<h3 id="update-multiple-persons">Update Multiple Persons</h3>
+
+<p>To update all Persons that match a filter, use the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-
+"><code>updateMany</code></a> method.</p>
+
+<p>The following example sets the zip field to <code>null</code> for all documents that have a <code>zip</code> value:</p>
+
+<pre><code class="language-java">collection.updateMany(not(eq(&quot;zip&quot;, null)), set(&quot;zip&quot;, null), printModifiedCount);
+
+</code></pre>
+
+<h3 id="replace-a-single-person">Replace a Single Person</h3>
+
+<p>An alternative method to change an existing <code>Person</code>, would be to use the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-
+"><code>replaceOne</code></a> method.</p>
+
+<p>The following example replaces the <code>Ada Lovelace</code> back to the original document:</p>
+
+<pre><code class="language-java">collection.replaceOne(eq(&quot;name&quot;, &quot;Ada Lovelace&quot;), ada, printModifiedCount);
+</code></pre>
+
+<h2 id="delete-documents">Delete Documents</h2>
+
+<p>To delete documents from a collection, you can use the collection&rsquo;s <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-
+"><code>deleteOne</code></a> and <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-
+"><code>deleteMany</code></a> methods.</p>
+
+<p>Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, Java driver provides the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/model/Filters.html
+"><code>Filters</code></a> helper. To specify an empty filter (i.e. match all documents in a collection), use an empty <a href="/mongo-java-driver/3.6/javadoc?org/bson/Document.html
+"><code>Document</code></a> object.</p>
+
+<p>The delete methods return a <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/result/DeleteResult.html
+"><code>DeleteResult</code></a>
+which provides information about the operation including the number of documents deleted.</p>
+
+<h3 id="delete-a-single-person-that-matches-a-filter">Delete a Single Person That Matches a Filter</h3>
+
+<p>To delete at most a single <code>Person</code> that matches a filter, use the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-
+"><code>deleteOne</code></a> method:</p>
+
+<p>The following example deletes at most one <code>Person</code> who lives in <code>Wimborne</code>:</p>
+
+<pre><code class="language-java">SingleResultCallback&lt;DeleteResult&gt; printDeletedCount = new SingleResultCallback&lt;DeleteResult&gt;() {
+    @Override
+    public void onResult(final DeleteResult result, final Throwable t) {
+        System.out.println(result.getDeletedCount());
+    }
+};
+
+collection.deleteOne(eq(&quot;address.city&quot;, &quot;Wimborne&quot;), printDeletedCount);
+</code></pre>
+
+<h3 id="delete-all-persons-that-match-a-filter">Delete All Persons That Match a Filter</h3>
+
+<p>To delete multiple Persons matching a filter use the <a href="/mongo-java-driver/3.6/javadoc?com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-
+"><code>deleteMany</code></a> method.</p>
+
+<p>The following example deletes all Persons that live in <code>London</code>:</p>
+
+<pre><code class="language-java">collection.deleteMany(eq(&quot;address.city&quot;, &quot;London&quot;), printDeletedCount);
+</code></pre>
+
+<h3 id="additional-information">Additional Information</h3>
+
+<p>For additional information about the configuring the <code>PojoCodecProvider</code>, see the <a href="/mongo-java-driver/3.6/bson/pojos/">Bson POJO page</a>.</p>
+
+<p>For additional tutorials about using MongoDB (such as to use the aggregation framework, specify write concern, etc.), see the <a href="/mongo-java-driver/3.6/driver-async/tutorials/">Java Async Driver Tutorials</a>.</p>
+<div id="btnv"><div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.6/driver-async/getting-started/quick-start/">
+      <i class="fa fa-long-arrow-left"> </i> Quick Start
+  </a>
+  </div><div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.6/driver-async/tutorials/">
+    Tutorials <i class="fa fa-long-arrow-right"> </i>
+  </a></div>
+</div></div><div class="right-column">
+<div class="wrapper"><div class="toc">
+    <span class="toc-header">On this page</span><nav id="TableOfContents">
+<ul>
+<li><a href="#mongodb-async-driver-quick-start-pojos">MongoDB Async Driver Quick Start - POJOs</a>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#creating-a-custom-codecregistry">Creating a Custom CodecRegistry</a>
+<ul>
+<li><a href="#using-the-codecregistry">Using the CodecRegistry</a></li>
+</ul></li>
+<li><a href="#inserting-a-pojo-into-mongodb">Inserting a POJO into MongoDB</a>
+<ul>
+<li><a href="#insert-a-person">Insert a Person</a></li>
+<li><a href="#insert-many-persons">Insert Many Persons</a></li>
+</ul></li>
+<li><a href="#query-the-collection">Query the Collection</a></li>
+<li><a href="#specify-a-query-filter">Specify a Query Filter</a>
+<ul>
+<li><a href="#get-a-single-person-that-matches-a-filter">Get A Single Person That Matches a Filter</a></li>
+<li><a href="#get-all-person-instances-that-match-a-filter">Get All Person Instances That Match a Filter</a></li>
+</ul></li>
+<li><a href="#update-documents">Update Documents</a>
+<ul>
+<li><a href="#update-a-single-person">Update a Single Person</a></li>
+<li><a href="#update-multiple-persons">Update Multiple Persons</a></li>
+<li><a href="#replace-a-single-person">Replace a Single Person</a></li>
+</ul></li>
+<li><a href="#delete-documents">Delete Documents</a>
+<ul>
+<li><a href="#delete-a-single-person-that-matches-a-filter">Delete a Single Person That Matches a Filter</a></li>
+<li><a href="#delete-all-persons-that-match-a-filter">Delete All Persons That Match a Filter</a></li>
+<li><a href="#additional-information">Additional Information</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.6",
+   VERSION:     "3.6",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.6/js/java.js"></script>
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2285 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.1/</link>
+    <description>Recent content on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 05 Aug 2015 12:00:00 +0000</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.1/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>GridFS</title>
+      <link>/mongo-java-driver/3.1/driver/reference/gridfs/</link>
+      <pubDate>Wed, 05 Aug 2015 12:00:00 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/driver/reference/gridfs/</guid>
+      <description>
+
+&lt;h2 id=&#34;gridfs&#34;&gt;GridFS&lt;/h2&gt;
+
+&lt;p&gt;GridFS is a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB.&lt;/p&gt;
+
+&lt;p&gt;Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document. By default GridFS limits chunk size to 255k. GridFS uses two collections to store files. The chunks collection stores the file chunks, and the files collection stores the file metadata.&lt;/p&gt;
+
+&lt;p&gt;When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having to load the entire file into memory.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;For more information about GridFS see the &lt;a href=&#34;http://docs.mongodb.org/manual/core/gridfs/&#34;&gt;MongoDB GridFS documentation&lt;/a&gt;.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The following code snippets come from the &lt;code&gt;GridFSTour.java&lt;/code&gt; example code
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/gridfs/GridFSTour.java
+&#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;connecting-to-gridfs&#34;&gt;Connecting to GridFS&lt;/h2&gt;
+
+&lt;p&gt;Interactions with GridFS are done via the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html
+&#34;&gt;&lt;code&gt;GridFSBucket&lt;/code&gt;&lt;/a&gt; class. To create a &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBuckets.html
+&#34;&gt;&lt;code&gt;GridFSBuckets&lt;/code&gt;&lt;/a&gt; factory class.&lt;/p&gt;
+
+&lt;p&gt;Creating a &lt;code&gt;GridFSBucket&lt;/code&gt; requires an instance of a
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/MongoDatabase.html
+&#34;&gt;&lt;code&gt;MongoDatabase&lt;/code&gt;&lt;/a&gt; and you can optionally provide a custom bucket name.&lt;/p&gt;
+
+&lt;p&gt;The following example shows how to create a &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Create a gridFSBucket using the default bucket name &amp;quot;fs&amp;quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
+
+// Create a gridFSBucket with a custom bucket name &amp;quot;files&amp;quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase, &amp;quot;files&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;uploading-to-gridfs&#34;&gt;Uploading to GridFS&lt;/h2&gt;
+
+&lt;p&gt;There are two main ways to upload data into GridFS.&lt;/p&gt;
+
+&lt;h3 id=&#34;uploadfromstream&#34;&gt;UploadFromStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+&#34;&gt;&lt;code&gt;uploadFromStream&lt;/code&gt;&lt;/a&gt; method reads the contents of an &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html&#34;&gt;&lt;code&gt;InputStream&lt;/code&gt;&lt;/a&gt; and saves it to the &lt;code&gt;GridFSBucket&lt;/code&gt;.  The size of the chunks defaults to 255 bytes, but can be configured via the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/model/GridFSUploadOptions.html
+&#34;&gt;&lt;code&gt;GridFSUploadOptions&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The following example uploads an &lt;code&gt;InputStream&lt;/code&gt; into &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Get the input stream
+InputStream streamToUploadFrom = new FileInputStream(new File(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;));
+
+// Create some custom options
+GridFSUploadOptions options = new GridFSUploadOptions()
+                                    .chunkSizeBytes(1024)
+                                    .metadata(new Document(&amp;quot;type&amp;quot;, &amp;quot;presentation&amp;quot;));
+
+ObjectId fileId = gridFSBucket.uploadFromStream(&amp;quot;mongodb-tutorial&amp;quot;, streamToUploadFrom, options);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;openuploadstream&#34;&gt;OpenUploadStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+&#34;&gt;&lt;code&gt;openUploadStream&lt;/code&gt;&lt;/a&gt; method returns a &lt;a href=&#34;http://api.mongodb.org/java/3.1/?mongodb/client/gridfs/GridFSUploadStream.html
+&#34;&gt;&lt;code&gt;GridFSUploadStream&lt;/code&gt;&lt;/a&gt; which extends &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html&#34;&gt;&lt;code&gt;OutputStream&lt;/code&gt;&lt;/a&gt; and can be written to.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;GridFSUploadStream&lt;/code&gt; buffers data until it reaches the &lt;code&gt;chunkSizeBytes&lt;/code&gt; and then inserts the chunk into the chunks collection.  When the &lt;code&gt;GridFSUploadStream&lt;/code&gt; is closed, the final chunk is written and the file metadata is inserted into the files collection.&lt;/p&gt;
+
+&lt;p&gt;The following example uploads an into &lt;code&gt;GridFSBucket&lt;/code&gt; via the returned &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;byte[] data = &amp;quot;Data to upload into GridFS&amp;quot;.getBytes(StandardCharsets.UTF_8);
+GridFSUploadStream uploadStream = gridFSBucket.openUploadStream(&amp;quot;sampleData&amp;quot;, options);
+uploadStream.write(data);
+uploadStream.close();
+System.out.println(&amp;quot;The fileId of the uploaded file is: &amp;quot; + uploadStream.getFileId().toHexString());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;GridFS will automatically create indexes on the files and chunks collections on first upload of data into the GridFS bucket.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;finding-files-stored-in-gridfs&#34;&gt;Finding files stored in GridFS&lt;/h2&gt;
+
+&lt;p&gt;To find the files stored in the &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#find--
+&#34;&gt;&lt;code&gt;find&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;p&gt;The following example prints out the filename of each file stored:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.find().forEach(
+  new Block&amp;lt;GridFSFile&amp;gt;() {
+    @Override
+    public void apply(final GridFSFile gridFSFile) {
+        System.out.println(gridFSFile.getFilename());
+    }
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can also provide a custom filter to limit the results returned. The following example prints out the filenames of all files with a &amp;ldquo;image/png&amp;rdquo; value set as the contentType in the user defined metadata document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.find(eq(&amp;quot;metadata.contentType&amp;quot;, &amp;quot;image/png&amp;quot;)).forEach(
+  new Block&amp;lt;GridFSFile&amp;gt;() {
+      @Override
+      public void apply(final GridFSFile gridFSFile) {
+          System.out.println(gridFSFile.getFilename());
+      }
+  });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;downloading-from-gridfs&#34;&gt;Downloading from GridFS&lt;/h2&gt;
+
+&lt;p&gt;There are four main ways to download data from GridFS.&lt;/p&gt;
+
+&lt;h3 id=&#34;downloadfromstream&#34;&gt;DownloadFromStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream-org.bson.types.ObjectId-java.io.OutputStream-
+&#34;&gt;&lt;code&gt;downloadToStream&lt;/code&gt;&lt;/a&gt; method reads the contents from MongoDB and writes the data directly to the provided &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html&#34;&gt;&lt;code&gt;OutputStream&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads a file into the provided &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;FileOutputStream streamToDownloadTo = new FileOutputStream(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;);
+gridFSBucket.downloadToStream(fileId, streamToDownloadTo);
+streamToDownloadTo.close();
+System.out.println(streamToDownloadTo.toString());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;downloadtostreambyname&#34;&gt;DownloadToStreamByName&lt;/h3&gt;
+
+&lt;p&gt;If you don&amp;rsquo;t know the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/types/ObjectId.html
+&#34;&gt;&lt;code&gt;ObjectId&lt;/code&gt;&lt;/a&gt; of the file you want to download, then you use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#downloadToStreamByName-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+&#34;&gt;&lt;code&gt;downloadToStreamByName&lt;/code&gt;&lt;/a&gt; method. By default it will download the latest version of the file. Use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html
+&#34;&gt;&lt;code&gt;GridFSDownloadByNameOptions&lt;/code&gt;&lt;/a&gt; to configure which version to download.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads the original version of the file named &amp;ldquo;mongodb-tutorial&amp;rdquo; into the &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;FileOutputStream streamToDownloadTo = new FileOutputStream(&amp;quot;/tmp/mongodb-tutorial.pdf&amp;quot;);
+GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
+gridFSBucket.downloadToStreamByName(&amp;quot;mongodb-tutorial&amp;quot;, streamToDownloadTo, downloadOptions);
+streamToDownloadTo.close();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;opendownloadstream&#34;&gt;OpenDownloadStream&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-
+&#34;&gt;&lt;code&gt;openDownloadStream&lt;/code&gt;&lt;/a&gt; method returns a &lt;a href=&#34;http://api.mongodb.org/java/3.1/?mongodb/client/gridfs/GridFSDownloadStream.html
+&#34;&gt;&lt;code&gt;GridFSDownloadStream&lt;/code&gt;&lt;/a&gt; which extends &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/index.html?java/io/InputStream.html&#34;&gt;&lt;code&gt;InputStream&lt;/code&gt;&lt;/a&gt; and can be read from.&lt;/p&gt;
+
+&lt;p&gt;The following example reads from the &lt;code&gt;GridFSBucket&lt;/code&gt; via the returned &lt;code&gt;InputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
+int fileLength = (int) downloadStream.getGridFSFile().getLength();
+byte[] bytesToWriteTo = new byte[fileLength];
+downloadStream.read(bytesToWriteTo);
+downloadStream.close();
+
+System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;opendownloadstreambyname&#34;&gt;OpenDownloadStreamByName&lt;/h3&gt;
+
+&lt;p&gt;You can also open a &lt;code&gt;GridFSDownloadStream&lt;/code&gt; by searching against the filename, using the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStreamByName-java.lang.String-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+&#34;&gt;&lt;code&gt;openDownloadStreamByName&lt;/code&gt;&lt;/a&gt; method. By default it will download the latest version of the file. Use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html
+&#34;&gt;&lt;code&gt;GridFSDownloadByNameOptions&lt;/code&gt;&lt;/a&gt; to configure which version to download.&lt;/p&gt;
+
+&lt;p&gt;The following example downloads the latest version of the file named &amp;ldquo;sampleData&amp;rdquo; into the &lt;code&gt;OutputStream&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStreamByName(&amp;quot;sampleData&amp;quot;);
+int fileLength = (int) downloadStream.getGridFSFile().getLength();
+byte[] bytesToWriteTo = new byte[fileLength];
+downloadStream.read(bytesToWriteTo);
+downloadStream.close();
+
+System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;renaming-files&#34;&gt;Renaming files&lt;/h2&gt;
+
+&lt;p&gt;If you should need to rename a file, then the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#rename-org.bson.types.ObjectId-java.lang.String-
+&#34;&gt;&lt;code&gt;rename&lt;/code&gt;&lt;/a&gt; method can be used.&lt;/p&gt;
+
+&lt;p&gt;The following example renames a file to &amp;ldquo;mongodbTutorial&amp;rdquo;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.rename(fileId, &amp;quot;mongodbTutorial&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;rename&lt;/code&gt; method requires an &lt;code&gt;ObjectId&lt;/code&gt; rather than a &lt;code&gt;filename&lt;/code&gt; to ensure the correct file is renamed.&lt;/p&gt;
+
+&lt;p&gt;To rename multiple revisions of the same filename, first retrieve the full list of files. Then for every file that should be renamed then execute &lt;code&gt;rename&lt;/code&gt; with the corresponding &lt;code&gt;_id&lt;/code&gt;.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;deleting-files&#34;&gt;Deleting files&lt;/h2&gt;
+
+&lt;p&gt;To delete a file from the &lt;code&gt;GridFSBucket&lt;/code&gt; use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/gridfs/GridFSBucket.html#delete-org.bson.types.ObjectId-
+&#34;&gt;&lt;code&gt;delete&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;p&gt;The following example deletes a file from the &lt;code&gt;GridFSBucket&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;gridFSBucket.delete(fileId);
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Indexes</title>
+      <link>/mongo-java-driver/3.1/builders/indexes/</link>
+      <pubDate>Thu, 16 Jul 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/indexes/</guid>
+      <description>
+
+&lt;h2 id=&#34;indexes&#34;&gt;Indexes&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Indexes.html
+&#34;&gt;&lt;code&gt;Indexes&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB Index key types.&lt;br /&gt;
+Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be used with the &lt;code&gt;createIndex&lt;/code&gt;
+methods.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Indexes&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Indexes.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;ascending&#34;&gt;Ascending&lt;/h3&gt;
+
+&lt;p&gt;To specify an ascending index key, use one of the &lt;code&gt;ascending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending index key for the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in ascending order and the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in ascending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;descending&#34;&gt;Descending&lt;/h3&gt;
+
+&lt;p&gt;To specify a descending index key, use one of the &lt;code&gt;descending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a descending index key on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in descending order and the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in descending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;compound-indexes&#34;&gt;Compound indexes&lt;/h3&gt;
+
+&lt;p&gt;To specify a compound index, use the &lt;code&gt;compoundIndex&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a compound index key composed of the &lt;code&gt;quantity&lt;/code&gt; field sorted in ascending order, followed by the &lt;code&gt;totalAmount&lt;/code&gt; field
+sorted in ascending order, followed by the &lt;code&gt;orderDate&lt;/code&gt; field sorted in descending order:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;compoundIndex(ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), descending(&amp;quot;orderDate&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-index&#34;&gt;Text Index&lt;/h3&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/index-text
+&#34;&gt;text&lt;/a&gt; index key, use the &lt;code&gt;text&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a text index key for the &lt;code&gt;description&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;text(&amp;quot;description&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;hashed-index&#34;&gt;Hashed Index&lt;/h3&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/index-hashed
+&#34;&gt;hashed&lt;/a&gt; index key, use the &lt;code&gt;hashed&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a hashed index key for the &lt;code&gt;timestamp&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;hashed(&amp;quot;timestamp&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;geospatial-indexes&#34;&gt;Geospatial Indexes&lt;/h3&gt;
+
+&lt;p&gt;There are also helpers for creating the index keys for the various &lt;a href=&#34;http://docs.mongodb.org/manual/applications/geospatial-indexes
+&#34;&gt;geospatial indexes&lt;/a&gt;
+supported by mongodb.&lt;/p&gt;
+
+&lt;h4 id=&#34;2dsphere&#34;&gt;2dsphere&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/2dsphere/
+&#34;&gt;2dsphere&lt;/a&gt; index key, use one of the &lt;code&gt;geo2dsphere&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a 2dsphere index on the &lt;code&gt;location&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geo2dsphere(&amp;quot;location&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;2d&#34;&gt;2d&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/2d/
+&#34;&gt;2d&lt;/a&gt; index key, use the &lt;code&gt;geo2d&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;A 2d index is for data stored as points on a two-dimensional plane and is intended for legacy coordinate pairs used in MongoDB 2.2 and earlier.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This example specifies a 2d index on the &lt;code&gt;points&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geo2d(&amp;quot;points&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;geohaystack&#34;&gt;geoHaystack&lt;/h4&gt;
+
+&lt;p&gt;To specify a &lt;a href=&#34;http://docs.mongodb.org/manual/core/geohaystack/
+&#34;&gt;geoHaystack&lt;/a&gt; index key, use the &lt;code&gt;geoHaystack&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition important&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;important&lt;/h5&gt;
+&lt;p&gt;For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering;
+geoHaystack indexes require the first field to be the location field. Also, geoHaystack indexes are only usable via commands and so always
+return all results at once.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This example specifies a geoHaystack index on the &lt;code&gt;position&lt;/code&gt; field and an ascending index on the &lt;code&gt;type&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geoHaystack(&amp;quot;position&amp;quot;, ascending(&amp;quot;type&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Observables</title>
+      <link>/mongo-java-driver/3.1/driver-async/reference/observables/</link>
+      <pubDate>Thu, 14 May 2015 08:01:00 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/driver-async/reference/observables/</guid>
+      <description>
+
+&lt;h2 id=&#34;observables&#34;&gt;Observables&lt;/h2&gt;
+
+&lt;p&gt;The MongoDB Async Driver is fully callback based and makes extensive use of &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/SingleResultCallback.html
+&#34;&gt;&lt;code&gt;SingleResultCallback&amp;lt;T&amp;gt;&lt;/code&gt;&lt;/a&gt; to achieve this. The &lt;code&gt;SingleResultCallback&amp;lt;T&amp;gt;&lt;/code&gt; interface requires the implementation of a single method &lt;code&gt;onResult(T result, Throwable t)&lt;/code&gt; which is called once the operation has completed or errored. The &lt;code&gt;result&lt;/code&gt; parameter contains the result of the operation if successful. If the operation failed for any reason then the &lt;code&gt;t&lt;/code&gt; contains the &lt;code&gt;Throwable&lt;/code&gt; reason for the failure. This pattern allows the users application logic to be deferred until the underlying network IO to MongoDB has been completed.&lt;/p&gt;
+
+&lt;p&gt;The callback pattern is extremely flexible but can quickly become unwieldy if the application logic requires a chain of operations. Nesting of callbacks can make code harder to read and give the appearance of making the codebase more complex that it actually is. To help with this we also have released two observable based asynchronous drivers:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;http://mongodb.github.io/mongo-java-driver-reactivestreams/&#34;&gt;MongoDB Reactive Streams Driver&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://mongodb.github.io/mongo-java-driver-rx/&#34;&gt;MongoDB RxJava Driver&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;These observable drivers follow similar patterns that split the logic into &lt;code&gt;onNext&lt;/code&gt;, &lt;code&gt;onError&lt;/code&gt; and &lt;code&gt;onComplete(d)&lt;/code&gt; methods. These methods split out the logic used by &lt;code&gt;SingleResultCallback&amp;lt;T&amp;gt;.onResult(T result, Throwable t)&lt;/code&gt; into individual components that can make the code  easier to reason with.&lt;/p&gt;
+
+&lt;p&gt;The MongoDB Async Driver provides a factory and interfaces that do the heavy lifting of converting callback based operations into an observable operations.  There are three interfaces &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observable.html
+&#34;&gt;&lt;code&gt;Observable&lt;/code&gt;&lt;/a&gt;, &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Subscription.html
+&#34;&gt;&lt;code&gt;Subscription&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observer.html
+&#34;&gt;&lt;code&gt;Observer&lt;/code&gt;&lt;/a&gt;. The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observables.html
+&#34;&gt;&lt;code&gt;Observables&lt;/code&gt;&lt;/a&gt; helpers convert any callback based operations into observable operations.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The interfaces are similar to &lt;code&gt;Publisher&lt;/code&gt;, &lt;code&gt;Subscription&lt;/code&gt; and &lt;code&gt;Subscriber&lt;/code&gt; interfaces from the &lt;a href=&#34;http://www.reactive-streams.org/&#34;&gt;reactive streams&lt;/a&gt; JVM implementation.  However, we prefer the name &lt;code&gt;Observerable&lt;/code&gt; to &lt;code&gt;Publisher&lt;/code&gt; and &lt;code&gt;Observer&lt;/code&gt; to &lt;code&gt;Subscriber&lt;/code&gt; for readability purposes.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;observable&#34;&gt;Observable&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observable.html
+&#34;&gt;&lt;code&gt;Observable&lt;/code&gt;&lt;/a&gt; represents a MongoDB operation which emits its results to the &lt;code&gt;Observer&lt;/code&gt; based on demand requested by the &lt;code&gt;Subscription&lt;/code&gt; to the &lt;code&gt;Observable&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;subscription&#34;&gt;Subscription&lt;/h2&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Subscription.html
+&#34;&gt;&lt;code&gt;Subscription&lt;/code&gt;&lt;/a&gt; represents a one-to-one lifecycle of an &lt;code&gt;Observer&lt;/code&gt; subscribing to an &lt;code&gt;Observable&lt;/code&gt;.  A &lt;code&gt;Subscription&lt;/code&gt; to an &lt;code&gt;Observable&lt;/code&gt; can only be used by a single &lt;code&gt;Observer&lt;/code&gt;.  The purpose of a &lt;code&gt;Subscription&lt;/code&gt; is to control demand and to allow unsubscribing from the &lt;code&gt;Observable&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;observer&#34;&gt;Observer&lt;/h2&gt;
+
+&lt;p&gt;An &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observer.html
+&#34;&gt;&lt;code&gt;Observer&lt;/code&gt;&lt;/a&gt; provides the mechanism for receiving push-based notifications from the &lt;code&gt;Observable&lt;/code&gt;.  Demand for these events is signalled by its &lt;code&gt;Subscription&lt;/code&gt;. On subscription to an &lt;code&gt;Observable&lt;/code&gt; the &lt;code&gt;Observer&lt;/code&gt; will be passed the &lt;code&gt;Subscription&lt;/code&gt; via the &lt;code&gt;onSubscribe(Subscription subscription)&lt;/code&gt;.
+Demand for results is signaled via the &lt;code&gt;Subscription&lt;/code&gt; and any results are passed to the &lt;code&gt;onNext(TResult result)&lt;/code&gt; method.  If there is an error for any reason the &lt;code&gt;onError(Throwable e)&lt;/code&gt; will be called and no more events passed to the &lt;code&gt;Observer&lt;/code&gt;. Alternatively, when the &lt;code&gt;Observer&lt;/code&gt; has consumed all the results from the &lt;code&gt;Observable&lt;/code&gt; the &lt;code&gt;onComplete()&lt;/code&gt; method will be called.&lt;/p&gt;
+
+&lt;h2 id=&#34;wrapping-a-mongoiterable&#34;&gt;Wrapping a MongoIterable&lt;/h2&gt;
+
+&lt;p&gt;With the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/Observables.html
+&#34;&gt;&lt;code&gt;Observables&lt;/code&gt;&lt;/a&gt; factory creating an &lt;code&gt;Observable&lt;/code&gt; from a &lt;code&gt;MongoIterable&lt;/code&gt; is simple.&lt;/p&gt;
+
+&lt;p&gt;In the following example we iterate and print out all json forms of documents in a collection:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    Observables.observe(collection.find()).subscribe(new Observer&amp;lt;Document&amp;gt;(){
+        @Override
+        void onSubscribe(final Subscription subscription) {
+            System.out.println(&amp;quot;Subscribed and requesting all documents&amp;quot;);
+            subscription.request(Long.MAX_VALUE);
+        }
+
+        @Override
+        void onNext(final Document document) {
+            System.out.println(document.toJson());
+        }
+
+        @Override
+        void onError(final Throwable e) {
+            System.out.println(&amp;quot;There was an error: &amp;quot; + e.getMessage());
+        }
+
+        @Override
+        void onComplete() {
+            System.out.println(&amp;quot;Finished iterating all documents&amp;quot;);
+        }
+    });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;wrapping-a-callback-based-method&#34;&gt;Wrapping a callback based method&lt;/h2&gt;
+
+&lt;p&gt;Creating an &lt;code&gt;Observable&lt;/code&gt; from any callback based methods requires the wrapping of the method inside a &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/Block.html
+&#34;&gt;&lt;code&gt;Block&lt;/code&gt;&lt;/a&gt;. This allows the execution of the operation to be delayed, until demand is request by the &lt;code&gt;Subscription&lt;/code&gt;.  The method &lt;em&gt;must&lt;/em&gt; use the supplied callback to convert the results into an &lt;code&gt;Observable&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the following example we print out the count of the number of documents in a collection:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;    Block&amp;lt;SingleResultCallback&amp;lt;Long&amp;gt;&amp;gt; operation = new Block&amp;lt;SingleResultCallback&amp;lt;Long&amp;gt;&amp;gt;() {
+        @Override
+        void apply(final SingleResultCallback&amp;lt;Long&amp;gt; callback) {
+            collection.count(callback);
+        }
+    };
+
+    // Or in Java 8 syntax:
+    operation = (Block&amp;lt;SingleResultCallback&amp;lt;Long&amp;gt;&amp;gt;) collection::count;
+
+    Observables.observe(operation).subscribe(new Observer&amp;lt;Long&amp;gt;(){
+        @Override
+        void onSubscribe(final Subscription subscription) {
+            System.out.println(&amp;quot;Subscribed and requesting the count&amp;quot;);
+            subscription.request(1);
+        }
+
+        @Override
+        void onNext(final Long count) {
+            System.out.println(&amp;quot;The collection has &amp;quot; + count + &amp;quot; documents&amp;quot;);
+        }
+
+        @Override
+        void onError(final Throwable e) {
+            System.out.println(&amp;quot;There was an error: &amp;quot; + e.getMessage());
+        }
+
+        @Override
+        void onComplete() {
+            System.out.println(&amp;quot;Finished&amp;quot;);
+        }
+    });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;back-pressure&#34;&gt;Back Pressure&lt;/h2&gt;
+
+&lt;p&gt;In the following example, the &lt;code&gt;Subscription&lt;/code&gt; is used to control demand when iterating an &lt;code&gt;Observable&lt;/code&gt;. This is similar in concept to the &lt;code&gt;MongoIterable.forEach&lt;/code&gt; method but allows demand-driven iteration:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt; Observables.observe(collection.find()).subscribe(new Observer&amp;lt;Document&amp;gt;(){
+        private long batchSize = 10;
+        private long seen = 0;
+        private Subscription subscription;
+
+         @Override
+         void onSubscribe(final Subscription subscription) {
+             this.subscription = subscription;
+             subscription.request(batchSize);
+         }
+
+         @Override
+         void onNext(final Document document) {
+             System.out.println(document.toJson());
+             seen += 1;
+             if (seen == batchSize) {
+                seen = 0;
+                subscription.request(batchSize);
+             }
+         }
+
+         @Override
+         void onError(final Throwable e) {
+             System.out.println(&amp;quot;There was an error: &amp;quot; + e.getMessage());
+         }
+
+         @Override
+         void onComplete() {
+             System.out.println(&amp;quot;Finished iterating all documents&amp;quot;);
+         }
+     });
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Codec and CodecRegistry</title>
+      <link>/mongo-java-driver/3.1/bson/codecs/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/bson/codecs/</guid>
+      <description>
+
+&lt;h2 id=&#34;codec-and-codecregistry&#34;&gt;Codec and CodecRegistry&lt;/h2&gt;
+
+&lt;p&gt;In the last section we saw how to use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonReader.html
+&#34;&gt;&lt;code&gt;BsonReader&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonWriter.html
+&#34;&gt;&lt;code&gt;BsonWriter&lt;/code&gt;&lt;/a&gt; API to read and write BSON documents.  But writing code at that
+low a level is tedious and error-prone, so in practice these algorithms are packaged in implementations of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/codecs/Codec.html
+&#34;&gt;&lt;code&gt;Codec&lt;/code&gt;&lt;/a&gt; interface.&lt;/p&gt;
+
+&lt;h3 id=&#34;codec&#34;&gt;Codec&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;Codec&lt;/code&gt; interface abstracts the processes of decoding a BSON value into a Java object using a &lt;code&gt;BsonReader&lt;/code&gt; and encoding a Java object
+ into a BSON value using a &lt;code&gt;BsonWriter&lt;/code&gt;.  The BSON value can be as simple as a boolean or as complex as a document or array.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s look at a simple &lt;code&gt;Codec&lt;/code&gt; implementation that encodes a Java &lt;code&gt;Integer&lt;/code&gt; to a BSON Int32, and vice versa:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class IntegerCodec implements Codec&amp;lt;Integer&amp;gt; {
+    @Override
+    public void encode(final BsonWriter writer, final Integer value, final EncoderContext encoderContext) {
+        writer.writeInt32(value);
+    }
+
+    @Override
+    public Integer decode(final BsonReader reader, final DecoderContext decoderContext) {
+        return reader.readInt32();
+    }
+
+    @Override
+    public Class&amp;lt;Integer&amp;gt; getEncoderClass() {
+        return Integer.class;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;encode&lt;/code&gt; method takes a &lt;code&gt;BsonWriter&lt;/code&gt; and an &lt;code&gt;Integer&lt;/code&gt; and calls the &lt;code&gt;writeInt32&lt;/code&gt; method on the &lt;code&gt;BsonWriter&lt;/code&gt; with the value of the
+&lt;code&gt;Integer&lt;/code&gt;, while the &lt;code&gt;decode&lt;/code&gt; method takes a &lt;code&gt;BsonReader&lt;/code&gt; and calls the &lt;code&gt;readInt32&lt;/code&gt; method on the &lt;code&gt;BsonReader&lt;/code&gt;, returning the value as an
+&lt;code&gt;Integer&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;A &lt;code&gt;Codec&lt;/code&gt; implementation than encodes to and decodes from a BSON document or array is more complicated, and would typically
+rely on a set of simpler &lt;code&gt;Codec&lt;/code&gt; implementations for the basic BSON value types.  For this, it can rely on a &lt;code&gt;CodecRegistry&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;codecregistry&#34;&gt;CodecRegistry&lt;/h3&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/codecs/configuration/CodecRegistry.html
+&#34;&gt;&lt;code&gt;CodecRegistry&lt;/code&gt;&lt;/a&gt; contains a set of &lt;code&gt;Codec&lt;/code&gt; instances that are accessed
+according to the Java classes that they encode from and decode to. Instances of &lt;code&gt;CodecRegistry&lt;/code&gt; are generally created via static factory
+methods on the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/codecs/configuration/CodecRegistries.html
+&#34;&gt;&lt;code&gt;CodecRegistries&lt;/code&gt;&lt;/a&gt; class.  Consider the simplest of these
+methods, one that takes a list of &lt;code&gt;Codec&lt;/code&gt;s:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;CodecRegistry registry = CodecRegistries.fromCodecs(new IntegerCodec(), new LongCodec(), ...);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This returns an immutable &lt;code&gt;CodecRegistry&lt;/code&gt; instance containing all the &lt;code&gt;Codec&lt;/code&gt; instances passed to the &lt;code&gt;fromCodecs&lt;/code&gt; method.  They can be
+accessed like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Codec&amp;lt;Integer&amp;gt; integerCodec = codecRegistry.get(Integer.class);
+Codec&amp;lt;Long&amp;gt; longCodec = codecRegistry.get(Long.class);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now consider a &lt;code&gt;Codec&lt;/code&gt; for the &lt;code&gt;Document&lt;/code&gt; class.  This &lt;code&gt;Codec&lt;/code&gt; implementation, in order to decode and
+encode the values for each field in the document, must be constructed with a &lt;code&gt;CodecRegistry&lt;/code&gt; to look up the &lt;code&gt;Codec&lt;/code&gt; instances for each type
+of value.  But how could one construct an instance of that &lt;code&gt;Codec&lt;/code&gt;?  You would have to pass an instance to the
+&lt;code&gt;CodecRegistries.fromCodecs&lt;/code&gt; method, but you don&amp;rsquo;t have a &lt;code&gt;CodecRegistry&lt;/code&gt; yet to pass to the constructor.  You need some way to delay the
+construction  of the &lt;code&gt;Document&lt;/code&gt; &lt;code&gt;Codec&lt;/code&gt; until after the &lt;code&gt;CodecRegistry&lt;/code&gt; has been constructed.  For that we use a &lt;code&gt;CodecProvider&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;codecprovider&#34;&gt;CodecProvider&lt;/h3&gt;
+
+&lt;p&gt;A &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/codecs/configuration/CodecProvider.html
+&#34;&gt;&lt;code&gt;CodecProvider&lt;/code&gt;&lt;/a&gt; is a factory for &lt;code&gt;Codec&lt;/code&gt; instances.  Unlike
+&lt;code&gt;CodecRegistry&lt;/code&gt;, its &lt;code&gt;get&lt;/code&gt; method takes not only a Class, but also a &lt;code&gt;CodecRegistry&lt;/code&gt;, allowing a &lt;code&gt;CodecProvider&lt;/code&gt; implementation to
+construct &lt;code&gt;Codec&lt;/code&gt; instances that require a &lt;code&gt;CodecRegistry&lt;/code&gt; to look up &lt;code&gt;Codec&lt;/code&gt; instances for the values contained within it.  Consider a
+&lt;code&gt;CodecProvider&lt;/code&gt; for the &lt;code&gt;Document&lt;/code&gt; class:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class DocumentCodecProvider implements CodecProvider {
+    @Override                                                                                          
+    public &amp;lt;T&amp;gt; Codec&amp;lt;T&amp;gt; get(final Class&amp;lt;T&amp;gt; clazz, final CodecRegistry registry) {                      
+        if (clazz == Document.class) {                      
+            // construct DocumentCodec with a CodecRegistry
+            return (Codec&amp;lt;T&amp;gt;) new DocumentCodec(registry);           
+        }                                                                                              
+                                                                                                       
+        // CodecProvider returns null if it&#39;s not a provider for the requresed Class 
+        return null;                                          
+    }                                                                                                  
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;DocumentCodec&lt;/code&gt;, because it is constructed with a &lt;code&gt;CodecRegistry&lt;/code&gt;, can now use that registry to look up &lt;code&gt;Codec&lt;/code&gt; instances for the
+values contained in each Document that it encodes.&lt;/p&gt;
+
+&lt;p&gt;One more problem remains, however.  Consider the problem of encoding values to a BSON DateTime.  An application may want  to
+encode to a BSON DateTime instances of both the original Java &lt;code&gt;Date&lt;/code&gt; class as well as the Java 8 &lt;code&gt;Instant&lt;/code&gt; class.  It&amp;rsquo;s easy to create
+implemenations of &lt;code&gt;Codec&amp;lt;Date&amp;gt;&lt;/code&gt; and &lt;code&gt;Codec&amp;lt;Instant&amp;gt;&lt;/code&gt;, and either one can be used for encoding.  But when decoding, a Document &lt;code&gt;Codec&lt;/code&gt;
+also has to choose which Java type to decode a BSON DateTime to.  Rather than hard-coding it in the &lt;code&gt;DocumentCodec&lt;/code&gt;, the decision is
+abstracted via the &lt;code&gt;BsonTypeClassMap&lt;/code&gt; class.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsontypeclassmap&#34;&gt;BsonTypeClassMap&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/codecs/BsonTypeClassMap.html
+&#34;&gt;&lt;code&gt;BsonTypeClassMap&lt;/code&gt;&lt;/a&gt; class simply maps each value in the &lt;code&gt;BsonType&lt;/code&gt;
+enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a &lt;code&gt;Map&amp;lt;BsonType, 
+Class&amp;lt;?&amp;gt;&amp;gt;&lt;/code&gt; instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode
+all BSON DateTime values to a Java 8 &lt;code&gt;Instant&lt;/code&gt; instead of the default &lt;code&gt;Date&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Map&amp;lt;BsonType, Class&amp;lt;?&amp;gt;&amp;gt; replacements = new HashMap&amp;lt;BsonType, Class&amp;lt;?&amp;gt;&amp;gt;();
+replacements.put(BsonType.DATE_TIME, Instant.class);
+BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(replacements);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will replace the default mapping of BSON DateTime to &lt;code&gt;Date&lt;/code&gt; to one from BSON DateTime to &lt;code&gt;Instant&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Putting it all together, we can added a BsonTypeClassMap to the DocumentCodecProvider shown above:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class DocumentCodecProvider implements CodecProvider {
+    private final BsonTypeClassMap bsonTypeClassMap;
+    
+    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) { 
+        this.bsonTypeClassMap = bsonTypeClassMap;                                       
+    }                                                                       
+    
+    @Override                                                                                          
+    public &amp;lt;T&amp;gt; Codec&amp;lt;T&amp;gt; get(final Class&amp;lt;T&amp;gt; clazz, final CodecRegistry registry) {                      
+        if (clazz == Document.class) {                      
+            // construct DocumentCodec with a CodecRegistry and a BsonTypeClassMap
+            return (Codec&amp;lt;T&amp;gt;) new DocumentCodec(registry, bsonTypeClassMap);           
+        }                                                                                              
+                                                                                                       
+        return null;                                                                                   
+    }                                                                                                  
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;DocumentCodec&lt;/code&gt;, because it is constructed with both a &lt;code&gt;BsonTypeClassMap&lt;/code&gt; and a &lt;code&gt;CodecRegistry&lt;/code&gt;, can first use the &lt;code&gt;BsonTypeClassMap&lt;/code&gt;
+to determine with type to decode each BSON value to, then use the &lt;code&gt;CodecRegistry&lt;/code&gt; to look up the &lt;code&gt;Codec&lt;/code&gt; for that Java type.&lt;/p&gt;
+
+&lt;p&gt;Finally, we create a &lt;code&gt;CodecRegistry&lt;/code&gt; instance&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;CodecRegistry defaultCodecRegistry = ... 
+DocumentCodecProvider documentCodecProvider = ... 
+Codec&amp;lt;Instant&amp;gt; instantCodec = ...   
+codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(instantCodec),
+                                               CodecRegistries.fromProviders(documentCodecProvider),
+                                               defaultCodecRegistry);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;using two additional static factory methods from the &lt;code&gt;CodecRegistries&lt;/code&gt; class: one that takes a list of &lt;code&gt;CodecProvider&lt;/code&gt;s and one which
+takes a list of &lt;code&gt;CodecRegistry&lt;/code&gt;s.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Documents</title>
+      <link>/mongo-java-driver/3.1/bson/documents/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/bson/documents/</guid>
+      <description>
+
+&lt;h2 id=&#34;documents&#34;&gt;Documents&lt;/h2&gt;
+
+&lt;p&gt;The driver includes several classes and interfaces used for representing BSON documents.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsondocument&#34;&gt;BsonDocument&lt;/h3&gt;
+
+&lt;p&gt;Although generally not needed by users of the high-level driver API, the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonDocument.html
+&#34;&gt;&lt;code&gt;BsonDocument&lt;/code&gt;&lt;/a&gt; class is
+central to the way that documents are managed internally by the driver.  The &lt;code&gt;BsonDocument&lt;/code&gt; class can represent dynamically structured
+documents of any complexity with a type-safe API.  For instance, the document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ 
+  &amp;quot;a&amp;quot; : &amp;quot;MongoDB&amp;quot;, 
+  &amp;quot;b&amp;quot; : [ 1, 2 ] 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;can be constructed as a BsonDocument as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;new BsonDocument().append(&amp;quot;a&amp;quot;, new BsonString(&amp;quot;MongoDB&amp;quot;))
+                  .append(&amp;quot;b&amp;quot;, new BsonArray(Arrays.asList(new BsonInt32(1), new BsonInt32(2))));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The type safety comes from &lt;code&gt;BsonDocument&lt;/code&gt; implementing &lt;code&gt;Map&amp;lt;String, BsonValue&amp;gt;&lt;/code&gt;, so even built-in types like &lt;code&gt;int&lt;/code&gt;, &lt;code&gt;String&lt;/code&gt; and &lt;code&gt;List&lt;/code&gt; must
+be wrapped in a sub-class of &lt;code&gt;BsonValue&lt;/code&gt;.  For a complete list of &lt;code&gt;BsonValue&lt;/code&gt; sub-types, please consult the
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonValue.html
+&#34;&gt;&lt;code&gt;BsonValue&lt;/code&gt;&lt;/a&gt; API documentation.&lt;/p&gt;
+
+&lt;h3 id=&#34;document&#34;&gt;Document&lt;/h3&gt;
+
+&lt;p&gt;Most applications will use the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/Document.html
+&#34;&gt;&lt;code&gt;Document&lt;/code&gt;&lt;/a&gt; class instead.  Like &lt;code&gt;BsonDocument&lt;/code&gt;, the
+&lt;code&gt;Document&lt;/code&gt; class can represent dynamically structured documents of any complexity; however, the typing is much looser, as &lt;code&gt;Document&lt;/code&gt;
+implements &lt;code&gt;Map&amp;lt;String, Object&amp;gt;&lt;/code&gt;. As a result, the same document as above can be constructed using the Document class as follows:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;new Document().append(&amp;quot;a&amp;quot;, &amp;quot;MongoDB&amp;quot;)
+              .append(&amp;quot;b&amp;quot;, Arrays.asList(1, 2));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.&lt;/p&gt;
+
+&lt;p&gt;The most commonly used value types are:&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;BSON type&lt;/th&gt;
+&lt;th&gt;Java type&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Document&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.Document&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Array&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.util.List&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Date&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.util.Date&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Boolean&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Boolean&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Double&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Double&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Int32&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Integer&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Int64&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.Long&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;String&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;java.lang.String&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Binary&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.types.Binary&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;ObjectId&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;org.bson.types.ObjectId&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;Null&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;null&lt;/code&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;p&gt;It is actually possible to change these mappings; the mechanism for doing so is covered &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/codecs/&#34;&gt;later&lt;/a&gt; in this
+reference .&lt;/p&gt;
+
+&lt;h3 id=&#34;dbobject&#34;&gt;DBObject&lt;/h3&gt;
+
+&lt;p&gt;Although not recommended for new applications, those upgrading from the 2.x driver series may continue to use the
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/DBObject.html
+&#34;&gt;&lt;code&gt;DBObject&lt;/code&gt;&lt;/a&gt; interface to represent BSON documents.  &lt;code&gt;DBObject&lt;/code&gt; is similar to Document in that it
+represents BSON values as &lt;code&gt;Object&lt;/code&gt;, but it has a few shortcomings that were impossible to overcome:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;it is an interface rather than a class, so it&amp;rsquo;s API can not be extended without breaking binary compatibility&lt;/li&gt;
+&lt;li&gt;it doesn&amp;rsquo;t actually implement &lt;code&gt;Map&amp;lt;String, Object&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;because it is an interface, a separate concrete class called &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/BasicDBObject.html
+&#34;&gt;&lt;code&gt;BasicDBObject&lt;/code&gt;&lt;/a&gt; which
+implements that interface, is required&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;bson&#34;&gt;Bson&lt;/h3&gt;
+
+&lt;p&gt;To tie these all together, the driver contains a small but powerful interface called &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/conversions/Bson.html
+&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt;.
+Any class that represents a BSON document, whether included in the driver itself or from a third party, can implement this interface and
+can then be used any place in the high-level API where a BSON document is required. The three classes discussed above all implement this
+interface and so can be used interchangeably based on the needs of a given application.  For example:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.find(new BsonDocument(&amp;quot;x&amp;quot;, new BsonInt32(1)));
+collection.find(new Document(&amp;quot;x&amp;quot;, 1));
+collection.find(new BasicDBObject(&amp;quot;x&amp;quot;, 1));
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Extended JSON</title>
+      <link>/mongo-java-driver/3.1/bson/extended-json/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/bson/extended-json/</guid>
+      <description>
+
+&lt;h2 id=&#34;mongodb-extended-json&#34;&gt;MongoDB Extended JSON&lt;/h2&gt;
+
+&lt;p&gt;As discussed earlier, the Java driver supports reading and writing BSON documents represented as&lt;br /&gt;
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.  Both variants are supported:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Strict Mode: representations of BSON types that conform to the &lt;a href=&#34;http://www.json.org/&#34;&gt;JSON RFC&lt;/a&gt;. This is the
+format that &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoexport/&#34;&gt;mongoexport&lt;/a&gt; produces and
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoimport/&#34;&gt;mongoimport&lt;/a&gt; consumes.&lt;/li&gt;
+&lt;li&gt;Shell Mode: a superset of JSON that the
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/&#34;&gt;MongoDB shell&lt;/a&gt; can parse.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Furthermore, the &lt;code&gt;Document&lt;/code&gt; class provides two sets of convenience methods for this purpose:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;toJson(): a set of overloaded methods that convert a &lt;code&gt;Document&lt;/code&gt; instance to a JSON string&lt;/li&gt;
+&lt;li&gt;parse(): a set of overloaded static factory methods that convert a JSON string to a &lt;code&gt;Document&lt;/code&gt; instance&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;writing-json&#34;&gt;Writing JSON&lt;/h2&gt;
+
+&lt;p&gt;Consider the task of implementing a &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoexport/&#34;&gt;mongoexport&lt;/a&gt;-like tool using the
+Java driver.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String outputFilename;                 // initialize to the path of the file to write to
+MongoCollection&amp;lt;Document&amp;gt; collection;  // initialize to the collection from which you want to query
+
+BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilename));
+
+try {
+    for (Document doc : collection.find()) {
+        writer.write(doc.toJson());
+        writer.newLine();
+} finally {
+   writer.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;Document.toJson()&lt;/code&gt; method constructs an instance of a &lt;code&gt;JsonWriter&lt;/code&gt; with its default settings, which will write in strict mode with
+no new lines or indentation.&lt;/p&gt;
+
+&lt;p&gt;You can override this default behavior by using one of the overloads of &lt;code&gt;toJson()&lt;/code&gt;.  As an example, consider the task of writing a
+ JSON string that can be copied and pasted into the MongoDB shell:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;SimpleDateFormat fmt = new SimpleDateFormat(&amp;quot;dd/MM/yy&amp;quot;);
+Date first = fmt.parse(&amp;quot;01/01/2014&amp;quot;);
+Date second = fmt.parse(&amp;quot;01/01/2015&amp;quot;);
+Document doc = new Document(&amp;quot;startDate&amp;quot;, new Document(&amp;quot;$gt&amp;quot;, first).append(&amp;quot;$lt&amp;quot;, second)); 
+System.out.println(doc.toJson(new JsonWriterSettings(JsonMode.SHELL))); 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This code snippet will print out MongoDB shell-compatible JSON, which can then be pasted into the shell:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ &amp;quot;startDate&amp;quot; : { &amp;quot;$gt&amp;quot; : ISODate(&amp;quot;2014-01-01T05:00:00.000Z&amp;quot;), &amp;quot;$lt&amp;quot; : ISODate(&amp;quot;2015-01-01T05:00:00.000Z&amp;quot;) } }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;reading-json&#34;&gt;Reading JSON&lt;/h2&gt;
+
+&lt;p&gt;Consider the task of implementing a &lt;a href=&#34;http://docs.mongodb.org/manual/reference/program/mongoimport/&#34;&gt;mongoimport&lt;/a&gt;-like tool using the
+Java driver.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String inputFilename;                  // initialize to the path of the file to read from
+MongoCollection&amp;lt;Document&amp;gt; collection;  // initialize to the collection to which you want to write
+
+BufferedReader reader = new BufferedReader(new FileReader(inputFilename));
+
+try {
+    String json;
+
+    while ((json = reader.readLine()) != null) {
+        collection.insertOne(Document.parse(json));
+    } 
+} finally {
+    reader.close();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;Document.parse()&lt;/code&gt; static factory method constructs an instance of a &lt;code&gt;JsonReader&lt;/code&gt; with the given string and returns an instance of an
+equivalent Document instance. &lt;code&gt;JsonReader&lt;/code&gt; automatically detects the JSON flavor in the string, so you do not need to specify it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Aggregation</title>
+      <link>/mongo-java-driver/3.1/builders/aggregation/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/aggregation/</guid>
+      <description>
+
+&lt;h2 id=&#34;aggregation&#34;&gt;Aggregation&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Aggregates.html
+&#34;&gt;&lt;code&gt;Aggregates&lt;/code&gt;&lt;/a&gt; class provides static factory methods that build &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/
+&#34;&gt;aggregation
+pipeline operators&lt;/a&gt;.  Each method returns an instance of the
+&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to the &lt;code&gt;aggregate&lt;/code&gt; method of &lt;code&gt;MongoCollection&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Aggregates&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Aggregates.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;match&#34;&gt;Match&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/match/
+&#34;&gt;&lt;code&gt;$match&lt;/code&gt;&lt;/a&gt; pipeline stage passes all documents matching the
+specified filter to the next stage.  Though the filter can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to
+combine with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Filters.html
+&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;eq&lt;/code&gt; method of the &lt;code&gt;Filters&lt;/code&gt; class has been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that matches all documents where the &lt;code&gt;author&lt;/code&gt; field is equal to &lt;code&gt;&amp;quot;Dave&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;match(eq(&amp;quot;author&amp;quot;, &amp;quot;Dave&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;project&#34;&gt;Project&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/project/
+&#34;&gt;&lt;code&gt;$project&lt;/code&gt;&lt;/a&gt; pipeline stage passes the projected fields of all
+documents to the next stage.  Though the projection can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to combine
+with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Projections.html
+&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;include&lt;/code&gt;, &lt;code&gt;excludeId&lt;/code&gt;, and &lt;code&gt;fields&lt;/code&gt; methods of the &lt;code&gt;Projections&lt;/code&gt; class have been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that excludes the &lt;code&gt;_id&lt;/code&gt; field but includes the &lt;code&gt;title&lt;/code&gt; and &lt;code&gt;author&lt;/code&gt; fields:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;project(fields(include(&amp;quot;title&amp;quot;, &amp;quot;author&amp;quot;), excludeId()))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;projecting-computed-fields&#34;&gt;Projecting Computed Fields&lt;/h4&gt;
+
+&lt;p&gt;The &lt;code&gt;$project&lt;/code&gt; stage can project computed fields as well.&lt;/p&gt;
+
+&lt;p&gt;This example simply projects the &lt;code&gt;qty&lt;/code&gt; field into a new field called &lt;code&gt;quantity&lt;/code&gt;.  In other words, it renames the field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;project(computed(&amp;quot;quantity&amp;quot;, &amp;quot;$qty&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;sort&#34;&gt;Sort&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/sort/
+&#34;&gt;&lt;code&gt;$sort&lt;/code&gt;&lt;/a&gt; pipeline stage passes all documents to the next stage,
+sorted by the specified sort criteria. Though the sort criteria can be an instance of any class that implements &lt;code&gt;Bson&lt;/code&gt;, it&amp;rsquo;s convenient to
+combine with use of the &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Sorts.html
+&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; class.  In the example below, it&amp;rsquo;s assumed that the
+&lt;code&gt;descending&lt;/code&gt;, &lt;code&gt;ascending&lt;/code&gt;, and &lt;code&gt;orderBy&lt;/code&gt; methods of the &lt;code&gt;Sorts&lt;/code&gt; class have been statically imported.&lt;/p&gt;
+
+&lt;p&gt;This example creates a pipeline stage that sorts in descending order according to the value of the &lt;code&gt;age&lt;/code&gt; field and then in ascending order
+according to the value of the &lt;code&gt;posts&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;sort(orderBy(descending(&amp;quot;age&amp;quot;), ascending(&amp;quot;posts&amp;quot;)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;skip&#34;&gt;Skip&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/skip/
+&#34;&gt;&lt;code&gt;$skip&lt;/code&gt;&lt;/a&gt; pipeline stage skips over the specified number of
+documents that pass into the stage and passes the remaining documents to the next stage.&lt;/p&gt;
+
+&lt;p&gt;This example skips the first &lt;code&gt;5&lt;/code&gt; documents:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;skip(5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;limit&#34;&gt;Limit&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/limit/
+&#34;&gt;&lt;code&gt;$limit&lt;/code&gt;&lt;/a&gt; pipeline stage limits the number of documents passed
+to the next stage.&lt;/p&gt;
+
+&lt;p&gt;This example limits the number of documents to &lt;code&gt;10&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;limit(10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;group&#34;&gt;Group&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/group/
+&#34;&gt;&lt;code&gt;$group&lt;/code&gt;&lt;/a&gt; pipeline stage groups documents by some specified
+expression and outputs to the next stage a document for each distinct grouping.  A group consists of an &lt;code&gt;_id&lt;/code&gt; which specifies the
+expression on which to group, and zero or more
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/group/#accumulator-operator
+&#34;&gt;accumulators&lt;/a&gt; which are evaluated for each
+grouping.  To simplify the expression of accumulators, the driver includes an
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Accumulators.html
+&#34;&gt;&lt;code&gt;Accumulators&lt;/code&gt;&lt;/a&gt; class with static factory methods for each of the supported
+accumulators. In the example below, it&amp;rsquo;s assumed that the &lt;code&gt;sum&lt;/code&gt; and &lt;code&gt;avg&lt;/code&gt; methods of the &lt;code&gt;Accumulators&lt;/code&gt; class have been statically
+imported.&lt;/p&gt;
+
+&lt;p&gt;This example groups documents by the value of the &lt;code&gt;customerId&lt;/code&gt; field, and for each group accumulates the sum and average of the values of
+the &lt;code&gt;quantity&lt;/code&gt; field into the &lt;code&gt;totalQuantity&lt;/code&gt; and &lt;code&gt;averageQuantity&lt;/code&gt; fields, respectively.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;group(&amp;quot;$customerId&amp;quot;, sum(&amp;quot;totalQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;), avg(&amp;quot;averageQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;unwind&#34;&gt;Unwind&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/unwind/
+&#34;&gt;&lt;code&gt;$unwind&lt;/code&gt;&lt;/a&gt; pipeline stage deconstructs an array field from the
+input documents to output a document for each element.&lt;/p&gt;
+
+&lt;p&gt;This example outputs, for each document, a document for each element in the &lt;code&gt;sizes&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;unwind(&amp;quot;$sizes&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;out&#34;&gt;Out&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/aggregation/out/
+&#34;&gt;&lt;code&gt;$out&lt;/code&gt;&lt;/a&gt; pipeline stage outputs all documents to the specified
+collection.  It must be the last stage in any aggregate pipeline:&lt;/p&gt;
+
+&lt;p&gt;This example writes the pipeline to the &lt;code&gt;authors&lt;/code&gt; collection:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;out(&amp;quot;authors&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;creating-a-pipeline&#34;&gt;Creating a Pipeline&lt;/h3&gt;
+
+&lt;p&gt;The above pipeline operators are typically combined into a list and passed to the &lt;code&gt;aggregate&lt;/code&gt; method of a &lt;code&gt;MongoCollection&lt;/code&gt;.  For instance:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;collection.aggregate(Arrays.asList(match(eq(&amp;quot;author&amp;quot;, &amp;quot;Dave&amp;quot;)),
+                                   group(&amp;quot;$customerId&amp;quot;, sum(&amp;quot;totalQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;),
+                                                        avg(&amp;quot;averageQuantity&amp;quot;, &amp;quot;$quantity&amp;quot;))
+                                   out(&amp;quot;authors&amp;quot;)));
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Filters</title>
+      <link>/mongo-java-driver/3.1/builders/filters/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/filters/</guid>
+      <description>
+
+&lt;h2 id=&#34;filters&#34;&gt;Filters&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Filters.html
+&#34;&gt;&lt;code&gt;Filters&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB query
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects a query filter.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Filters&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Filters.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;comparison&#34;&gt;Comparison&lt;/h3&gt;
+
+&lt;p&gt;The comparison operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;eq&lt;/code&gt;: Matches values that are equal to a specified value.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gt&lt;/code&gt;: Matches values that are greater than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;gte&lt;/code&gt;: Matches values that are greater than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lt&lt;/code&gt;: Matches values that are less than a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;lte&lt;/code&gt;: Matches values that are less than or equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ne&lt;/code&gt;: Matches all values that are not equal to a specified value.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;in&lt;/code&gt;: Matches any of the values specified in an array.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nin&lt;/code&gt;: Matches none of the values specified in an array.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field equals &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;eq(&amp;quot;qty&amp;quot;, 20)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{  
+   &amp;quot;qty&amp;quot; : 20
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the value of the &lt;code&gt;qty&lt;/code&gt; field is either &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;in(&amp;quot;qty&amp;quot;, 5, 15)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;logical&#34;&gt;Logical&lt;/h3&gt;
+
+&lt;p&gt;The logical operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;and&lt;/code&gt;: Joins filters with a logical AND and selects all documents that match the conditions of both filters.&lt;br /&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;or&lt;/code&gt;: Joins filters with a logical OR and selects all documents that match the conditions of either filters.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;not&lt;/code&gt;: Inverts the effect of a query expression and selects documents that do not match the filter.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nor&lt;/code&gt;: Joins filters with a logical NOR and selects all documents that fail to match both filters.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-1&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where ther value of the &lt;code&gt;qty&lt;/code&gt; field is greater than &lt;code&gt;20&lt;/code&gt; and the value of the
+&lt;code&gt;user&lt;/code&gt; field equals &lt;code&gt;&amp;quot;jdoe&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(gt(&amp;quot;qty&amp;quot;, 20), eq(&amp;quot;user&amp;quot;, &amp;quot;jdoe&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The &lt;code&gt;and&lt;/code&gt; method generates a &lt;code&gt;$and&lt;/code&gt; operator only if necessary, as the query language implicity ands together all the elements in a
+filter. So the above example will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{ 
+   &amp;quot;qty&amp;quot; : { &amp;quot;$gt&amp;quot; : 20 },
+   &amp;quot;user&amp;quot; : &amp;quot;jdoe&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the &lt;code&gt;price&lt;/code&gt; field value equals &lt;code&gt;0.99&lt;/code&gt; or &lt;code&gt;1.99&lt;/code&gt;; and the &lt;code&gt;sale&lt;/code&gt; field value
+is equal to &lt;code&gt;true&lt;/code&gt; or the &lt;code&gt;qty&lt;/code&gt; field value is less than &lt;code&gt;20&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(or(eq(&amp;quot;price&amp;quot;, 0.99), eq(&amp;quot;price&amp;quot;, 1.99)
+    or(eq(&amp;quot;sale&amp;quot;, true), lt(&amp;quot;qty&amp;quot;, 20)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This query cannot be constructed using an implicit and operation, because it uses the &lt;code&gt;$or&lt;/code&gt; operator more than once.  So it will render as:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-json&#34;&gt;{
+ &amp;quot;$and&amp;quot; : 
+    [
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;price&amp;quot; : 0.99 }, { &amp;quot;price&amp;quot; : 1.99 } ] },
+      { &amp;quot;$or&amp;quot; : [ { &amp;quot;sale&amp;quot; : true }, { &amp;quot;qty&amp;quot; : { &amp;quot;$lt&amp;quot; : 20 } } ] }
+    ]
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;arrays&#34;&gt;Arrays&lt;/h3&gt;
+
+&lt;p&gt;The array operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;all&lt;/code&gt;: Matches arrays that contain all elements specified in the query&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;elemMatch&lt;/code&gt;: Selects documents if element in the array field matches all the specified $elemMatch conditions&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;size&lt;/code&gt;: Selects documents if the array field is a specified size&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-2&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents with a &lt;code&gt;tags&lt;/code&gt; array containing both &lt;code&gt;&amp;quot;ssl&amp;quot;&lt;/code&gt; and &lt;code&gt;&amp;quot;security&amp;quot;&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;all(&amp;quot;tags&amp;quot;, Arrays.asList(&amp;quot;ssl&amp;quot;, &amp;quot;security&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;elements&#34;&gt;Elements&lt;/h3&gt;
+
+&lt;p&gt;The elements operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;exists&lt;/code&gt;: Selects documents that have the specified field.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;type&lt;/code&gt;: Selects documents if a field is of the specified type.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-3&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example selects documents that have a &lt;code&gt;qty&lt;/code&gt; field and its value does not equal &lt;code&gt;5&lt;/code&gt; or &lt;code&gt;15&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;and(exists(&amp;quot;qty&amp;quot;), nin(&amp;quot;qty&amp;quot;, 5, 15))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;evaluation&#34;&gt;Evaluation&lt;/h3&gt;
+
+&lt;p&gt;The evaluation operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;mod&lt;/code&gt;: Performs a modulo operation on the value of a field and selects documents with a specified result.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;: Selects documents where values match a specified regular expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;text&lt;/code&gt;: Selects documemts matching a full-text search expression.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;where&lt;/code&gt;: Matches documents that satisfy a JavaScript expression.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-4&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example assumes a collection that has a text index in the field &lt;code&gt;abstract&lt;/code&gt;.  It selects documents that have a &lt;code&gt;abstract&lt;/code&gt; field
+containing the term &lt;code&gt;coffee&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;text(&amp;quot;abstract&amp;quot;, &amp;quot;coffee&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;geospatial&#34;&gt;Geospatial&lt;/h3&gt;
+
+&lt;p&gt;The geospatial operator methods include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;geoWithin&lt;/code&gt;: Selects all documents containing a field whose value is a GeoJSON geometry that falls within within a bounding GeoJSON
+geometry.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinBox&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified box.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinPolygon&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified polygon.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinCenter&lt;/code&gt;: Selects all documents containing a field with grid coordinates data that exist entirely within the specified circle.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoWithinCenterSphere&lt;/code&gt;: Selects geometries containing a field with geospatial data (GeoJSON or legacy coordinate pairs) that exist
+entirely within the specified circle, using spherical geometry.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;geoIntersects&lt;/code&gt;: Selects geometries that intersect with a GeoJSON geometry. The 2dsphere index supports $geoIntersects.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;near&lt;/code&gt;: Returns geospatial objects in proximity to a point. Requires a geospatial index. The 2dsphere and 2d indexes support $near.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nearSphere&lt;/code&gt;: Returns geospatial objects in proximity to a point on a sphere. Requires a geospatial index. The 2dsphere and 2d
+indexes support $nearSphere.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;To make it easier to construct GeoJSON-based filters, the driver also include a full GeoJSON class hierarchy:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/Point.html
+&#34;&gt;&lt;code&gt;Point&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON Point.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiPoint.html
+&#34;&gt;&lt;code&gt;MultiPoint&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiPoint.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/LineString.html
+&#34;&gt;&lt;code&gt;LineString&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON LineString.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiLineString.html
+&#34;&gt;&lt;code&gt;MultiLineString&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiLineString.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/Polygon.html
+&#34;&gt;&lt;code&gt;Polygon&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON Polygon.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/MultiPolygon.html
+&#34;&gt;&lt;code&gt;MultiPolygon&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON MultiPolygon.&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/geojson/GeometryCollection.html
+&#34;&gt;&lt;code&gt;GeometryCollection&lt;/code&gt;&lt;/a&gt;: A representation of a GeoJSON
+GeometryCollection.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;examples-5&#34;&gt;Examples&lt;/h4&gt;
+
+&lt;p&gt;This example creates a filter that selects all documents where the &lt;code&gt;geo&lt;/code&gt; field contains a GeoJSON Geometry object that falls within the
+given polygon:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;Polygon polygon = new Polygon(Arrays.asList(new Position(0, 0), 
+                                            new Position(4, 0), 
+                                            new Position(4, 4), 
+                                            new Position(0, 4),
+                                            new Position(0, 0)));
+geoWithin(&amp;quot;geo&amp;quot;, polygon))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Similarly, this example creates a filter that selects all documents where the &lt;code&gt;geo&lt;/code&gt; field contains a GeoJSON Geometry object that
+intersects the given Point:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;geoIntersects(&amp;quot;geo&amp;quot;, new Point(new Position(4, 0)))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Readers and Writers</title>
+      <link>/mongo-java-driver/3.1/bson/readers-and-writers/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/bson/readers-and-writers/</guid>
+      <description>
+
+&lt;h2 id=&#34;bsonwriter-and-bsonreader&#34;&gt;BsonWriter and BsonReader&lt;/h2&gt;
+
+&lt;p&gt;The various implementations of the &lt;code&gt;Bson&lt;/code&gt; interface discussed in the previous section all represent BSON documents using an underlying
+Java &lt;code&gt;Map&lt;/code&gt; instance. However, they are not directly responsible for reading and writing their representations from and to BSON.  Instead,
+this process is delegated to &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonWriter.html
+&#34;&gt;&lt;code&gt;BsonWriter&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonReader.html
+&#34;&gt;&lt;code&gt;BsonReader&lt;/code&gt;&lt;/a&gt;, abstract classes that expose methods for iterative, stream-based processing of
+BSON documents.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsonwriter&#34;&gt;BsonWriter&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;BsonWriter&lt;/code&gt; class exposes methods for writing a BSON document.  Consider the task of writing the document&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;{ 
+  &amp;quot;a&amp;quot; : &amp;quot;MongoDB&amp;quot;, 
+  &amp;quot;b&amp;quot; : [ 
+          { &amp;quot;c&amp;quot;: 1 } 
+        ] 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The following code will stream a document of this structure to a &lt;code&gt;BsonWriter&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BsonWriter writer = ... // Construct a BsonWriter
+
+writer.writeStartDocument();           
+    writer.writeName(&amp;quot;a&amp;quot;);             
+    writer.writeString(&amp;quot;MongoDB&amp;quot;);     
+    writer.writeName(&amp;quot;b&amp;quot;);             
+    writer.writeStartArray();          
+        writer.writeStartDocument();   
+            writer.writeName(&amp;quot;c&amp;quot;);     
+            writer.writeInt32(1);      
+        writer.writeEndDocument();     
+    writer.writeEndArray();            
+writer.writeEndDocument();             
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The indentation is not necessary: it&amp;rsquo;s just to clarify that the stream of events written to the &lt;code&gt;BsonWriter&lt;/code&gt;, although written
+iteratively, have an implicit hierarchical structure.  The BsonWriter validates that the events create only properly structured BSON
+documents.  Otherwise, it throws a &lt;code&gt;BsonSerializationException&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The two most important classes to extend &lt;code&gt;BsonWriter&lt;/code&gt; are &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonBinaryWriter.html
+&#34;&gt;&lt;code&gt;BsonBinaryWriter&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/json/JsonWriter.html
+&#34;&gt;&lt;code&gt;JsonWriter&lt;/code&gt;&lt;/a&gt;.  &lt;code&gt;BsonBinaryWriter&lt;/code&gt; writes the BSON
+document as a stream of bytes in accordance with the &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt; specification, while &lt;code&gt;JsonWriter&lt;/code&gt; writes the BSON
+document as a stream of characters in accordance with
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;bsonreader&#34;&gt;BsonReader&lt;/h3&gt;
+
+&lt;p&gt;The &lt;code&gt;BsonReader&lt;/code&gt; class exposes methods for reading a BSON document.  Consider the task of reading the document written above with a
+&lt;code&gt;BsonReader&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;BsonReader reader = ... // Construct a BsonReader
+
+reader.readStartDocument();                           
+    reader.readName();      // read the name &amp;quot;a&amp;quot;      
+    reader.readString();    // read string &amp;quot;MongoDB&amp;quot;  
+    reader.readName();      // read the name &amp;quot;b&amp;quot;      
+    reader.readStartArray();                          
+        reader.readStartDocument();                   
+            reader.readName();   // read the name &amp;quot;c&amp;quot; 
+            reader.readInt32();  // read the integer 1
+        reader.readEndDocument();                     
+    reader.readEndArray();                            
+reader.readEndDocument();                             
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As with the writer example, the indentation is not necessary: it&amp;rsquo;s just to clarify that the stream of events read from the &lt;code&gt;BsonWriter&lt;/code&gt;,
+although written iteratively, have an implicit hierarchical structure.  The BsonReader will throw a &lt;code&gt;BsonSerializationException&lt;/code&gt; if the
+events read do not match the structure of the document that is being read from.&lt;/p&gt;
+
+&lt;p&gt;In most situations an application will not know the exact structure of the document being read.  For that reason, &lt;code&gt;BsonReader&lt;/code&gt;
+exposes a few methods that allow an application to peak ahead so that it can figure out what method to call next.  Consider a situation
+where an application must read a BSON document with an unknown structure:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;reader.readStartDocument();
+
+while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+    String fieldName = reader.readName();
+    switch (reader.getCurrentBsonType()) {
+        case INT32:
+            int intValue = reader.readInt32();
+            break;
+        case INT64:
+            long longValue = reader.readInt64();
+            break;
+        // ... handle each supported field type
+    }
+}
+
+reader.readEndDocument();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this example, the application iterates through the fields of the document until it reaches &lt;code&gt;END_OF_DOCUMENT&lt;/code&gt;.  For each field, it
+reads the name and then the value based on the &lt;code&gt;BsonType&lt;/code&gt; of the field.&lt;/p&gt;
+
+&lt;p&gt;A similar pattern can be used to read a BSON array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;reader.readStartArray();
+
+while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+    switch (reader.getCurrentBsonType()) {
+        case INT32:
+            int intValue = reader.readInt32();
+            break;
+        case INT64:
+            long longValue = reader.readInt64();
+            break;
+        // ... handle each supported field type
+    }
+}
+
+reader.readEndArray();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The only significant difference between reading an array and reading a document is that, since the elements of an array do not have names,
+there is no field name to read, only a series of values.&lt;/p&gt;
+
+&lt;p&gt;The two most important classes to extend &lt;code&gt;BsonReader&lt;/code&gt; are &lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/BsonBinaryReader.html
+&#34;&gt;&lt;code&gt;BsonBinaryReader&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?org/bson/json/JsonReader.html
+&#34;&gt;&lt;code&gt;JsonReader&lt;/code&gt;&lt;/a&gt;. &lt;code&gt;BsonBinaryReader&lt;/code&gt; reads the BSON
+document as a stream of bytes in accordance with the &lt;a href=&#34;http://www.bsonspec.org&#34;&gt;BSON&lt;/a&gt; specification, while &lt;code&gt;JsonReader&lt;/code&gt; reads the BSON
+document as a stream of characters in accordance with
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/mongodb-extended-json/&#34;&gt;MongoDB Extended JSON&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Sort Criteria  </title>
+      <link>/mongo-java-driver/3.1/builders/sorts/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/sorts/</guid>
+      <description>
+
+&lt;h2 id=&#34;sorts&#34;&gt;Sorts&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Sorts.html
+&#34;&gt;&lt;code&gt;Sorts&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB sort criteria
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects sort criteria.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Sorts&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Sorts.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;ascending&#34;&gt;Ascending&lt;/h3&gt;
+
+&lt;p&gt;To specify an ascending sort, use one of the &lt;code&gt;ascending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;descending&#34;&gt;Descending&lt;/h3&gt;
+
+&lt;p&gt;To specify a descending sort, use one of the &lt;code&gt;descending&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example specifies a descending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by a descending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;descending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;) 
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a sort by &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#sort-by-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;, use the
+&lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example specifies a sort on the score of a &lt;code&gt;$text&lt;/code&gt; query that will be projected into the &lt;code&gt;scoreValue&lt;/code&gt; field in a projection on the
+same query:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;scoreValue&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-sort-criteria&#34;&gt;Combining sort criteria&lt;/h3&gt;
+
+&lt;p&gt;To specify the combination of multiple sort criteria, use the &lt;code&gt;orderBy&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example specifies an ascending sort on the &lt;code&gt;quantity&lt;/code&gt; field, followed by an ascending sort on the &lt;code&gt;totalAmount&lt;/code&gt; field, followed by a
+descending sort on the &lt;code&gt;orderDate&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;orderBy(ascending(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), descending(&amp;quot;orderDate&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Projections</title>
+      <link>/mongo-java-driver/3.1/builders/projections/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/projections/</guid>
+      <description>
+
+&lt;h2 id=&#34;projections&#34;&gt;Projections&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Projections.html
+&#34;&gt;&lt;code&gt;Projections&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB
+projection opererators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn
+be passed to any method that expects a projection.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Projections&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import static com.mongodb.client.model.Projections.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;inclusion&#34;&gt;Inclusion&lt;/h3&gt;
+
+&lt;p&gt;By default, all fields of each document are projected.  To specify the inclusion of one or more fields (which implicitly excludes all
+other fields except &lt;code&gt;_id&lt;/code&gt;), use the &lt;code&gt;include&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; field and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and (implicitly) the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion&#34;&gt;Exclusion&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of one or more fields (which implicitly includes all other fields), use the &lt;code&gt;exclude&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example excludes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;exclusion-of-id&#34;&gt;Exclusion of _id&lt;/h3&gt;
+
+&lt;p&gt;To specify the exclusion of the &lt;code&gt;_id&lt;/code&gt; field, use the &lt;code&gt;excludeId&lt;/code&gt; method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;excludeId()
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;which is just shorthand for:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;exclude(&amp;quot;_id&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-a-supplied-filter&#34;&gt;Array Element Match with a Supplied Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches a supplied query filter (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/elemMatch
+&#34;&gt;elemMatch&lt;/a&gt; operator), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes a
+field name and a filter.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array where the &lt;code&gt;quantity&lt;/code&gt; field is greater that &lt;code&gt;3&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;, Filters.gt(&amp;quot;quantity&amp;quot;, 3))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-element-match-with-an-implicit-filter&#34;&gt;Array Element Match with an Implicit Filter&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection that includes only the first element of an array that matches the filter supplied as part of the query (the
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/positional/#projection
+&#34;&gt;positional $ operator&lt;/a&gt;), use the &lt;code&gt;elemMatch&lt;/code&gt; method that takes
+just a field name.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first element of the &lt;code&gt;orders&lt;/code&gt; array that matches the query filter:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;elemMatch(&amp;quot;orders&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;slice&#34;&gt;Slice&lt;/h3&gt;
+
+&lt;p&gt;To project &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/projection/slice
+&#34;&gt;a slice of an array&lt;/a&gt;, use one of the &lt;code&gt;slice&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;This example projects the first &lt;code&gt;7&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 7)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example skips the first &lt;code&gt;2&lt;/code&gt; elements of the &lt;code&gt;tags&lt;/code&gt; array and projects the next &lt;code&gt;5&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;slice(&amp;quot;tags&amp;quot;, 2, 5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;text-score&#34;&gt;Text Score&lt;/h3&gt;
+
+&lt;p&gt;To specify a projection of &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/query/text/#return-the-text-search-score
+&#34;&gt;the score of a &lt;code&gt;$text&lt;/code&gt; query&lt;/a&gt;,
+use the &lt;code&gt;metaTextScore&lt;/code&gt; method to specify the name of the projected field.&lt;/p&gt;
+
+&lt;p&gt;This example projects the text score as the value of the &lt;code&gt;score&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;metaTextScore(&amp;quot;score&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-projections&#34;&gt;Combining Projections&lt;/h3&gt;
+
+&lt;p&gt;To combine multiple projections, use the &lt;code&gt;fields&lt;/code&gt; method.&lt;/p&gt;
+
+&lt;p&gt;This example includes the &lt;code&gt;quantity&lt;/code&gt; and &lt;code&gt;totalAmount&lt;/code&gt; fields and excludes the &lt;code&gt;_id&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;fields(include(&amp;quot;quantity&amp;quot;, &amp;quot;totalAmount&amp;quot;), excludeId()) 
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Updates</title>
+      <link>/mongo-java-driver/3.1/builders/updates/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/builders/updates/</guid>
+      <description>
+
+&lt;h2 id=&#34;updates&#34;&gt;Updates&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/client/model/Updates.html
+&#34;&gt;&lt;code&gt;Updates&lt;/code&gt;&lt;/a&gt; class provides static factory methods for all the MongoDB update
+operators.  Each method returns an instance of the &lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/bson/documents/#bson&#34;&gt;&lt;code&gt;Bson&lt;/code&gt;&lt;/a&gt; type, which can in turn be passed to
+any method that expects an update.&lt;/p&gt;
+
+&lt;p&gt;For brevity, you may choose to import the methods of the &lt;code&gt;Updates&lt;/code&gt; class statically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.client.model.Updates.*;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All the examples below assume this static import.&lt;/p&gt;
+
+&lt;h3 id=&#34;field-updates&#34;&gt;Field Updates&lt;/h3&gt;
+
+&lt;p&gt;This section describes update operators that apply to the value of an entire field.&lt;/p&gt;
+
+&lt;h4 id=&#34;set&#34;&gt;Set&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/set/
+&#34;&gt;&lt;code&gt;$set&lt;/code&gt;&lt;/a&gt; update operator sets the value of a field to to the specified value.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;quantity&lt;/code&gt; field to &lt;code&gt;11&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;set(&amp;quot;quantity&amp;quot;, 11)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;unset&#34;&gt;Unset&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/unset/
+&#34;&gt;&lt;code&gt;$unset&lt;/code&gt;&lt;/a&gt; update operator deletes the field with the given name.&lt;/p&gt;
+
+&lt;p&gt;This example deletes the &lt;code&gt;quantity&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;unset(&amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;set-on-insert&#34;&gt;Set On Insert&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/setOnInsert/
+&#34;&gt;&lt;code&gt;$setOnInsert&lt;/code&gt;&lt;/a&gt; update operator sets the value of a field to the given
+value, but only if the update is an
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/modify-documents/#specify-upsert-true-for-the-update-specific-fields-operation
+&#34;&gt;upsert&lt;/a&gt; that results in an
+insert of a document.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;defaultQuantity&lt;/code&gt; field to &lt;code&gt;10&lt;/code&gt; if an upsert resulted in the insert of a document:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;setOnInsert(&amp;quot;defaultQuantity&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;increment&#34;&gt;Increment&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/inc/
+&#34;&gt;&lt;code&gt;$inc&lt;/code&gt;&lt;/a&gt; update operator increments the value of a numeric field by a specified
+value.&lt;/p&gt;
+
+&lt;p&gt;This example increments the value of the &lt;code&gt;quantity&lt;/code&gt; field by &lt;code&gt;5&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;inc(&amp;quot;quantity&amp;quot;, 5)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;multiply&#34;&gt;Multiply&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/mul/
+&#34;&gt;&lt;code&gt;$mul&lt;/code&gt;&lt;/a&gt; update operator multiplies the value of a numeric field by a specified value.&lt;/p&gt;
+
+&lt;p&gt;This example multiplies the value of the &lt;code&gt;price&lt;/code&gt; field by &lt;code&gt;1.2&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;mul(&amp;quot;price&amp;quot;, 1.2)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;rename&#34;&gt;Rename&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/rename/
+&#34;&gt;&lt;code&gt;$rename&lt;/code&gt;&lt;/a&gt; update operator renames a field.&lt;/p&gt;
+
+&lt;p&gt;This example renames the &lt;code&gt;qty&lt;/code&gt; field to &lt;code&gt;quantity&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;rename(&amp;quot;qty&amp;quot;, &amp;quot;quantity&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;min&#34;&gt;Min&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/min/
+&#34;&gt;&lt;code&gt;$min&lt;/code&gt;&lt;/a&gt; update operator updates the value of the field to a specified value &lt;em&gt;if&lt;/em&gt; the
+specified value is less than the current value of the field .&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lowScore&lt;/code&gt; field to the minimum of its current value and 150:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;min(&amp;quot;lowScore&amp;quot;, 150)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;max&#34;&gt;Max&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/max/
+&#34;&gt;&lt;code&gt;$max&lt;/code&gt;&lt;/a&gt; update operator updates the value of the field to a specified value &lt;em&gt;if&lt;/em&gt;
+the specified value is greater than the current value of the field .&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;highScore&lt;/code&gt; field to the maximum of its current value and 900:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;max(&amp;quot;highScore&amp;quot;, 900)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;current-date&#34;&gt;Current Date&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/currentDate/
+&#34;&gt;&lt;code&gt;$currentDate&lt;/code&gt;&lt;/a&gt; update operator sets the value of the field with the
+specified name to the current date, either as a BSON &lt;a href=&#34;http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-date
+&#34;&gt;date&lt;/a&gt; or as a BSON
+&lt;a href=&#34;http://docs.mongodb.org/manual/reference/bson-types/#document-bson-type-timestamp
+&#34;&gt;timestamp&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lastModified&lt;/code&gt; field to the current date as a BSON date type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;currentDate(&amp;quot;lastModified&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;lastModified&lt;/code&gt; field to the current date as a BSON timestamp type:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;currentTimestamp(&amp;quot;lastModified&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;bit&#34;&gt;Bit&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/bit/
+&#34;&gt;&lt;code&gt;$bit&lt;/code&gt;&lt;/a&gt; update operator performs a bitwise update of the integral value of a field.&lt;/p&gt;
+
+&lt;p&gt;This example performs a bitwise AND between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseAnd(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example performs a bitwise OR between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseOr(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example performs a bitwise XOR between the number &lt;code&gt;10&lt;/code&gt; and the integral value of the &lt;code&gt;mask&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;bitwiseXor(&amp;quot;mask&amp;quot;, 10)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;array-updates&#34;&gt;Array Updates&lt;/h3&gt;
+
+&lt;p&gt;This section describes update operators that apply to the contents of the array value of a field.&lt;/p&gt;
+
+&lt;h4 id=&#34;add-to-set&#34;&gt;Add to Set&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/addToSet/
+&#34;&gt;&lt;code&gt;$addToSet&lt;/code&gt;&lt;/a&gt; update operator adds a value to an array unless the value is
+already present, in which case $addToSet does nothing to that array.&lt;/p&gt;
+
+&lt;p&gt;This example adds the value &lt;code&gt;&amp;quot;a&amp;quot;&lt;/code&gt; to the array value of the `letters&amp;rsquo; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;addToSet(&amp;quot;letters&amp;quot;, &amp;quot;a&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example adds each of the values &lt;code&gt;&amp;quot;a&amp;quot;&lt;/code&gt;, &lt;code&gt;&amp;quot;b&amp;quot;&lt;/code&gt;, and &lt;code&gt;&amp;quot;c&amp;quot;&lt;/code&gt; to the array value of the `letters&amp;rsquo; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;addEachToSet(&amp;quot;letters&amp;quot;, Arrays.asList(&amp;quot;a&amp;quot;, &amp;quot;b&amp;quot;, &amp;quot;c&amp;quot;))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pop&#34;&gt;Pop&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pop/
+&#34;&gt;&lt;code&gt;$pop&lt;/code&gt;&lt;/a&gt; update operator removes the first or last element of an array.&lt;/p&gt;
+
+&lt;p&gt;This example pops the first element off of the array value of the &lt;code&gt;scores&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;popFirst(&amp;quot;scores&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pops the last element off of the array value of the &lt;code&gt;scores&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;popLast(&amp;quot;scores&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pull-all&#34;&gt;Pull All&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pullAll/
+&#34;&gt;&lt;code&gt;$pullAll&lt;/code&gt;&lt;/a&gt; update operator removes all instances of the specified values from
+an existing array.&lt;/p&gt;
+
+&lt;p&gt;This example removes the scores &lt;code&gt;0&lt;/code&gt; and &lt;code&gt;5&lt;/code&gt; from the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pullAll(&amp;quot;scores&amp;quot;, Arrays.asList(0, 5))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;pull&#34;&gt;Pull&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/pull/
+&#34;&gt;&lt;code&gt;$pull&lt;/code&gt;&lt;/a&gt; update operator removes from an existing array all instances of a value
+or values that match a specified query.&lt;/p&gt;
+
+&lt;p&gt;This example removes the value &lt;code&gt;0&lt;/code&gt; from the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pull(&amp;quot;scores&amp;quot;, 0)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example removes all elements from the &lt;code&gt;votes&lt;/code&gt; array that are greater than or equal to &lt;code&gt;6&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pullByFilter(Filters.gte(&amp;quot;votes&amp;quot;, 6))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h4 id=&#34;push&#34;&gt;Push&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/reference/operator/update/push/
+&#34;&gt;&lt;code&gt;$push&lt;/code&gt;&lt;/a&gt; update operator appends a specified value to an array.&lt;/p&gt;
+
+&lt;p&gt;This examples pushes the value &lt;code&gt;89&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;push(&amp;quot;scores&amp;quot;, 89)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This examples pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the start of the &lt;code&gt;scores&lt;/code&gt; array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92), new PushOptions().position(0))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the values &lt;code&gt;89&lt;/code&gt;, &lt;code&gt;90&lt;/code&gt;, and &lt;code&gt;92&lt;/code&gt; to the &lt;code&gt;scores&lt;/code&gt; array, sorts the array in descending order, and removes all
+but the first 5 elements of the array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;scores&amp;quot;, Arrays.asList(89, 90, 92), new PushOptions().sort(-1).slice(5))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This example pushes each of the documents &lt;code&gt;{ wk: 5, score: 8 }&lt;/code&gt;, &lt;code&gt;{ wk: 6, score: 7 }&lt;/code&gt;, and &lt;code&gt;{ wk: 7, score: 6 }&lt;/code&gt; to the &lt;code&gt;quizzes&lt;/code&gt; array,
+sorts the array in descending order by &lt;code&gt;score&lt;/code&gt;, and removes all but the last 3 elements of the array:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;pushEach(&amp;quot;quizzes&amp;quot;,
+                 Arrays.asList(new Document(&amp;quot;week&amp;quot;, 5).append(&amp;quot;score&amp;quot;, 8),
+                               new Document(&amp;quot;week&amp;quot;, 6).append(&amp;quot;score&amp;quot;, 7),
+                               new Document(&amp;quot;week&amp;quot;, 7).append(&amp;quot;score&amp;quot;, 6)),
+                 new PushOptions().sortDocument(Sorts.descending(&amp;quot;score&amp;quot;)).slice(-3))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;combining-multiple-update-operators&#34;&gt;Combining Multiple Update Operators&lt;/h3&gt;
+
+&lt;p&gt;Often, an application will need to atomically update multiple fields of a single document by combine two or more of the update operators
+described above.&lt;/p&gt;
+
+&lt;p&gt;This example sets the value of the &lt;code&gt;quantity&lt;/code&gt; field to 11, the value of the &lt;code&gt;total&lt;/code&gt; field to &lt;code&gt;30.40&lt;/code&gt;, and pushes each of the values
+&lt;code&gt;4.99&lt;/code&gt;, &lt;code&gt;5.99&lt;/code&gt;, and &lt;code&gt;10.99&lt;/code&gt; to the array value of the &lt;code&gt;prices&lt;/code&gt; field:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;combine(set(&amp;quot;quantity&amp;quot;, 11), 
+        set(&amp;quot;total&amp;quot;, 30.40),
+        pushEach(&amp;quot;prices&amp;quot;, Arrays.asList(4.99, 5.99, 10.99)))
+&lt;/code&gt;&lt;/pre&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Authenticating</title>
+      <link>/mongo-java-driver/3.1/driver/reference/connecting/authenticating/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/driver/reference/connecting/authenticating/</guid>
+      <description>
+
+&lt;h1 id=&#34;authentication&#34;&gt;Authentication&lt;/h1&gt;
+
+&lt;p&gt;The Java driver supports all MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/&#34;&gt;authentication mechanisms&lt;/a&gt;, including those
+only available in the MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/administration/install-enterprise/&#34;&gt;Enterprise Edition&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;An authentication credential is represented as an instance of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; class, which includes static factory methods for
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; constructors that take a
+parameter of type &lt;code&gt;List&amp;lt;MongoCredential&amp;gt;&lt;/code&gt;.  Alternatively, a single &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt;
+can be created implicity via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; and passed to a &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt;
+constructor that takes a &lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoClientURI.html
+&#34;&gt;&lt;code&gt;MongoClientURI&lt;/code&gt;&lt;/a&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;default-authentication-mechanism&#34;&gt;Default authentication mechanism&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 3.0 changed the default authentication mechanism from
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt; to
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;.  To create a credential that will
+authenticate properly regardless of server version, create a credential using the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.MongoCredential;
+
+// ...
+
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.0-scram/#upgrade-mongodb-cr-to-scram&#34;&gt;upgrading the
+authentication schema&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;scram-sha-1&#34;&gt;SCRAM-SHA-1&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb .org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=SCRAM-SHA-1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;mongodb-cr&#34;&gt;MONGODB-CR&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=MONGODB-CR&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
+from MONGODB-CR to SCRAM-SHA-1.&lt;/p&gt;
+
+&lt;h2 id=&#34;x-509&#34;&gt;x.509&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication&#34;&gt;x.509&lt;/a&gt; mechanism authenticates a user
+whose name is derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This
+authentication method requires the use of SSL connections with certificate validation and is available in MongoDB 2.6 and newer. To
+create a credential of this type use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;     // The x.509 certificate derived user name, e.g. &amp;quot;CN=user,OU=OrgUnit,O=myOrg,...&amp;quot;
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;See the MongoDB server
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user&#34;&gt;x.509 tutorial&lt;/a&gt; for
+more information about determining the subject name from the certificate.&lt;/p&gt;
+
+&lt;h2 id=&#34;kerberos-gssapi&#34;&gt;Kerberos (GSSAPI)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Kerberos service.  To
+create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication&#34;&gt;Kerberos (GSSAPI)&lt;/a&gt; use the
+following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;   // The Kerberos user name, including the realm, e.g. &amp;quot;user1@MYREALM.ME&amp;quot;
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism instead of &lt;code&gt;Kerberos&lt;/code&gt; because technically the driver is authenticating via the
+&lt;a href=&#34;https://tools.ietf.org/html/rfc4752&#34;&gt;GSSAPI&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
+Java libraries can acquire a Kerberos ticket:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java.security.krb5.realm=MYREALM.ME
+java.security.krb5.kdc=mykdc.myrealm.me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism is supported only in the following environments:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Linux: Java 6 and above&lt;/li&gt;
+&lt;li&gt;Windows: Java 7 and above with &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493&#34;&gt;SSPI&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;OS X: Java 7 and above&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;ldap-plain&#34;&gt;LDAP (PLAIN)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service.  To create a credential of type &lt;a href=&#34;http://docs.mongodb
+.org/manual/core/authentication/#ldap-proxy-authority-authentication&#34;&gt;LDAP&lt;/a&gt; use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;quot;$external&amp;quot;, password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://user1@host1/?authSource=$external&amp;amp;authMechanism=PLAIN&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;plain&lt;/code&gt; authentication mechanism instead of &lt;code&gt;LDAP&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://www.ietf.org/rfc/rfc4616.txt&#34;&gt;PLAIN&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Management</title>
+      <link>/mongo-java-driver/3.1/driver/reference/management/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/driver/reference/management/</guid>
+      <description>
+
+&lt;h2 id=&#34;management&#34;&gt;Management&lt;/h2&gt;
+
+&lt;p&gt;The driver provides two mechanisms for examining its state:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver/reference/management/logging/&#34;&gt;Logging&lt;/a&gt;: Comprehensive logging of all operations using &lt;a href=&#34;http://www.slf4j.org/&#34;&gt;SLF4J&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;/mongo-java-driver/3.1/mongo-java-driver/3.1/driver/reference/management/monitoring/&#34;&gt;Monitoring&lt;/a&gt;: Built on &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/&#34;&gt;JMX&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Authenticating</title>
+      <link>/mongo-java-driver/3.1/driver-async/reference/connecting/authenticating/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.1/driver-async/reference/connecting/authenticating/</guid>
+      <description>
+
+&lt;h1 id=&#34;authentication&#34;&gt;Authentication&lt;/h1&gt;
+
+&lt;p&gt;The Java driver supports all MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/&#34;&gt;authentication mechanisms&lt;/a&gt;, including those
+only available in the MongoDB &lt;a href=&#34;http://docs.mongodb.org/manual/administration/install-enterprise/&#34;&gt;Enterprise Edition&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;An authentication credential is represented as an instance of the
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; class, which includes static factory methods for
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/MongoClients.html
+&#34;&gt;&lt;code&gt;MongoClients&lt;/code&gt;&lt;/a&gt; static factory method that takes a
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/async/client/MongoClientSettings.html
+&#34;&gt;&lt;code&gt;MongoClientSettings&lt;/code&gt;&lt;/a&gt; parameter.  Alternatively, a single
+&lt;code&gt;MongoCredential&lt;/code&gt; can be created implicity via a
+&lt;a href=&#34;http://api.mongodb.org/java/3.1/?com/mongodb/ConnectionString.html
+&#34;&gt;&lt;code&gt;ConnectionString&lt;/code&gt;&lt;/a&gt; and passed to a
+&lt;code&gt;MongoClients&lt;/code&gt; static factory method that takes a &lt;code&gt;ConnectionString&lt;/code&gt; parameter.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;default-authentication-mechanism&#34;&gt;Default authentication mechanism&lt;/h2&gt;
+
+&lt;p&gt;MongoDB 3.0 changed the default authentication mechanism from
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt; to
+&lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;.  To create a credential that will
+authenticate properly regardless of server version, create a credential using the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;import com.mongodb.MongoCredential;
+
+// ...
+
+String user;        // the user name
+String database;    // the name of the database in which the user is defined
+char[] password;    // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createCredential(user,
+                                                              database,
+                                                              password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.0-scram/#upgrade-mongodb-cr-to-scram&#34;&gt;upgrading the
+authentication schema&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2 id=&#34;scram-sha-1&#34;&gt;SCRAM-SHA-1&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb .org/manual/core/authentication/#scram-sha-1-authentication&#34;&gt;SCRAM-SHA-1&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createScramSha1Credential(user,
+                                                                       database,
+                                                                       password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=SCRAM-SHA-1&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;mongodb-cr&#34;&gt;MONGODB-CR&lt;/h2&gt;
+
+&lt;p&gt;To explicitly create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication&#34;&gt;MONGODB-CR&lt;/a&gt;
+use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoCredential credential = MongoCredential.createMongoCRCredential(user,
+                                                                     database,
+                                                                     password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1:pwd1@host1/?authSource=db1&amp;amp;authMechanism=MONGODB-CR&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
+from MONGODB-CR to SCRAM-SHA-1.&lt;/p&gt;
+
+&lt;h2 id=&#34;x-509&#34;&gt;x.509&lt;/h2&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication&#34;&gt;x.509&lt;/a&gt; mechanism authenticates a user
+whose name is derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This
+authentication method requires the use of SSL connections with certificate validation and is available in MongoDB 2.6 and newer. To
+create a credential of this type use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;     // The x.509 certificate derived user name, e.g. &amp;quot;CN=user,OU=OrgUnit,O=myOrg,...&amp;quot;
+MongoCredential credential = MongoCredential.createMongoX509Credential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://subjectName@host1/?authMechanism=MONGODB-X509&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;See the MongoDB server
+&lt;a href=&#34;http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user&#34;&gt;x.509 tutorial&lt;/a&gt; for
+more information about determining the subject name from the certificate.&lt;/p&gt;
+
+&lt;h2 id=&#34;kerberos-gssapi&#34;&gt;Kerberos (GSSAPI)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Kerberos service.  To
+create a credential of type &lt;a href=&#34;http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication&#34;&gt;Kerberos (GSSAPI)&lt;/a&gt; use the
+following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;   // The Kerberos user name, including the realm, e.g. &amp;quot;user1@MYREALM.ME&amp;quot;
+// ...
+MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism instead of &lt;code&gt;Kerberos&lt;/code&gt; because technically the driver is authenticating via the
+&lt;a href=&#34;https://tools.ietf.org/html/rfc4752&#34;&gt;GSSAPI&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
+Java libraries can acquire a Kerberos ticket:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;java.security.krb5.realm=MYREALM.ME
+java.security.krb5.kdc=mykdc.myrealm.me
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The &lt;code&gt;GSSAPI&lt;/code&gt; authentication mechanism is supported only in the following environments:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Linux: Java 6 and above&lt;/li&gt;
+&lt;li&gt;Windows: Java 7 and above with &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493&#34;&gt;SSPI&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;OS X: Java 7 and above&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;ldap-plain&#34;&gt;LDAP (PLAIN)&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://www.mongodb.com/products/mongodb-enterprise&#34;&gt;MongoDB Enterprise&lt;/a&gt; supports proxy authentication through a Lightweight Directory
+Access Protocol (LDAP) service.  To create a credential of type &lt;a href=&#34;http://docs.mongodb
+.org/manual/core/authentication/#ldap-proxy-authority-authentication&#34;&gt;LDAP&lt;/a&gt; use the following static factory method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;String user;          // The LDAP user name
+char[] password;      // The LDAP password
+// ...
+MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;quot;$external&amp;quot;, password);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or with a connection string:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;ConnectionString uri = new ConnectionString(&amp;quot;mongodb://user1@host1/?authSource=$external&amp;amp;authMechanism=PLAIN&amp;quot;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
+&lt;h5 class=&#34;admonition-title&#34;&gt;Note&lt;/h5&gt;
+&lt;p&gt;The method refers to the &lt;code&gt;plain&lt;/code&gt; authentication mechanism instead of &lt;code&gt;LDAP&lt;/code&gt; because technically the driver is authenticating via the &lt;a href=&#34;https://www.ietf.org/rfc/rfc4616.txt&#34;&gt;PLAIN&lt;/a&gt; SASL mechanism.&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

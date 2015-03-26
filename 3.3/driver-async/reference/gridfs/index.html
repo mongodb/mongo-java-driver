@@ -1,0 +1,3084 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<meta name="keyword" content="">
+
+    <link rel="shortcut icon" href="/mongo-java-driver/3.3/img/favicon.png">
+
+    <title>GridFS</title>
+
+    <link rel="stylesheet" href="/mongo-java-driver/3.3/lib/bootstrap.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/font-awesome/css/font-awesome.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/mongodb-docs.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/overrides.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/highlight/styles/idea.css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/lib/bootstrap-toggle/bootstrap-toggle.min.css" type="text/css" />
+<link rel="stylesheet" href="/mongo-java-driver/3.3/css/java.css" type="text/css" />
+
+
+  </head>
+
+  <body>
+  
+  <section id="container" class="">
+      
+      <header id="header-db" class="row" role="navigation">
+  <div class="header-content">
+    <div class="toggle-nav pull-left">
+        <i class="fa fa-bars"></i>
+        <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
+    </div>
+    
+    <div class="logo pull-left">
+      <a href="/mongo-java-driver/3.3/../">
+        <img src="/mongo-java-driver/3.3/img/logo-mongodb-header.png", alt="MongoDB.org" />
+      </a>
+    </div>
+    
+    <div>
+<div class="nav-items pull-right">
+  <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
+  <a href="http://www.mongodb.org/downloads" data-toggle="tooltip" data-placement="bottom" title="Download MongoDB">Downloads</a>
+  <a href="http://www.mongodb.org/get-involved" data-toggle="tooltip" data-placement="bottom" title="Get involved with MongoDB">Community</a>
+  <a href="http://docs.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Documentation">Docs</a>
+  <a href="http://blog.mongodb.org" data-toggle="tooltip" data-placement="bottom" title="The MongoDB Blog">Blog</a>
+  <div id="search">
+<form method="get" action="//www.google.com/search" target="_blank">
+    <input type="text" name="searchQuery" size="20" value="" autocomplete="off" placeholder="Search docs">
+    <input type="hidden" name="site" value="/mongo-java-driver/3.3">
+    <input type="hidden" name="q" value="">
+    <label for="searchQuery"><i class="fa fa-search fa-1"></i></label>
+</form>
+</div>
+
+</div>
+</div>
+
+  </div>
+</header>
+
+      
+
+      
+<aside id="sidebar" class="sidebar">
+    <div class="ssidebar nav-collapse">
+      <div class="ssidebarwrapper">
+        <h3>
+          <a class="index-link" href="/mongo-java-driver/3.3/../">MongoDB Java Driver</a>
+          <a class="version pull-right" href="/mongo-java-driver/3.3">3.3</a>
+        </h3>
+
+        
+        <ul class="sidebar-menu">
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
+          
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+    
+      
+    
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+
+
+        
+          
+        
+      
+    
+      
+      
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+
+  
+    
+    
+    
+      
+      
+      
+        
+      
+    
+    
+  
+  
+
+
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+    
+    
+  
+
+
+        
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+    
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+    
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+  
+
+
+          
+
+          
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/whats-new/" class="">
+      <i class='fa fa-cog'></i>
+      <span>What&#39;s New</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/whats-new/upgrading/">
+        <i class='fa fa-wrench'></i>
+        Upgrading to 3.3
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/driver/" class="">
+      <i class='fa fa-arrows-h'></i>
+      <span>MongoDB Driver</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/connecting/jndi/">
+        <i class='fa'></i>
+        JNDI
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver/reference/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l1  current">
+  <a href="/mongo-java-driver/3.3/driver-async/" class="">
+      <i class='fa fa-refresh'></i>
+      <span>MongoDB Async Driver</span>
+      <span class="menu-arrow fa fa-angle-down"></span>
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l2 ">
+  <a href="/mongo-java-driver/3.3/driver-async/getting-started/" class="">
+      <i class='fa fa-road'></i>
+      <span>Getting Started</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/quick-tour/">
+        <i class='fa'></i>
+        Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/getting-started/quick-tour-admin/">
+        <i class='fa'></i>
+        Admin Quick Tour
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+<li class="toctree-l2  current">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/" class="">
+      <i class='fa fa-book'></i>
+      <span>Reference</span>
+      
+  </a>
+    <ul  class="current">
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/" class="">
+      <i class='fa'></i>
+      <span>Connecting</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/connection-settings/">
+        <i class='fa'></i>
+        Connection Settings
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/ssl/">
+        <i class='fa'></i>
+        SSL
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/connecting/authenticating/">
+        <i class='fa'></i>
+        Authenticating
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/crud/">
+        <i class='fa'></i>
+        CRUD Operations
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/gridfs/">
+        <i class='fa'></i>
+        GridFS
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l3 ">
+  <a href="/mongo-java-driver/3.3/driver-async/reference/management/" class="">
+      <i class='fa'></i>
+      <span>Management</span>
+      
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/management/logging/">
+        <i class='fa'></i>
+        Logging
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l4">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/management/monitoring/">
+        <i class='fa'></i>
+        Monitoring
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l3">
+    <a href="/mongo-java-driver/3.3/driver-async/reference/observables/">
+        <i class='fa'></i>
+        Observables
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/bson/" class="">
+      <i class='fa fa-th'></i>
+      <span>BSON</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/documents/">
+        <i class='fa'></i>
+        Documents
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/readers-and-writers/">
+        <i class='fa'></i>
+        Readers and Writers
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/codecs/">
+        <i class='fa'></i>
+        Codec and CodecRegistry
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/extended-json/">
+        <i class='fa'></i>
+        Extended JSON
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/bson/installation-guide/">
+        <i class='fa'></i>
+        Installation Guide
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="toctree-l1 ">
+  <a href="/mongo-java-driver/3.3/builders/" class="">
+      <i class='fa fa-wrench'></i>
+      <span>Builders</span>
+      <span class="menu-arrow fa fa-angle-right"></span>
+  </a>
+    <ul >
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/filters/">
+        <i class='fa'></i>
+        Filters
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/projections/">
+        <i class='fa'></i>
+        Projections
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/sorts/">
+        <i class='fa'></i>
+        Sort Criteria  
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/aggregation/">
+        <i class='fa'></i>
+        Aggregation
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/updates/">
+        <i class='fa'></i>
+        Updates
+    </a>
+  </li>
+
+
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l2">
+    <a href="/mongo-java-driver/3.3/builders/indexes/">
+        <i class='fa'></i>
+        Indexes
+    </a>
+  </li>
+
+
+        
+        
+    </ul>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="http://api.mongodb.com/java/3.3">
+        <i class='fa fa-file-text-o'></i>
+        API Documentation
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="https://github.com/mongodb/mongo-java-driver/tree/master">
+        <i class='fa fa-github'></i>
+        Source Code
+    </a>
+  </li>
+
+
+          
+            
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <li class="toctree-l1">
+    <a href="/mongo-java-driver/3.3/issues-help/">
+        <i class='fa fa-life-ring'></i>
+        Issues &amp; Help
+    </a>
+  </li>
+
+
+          
+        </ul>
+        
+    </div>
+  </div>
+  
+</aside>
+
+<div class="option-popup closed hidden" id="optionsVersionsPopup">
+<div class="option-header">
+  <i class="fa fa-gear"></i>
+  <span>OPTIONS</span>
+  <i class="fa fa-angle-up pull-right"></i>
+</div>
+<div class="option-body">
+  <ul>
+      
+      <li>
+        <label>Version</label>
+        <div class="btn-group btn-group-xs pull-right">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Select Version <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" id="optionsVersionsMenu">
+          </ul>
+        </div>
+      </li>
+
+   
+
+
+    
+
+  </ul>
+</div>
+</div>
+
+
+
+      
+      <section id="main-content" class="content">
+          <section class="main-column pull-left">
+            <div class="document">
+              <div class="documentwrapper">
+                <div class="bodywrapper">
+                  <div class="body">
+
+
+   
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/driver-async/reference/gridfs/index.md" target="_blank" title="Edit driver-async/reference/gridfs/index.md on GitHub"><i class="fa fa-pencil-square-o"></i></a>
+
+
+
+
+
+
+
+
+
+
+<div class="bc">
+<ul>
+  
+  
+  
+  
+  <li><a href="/mongo-java-driver/3.3/driver-async/">MongoDB Async Driver</a> <i class="fa fa-angle-right"></i></li>
+  <li><a href="/mongo-java-driver/3.3/driver-async/reference/">Reference</a> <i class="fa fa-angle-right"></i></li>
+  <li>GridFS</li>
+</ul>
+</div>
+
+
+
+
+<h2 id="gridfs">GridFS</h2>
+
+<p>GridFS is a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB.</p>
+
+<p>Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document. By default GridFS limits chunk size to 255k. GridFS uses two collections to store files. The chunks collection stores the file chunks, and the files collection stores the file metadata.</p>
+
+<p>When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having to load the entire file into memory.</p>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>For more information about GridFS see the <a href="http://docs.mongodb.org/manual/core/gridfs/">MongoDB GridFS documentation</a>.</p>
+
+</div>
+</p>
+
+<p>The following code snippets come from the <code>GridFSTour.java</code> example code
+that can be found with the <a href="https://github.com/mongodb/mongo-java-driver/blob/master/driver-async/src/examples/gridfs/GridFSTour.java
+">driver source</a>.</p>
+
+<p><div class="admonition important">
+<h5 class="admonition-title">important</h5>
+<p>It&rsquo;s important to always check for errors in any <code>SingleResponseCallback&lt;T&gt;</code> implementation and handle them appropriately!
+Below the error checks are left out only for the sake of brevity.</p>
+
+</div>
+</p>
+
+<h2 id="async-streams">Async Streams</h2>
+
+<p>As there are multiple API&rsquo;s for Asynchronous I/O on the JVM the GridFS library uses a flexible interfaces for asynchronous input and output.
+The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncInputStream.html
+"><code>AsyncInputStream</code></a> interface represents an <code>InputStream</code>
+and the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncOutputStream.html
+"><code>AsyncOutputStream</code></a> interface represents an <code>OutputStream</code>.</p>
+
+<p>In addition to these interfaces there are the following helpers:</p>
+
+<ul>
+<li><p><a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/helpers/AsyncStreamHelper.html
+"><code>AsyncStreamHelper</code></a> which provides support for:</p>
+
+<ul>
+<li><code>byte[]</code></li>
+<li><code>ByteBuffer</code></li>
+<li><code>InputStream</code> - note: input streams are blocking</li>
+<li><code>OutputStream</code> - note: output streams are blocking</li>
+</ul></li>
+
+<li><p><a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/helpers/AsynchronousChannelHelper.html
+"><code>AsynchronousChannelHelper</code></a> which provides support for:</p>
+
+<ul>
+<li><code>AsynchronousByteChannel</code></li>
+<li><code>AsynchronousFileChannel</code></li>
+</ul></li>
+</ul>
+
+<p>These interfaces should be easy to wrap for any alternative asynchronous I/O implementations such as Netty or Vertx.</p>
+
+<h2 id="connecting-to-gridfs">Connecting to GridFS</h2>
+
+<p>Interactions with GridFS are done via the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html
+"><code>GridFSBucket</code></a> class.
+To create a <code>GridFSBucket</code> use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBuckets.html
+"><code>GridFSBuckets</code></a> factory class.</p>
+
+<p>Creating a <code>GridFSBucket</code> requires an instance of a
+<a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/MongoDatabase.html
+"><code>MongoDatabase</code></a> and you can optionally provide a custom bucket name.</p>
+
+<p>The following example shows how to create a <code>GridFSBucket</code>:</p>
+
+<pre><code class="language-java">// Create a gridFSBucket using the default bucket name &quot;fs&quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase);
+
+// Create a gridFSBucket with a custom bucket name &quot;files&quot;
+GridFSBucket gridFSBucket = GridFSBuckets.create(myDatabase, &quot;files&quot;);
+</code></pre>
+
+<h2 id="uploading-to-gridfs">Uploading to GridFS</h2>
+
+<p>There are two main ways to upload data into GridFS.</p>
+
+<h3 id="uploadfromstream">UploadFromStream</h3>
+
+<p>The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+"><code>uploadFromStream</code></a> method
+reads the contents of an <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncInputStream.html
+"><code>AsyncInputStream</code></a> and saves it to the <code>GridFSBucket</code>.
+The size of the chunks defaults to 255 bytes, but can be configured via the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/model/GridFSUploadOptions.html
+"><code>GridFSUploadOptions</code></a>.</p>
+
+<p>The following example uploads an <code>AsyncInputStream</code> into <code>GridFSBucket</code>:</p>
+
+<pre><code class="language-java">// Get the input stream
+Path inputPath = Paths.get(&quot;/tmp/mongodb-tutorial.pdf&quot;);
+AsynchronousFileChannel streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOptionRead);
+final AsyncInputStream streamToUploadFrom = channelToInputStream(streamToDownloadTo); // Using the AsynchronousChannelHelper
+
+// Create some custom options
+GridFSUploadOptions options = new GridFSUploadOptions()
+                                    .chunkSizeBytes(1024 * 1024)
+                                    .metadata(new Document(&quot;type&quot;, &quot;presentation&quot;));
+
+gridFSBucket.uploadFromStream(&quot;mongodb-tutorial&quot;, streamToUploadFrom, options, 
+    new SingleResultCallback&lt;ObjectId&gt;() {
+       @Override
+       public void onResult(final ObjectId result, final Throwable t) {
+           System.out.println(&quot;The fileId of the uploaded file is: &quot; + result.toHexString());
+            streamToUploadFrom.close(new SingleResultCallback&lt;Void&gt;() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    // Stream closed
+                }
+            });
+       }
+    }
+);
+</code></pre>
+
+<h3 id="openuploadstream">OpenUploadStream</h3>
+
+<p>The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-
+"><code>openUploadStream</code></a> method returns a <a href="http://api.mongodb.com/java/3.3/?mongodb/client/gridfs/GridFSUploadStream.html
+"><code>GridFSUploadStream</code></a> which extends <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncOutputStream.html
+"><code>AsyncOutputStream</code></a> and can be written to.</p>
+
+<p>The <code>GridFSUploadStream</code> buffers data until it reaches the <code>chunkSizeBytes</code> and then inserts the chunk into the chunks collection.
+When the <code>GridFSUploadStream</code> is closed, the final chunk is written and the file metadata is inserted into the files collection.</p>
+
+<p>The following example uploads an into <code>GridFSBucket</code> via the returned <code>OutputStream</code>:</p>
+
+<pre><code class="language-java">ByteBuffer data = ByteBuffer.wrap(&quot;Data to upload into GridFS&quot;.getBytes(StandardCharsets.UTF_8));
+final GridFSUploadStream uploadStream = gridFSBucket.openUploadStream(&quot;sampleData&quot;);
+uploadStream.write(data, new SingleResultCallback&lt;Integer&gt;() {
+    @Override
+    public void onResult(final Integer result, final Throwable t) {
+        System.out.println(&quot;The fileId of the uploaded file is: &quot; + uploadStream.getFileId().toHexString());
+
+        uploadStream.close(new SingleResultCallback&lt;Void&gt;() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                // Stream closed
+            }
+        });
+    }
+});
+</code></pre>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>GridFS will automatically create indexes on the files and chunks collections on first upload of data into the GridFS bucket.</p>
+
+</div>
+</p>
+
+<h2 id="finding-files-stored-in-gridfs">Finding files stored in GridFS</h2>
+
+<p>To find the files stored in the <code>GridFSBucket</code> use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#find--
+"><code>find</code></a> method.</p>
+
+<p>The following example prints out the filename of each file stored:</p>
+
+<pre><code class="language-java">gridFSBucket.find().forEach(
+    new Block&lt;GridFSFile&gt;() {
+        @Override
+        public void apply(final GridFSFile gridFSFile) {
+            System.out.println(gridFSFile.getFilename());
+        }
+    }, 
+    new SingleResultCallback&lt;Void&gt;() {
+        @Override
+        public void onResult(final Void result, final Throwable t) {
+            // Finished
+        }
+    }
+);
+</code></pre>
+
+<p>You can also provide a custom filter to limit the results returned. The following example prints out the filenames of all files with a &ldquo;image/png&rdquo; value set as the contentType in the user defined metadata document:</p>
+
+<pre><code class="language-java">gridFSBucket.find(eq(&quot;metadata.contentType&quot;, &quot;image/png&quot;)).forEach(
+    new Block&lt;GridFSFile&gt;() {
+        @Override
+        public void apply(final GridFSFile gridFSFile) {
+            System.out.println(gridFSFile.getFilename());
+        }
+    },
+    new SingleResultCallback&lt;Void&gt;() {
+        @Override
+        public void onResult(final Void result, final Throwable t) {
+            // Finished
+        }
+    }
+);
+</code></pre>
+
+<h2 id="downloading-from-gridfs">Downloading from GridFS</h2>
+
+<p>There are four main ways to download data from GridFS.</p>
+
+<h3 id="downloadfromstream">DownloadFromStream</h3>
+
+<p>The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStream-org.bson.types.ObjectId-java.io.OutputStream-
+"><code>downloadToStream</code></a> method reads the contents from MongoDB and writes the data directly to the provided <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncOutputStream.html
+"><code>AsyncOutputStream</code></a>.</p>
+
+<p>The following example downloads a file into the provided <code>OutputStream</code>:</p>
+
+<pre><code class="language-java">Path outputPath = Paths.get(&quot;/tmp/mongodb-tutorial.pdf&quot;);
+final AsynchronousFileChannel streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW,
+        StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE);
+gridFSBucket.downloadToStream(fileId, channelToOutputStream(streamToDownloadTo), new SingleResultCallback&lt;Long&gt;() {
+    @Override
+    public void onResult(final Long result, final Throwable t) {
+        streamToDownloadTo.close();
+        System.out.println(&quot;downloaded file sized: &quot; + result);
+    }
+});
+</code></pre>
+
+<h3 id="downloadtostreambyname">DownloadToStreamByName</h3>
+
+<p>If you don&rsquo;t know the <a href="http://api.mongodb.com/java/3.3/?org/bson/types/ObjectId.html
+"><code>ObjectId</code></a> of the file you want to download, then you use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#downloadToStreamByName-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+"><code>downloadToStreamByName</code></a> method. By default it will download the latest version of the file. Use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/model/GridFSDownloadByNameOptions.html
+"><code>GridFSDownloadByNameOptions</code></a> to configure which version to download.</p>
+
+<p>The following example downloads the original version of the file named &ldquo;mongodb-tutorial&rdquo; into the <code>OutputStream</code>:</p>
+
+<pre><code class="language-java">final streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE,
+        StandardOpenOption.DELETE_ON_CLOSE);
+GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
+gridFSBucket.downloadToStreamByName(&quot;mongodb-tutorial&quot;, channelToOutputStream(streamToDownloadTo), downloadOptions,
+    new SingleResultCallback&lt;Long&gt;() {
+        @Override
+        public void onResult(final Long result, final Throwable t) {
+            System.out.println(&quot;downloaded file sized: &quot; + result);
+            streamToDownloadTo.close();
+        }
+    }
+);
+</code></pre>
+
+<h3 id="opendownloadstream">OpenDownloadStream</h3>
+
+<p>The <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-
+"><code>openDownloadStream</code></a> method returns a <a href="http://api.mongodb.com/java/3.3/?mongodb/client/gridfs/GridFSDownloadStream.html
+"><code>GridFSDownloadStream</code></a> which extends <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/AsyncInputStream.html
+"><code>AsyncInputStream</code></a> and can be read from.</p>
+
+<p>The following example reads from the <code>GridFSBucket</code> via the returned <code>AsyncInputStream</code>:</p>
+
+<pre><code class="language-java">final ByteBuffer dstByteBuffer = ByteBuffer.allocate(1024 * 1024);
+final GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
+downloadStream.read(dstByteBuffer, new SingleResultCallback&lt;Integer&gt;() {
+    @Override
+    public void onResult(final Integer result, final Throwable t) {
+        dstByteBuffer.flip();
+        byte[] bytes = new byte[result];
+        dstByteBuffer.get(bytes);
+        System.out.println(new String(bytes, StandardCharsets.UTF_8));
+
+        downloadStream.close(new SingleResultCallback&lt;Void&gt;() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                // Finished
+            }
+        });
+    }
+});
+</code></pre>
+
+<h3 id="opendownloadstreambyname">OpenDownloadStreamByName</h3>
+
+<p>You can also open a <code>GridFSDownloadStream</code> by searching against the filename, using the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStreamByName-java.lang.String-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-
+"><code>openDownloadStreamByName</code></a> method. By default it will download the latest version of the file. Use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/model/GridFSDownloadByNameOptions.html
+"><code>GridFSDownloadByNameOptions</code></a> to configure which version to download.</p>
+
+<p>The following example downloads the latest version of the file named &ldquo;sampleData&rdquo; into the <code>dstByteBuffer</code> ByteBuffer:</p>
+
+<pre><code class="language-java">final GridFSDownloadStream downloadStreamByName = gridFSBucket.openDownloadStreamByName(&quot;sampleData&quot;);
+final ByteBuffer dstByteBuffer = ByteBuffer.allocate(1024 * 1024);
+downloadStreamByName.read(dstByteBuffer, new SingleResultCallback&lt;Integer&gt;() {
+    @Override
+    public void onResult(final Integer result, final Throwable t) {
+        dstByteBuffer.flip();
+        byte[] bytes = new byte[result];
+        dstByteBuffer.get(bytes);
+        System.out.println(new String(bytes, StandardCharsets.UTF_8));
+
+        downloadStreamByName.close(new SingleResultCallback&lt;Void&gt;() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                // Finished
+            }
+        });
+    }
+});
+</code></pre>
+
+<h2 id="renaming-files">Renaming files</h2>
+
+<p>If you should need to rename a file, then the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#rename-org.bson.types.ObjectId-java.lang.String-
+"><code>rename</code></a> method can be used.</p>
+
+<p>The following example renames a file to &ldquo;mongodbTutorial&rdquo;:</p>
+
+<pre><code class="language-java">gridFSBucket.rename(fileId, &quot;mongodbTutorial&quot;, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Renamed file&quot;);
+    }
+});
+</code></pre>
+
+<p><div class="admonition note">
+<h5 class="admonition-title">Note</h5>
+<p>The <code>rename</code> method requires an <code>ObjectId</code> rather than a <code>filename</code> to ensure the correct file is renamed.</p>
+
+<p>To rename multiple revisions of the same filename, first retrieve the full list of files. Then for every file that should be renamed then execute <code>rename</code> with the corresponding <code>_id</code>.</p>
+
+</div>
+</p>
+
+<h2 id="deleting-files">Deleting files</h2>
+
+<p>To delete a file from the <code>GridFSBucket</code> use the <a href="http://api.mongodb.com/java/3.3/?com/mongodb/async/client/gridfs/GridFSBucket.html#delete-org.bson.types.ObjectId-
+"><code>delete</code></a> method.</p>
+
+<p>The following example deletes a file from the <code>GridFSBucket</code>:</p>
+
+<pre><code class="language-java">gridFSBucket.delete(fileId, new SingleResultCallback&lt;Void&gt;() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println(&quot;Deleted file&quot;);
+    }
+});
+</code></pre>
+
+
+
+
+
+
+<div id="btnv">
+  
+  <div class="pull-left">
+  <a class="navigation prev" href="/mongo-java-driver/3.3/driver-async/reference/crud/">
+      <i class="fa fa-long-arrow-left"> </i> CRUD Operations
+  </a>
+  </div>
+  
+  
+  <div class="pull-right">
+  <a class="navigation next" href="/mongo-java-driver/3.3/driver-async/reference/management/">
+    Management <i class="fa fa-long-arrow-right"> </i>
+  </a>
+  
+</div>
+</div>
+
+
+</div>
+<div class="right-column">
+<div class="wrapper">
+  
+  <div class="toc">
+    <span class="toc-header">On this page</span>
+    <nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#gridfs">GridFS</a></li>
+<li><a href="#async-streams">Async Streams</a></li>
+<li><a href="#connecting-to-gridfs">Connecting to GridFS</a></li>
+<li><a href="#uploading-to-gridfs">Uploading to GridFS</a>
+<ul>
+<li><a href="#uploadfromstream">UploadFromStream</a></li>
+<li><a href="#openuploadstream">OpenUploadStream</a></li>
+</ul></li>
+<li><a href="#finding-files-stored-in-gridfs">Finding files stored in GridFS</a></li>
+<li><a href="#downloading-from-gridfs">Downloading from GridFS</a>
+<ul>
+<li><a href="#downloadfromstream">DownloadFromStream</a></li>
+<li><a href="#downloadtostreambyname">DownloadToStreamByName</a></li>
+<li><a href="#opendownloadstream">OpenDownloadStream</a></li>
+<li><a href="#opendownloadstreambyname">OpenDownloadStreamByName</a></li>
+</ul></li>
+<li><a href="#renaming-files">Renaming files</a></li>
+<li><a href="#deleting-files">Deleting files</a></li>
+</ul></li>
+</ul>
+</nav>
+  </div>
+  
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</section>
+
+
+<script type="text/javascript">
+  var DOCUMENTATION_OPTIONS = {
+   URL_ROOT:    "/mongo-java-driver/3.3",
+   VERSION:     "3.3",
+   COLLAPSE_INDEX: false,
+   FILE_SUFFIX: '.html',
+   HAS_SOURCE:  true
+  };
+</script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/jquery.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/bootstrap.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/navbar.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/highlight/highlight.pack.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/scripts.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/lib/bootstrap-toggle/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="/mongo-java-driver/3.3/js/java.js"></script>
+
+
+
+<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K75Z5Q"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push(
+{'gtm.start': new Date().getTime(),event:'gtm.js'}
+);var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K75Z5Q');</script>
+
+
+<script type="text/javascript">
+var _elqQ = _elqQ || [];
+_elqQ.push(['elqSetSiteId', '413370795']);
+_elqQ.push(['elqTrackPageView']);
+(function () {
+function async_load()
+{ var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//img03.en25.com/i/elqCfg.min.js'; var x = document.getElementsByTagName('script')[0]; x.parentNode.insertBefore(s, x); }
+if (window.addEventListener) window.addEventListener('DOMContentLoaded', async_load, false);
+else if (window.attachEvent) window.attachEvent('onload', async_load);
+})();
+</script>
+
+</body>
+</html>
+

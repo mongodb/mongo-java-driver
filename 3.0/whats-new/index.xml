@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Whats-News on MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.0/whats-new/</link>
+    <description>Recent content in Whats-News on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 19 Mar 2015 12:53:39 -0400</lastBuildDate>
+    <atom:link href="/mongo-java-driver/3.0/whats-new/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Upgrading to 3.0</title>
+      <link>/mongo-java-driver/3.0/whats-new/upgrading/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:39 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/whats-new/upgrading/</guid>
+      <description>
+
+&lt;h1 id=&#34;upgrading-to-3-0&#34;&gt;Upgrading to 3.0&lt;/h1&gt;
+
+&lt;p&gt;The 3.0 release is &lt;strong&gt;incompatible&lt;/strong&gt; with the 2.x release series. However, where possible, the 2.13.0 driver has deprecated classes or
+methods that have been removed in 3.0.&lt;/p&gt;
+
+&lt;p&gt;Before upgrading to 3.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.&lt;/p&gt;
+
+&lt;h2 id=&#34;system-requirements&#34;&gt;System Requirements&lt;/h2&gt;
+
+&lt;p&gt;The minimum JVM is now Java 6: however, specific features require Java 7:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;SSL support requires Java 7 in order to perform host name verification, which is enabled by default.  See below and on
+&lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver/reference/connecting/ssl/&#34;&gt;SSL&lt;/a&gt; for details on how to disable host name verification.&lt;/li&gt;
+&lt;li&gt;The asynchronous API requires Java 7, as by default it relies on
+&lt;a href=&#34;http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html&#34;&gt;&lt;code&gt;AsynchronousSocketChannel&lt;/code&gt;&lt;/a&gt; for
+its implementation.  See &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/driver-async/&#34;&gt;Async&lt;/a&gt; for details on configuring the driver to use &lt;a href=&#34;http://netty.io/&#34;&gt;Netty&lt;/a&gt; instead.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;incompatibilities&#34;&gt;Incompatibilities&lt;/h2&gt;
+
+&lt;p&gt;The following lists the most significant backwards-breaking changes, along with the recommended solutions.&lt;/p&gt;
+
+&lt;h3 id=&#34;general&#34;&gt;General&lt;/h3&gt;
+
+&lt;p&gt;The driver now enables host name verification by default for SSL connections.  If you are knowingly using an invalid certificate, or are
+using Java 6 (see above), set the
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/com/mongodb/MongoClientOptions.html#isSslInvalidHostNameAllowed--&#34;&gt;&lt;code&gt;sslInvalidHostNameAllowed&lt;/code&gt;&lt;/a&gt;
+property to true.&lt;/p&gt;
+
+&lt;h3 id=&#34;mongoclientoptions&#34;&gt;MongoClientOptions&lt;/h3&gt;
+
+&lt;p&gt;Providing little practical value,
+the &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions .html#isAutoConnectRetry--&#34;&gt;&lt;code&gt;autoConnectRetry&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/MongoClientOptions.html#getMaxAutoConnectRetryTime--&#34;&gt;&lt;code&gt;maxAutoConnectRetryTime&lt;/code&gt;&lt;/a&gt;
+properties in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClientOptions.html
+&#34;&gt;&lt;code&gt;MongoClientOptions&lt;/code&gt;&lt;/a&gt; have been removed from the Java driver to be consistent with other
+MongoDB-supported drivers .&lt;/p&gt;
+
+&lt;h4 id=&#34;mongoclient&#34;&gt;MongoClient&lt;/h4&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoClient.html
+&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; (and
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/ServerAddress.html
+&#34;&gt;&lt;code&gt;ServerAddress&lt;/code&gt;&lt;/a&gt;) constructors no longer throw
+&lt;a href=&#34;http://docs.oracle.com/javase/8/docs/api/java/net/UnknownHostException.html&#34;&gt;&lt;code&gt;UnknownHostException&lt;/code&gt;&lt;/a&gt;: This breaks source but not binary
+compatibility, so re-compilation with 3.0 will only succeed after removing any reference to this exception in catch blocks or method
+throws declarations.&lt;/p&gt;
+
+&lt;h3 id=&#34;db&#34;&gt;DB&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#requestStart--&#34;&gt;&lt;code&gt;requestStart&lt;/code&gt;&lt;/a&gt; and
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#requestDone--&#34;&gt;&lt;code&gt;requestDone&lt;/code&gt;&lt;/a&gt; methods in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DB.html
+&#34;&gt;&lt;code&gt;DB&lt;/code&gt;&lt;/a&gt; have been removed: These methods have been removed in accordance with the
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#what-happened-to-pinning&#34;&gt;server selection specification&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DB.html#authenticate-java.lang.String-char:A-&#34;&gt;&lt;code&gt;authenticate&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DB.html
+&#34;&gt;&lt;code&gt;DB&lt;/code&gt;&lt;/a&gt; has been replaced with
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/com/mongodb/MongoClient.html#MongoClient-java.util.List-java.util.List-&#34;&gt;&lt;code&gt;MongoClient&lt;/code&gt;&lt;/a&gt; constructors that
+take &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/MongoCredential.html
+&#34;&gt;&lt;code&gt;MongoCredential&lt;/code&gt;&lt;/a&gt; instances.&lt;/p&gt;
+
+&lt;h3 id=&#34;dbcollection&#34;&gt;DBCollection&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#ensureIndex-com.mongodb.DBObject-&#34;&gt;&lt;code&gt;ensureIndex&lt;/code&gt;&lt;/a&gt; methods in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DBCollection.html
+&#34;&gt;&lt;code&gt;DBCollection&lt;/code&gt;&lt;/a&gt; have been removed:
+replace with the corresponding
+&lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#createIndex-com.mongodb.DBObject-&#34;&gt;&lt;code&gt;createIndex&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;h3 id=&#34;writeresult&#34;&gt;WriteResult&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;http://api.mongodb.org/java/2.13/com/mongodb/WriteResult.html#getLastError--&#34;&gt;&lt;code&gt;getLastError&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/WriteResult.html
+&#34;&gt;&lt;code&gt;WriteResult&lt;/code&gt;&lt;/a&gt; has been removed: this method does not work reliably in
+the 2.x series and there is no way to make work reliably, so it has been removed.  Replace with use of an acknowledged
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/WriteConcern.html
+&#34;&gt;&lt;code&gt;WriteConcern&lt;/code&gt;&lt;/a&gt; when executing the write operation.&lt;/p&gt;
+
+&lt;h3 id=&#34;dbref&#34;&gt;DBRef&lt;/h3&gt;
+
+&lt;p&gt;The &lt;a href=&#34;https://api.mongodb.org/java/2.13/com/mongodb/DBRefBase.html#fetch--&#34;&gt;&lt;code&gt;fetch&lt;/code&gt;&lt;/a&gt; method in
+&lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/DBRef.html
+&#34;&gt;&lt;code&gt;DBRef&lt;/code&gt;&lt;/a&gt; has been removed: use the
+&lt;a href=&#34;https://api.mongodb.org/java/3.0/com/mongodb/DBCollection.html#findOne-java.lang.Object-&#34;&gt;&lt;code&gt;findOne&lt;/code&gt;&lt;/a&gt; method instead.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New</title>
+      <link>/mongo-java-driver/3.0/whats-new/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:35 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.0/whats-new/</guid>
+      <description>
+
+&lt;h1 id=&#34;what-s-new-in-3-0&#34;&gt;What&amp;rsquo;s New in 3.0&lt;/h1&gt;
+
+&lt;p&gt;Key features of the 3.0 driver include:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;A generic &lt;a href=&#34;http://api.mongodb.org/java/3.0/?com/mongodb/client/MongoCollection.html
+&#34;&gt;&lt;code&gt;MongoCollection&lt;/code&gt;&lt;/a&gt; interface that complies with a new cross-driver
+&lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst&#34;&gt;CRUD specification&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;A new &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/tree/master/driver-async&#34;&gt;asynchronous API&lt;/a&gt; that can leverage either
+&lt;a href=&#34;http://netty.io/&#34;&gt;Netty&lt;/a&gt; or Java 7&amp;rsquo;s
+&lt;a href=&#34;http://docs.oracle .com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html&#34;&gt;AsynchronousSocketChannel&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;A new &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/bson/codecs/&#34;&gt;Codec&lt;/a&gt; infrastructure that you can use to build high-performance
+encoders and decoders without requiring an intermediate Map instance.&lt;/li&gt;
+&lt;li&gt;A new core driver on top of which you can build alternative or experimental driver APIs&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;upgrading&#34;&gt;Upgrading&lt;/h2&gt;
+
+&lt;p&gt;See the &lt;a href=&#34;/mongo-java-driver/3.0/mongo-java-driver/3.0/whats-new/upgrading/&#34;&gt;upgrading guide&lt;/a&gt; on how to upgrade to 3.0&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

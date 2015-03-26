@@ -1,0 +1,790 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MongoDB Java Driver</title>
+    <link>/mongo-java-driver/3.6/</link>
+    <description>Recent content on MongoDB Java Driver</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 15 Aug 2017 14:19:24 -0400</lastBuildDate>
+    
+	<atom:link href="/mongo-java-driver/3.6/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Change Streams</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/change-streams/</link>
+      <pubDate>Tue, 15 Aug 2017 14:19:24 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/change-streams/</guid>
+      <description>Change Streams - Draft MongoDB 3.6 introduces a new $changeStream aggregation pipeline operator.
+Change streams provide a way to watch changes to documents in a collection. To improve the usability of this new stage, the MongoCollection API includes a new watch method. The ChangeStreamIterable sets up the change stream and automatically attempts to resume if it encounters a potentially recoverable error.
+Prerequisites  The example below requires a restaurants collection in the test database.</description>
+    </item>
+    
+    <item>
+      <title>Change Streams</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/change-streams/</link>
+      <pubDate>Tue, 15 Aug 2017 14:19:24 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/change-streams/</guid>
+      <description>Change Streams - Draft MongoDB 3.6 introduces a new $changeStream aggregation pipeline operator.
+Change streams provide a way to watch changes to documents in a collection. To improve the usability of this new stage, the MongoCollection API includes a new watch method. The ChangeStreamIterable sets up the change stream and automatically attempts to resume if it encounters a potentially recoverable error.
+Prerequisites  The example below requires a restaurants collection in the test database.</description>
+    </item>
+    
+    <item>
+      <title>Compression</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/compression/</link>
+      <pubDate>Fri, 16 Jun 2017 22:05:03 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/compression/</guid>
+      <description>Compression The Java driver supports compression of messages to and from MongoDB servers. The driver implements the two algorithms that are supported by MongoDB servers:
+ Snappy: Snappy compression can be used when connecting to MongoDB servers starting with the 3.4 release. Zlib: Zlib compression can be used when connecting to MongoDB servers starting with the 3.6 release.  The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in the ismaster command response.</description>
+    </item>
+    
+    <item>
+      <title>Compression</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/compression/</link>
+      <pubDate>Fri, 16 Jun 2017 22:05:03 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/compression/</guid>
+      <description>Compression The Java driver supports compression of messages to and from MongoDB servers. The driver implements the two algorithms that are supported by MongoDB servers:
+ Snappy: Snappy compression can be used when connecting to MongoDB servers starting with the 3.4 release. Zlib: Zlib compression can be used when connecting to MongoDB servers starting with the 3.6 release.  The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in the ismaster command response.</description>
+    </item>
+    
+    <item>
+      <title>Quick Start - POJOs</title>
+      <link>/mongo-java-driver/3.6/driver-async/getting-started/quick-start-pojo/</link>
+      <pubDate>Wed, 17 May 2017 15:36:57 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/getting-started/quick-start-pojo/</guid>
+      <description>MongoDB Async Driver Quick Start - POJOs Note POJOs stands for Plain Old Java Objects.
+The following code snippets come from the PojoQuickTour.java example code that can be found with the driver source on github.
+ Prerequisites  A running MongoDB on localhost using the default port for MongoDB 27017
+ MongoDB Driver. See Installation for instructions on how to install the MongoDB driver.
+ Quick Start. This guide follows on from the Quick Start.</description>
+    </item>
+    
+    <item>
+      <title>Quick Start - POJOs</title>
+      <link>/mongo-java-driver/3.6/driver/getting-started/quick-start-pojo/</link>
+      <pubDate>Wed, 17 May 2017 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/getting-started/quick-start-pojo/</guid>
+      <description>MongoDB Driver Quick Start - POJOs Note POJOs stands for Plain Old Java Objects.
+The following code snippets come from the PojoQuickTour.java example code that can be found with the driver source on github.
+ Prerequisites  A running MongoDB on localhost using the default port for MongoDB 27017
+ MongoDB Driver. See Installation for instructions on how to install the MongoDB driver.
+ Quick Start. This guide follows on from the Quick Start.</description>
+    </item>
+    
+    <item>
+      <title>POJOs</title>
+      <link>/mongo-java-driver/3.6/bson/pojos/</link>
+      <pubDate>Mon, 10 Apr 2017 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/pojos/</guid>
+      <description>POJOs - Plain Old Java Objects The 3.5 release of the driver adds POJO support via the PojoCodec, which allows for direct serialization of POJOs and Java Beans to and from BSON. Internally, each PojoCodec utilizes a ClassModel instance to store metadata about how the POJO should be serialized.
+A ClassModel for a POJO includes:
+ The class of the POJO. A new instance factory. Handling the creation of new instances of the POJO.</description>
+    </item>
+    
+    <item>
+      <title>Create Indexes</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/indexes/</link>
+      <pubDate>Mon, 01 Aug 2016 14:13:59 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/indexes/</guid>
+      <description>Create Indexes Indexes support the efficient execution of queries in MongoDB. To create an index on a field or fields, pass an index specification document to the MongoCollection.createIndex method.
+The MongoDB Java Async Driver provides the Indexes helper class that provides static factory methods to create index specification documents for the various MongoDB Index key types.
+Note MongoDB only creates an index if an index of the same specification does not already exist.</description>
+    </item>
+    
+    <item>
+      <title>Aggregation</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/aggregation/</link>
+      <pubDate>Mon, 01 Aug 2016 11:35:05 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/aggregation/</guid>
+      <description>Aggregation Framework The aggregation pipeline is a framework for data aggregation, modeled on the concept of data processing pipelines.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+  import com.mongodb.Block; import com.mongodb.async.client.*; import com.mongodb.async.SingleResultCallback; import com.mongodb.client.model.*; import org.bson.Document; import java.util.Arrays;   Include the following callback code which the examples in the tutorials will use:  SingleResultCallback&amp;lt;Void&amp;gt; callbackWhenFinished = new SingleResultCallback&amp;lt;Void&amp;gt;() { @Override public void onResult(final Void result, final Throwable t) { System.</description>
+    </item>
+    
+    <item>
+      <title>GridFS</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/gridfs/</link>
+      <pubDate>Sun, 12 Jun 2016 17:29:57 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/gridfs/</guid>
+      <description>GridFS GridFS is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.
+When you query a GridFS store for a file, the Java driver will reassemble the chunks as needed.
+The following code snippets come from the GridFSTour.</description>
+    </item>
+    
+    <item>
+      <title>Geospatial Search</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/geospatial-search/</link>
+      <pubDate>Sun, 12 Jun 2016 17:26:54 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/geospatial-search/</guid>
+      <description>Geospatial Search To support geospatial queries, MongoDB provides various geospatial indexes as well as geospatial query operators.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+  import com.mongodb.Block; import com.mongodb.async.SingleResultCallback; import com.mongodb.async.client.MongoClient; import com.mongodb.async.client.MongoClients; import com.mongodb.async.client.MongoCollection; import com.mongodb.async.client.MongoDatabase; import com.mongodb.client.model.Filters; import com.mongodb.client.model.Indexes; import com.mongodb.client.model.geojson.Point; import com.mongodb.client.model.geojson.Position; import org.</description>
+    </item>
+    
+    <item>
+      <title>Geospatial Search</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/geospatial-search/</link>
+      <pubDate>Sun, 12 Jun 2016 17:26:54 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/geospatial-search/</guid>
+      <description>Geospatial Search To support geospatial queries, MongoDB provides various geospatial indexes as well as geospatial query operators.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+import com.mongodb.Block; import com.mongodb.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.MongoCursor; import com.mongodb.client.model.geojson.*; import com.mongodb.client.model.Indexes; import com.mongodb.client.model.Filters; import org.bson.Document;  Include the following code which the examples in the tutorials will use to print the results of the geospatial search:</description>
+    </item>
+    
+    <item>
+      <title>Read Operations</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/perform-read-operations/</link>
+      <pubDate>Thu, 09 Jun 2016 13:21:16 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/perform-read-operations/</guid>
+      <description>Find Operations Find operations retrieve documents from a collection. You can specify a filter to select only those documents that match the filter condition.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+import com.mongodb.*; import com.mongodb.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.model.Projections; import com.mongodb.client.model.Filters; import static com.mongodb.client.model.Filters.*; import static com.</description>
+    </item>
+    
+    <item>
+      <title>Write Operations</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/perform-write-operations/</link>
+      <pubDate>Thu, 09 Jun 2016 13:21:16 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/perform-write-operations/</guid>
+      <description>Write Operations (Insert, Update, Replace, Delete) Perform write operations to insert new documents into a collection, update existing document or documents in a collection, replace an existing document in a collection, or delete existing document or documents from a collection.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:</description>
+    </item>
+    
+    <item>
+      <title>What&#39;s New</title>
+      <link>/mongo-java-driver/3.6/whats-new/</link>
+      <pubDate>Thu, 09 Jun 2016 12:47:43 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/whats-new/</guid>
+      <description>What&amp;rsquo;s New in 3.6 Key new features of the 3.6 Java driver release:
+Change Stream support The 3.6 release adds support for change streams.
+ Change Stream Quick Start Change Stream Quick Start (Async)  Retryable writes The 3.6 release adds support for retryable writes using the retryWrites option in MongoClientOptions.
+Compression The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
+ Compression Tutorial Compression Tutorial (Async)  Causal consistency The 3.</description>
+    </item>
+    
+    <item>
+      <title>Aggregation</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/aggregation/</link>
+      <pubDate>Wed, 08 Jun 2016 14:19:24 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/aggregation/</guid>
+      <description>Aggregation Framework The aggregation pipeline is a framework for data aggregation, modeled on the concept of data processing pipelines.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+import com.mongodb.Block; import com.mongodb.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import com.mongodb.client.model.Aggregates; import com.mongodb.client.model.Accumulators; import com.mongodb.client.model.Projections; import com.mongodb.client.model.Filters; import org.bson.Document;  Include the following code which the examples in the tutorials will use to print the results of the aggregation:</description>
+    </item>
+    
+    <item>
+      <title>Text Search</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/text-search/</link>
+      <pubDate>Tue, 07 Jun 2016 23:28:50 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/text-search/</guid>
+      <description>Text Search MongoDB supports query operations that perform a text search of string content. To perform text search, MongoDB uses a text index and the $text query operator.
+The Java driver provides the Filters.text() helper to facilitate the creation of text search query filters.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:</description>
+    </item>
+    
+    <item>
+      <title>Text Search</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/text-search/</link>
+      <pubDate>Tue, 07 Jun 2016 23:28:50 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/text-search/</guid>
+      <description>Text Search MongoDB supports query operations that perform a text search of string content. To perform text search, MongoDB uses a text index and the $text query operator.
+The Java driver provides the Filters.text() helper to facilitate the creation of text search query filters.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:</description>
+    </item>
+    
+    <item>
+      <title>Databases and Collections</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/databases-collections/</link>
+      <pubDate>Tue, 31 May 2016 13:40:45 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/databases-collections/</guid>
+      <description>Databases and Collections MongoDB stores documents in collections; the collections in databases.
+Prerequisites  Include following import statements:
+import com.mongodb.MongoClient; import com.mongodb.client.MongoCollection; import com.mongodb.client.MongoDatabase; import static com.mongodb.client.model.Filters.*; import com.mongodb.client.model.CreateCollectionOptions; import com.mongodb.client.model.ValidationOptions;   Connect to a MongoDB Deployment Connect to a running MongoDB deployment.
+For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port 27017.
+MongoClient mongoClient = new MongoClient();  For more information on connecting to running MongoDB deployments, see Connect to MongoDB.</description>
+    </item>
+    
+    <item>
+      <title>Run Commands</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/commands/</link>
+      <pubDate>Tue, 31 May 2016 13:07:04 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/commands/</guid>
+      <description>Run Commands Not all commands have a specific helper. However, you can run any MongoDB command by using the runCommand() method.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+import com.mongodb.async.client.MongoClient; import com.mongodb.async.client.MongoClients; import com.mongodb.async.client.MongoDatabase; import com.mongodb.async.SingleResultCallback; import org.bson.Document;   Connect to a MongoDB Deployment Connect to a MongoDB deployment and declare and define a MongoDatabase instance.</description>
+    </item>
+    
+    <item>
+      <title>Run Commands</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/commands/</link>
+      <pubDate>Tue, 31 May 2016 13:07:04 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/commands/</guid>
+      <description>Run Commands Not all commands have a specific helper. However you can run any MongoDB command by using the MongoDatabase&amp;rsquo;s runCommand() method.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+import com.mongodb.MongoClient; import com.mongodb.client.MongoDatabase; import org.bson.Document;   Connect to a MongoDB Deployment Connect to a MongoDB deployment and declare and define a MongoDatabase instance.</description>
+    </item>
+    
+    <item>
+      <title>Create Indexes</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/indexes/</link>
+      <pubDate>Tue, 31 May 2016 10:10:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/indexes/</guid>
+      <description>Create Indexes Indexes support the efficient execution of queries in MongoDB. To create an index on a field or fields, pass an index specification document to the MongoCollection.createIndex() method.
+The MongoDB Java Driver provides the Indexes class that includes static factory methods to create index specification documents for the various MongoDB Index key types.
+Note MongoDB only creates an index if an index of the same specification does not already exist.</description>
+    </item>
+    
+    <item>
+      <title>Authentication</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/authentication/</link>
+      <pubDate>Sun, 29 May 2016 23:27:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/authentication/</guid>
+      <description>Authentication The Java driver supports all MongoDB authentication mechanisms, including those only available in the MongoDB Enterprise Edition.
+MongoCredential import com.mongodb.MongoCredential;  An authentication credential is represented as an instance of the MongoCredential class. The MongoCredential class includes static factory methods for each of the supported authentication mechanisms.
+You can also use a MongoClientURI and pass it to a MongoClient() constructor that takes a MongoClientURI parameter.
+Default Authentication Mechanism Starting in MongoDB 3.</description>
+    </item>
+    
+    <item>
+      <title>TLS/SSL</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/ssl/</link>
+      <pubDate>Sun, 29 May 2016 22:05:03 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/ssl/</guid>
+      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. You can configure the driver to use TLS/SSL either with MongoClientURI or with MongoClientOptions.
+Specify TLS/SSL via MongoClientURI import com.mongodb.MongoClientURI;  To specify TLS/SSL with MongoClientURI, specify ssl=true as part of the connection string, as in:
+MongoClientURI uri = new MongoClientURI(&amp;quot;mongodb://localhost/?ssl=true&amp;quot;); MongoClient mongoClient = new MongoClient(uri);  Specify TLS/SSL via MongoClientOptions import com.</description>
+    </item>
+    
+    <item>
+      <title>Connect to MongoDB</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/connect-to-mongodb/</link>
+      <pubDate>Sun, 29 May 2016 13:26:13 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/connect-to-mongodb/</guid>
+      <description>Connect to MongoDB Use MongoClient() to make a connection to a running MongoDB instance.
+important The following examples are not meant to provide an exhaustive list of ways to instantiate MongoClient. For a complete list of the MongoClient constructors, see MongoClient() API documentation.
+ Note The 3.5 release deprecated socket keep-alive settings, also socket keep-alive checks are now on by default. It is strongly recommended that system keep-alive settings should be configured with shorter timeouts.</description>
+    </item>
+    
+    <item>
+      <title>Tutorials</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/</link>
+      <pubDate>Sun, 29 May 2016 12:49:33 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/</guid>
+      <description> Java Async Driver Tutorials The tutorials in this section provide examples of some frequently used operations. This section is not meant to be an exhaustive list of all operations available in the Java Async driver.
+ Connect to MongoDB
+ Databases and Collections
+ Create Indexes
+ Read Operations
+ Write Operations
+ Aggregation
+ Text Search
+ Geospatial Search
+ GridFS
+ Run Commands
+  </description>
+    </item>
+    
+    <item>
+      <title>Tutorials</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/</link>
+      <pubDate>Sun, 29 May 2016 12:49:33 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/</guid>
+      <description> Java Driver Tutorials The tutorials in this section provide examples of some frequently used operations. This section is not meant to be an exhaustive list of all operations available in the Java driver.
+ Connect to MongoDB
+ Databases and Collections
+ Create Indexes
+ Perform Read Operations
+ Perform Write Operations
+ Aggregation
+ Text Search
+ Geospatial Search
+ GridFS
+ Run Commands
+  </description>
+    </item>
+    
+    <item>
+      <title>Bulk Writes</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/bulk-writes/</link>
+      <pubDate>Sun, 29 May 2016 12:47:54 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/bulk-writes/</guid>
+      <description>Bulk operations Starting in version 2.6, MongoDB servers support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException.
+There are two types of bulk operations, ordered and unordered bulk operations.
+ Ordered bulk operations execute all the operation in order and error out on the first write error.
+ Unordered bulk operations execute all the operations and report any the errors.</description>
+    </item>
+    
+    <item>
+      <title>Bulk Writes</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/bulk-writes/</link>
+      <pubDate>Sun, 29 May 2016 12:47:54 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/bulk-writes/</guid>
+      <description>Bulk operations Starting in version 2.6, MongoDB servers support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException.
+There are two types of bulk operations, ordered and unordered bulk operations.
+ Ordered bulk operations execute all the operation in order and error out on the first write error.
+ Unordered bulk operations execute all the operations and report any the errors.</description>
+    </item>
+    
+    <item>
+      <title>GridFS</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/gridfs/</link>
+      <pubDate>Fri, 27 Nov 2015 12:00:00 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/gridfs/</guid>
+      <description>GridFS GridFS is a specification for storing and retrieving files that exceed the BSON document size limit of 16MB. Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a separate document.
+When you query a GridFS store for a file, the Java Async driver will reassemble the chunks as needed.
+The following code snippets come from the GridFSTour.</description>
+    </item>
+    
+    <item>
+      <title>Indexes</title>
+      <link>/mongo-java-driver/3.6/builders/indexes/</link>
+      <pubDate>Thu, 16 Jul 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/indexes/</guid>
+      <description>Indexes The Indexes class provides static factory methods for all the MongoDB Index key types.
+Each method returns an instance of the Bson type, which can in turn be used with the createIndex methods.
+For brevity, you may choose to import the methods of the Indexes class statically:
+import static com.mongodb.client.model.Indexes.*;  All the examples below assume this static import.
+Ascending To specify an ascending index key, use one of the ascending methods.</description>
+    </item>
+    
+    <item>
+      <title>Observables</title>
+      <link>/mongo-java-driver/3.6/driver-async/reference/observables/</link>
+      <pubDate>Thu, 14 May 2015 08:01:00 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/reference/observables/</guid>
+      <description>Observables The MongoDB Async Driver is fully callback-based and makes extensive use of SingleResultCallback&amp;lt;T&amp;gt; to achieve this. The SingleResultCallback&amp;lt;T&amp;gt; interface requires the implementation of a single method onResult(T result, Throwable t) which is called once the operation has completed or errored. The result parameter contains the result of the operation if successful. If the operation failed for any reason then the t contains the Throwable reason for the failure. This pattern allows the users application logic to be deferred until the underlying network IO to MongoDB has been completed.</description>
+    </item>
+    
+    <item>
+      <title>Aggregates</title>
+      <link>/mongo-java-driver/3.6/builders/aggregation/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/aggregation/</guid>
+      <description>Aggregates The Aggregates class provides static factory methods that build aggregation pipeline operators. Each method returns an instance of the Bson type, which can in turn be passed to the aggregate method of MongoCollection.
+For brevity, you may choose to import the methods of the Aggregates class statically:
+import static com.mongodb.client.model.Aggregates.*;  All the examples below assume this static import.
+Match The $match pipeline stage passes all documents matching the specified filter to the next stage.</description>
+    </item>
+    
+    <item>
+      <title>Authentication</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/authentication/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/authentication/</guid>
+      <description>Authentication The Java driver supports all MongoDB authentication mechanisms, including those only available in the MongoDB Enterprise Edition.
+MongoCredential import com.mongodb.MongoCredential;  An authentication credential is represented as an instance of the MongoCredential class. The MongoCredential class includes static factory methods for each of the supported authentication mechanisms.
+You can also use the ConnectionString and pass it to a MongoClients.create() method.
+Default Authentication Mechanism Starting in MongoDB 3.0, MongoDB changed the default authentication mechanism from MONGODB-CR to SCRAM-SHA-1.</description>
+    </item>
+    
+    <item>
+      <title>Codec and CodecRegistry</title>
+      <link>/mongo-java-driver/3.6/bson/codecs/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/codecs/</guid>
+      <description>Codec and CodecRegistry In the last section we saw how to use the BsonReader and BsonWriter API to read and write BSON documents. But writing code at that low a level is tedious and error-prone, so in practice these algorithms are packaged in implementations of the Codec interface.
+Codec The Codec interface abstracts the processes of decoding a BSON value into a Java object using a BsonReader and encoding a Java object into a BSON value using a BsonWriter.</description>
+    </item>
+    
+    <item>
+      <title>Documents</title>
+      <link>/mongo-java-driver/3.6/bson/documents/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/documents/</guid>
+      <description>Documents The driver includes several classes and interfaces used for representing BSON documents.
+BsonDocument Although generally not needed by users of the high-level driver API, the BsonDocument class is central to the way that documents are managed internally by the driver. The BsonDocument class can represent dynamically structured documents of any complexity with a type-safe API. For instance, the document
+{ &amp;quot;a&amp;quot; : &amp;quot;MongoDB&amp;quot;, &amp;quot;b&amp;quot; : [ 1, 2 ] }  can be constructed as a BsonDocument as follows:</description>
+    </item>
+    
+    <item>
+      <title>Extended JSON</title>
+      <link>/mongo-java-driver/3.6/bson/extended-json/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/extended-json/</guid>
+      <description>JSON As discussed earlier, the Java driver supports reading and writing BSON documents represented as JSON values. The driver supports four standard variants:
+ Extended Mode: Canonical representation that avoids any loss of BSON type information. See the Extended JSON specification for a description of this mode. Relaxed Mode: Relaxed representation that loses type information for BSON numeric types and uses a more human-readable representation of BSON dates. See the Extended JSON specification for a description of this mode.</description>
+    </item>
+    
+    <item>
+      <title>Filters</title>
+      <link>/mongo-java-driver/3.6/builders/filters/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/filters/</guid>
+      <description>Filters The Filters class provides static factory methods for all the MongoDB query operators. Each method returns an instance of the Bson type, which can in turn be passed to any method that expects a query filter.
+For brevity, you may choose to import the methods of the Filters class statically:
+import static com.mongodb.client.model.Filters.*;  All the examples below assume this static import.
+Comparison The comparison operator methods include:</description>
+    </item>
+    
+    <item>
+      <title>Projections</title>
+      <link>/mongo-java-driver/3.6/builders/projections/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/projections/</guid>
+      <description>Projections The Projections class provides static factory methods for all the MongoDB projection opererators. Each method returns an instance of the Bson type, which can in turn be passed to any method that expects a projection.
+For brevity, you may choose to import the methods of the Projections class statically:
+import static com.mongodb.client.model.Projections.*;  All the examples below assume this static import.
+Inclusion By default, all fields of each document are projected.</description>
+    </item>
+    
+    <item>
+      <title>Readers and Writers</title>
+      <link>/mongo-java-driver/3.6/bson/readers-and-writers/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/readers-and-writers/</guid>
+      <description>BsonWriter and BsonReader The various implementations of the Bson interface discussed in the previous section all represent BSON documents using an underlying Java Map instance. However, they are not directly responsible for reading and writing their representations from and to BSON. Instead, this process is delegated to BsonWriter and BsonReader, abstract classes that expose methods for iterative, stream-based processing of BSON documents.
+BsonWriter The BsonWriter class exposes methods for writing a BSON document.</description>
+    </item>
+    
+    <item>
+      <title>Sort Criteria  </title>
+      <link>/mongo-java-driver/3.6/builders/sorts/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/sorts/</guid>
+      <description>Sorts The Sorts class provides static factory methods for all the MongoDB sort criteria operators. Each method returns an instance of the Bson type, which can in turn be passed to any method that expects sort criteria.
+For brevity, you may choose to import the methods of the Sorts class statically:
+import static com.mongodb.client.model.Sorts.*;  All the examples below assume this static import.
+Ascending To specify an ascending sort, use one of the ascending methods.</description>
+    </item>
+    
+    <item>
+      <title>Updates</title>
+      <link>/mongo-java-driver/3.6/builders/updates/</link>
+      <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/updates/</guid>
+      <description>Updates The Updates class provides static factory methods for all the MongoDB update operators. Each method returns an instance of the Bson type, which can in turn be passed to any method that expects an update.
+For brevity, you may choose to import the methods of the Updates class statically:
+import static com.mongodb.client.model.Updates.*;  All the examples below assume this static import.
+Field Updates This section describes update operators that apply to the value of an entire field.</description>
+    </item>
+    
+    <item>
+      <title>Upgrade Considerations</title>
+      <link>/mongo-java-driver/3.6/upgrading/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:39 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/upgrading/</guid>
+      <description>Upgrading from 3.5.x The 3.6 release is binary and source compatible with the 3.5 release, except for methods that have been added to interfaces that have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
+Upgrading from 2.x You must upgrade first to 3.0 driver. See the Upgrade guide in the 3.0 driver reference documentation.
+System Requirements The minimum JVM is now Java 6: however, specific features require Java 7:</description>
+    </item>
+    
+    <item>
+      <title>BSON</title>
+      <link>/mongo-java-driver/3.6/bson/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/</guid>
+      <description>BSON The BSON library comprehensively supports BSON, the data storage and network transfer format that MongoDB uses for “documents&amp;rdquo;. BSON, short for Binary JSON, is a binary-encoded serialization of JSON-like documents.
+ Documents: Documentation of the driver&amp;rsquo;s support for BSON document representations Readers and Writers: Documentation of the driver&amp;rsquo;s support for stream-based reading and writing of BSON documents JSON: Documentation of the driver&amp;rsquo;s support for JSON Codec and CodecRegistry: Documentation of the driver&amp;rsquo;s Codec API, an abstraction for producing and consuming BSON document representations using the stream-based readers and writers POJOs: Documentation of the driver&amp;rsquo;s POJO support.</description>
+    </item>
+    
+    <item>
+      <title>Builders</title>
+      <link>/mongo-java-driver/3.6/builders/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/builders/</guid>
+      <description> Builders The driver provides several classes that make it easier to use the CRUD API.
+ Filters: Documentation of the driver&amp;rsquo;s support for building query filters Projections: Documentation of the driver&amp;rsquo;s support for building projections Sorts: Documentation of the driver&amp;rsquo;s support for building sort criteria Aggregation: Documentation of the driver&amp;rsquo;s support for building aggregation pipelines Updates: Documentation of the driver&amp;rsquo;s support for building updates Indexes: Documentation of the driver&amp;rsquo;s support for creating index keys  </description>
+    </item>
+    
+    <item>
+      <title>Connect to MongoDB</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/connect-to-mongodb/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/connect-to-mongodb/</guid>
+      <description>Connect to MongoDB To make a connection to a running MongoDB instance, use MongoClients.create to create a new MongoClient instance.
+A MongoClient instance actually represents a pool of connections to the database; you will only need one instance of class MongoClient even with multiple concurrently executing asynchronous operations.
+important Typically you only create one MongoClient instance for a given MongoDB deployment (e.g. standalone, replica set, or a sharded cluster) and use it across your application.</description>
+    </item>
+    
+    <item>
+      <title>Read Operations</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/perform-read-operations/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/perform-read-operations/</guid>
+      <description>Find Operations Find operations retrieve documents from a collection. You can specify a filter to select only those documents that match the filter condition.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:
+  import com.mongodb.*; import com.mongodb.async.SingleResultCallback; import com.mongodb.async.client.*; import com.mongodb.client.model.Sorts; import com.mongodb.connection.ClusterSettings; import org.bson.Document; import static com.</description>
+    </item>
+    
+    <item>
+      <title>Write Operations</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/perform-write-operations/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/perform-write-operations/</guid>
+      <description>Write Operations (Insert, Update, Replace, Delete) Perform write operations to insert new documents into a collection, update existing document or documents in a collection, replace an existing document in a collection, or delete existing document or documents from a collection.
+Prerequisites  The example below requires a restaurants collection in the test database. To create and populate the collection, follow the directions in github.
+ Include the following import statements:</description>
+    </item>
+    
+    <item>
+      <title>JNDI</title>
+      <link>/mongo-java-driver/3.6/driver/tutorials/jndi/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/tutorials/jndi/</guid>
+      <description>Java Naming and Directory Interface (JNDI) The driver includes a JNDI ObjectFactory implementation, MongoClientFactory, that returns MongoClient instances based on a connection string.
+Examples The configuration of the MongoClientFactory differs depending on the application server. Below are examples of a few popular ones.
+Wildfly (formerly JBoss)  In a Wildfly installation, create a new module for MongoDB at modules/system/layers/base/org/mongodb/main.
+ Copy the mongo-java-driver jar file into the module.
+ Add the following module.</description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>/mongo-java-driver/3.6/driver-async/reference/monitoring/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/reference/monitoring/</guid>
+      <description>JMX Monitoring The driver uses JMX to create MXBeans that allow an application or end user to monitor various aspects of the driver.
+The driver creates MXBean instances of a single type: ConnectionPoolStatisticsMBean. The driver registers one ConnectionPoolStatisticsMBean instance per each server it connects to. For example, in the case of a replica set, the driver creates an instance per each non-hidden member of the replica set.
+Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties.</description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>/mongo-java-driver/3.6/driver/reference/monitoring/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/reference/monitoring/</guid>
+      <description>JMX Monitoring The driver uses JMX to create MXBeans that allow an application or end user to monitor various aspects of the driver.
+The driver creates MXBean instances of a single type: ConnectionPoolStatisticsMBean. The driver registers one ConnectionPoolStatisticsMBean instance per each server it connects to. For example, in the case of a replica set, the driver creates an instance per each non-hidden member of the replica set.
+Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties.</description>
+    </item>
+    
+    <item>
+      <title>SSL</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/ssl/</link>
+      <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/ssl/</guid>
+      <description>TLS/SSL The Java driver supports TLS/SSL connections to MongoDB servers using the underlying support for TLS/SSL provided by the JDK. To use TLS/SSL, you must configure the asynchronous driver to use Netty.
+Specify TLS/SSL and Netty Configuration Note If your application requires Netty, it must explicitly add a dependency to Netty artifacts. The driver is currently tested against Netty 4.1.
+ Via Connection String To configure the driver to use Netty, include the ssl=true and streamType=netty options in the connection string, as in:</description>
+    </item>
+    
+    <item>
+      <title>Logging</title>
+      <link>/mongo-java-driver/3.6/driver-async/reference/logging/</link>
+      <pubDate>Wed, 18 Mar 2015 21:14:20 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/reference/logging/</guid>
+      <description> Logging By default, logging is enabled via the popular SLF4J API. The use of SLF4J is optional; the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to JUL (java.util.logging).
+The driver uses the following logger names:
+ org.mongodb.driver: the root logger  cluster: for logs related to monitoring of the MongoDB servers to which the driver connects connection: for logs related to connections and connection pools protocol: for logs related to protocol message sent to and received from a MongoDB server  insert: for logs related to insert messages and responses update: for logs related to update messages and responses delete: for logs related to delete messages and responses query: for logs related to query messages and responses getmore: for logs related to getmore messages and responses killcursor: for logs related to killcursor messages and responses command: for logs related to command messages and responses  uri: for logs related to connection string parsing management: for logs related to JMX   </description>
+    </item>
+    
+    <item>
+      <title>Logging</title>
+      <link>/mongo-java-driver/3.6/driver/reference/logging/</link>
+      <pubDate>Wed, 18 Mar 2015 21:14:20 -0400</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/reference/logging/</guid>
+      <description> Logging By default, logging is enabled via the popular SLF4J API. The use of SLF4J is optional; the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to JUL (java.util.logging).
+The driver uses the following logger names:
+ org.mongodb.driver: the root logger  cluster: for logs related to monitoring of the MongoDB servers to which the driver connects connection: for logs related to connections and connection pools protocol: for logs related to protocol message sent to and received from a MongoDB server  insert: for logs related to insert messages and responses update: for logs related to update messages and responses delete: for logs related to delete messages and responses query: for logs related to query messages and responses getmore: for logs related to getmore messages and responses killcursor: for logs related to killcursor messages and responses command: for logs related to command messages and responses  uri: for logs related to connection string parsing management: for logs related to JMX   </description>
+    </item>
+    
+    <item>
+      <title>Issues &amp; Help</title>
+      <link>/mongo-java-driver/3.6/issues-help/</link>
+      <pubDate>Wed, 18 Mar 2015 16:56:14 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/issues-help/</guid>
+      <description>Issues &amp;amp; Help We are lucky to have a vibrant MongoDB Java community with lots of varying experience of using the Java driver. We often find the quickest way to get support for general questions is through the mongodb-user google group or through stackoverflow. Please also refer to our own support channels documentation.
+Bugs / Feature Requests If you think you’ve found a bug or want to see a new feature in the Java driver, please open a case in our issue management tool, JIRA:</description>
+    </item>
+    
+    <item>
+      <title>Databases and Collections</title>
+      <link>/mongo-java-driver/3.6/driver-async/tutorials/databases-collections/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/tutorials/databases-collections/</guid>
+      <description>Databases and Collections MongoDB stores documents in collections; the collections in databases.
+Consideration important Always check for errors in any SingleResultCallback&amp;lt;T&amp;gt; implementation and handle them appropriately.
+For sake of brevity, this tutorial omits the error check logic in the code examples.
+ Prerequisites  Include the following import statements:
+import com.mongodb.Block; import com.mongodb.async.SingleResultCallback; import com.mongodb.async.client.MongoClient; import com.mongodb.async.client.MongoClients; import com.mongodb.async.client.MongoCollection; import com.mongodb.async.client.MongoDatabase; import com.mongodb.client.model.CreateCollectionOptions; import com.mongodb.client.model.Filters; import com.mongodb.client.model.ValidationOptions; import org.bson.Document;  The following callback:</description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>/mongo-java-driver/3.6/driver-async/getting-started/installation/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/getting-started/installation/</guid>
+      <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
+important The MongoDB Async Driver requires either Netty or Java 7.
+  MongoDB Async Driver The MongoDB Async Driver provides asynchronous API that can leverage either Netty or Java 7&amp;rsquo;s AsynchronousSocketChannel for fast and non-blocking I/O.
+&amp;lt;dependencies&amp;gt; &amp;lt;dependency&amp;gt; &amp;lt;groupId&amp;gt;org.mongodb&amp;lt;/groupId&amp;gt; &amp;lt;artifactId&amp;gt;mongodb-driver-async&amp;lt;/artifactId&amp;gt; &amp;lt;version&amp;gt;3.6.4&amp;lt;/version&amp;gt; &amp;lt;/dependency&amp;gt; &amp;lt;/dependencies&amp;gt;    dependencies { compile &#39;org.</description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>/mongo-java-driver/3.6/driver/getting-started/installation/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/getting-started/installation/</guid>
+      <description>Installation The recommended way to get started using one of the drivers in your project is with a dependency management system.
+There are two Maven artifacts available in the release. The preferred artifact for new applications is mongodb-driver however, we still publish the legacy mongo-java-driver uber-jar.
+ MongoDB Driver The MongoDB Driver mongodb-driver is the updated synchronous Java driver that includes the legacy API as well as a new generic MongoCollection interface that complies with a new cross-driver CRUD specification.</description>
+    </item>
+    
+    <item>
+      <title>Installation Guide</title>
+      <link>/mongo-java-driver/3.6/bson/installation-guide/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/bson/installation-guide/</guid>
+      <description>Installation The BSON library is a required dependency of all the MongoDB Java drivers and if using a dependency management system, it will be automatically installed alongside the driver, however, it can be used as a standalone library. The recommended way to get started using one of the drivers in your project is with a dependency management system.
+ BSON This library comprehensively supports BSON, the data storage and network transfer format that MongoDB uses for &amp;ldquo;documents&amp;rdquo;.</description>
+    </item>
+    
+    <item>
+      <title>MongoDB Async Driver</title>
+      <link>/mongo-java-driver/3.6/driver-async/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/</guid>
+      <description>MongoDB Async Java Driver Documentation The following guide provides information on using the callback-based MongoDB Async Java Driver 3.6.
+Note There are two higher level MongoDB Asynchronous Java Drivers available, that users may find easier to work with due to their friendlier APIs:
+ MongoDB RxJava Driver An RxJava implementation of the MongoDB Driver. MongoDB Reactive Streams Java Driver A Reactive Streams implementation for the JVM.   What&amp;rsquo;s New in 3.</description>
+    </item>
+    
+    <item>
+      <title>MongoDB Driver</title>
+      <link>/mongo-java-driver/3.6/driver/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/</guid>
+      <description>MongoDB Driver 3.6 Documentation The following guide provides information on using the synchronous MongoDB Java Driver 3.6.
+What&amp;rsquo;s New in 3.6 The What&amp;rsquo;s New guide explains the major new features of the driver.
+If you are upgrading from the 2.x series of the driver, consult the Upgrading documentation for information on breaking changes.
+Getting Started To get started, see the Installation Guide, the Quick Start Guide and the Quick Start with POJOs Guide.</description>
+    </item>
+    
+    <item>
+      <title>Quick Start</title>
+      <link>/mongo-java-driver/3.6/driver-async/getting-started/quick-start/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/getting-started/quick-start/</guid>
+      <description>MongoDB Async Driver Quick Start The following code snippets come from the QuickTour.java example code that can be found with the async driver source on github.
+Note There are two higher level MongoDB Asynchronous Java Drivers available, that users may find easier to work with due to their friendlier APIs:
+ MongoDB RxJava Driver An RxJava implementation of the MongoDB Driver. MongoDB Reactive Streams Java Driver A Reactive Streams implementation for the JVM.</description>
+    </item>
+    
+    <item>
+      <title>Quick Start</title>
+      <link>/mongo-java-driver/3.6/driver/getting-started/quick-start/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/getting-started/quick-start/</guid>
+      <description>MongoDB Driver Quick Start Note The following code snippets come from the QuickTour.java example code that can be found with the driver source on github.
+ Prerequisites  A running MongoDB on localhost using the default port for MongoDB 27017
+ MongoDB Driver. See Installation for instructions on how to install the MongoDB driver.
+ The following import statements:
+  import com.mongodb.MongoClient; import com.mongodb.MongoClientURI; import com.mongodb.ServerAddress; import com.mongodb.client.MongoDatabase; import com.</description>
+    </item>
+    
+    <item>
+      <title>Reference</title>
+      <link>/mongo-java-driver/3.6/driver-async/reference/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver-async/reference/</guid>
+      <description>Reference The reference documentation for the Java driver focuses on high-level documentation and use-cases.
+ Logging
+ Monitoring
+  See also Javadoc-generated API.</description>
+    </item>
+    
+    <item>
+      <title>Reference</title>
+      <link>/mongo-java-driver/3.6/driver/reference/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/driver/reference/</guid>
+      <description>Reference The reference documentation for the Java driver focuses on high-level documentation and use-cases.
+ Logging
+ Monitoring
+  See also Javadoc-generated API.</description>
+    </item>
+    
+    <item>
+      <title>index</title>
+      <link>/mongo-java-driver/3.6/</link>
+      <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
+      
+      <guid>/mongo-java-driver/3.6/</guid>
+      <description>MongoDB Java Driver Documentation Welcome to the MongoDB Java driver documentation hub for the 3.6 driver release.
+What&amp;rsquo;s New in 3.6 For key new features of 3.6, see What&amp;rsquo;s New.
+Upgrade To upgrade, refer to the Upgrade Considerations documentation.
+MongoDB Driver For the synchronous MongoDB Driver, see MongoDB Driver section.
+MongoDB Async Driver For the new asynchronous MongoDB Async Driver, the MongoDB Async Driver section.
+BSON Library The BSON library comprehensively supports the BSON spec, the data storage and network transfer format that MongoDB uses for “documents&amp;rdquo;.</description>
+    </item>
+    
+  </channel>
+</rss>
