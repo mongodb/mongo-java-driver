@@ -17,16 +17,16 @@
 package org.bson.json;
 
 /**
- * An enumeration of the supported output modes of {@code JSONWriter}.  See
- * <a href="docs.mongodb.org/manual/reference/mongodb-extended-json/">MongoDB extended JSON documentation</a>.
+ * An enumeration of the supported output modes of {@code JSONWriter}.
  *
  * @see JsonWriter
  * @since 3.0
+ * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
  */
 public enum JsonMode {
 
     /**
-     * This mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.
+     * Strict mode representations of BSON types conform to the <a href="http://www.json.org">JSON RFC spec</a>.
      */
     STRICT,
 

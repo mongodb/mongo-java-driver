@@ -750,6 +750,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
 
     /**
      * Gets a JSON representation of this document using the given {@code JsonWriterSettings}.
+     * @param settings the JSON writer settings
      * @return a JSON representation of this document
      */
     public String toJson(final JsonWriterSettings settings) {
