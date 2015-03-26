@@ -24,11 +24,11 @@ See the [Binaries section of the
 README](https://github.com/mongodb/mongo-java-driver/tree/master#binaries)
 for instructions on how to include the driver in your project.
 
-> **Note:**
->
-> The following code snippets come from the QuickTour.java example code
-> that can be found with the [driver
-> source](https://github.com/mongodb/mongo-java-driver/blob/3.0.x/driver/src/examples/tour/QuickTour.java).
+
+{{% note %}}
+The following code snippets come from the QuickTour.java example code that can
+be found with the [driver source](https://github.com/mongodb/mongo-java-driver/blob/3.0.x/driver/src/examples/tour/QuickTour.java).
+{{% /note %}}
 
 ### Making a Connection
 
@@ -62,12 +62,9 @@ At this point, the `database` object will be a connection to a MongoDB
 server for the specified database. With it, you can do further
 operations.
 
-> **Note:**
->
-> The `MongoClient` instance actually represents a pool of connections
-> to the database; you will only need one instance of class
-> `MongoClient` even with multiple threads. See the
-> concurrency \<java-driver-concurrency\> doc page for more information.
+{{% note %}}
+The `MongoClient` instance actually represents a pool of connections to the database; you will only need one instance of class `MongoClient` even with multiple threads. See the concurrency \<java-driver-concurrency\> doc page for more information.
+{{% /note %}}
 
 The `MongoClient` class is designed to be thread safe and shared among
 threads. Typically you create only 1 instance for a given database
@@ -148,11 +145,11 @@ and you should see
 Document{{_id=54b5594843bb7b25f1c9da72, name=MongoDB, type=database, count=1, info=Document{{x=203, y=102}}}}
 ```
 
-> **Note:**
->
-> The `_id` element has been added automatically by MongoDB to your
-> document. Remember, MongoDB reserves element names that start with
-> "\_" and "\$" for internal use.
+{{% note %}}
+The `_id` element has been added automatically by MongoDB to your
+document. Remember, MongoDB reserves element names that start with
+"\_" and "\$" for internal use.
+{{% /note %}}
 
 ### Adding Multiple Documents
 
@@ -338,13 +335,13 @@ collection.bulkWrite(Arrays.asList(new InsertOneModel<>(new Document("_id", 4)),
                      new BulkWriteOptions().ordered(false));
 ```
 
-> **Note:**
->
-> For servers older than 2.6 the API will down convert the operations,
-> and support the correct semantics for BulkWriteResult and
-> BulkWriteException each write operation has to be done one at a time.
-> It's not possible to down convert 100% so there might be slight edge
-> cases where it cannot correctly report the right numbers.
+{{% note %}}
+For servers older than 2.6 the API will down convert the operations,
+and support the correct semantics for BulkWriteResult and
+BulkWriteException each write operation has to be done one at a time.
+It's not possible to down convert 100% so there might be slight edge
+cases where it cannot correctly report the right numbers.
+{{% /note %}}
 
 Quick Tour of the Administrative Functions
 ------------------------------------------
