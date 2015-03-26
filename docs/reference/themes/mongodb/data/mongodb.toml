@@ -1,6 +1,5 @@
 githubRepo = ""
 githubBranch = ""
-googleAnalytics = false
 currentVersion = ""
 driverVersions = []
 highlightTheme = "default.css"
