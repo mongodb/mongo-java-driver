@@ -1,27 +1,30 @@
 +++
 date = "2015-03-17T15:36:56Z"
-draft = true
 title = "index"
 type = "index"
 +++
 
-## Welcome to the Java MongoDB Docs
+## MongoDB Java Driver Documentation
 
-## Getting Started
+Welcome to the MongoDB Java driver documentation hub for the 3.0 driver release.
 
-Quick guide to getting started...
+### Getting Started
 
-
-## What's New in 3.0
-
-Summary and link to the 3.0 docs
+The [Getting Started]({{< relref "tutorial/index.md" >}}) guide contains installation instructions and a simple tutorial to get up 
+and running quickly.    
 
 
-## Upgrading
+### What's new in 2.0
 
-Summary and link to the upgrade guide
+The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major new features of the driver.
 
 
-## Reference
+### Upgrading
 
-Summary and link to the reference guide
+If you are coming from the 2.x series of the driver, consult the [upgrading]({{< relref "whats-new/upgrading.md" >}}) 
+documentation on breaking changes.
+
+
+### Reference
+
+For more detailed documentation, see the [Reference]({{< relref "reference/index.md" >}}) guide.
