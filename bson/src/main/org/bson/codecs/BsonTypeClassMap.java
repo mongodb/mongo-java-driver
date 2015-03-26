@@ -43,7 +43,7 @@ import java.util.Map;
  * <p>The default mappings are:</p>
  *
  * <ul>
- *     <li><em>DOCUMENT</em>: {@code org.mongodb.Document.class} </li>
+ *     <li><em>DOCUMENT</em>: {@code org.bson.Document.class} </li>
  *     <li><em>ARRAY</em>: {@code java.util.List.class} </li>
  *     <li><em>DATE_TIME</em>: {@code java.util.Date.class} </li>
  *     <li><em>BOOLEAN</em>: {@code java.lang.Boolean.class} </li>
