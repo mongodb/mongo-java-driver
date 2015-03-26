@@ -79,23 +79,25 @@ public class Document implements Map<String, Object>, Serializable, Bson {
 
 
     /**
-     * Parses a string in JSON format to a {@code Document}
+     * Parses a string in MongoDB Extended JSON format to a {@code Document}
      *
-     * @param json document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
+     * @param json the JSON string
      * @return a corresponding {@code Document} object
      * @see org.bson.json.JsonReader
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static Document parse(final String json) {
         return parse(json, new DocumentCodec());
     }
 
     /**
-     * Parses a string in JSON format to a {@code Document}
+     * Parses a string in MongoDB Extended JSON format to a {@code Document}
      *
-     * @param json document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
+     * @param json the JSON string
      * @param decoder the {@code Decoder} to use to parse the JSON string into a {@code Document}
      * @return a corresponding {@code Document} object
      * @see org.bson.json.JsonReader
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static Document parse(final String json, final Decoder<Document> decoder) {
         notNull("codec", decoder);

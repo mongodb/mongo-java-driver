@@ -46,11 +46,12 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     private final Map<String, BsonValue> map = new LinkedHashMap<String, BsonValue>();
 
     /**
+     * Parses a string in MongoDB Extended JSON format to a {@code BsonDocument}
      *
-     * Create a BsonDocument from a JSON String representation.
-     *
-     * @param json a JSON string
-     * @return a BSON document
+     * @param json the JSON string
+     * @return a corresponding {@code BsonDocument} object
+     * @see org.bson.json.JsonReader
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static BsonDocument parse(final String json) {
         return new BsonDocumentCodec().decode(new JsonReader(json), DecoderContext.builder().build());
