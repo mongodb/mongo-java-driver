@@ -6,6 +6,12 @@ title = "Reference"
   pre = "<i class='fa fa-book'></i>"
 +++
 
-## MongoDB Java Driver Reference Documentation
+## Reference Page index
 
-This is the reference documentation.  Not sure what to say yet at the top level.
+The reference documentation is not an API reference. You can review those [here](http://api.mongodb.org/java/3.0/). Instead, the 
+reference documentation will focus on high-level documentation and use-cases.  
+
+- [BSON]({{< relref "reference/bson/index.md" >}})
+- [Connecting]({{< relref "reference/connecting/index.md" >}})
+- [Management]({{< relref "reference/management/index.md" >}})
+

@@ -2,8 +2,8 @@
 date = "2015-03-18T21:14:20-04:00"
 title = "Logging"
 [menu.main]
-  parent = "Reference"
-  weight = 90
+  parent = "Management"
+  weight = 10
   pre = "<i class='fa'></i>"
 +++
 

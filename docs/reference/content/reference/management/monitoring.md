@@ -2,14 +2,18 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "Monitoring"
 [menu.main]
-  parent = "Reference"
+  parent = "Management"
   weight = 100
   pre = "<i class='fa'></i>"
 +++
 
 # Monitoring
 
-The driver currently MXBean instances of a single type:
+The driver uses [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/) to create
+[MXBeans](http://docs.oracle.com/javase/tutorial/jmx/mbeans/mxbeans.html) that allow an
+application or end user to monitor various aspects of the driver.
+
+The driver creates MXBean instances of a single type:
 [ConnectionPoolStatisticsMBean](http://api.mongodb.org/java/3.0/com/mongodb/management/ConnectionPoolStatisticsMBean.html).
  The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica 
  set, the driver creates an instance per each non-hidden member of the replica set.

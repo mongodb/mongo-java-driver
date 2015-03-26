@@ -1,14 +1,14 @@
 +++
 date = "2015-03-19T14:27:51-04:00"
 draft = true
-title = "JSON support"
+title = "Extended JSON"
 [menu.main]
-  parent = "Reference"
+  parent = "BSON"
   weight = 50
   pre = "<i class='fa'></i>"
 +++
 
-## JSON Support
+## MongoDB Extended JSON
 
 The Java driver supports reading and writing JSON documents with the [JsonReader]({{< apiref "org/bson/json/JsonReader" >}}) and
 [JsonWriter]({{< apiref "org/bson/json/JsonWriter" >}}) classes, which can read/write both flavors of 
