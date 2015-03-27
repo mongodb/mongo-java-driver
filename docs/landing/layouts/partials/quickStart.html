@@ -8,29 +8,32 @@
   Alternatively, head over to our documentation to learn more about getting started with Java and MongoDB.
 </p>
 
-{{ range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current  }}{{ $.Scratch.Set "currentReleasedVersion" . }}{{end }}
-{{$currentReleasedVersion := $.Scratch.Get "currentReleasedVersion"}}
+{{ range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current  }}{{ $.Scratch.Set "qs.currentReleasedVersion" . }}{{end }}
+{{$currentReleasedVersion := $.Scratch.Get "qs.currentReleasedVersion"}}
 
 <div id="downloadWidget">
   <form class="form-inline">
     <a id="downloadLink" href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/{{$currentReleasedVersion.version}}/"
           class="btn btn-large btn-dark btn-download" target="_blank">Download</a>
-      {{ $.Scratch.Set "pos" 0 }}
+      {{ $.Scratch.Set "qs.pos" 0 }}
+      {{ $.Scratch.Set "qs.firstDriver" false }}
       {{ with $.Site.Data.releases.drivers }}
         <select class="driverPicker">
           {{ range . }}
-          <option value="{{$.Scratch.Get "pos"}}">{{.name}}</option>
-          {{ $.Scratch.Add "pos" 1 }}
+          {{ if eq ($.Scratch.Get "qs.firstDriver") false }}{{ $.Scratch.Set "qs.firstDriver" . }}{{end}}
+          <option value="{{$.Scratch.Get "qs.pos"}}" data-versions="{{.versions}}">{{.name}}</option>
+          {{ $.Scratch.Add "qs.pos" 1 }}
           {{ end }}
         </select>
       {{ end }}
 
-    {{ $.Scratch.Set "pos" 0 }}
+    {{ $.Scratch.Set "qs.pos" 0 }}
+    {{ $firstDriver := $.Scratch.Get "qs.firstDriver"}}
     {{ with $.Site.Data.releases.versions }}
       <select class="releasePicker">
         {{ range . }}
-        <option value="{{$.Scratch.Get "pos"}}">{{.version}}</option>
-        {{ $.Scratch.Add "pos" 1 }}
+        <option value="{{$.Scratch.Get "qs.pos"}}"{{ if eq (in .version $firstDriver.versions) false }}disabled="disabled"{{end}}>{{.version}}</option>
+        {{ $.Scratch.Add "qs.pos" 1 }}
         {{ end }}
       </select>
     {{ end }}
@@ -40,17 +43,20 @@
   <button class="btn btn-dark"><i class="fa fa-clipboard fa-2"></i></button>
   </div>
   {{ $currentNode := . }}
+  {{ $.Scratch.Set "qs.firstDriver" true }}
   {{ with $currentNode.Site.Data.releases.drivers }}
-    {{ $.Scratch.Set "driverPos" 0 }}
+    {{ $.Scratch.Set "qs.driverPos" 0 }}
     {{ range . }}
       {{ $currentDriver := . }}
       {{ with $.Site.Data.releases.versions }}
-        {{ $.Scratch.Set "versionPos" 0 }}
+        {{ $.Scratch.Set "qs.versionPos" 0 }}
         {{ range . }}
           {{ $currentVersion := . }}
-          {{ $driverPos := $.Scratch.Get "driverPos" }}
-          {{ $versionPos := $.Scratch.Get "versionPos" }}
-<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if or (ne $currentVersion $currentReleasedVersion) (ne $driverPos 0)}} hidden{{end}}">
+          {{ $firstDriver := $.Scratch.Get "qs.firstDriver"}}
+          {{ $driverPos := $.Scratch.Get "qs.driverPos" }}
+          {{ $versionPos := $.Scratch.Get "qs.versionPos" }}
+          {{ if in $currentDriver.versions $currentVersion.version }}
+<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if ne $firstDriver true}} hidden{{end}}">
 <pre><code>
 &lt;dependencies&gt;
     &lt;dependency&gt;
@@ -70,14 +76,16 @@
 
 </code></pre>
 </div>
-            {{ $.Scratch.Add "versionPos" 1 }}
+          {{ $.Scratch.Set "qs.firstDriver" false }}
+          {{ $.Scratch.Add "qs.versionPos" 1 }}
           {{ end }}
           {{ end }}
-          {{ $driverPos := $.Scratch.Get "driverPos" }}
+          {{ end }}
+          {{ $driverPos := $.Scratch.Get "qs.driverPos" }}
           <div id="driver-{{$driverPos}}" class="download description{{if ne $driverPos 0}} hidden{{end}}">
-            {{$currentDriver.description}}
+            {{$currentDriver.description | markdownify}}
           </div>
-          {{ $.Scratch.Add "driverPos" 1 }}
+          {{ $.Scratch.Add "qs.driverPos" 1 }}
       {{ end }}
       {{ end }}
 </div>

@@ -33,11 +33,24 @@ var toggleDownload = function() {
   prefix = $('.distroPicker').prop('checked') ? "#maven" : "#gradle"
   driverVersion = $('.driverPicker').selectpicker().val();
   releaseVersion = $('.releasePicker').selectpicker().val();
-  activeSample = prefix + "-" + releaseVersion + "-" + driverVersion;
-  activeDescription = "#driver-" + driverVersion;
-
   activeDriver = $('.driverPicker option:selected').text();
   activeVersion = $('.releasePicker option:selected').text();
+
+  driverVersions = $('.driverPicker option:selected').data('versions');
+  $('.releasePicker option').each(function(){
+    $(this).prop('disabled', driverVersions.indexOf($(this).text()) < 0);
+  });
+
+  $('.driverPicker option').each(function(){
+    driverVersions = $(this).data('versions');
+    $(this).prop('disabled', driverVersions.indexOf(activeVersion) < 0);
+  });
+
+  $('.driverPicker').selectpicker('refresh');
+  $('.releasePicker').selectpicker('refresh');
+
+  activeSample = prefix + "-" + releaseVersion + "-" + driverVersion;
+  activeDescription = "#driver-" + driverVersion;
   activeLink = downloadLink + activeDriver +'/' + activeVersion + '/';
 
   $('.download').addClass('hidden');

@@ -19,16 +19,20 @@ current = "3.0.0-rc1"
 
 [[drivers]]
   name = "mongodb-driver"
-  description = "The synchronous driver."
-
-[[drivers]]
-  name = "mongodb-driver-async"
-  description = "The new asynchronous driver."
+  description = "The synchronous driver, new in 3.0, for older versions select the: `mongo-java-driver`"
+  versions = "3.0.0-rc1"
 
 [[drivers]]
   name = "mongo-java-driver"
   description = "An uber jar containing the bson library, the core library and the mongodb-driver."
+  versions = "3.0.0-rc1,2.13.0,2.12.5"
+
+[[drivers]]
+  name = "mongodb-driver-async"
+  description = "The new asynchronous driver, new in 3.0"
+  versions = "3.0.0-rc1"
 
 [[drivers]]
   name = "mongodb-driver-core"
-  description = "The core library."
+  description = "The core library, new in 3.0"
+  versions = "3.0.0-rc1"
