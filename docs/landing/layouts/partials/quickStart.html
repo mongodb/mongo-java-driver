@@ -12,9 +12,10 @@
 {{$currentReleasedVersion := $.Scratch.Get "qs.currentReleasedVersion"}}
 
 <div id="downloadWidget">
-  <form class="form-inline">
-    <a id="downloadLink" href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/{{$currentReleasedVersion.version}}/"
-          class="btn btn-large btn-dark btn-download" target="_blank">Download</a>
+  <div class="container">
+    <div class="row downloadForm">
+      <form>
+        <div class="col-xs-5 col-lg-4 col-lg-push-2 ">
       {{ $.Scratch.Set "qs.pos" 0 }}
       {{ $.Scratch.Set "qs.firstDriver" false }}
       {{ with $.Site.Data.releases.drivers }}
@@ -26,7 +27,8 @@
           {{ end }}
         </select>
       {{ end }}
-
+      </div>
+    <div class="col-xs-5 col-lg-4 col-lg-push-2 ">
     {{ $.Scratch.Set "qs.pos" 0 }}
     {{ $firstDriver := $.Scratch.Get "qs.firstDriver"}}
     {{ with $.Site.Data.releases.versions }}
@@ -37,8 +39,19 @@
         {{ end }}
       </select>
     {{ end }}
+    </div>
+    <div class="col-lg-2 col-lg-push-2 ">
     <input type="checkbox" checked class="distroPicker" data-toggle="toggle" data-on="Maven" data-off="Gradle" data-offstyle="success">
+    </div>
   </form>
+  <div class="hidden-md hidden-sm hidden-xs col-lg-2 col-lg-pull-10 downloadLink">
+  <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/{{$currentReleasedVersion.version}}/"
+        class="btn btn-dark btn-download" target="_blank">Download</a>
+  </div>
+  </div>
+
+
+  <div class="row">
   <div class="clipboard" title="copy">
   <button class="btn btn-dark"><i class="fa fa-clipboard fa-2"></i></button>
   </div>
@@ -88,4 +101,6 @@
           {{ $.Scratch.Add "qs.driverPos" 1 }}
       {{ end }}
       {{ end }}
-</div>
+    </div>
+    </div>
+  </div>
