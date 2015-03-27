@@ -10,8 +10,8 @@ Welcome to the MongoDB Java driver documentation hub for the 3.0 driver release.
 
 ### Getting Started
 
-The [Getting Started]({{< relref "tutorial/index.md" >}}) guide contains installation instructions and a simple tutorial to get up 
-and running quickly.    
+The [Getting Started]({{< relref "getting-started/index.md" >}}) guide contains installation instructions
+and a simple tutorial to get up  and running quickly.
 
 
 ### What's new in 2.0
@@ -21,7 +21,7 @@ The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major n
 
 ### Upgrading
 
-If you are coming from the 2.x series of the driver, consult the [upgrading]({{< relref "whats-new/upgrading.md" >}}) 
+If you are coming from the 2.x series of the driver, consult the [upgrading]({{< relref "whats-new/upgrading.md" >}})
 documentation on breaking changes.
 
 

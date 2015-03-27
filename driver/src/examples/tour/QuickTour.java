@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,36 @@
 
 package tour;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import com.mongodb.Block;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.WriteModel;
+import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Projections.excludeId;
+import static com.mongodb.client.model.Sorts.ascending;
+import static com.mongodb.client.model.Sorts.descending;
 
 /**
- * The tutorial from http://www.mongodb.org/display/DOCS/Java+Tutorial.
+ * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
  */
 public class QuickTour {
     /**
@@ -37,7 +53,6 @@ public class QuickTour {
      *
      * @param args takes an optional single argument for the connection string
      */
-    @SuppressWarnings("deprecation")
     public static void main(final String[] args) {
         MongoClient mongoClient;
 
@@ -48,92 +63,125 @@ public class QuickTour {
             mongoClient = new MongoClient(new MongoClientURI(args[0]));
         }
 
-        // get handle to the "mydb" database
-        DB db = mongoClient.getDB("mydb");
+        // get handle to "mydb" database
+        MongoDatabase database = mongoClient.getDatabase("mydb");
 
-        // get a list of the collections in this database and print them out
-        Set<String> collectionNames = db.getCollectionNames();
-        for (final String s : collectionNames) {
-            System.out.println(s);
-        }
 
         // get a handle to the "test" collection
-        DBCollection collection = db.getCollection("test");
+        MongoCollection<Document> collection = database.getCollection("test");
 
         // drop all the data in it
         collection.drop();
 
         // make a document and insert it
-        BasicDBObject doc = new BasicDBObject("name", "MongoDB")
-                            .append("type", "database")
-                            .append("count", 1)
-                            .append("info", new BasicDBObject("x", 203).append("y", 102));
+        Document doc = new Document("name", "MongoDB")
+                       .append("type", "database")
+                       .append("count", 1)
+                       .append("info", new Document("x", 203).append("y", 102));
 
-        collection.insert(doc);
+        collection.insertOne(doc);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
-        DBObject myDoc = collection.findOne();
-        System.out.println(myDoc);
+        Document myDoc = collection.find().first();
+        System.out.println(myDoc.toJson());
 
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
-        List<DBObject> documents = new ArrayList<DBObject>();
+        List<Document> documents = new ArrayList<Document>();
         for (int i = 0; i < 100; i++) {
-            documents.add(new BasicDBObject().append("i", i));
+            documents.add(new Document("i", i));
         }
-        collection.insert(documents);
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.getCount());
+        collection.insertMany(documents);
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.count());
+
+        // find first
+        myDoc = collection.find().first();
+        System.out.println(myDoc.toJson());
 
         // lets get all the documents in the collection and print them out
-        DBCursor cursor = collection.find();
+        MongoCursor<Document> cursor = collection.find().iterator();
         try {
             while (cursor.hasNext()) {
-                System.out.println(cursor.next());
+                System.out.println(cursor.next().toJson());
             }
         } finally {
             cursor.close();
+        }
+
+        for (Document cur : collection.find()) {
+            System.out.println(cur.toJson());
         }
 
         // now use a query to get 1 document out
-        cursor = collection.find(new BasicDBObject("i", 71));
-
-        try {
-            while (cursor.hasNext()) {
-                System.out.println(cursor.next());
-            }
-        } finally {
-            cursor.close();
-        }
+        myDoc = collection.find(eq("i", 71)).first();
+        System.out.println(myDoc.toJson());
 
         // now use a range query to get a larger subset
-        cursor = collection.find(new BasicDBObject("i", new BasicDBObject("$gt", 50)));
+        cursor = collection.find(gt("i", 50)).iterator();
 
         try {
             while (cursor.hasNext()) {
-                System.out.println(cursor.next());
+                System.out.println(cursor.next().toJson());
             }
         } finally {
             cursor.close();
         }
 
         // range query with multiple constraints
-        cursor = collection.find(new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30)));
+        cursor = collection.find(and(gt("i", 50), lte("i", 100))).iterator();
 
         try {
             while (cursor.hasNext()) {
-                System.out.println(cursor.next());
+                System.out.println(cursor.next().toJson());
             }
         } finally {
             cursor.close();
         }
 
-        // create an ascending index on the "i" field
-        collection.createIndex(new BasicDBObject("i", 1));
+        // Query Filters
+        myDoc = collection.find(eq("i", 71)).first();
+        System.out.println(myDoc.toJson());
 
-        // list the indexes on the collection
-        List<DBObject> list = collection.getIndexInfo();
-        for (final DBObject o : list) {
-            System.out.println(o);
-        }
+        // now use a range query to get a larger subset
+        Block<Document> printBlock = new Block<Document>() {
+            @Override
+            public void apply(final Document document) {
+                System.out.println(document.toJson());
+            }
+        };
+        collection.find(gt("i", 50)).forEach(printBlock);
+
+        // filter where; 50 < i <= 100
+        collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
+
+        // Sorting
+        myDoc = collection.find(exists("i")).sort(descending("i")).first();
+        System.out.println(myDoc.toJson());
+
+        // Projection
+        myDoc = collection.find().projection(excludeId()).first();
+        System.out.println(myDoc.toJson());
+
+
+        collection.drop();
+
+        // ordered bulk writes
+        List<WriteModel<Document>> writes = new ArrayList<WriteModel<Document>>();
+        writes.add(new InsertOneModel<Document>(new Document("_id", 4)));
+        writes.add(new InsertOneModel<Document>(new Document("_id", 5)));
+        writes.add(new InsertOneModel<Document>(new Document("_id", 6)));
+        writes.add(new UpdateOneModel<Document>(new Document("_id", 1), new Document("$set", new Document("x", 2))));
+        writes.add(new DeleteOneModel<Document>(new Document("_id", 2)));
+        writes.add(new ReplaceOneModel<Document>(new Document("_id", 3), new Document("_id", 3).append("x", 4)));
+
+        collection.bulkWrite(writes);
+
+        collection.drop();
+
+        collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
+        collection.find().forEach(printBlock);
+
+        // Clean up
+        database.drop();
 
         // release resources
         mongoClient.close();
