@@ -72,7 +72,7 @@ When creating many `MongoClient` instances:
 ## Get a Collection
 
 To get a collection to operate upon, specify the name of the collection to
-the [getCollection(String collectionName)]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection-java.lang.String-">}})
+the [`getCollection()`]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection-java.lang.String-">}})
 method:
 
 The following example gets the collection `test`. If the collection does not
@@ -104,7 +104,7 @@ contains a field `info` which is an embedded document:
 ```
 
 To create the document using the Java driver, use the
-[Document]({{< apiref "org/bson/Document.html">}}) class. You
+[`Document`]({{< apiref "org/bson/Document.html">}}) class. You
 can use this class to create the embedded document as well.
 
 ```java
@@ -152,7 +152,7 @@ collection.insertMany(documents);
 
 Now that we've inserted 101 documents (the 100 we did in the loop, plus
 the first one), we can check to see if we have them all using the
-[count()]({{< apiref "com/mongodb/client/MongoCollection#count--">}})
+[`count()`]({{< apiref "com/mongodb/client/MongoCollection#count--">}})
 method. The following code should print `101`.
 
 ```java
@@ -162,7 +162,7 @@ System.out.println(collection.count());
 ## Query the Collection
 
 Use the
-[find()]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
+[`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
 method to query the collection.
 
 ### Find the First Document in a Collection
@@ -170,8 +170,8 @@ method to query the collection.
 call the first() method on the result of the find() of method
 
 To get the first document in the collection, call the
-[first()]({{< apiref "com/mongodb/client/MongoIterable.html#first--">}})
-method on the [find()]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
+[`first()`]({{< apiref "com/mongodb/client/MongoIterable.html#first--">}})
+method on the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
 operation. `collection.find().first()` returns the first document or null rather than a cursor.
 This is useful for queries that should only match a single document, or if you are
 interested in the first document only.
@@ -250,7 +250,8 @@ and it should just print just one document
 
 
 {{% note %}}
-Use the [Filters]({{< apiref "com/mongodb/client/model/Filters">}}), [Sorts]({{< apiref "com/mongodb/client/model/Sorts">}}) and [Projections]({{< apiref "com/mongodb/client/model/Projections">}})
+Use the [`Filters`]({{< apiref "com/mongodb/client/model/Filters">}}), [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts">}}) and 
+[`Projections`]({{< apiref "com/mongodb/client/model/Projections">}})
 helpers for simple and concise ways of building up queries.
 {{% /note %}}
 
@@ -282,8 +283,9 @@ collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
 
 ## Sorting documents
 
-We can also use the [Sorts]({{< apiref "com/mongodb/client/model/Sorts">}}) helpers to sort documents.
-We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the [`exists()`]({{ < apiref "com/mongodb/client/model/Filters.html#exists-java.lang.String-">}}) helper and sort
+We can also use the [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts">}}) helpers to sort documents.
+We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the 
+[`exists()`]({{ < apiref "com/mongodb/client/model/Filters.html#exists-java.lang.String-">}}) helper and sort
 [`descending("i")`]({{ < apiref "com/mongodb/client/model/Sorts.html#exists-java.lang.String-">}}) helper to
 sort our documents:
 
@@ -294,7 +296,8 @@ System.out.println(myDoc.toJson());
 
 ## Projecting fields
 
-Sometimes we don't need all the data contained in a document, the [Projections]({{< apiref "com/mongodb/client/model/Projections">}}) helpers help build the projection parameter for the
+Sometimes we don't need all the data contained in a document, the [`Projections`]({{< apiref "com/mongodb/client/model/Projections">}}) 
+helpers help build the projection parameter for the
 find operation.  Below we'll sort the collection, exclude the `_id` field and output the first
 matching document:
 

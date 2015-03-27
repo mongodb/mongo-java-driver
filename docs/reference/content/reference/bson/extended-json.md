@@ -9,14 +9,14 @@ title = "Extended JSON"
 
 ## MongoDB Extended JSON
 
-The Java driver supports reading and writing JSON-like documents with the [JsonReader]({{< apiref "org/bson/json/JsonReader" >}}) and
-[JsonWriter]({{< apiref "org/bson/json/JsonWriter" >}}) classes, which can read/write both flavors of 
+The Java driver supports reading and writing JSON-like documents with the [`JsonReader`]({{< apiref "org/bson/json/JsonReader" >}}) and
+[`JsonWriter`]({{< apiref "org/bson/json/JsonWriter" >}}) classes, which can read/write both flavors of 
 [MongoDB Extended JSON](http://docs.mongodb.org/manual/reference/mongodb-extended-json/): 
 
-- MongoDB Extended JSON Strict Mode: representations of BSON types that conform to the [JSON RFC](http://www.json.org/). This is the 
+- Strict Mode: representations of BSON types that conform to the [JSON RFC](http://www.json.org/). This is the 
 format that [mongoexport](http://docs.mongodb.org/manual/reference/program/mongoexport/) produces and 
 [mongoimport](http://docs.mongodb.org/manual/reference/program/mongoimport/) consumes.
-- MongoDB Shell Mode: a superset of JSON that the 
+- Shell Mode: a superset of JSON that the 
 [MongoDB shell](http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/) can parse. 
  
 
