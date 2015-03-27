@@ -43,8 +43,9 @@ mongodb://host:27017/mydb
 
 Above, the database by the name of "mydb" is where the credentials are stored for the application.
 
-> Note that some drivers utilize the database component to indicate which database to work with by default. The Java driver, while it
-parses the database component, does not use the database component for anything other than authentication.
+{{% note %}}
+Some drivers utilize the database component to indicate which database to work with by default. The Java driver, while it parses the database component, does not use the database component for anything other than authentication.
+{{% /note %}}
 
 #### Options
 

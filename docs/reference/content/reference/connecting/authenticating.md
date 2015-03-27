@@ -9,17 +9,18 @@ title = "Authenticating"
 
 # Authenticating
 
-The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those 
+The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those
 only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).
 
-An authentication credential is represented as an instance of the 
-[MongoCredential](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) class, which includes static factory methods for 
+An authentication credential is represented as an instance of the
+[MongoCredential](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) class, which includes static factory methods for
 each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
 [MongoClient](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) constructors that take a
-parameter of type `List<MongoCredential>`. 
+parameter of type `List<MongoCredential>`.
 
-> Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for 
-completeness, the driver accepts a list of credentials.
+{{% note %}}
+Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.
+{{% /note %}}
 
 ## Default authentication mechanism
 
@@ -129,8 +130,9 @@ or with a connection string:
 MongoClientURI uri = new MongoClientURI("mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI");
 ```
 
-> The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating
-via the [GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
+{{% note %}}
+The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating via the [GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
+{{% /note %}}
 
 To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
 Java libraries can acquire a Kerberos ticket:
@@ -158,5 +160,6 @@ or with a connection string:
 MongoClientURI uri = new MongoClientURI("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
-> The method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating
-via the [PLAIN](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.
+{{% note %}}
+The method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating via the [PLAIN](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.
+{{% /note %}}
