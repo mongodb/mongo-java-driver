@@ -350,7 +350,3 @@ collection.bulkWrite(
 {{% note class="important" %}}
 Use of the bulkWrite methods is not recommended when connected to pre-2.6 MongoDB servers, as this was the first server version to support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException. The methods will still work for pre-2.6 servers, but performance will suffer, as each write operation has to be executed one at a time.
 {{% /note %}}
-
-The concludes the quick tour of the new driver. To learn about MongoDB
-administration features available in the driver see the
-[admin quick tour]({{< relref "getting-started/admin-quick-tour.md" >}}).
