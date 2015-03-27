@@ -10,11 +10,12 @@ title = "What's New"
 
 Key features of the 3.0 driver include:
 
-- A generic [MongoCollection](http://api.mongodb.org/java/3.0/com/mongodb/client/MongoCollection.html) interface that complies with a new cross-driver [CRUD specification](https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst).
+- A generic [`MongoCollection`]({{< apiref "com/mongodb/client/MongoCollection" >}}) interface that complies with a new cross-driver 
+[CRUD specification](https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst).
 - A new [asynchronous API](https://github.com/mongodb/mongo-java-driver/tree/master/driver-async) that can leverage either 
 [Netty](http://netty.io/) or Java 7's 
 [AsynchronousSocketChannel](http://docs.oracle .com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html)
-- A new [Codec](http://api.mongodb.org/java/3.0/org/bson/codecs/Codec.html) infrastructure that you can use to build high-performance
+- A new [`Codec`]({{< apiref "org/bson/codecs/Codec" >}}) infrastructure that you can use to build high-performance
  encoders and decoders without requiring an intermediate Map instance.
 - A new core driver on top of which you can build alternative or experimental driver APIs
 
