@@ -37,7 +37,7 @@ import java.util.List;
  * <p> Implementation of GridFS - a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB. </p>
  *
  * <p>Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a
- * separate document. By default GridFS limits chunk size to 256k. GridFS uses two collections to store files. One collection stores the
+ * separate document. By default GridFS limits chunk size to 255k. GridFS uses two collections to store files. One collection stores the
  * file chunks, and the other stores file metadata. </p>
  *
  * <p>When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. You can perform range queries on
