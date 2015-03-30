@@ -12,4 +12,4 @@ title = "Management"
 The driver provides two mechanisms for examining its state:
 
 - [Logging]({{< relref "logging.md" >}}): Comprehensive logging of all operations using [SLF4J](http://www.slf4j.org/)
-- [Management]({{< relref "monitoring.md" >}}): Built on [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/) 
+- [Monitoring]({{< relref "monitoring.md" >}}): Built on [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/) 
