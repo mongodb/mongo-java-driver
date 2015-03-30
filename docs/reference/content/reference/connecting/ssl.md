@@ -7,7 +7,7 @@ title = "SSL"
   pre = "<i class='fa'></i>"
 +++
 
-# SSL
+## SSL
 
 The Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by the JDK. You can configure 
 the driver to use SSL either with `MongoClientURI` or with `MongoClientOptions`.  
@@ -24,7 +24,7 @@ With `MongoClientOptions`, set the sslEnabled property to true, as in:
     MongoClientOptions.builder().sslEnabled(true).build()
 ```
 
-## Host name verification
+### Host name verification
 
 By default, the driver ensures that the host name included in the server's SSL certificate(s) matches the host name(s) provided when 
 constructing a `MongoClient`.  However, this host name verification requires a Java 7 JVM, as it relies on additions to the 
@@ -35,7 +35,7 @@ constructing a `MongoClient`.  However, this host name verification requires a J
     MongoClientOptions.builder().sslEnabled(true).sslInvalidHostNameAllowed(true).build()
 ``` 
 
-## JVM system properties
+### JVM system properties
 
 A typical application will need to set several JVM system properties to ensure that the client is able to validate the SSL certificate 
 presented by the server:

@@ -7,7 +7,7 @@ title = "Authenticating"
   pre = "<i class='fa'></i>"
 +++
 
-# Authenticating
+# Authentication
 
 The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those
 only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).

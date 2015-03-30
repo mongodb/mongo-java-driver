@@ -3,7 +3,7 @@ date = "2015-03-19T14:27:51-04:00"
 title = "Documents"
 [menu.main]
   parent = "BSON"
-  weight = 50
+  weight = 1
   pre = "<i class='fa'></i>"
 +++
 
@@ -15,8 +15,16 @@ The driver includes several classes and interfaces used for representing BSON do
 
 Although generally not needed by users of the high-level driver API, the [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) class is 
 central to the way that documents are managed internally by the driver.  The BsonDocument class can represent dynamically structured 
-documents of any complexity with a type-safe API.  For instance, the document `{ a: "MongoDB", b: [ { c: 1 } ] }` can be constructed as a
-BsonDocument as follows:
+documents of any complexity with a type-safe API.  For instance, the document 
+
+```javascript
+{ 
+  "a" : "MongoDB", 
+  "b" : [ 1, 2 ] 
+}
+```
+
+can be constructed as a BsonDocument as follows:
 
 ```java
 new BsonDocument().append("a", new BsonString("MongoDB"))
@@ -38,8 +46,9 @@ new Document().append("a", "MongoDB")
               .append("b", Arrays.asList(1, 2));
 ```
 
-There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.  The most
-commonly used value types are: 
+There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.  
+
+The most commonly used value types are: 
    
 | BSON type | Java type               |
 |-----------|-------------------------|
@@ -55,7 +64,8 @@ commonly used value types are:
 | ObjectId  | org.bson.types.ObjectId |
 | Null      | null                    |
 
-It is actually possible to change these mappings; the mechanism for doing so is currently beyond the scope of this reference.
+It is actually possible to change these mappings; the mechanism for doing so is covered [later]({{< relref "codecs.md" >}}) in this 
+reference .
 
 ### DBObject
 
