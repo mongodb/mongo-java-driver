@@ -85,7 +85,7 @@ authenticate against. In the Java driver, you simply provide the
 credentials when creating a `MongoClient` instance:
 
 ```java
-MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
+MongoCredential credential = MongoCredential.createCredential(userName, database, password);
 MongoClient mongoClient = new MongoClient(new ServerAddress(), Arrays.asList(credential));
 ```
 
