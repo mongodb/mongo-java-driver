@@ -34,7 +34,6 @@ MongoDatabase database = mongoClient.getDatabase("mydb");
 MongoCollection<Document> collection = database.getCollection("test");
 ```
 
-
 ## Get A List of Databases
 
 You can get a list of the available databases:
@@ -55,7 +54,7 @@ collection.
 You can drop a database by name using a `MongoClient` instance:
 
 ```java
-mongoClient.dropDatabase("databaseToBeDropped");
+mongoClient.getDatabase("databaseToBeDropped").drop();
 ```
 
 ## Create A Collection
@@ -63,8 +62,8 @@ mongoClient.dropDatabase("databaseToBeDropped");
 Collections in MongoDB are created automatically simply by inserted a document into it. Using the `[createCollection]({{< apiref "com/mongodb/client/MongoDatabase.html#createCollection-java.lang.String-">}})` method, you can also create a collection explicitly in order to to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
 
 ```java
-database.createCollection("cappedCollection", new
-CreateCollectionOptions().capped(true).sizeInBytes(0x100000));
+database.createCollection("cappedCollection",
+  new CreateCollectionOptions().capped(true).sizeInBytes(0x100000));
 ```
 
 ## Get A List of Collections
@@ -98,8 +97,8 @@ For `1` ascending  or `-1` for descending. The following creates an ascending in
 
 ## Get a List of Indexes on a Collection
 
-Use the `listIndexes()` method to get a list of indexes on a collection:
-The following lists the indexes on the collection `test`
+Use the `listIndexes()` method to get a list of indexes. The following lists
+ the indexes on the collection `test`:
 
 ```java
 for (final Document index : collection.listIndexes()) {
@@ -161,7 +160,12 @@ Highest scoring document: { "_id" : 1, "content" : "additional content", "score"
 For more information about text search see the [text index]({{< docsref "/core/index-text" >}}) and
 [$text query operator]({{< docsref "/reference/operator/query/text">}}) documentation.
 
-That concludes the admin quick tour overview!  Remember any [command]({{< docsref "/reference/command">}}) that doesn't have a specific 
-helper can be called by the 
-[`runCommand()`]({{< apiref "com/mongodb/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-">}}) method on 
-`MongoDatabase`.
+## Running a command
+
+Not all commands have a specific helper, however you can run any [command]({{< docsref "/reference/command">}})
+by using the [`runCommand()`](http://api.mongodb.org/java/3.0/?com/mongodb/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-) method.  Here we call the [buildInfo]({{ docsref "reference/command/buildInfo" }}) command:
+
+```java
+Document buildInfo = database.runCommand(new Document("buildInfo", 1));
+System.out.println(buildInfo);
+```

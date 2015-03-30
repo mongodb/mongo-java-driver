@@ -56,12 +56,9 @@ The `MongoClient` instance actually represents a pool of connections
 to the database; you will only need one instance of class
 `MongoClient` even with multiple threads.
 
-The `MongoClient` class is designed to be thread safe and shared among
-threads. Typically you create only 1 instance for a given database
-cluster and use it across your application.
-
 {{% note class="important" %}}
-When creating many `MongoClient` instances:
+Typically you only create one `MongoClient` instance for a given database
+cluster and use it across your application. When creating multiple instances:
 
 -   All resource usage limits (max connections, etc) apply per
     `MongoClient` instance
@@ -75,15 +72,11 @@ To get a collection to operate upon, specify the name of the collection to
 the [`getCollection()`]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection-java.lang.String-">}})
 method:
 
-The following example gets the collection `test`. If the collection does not
-exist, MongoDB will create it for you.
+The following example gets the collection `test`:
 
 ```java
 MongoCollection<Document> collection = database.getCollection("test");
 ```
-
-With this collection object, you can now do things like insert
-data, query for data, etc.
 
 ## Insert a Document
 
@@ -127,9 +120,7 @@ To add multiple documents, you can use the `insertMany()` method.
 The following example will add multiple documents of the form:
 
 ```javascript
-{
-   "i" : value
-}
+{ "i" : value }
 ```
 
 Create the documents in a loop.
@@ -201,7 +192,7 @@ names that start with
 ### Find All Documents in a Collection
 
 To retrieve all the documents in the collection, we will use the
-`find()` method. The `find()` method returns a `FindIterable` instance, that
+`find()` method. The `find()` method returns a `FindIterable` instance that
 provides a fluent interface for chaining or controlling find operations. Use the
 `iterator()` method to get an iterator over the set of documents that matched the
 query and iterate. The following code retrieves all documents in the collection
@@ -250,7 +241,7 @@ and it should just print just one document
 
 
 {{% note %}}
-Use the [`Filters`]({{< apiref "com/mongodb/client/model/Filters">}}), [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts">}}) and 
+Use the [`Filters`]({{< apiref "com/mongodb/client/model/Filters">}}), [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts">}}) and
 [`Projections`]({{< apiref "com/mongodb/client/model/Projections">}})
 helpers for simple and concise ways of building up queries.
 {{% /note %}}
@@ -284,7 +275,7 @@ collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
 ## Sorting documents
 
 We can also use the [`Sorts`]({{< apiref "com/mongodb/client/model/Sorts">}}) helpers to sort documents.
-We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the 
+We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the
 [`exists()`]({{ < apiref "com/mongodb/client/model/Filters.html#exists-java.lang.String-">}}) helper and sort
 [`descending("i")`]({{ < apiref "com/mongodb/client/model/Sorts.html#exists-java.lang.String-">}}) helper to
 sort our documents:
@@ -296,7 +287,7 @@ System.out.println(myDoc.toJson());
 
 ## Projecting fields
 
-Sometimes we don't need all the data contained in a document, the [`Projections`]({{< apiref "com/mongodb/client/model/Projections">}}) 
+Sometimes we don't need all the data contained in a document, the [`Projections`]({{< apiref "com/mongodb/client/model/Projections">}})
 helpers help build the projection parameter for the
 find operation.  Below we'll sort the collection, exclude the `_id` field and output the first
 matching document:
@@ -305,6 +296,50 @@ matching document:
 myDoc = collection.find().projection(excludeId()).first();
 System.out.println(myDoc.toJson());
 ```
+
+## Updating documents
+
+There are numerous [update operators](http://docs.mongodb.org/manual/reference/operator/update-field/)
+supported by MongoDB.
+
+To update at most a single document (may be 0 if none match the filter), use the [`updateOne`]({{< apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
+method to specify the filter and the update document.  Here we update the first document that meets the filter `i` equals `10` and set the value of `i` to `110`:
+
+```java
+collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
+```
+
+To update all documents matching the filter use the [`updateMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
+method.  Here we increment the value of `i` by `100` where `i` is less than `100`.
+
+```java
+UpdateResult updateResult = collection.updateMany(lt("i", 100),
+          new Document("$inc", new Document("i", 100)));
+System.out.println(updateResult.getModifiedCount());
+```
+
+The update methods return an [`UpdateResult`]({{< apiref "com/mongodb/client/result/UpdateResult.html">}})
+which provides information about the operation including the number of documents modified by the update.
+
+## Deleting documents
+
+To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}})
+method:
+
+```java
+collection.deleteOne(eq("i", 110));
+```
+
+To delete all documents matching the filter use the [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method.  
+Here we delete all documents where `i` is greater or equal to `100`:
+
+```java
+DeleteResult deleteResult = collection.deleteMany(gte("i", 100));
+System.out.println(deleteResult.getDeletedCount());
+```
+
+The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
+which provides information about the operation including the number of documents deleted.
 
 ## Bulk operations
 

@@ -51,7 +51,7 @@ public abstract class UpdateResult {
     public abstract boolean isModifiedCountAvailable();
 
     /**
-     * Gets he number of documents modified by the update.
+     * Gets the number of documents modified by the update.
      *
      * @return the number of documents modified
      */

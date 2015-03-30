@@ -62,7 +62,7 @@ public class QuickTourAdmin {
         }
 
         // drop a database
-        mongoClient.dropDatabase("databaseToBeDropped");
+        mongoClient.getDatabase("databaseToBeDropped").drop();
 
         // create a collection
         database.createCollection("cappedCollection", new CreateCollectionOptions().capped(true).sizeInBytes(0x100000));
@@ -70,6 +70,9 @@ public class QuickTourAdmin {
         for (String name : database.listCollectionNames()) {
             System.out.println(name);
         }
+
+        // drop a collection:
+        collection.drop();
 
         // create an ascending index on the "i" field
         collection.createIndex(new Document("i", 1));
@@ -99,6 +102,10 @@ public class QuickTourAdmin {
         Document projection = new Document("score", new Document("$meta", "textScore"));
         Document myDoc = collection.find(textSearch).projection(projection).first();
         System.out.println("Highest scoring document: " + myDoc.toJson());
+
+        // Run a command
+        Document buildInfo = database.runCommand(new Document("buildInfo", 1));
+        System.out.println(buildInfo);
 
         // release resources
         database.drop();

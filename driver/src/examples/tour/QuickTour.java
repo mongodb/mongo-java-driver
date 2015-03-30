@@ -28,6 +28,8 @@ import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Sorts.descending;
@@ -158,6 +162,20 @@ public class QuickTour {
         myDoc = collection.find().projection(excludeId()).first();
         System.out.println(myDoc.toJson());
 
+        // Update One
+        collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
+
+        // Update Many
+        UpdateResult updateResult = collection.updateMany(lt("i", 100),
+                new Document("$inc", new Document("i", 100)));
+        System.out.println(updateResult.getModifiedCount());
+
+        // Delete One
+        collection.deleteOne(eq("i", 110));
+
+        // Delete Many
+        DeleteResult deleteResult = collection.deleteMany(gte("i", 100));
+        System.out.println(deleteResult.getDeletedCount());
 
         collection.drop();
 
@@ -175,7 +193,7 @@ public class QuickTour {
         collection.drop();
 
         collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
-        collection.find().forEach(printBlock);
+        //collection.find().forEach(printBlock);
 
         // Clean up
         database.drop();
