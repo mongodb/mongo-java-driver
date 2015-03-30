@@ -61,6 +61,7 @@ var toggleDownload = function() {
 
 jQuery(document).ready(function(){
   initializeJS();
+  jQuery('[data-toggle="tooltip"]').tooltip();
   jQuery("body").addClass("hljsCode");
   hljs.initHighlightingOnLoad();
 });
