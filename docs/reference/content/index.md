@@ -9,10 +9,12 @@ type = "index"
 Welcome to the MongoDB Java driver documentation hub for the 3.0 driver release.
 
 
-### What's New in 2.0
+### What's New in 3.0
 
-The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major new features of the driver. If you are coming from the 2.x
- series of the driver, consult the [Upgrading]({{< relref "whats-new/upgrading.md" >}}) documentation on breaking changes.
+The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major new features of the driver. 
+
+If you are upgrading from the 2.x series of the driver, consult the [Upgrading]({{< relref "whats-new/upgrading.md" >}}) documentation for 
+information on breaking changes. 
 
 
 ### Getting Started
