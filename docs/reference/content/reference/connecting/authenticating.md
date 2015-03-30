@@ -7,16 +7,19 @@ title = "Authenticating"
   pre = "<i class='fa'></i>"
 +++
 
-# Authenticating
+# Authentication
 
 The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those
 only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).
 
 An authentication credential is represented as an instance of the
-[MongoCredential](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) class, which includes static factory methods for
+[`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}}) class, which includes static factory methods for
 each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
-[MongoClient](http://api.mongodb.org/java/current/com/mongodb/MongoCredential.html) constructors that take a
-parameter of type `List<MongoCredential>`.
+[`MongoClient`]({{< apiref "com/mongodb/MongoClient" >}}) constructors that take either a 
+parameter of type `List<MongoCredential>`.  Alternatively, a single [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}})
+can be created implicity via a 
+[`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) and passed to a [`MongoClient`]({{< apiref "com/mongodb/MongoClient" >}})
+constructor that takes a `[`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) parameter. 
 
 {{% note %}}
 Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.

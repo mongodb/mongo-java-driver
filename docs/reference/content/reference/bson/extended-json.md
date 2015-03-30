@@ -3,23 +3,26 @@ date = "2015-03-19T14:27:51-04:00"
 title = "Extended JSON"
 [menu.main]
   parent = "BSON"
-  weight = 50
+  weight = 20
   pre = "<i class='fa'></i>"
 +++
 
 ## MongoDB Extended JSON
 
-The Java driver supports reading and writing JSON-like documents with the [JsonReader]({{< apiref "org/bson/json/JsonReader" >}}) and
-[JsonWriter]({{< apiref "org/bson/json/JsonWriter" >}}) classes, which can read/write both flavors of 
-[MongoDB Extended JSON](http://docs.mongodb.org/manual/reference/mongodb-extended-json/): 
+As discussed earlier, the Java driver supports reading and writing BSON documents represented as  
+[MongoDB Extended JSON](http://docs.mongodb.org/manual/reference/mongodb-extended-json/).  Both variants are supported: 
 
-- MongoDB Extended JSON Strict Mode: representations of BSON types that conform to the [JSON RFC](http://www.json.org/). This is the 
+- Strict Mode: representations of BSON types that conform to the [JSON RFC](http://www.json.org/). This is the 
 format that [mongoexport](http://docs.mongodb.org/manual/reference/program/mongoexport/) produces and 
 [mongoimport](http://docs.mongodb.org/manual/reference/program/mongoimport/) consumes.
-- MongoDB Shell Mode: a superset of JSON that the 
+- Shell Mode: a superset of JSON that the 
 [MongoDB shell](http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/) can parse. 
- 
 
+Furthermore, the `Document` class provides two sets of convenience methods for this purpose:
+
+- toJson(): a set of overloaded methods that convert a `Document` instance to a JSON string
+- parse(): a set of overloaded static factory methods that convert a JSON string to a `Document` instance
+ 
 ## Writing JSON
 
 Consider the task of implementing a [mongoexport](http://docs.mongodb.org/manual/reference/program/mongoexport/)-like tool using the 
@@ -40,10 +43,10 @@ try {
 }
 ```
 
-The `Document.toJson()` method is the key part of this code snippet.  The implementation of this method constructs an instance of a 
-`JsonWriter` with its default settings, which will write in strict mode with no new lines or indentation.
+The `Document.toJson()` method constructs an instance of a `JsonWriter` with its default settings, which will write in strict mode with 
+no new lines or indentation.  
 
-You can override this default behavior by using one of the overloads of Document.toJson().  As an example, consider the task of writing a
+You can override this default behavior by using one of the overloads of `toJson()`.  As an example, consider the task of writing a
  JSON string that can be copied and pasted into the MongoDB shell:
  
 ```java
@@ -82,9 +85,8 @@ try {
 }
 ```
 
-The `Document.parse()` static factory method is the key part of this code snippet.  The implementation of this method constructs an 
-instance of a `JsonReader` with the given string and returns an instance of an equivalent Document instance. `JsonReader`  
-automatically detects the JSON flavor in the string, so you do not need to specify it. 
+The `Document.parse()` static factory method constructs an instance of a `JsonReader` with the given string and returns an instance of an
+equivalent Document instance. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it. 
 
  
 

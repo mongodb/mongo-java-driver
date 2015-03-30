@@ -3,7 +3,7 @@ date = "2015-03-19T14:27:51-04:00"
 title = "Documents"
 [menu.main]
   parent = "BSON"
-  weight = 50
+  weight = 1
   pre = "<i class='fa'></i>"
 +++
 
@@ -13,10 +13,18 @@ The driver includes several classes and interfaces used for representing BSON do
 
 ### BsonDocument
 
-Although generally not needed by users of the high-level driver API, the [BsonDocument]({{< apiref "org/bson/BsonDocument" >}}) class is 
+Although generally not needed by users of the high-level driver API, the [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) class is 
 central to the way that documents are managed internally by the driver.  The BsonDocument class can represent dynamically structured 
-documents of any complexity with a type-safe API.  For instance, the document `{ a: "MongoDB", b: [ { c: 1 } ] }` can be constructed as a
-BsonDocument as follows:
+documents of any complexity with a type-safe API.  For instance, the document 
+
+```javascript
+{ 
+  "a" : "MongoDB", 
+  "b" : [ 1, 2 ] 
+}
+```
+
+can be constructed as a BsonDocument as follows:
 
 ```java
 new BsonDocument().append("a", new BsonString("MongoDB"))
@@ -25,11 +33,11 @@ new BsonDocument().append("a", new BsonString("MongoDB"))
 
 The type safety comes from BsonDocument implementing `Map<String, BsonValue>`, so even built-in types like `int`, `String` and `List` must
 be wrapped in a sub-class of `BsonValue`.  For a complete list of BsonValue sub-types, please consult the 
-[API documentation]({{< apiref "org/bson/BsonValue" >}}). 
+[`BsonValue`]({{< apiref "org/bson/BsonValue" >}}) API documentation. 
 
 ### Document
 
-Most applications will use the [Document]({{< apiref "org/bson/Document" >}}) class instead.  Like BsonDocument, the 
+Most applications will use the [`Document`]({{< apiref "org/bson/Document" >}}) class instead.  Like BsonDocument, the 
 Document class can represent dynamically structured documents of any complexity; however, the typing is much looser, as Document 
 implements `Map<String, Object>`. As a result, the same document as above can be constructed using the Document class as follows:
 
@@ -38,8 +46,9 @@ new Document().append("a", "MongoDB")
               .append("b", Arrays.asList(1, 2));
 ```
 
-There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.  The most
-commonly used value types are: 
+There is less code to write, but runtime errors are possible if you inadvertently add an instance of an unsupported value type.  
+
+The most commonly used value types are: 
    
 | BSON type | Java type               |
 |-----------|-------------------------|
@@ -55,12 +64,13 @@ commonly used value types are:
 | ObjectId  | org.bson.types.ObjectId |
 | Null      | null                    |
 
-It is actually possible to change these mappings; the mechanism for doing so is currently beyond the scope of this reference.
+It is actually possible to change these mappings; the mechanism for doing so is covered [later]({{< relref "codecs.md" >}}) in this 
+reference .
 
 ### DBObject
 
 Although not recommended for new applications, those upgrading from the 2.x driver series may continue to use the 
-[DBObject]({{< apiref "com/mongodb/DBObject" >}}) interface to represent BSON documents.  DBObject is similar to Document in that it 
+[`DBObject`]({{< apiref "com/mongodb/DBObject" >}}) interface to represent BSON documents.  DBObject is similar to Document in that it 
 represents BSON values as `Object`, but it has a few shortcomings that were impossible to overcome:
  
 - it is an interface rather than a class, so it's API can not be extended without breaking binary compatibility
@@ -70,7 +80,7 @@ that interface, is required
 
 ### Bson
 
-To tie these all together, the driver contains a small but powerful interface called [Bson]({{< apiref "org/bson/conversions/Bson" >}}). 
+To tie these all together, the driver contains a small but powerful interface called [`Bson`]({{< apiref "org/bson/conversions/Bson" >}}). 
 Any class that represents a BSON document, whether included in the driver itself or from a third party, can implement this interface and 
 can then be used any place in the high-level API where a BSON document is required. The three classes discussed above all implement this 
 interface and so can be used interchangeably based on the needs of a given application.  For example:

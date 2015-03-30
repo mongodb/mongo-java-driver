@@ -136,11 +136,11 @@ collection.insertOne(new Document("_id", 1).append("content", "additional conten
 collection.insertOne(new Document("_id", 2).append("content", "irrelevant content"));
 
 // Find using the text index
-long matchCount = collection.count(text("textual content -irrelevant"));
+long matchCount = collection.count(Filters.text("textual content -irrelevant"));
 System.out.println("Text search matches: " + matchCount);
 
 // Find using the $language operator
-Bson textSearch = text("textual content -irrelevant", "english");
+Bson textSearch = Filters.text("textual content -irrelevant", "english");
 matchCount = collection.count(textSearch);
 System.out.println("Text search matches (english): " + matchCount);
 
@@ -161,4 +161,7 @@ Highest scoring document: { "_id" : 1, "content" : "additional content", "score"
 For more information about text search see the [text index]({{< docsref "/core/index-text" >}}) and
 [$text query operator]({{< docsref "/reference/operator/query/text">}}) documentation.
 
-That concludes the admin quick tour overview!  Remember any [command]({{< docsref "/reference/command">}}) that doesn't have a specific helper can be called by the [database.runCommand()](http://api.mongodb.org/java/3.0/?com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-).
+That concludes the admin quick tour overview!  Remember any [command]({{< docsref "/reference/command">}}) that doesn't have a specific 
+helper can be called by the 
+[`runCommand()`]({{< apiref "com/mongodb/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-">}}) method on 
+`MongoDatabase`.
