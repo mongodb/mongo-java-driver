@@ -92,7 +92,7 @@ final class MessageHelper {
         bsonInput.readInt32(); // numToSkip
         bsonInput.readInt32(); // numToReturn
 
-        BsonBinaryReader reader = new BsonBinaryReader(bsonInput, true);
+        BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
         BsonDocumentCodec codec = new BsonDocumentCodec();
         BsonDocument document = codec.decode(reader, DecoderContext.builder().build());
         StringWriter writer = new StringWriter();
@@ -106,7 +106,7 @@ final class MessageHelper {
         JsonReader jsonReader = new JsonReader(json);
         BsonDocumentCodec codec = new BsonDocumentCodec();
         BsonDocument document = codec.decode(jsonReader, DecoderContext.builder().build());
-        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer);
         codec.encode(writer, document, EncoderContext.builder().build());
 
         ByteBuffer documentByteBuffer = ByteBuffer.allocate(outputBuffer.size());

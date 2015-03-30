@@ -68,7 +68,7 @@ public class BasicBSONEncoder implements BSONEncoder {
             throw new IllegalStateException("Performing another operation at this moment");
         }
         outputBuffer = buffer;
-        this.bsonWriter = new BsonBinaryWriter(buffer, false);
+        this.bsonWriter = new BsonBinaryWriter(buffer);
     }
 
     /**

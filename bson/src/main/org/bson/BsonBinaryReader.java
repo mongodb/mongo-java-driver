@@ -17,9 +17,13 @@
 package org.bson;
 
 import org.bson.io.BsonInput;
+import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.ObjectId;
 
+import java.nio.ByteBuffer;
+
 import static java.lang.String.format;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A BsonReader implementation that reads from a binary stream of data.  This is the most commonly used implementation.
@@ -29,31 +33,33 @@ import static java.lang.String.format;
 public class BsonBinaryReader extends AbstractBsonReader {
 
     private final BsonInput bsonInput;
-    private final boolean closeInput;
     private Mark mark;
 
     /**
      * Construct an instance.
      *
-     * @param bsonInput the input for this reader
-     * @param closeInput whether the reader should close the input when it is closed itself
+     * @param byteBuffer the input for this reader
      */
-    public BsonBinaryReader(final BsonInput bsonInput, final boolean closeInput) {
-        super();
+    public BsonBinaryReader(final ByteBuffer byteBuffer) {
+        this(new ByteBufferBsonInput(new ByteBufNIO(notNull("byteBuffer", byteBuffer))));
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param bsonInput the input for this reader
+     */
+    public BsonBinaryReader(final BsonInput bsonInput) {
         if (bsonInput == null) {
             throw new IllegalArgumentException("bsonInput is null");
         }
         this.bsonInput = bsonInput;
-        this.closeInput = closeInput;
         setContext(new Context(null, BsonContextType.TOP_LEVEL, 0, 0));
     }
 
     @Override
     public void close() {
         super.close();
-        if (closeInput) {
-            bsonInput.close();
-        }
     }
 
     /**

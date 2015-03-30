@@ -32,7 +32,7 @@ public final class CodecTestUtil {
 
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer);
         byte[] documentAsByteArrayForReader;
         try {
             new DocumentCodec().encode(writer, document, EncoderContext.builder().build());
@@ -41,8 +41,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))),
-                                                       false);
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))));
 
         //have to read off the wrapper document so the reader is in the correct position for the test
         reader.readStartDocument();
@@ -53,7 +52,7 @@ public final class CodecTestUtil {
     static <T> BsonBinaryReader prepareReaderWithObjectToBeDecoded(final T objectToDecode, final Codec<T> codec) {
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer);
         byte[] documentAsByteArrayForReader;
         try {
             codec.encode(writer, objectToDecode, EncoderContext.builder().build());
@@ -62,7 +61,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))), false);
+        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))));
     }
 
     private CodecTestUtil() { }

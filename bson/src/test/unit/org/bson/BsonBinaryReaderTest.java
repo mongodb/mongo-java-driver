@@ -30,8 +30,7 @@ public class BsonBinaryReaderTest {
     @Test
     public void testReadDBPointer() {
         BsonBinaryReader reader = createReaderForBytes(new byte[]{26, 0, 0, 0, 12, 97, 0, 2, 0, 0, 0, 98, 0, 82, 9, 41, 108,
-                                                                  -42, -60, -29, -116, -7, 111, -1, -36, 0
-        });
+                                                                  -42, -60, -29, -116, -7, 111, -1, -36, 0});
 
         reader.readStartDocument();
         assertThat(reader.readBsonType(), is(BsonType.DB_POINTER));
@@ -39,9 +38,10 @@ public class BsonBinaryReaderTest {
         assertThat(dbPointer.getNamespace(), is("b"));
         assertThat(dbPointer.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
         reader.readEndDocument();
+        reader.close();
     }
 
     private BsonBinaryReader createReaderForBytes(final byte[] bytes) {
-        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))));
     }
 }

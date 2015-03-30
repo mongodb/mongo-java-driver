@@ -40,7 +40,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
             BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
-            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)), true)
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             reader = new JsonReader(writer.writer.toString())
         }
@@ -57,7 +57,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         where:
         writer << [
                 new BsonDocumentWriter(new BsonDocument()),
-                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
                 new JsonWriter(new StringWriter())
         ]
     }
@@ -75,7 +75,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
             BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
-            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)), true)
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             reader = new JsonReader(writer.writer.toString())
         }
@@ -91,7 +91,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         where:
         writer << [
                 new BsonDocumentWriter(new BsonDocument()),
-                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
                 new JsonWriter(new StringWriter())
         ]
     }
@@ -126,7 +126,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
             BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
-            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)), true)
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             reader = new JsonReader(writer.writer.toString())
         }
@@ -237,7 +237,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         where:
         writer << [
                 new BsonDocumentWriter(new BsonDocument()),
-                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
                 new JsonWriter(new StringWriter())
         ]
     }
@@ -257,7 +257,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
             BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
-            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)), true)
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             reader = new JsonReader(writer.writer.toString())
         }
@@ -277,7 +277,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         where:
         writer << [
                 new BsonDocumentWriter(new BsonDocument()),
-                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
                 new JsonWriter(new StringWriter())
         ]
     }

@@ -971,7 +971,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
             int start = outputBuffer.getPosition();
-            BsonBinaryWriter bsonWriter = new BsonBinaryWriter(outputBuffer, false);
+            BsonBinaryWriter bsonWriter = new BsonBinaryWriter(outputBuffer);
             try {
                 bsonWriter.writeStartDocument();
                 bsonWriter.writeInt32("_id", 1);

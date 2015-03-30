@@ -44,7 +44,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final RawBsonDocument value, final EncoderContext encoderContext) {
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()), true);
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(value.getByteBuffer()));
         try {
             writer.pipe(reader);
         } finally {
@@ -55,7 +55,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
     @Override
     public RawBsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
         try {
             writer.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBsonOutput()

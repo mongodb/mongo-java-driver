@@ -97,7 +97,7 @@ class DocumentCodecSpecification extends Specification {
         } else if (writer instanceof BsonBinaryWriter) {
             BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput();
             reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(
-                    ByteBuffer.wrap(buffer.toByteArray()))), true)
+                    ByteBuffer.wrap(buffer.toByteArray()))))
         } else {
             reader = new JsonReader(stringWriter.toString())
         }
@@ -134,7 +134,7 @@ class DocumentCodecSpecification extends Specification {
         where:
         writer << [
                 new BsonDocumentWriter(bsonDoc),
-                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
 //                new JsonWriter(stringWriter)
         ]
     }

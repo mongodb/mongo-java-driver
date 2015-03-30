@@ -53,7 +53,7 @@ class RawBsonDocumentCodecSpecification extends Specification {
 
     def 'should decode'() {
         given:
-        def reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(documentBytes))), false)
+        def reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(documentBytes))))
 
         when:
         RawBsonDocument buffer = codec.decode(reader, DecoderContext.builder().build())

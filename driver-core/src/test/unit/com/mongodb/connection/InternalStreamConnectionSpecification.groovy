@@ -685,7 +685,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def body() {
             def okResponse = ['connectionId': 1, 'n': 0, 'syncMillis': 0, 'writtenTo': null, 'err': null, 'ok': 1] as Document
             OutputBuffer outputBuffer = new BasicOutputBuffer()
-            BsonBinaryWriter binaryResponse = new BsonBinaryWriter(outputBuffer, false)
+            BsonBinaryWriter binaryResponse = new BsonBinaryWriter(outputBuffer)
             new DocumentCodec().encode(binaryResponse, okResponse, EncoderContext.builder().build())
             new ByteBufNIO(ByteBuffer.allocate(outputBuffer.size()).put(outputBuffer.toByteArray()))
         }

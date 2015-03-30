@@ -68,7 +68,7 @@ public class RawBsonDocument extends BsonDocument {
      */
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
         try {
             codec.encode(writer, document, EncoderContext.builder().build());
             this.bytes = buffer.toByteArray();
@@ -260,7 +260,7 @@ public class RawBsonDocument extends BsonDocument {
     }
 
     private BsonBinaryReader createReader() {
-        return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()), true);
+        return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()));
     }
 
     private BsonDocument toBsonDocument() {

@@ -33,7 +33,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private final BsonBinaryWriterSettings binaryWriterSettings;
 
     private final BsonOutput bsonOutput;
-    private final boolean closeOutput;
     private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
     private Mark mark;
 
@@ -51,10 +50,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * Construct an instance.
      *
      * @param bsonOutput  the output to write to
-     * @param closeOutput whether to close the bsonOutput when it is closed itself
      */
-    public BsonBinaryWriter(final BsonOutput bsonOutput, final boolean closeOutput) {
-        this(new BsonWriterSettings(), new BsonBinaryWriterSettings(), bsonOutput, closeOutput);
+    public BsonBinaryWriter(final BsonOutput bsonOutput) {
+        this(new BsonWriterSettings(), new BsonBinaryWriterSettings(), bsonOutput);
     }
 
     /**
@@ -63,11 +61,10 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * @param settings             the generic BsonWriter settings
      * @param binaryWriterSettings the settings specific to a BsonBinaryWriter
      * @param bsonOutput           the output to write to
-     * @param closeOutput          whether to close the bsonOutput when it is closed itself
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
-                            final BsonOutput bsonOutput, final boolean closeOutput) {
-        this(settings, binaryWriterSettings, bsonOutput, new NoOpFieldNameValidator(), closeOutput);
+                            final BsonOutput bsonOutput) {
+        this(settings, binaryWriterSettings, bsonOutput, new NoOpFieldNameValidator());
     }
 
     /**
@@ -80,24 +77,15 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
                             final BsonOutput bsonOutput, final FieldNameValidator validator) {
-        this(settings, binaryWriterSettings, bsonOutput, validator, false);
-    }
-
-    private BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
-                             final BsonOutput bsonOutput, final FieldNameValidator validator, final boolean closeOutput) {
         super(settings, validator);
         this.binaryWriterSettings = binaryWriterSettings;
         this.bsonOutput = bsonOutput;
-        this.closeOutput = closeOutput;
         maxDocumentSizeStack.push(binaryWriterSettings.getMaxDocumentSize());
     }
 
     @Override
     public void close() {
         super.close();
-        if (closeOutput) {
-            bsonOutput.close();
-        }
     }
 
     /**

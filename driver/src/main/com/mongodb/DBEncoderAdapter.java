@@ -42,7 +42,7 @@ class DBEncoderAdapter implements Encoder<DBObject> {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);
-            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
+            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(buffer.toByteArray()))));
             try {
                 writer.pipe(reader);
             } finally {

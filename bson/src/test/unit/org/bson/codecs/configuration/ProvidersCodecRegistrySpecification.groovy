@@ -93,14 +93,14 @@ class ProvidersCodecRegistrySpecification extends Specification {
         def top = new Top('Bob',
                           new Top('Jim', null, null),
                           new Nested('George', new Top('Joe', null, null)))
-        def writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
+        def writer = new BsonBinaryWriter(new BasicOutputBuffer())
         topCodec.encode(writer, top, EncoderContext.builder().build())
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writer.getBsonOutput().pipe(os);
         writer.close()
 
         then:
-        topCodec.decode(new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(os.toByteArray()))), false),
+        topCodec.decode(new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(os.toByteArray())))),
                         DecoderContext.builder().build()) == top
     }
 

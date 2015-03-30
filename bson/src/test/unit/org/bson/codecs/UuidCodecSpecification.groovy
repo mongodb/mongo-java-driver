@@ -47,7 +47,7 @@ class UuidCodecSpecification extends Specification {
         given:
 
         ByteBufferBsonInput inputBuffer = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(list)))
-        BsonBinaryReader bsonReader = new BsonBinaryReader(inputBuffer, false)
+        BsonBinaryReader bsonReader = new BsonBinaryReader(inputBuffer)
         UUID expectedUuid = UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09')
 
         bsonReader.readStartDocument()
@@ -122,7 +122,7 @@ class UuidCodecSpecification extends Specification {
 
         encodedDoc[13] = bsonSubType
 
-        BsonBinaryWriter bsonWriter = new BsonBinaryWriter(outputBuffer, false)
+        BsonBinaryWriter bsonWriter = new BsonBinaryWriter(outputBuffer)
         bsonWriter.writeStartDocument()
         bsonWriter.writeName('_id')
 

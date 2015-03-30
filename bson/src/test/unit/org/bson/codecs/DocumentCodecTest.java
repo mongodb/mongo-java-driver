@@ -54,7 +54,7 @@ public class DocumentCodecTest {
     @Before
     public void setUp() throws Exception {
         buffer = new BasicOutputBuffer();
-        writer = new BsonBinaryWriter(buffer, true);
+        writer = new BsonBinaryWriter(buffer);
     }
 
     @After
@@ -83,7 +83,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -96,7 +96,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -108,7 +108,7 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(createInputBuffer(), false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(createInputBuffer()), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -123,7 +123,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -137,7 +137,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -150,7 +150,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
