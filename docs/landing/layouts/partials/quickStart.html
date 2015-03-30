@@ -5,7 +5,7 @@
   Select the driver, version and dependency management system below and the snippet can be copied and pasted into your build.
 </p>
 <p>
-  Alternatively, head over to our documentation to learn more about getting started with Java and MongoDB.
+  Alternatively, head over to our <a href="{{.Site.BaseUrl}}/{{$.Site.Data.releases.current}}">documentation</a> to learn more about getting started with Java and MongoDB.
 </p>
 
 {{ range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current  }}{{ $.Scratch.Set "qs.currentReleasedVersion" . }}{{end }}

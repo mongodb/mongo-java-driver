@@ -4,14 +4,3 @@ title = "MongoDB Java Driver"
 canonifyurls = false
 
 githubRepo = "mongo-java-driver"
-
-[params.authors]
-  [params.authors.Derek]
-    "firstName"  = "Derek"
-    "lastName"   = "Perkins"
-  [params.authors.Joe]
-    "firstName"  = "Joe"
-    "lastName"   = "Bergevin"
-  [params.authors.Tanner]
-    "firstName"  = "Tanner"
-    "lastName"   = "Linsley"
