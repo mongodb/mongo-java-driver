@@ -15,7 +15,6 @@ commit-*
 test-output
 build
 doc
-docs
 bin
 target
 *.jar
@@ -29,3 +28,5 @@ atlassian-ide-plugin.xml
 
 out/*
 .gradle/*
+
+docs/reference/public/*
