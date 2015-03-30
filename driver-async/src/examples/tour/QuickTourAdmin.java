@@ -39,6 +39,7 @@ public class QuickTourAdmin {
      * Run this main method to see the output of this quick example.
      *
      * @param args takes an optional single argument for the connection string
+     * @throws InterruptedException if a latch is interrupted
      */
     public static void main(final String[] args) throws InterruptedException {
         MongoClient mongoClient;
