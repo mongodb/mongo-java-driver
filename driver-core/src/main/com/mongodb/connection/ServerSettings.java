@@ -47,7 +47,7 @@ public class ServerSettings {
         private long minHeartbeatFrequencyMS = 500;
 
         /**
-         * Sets the frequency that the cluster monitor attempts to reach each server.
+         * Sets the frequency that the cluster monitor attempts to reach each server. The default value is 10 seconds.
          *
          * @param heartbeatFrequency the heartbeat frequency
          * @param timeUnit           the time unit
@@ -60,7 +60,7 @@ public class ServerSettings {
 
         /**
          * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
-         * wait at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
+         * wait at least this long since the previous check to avoid wasted effort.  The default value is 500 milliseconds.
          *
          * @param minHeartbeatFrequency the minimum heartbeat frequency
          * @param timeUnit              the time unit
@@ -82,7 +82,7 @@ public class ServerSettings {
     }
 
     /**
-     * Gets the frequency that the cluster monitor attempts to reach each server.  The default is every 5 seconds.
+     * Gets the frequency that the cluster monitor attempts to reach each server.  The default value is 10 seconds.
      *
      * @param timeUnit the time unit
      * @return the heartbeat frequency
@@ -93,7 +93,7 @@ public class ServerSettings {
 
     /**
      * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will wait
-     * at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
+     * at least this long since the previous check to avoid wasted effort.  The default value is 500 milliseconds.
      *
      * @param timeUnit the time unit
      * @return the heartbeat reconnect retry frequency

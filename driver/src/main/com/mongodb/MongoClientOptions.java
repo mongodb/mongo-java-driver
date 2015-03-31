@@ -299,7 +299,7 @@ public class MongoClientOptions {
 
     /**
      * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
-     * cluster. The default value is 5000 milliseconds.
+     * cluster. The default value is 10,000 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
      * @since 2.12
@@ -310,7 +310,7 @@ public class MongoClientOptions {
 
     /**
      * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-     * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
+     * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 500 milliseconds.
      *
      * @return the minimum heartbeat frequency, in milliseconds
      * @since 2.13
@@ -1048,7 +1048,7 @@ public class MongoClientOptions {
 
         /**
          * Sets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in
-         * the cluster.
+         * the cluster. The default value is 10,000 milliseconds
          *
          * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds, which must be &gt; 0
          * @return {@code this}
@@ -1063,7 +1063,7 @@ public class MongoClientOptions {
 
         /**
          * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-         * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10ms.
+         * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 500 milliseconds.
          *
          * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
