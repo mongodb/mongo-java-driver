@@ -92,7 +92,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     /**
      * Gets the index names.
      *
-     * @return a List<String> of index names
+     * @return a list of index names
      */
     public List<String> getIndexNames() {
         List<String> indexNames = new ArrayList<String>(requests.size());
