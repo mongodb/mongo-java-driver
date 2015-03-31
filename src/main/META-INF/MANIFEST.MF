@@ -7,9 +7,10 @@ Bundle-Version: @VERSION@
 Import-Package: javax.management,
  javax.net,
  javax.net.ssl,
+ javax.crypto,
+ javax.crypto.spec,
  javax.security.sasl,
- javax.security.auth.login,
- javax.security.auth,
+ javax.security.auth.callback,
  org.ietf.jgss
 Export-Package: com.mongodb;version="@VERSION@",
  com.mongodb.io;version="@VERSION@",
