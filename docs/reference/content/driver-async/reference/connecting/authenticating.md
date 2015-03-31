@@ -15,12 +15,12 @@ only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manua
 
 An authentication credential is represented as an instance of the
 [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}}) class, which includes static factory methods for
-each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via one of several
-[`MongoClient`]({{< apiref "com/mongodb/MongoClient" >}}) constructors that take either a 
-parameter of type `List<MongoCredential>`.  Alternatively, a single [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}})
-can be created implicity via a 
-[`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) and passed to a [`MongoClient`]({{< apiref "com/mongodb/MongoClient" >}})
-constructor that takes a `[`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) parameter. 
+each of the supported authentication mechanisms.  A list of these instances must be passed to the driver via a
+[`MongoClients`]({{< apiref "com/mongodb/async/client/MongoClients" >}}) static factory method that takes a 
+[`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) parameter.  Alternatively, a single 
+`MongoCredential` can be created implicity via a 
+[`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) and passed to a 
+`MongoClients` static factory method that takes a `ConnectionString` parameter. 
 
 {{% note %}}
 Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.
@@ -50,7 +50,7 @@ MongoCredential credential = MongoCredential.createCredential(user,
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1");
+ConnectionString uri = new ConnectionString("mongodb://user1:pwd1@host1/?authSource=db1");
 ```
 
 This is the recommended approach as it will make upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the
@@ -71,7 +71,7 @@ MongoCredential credential = MongoCredential.createScramSha1Credential(user,
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1");
+ConnectionString uri = new ConnectionString("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1");
 ```
 
 ## MONGODB-CR
@@ -88,7 +88,7 @@ MongoCredential credential = MongoCredential.createMongoCRCredential(user,
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=MONGODB-CR");
+ConnectionString uri = new ConnectionString("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=MONGODB-CR");
 ```
 
 Note that this is not recommended as a credential created in this way will fail to authenticate after an authentication schema upgrade
@@ -109,7 +109,7 @@ MongoCredential credential = MongoCredential.createMongoX509Credential(user);
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://subjectName@host1/?authMechanism=MONGODB-X509");
+ConnectionString uri = new ConnectionString("mongodb://subjectName@host1/?authMechanism=MONGODB-X509");
 ```
 
 See the MongoDB server
@@ -131,7 +131,7 @@ MongoCredential credential = MongoCredential.createGSSAPICredential(user);
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI");
+ConnectionString uri = new ConnectionString("mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI");
 ```
 
 {{% note %}}
@@ -161,7 +161,7 @@ MongoCredential credential = MongoCredential.createPlainCredential(user, "$exter
 or with a connection string:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
+ConnectionString uri = new ConnectionString("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
 {{% note %}}

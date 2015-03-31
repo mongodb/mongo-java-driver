@@ -11,18 +11,22 @@ title = "SSL"
 ## SSL
 
 The Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by the JDK. You can configure 
-the driver to use SSL either with `MongoClientURI` or with `MongoClientOptions`.  
+the driver to use SSL either with `ConnectionString` or with `MongoClientSettings`.  
 
-With `MongoClientURI`, specify `ssl=true as a query parameter, as in:
+With `ConnectionString`, specify `ssl=true as a query parameter, as in:
 
 ```java
-    new MongoClientURI("mongodb://localhost/?ssl=true")
+new ConnectionString("mongodb://localhost/?ssl=true")
 ```
 
-With `MongoClientOptions`, set the sslEnabled property to true, as in:
+With `MongoClientSettings`, set the sslEnabled property to true, as in:
 
 ```java
-    MongoClientOptions.builder().sslEnabled(true).build()
+MongoClientSettings.builder()                                                  
+                   .sslSettings(SslSettings.builder()
+                                           .enabled(true)
+                                           .build())   
+                   .build()                                                    
 ```
 
 ### Host name verification
@@ -30,10 +34,15 @@ With `MongoClientOptions`, set the sslEnabled property to true, as in:
 By default, the driver ensures that the host name included in the server's SSL certificate(s) matches the host name(s) provided when 
 constructing a `MongoClient`.  However, this host name verification requires a Java 7 JVM, as it relies on additions to the 
 `javax.net.SSLParameters` class that were introduced in Java 7.  If your application must run on Java 6, or for some other reason you need
- to disable host name verification, you must expicitly indicate this in `MongoClientOptions` using the `sslInvalidHostNameAllowed` property:
+ to disable host name verification, you must expicitly indicate this in `SslSettings` using the `invalidHostNameAllowed` property:
    
 ```java
-    MongoClientOptions.builder().sslEnabled(true).sslInvalidHostNameAllowed(true).build()
+MongoClientSettings.builder()                                             
+                   .sslSettings(SslSettings.builder()                     
+                                           .enabled(true)                 
+                                           .invalidHostNameAllowed(true)  
+                                           .build())                      
+                   .build()                                              
 ``` 
 
 ### JVM system properties

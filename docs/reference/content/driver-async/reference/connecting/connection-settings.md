@@ -52,7 +52,7 @@ database component, does not use the database component for anything other than 
 #### Options
 
 Many options can be provided via the connection string. The ones that cannot may be provided in a 
-[`MongoClientOptions`]({{< apiref "com/mongodb/MongoClientOptions" >}}) instance. To
+[`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) instance. To
 provide an option, append a `?` to the connection string and separate options by an `&`.
 
 ```ini
@@ -84,7 +84,7 @@ MongoClient client = MongoClients.create(new ConnectionString("mongodb://host:27
 ```
 
 Finally, the [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) class provides an in-code way to set the 
-same  options from a connection string.  This is sometimes necessary, as the connection string does not allow an application to configure as 
+same options from a connection string.  This is sometimes necessary, as the connection string does not allow an application to configure as 
 many properties of the connection as  `MongoClientSettings`.  
 [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) instances are immutable, so to create one an 
 application uses a builder: 
