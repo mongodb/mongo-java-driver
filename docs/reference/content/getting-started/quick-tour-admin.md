@@ -142,7 +142,7 @@ coll.createIndex(new BasicDBObject("i", 1));  // create index on "i", ascending
 
 ## Geo indexes
 
-MongoDB supports various [geospatial indexes]({{< docref "core/geospatial-indexes/" >}})
+MongoDB supports various [geospatial indexes]({{< docsref "core/geospatial-indexes/" >}})
 in this example we'll be creating a 2dsphere index which we can query using standard
 GeoJson markup. To create a 2dsphere index specify the string literal
 "2dsphere" in the index document:
@@ -152,7 +152,7 @@ coll.createIndex(new BasicDBObject("loc", "2dsphere"));
 ```
 
 There are various ways to
-query a [2dsphere index]({{< docref "/tutorial/query-a-2dsphere-index">}} this example
+query a [2dsphere index]({{< docsref "/tutorial/query-a-2dsphere-index">}} this example
 finds places within 500 meters of a location:
 
 ```java
@@ -188,7 +188,7 @@ System.out.println(myDoc.get("name"));
 ```
 
 It should print *Central Park*. See the
-[geospatial documentation]({{< docref "/reference/operator/query-geospatial">}}) for
+[geospatial documentation]({{< docsref "/reference/operator/query-geospatial">}}) for
 more information.
 
 ## Text indexes
