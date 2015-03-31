@@ -116,7 +116,7 @@ $ ./gradlew check
 
 ### Build status:
 
-[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=3.0.x)](https://travis-ci.org/mongodb/mongo-java-driver) | [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver-3.0.x/)
+[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver) | [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
 
 ## Maintainers
 
