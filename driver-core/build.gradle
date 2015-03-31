@@ -30,11 +30,13 @@ jar {
     manifest {
         instruction 'Import-Package',
                     'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
+                    'javax.crypto.*',
+                    'javax.crypto.spec.*',
                     'javax.management.*',
                     'javax.net.*',
                     'javax.net.ssl.*',
                     'javax.security.sasl.*',
-                    'javax.security.auth.*',
+                    'javax.security.auth.callback.*',
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.slf4j;resolution:=optional'

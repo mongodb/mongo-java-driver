@@ -46,11 +46,14 @@ sourceSets {
 jar {
     manifest {
         instruction 'Import-Package',
+                    'javax.xml.bind.*',
+                    'javax.crypto.*',
+                    'javax.crypto.spec.*',
                     'javax.management.*',
                     'javax.net.*',
                     'javax.net.ssl.*',
                     'javax.security.sasl.*',
-                    'javax.security.auth.*',
+                    'javax.security.auth.callback.*',
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.slf4j;resolution:=optional'

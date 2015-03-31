@@ -18,6 +18,14 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'bson'
 
+jar {
+    manifest {
+        instruction 'Import-Package',
+                    'javax.xml.bind.*',
+                    'org.slf4j;resolution:=optional'
+    }
+}
+
 modifyPom {
     project {
         name 'BSON'
