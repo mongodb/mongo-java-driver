@@ -89,6 +89,23 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return requests;
     }
 
+    /**
+     * Gets the index names.
+     *
+     * @return a List<String> of index names
+     */
+    public List<String> getIndexNames() {
+        List<String> indexNames = new ArrayList<String>(requests.size());
+        for (IndexRequest request : requests) {
+            if (request.getName() != null) {
+                indexNames.add(request.getName());
+            } else {
+                indexNames.add(IndexHelper.generateIndexName(request.getKeys()));
+            }
+        }
+        return indexNames;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {

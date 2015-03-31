@@ -469,27 +469,30 @@ public interface MongoCollection<TDocument> {
      * Create an index with the given keys.
      *
      * @param keys an object describing the index key(s), which may not be null.
+     * @return the index name
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
-    void createIndex(Bson keys);
+    String createIndex(Bson keys);
 
     /**
      * Create an index with the given keys and options.
      *
      * @param keys                an object describing the index key(s), which may not be null.
      * @param indexOptions the options for the index
+     * @return the index name
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
-    void createIndex(Bson keys, IndexOptions indexOptions);
+    String createIndex(Bson keys, IndexOptions indexOptions);
 
     /**
      * Create multiple indexes.
      *
      * @param indexes the list of indexes
+     * @return the list of index names
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      * @mongodb.server.release 2.6
      */
-    void createIndexes(List<IndexModel> indexes);
+    List<String> createIndexes(List<IndexModel> indexes);
 
     /**
      * Get all the indexes in this collection.

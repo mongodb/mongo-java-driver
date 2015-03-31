@@ -79,6 +79,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -418,17 +419,26 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void createIndex(final Bson key, final SingleResultCallback<Void> callback) {
+    public void createIndex(final Bson key, final SingleResultCallback<String> callback) {
         createIndex(key, new IndexOptions(), callback);
     }
 
     @Override
-    public void createIndex(final Bson key, final IndexOptions indexOptions, final SingleResultCallback<Void> callback) {
-        createIndexes(asList(new IndexModel(key, indexOptions)), callback);
+    public void createIndex(final Bson key, final IndexOptions indexOptions, final SingleResultCallback<String> callback) {
+        createIndexes(singletonList(new IndexModel(key, indexOptions)), new SingleResultCallback<List<String>>() {
+            @Override
+            public void onResult(final List<String> result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(result.get(0), null);
+                }
+            }
+        });
     }
 
     @Override
-    public void createIndexes(final List<IndexModel> indexes, final SingleResultCallback<Void> callback) {
+    public void createIndexes(final List<IndexModel> indexes, final SingleResultCallback<List<String>> callback) {
         notNull("indexes", indexes);
 
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
@@ -451,7 +461,17 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                               .bucketSize(model.getOptions().getBucketSize())
                               .storageEngine(toBsonDocument(model.getOptions().getStorageEngine())));
         }
-        executor.execute(new CreateIndexesOperation(getNamespace(), indexRequests), callback);
+        final CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests);
+        executor.execute(createIndexesOperation, new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(createIndexesOperation.getIndexNames(), null);
+                }
+            }
+        });
     }
 
     @Override

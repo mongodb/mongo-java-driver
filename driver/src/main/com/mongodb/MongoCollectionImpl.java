@@ -76,6 +76,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -386,17 +387,17 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void createIndex(final Bson keys) {
-        createIndex(keys, new IndexOptions());
+    public String createIndex(final Bson keys) {
+        return createIndex(keys, new IndexOptions());
     }
 
     @Override
-    public void createIndex(final Bson keys, final IndexOptions indexOptions) {
-       createIndexes(asList(new IndexModel(keys, indexOptions)));
+    public String createIndex(final Bson keys, final IndexOptions indexOptions) {
+        return createIndexes(singletonList(new IndexModel(keys, indexOptions))).get(0);
     }
 
     @Override
-    public void createIndexes(final List<IndexModel> indexes) {
+    public List<String> createIndexes(final List<IndexModel> indexes) {
         notNull("indexes", indexes);
 
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
@@ -419,7 +420,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .bucketSize(model.getOptions().getBucketSize())
                          .storageEngine(toBsonDocument(model.getOptions().getStorageEngine())));
         }
-        executor.execute(new CreateIndexesOperation(getNamespace(), indexRequests));
+        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests);
+        executor.execute(createIndexesOperation);
+        return createIndexesOperation.getIndexNames();
     }
 
     @Override

@@ -100,7 +100,12 @@ public class QuickTourAdmin {
         collection.drop(callbackWhenFinished);
 
         // create an ascending index on the "i" field
-        collection.createIndex(new Document("i", 1), callbackWhenFinished);
+        collection.createIndex(new Document("i", 1), new SingleResultCallback<String>() {
+            @Override
+            public void onResult(final String result, final Throwable t) {
+                System.out.println("Operation finished");
+            }
+        });
 
         // list the indexes on the collection
         Block<Document> printDocumentBlock = new Block<Document>() {
@@ -113,7 +118,12 @@ public class QuickTourAdmin {
 
 
         // create a text index on the "content" field
-        collection.createIndex(new Document("content", "text"), callbackWhenFinished);
+        collection.createIndex(new Document("content", "text"), new SingleResultCallback<String>() {
+            @Override
+            public void onResult(final String result, final Throwable t) {
+                System.out.println("Operation finished");
+            }
+        });
 
         collection.insertOne(new Document("_id", 0).append("content", "textual content"), callbackWhenFinished);
         collection.insertOne(new Document("_id", 1).append("content", "additional content"), callbackWhenFinished);

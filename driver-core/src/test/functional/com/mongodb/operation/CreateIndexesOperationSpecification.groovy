@@ -44,6 +44,22 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def xyIndex = ['x.y': 1]
 
 
+    def 'should get index names'() {
+        when:
+
+        def createIndexOperation = new CreateIndexesOperation(getNamespace(),
+                                                              [new IndexRequest(new BsonDocument('field1', new BsonInt32(1))),
+                                                               new IndexRequest(new BsonDocument('field2', new BsonInt32(-1))),
+                                                               new IndexRequest(new BsonDocument('field3', new BsonInt32(1))
+                                                                                        .append('field4', new BsonInt32(-1))),
+                                                               new IndexRequest(new BsonDocument('field5', new BsonInt32(-1)))
+                                                                       .name('customName')
+                                                              ])
+        then:
+        createIndexOperation.indexNames == ['field1_1', 'field2_-1', 'field3_1_field4_-1', 'customName']
+
+    }
+
     def 'should be able to create a single index'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))

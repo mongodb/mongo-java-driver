@@ -678,20 +678,22 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))])
-        collection.createIndex(new Document('key', 1))
+        def indexName = collection.createIndex(new Document('key', 1))
         def operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
+        indexName == 'key_1'
 
         when:
         expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
                                                                    new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))])
-        collection.createIndexes([new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))])
+        def indexNames = collection.createIndexes([new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))])
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)
+        indexNames == ['key_1', 'key1_1']
 
         when:
         expectedOperation =
@@ -717,7 +719,7 @@ class MongoCollectionSpecification extends Specification {
                                                                                                      new BsonString(
                                                                                                              'block_compressor=zlib'))))
                                            ])
-        collection.createIndex(new Document('key', 1), new IndexOptions()
+        indexName = collection.createIndex(new Document('key', 1), new IndexOptions()
                 .background(true)
                 .unique(true)
                 .sparse(true)
@@ -739,6 +741,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(expectedOperation)
+        indexName == 'aIndex'
     }
 
     def 'should use ListIndexesOperations correctly'() {

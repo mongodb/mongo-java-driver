@@ -472,33 +472,33 @@ public interface MongoCollection<TDocument> {
     void drop(SingleResultCallback<Void> callback);
 
     /**
-     * Creates an index.
+     * Creates an index.  If successful, the callback will be executed with the name of the created index as the result.
      *
      * @param key      an object describing the index key(s), which may not be null.
      * @param callback the callback that is completed once the index has been created
      * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
      */
-    void createIndex(Bson key, SingleResultCallback<Void> callback);
+    void createIndex(Bson key, SingleResultCallback<String> callback);
 
     /**
-     * Creates an index.
+     * Creates an index.  If successful, the callback will be executed with the name of the created index as the result.
      *
      * @param key      an object describing the index key(s), which may not be null.
      * @param options  the options for the index
      * @param callback the callback that is completed once the index has been created
      * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
      */
-    void createIndex(Bson key, IndexOptions options, SingleResultCallback<Void> callback);
+    void createIndex(Bson key, IndexOptions options, SingleResultCallback<String> callback);
 
     /**
-     * Create multiple indexes.
+     * Create multiple indexes. If successful, the callback will be executed with a list of the namess of the created index as the result.
      *
      * @param indexes the list of indexes
      * @param callback the callback that is completed once the indexes has been created
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      * @mongodb.server.release 2.6
      */
-    void createIndexes(List<IndexModel> indexes, SingleResultCallback<Void> callback);
+    void createIndexes(List<IndexModel> indexes, SingleResultCallback<List<String>> callback);
 
     /**
      * Get all the indexes in this collection.

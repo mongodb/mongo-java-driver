@@ -17,11 +17,11 @@
 package primer;
 
 
+import com.mongodb.async.SingleResultCallback;
+import org.bson.Document;
 import org.junit.Test;
 
 // @imports: start
-import org.bson.Document;
-import com.mongodb.async.SingleResultCallback;
 // @imports: end
 
 public class IndexesPrimer extends PrimerTestCase {
@@ -31,9 +31,9 @@ public class IndexesPrimer extends PrimerTestCase {
 
         // @begin: single-field-index
         // @code: start
-        db.getCollection("restaurants").createIndex(new Document("cuisine", 1), new SingleResultCallback<Void>() {
+        db.getCollection("restaurants").createIndex(new Document("cuisine", 1), new SingleResultCallback<String>() {
             @Override
-            public void onResult(final Void result, final Throwable t) {
+            public void onResult(final String result, final Throwable t) {
                 System.out.println("Operation Finished");
             }
         });
@@ -48,9 +48,9 @@ public class IndexesPrimer extends PrimerTestCase {
         // @begin: create-compound-index
         // @code: start
         db.getCollection("restaurants").createIndex(new Document("cuisine", 1).append("address.zipcode", 1),
-                new SingleResultCallback<Void>() {
+                new SingleResultCallback<String>() {
                     @Override
-                    public void onResult(final Void result, final Throwable t) {
+                    public void onResult(final String result, final Throwable t) {
                         System.out.println("Operation Finished");
                     }
                 });

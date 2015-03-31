@@ -138,7 +138,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         collectionNames.contains(collectionName)
 
         then: 'create an index'
-        run(collection.&createIndex, new Document('test', 1)) == null
+        run(collection.&createIndex, new Document('test', 1)) == 'test_1'
 
         then: 'has the newly created index'
         run(collection.listIndexes().&into, [])*.name.containsAll('_id_', 'test_1')
