@@ -2,8 +2,9 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrading to 3.0"
 [menu.main]
+  parent = "Whats New"
+  identifier = "Upgrading to 3.0"
   weight = 40
-  parent = "What's New"
   pre = "<i class='fa fa-wrench'></i>"
 +++
 
@@ -19,10 +20,10 @@ Before upgrading to 3.0.0, compile against 2.13.0 with deprecation warnings enab
 The minimum JVM is now Java 6: however, specific features require Java 7:
 
 - SSL support requires Java 7 in order to perform host name verification, which is enabled by default.  See below and on
-[SSL]({{< relref "reference/connecting/ssl.md" >}}) for details on how to disable host name verification.
+[SSL]({{< relref "driver/reference/connecting/ssl.md" >}}) for details on how to disable host name verification.
 - The asynchronous API requires Java 7, as by default it relies on
 [`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) for
-its implementation.  See [Async]({{< ref "async" >}}) for details on configuring the driver to use [Netty](http://netty.io/) instead.
+its implementation.  See [Async]({{< ref "driver-async/index.md" >}}) for details on configuring the driver to use [Netty](http://netty.io/) instead.
 
 ## Incompatibilities
 

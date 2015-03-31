@@ -4,6 +4,9 @@ title = "MongoDB Java Driver"
 theme = "mongodb"
 canonifyurls = false
 
+[blackfriday]
+  plainIdAnchors = true
+
 # Example custom menu Item (Useful for linking to API docs)
 # [[menu.main]]
 #     name = "Issues & Help"

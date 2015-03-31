@@ -17,11 +17,22 @@ If you are upgrading from the 2.x series of the driver, consult the [Upgrading](
 information on breaking changes. 
 
 
-### Getting Started
+### MongoDB Driver
 
-The [Getting Started]({{< relref "getting-started/index.md" >}}) guide contains installation instructions
-and a simple tutorial to get up  and running quickly.
+For the synchronous MongoDB Driver, the [Getting Started]({{< relref "driver/getting-started/index.md" >}}) guide contains 
+installation instructions and a simple tutorial to get up  and running quickly. For more detailed documentation, see the 
+[Reference]({{< relref "driver/reference/index.md" >}}) guide.
 
-### Reference
 
-For more detailed documentation, see the [Reference]({{< relref "reference/index.md" >}}) guide.
+### MongoDB Async Driver
+
+For the new asynchronous MongoDB Async Driver, the [Getting Started]({{< relref "driver-async/getting-started/index.md" >}}) 
+guide contains installation instructions and a simple tutorial to get up  and running quickly. For more detailed documentation, see the 
+[Reference]({{< relref "driver-async/reference/index.md" >}}) guide.
+
+
+### BSON Library
+
+The [BSON]({{< relref "bson/index.md">}}) library comprehensively supports the BSON spec, the data storage and network transfer format that MongoDB uses for 
+“documents".  The [reference guide]({{< relref "bson/index.md">}}) provides information about working with [Documents]({{< relref "bson/documents.md">}}), 
+how to use [Codecs]({{< relref "bson/codecs.md">}}) and [Extended JSON]({{< relref "bson/extended-json.md">}}) support. 
