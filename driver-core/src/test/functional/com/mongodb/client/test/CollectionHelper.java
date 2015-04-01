@@ -36,9 +36,15 @@ import com.mongodb.operation.InsertOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +56,9 @@ import static java.util.Arrays.asList;
 public final class CollectionHelper<T> {
 
     private Codec<T> codec;
+    private CodecRegistry registry = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
+                                                                   new ValueCodecProvider(),
+                                                                   new DocumentCodecProvider());
     private MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
@@ -142,12 +151,34 @@ public final class CollectionHelper<T> {
         return results;
     }
 
-    public List<T> find(final Document filter) {
-        return find(new BsonDocumentWrapper<Document>(filter, new DocumentCodec()), codec);
+    public List<T> find(final Bson filter) {
+        return find(filter, null);
+    }
+
+    public List<T> find(final Bson filter, final Bson sort) {
+        return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
+                    sort != null ? sort.toBsonDocument(Document.class, registry) : null,
+                    codec);
+    }
+
+    public List<T> find(final Bson filter, final Bson sort, final Bson projection) {
+        return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
+                    sort != null ? sort.toBsonDocument(Document.class, registry) : null,
+                    projection != null ? projection.toBsonDocument(Document.class, registry) : null,
+                    codec);
     }
 
     public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
-        BatchCursor<D> cursor = new FindOperation<D>(namespace, decoder).filter(filter).execute(getBinding());
+        return find(filter, null, decoder);
+    }
+
+    public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final Decoder<D> decoder) {
+        return find(filter, sort, null, decoder);
+    }
+
+    public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
+        BatchCursor<D> cursor = new FindOperation<D>(namespace, decoder).filter(filter).sort(sort).projection(projection)
+                                                                        .execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.addAll(cursor.next());
