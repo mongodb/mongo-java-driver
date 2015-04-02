@@ -86,7 +86,7 @@ cluster and use it across your application. When creating multiple instances:
 ## Get a Collection
 
 To get a collection to operate upon, specify the name of the collection to
-the [`getCollection(String collectionName)`]({{< apiref "com/mongodb/client/MongoDatabase.html#getCollection-java.lang.String-">}})
+the [`getCollection(String collectionName)`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection-java.lang.String-">}})
 method:
 
 The following example gets the collection `test`:
@@ -181,7 +181,7 @@ collection.insertMany(documents, new SingleResultCallback<Void>() {
 
 Now that we've inserted 101 documents (the 100 we did in the loop, plus
 the first one), we can check to see if we have them all using the
-[count()]({{< apiref "com/mongodb/client/MongoCollection#count--">}})
+[count()]({{< apiref "com/mongodb/async/client/MongoCollection#count--">}})
 method. The following code should print `101`.
 
 ```java
@@ -197,7 +197,7 @@ collection.count(
 ## Query the Collection
 
 Use the
-[find()]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
+[find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}})
 method to query the collection.
 
 ### Find the First Document in a Collection
@@ -205,8 +205,8 @@ method to query the collection.
 call the first() method on the result of the find() of method
 
 To get the first document in the collection, call the
-[first()]({{< apiref "com/mongodb/client/MongoIterable.html#first--">}})
-method on the [find()]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}})
+[first()]({{< apiref "com/mongodb/async/client/MongoIterable.html#first--">}})
+method on the [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}})
 operation. `collection.find().first()` returns the first document or null rather than a cursor.
 This is useful for queries that should only match a single document, or if you are
 interested in the first document only.
