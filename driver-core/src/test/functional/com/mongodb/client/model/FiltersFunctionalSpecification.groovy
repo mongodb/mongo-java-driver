@@ -20,9 +20,11 @@ import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonType
 import org.bson.Document
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 
 import java.util.regex.Pattern
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.elemMatch
@@ -78,6 +80,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(ne('x', 1)) == [b, c]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def '$not'() {
         expect:
         find(not(eq('x', 1))) == [b, c]
@@ -190,6 +193,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(type('x', BsonType.ARRAY)) == []
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should render $text'() {
         expect:
         find(text('I love MongoDB')) == []

@@ -19,7 +19,9 @@ package com.mongodb.client.model
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.Document
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Sorts.metaTextScore
@@ -62,6 +64,7 @@ class SortsFunctionalSpecification extends OperationFunctionalSpecification {
         find(descending('x', 'y')) == [c, a, b]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'metaTextScore'() {
         expect:
         find(metaTextScore('score'), new Document('score', new Document('$meta', 'textScore')))*.containsKey('score')
