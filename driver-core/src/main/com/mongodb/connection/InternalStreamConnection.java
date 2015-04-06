@@ -197,8 +197,9 @@ class InternalStreamConnection implements InternalConnection {
 
         writerLock.lock();
         try {
+            int messageSize = getMessageSize(byteBuffers);
             stream.write(byteBuffers);
-            connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(), lastRequestId, getTotalRemaining(byteBuffers)));
+            connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(), lastRequestId, messageSize));
         } catch (Exception e) {
             close();
             throw translateWriteException(e);
@@ -289,6 +290,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void writeAsync(final SendMessageRequest request) {
+        final int messageSize = getMessageSize(request.getByteBuffers());
         stream.writeAsync(request.getByteBuffers(), new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void v) {
@@ -303,8 +305,7 @@ class InternalStreamConnection implements InternalConnection {
                     writerLock.unlock();
                 }
 
-                connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(), request.getMessageId(),
-                                                                                getTotalRemaining(request.getByteBuffers())));
+                connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(), request.getMessageId(), messageSize));
                 request.getCallback().onResult(null, null);
 
                 if (nextMessage != null) {
@@ -579,7 +580,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private int getTotalRemaining(final List<ByteBuf> byteBuffers) {
+    private int getMessageSize(final List<ByteBuf> byteBuffers) {
         int messageSize = 0;
         for (final ByteBuf cur : byteBuffers) {
             messageSize += cur.remaining();

@@ -27,6 +27,8 @@ import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.event.ConnectionListener
+import com.mongodb.event.ConnectionMessageReceivedEvent
+import com.mongodb.event.ConnectionMessagesSentEvent
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -50,6 +52,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 import static MongoNamespace.COMMAND_COLLECTION_NAME
+import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
@@ -61,7 +64,9 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def helper = new StreamHelper()
     def serverAddress = new ServerAddress()
-    def connectionDescription = new ConnectionDescription(new ConnectionId(SERVER_ID, 1, 1), new ServerVersion(), ServerType.STANDALONE,
+    def connectionId = new ConnectionId(SERVER_ID, 1, 1)
+
+    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(), ServerType.STANDALONE,
                                                           getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
                                                           getDefaultMaxMessageSize())
     def stream = Mock(Stream) {
@@ -106,23 +111,31 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def (buffers1, messageId1) = helper.isMaster()
-        stream.read(_) >>> helper.read([messageId1])
+        def messageSize = helper.remaining(buffers1)
+        stream.write(_) >> {
+            helper.write(buffers1)
+        }
         when:
         connection.sendMessage(buffers1, messageId1)
 
+
         then:
-        1 * listener.messagesSent(_)
+        1 * listener.messagesSent {
+            compare(new ConnectionMessagesSentEvent(connectionId, messageId1, messageSize), it)
+        }
     }
 
     @Category(Async)
     @IgnoreIf({ javaVersion < 1.7 })
     def 'should fire message sent event asynchronously'() {
-        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            callback.completed(null)
-        }
         def (buffers1, messageId1) = helper.isMaster()
+        def messageSize = helper.remaining(buffers1)
         def connection = getOpenedConnection()
         def latch = new CountDownLatch(1);
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+            helper.write(buffers1)
+            callback.completed(null)
+        }
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, new SingleResultCallback<Void>() {
@@ -134,7 +147,9 @@ class InternalStreamConnectionSpecification extends Specification {
         latch.await()
 
         then:
-        1 * listener.messagesSent(_)
+        1 * listener.messagesSent {
+            compare(new ConnectionMessagesSentEvent(connectionId, messageId1, messageSize), it)
+        }
     }
 
     def 'should fire message received event'() {
@@ -147,7 +162,9 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.receiveMessage(messageId1)
 
         then:
-        1 * listener.messageReceived(_)
+        1 * listener.messageReceived {
+            compare(new ConnectionMessageReceivedEvent(connectionId, messageId1, 110), it)
+        }
     }
 
     @Category(Async)
@@ -175,7 +192,9 @@ class InternalStreamConnectionSpecification extends Specification {
         latch.await()
 
         then:
-        1 * listener.messageReceived(_)
+        1 * listener.messageReceived {
+            compare(new ConnectionMessageReceivedEvent(connectionId, messageId1, 110), it)
+        }
     }
 
     def 'should change the connection description when opened'() {
@@ -653,6 +672,21 @@ class InternalStreamConnectionSpecification extends Specification {
     class StreamHelper {
         int nextMessageId = 900000 // Generates a message then adds one to the id
 
+        def remaining(List<ByteBuf> buffers) {
+            int remaining = 0
+            buffers.each {
+                remaining += it.remaining()
+            }
+            remaining
+        }
+
+        def write(List<ByteBuf> buffers) {
+            buffers.each {
+                it.get(new byte[it.remaining()])
+            }
+        }
+
+
         def read(List<Integer> messageIds) {
             read(messageIds, true)
         }
@@ -706,10 +740,10 @@ class InternalStreamConnectionSpecification extends Specification {
             def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
                                              new BsonDocument('ismaster', new BsonInt32(1)),
                                              false, MessageSettings.builder().build());
-            OutputBuffer buffer = new BasicOutputBuffer();
-            command.encode(buffer);
+            OutputBuffer outputBuffer = new BasicOutputBuffer();
+            command.encode(outputBuffer);
             nextMessageId++
-            [buffer.byteBuffers, nextMessageId]
+            [outputBuffer.byteBuffers, nextMessageId]
         }
 
         def isMasterAsync() {
