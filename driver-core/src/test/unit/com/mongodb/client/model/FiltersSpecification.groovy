@@ -16,6 +16,9 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.client.model.geojson.Polygon
+import com.mongodb.client.model.geojson.Position
+import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -38,6 +41,8 @@ import static Filters.lte
 import static Filters.or
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.elemMatch
+import static com.mongodb.client.model.Filters.geoIntersects
+import static com.mongodb.client.model.Filters.geoWithin
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.nin
@@ -53,7 +58,7 @@ import static org.bson.BsonDocument.parse
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class FiltersSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
+    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider(), new GeoJsonCodecProvider()])
 
     def 'eq should render without $eq'() {
         expect:
@@ -204,6 +209,35 @@ class FiltersSpecification extends Specification {
     def 'should render $where'() {
         expect:
         toBson(where('this.credits == this.debits')) == parse('{$where: "this.credits == this.debits"}')
+    }
+
+    def 'should render $geoWithin'() {
+        given:
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        toBson(geoWithin('loc', polygon)) == parse('{loc: {$geoWithin: {$geometry: {type: \'Polygon\', ' +
+                                                   'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}}}}')
+
+        toBson(geoWithin('loc', parse(polygon.toJson()))) == parse('{loc: {$geoWithin: {$geometry: {type: \'Polygon\', ' +
+                                                                   'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], ' +
+                                                                   '[40.0, 18.0]]]}}}}')
+    }
+
+    def 'should render $geoIntersects'() {
+        given:
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        toBson(geoIntersects('loc', polygon)) == parse('{loc: {$geoIntersects: {$geometry: {type: \'Polygon\', ' +
+                                                       'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}}}}')
+        toBson(geoIntersects('loc', parse(polygon.toJson()))) == parse('{loc: {$geoIntersects: {$geometry: {type: \'Polygon\', ' +
+                                                                       'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], ' +
+                                                                       '[40.0, 18.0]]]}}}}')
     }
 
     def toBson(Bson bson) {

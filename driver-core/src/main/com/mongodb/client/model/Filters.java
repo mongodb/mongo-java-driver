@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.client.model.geojson.Geometry;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -485,8 +486,58 @@ public final class Filters {
         return new OperatorFilter<Integer>("$size", fieldName, size);
     }
 
-    // TODO: $geoWithin
-    // TODO: $geoIntersects
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within a specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     */
+    public static Bson geoWithin(final String fieldName, final Geometry geometry) {
+        return new GeometryOperatorFilter<Geometry>("$geoWithin", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     */
+    public static Bson geoIntersects(final String fieldName, final Bson geometry) {
+        return new GeometryOperatorFilter<Bson>("$geoIntersects", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within a specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     */
+    public static Bson geoWithin(final String fieldName, final Bson geometry) {
+        return new GeometryOperatorFilter<Bson>("$geoWithin", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     */
+    public static Bson geoIntersects(final String fieldName, final Geometry geometry) {
+        return new GeometryOperatorFilter<Geometry>("$geoIntersects", fieldName, geometry);
+    }
+
     // TODO: $near
     // TODO: $nearSphere
 
@@ -712,4 +763,34 @@ public final class Filters {
         }
 
     }
+
+    private static class GeometryOperatorFilter<TItem> implements Bson {
+        private final String operatorName;
+        private final String fieldName;
+        private final TItem geometry;
+
+        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry) {
+            this.operatorName = operatorName;
+            this.fieldName = notNull("fieldName", fieldName);
+            this.geometry = notNull("geometry", geometry);
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeName(fieldName);
+            writer.writeStartDocument();
+            writer.writeName(operatorName);
+            writer.writeStartDocument();
+            writer.writeName("$geometry");
+            encodeValue(writer, geometry, codecRegistry);
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+    }
+
 }
