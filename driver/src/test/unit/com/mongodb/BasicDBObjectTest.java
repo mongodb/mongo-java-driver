@@ -46,9 +46,8 @@ public class BasicDBObjectTest {
         document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc' }", getDefaultCodecRegistry().get(BasicDBObject.class));
         assertEquals(new BasicDBObject("int", 1).append("string", "abc"), document);
 
-        document = BasicDBObject.parse("{d : {$gte : ISODate('2015-03-19'), $lt : ISODate('2015-04-19') } }");
-        assertEquals(new BasicDBObject("d", new BasicDBObject("$gte", new Date(1426737600000L)).append("$lt", new Date(1429416000000L))),
-                     document);
+        document = BasicDBObject.parse("{_id : ObjectId('5524094c2cf8fb61dede210c')}");
+        assertEquals(new BasicDBObject("_id", new ObjectId("5524094c2cf8fb61dede210c")), document);
     }
 
     @Test
