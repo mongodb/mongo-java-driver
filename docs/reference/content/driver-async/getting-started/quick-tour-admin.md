@@ -26,7 +26,7 @@ for instructions on how to install the MongoDB Driver.
 
 ## Setup
 
-To get use started we'll quickly connect and create a `mongoClient`, `database` and `collection`
+To get started we'll quickly connect and create a `mongoClient`, `database` and `collection`
 variable for use in the examples below:
 
 ```java
@@ -34,6 +34,12 @@ MongoClient mongoClient = new MongoClient(new ConnectionString("mongodb://localh
 MongoDatabase database = mongoClient.getDatabase("mydb");
 MongoCollection<Document> collection = database.getCollection("test");
 ```
+
+{{% note %}}
+Calling the `getDatabase()` on `MongoClient` does not create a database.
+Only when a database is written to will a database be created.  Examples include the creation of an index or the insertion of a document 
+into a previously non-existent collection.
+{{% /note %}}
 
 {{% note %}}
 Sometimes you will need the same or similar callbacks more than once.  In these situations
@@ -64,11 +70,6 @@ mongoClient.listDatabaseNames().forEach(new Block<String>() {
 }, callbackWhenFinished);
 ```
 
-Calling the `getDatabase()` on `MongoClient` does not create a database.
-Only when a database is written to will a database be created. Examples
-would be creating an index or collection or inserting a document into a
-collection.
-
 ## Drop A Database
 
 You can drop a database by name using a `MongoClient` instance:
@@ -79,7 +80,9 @@ mongoClient.getDatabase("databaseToBeDropped").drop(callbackWhenFinished);
 
 ## Create A Collection
 
-Collections in MongoDB are created automatically simply by inserted a document into it. Using the `[createCollection]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}})` method, you can also create a collection explicitly in order to to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
+Collections in MongoDB are created automatically simply by inserted a document into it. Using the 
+[`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) 
+method, you can also create a collection explicitly in order to to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
 
 ```java
 database.createCollection("cappedCollection",
