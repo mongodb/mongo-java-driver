@@ -63,7 +63,7 @@ server for the specified database.
 There is no callback required for `getDatabase("mydb")` as there is no network IO required.
 A `MongoDatabase` instance provides methods to interact with a database
 but the database might not actually exist and will only be created on the
-insertion of data via some means; eg the creation of a collection or the insertion of documents
+insertion of data via some means; e.g. the creation of a collection or the insertion of documents
 which do require callbacks as they require network IO.
 {{% /note %}}
 
@@ -287,7 +287,7 @@ import static com.mongodb.client.model.Filters.*;
 collection.find(eq("i", 71)).first(printDocument);
 ```
 
-and it should return immediately and eventually print just one document:
+will eventually print just one document:
 
 ```json
 { "_id" : { "$oid" : "5515836e58c7b4fbc756320b" }, "i" : 71 }
@@ -330,9 +330,9 @@ collection.find(exists("i")).sort(descending("i")).first(printDocument);
 
 ## Projecting fields
 
-Sometimes we don't need all the data contained in a document, the [Projections]({{< apiref "com/mongodb/client/model/Projections">}}) helpers help build the projection parameter for the
-find operation.  Below we'll sort the collection, exclude the `_id` field and output the first
-matching document:
+Sometimes we don't need all the data contained in a document. The [Projections]({{< apiref "com/mongodb/client/model/Projections">}}) 
+helpers can be used to build the projection parameter for the find operation and limit the fields returned.  
+Below we'll sort the collection, exclude the `_id` field and output the first matching document:
 
 ```java
 collection.find().projection(excludeId()).first(printDocument);
@@ -370,7 +370,7 @@ collection.updateMany(lt("i", 100), new Document("$inc", new Document("i", 100))
     });
 ```
 
-The update methods return a [`UpdateResult`]({{< apiref "com/mongodb/client/result/UpdateResult.html">}})
+The update methods return an [`UpdateResult`]({{< apiref "com/mongodb/client/result/UpdateResult.html">}}),
 which provides information about the operation including the number of documents modified by the update.
 
 ## Deleting documents
@@ -387,8 +387,9 @@ collection.deleteOne(eq("i", 110), new SingleResultCallback<DeleteResult>() {
 });
 ```
 
-To delete all documents matching the filter use the [`deleteMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method.  
-Here we delete all documents where `i` is greater or equal to `100`:
+To delete all documents matching the filter use the 
+[`deleteMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method. Here we delete 
+all documents where `i` is greater or equal to `100`:
 
 ```java
 collection.deleteMany(gte("i", 100), new SingleResultCallback<DeleteResult>() {
@@ -399,13 +400,13 @@ collection.deleteMany(gte("i", 100), new SingleResultCallback<DeleteResult>() {
 });
 ```
 
-The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
+The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}}),
 which provides information about the operation including the number of documents deleted.
 
 
 ## Bulk operations
 
-These new commands allow for the execution of bulk
+These commands allow for the execution of bulk
 insert/update/delete operations. There are two types of bulk operations:
 
 1.  Ordered bulk operations.
