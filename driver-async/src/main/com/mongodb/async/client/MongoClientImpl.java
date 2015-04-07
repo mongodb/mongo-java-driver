@@ -23,6 +23,7 @@ import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
@@ -46,7 +47,8 @@ class MongoClientImpl implements MongoClient {
 
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
             new DocumentCodecProvider(),
-            new BsonValueCodecProvider()));
+            new BsonValueCodecProvider(),
+            new GeoJsonCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -55,6 +57,7 @@ class MongoClientImpl implements MongoClient {
      *     <li>{@link org.bson.codecs.ValueCodecProvider}</li>
      *     <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
      *     <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
+     *     <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
