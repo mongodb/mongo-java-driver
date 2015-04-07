@@ -22,6 +22,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 @Category(ReplicaSet.class)
+@Ignore // Ignoring, since this is test of a test class
 public class AsyncSingleConnectionBindingTest  {
     private AsyncSingleConnectionBinding binding;
 
@@ -86,7 +88,7 @@ public class AsyncSingleConnectionBindingTest  {
     @Test
     public void shouldNotDevourAllConnections() throws Throwable {
         for (int i = 0; i < 250; i++) {
-            AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
+            AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), ClusterFixture.TIMEOUT, SECONDS);
             getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));
@@ -99,7 +101,8 @@ public class AsyncSingleConnectionBindingTest  {
 
     @Test
     public void shouldHaveTheDifferentConnectionForReadsAndWritesWithNonPrimaryReadPreference() throws Throwable {
-        AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
+        AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), ClusterFixture.TIMEOUT,
+                                                                                SECONDS);
         AsyncConnectionSource writeSource = getWriteConnectionSource(binding);
         AsyncConnection writeConnection = getConnection(writeSource);
 
@@ -117,7 +120,8 @@ public class AsyncSingleConnectionBindingTest  {
     @Test
     public void shouldNotDevourAllConnectionsWhenUsingNonPrimaryReadPreference() throws Throwable {
         for (int i = 0; i < 500; i++) {
-            AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), 1, SECONDS);
+            AsyncSingleConnectionBinding binding = new AsyncSingleConnectionBinding(getAsyncCluster(), secondary(), ClusterFixture.TIMEOUT,
+                                                                                    SECONDS);
             getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             getAndReleaseConnectionSourceAndConnection(getReadConnectionSource(binding));
             getAndReleaseConnectionSourceAndConnection(getWriteConnectionSource(binding));

@@ -20,6 +20,7 @@ import category.ReplicaSet;
 import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -31,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 @Category(ReplicaSet.class)
+@Ignore // Ignoring, since this is test of a test class
 public class SingleConnectionBindingTest  {
     private SingleConnectionBinding binding;
 
