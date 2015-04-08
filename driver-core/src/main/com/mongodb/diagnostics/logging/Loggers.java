@@ -64,6 +64,8 @@ public final class Loggers {
             return true;
         } catch (ClassNotFoundException e) {
             return false;
+        } catch (NoClassDefFoundError e) {
+            return false;
         }
     }
 }
