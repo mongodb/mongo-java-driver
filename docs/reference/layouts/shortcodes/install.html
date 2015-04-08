@@ -1,4 +1,4 @@
-{{ $artifactId := .Get "artifactId"}}{{ $version := .Get "version"}}
+{{ $artifactId := .Get "artifactId"}}{{ $version := .Get "version"}}{{ $dependencies := .Get "dependencies"}}
 <section class="maven">
 <pre><code class="ini">
 &lt;dependencies&gt;
@@ -19,9 +19,9 @@
 
 </code></pre>
 </section>
-<section class="downloadInfo">
-<p class="small">You can also download the jars
+<section class="downloadInfo small">
+<p>You can also download the jars
   <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
-  from sonatype.</a>
-</p>
+  from sonatype.</a></p>
+{{ with $dependencies}}{{ $depMarkdown := add (add (add (add "**Note:** `" $artifactId ) "` requires the following dependencies: ") . ) "." }}{{$depMarkdown | markdownify}}{{end}}
 </section>
