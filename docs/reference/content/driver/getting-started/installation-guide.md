@@ -26,6 +26,6 @@ a new cross-driver CRUD specification.
 
 
 ## Uber MongoDB Java Driver
-This is the legacy uber jar that contains everything you need; the BSON library, the core library and the mongodb-driver.
+An uber jar that contains everything you need; the BSON library, the core library and the mongodb-driver.
 
 {{< install artifactId="mongo-java-driver" version="3.0.0" >}}
