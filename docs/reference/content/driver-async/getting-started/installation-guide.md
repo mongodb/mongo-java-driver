@@ -10,7 +10,12 @@ title = "Installation Guide"
 
 # Installation
 
+
 The recommended way to get started using one of the drivers in your project is with a dependency management system.
+
+{{% note class="important" %}}
+The MongoDB Async Driver requires Java 7 or greater.
+{{% /note %}}
 
 {{< distroPicker >}}
 
