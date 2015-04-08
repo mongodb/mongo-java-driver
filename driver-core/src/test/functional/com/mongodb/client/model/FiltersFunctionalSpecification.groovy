@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonType
 import org.bson.Document
@@ -86,10 +87,12 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(not(eq('x', 1))) == [b, c]
         find(not(gt('x', 1))) == [a]
         find(not(regex('y', 'a.*'))) == [b, c]
+
+        when:
         find(not(and(eq('x', 1), eq('x', 1)))) == [b, c]
-        find(not(and(Filters.in('a', 1, 2), eq('x', 1)))) == [b, c]
-        find(not(and(eq('x', 1), eq('y', 'a')))) == [b, c]
-        // find(not(and(eq('x', 1), eq('y', 'b')))) == [a, b, c]  // should pass, but see JAVA-1740
+
+        then:
+        thrown MongoQueryException
     }
 
     def '$nor'() {
