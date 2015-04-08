@@ -689,69 +689,27 @@ public final class Filters {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-            BsonDocument bsonFilter = toFilter(filter.toBsonDocument(documentClass, codecRegistry));
-            if (bsonFilter.keySet().iterator().next().startsWith("$")) {
-                throw new IllegalArgumentException("Invalid $not document, the filter document must start with the field name that "
-                        + "the $not operator applies to: " + filter);
+            BsonDocument filterDocument = filter.toBsonDocument(documentClass, codecRegistry);
+            if (filterDocument.size() == 1) {
+                Map.Entry<String, BsonValue> entry = filterDocument.entrySet().iterator().next();
+                return createFilter(entry.getKey(), entry.getValue());
+            } else {
+                BsonArray values = new BsonArray();
+                for (Map.Entry<String, BsonValue> docs : filterDocument.entrySet()) {
+                    values.add(new BsonDocument(docs.getKey(), docs.getValue()));
+                }
+                return createFilter("$and", values);
             }
-            return bsonFilter;
-        }
-
-        public BsonDocument toFilter(final BsonDocument filterDocument) {
-            BsonDocument combinedDocument = new BsonDocument();
-            for (Map.Entry<String, BsonValue> docs : filterDocument.entrySet()) {
-                combinedDocument = combineDocuments(combinedDocument, createFilter(docs.getKey(), docs.getValue()));
-            }
-            return combinedDocument;
         }
 
         private BsonDocument createFilter(final String fieldName, final BsonValue value) {
-            if (fieldName.equals("$and")) {
-                return toFilter(flattenBsonArray(value.asArray()));
-            } else if (value.isDocument() && ((BsonDocument) value).keySet().iterator().next().startsWith("$")) {
-                return new BsonDocument(fieldName, new BsonDocument("$not", value));
-            } else if (value.isRegularExpression()) {
+            if (fieldName.startsWith("$")) {
+                return new BsonDocument("$not", new BsonDocument(fieldName, value));
+            } else if (value.isDocument() || value.isRegularExpression()) {
                 return new BsonDocument(fieldName, new BsonDocument("$not", value));
             }
             return new BsonDocument(fieldName, new BsonDocument("$not", new BsonDocument("$eq", value)));
         }
 
-        private BsonDocument combineDocuments(final BsonDocument document1, final BsonDocument document2) {
-            BsonDocument combinedDocument = document1;
-            for (Map.Entry<String, BsonValue> entry : document2.entrySet()) {
-                String key = entry.getKey();
-                BsonValue val = entry.getValue();
-                BsonDocument document = combinedDocument.getDocument(key, new BsonDocument());
-                if (!val.isDocument()) {
-                    if (document.containsKey("$in")) {
-                        BsonArray inArray = document.getArray("$in");
-                        inArray.add(val);
-                        document.put("$in", inArray);
-                    } else if (document.containsKey("$eq")) {
-                        BsonArray inArray = document.getArray("$in", new BsonArray());
-                        inArray.add(document.remove("$eq"));
-                        inArray.add(val);
-                        document.put("$in", inArray);
-                    } else {
-                        document.put("$eq", val);
-                    }
-                } else {
-                    document = val.asDocument();
-                }
-                combinedDocument.put(key, document);
-            }
-            return combinedDocument;
-        }
-
-        private BsonDocument flattenBsonArray(final BsonArray bsonArray) {
-            BsonDocument combinedDocument = new BsonDocument();
-            for (BsonValue bsonValue : bsonArray) {
-                if (!bsonValue.isDocument()) {
-                    throw new IllegalArgumentException("Invalid $not document " + bsonValue);
-                }
-                combinedDocument = combineDocuments(combinedDocument, bsonValue.asDocument());
-            }
-            return combinedDocument;
-        }
     }
 }
