@@ -7,10 +7,9 @@ canonifyurls = false
 [blackfriday]
   plainIdAnchors = true
 
-# Example custom menu Item (Useful for linking to API docs)
-# [[menu.main]]
-#     name = "Issues & Help"
-#     pre = "<i class='fa fa-life-ring'></i>"
-#     weight = 100
-#     identifier = "help"
-#     url = "https://jira.mongodb.org/browse/JAVA"
+[[menu.main]]
+    name = "API Documentation"
+    pre = "<i class='fa fa-file-text-o'></i>"
+    weight = 90
+    identifier = "apiDocs"
+    url = "http://api.mongodb.org/java/3.0"
