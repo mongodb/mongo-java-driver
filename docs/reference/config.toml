@@ -4,10 +4,17 @@ title = "MongoDB Java Driver"
 theme = "mongodb"
 canonifyurls = false
 
-# Example custom menu Item (Useful for linking to API docs)
-# [[menu.main]]
-#     name = "Issues & Help"
-#     pre = "<i class='fa fa-life-ring'></i>"
-#     weight = 100
-#     identifier = "help"
-#     url = "https://jira.mongodb.org/browse/JAVA"
+# Update versions in mongodb.toml as well
+[[menu.main]]
+    name = "API Documentation"
+    pre = "<i class='fa fa-file-text-o'></i>"
+    weight = 90
+    identifier = "apiDocs"
+    url = "http://api.mongodb.org/java/2.13"
+
+[[menu.main]]
+    name = "Source Code"
+    pre = "<i class='fa fa-github'></i>"
+    weight = 90
+    identifier = "githubLink"
+    url = "https://github.com/mongodb/mongo-java-driver/tree/2.13.x"
