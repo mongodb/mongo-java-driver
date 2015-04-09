@@ -23,5 +23,11 @@
 <p>You can also download the jars
   <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
   from sonatype.</a></p>
-{{ with $dependencies}}{{ $depMarkdown := add (add (add (add "**Note:** `" $artifactId ) "` requires the following dependencies: ") . ) "." }}{{$depMarkdown | markdownify}}{{end}}
+{{ with $dependencies}}
+    <p>
+    <strong>Note:</strong> <code>{{$artifactId}}</code> requires the following dependencies:
+    <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/{{$version}}" target="_blank"><code>bson</code></a> and
+    <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/{{$version}}" target="_blank"><code>mongodb-driver-core</code></a>
+    </p>
+{{end}}
 </section>
