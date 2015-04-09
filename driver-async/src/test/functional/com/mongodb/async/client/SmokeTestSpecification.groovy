@@ -23,6 +23,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.async.client.Fixture.getMongoClient
+import static com.mongodb.async.client.Fixture.isSharded
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -149,17 +150,6 @@ class SmokeTestSpecification extends FunctionalSpecification {
         then: 'has a single index left "_id" '
         run(collection.listIndexes().&into, []).size == 1
 
-        then: 'can rename the collection'
-        def newCollectionName = 'newCollectionName'
-        run(collection.&renameCollection, new MongoNamespace(databaseName, newCollectionName)) == null
-
-        then: 'the new collection name is in the collection names list'
-        !run(database.listCollectionNames().&into, []).contains(collectionName)
-        run(database.listCollectionNames().&into, []).contains(newCollectionName)
-
-        when:
-        collection = database.getCollection(newCollectionName)
-
         then: 'drop the collection'
         run(collection.&drop) == null
 
@@ -168,6 +158,26 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         then: 'the collection name is no longer in the collectionNames list'
         !run(database.listCollectionNames().&into, []).contains(collectionName)
+    }
+
+    @IgnoreIf({ isSharded() })   // see JAVA-1757 for why sharded clusters are currently excluded from this test
+    def 'should handle rename collection administrative scenario without error'() {
+        given:
+        def mongoClient = getMongoClient()
+        def database = mongoClient.getDatabase(databaseName)
+        def collection = database.getCollection(collectionName)
+        run(mongoClient.getDatabase(databaseName).&drop) == null
+
+        when: 'Create a collection and the created database is in the list'
+        run(database.&createCollection, collectionName)
+
+        then: 'can rename the collection'
+        def newCollectionName = 'newCollectionName'
+        run(collection.&renameCollection, new MongoNamespace(databaseName, newCollectionName)) == null
+
+        then: 'the new collection name is in the collection names list'
+        !run(database.listCollectionNames().&into, []).contains(collectionName)
+        run(database.listCollectionNames().&into, []).contains(newCollectionName)
     }
 
     def run(operation, ... args) {
