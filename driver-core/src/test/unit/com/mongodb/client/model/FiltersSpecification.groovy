@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.client.model.geojson.Point
 import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
@@ -238,6 +239,218 @@ class FiltersSpecification extends Specification {
         toBson(geoIntersects('loc', parse(polygon.toJson()))) == parse('{loc: {$geoIntersects: {$geometry: {type: \'Polygon\', ' +
                                                                        'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], ' +
                                                                        '[40.0, 18.0]]]}}}}')
+    }
+
+    def 'should render $near'() {
+        given:
+        def point = new Point(new Position(-73.9667, 40.78))
+        def pointDocument = parse(point.toJson())
+
+        expect:
+        toBson(Filters.near('loc', point, 5000d, 1000d)) == parse('{' +
+                                                                  '     loc : {' +
+                                                                  '        $near: {' +
+                                                                  '           $geometry: {' +
+                                                                  '              type : "Point",' +
+                                                                  '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                  '           },' +
+                                                                  '           $maxDistance: 5000.0,' +
+                                                                  '           $minDistance: 1000.0,' +
+                                                                  '        }' +
+                                                                  '     }' +
+                                                                  '   }')
+
+        toBson(Filters.near('loc', point, 5000d, null)) == parse('{' +
+                                                                 '     loc : {' +
+                                                                 '        $near: {' +
+                                                                 '           $geometry: {' +
+                                                                 '              type : "Point",' +
+                                                                 '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                 '           },' +
+                                                                 '           $maxDistance: 5000.0,' +
+                                                                 '        }' +
+                                                                 '     }' +
+                                                                 '   }')
+
+        toBson(Filters.near('loc', point, null, 1000d)) == parse('{' +
+                                                                 '     loc : {' +
+                                                                 '        $near: {' +
+                                                                 '           $geometry: {' +
+                                                                 '              type : "Point",' +
+                                                                 '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                 '           },' +
+                                                                 '           $minDistance: 1000.0,' +
+                                                                 '        }' +
+                                                                 '     }' +
+                                                                 '   }')
+
+        toBson(Filters.near('loc', pointDocument, 5000d, 1000d)) == parse('{' +
+                                                                          '     loc : {' +
+                                                                          '        $near: {' +
+                                                                          '           $geometry: {' +
+                                                                          '              type : "Point",' +
+                                                                          '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                          '           },' +
+                                                                          '           $maxDistance: 5000.0,' +
+                                                                          '           $minDistance: 1000.0,' +
+                                                                          '        }' +
+                                                                          '     }' +
+                                                                          '   }')
+
+        toBson(Filters.near('loc', pointDocument, 5000d, null)) == parse('{' +
+                                                                         '     loc : {' +
+                                                                         '        $near: {' +
+                                                                         '           $geometry: {' +
+                                                                         '              type : "Point",' +
+                                                                         '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                         '           },' +
+                                                                         '           $maxDistance: 5000.0,' +
+                                                                         '        }' +
+                                                                         '     }' +
+                                                                         '   }')
+
+        toBson(Filters.near('loc', pointDocument, null, 1000d)) == parse('{' +
+                                                                         '     loc : {' +
+                                                                         '        $near: {' +
+                                                                         '           $geometry: {' +
+                                                                         '              type : "Point",' +
+                                                                         '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                         '           },' +
+                                                                         '           $minDistance: 1000.0,' +
+                                                                         '        }' +
+                                                                         '     }' +
+                                                                         '   }')
+
+        toBson(Filters.near('loc', -73.9667, 40.78, 5000d, 1000d)) == parse('{' +
+                                                                            '     loc : {' +
+                                                                            '        $near: [-73.9667, 40.78],' +
+                                                                            '        $maxDistance: 5000.0,' +
+                                                                            '        $minDistance: 1000.0,' +
+                                                                            '        }' +
+                                                                            '     }' +
+                                                                            '   }')
+
+        toBson(Filters.near('loc', -73.9667, 40.78, 5000d, null)) == parse('{' +
+                                                                           '     loc : {' +
+                                                                           '        $near: [-73.9667, 40.78],' +
+                                                                           '        $maxDistance: 5000.0,' +
+                                                                           '        }' +
+                                                                           '     }' +
+                                                                           '   }')
+
+        toBson(Filters.near('loc', -73.9667, 40.78, null, 1000d)) == parse('{' +
+                                                                           '     loc : {' +
+                                                                           '        $near: [-73.9667, 40.78],' +
+                                                                           '        $minDistance: 1000.0,' +
+                                                                           '        }' +
+                                                                           '     }' +
+                                                                           '   }')
+    }
+
+    def 'should render $nearSphere'() {
+        given:
+        def point = new Point(new Position(-73.9667, 40.78))
+        def pointDocument = parse(point.toJson())
+
+        expect:
+        toBson(Filters.nearSphere('loc', point, 5000d, 1000d)) == parse('{' +
+                                                                        '     loc : {' +
+                                                                        '        $nearSphere: {' +
+                                                                        '           $geometry: {' +
+                                                                        '              type : "Point",' +
+                                                                        '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                        '           },' +
+                                                                        '           $maxDistance: 5000.0,' +
+                                                                        '           $minDistance: 1000.0,' +
+                                                                        '        }' +
+                                                                        '     }' +
+                                                                        '   }')
+
+        toBson(Filters.nearSphere('loc', point, 5000d, null)) == parse('{' +
+                                                                       '     loc : {' +
+                                                                       '        $nearSphere: {' +
+                                                                       '           $geometry: {' +
+                                                                       '              type : "Point",' +
+                                                                       '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                       '           },' +
+                                                                       '           $maxDistance: 5000.0,' +
+                                                                       '        }' +
+                                                                       '     }' +
+                                                                       '   }')
+
+        toBson(Filters.nearSphere('loc', point, null, 1000d)) == parse('{' +
+                                                                       '     loc : {' +
+                                                                       '        $nearSphere: {' +
+                                                                       '           $geometry: {' +
+                                                                       '              type : "Point",' +
+                                                                       '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                       '           },' +
+                                                                       '           $minDistance: 1000.0,' +
+                                                                       '        }' +
+                                                                       '     }' +
+                                                                       '   }')
+
+        toBson(Filters.nearSphere('loc', pointDocument, 5000d, 1000d)) == parse('{' +
+                                                                                '     loc : {' +
+                                                                                '        $nearSphere: {' +
+                                                                                '           $geometry: {' +
+                                                                                '              type : "Point",' +
+                                                                                '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                                '           },' +
+                                                                                '           $maxDistance: 5000.0,' +
+                                                                                '           $minDistance: 1000.0,' +
+                                                                                '        }' +
+                                                                                '     }' +
+                                                                                '   }')
+
+        toBson(Filters.nearSphere('loc', pointDocument, 5000d, null)) == parse('{' +
+                                                                               '     loc : {' +
+                                                                               '        $nearSphere: {' +
+                                                                               '           $geometry: {' +
+                                                                               '              type : "Point",' +
+                                                                               '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                               '           },' +
+                                                                               '           $maxDistance: 5000.0,' +
+                                                                               '        }' +
+                                                                               '     }' +
+                                                                               '   }')
+
+        toBson(Filters.nearSphere('loc', pointDocument, null, 1000d)) == parse('{' +
+                                                                               '     loc : {' +
+                                                                               '        $nearSphere: {' +
+                                                                               '           $geometry: {' +
+                                                                               '              type : "Point",' +
+                                                                               '              coordinates : [ -73.9667, 40.78 ]' +
+                                                                               '           },' +
+                                                                               '           $minDistance: 1000.0,' +
+                                                                               '        }' +
+                                                                               '     }' +
+                                                                               '   }')
+
+        toBson(Filters.nearSphere('loc', -73.9667, 40.78, 5000d, 1000d)) == parse('{' +
+                                                                                  '     loc : {' +
+                                                                                  '        $nearSphere: [-73.9667, 40.78],' +
+                                                                                  '        $maxDistance: 5000.0,' +
+                                                                                  '        $minDistance: 1000.0,' +
+                                                                                  '        }' +
+                                                                                  '     }' +
+                                                                                  '   }')
+
+        toBson(Filters.nearSphere('loc', -73.9667, 40.78, 5000d, null)) == parse('{' +
+                                                                                 '     loc : {' +
+                                                                                 '        $nearSphere: [-73.9667, 40.78],' +
+                                                                                 '        $maxDistance: 5000.0,' +
+                                                                                 '        }' +
+                                                                                 '     }' +
+                                                                                 '   }')
+
+        toBson(Filters.nearSphere('loc', -73.9667, 40.78, null, 1000d)) == parse('{' +
+                                                                                 '     loc : {' +
+                                                                                 '        $nearSphere: [-73.9667, 40.78],' +
+                                                                                 '        $minDistance: 1000.0,' +
+                                                                                 '        }' +
+                                                                                 '     }' +
+                                                                                 '   }')
     }
 
     def toBson(Bson bson) {

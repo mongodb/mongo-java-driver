@@ -23,6 +23,8 @@ import org.bson.conversions.Bson
 
 import static com.mongodb.client.model.Filters.geoIntersects
 import static com.mongodb.client.model.Filters.geoWithin
+import static com.mongodb.client.model.Filters.near
+import static com.mongodb.client.model.Filters.nearSphere
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.CRS_84
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.EPSG_4326
 
@@ -59,6 +61,16 @@ class GeoJsonFiltersFunctionalSpecification extends OperationFunctionalSpecifica
 
         expect:
         find(geoIntersects('geo', polygon)) == [firstPoint, secondPoint, thirdPoint, firstPolygon]
+    }
+
+    def '$near'() {
+        expect:
+        find(near('geo', new Point(new Position(1.01d, 1.01d)), 10000d, null)) == [firstPoint]
+    }
+
+    def '$nearSphere'() {
+        expect:
+        find(nearSphere('geo', new Point(new Position(1.01d, 1.01d)), 10000d, null)) == [firstPoint]
     }
 
 }

@@ -17,10 +17,12 @@
 package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Geometry;
+import com.mongodb.client.model.geojson.Point;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonRegularExpression;
@@ -32,6 +34,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -487,7 +490,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within a specified shape.
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name
      * @param geometry the bounding GeoJSON geometry object
@@ -513,7 +516,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within a specified shape.
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name
      * @param geometry the bounding GeoJSON geometry object
@@ -538,8 +541,114 @@ public final class Filters {
         return new GeometryOperatorFilter<Geometry>("$geoIntersects", fieldName, geometry);
     }
 
-    // TODO: $near
-    // TODO: $nearSphere
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson near(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Point>("$near", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson near(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Bson>("$near", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point.
+     *
+     * @param fieldName the field name
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param maxDistance the maximum distance from the point, in radians
+     * @param minDistance the minimum distance from the point, in radians
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson near(final String fieldName, final double x, final double y, final Double maxDistance, final Double minDistance) {
+        return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$near");
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson nearSphere(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Point>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson nearSphere(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Bson>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param maxDistance the maximum distance from the point, in radians
+     * @param minDistance the minimum distance from the point, in radians
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     */
+    public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
+                                  final Double minDistance) {
+        return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$nearSphere");
+    }
+
+    private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, final Double maxDistance,
+                                                 final Double minDistance, final String operator) {
+        BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(Arrays.asList(new BsonDouble(x), new BsonDouble(y))));
+        if (maxDistance != null) {
+            nearFilter.append("$maxDistance", new BsonDouble(maxDistance));
+        }
+        if (minDistance != null) {
+            nearFilter.append("$minDistance", new BsonDouble(minDistance));
+        }
+        return new BsonDocument(fieldName, nearFilter);
+    }
+
 
     private static final class SimpleFilter implements Bson {
         private final String fieldName;
@@ -768,11 +877,20 @@ public final class Filters {
         private final String operatorName;
         private final String fieldName;
         private final TItem geometry;
+        private final Double maxDistance;
+        private final Double minDistance;
 
         public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry) {
+            this(operatorName, fieldName, geometry, null, null);
+        }
+
+        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry,
+                                      final Double maxDistance, final Double minDistance) {
             this.operatorName = operatorName;
             this.fieldName = notNull("fieldName", fieldName);
             this.geometry = notNull("geometry", geometry);
+            this.maxDistance = maxDistance;
+            this.minDistance = minDistance;
         }
 
         @Override
@@ -785,7 +903,12 @@ public final class Filters {
             writer.writeStartDocument();
             writer.writeName("$geometry");
             encodeValue(writer, geometry, codecRegistry);
-            writer.writeEndDocument();
+            if (maxDistance != null) {
+               writer.writeDouble("$maxDistance", maxDistance);
+            }
+            if (minDistance != null) {
+                writer.writeDouble("$minDistance", minDistance);
+            }writer.writeEndDocument();
             writer.writeEndDocument();
             writer.writeEndDocument();
 
