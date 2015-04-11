@@ -20,7 +20,9 @@ import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
 import org.bson.Document
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.geoIntersects
 import static com.mongodb.client.model.Filters.geoWithin
 import static com.mongodb.client.model.Filters.near
@@ -45,6 +47,7 @@ class GeoJsonFiltersFunctionalSpecification extends OperationFunctionalSpecifica
         getCollectionHelper().find(filter, new Document('_id', 1)) // sort by _id
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
     def '$geoWithin'() {
         given:
         def polygon = new Polygon([new Position(0d, 0d), new Position(4d, 0d), new Position(4d, 4d), new Position(0d, 4d),
@@ -54,6 +57,7 @@ class GeoJsonFiltersFunctionalSpecification extends OperationFunctionalSpecifica
         find(geoWithin('geo', polygon)) == [firstPoint, secondPoint, thirdPoint]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
     def '$geoIntersects'() {
         given:
         def polygon = new Polygon([new Position(0d, 0d), new Position(4d, 0d), new Position(4d, 4d), new Position(0d, 4d),
@@ -63,11 +67,13 @@ class GeoJsonFiltersFunctionalSpecification extends OperationFunctionalSpecifica
         find(geoIntersects('geo', polygon)) == [firstPoint, secondPoint, thirdPoint, firstPolygon]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
     def '$near'() {
         expect:
         find(near('geo', new Point(new Position(1.01d, 1.01d)), 10000d, null)) == [firstPoint]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
     def '$nearSphere'() {
         expect:
         find(nearSphere('geo', new Point(new Position(1.01d, 1.01d)), 10000d, null)) == [firstPoint]

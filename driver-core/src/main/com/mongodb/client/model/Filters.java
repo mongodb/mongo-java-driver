@@ -498,6 +498,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.server.release 2.4
      */
     public static Bson geoWithin(final String fieldName, final Geometry geometry) {
         return new GeometryOperatorFilter<Geometry>("$geoWithin", fieldName, geometry);
@@ -511,6 +512,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.server.release 2.4
      */
     public static Bson geoWithin(final String fieldName, final Bson geometry) {
         return new GeometryOperatorFilter<Bson>("$geoWithin", fieldName, geometry);
@@ -528,6 +530,7 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
      * @mongodb.driver.manual reference/operator/query/box/#op._S_box $box
+     * @mongodb.server.release 2.4
      * @since 3.1
      */
     public static Bson geoWithinBox(final String fieldName, final double lowerLeftX, final double lowerLeftY, final double upperRightX,
@@ -549,6 +552,7 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
      * @mongodb.driver.manual reference/operator/query/polygon/#op._S_polygon $polygon
+     * @mongodb.server.release 2.4
      * @since 3.1
      */
     public static Bson geoWithinPolygon(final String fieldName, final List<List<Double>> points) {
@@ -571,6 +575,7 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
      * @mongodb.driver.manual reference/operator/query/center/#op._S_center $center
+     * @mongodb.server.release 2.4
      * @since 3.1
      */
     public static Bson geoWithinCenter(final String fieldName, final double x, final double y, final double radius) {
@@ -592,6 +597,7 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
      * @mongodb.driver.manual reference/operator/query/centerSphere/#op._S_centerSphere $centerSphere
+     * @mongodb.server.release 2.4
      * @since 3.1
      */
     public static Bson geoWithinCenterSphere(final String fieldName, final double x, final double y, final double radius) {
@@ -610,6 +616,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     * @mongodb.server.release 2.4
      */
     public static Bson geoIntersects(final String fieldName, final Bson geometry) {
         return new GeometryOperatorFilter<Bson>("$geoIntersects", fieldName, geometry);
@@ -623,6 +630,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     * @mongodb.server.release 2.4
      */
     public static Bson geoIntersects(final String fieldName, final Geometry geometry) {
         return new GeometryOperatorFilter<Geometry>("$geoIntersects", fieldName, geometry);
@@ -638,6 +646,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson near(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$near", fieldName, geometry, maxDistance, minDistance);
@@ -653,6 +662,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson near(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$near", fieldName, geometry, maxDistance, minDistance);
@@ -669,6 +679,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson near(final String fieldName, final double x, final double y, final Double maxDistance, final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$near");
@@ -685,6 +696,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson nearSphere(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
@@ -701,6 +713,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson nearSphere(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
@@ -718,6 +731,7 @@ public final class Filters {
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
      */
     public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
                                   final Double minDistance) {
