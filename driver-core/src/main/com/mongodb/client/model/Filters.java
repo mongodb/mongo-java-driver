@@ -35,6 +35,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -503,19 +504,6 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
-     *
-     * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
-     * @return the filter
-     * @since 3.1
-     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
-     */
-    public static Bson geoIntersects(final String fieldName, final Bson geometry) {
-        return new GeometryOperatorFilter<Bson>("$geoIntersects", fieldName, geometry);
-    }
-
-    /**
      * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name
@@ -526,6 +514,105 @@ public final class Filters {
      */
     public static Bson geoWithin(final String fieldName, final Bson geometry) {
         return new GeometryOperatorFilter<Bson>("$geoWithin", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * box.
+     *
+     * @param fieldName   the field name
+     * @param lowerLeftX  the lower left x coordinate of the box
+     * @param lowerLeftY  the lower left y coordinate of the box
+     * @param upperRightX the upper left x coordinate of the box
+     * @param upperRightY the upper left y coordinate of the box
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/box/#op._S_box $box
+     * @since 3.1
+     */
+    public static Bson geoWithinBox(final String fieldName, final double lowerLeftX, final double lowerLeftY, final double upperRightX,
+                                    final double upperRightY) {
+        BsonDocument box = new BsonDocument("$box",
+                                            new BsonArray(asList(new BsonArray(asList(new BsonDouble(lowerLeftX),
+                                                                                      new BsonDouble(lowerLeftY))),
+                                                                 new BsonArray(asList(new BsonDouble(upperRightX),
+                                                                                      new BsonDouble(upperRightY))))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, box);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * polygon.
+     *
+     * @param fieldName the field name
+     * @param points    a list of pairs of x, y coordinates.  Any extra dimensions are ignored
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/polygon/#op._S_polygon $polygon
+     * @since 3.1
+     */
+    public static Bson geoWithinPolygon(final String fieldName, final List<List<Double>> points) {
+        BsonArray pointsArray = new BsonArray();
+        for (List<Double> point : points) {
+            pointsArray.add(new BsonArray(asList(new BsonDouble(point.get(0)), new BsonDouble(point.get(1)))));
+        }
+        BsonDocument polygon = new BsonDocument("$polygon", pointsArray);
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, polygon);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * circle.
+     *
+     * @param fieldName the field name
+     * @param x         the x coordinate of the circle
+     * @param y         the y coordinate of the circle
+     * @param radius    the radius of the circle, as measured in the units used by the coordinate system
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/center/#op._S_center $center
+     * @since 3.1
+     */
+    public static Bson geoWithinCenter(final String fieldName, final double x, final double y, final double radius) {
+        BsonDocument center = new BsonDocument("$center",
+                                               new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                                                                           new BsonDouble(y))),
+                                                                                      new BsonDouble(radius))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, center);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data (GeoJSON or legacy coordinate pairs( that exist
+     * entirely within the specified circle, using spherical geometry.  If using longitude and latitude, specify longitude first.
+     *
+     * @param fieldName the field name
+     * @param x         the x coordinate of the circle
+     * @param y         the y coordinate of the circle
+     * @param radius    the radius of the circle, in radians
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/centerSphere/#op._S_centerSphere $centerSphere
+     * @since 3.1
+     */
+    public static Bson geoWithinCenterSphere(final String fieldName, final double x, final double y, final double radius) {
+        BsonDocument centerSphere = new BsonDocument("$centerSphere",
+                                                     new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                                                                                 new BsonDouble(y))),
+                                                                                            new BsonDouble(radius))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, centerSphere);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     */
+    public static Bson geoIntersects(final String fieldName, final Bson geometry) {
+        return new GeometryOperatorFilter<Bson>("$geoIntersects", fieldName, geometry);
     }
 
     /**

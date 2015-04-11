@@ -44,6 +44,10 @@ import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.geoIntersects
 import static com.mongodb.client.model.Filters.geoWithin
+import static com.mongodb.client.model.Filters.geoWithinBox
+import static com.mongodb.client.model.Filters.geoWithinCenter
+import static com.mongodb.client.model.Filters.geoWithinCenterSphere
+import static com.mongodb.client.model.Filters.geoWithinPolygon
 import static com.mongodb.client.model.Filters.mod
 import static com.mongodb.client.model.Filters.ne
 import static com.mongodb.client.model.Filters.nin
@@ -225,6 +229,34 @@ class FiltersSpecification extends Specification {
         toBson(geoWithin('loc', parse(polygon.toJson()))) == parse('{loc: {$geoWithin: {$geometry: {type: \'Polygon\', ' +
                                                                    'coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], ' +
                                                                    '[40.0, 18.0]]]}}}}')
+    }
+
+    def 'should render $geoWithin with $box'() {
+        expect:
+        toBson(geoWithinBox('loc', 1d, 2d, 3d, 4d)) == parse('{ loc: { ' +
+                                                             '   $geoWithin: { $box:  [ [ 1.0, 2.0 ], [ 3.0, 4.0 ] ] } ' +
+                                                             '} }')
+    }
+
+    def 'should render $geoWithin with $polygon'() {
+        expect:
+        toBson(geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]])) == parse('{ loc: {' +
+                                                                                 '    $geoWithin: { $polygon: [ [ 0.0, 0.0 ], ' +
+                                                                                 '                              [ 3.0, 6.0 ], ' +
+                                                                                 '                              [ 6.0, 0.0 ] ] }' +
+                                                                                 '} }')
+    }
+
+    def 'should render $geoWithin with $center'() {
+        expect:
+        toBson(geoWithinCenter('loc', -74d, 40.74d, 10d)) == parse('{ loc: { $geoWithin: { $center: [ [-74.0, 40.74], 10.0 ] } } }')
+    }
+
+    def 'should render $geoWithin with $centerSphere'() {
+        expect:
+        toBson(geoWithinCenterSphere('loc', -74d, 40.74d, 10d)) == parse('{ loc: { $geoWithin: { ' +
+                                                                           '           $centerSphere: [ [-74.0, 40.74], 10.0 ] ' +
+                                                                           '} } }')
     }
 
     def 'should render $geoIntersects'() {

@@ -18,6 +18,10 @@ import com.mongodb.OperationFunctionalSpecification
 import org.bson.Document
 import org.bson.conversions.Bson
 
+import static com.mongodb.client.model.Filters.geoWithinBox
+import static com.mongodb.client.model.Filters.geoWithinCenter
+import static com.mongodb.client.model.Filters.geoWithinCenterSphere
+import static com.mongodb.client.model.Filters.geoWithinPolygon
 import static com.mongodb.client.model.Filters.near
 import static com.mongodb.client.model.Filters.nearSphere
 
@@ -45,4 +49,23 @@ class GeoFiltersFunctionalSpecification extends OperationFunctionalSpecification
         find(nearSphere('geo', 1.01d, 1.01d, 0.1d, 0.0d)) == [firstPoint, thirdPoint]
     }
 
+    def '$geoWithin $box'() {
+        expect:
+        find(geoWithinBox('geo', 0d, 0d, 4d, 4d)) == [firstPoint, thirdPoint]
+    }
+
+    def '$geoWithin $polygon'() {
+        expect:
+        find(geoWithinPolygon('geo', [[0d, 0d], [0d, 4d], [4d, 4d], [4d, 0d]])) == [firstPoint, thirdPoint]
+    }
+
+    def '$geoWithin $center'() {
+        expect:
+        find(geoWithinCenter('geo', 2d, 2d, 4d)) == [firstPoint, thirdPoint]
+    }
+
+    def '$geoWithin $centerSphere'() {
+        expect:
+        find(geoWithinCenterSphere('geo', 2d, 2d, 4d)) == [firstPoint, secondPoint, thirdPoint]
+    }
 }
