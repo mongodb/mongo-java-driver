@@ -44,6 +44,20 @@ public final class Projections {
     }
 
     /**
+     * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
+     * using the $project aggregation pipeline stage.
+     *
+     * @param fieldName     the field name
+     * @param  expression   the expression
+     * @param <TExpression> the expression type
+     * @return the projection
+     * @see Aggregates#project(Bson)
+     */
+    public static <TExpression> Bson computed(final String fieldName, final TExpression expression) {
+        return new SimpleExpression<TExpression>(fieldName, expression);
+    }
+
+    /**
      * Creates a projection that includes all of the given fields.
      *
      * @param fieldNames the field names

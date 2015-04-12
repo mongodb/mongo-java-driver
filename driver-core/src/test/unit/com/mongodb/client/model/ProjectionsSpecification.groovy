@@ -24,6 +24,7 @@ import spock.lang.Specification
 
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.elemMatch
 import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
@@ -76,6 +77,11 @@ class ProjectionsSpecification extends Specification {
     def 'metaTextScore'() {
         expect:
         toBson(metaTextScore('x')) == parse('{x : {$meta : "textScore"}}')
+    }
+
+    def 'computed'() {
+        expect:
+        toBson(computed('c', '$y')) == parse('{c : "$y"}')
     }
 
     def 'combine fields'() {

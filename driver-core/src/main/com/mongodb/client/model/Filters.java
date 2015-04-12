@@ -29,8 +29,6 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
 import org.bson.BsonType;
 import org.bson.BsonValue;
-import org.bson.codecs.Encoder;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -40,6 +38,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.BuildersHelper.encodeValue;
 import static java.util.Arrays.asList;
 
 /**
@@ -926,18 +925,6 @@ public final class Filters {
             writer.writeEndDocument();
 
             return writer.getDocument();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <TItem> void encodeValue(final BsonDocumentWriter writer, final TItem value, final CodecRegistry codecRegistry) {
-        if (value == null) {
-            writer.writeNull();
-        } else if (value instanceof Bson) {
-            ((Encoder) codecRegistry.get(BsonDocument.class)).encode(writer,
-                    ((Bson) value).toBsonDocument(BsonDocument.class, codecRegistry), EncoderContext.builder().build());
-        } else {
-            ((Encoder) codecRegistry.get(value.getClass())).encode(writer, value, EncoderContext.builder().build());
         }
     }
 

@@ -26,6 +26,7 @@ import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -156,6 +157,24 @@ public final class CollectionHelper<T> {
 
     public List<T> find(final Bson filter) {
         return find(filter, null);
+    }
+
+    public List<T> aggregate(final List<Bson> pipeline) {
+        return aggregate(pipeline, codec);
+    }
+
+    public <D> List<D> aggregate(final List<Bson> pipeline, final Decoder<D> decoder) {
+        List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>();
+        for (Bson cur : pipeline) {
+            bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
+        }
+        BatchCursor<D> cursor = new AggregateOperation<D>(namespace, bsonDocumentPipeline, decoder)
+                                .execute(getBinding());
+        List<D> results = new ArrayList<D>();
+        while (cursor.hasNext()) {
+            results.addAll(cursor.next());
+        }
+        return results;
     }
 
     public List<T> find(final Bson filter, final Bson sort) {
