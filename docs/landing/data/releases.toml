@@ -6,7 +6,7 @@ current = "3.0.0"
   api = "http://api.mongodb.org/java/3.0"
 
 [[versions]]
-  version = "2.13.0"
+  version = "2.13.1"
   status = ""
   docs = "./2.13"
   api = "http://api.mongodb.org/java/2.13"
@@ -19,7 +19,7 @@ current = "3.0.0"
 [[drivers]]
   name = "mongo-java-driver"
   description = "An uber jar containing the bson library, the core library and the mongodb-driver."
-  versions = "3.0.0,2.13.0"
+  versions = "3.0.0,2.13.1"
 
 [[drivers]]
   name = "mongodb-driver-async"
