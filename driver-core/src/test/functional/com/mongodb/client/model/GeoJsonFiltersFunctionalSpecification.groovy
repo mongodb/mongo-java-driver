@@ -78,5 +78,4 @@ class GeoJsonFiltersFunctionalSpecification extends OperationFunctionalSpecifica
         expect:
         find(nearSphere('geo', new Point(new Position(1.01d, 1.01d)), 10000d, null)) == [firstPoint]
     }
-
 }

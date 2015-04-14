@@ -47,7 +47,7 @@ public final class GeometryCollection extends Geometry {
                               final List<Geometry> geometries) {
         super(coordinateReferenceSystem);
         notNull("geometries", geometries);
-        isTrueArgument("geometrys contain only non-null elements", !geometries.contains(null));
+        isTrueArgument("geometries contains only non-null elements", !geometries.contains(null));
         this.geometries = Collections.unmodifiableList(geometries);
     }
 
