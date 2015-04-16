@@ -40,7 +40,7 @@ collection.insertOne(document);
 document.append("x", 2).append("y", 3);
 
 // replace a document
-collection.replaceOne(Filters.eq("_id", document.get("_id"), document);
+collection.replaceOne(Filters.eq("_id", document.get("_id")), document);
 
 // find documents
 List<Document> foundDocument = collection.find().into(new ArrayList<Document>());
