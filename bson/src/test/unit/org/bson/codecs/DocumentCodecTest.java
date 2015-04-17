@@ -40,6 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -90,14 +91,18 @@ public class DocumentCodecTest {
     @Test
     public void testIterableEncoding() throws IOException {
         DocumentCodec documentCodec = new DocumentCodec();
-        Document doc = new Document();
-        doc.put("array", asList(1, 2, 3, 4, 5));
+        Document doc = new Document()
+                       .append("list", asList(1, 2, 3, 4, 5))
+                       .append("set", new HashSet<Integer>(asList(1, 2, 3, 4)));
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         BsonInput bsonInput = createInputBuffer();
         Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput), DecoderContext.builder().build());
-        assertEquals(doc, decodedDocument);
+        assertEquals(new Document()
+                     .append("list", asList(1, 2, 3, 4, 5))
+                     .append("set", asList(1, 2, 3, 4)),
+                     decodedDocument);
     }
 
     @Test
