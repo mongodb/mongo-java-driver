@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -176,5 +177,29 @@ public class DBObjectCodecTest extends DatabaseTestCase {
                      .append("array", zeroOneBsonArray)
                      .append("lazyDoc", zeroOneBsonDocument)
                      .append("lazyArray", zeroOneBsonArray), writer.getDocument());
+    }
+
+    @Test
+    public void shouldEncodeIterableMapAsMap() {
+        IterableMap iterableMap = new IterableMap();
+        iterableMap.put("first", 1);
+
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+
+        DBObject doc = new BasicDBObject("map", iterableMap);
+
+        BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+        dbObjectCodec.encode(writer, doc, EncoderContext.builder().build());
+
+        assertEquals(new BsonDocument("map", new BsonDocument("first", new BsonInt32(1))), writer.getDocument());
+    }
+
+    static class IterableMap extends HashMap<String, Integer> implements Iterable<Integer> {
+        private static final long serialVersionUID = -5090421898469363392L;
+
+        @Override
+        public Iterator<Integer> iterator() {
+            return values().iterator();
+        }
     }
 }

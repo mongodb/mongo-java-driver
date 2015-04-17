@@ -192,10 +192,10 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
             bsonWriter.writeNull();
         } else if (value instanceof DBRef) {
             encodeDBRef(bsonWriter, (DBRef) value);
-        } else if (value instanceof Iterable) {
-            encodeIterable(bsonWriter, (Iterable) value);
         } else if (value instanceof Map) {
             encodeMap(bsonWriter, (Map<String, Object>) value);
+        } else if (value instanceof Iterable) {
+            encodeIterable(bsonWriter, (Iterable) value);
         } else if (value instanceof BSONObject) {
             encodeBsonObject(bsonWriter, ((BSONObject) value));
         } else if (value instanceof CodeWScope) {
