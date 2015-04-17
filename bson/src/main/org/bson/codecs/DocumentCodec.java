@@ -166,8 +166,8 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
         if (value == null) {
             writer.writeNull();
-        } else if (List.class.isAssignableFrom(value.getClass())) {
-            writeList(writer, (List<Object>) value, encoderContext.getChildContext());
+        } else if (Iterable.class.isAssignableFrom(value.getClass())) {
+            writeIterable(writer, (Iterable<Object>) value, encoderContext.getChildContext());
         } else if (Map.class.isAssignableFrom(value.getClass())) {
             writeMap(writer, (Map<String, Object>) value, encoderContext.getChildContext());
         } else {
@@ -191,7 +191,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         writer.writeEndDocument();
     }
 
-    private void writeList(final BsonWriter writer, final List<Object> list, final EncoderContext encoderContext) {
+    private void writeIterable(final BsonWriter writer, final Iterable<Object> list, final EncoderContext encoderContext) {
         writer.writeStartArray();
         for (final Object value : list) {
             writeValue(writer, encoderContext, value);
