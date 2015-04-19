@@ -147,7 +147,7 @@ public class JsonReaderTest {
 
     @Test(expected = JsonParseException.class)
     public void testInvalidDateTimeISOString1() {
-        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626+02:000\" }";
+        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626+02:0000\" }";
         bsonReader = new JsonReader(json);
         bsonReader.readBsonType();
     }
