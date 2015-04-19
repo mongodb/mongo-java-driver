@@ -128,6 +128,45 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testDateTimeISOString() {
+        String json = "{ \"$date\" : \"2015-04-16T14:55:57.626Z\" }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+        assertEquals(1429196157626L, bsonReader.readDateTime());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDateTimeISOStringWithTimeOffset() {
+        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626+02:00\" }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+        assertEquals(1429196157626L, bsonReader.readDateTime());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test(expected = JsonParseException.class)
+    public void testInvalidDateTimeISOString1() {
+        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626+02:000\" }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readBsonType();
+    }
+
+    @Test(expected = JsonParseException.class)
+    public void testInvalidDateTimeISOString2() {
+        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626Z invalid string\" }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readBsonType();
+    }
+
+    @Test(expected = JsonParseException.class)
+    public void testInvalidDateTimeValue() {
+        String json = "{ \"$date\" : {} }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readBsonType();
+    }
+
+    @Test
     public void testDateTimeTengen() {
         String json = "new Date(0)";
         bsonReader = new JsonReader(json);
