@@ -875,18 +875,12 @@ public class JsonReader extends AbstractBsonReader {
         if (valueToken.getType() == JsonTokenType.INT32 || valueToken.getType() == JsonTokenType.INT64) {
             return valueToken.getValue(Long.class);
         } else if (valueToken.getType() == JsonTokenType.STRING) {
-            String dateString = valueToken.getValue(String.class);
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ENGLISH);
-            ParsePosition pos = new ParsePosition(0);
-            format.setLenient(true);
-
-            Date date = format.parse(dateString, pos);
-
-            if (date != null && pos.getIndex() == dateString.length()) {
-                return date.getTime();
+            String dateTimeString = valueToken.getValue(String.class);
+            try {
+                return DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
+            } catch (IllegalArgumentException e) {
+                throw new JsonParseException("JSON reader expected an ISO-8601 date time string but found.", dateTimeString);
             }
-
-            throw new JsonParseException("JSON reader expected an ISO-8601 date string but found.", dateString);
         } else {
             throw new JsonParseException("JSON reader expected an integer or string but found '%s'.", valueToken.getValue());
         }
