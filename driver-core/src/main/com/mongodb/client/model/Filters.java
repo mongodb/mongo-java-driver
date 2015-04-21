@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -587,7 +588,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents containing a field with geospatial data (GeoJSON or legacy coordinate pairs( that exist
+     * Creates a filter that matches all documents containing a field with geospatial data (GeoJSON or legacy coordinate pairs) that exist
      * entirely within the specified circle, using spherical geometry.  If using longitude and latitude, specify longitude first.
      *
      * @param fieldName the field name
