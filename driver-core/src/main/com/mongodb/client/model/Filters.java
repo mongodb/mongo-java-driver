@@ -18,7 +18,6 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
-import com.mongodb.client.model.geojson.Position;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
