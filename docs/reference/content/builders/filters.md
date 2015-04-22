@@ -10,7 +10,7 @@ title = "Filters"
 ## Filters
 
 The [`Filters`]({{< apiref "com/mongodb/client/model/Filters" >}}) class provides static factory methods for all the MongoDB query 
-operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents/#bson" >}}) type, which can in turn be passed to
+operators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be passed to
 any method that expects a query filter.
 
 For brevity, you may choose to import the methods of the `Filters` class statically:
