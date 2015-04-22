@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -83,7 +84,8 @@ public class MongoClient extends Mongo implements Closeable {
                     new DBRefCodecProvider(),
                     new DocumentCodecProvider(new DocumentToDBRefTransformer()),
                     new DBObjectCodecProvider(),
-                    new BsonValueCodecProvider()));
+                    new BsonValueCodecProvider(),
+                    new GeoJsonCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -92,6 +94,7 @@ public class MongoClient extends Mongo implements Closeable {
      * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
      * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
+     * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry

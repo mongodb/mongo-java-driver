@@ -25,6 +25,7 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -36,6 +37,7 @@ import com.mongodb.operation.InsertOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
+import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -58,7 +60,8 @@ public final class CollectionHelper<T> {
     private Codec<T> codec;
     private CodecRegistry registry = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
                                                                    new ValueCodecProvider(),
-                                                                   new DocumentCodecProvider());
+                                                                   new DocumentCodecProvider(),
+                                                                   new GeoJsonCodecProvider());
     private MongoNamespace namespace;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
@@ -115,7 +118,7 @@ public final class CollectionHelper<T> {
     }
 
     public void insertDocuments(final Document... documents) {
-        insertDocuments(new DocumentCodec(), asList(documents));
+        insertDocuments(new DocumentCodec(registry, new BsonTypeClassMap()), asList(documents));
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {

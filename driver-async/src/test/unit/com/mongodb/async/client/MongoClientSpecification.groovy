@@ -17,6 +17,7 @@
 package com.mongodb.async.client
 
 import com.mongodb.WriteConcern
+import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
@@ -86,4 +87,18 @@ class MongoClientSpecification extends Specification {
                 WriteConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
+    def 'default codec registry should contain all supported providers'() {
+        given:
+        def settings = MongoClientSettings.builder().build()
+        def cluster = Stub(Cluster)
+        def executor = new TestOperationExecutor([null, null, null])
+        def client = new MongoClientImpl(settings, cluster, executor)
+        def codecRegistry = client.getDefaultCodecRegistry()
+
+        expect:
+        codecRegistry.get(BsonDocument)
+        codecRegistry.get(Document)
+        codecRegistry.get(Integer)
+        codecRegistry.get(MultiPolygon)
+    }
 }

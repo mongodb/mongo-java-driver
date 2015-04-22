@@ -16,10 +16,13 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.client.model.geojson.Geometry;
+import com.mongodb.client.model.geojson.Point;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonRegularExpression;
@@ -31,6 +34,8 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -485,10 +490,266 @@ public final class Filters {
         return new OperatorFilter<Integer>("$size", fieldName, size);
     }
 
-    // TODO: $geoWithin
-    // TODO: $geoIntersects
-    // TODO: $near
-    // TODO: $nearSphere
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.server.release 2.4
+     */
+    public static Bson geoWithin(final String fieldName, final Geometry geometry) {
+        return new GeometryOperatorFilter<Geometry>("$geoWithin", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.server.release 2.4
+     */
+    public static Bson geoWithin(final String fieldName, final Bson geometry) {
+        return new GeometryOperatorFilter<Bson>("$geoWithin", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * box.
+     *
+     * @param fieldName   the field name
+     * @param lowerLeftX  the lower left x coordinate of the box
+     * @param lowerLeftY  the lower left y coordinate of the box
+     * @param upperRightX the upper left x coordinate of the box
+     * @param upperRightY the upper left y coordinate of the box
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/box/#op._S_box $box
+     * @mongodb.server.release 2.4
+     * @since 3.1
+     */
+    public static Bson geoWithinBox(final String fieldName, final double lowerLeftX, final double lowerLeftY, final double upperRightX,
+                                    final double upperRightY) {
+        BsonDocument box = new BsonDocument("$box",
+                                            new BsonArray(asList(new BsonArray(asList(new BsonDouble(lowerLeftX),
+                                                                                      new BsonDouble(lowerLeftY))),
+                                                                 new BsonArray(asList(new BsonDouble(upperRightX),
+                                                                                      new BsonDouble(upperRightY))))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, box);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * polygon.
+     *
+     * @param fieldName the field name
+     * @param points    a list of pairs of x, y coordinates.  Any extra dimensions are ignored
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/polygon/#op._S_polygon $polygon
+     * @mongodb.server.release 2.4
+     * @since 3.1
+     */
+    public static Bson geoWithinPolygon(final String fieldName, final List<List<Double>> points) {
+        BsonArray pointsArray = new BsonArray();
+        for (List<Double> point : points) {
+            pointsArray.add(new BsonArray(asList(new BsonDouble(point.get(0)), new BsonDouble(point.get(1)))));
+        }
+        BsonDocument polygon = new BsonDocument("$polygon", pointsArray);
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, polygon);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with grid coordinates data that exist entirely within the specified
+     * circle.
+     *
+     * @param fieldName the field name
+     * @param x         the x coordinate of the circle
+     * @param y         the y coordinate of the circle
+     * @param radius    the radius of the circle, as measured in the units used by the coordinate system
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/center/#op._S_center $center
+     * @mongodb.server.release 2.4
+     * @since 3.1
+     */
+    public static Bson geoWithinCenter(final String fieldName, final double x, final double y, final double radius) {
+        BsonDocument center = new BsonDocument("$center",
+                                               new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                                                                           new BsonDouble(y))),
+                                                                                      new BsonDouble(radius))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, center);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data (GeoJSON or legacy coordinate pairs) that exist
+     * entirely within the specified circle, using spherical geometry.  If using longitude and latitude, specify longitude first.
+     *
+     * @param fieldName the field name
+     * @param x         the x coordinate of the circle
+     * @param y         the y coordinate of the circle
+     * @param radius    the radius of the circle, in radians
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
+     * @mongodb.driver.manual reference/operator/query/centerSphere/#op._S_centerSphere $centerSphere
+     * @mongodb.server.release 2.4
+     * @since 3.1
+     */
+    public static Bson geoWithinCenterSphere(final String fieldName, final double x, final double y, final double radius) {
+        BsonDocument centerSphere = new BsonDocument("$centerSphere",
+                                                     new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                                                                                 new BsonDouble(y))),
+                                                                                            new BsonDouble(radius))));
+        return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, centerSphere);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     * @mongodb.server.release 2.4
+     */
+    public static Bson geoIntersects(final String fieldName, final Bson geometry) {
+        return new GeometryOperatorFilter<Bson>("$geoIntersects", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
+     * @mongodb.server.release 2.4
+     */
+    public static Bson geoIntersects(final String fieldName, final Geometry geometry) {
+        return new GeometryOperatorFilter<Geometry>("$geoIntersects", fieldName, geometry);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson near(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Point>("$near", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson near(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Bson>("$near", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point.
+     *
+     * @param fieldName the field name
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param maxDistance the maximum distance from the point, in radians
+     * @param minDistance the minimum distance from the point, in radians
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson near(final String fieldName, final double x, final double y, final Double maxDistance, final Double minDistance) {
+        return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$near");
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson nearSphere(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Point>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param geometry the bounding GeoJSON geometry object
+     * @param maxDistance the maximum distance from the point, in meters
+     * @param minDistance the minimum distance from the point, in meters
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson nearSphere(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+        return new GeometryOperatorFilter<Bson>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
+    }
+
+    /**
+     * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point using
+     * spherical geometry.
+     *
+     * @param fieldName the field name
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param maxDistance the maximum distance from the point, in radians
+     * @param minDistance the minimum distance from the point, in radians
+     * @return the filter
+     * @since 3.1
+     * @mongodb.driver.manual reference/operator/query/near/ $near
+     * @mongodb.server.release 2.4
+     */
+    public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
+                                  final Double minDistance) {
+        return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$nearSphere");
+    }
+
+    private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, final Double maxDistance,
+                                                 final Double minDistance, final String operator) {
+        BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(Arrays.asList(new BsonDouble(x), new BsonDouble(y))));
+        if (maxDistance != null) {
+            nearFilter.append("$maxDistance", new BsonDouble(maxDistance));
+        }
+        if (minDistance != null) {
+            nearFilter.append("$minDistance", new BsonDouble(minDistance));
+        }
+        return new BsonDocument(fieldName, nearFilter);
+    }
+
 
     private static final class SimpleFilter implements Bson {
         private final String fieldName;
@@ -712,4 +973,48 @@ public final class Filters {
         }
 
     }
+
+    private static class GeometryOperatorFilter<TItem> implements Bson {
+        private final String operatorName;
+        private final String fieldName;
+        private final TItem geometry;
+        private final Double maxDistance;
+        private final Double minDistance;
+
+        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry) {
+            this(operatorName, fieldName, geometry, null, null);
+        }
+
+        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry,
+                                      final Double maxDistance, final Double minDistance) {
+            this.operatorName = operatorName;
+            this.fieldName = notNull("fieldName", fieldName);
+            this.geometry = notNull("geometry", geometry);
+            this.maxDistance = maxDistance;
+            this.minDistance = minDistance;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeName(fieldName);
+            writer.writeStartDocument();
+            writer.writeName(operatorName);
+            writer.writeStartDocument();
+            writer.writeName("$geometry");
+            encodeValue(writer, geometry, codecRegistry);
+            if (maxDistance != null) {
+               writer.writeDouble("$maxDistance", maxDistance);
+            }
+            if (minDistance != null) {
+                writer.writeDouble("$minDistance", minDistance);
+            }writer.writeEndDocument();
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+    }
+
 }
