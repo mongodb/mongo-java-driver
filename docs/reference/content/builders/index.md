@@ -11,4 +11,6 @@ title = "Builders"
 
 The driver provides several classes that make it easier to use the CRUD API.
 
-- [Filters]({{< relref "filters.md" >}}): Documentation of the driver's support for query filters
+- [Filters]({{< relref "filters.md" >}}): Documentation of the driver's support for building query filters
+- [Projections]({{< relref "projections.md" >}}): Documentation of the driver's support for building projections
+- [Sorts]({{< relref "sorts.md" >}}): Documentation of the driver's support for building sort criteria
