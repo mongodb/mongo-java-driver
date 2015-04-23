@@ -303,6 +303,11 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         assertTrue(distinct.containsAll(asList(new BsonString("a"), new BsonInt32(1), new BsonDocument("b", new BsonString("c")),
                 new BsonDocument("list", new BsonArray(asList(new BsonInt32(2), new BsonString("d"),
                         new BsonDocument("e", new BsonInt32(3))))))));
+
+        distinct = collection.distinct("id", new Document("id", new Document("$ne", 1)), BsonValue.class).into(new ArrayList<BsonValue>());
+        assertTrue(distinct.containsAll(asList(new BsonString("a"), new BsonDocument("b", new BsonString("c")),
+                new BsonDocument("list", new BsonArray(asList(new BsonInt32(2), new BsonString("d"),
+                        new BsonDocument("e", new BsonInt32(3))))))));
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {

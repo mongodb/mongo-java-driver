@@ -213,13 +213,13 @@ class MongoCollectionSpecification extends Specification {
         def asyncCursor = Stub(AsyncBatchCursor) {
             next(_) >> { args -> args[0].onResult(null, null) }
         }
-        def executor = new TestOperationExecutor([asyncCursor, asyncCursor])
+        def executor = new TestOperationExecutor([asyncCursor, asyncCursor, asyncCursor])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def filter = new BsonDocument()
+        def filter = new BsonDocument('a', new BsonInt32(1))
         def futureResultCallback = new FutureResultCallback<List<String>>()
 
         when:
-        collection.distinct('test', String).filter(filter).into([], futureResultCallback)
+        collection.distinct('test', String).into([], futureResultCallback)
         futureResultCallback.get()
         def operation = executor.getReadOperation() as DistinctOperation
 
@@ -228,8 +228,16 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback<List<String>>()
-        filter = new BsonDocument('a', new BsonInt32(1))
-        collection.distinct('test', String).filter(filter).maxTime(100, MILLISECONDS).into([], futureResultCallback)
+        collection.distinct('test', String).filter(filter).into([], futureResultCallback)
+        futureResultCallback.get()
+        operation = executor.getReadOperation() as DistinctOperation
+
+        then:
+        expect operation, isTheSameAs(new DistinctOperation(namespace, 'test', codec).filter(filter))
+
+        when:
+        futureResultCallback = new FutureResultCallback<List<String>>()
+        collection.distinct('test', filter, String).maxTime(100, MILLISECONDS).into([], futureResultCallback)
         futureResultCallback.get()
         operation = executor.getReadOperation() as DistinctOperation
 
@@ -247,8 +255,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, Document, String, codecRegistry,
-                                                                      readPreference,
-                                                                      executor, 'field'))
+                                                                      readPreference, executor, 'field', new BsonDocument()))
     }
 
     def 'should create FindIterable correctly'() {

@@ -169,8 +169,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> resultClass) {
+        return distinct(fieldName, new BsonDocument(), resultClass);
+    }
+
+    @Override
+    public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Bson filter, final Class<TResult> resultClass) {
         return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference, executor,
-                                                            fieldName);
+                fieldName, filter);
     }
 
     @Override

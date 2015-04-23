@@ -258,8 +258,7 @@ public class CrudTest {
     }
 
     private DistinctIterable<BsonInt32> getDistinctMongoOperation(final BsonDocument arguments) {
-        return collection.distinct(arguments.getString("fieldName").getValue(), BsonInt32.class)
-                .filter(arguments.getDocument("filter"));
+        return collection.distinct(arguments.getString("fieldName").getValue(), arguments.getDocument("filter"), BsonInt32.class);
     }
 
     private FindIterable<BsonDocument> getFindMongoOperation(final BsonDocument arguments) {

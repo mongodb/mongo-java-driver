@@ -188,13 +188,28 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
+        def filter = new Document('a', 1)
 
         when:
         def distinctIterable = collection.distinct('field', String)
 
         then:
         expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, Document, String, codecRegistry, readPreference,
-                                                                      executor, 'field'))
+                                                                      executor, 'field', new BsonDocument()))
+
+        when:
+        distinctIterable = collection.distinct('field', String).filter(filter)
+
+        then:
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, Document, String, codecRegistry, readPreference,
+                executor, 'field', filter))
+
+        when:
+        distinctIterable = collection.distinct('field', filter, String).maxTime(100, MILLISECONDS)
+
+        then:
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl(namespace, Document, String, codecRegistry, readPreference,
+                executor, 'field', filter).maxTime(100, MILLISECONDS))
     }
 
     def 'should create FindIterable correctly'() {

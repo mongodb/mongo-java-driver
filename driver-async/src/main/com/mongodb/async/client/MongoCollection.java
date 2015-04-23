@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,18 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
     <TResult> DistinctIterable<TResult> distinct(String fieldName, Class<TResult> resultClass);
+
+    /**
+     * Gets the distinct values of the specified field name.
+     *
+     * @param fieldName   the field name
+     * @param filter      the query filter
+     * @param resultClass the default class to cast any distinct items into.
+     * @param <TResult>   the target type of the iterable.
+     * @return an iterable of distinct values
+     * @mongodb.driver.manual reference/command/distinct/ Distinct
+     */
+    <TResult> DistinctIterable<TResult> distinct(String fieldName, Bson filter, Class<TResult> resultClass);
 
     /**
      * Finds all documents in the collection.
