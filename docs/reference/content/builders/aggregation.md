@@ -3,7 +3,7 @@ date = "2015-03-19T14:27:51-04:00"
 title = "Aggregation"
 [menu.main]
   parent = "Builders"
-  weight = 20
+  weight = 40
   pre = "<i class='fa'></i>"
 +++
 
