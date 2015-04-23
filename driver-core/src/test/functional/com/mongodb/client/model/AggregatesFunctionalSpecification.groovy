@@ -18,7 +18,9 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.Document
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
@@ -41,6 +43,7 @@ import static com.mongodb.client.model.Projections.excludeId
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.descending
+import static java.util.Arrays.asList
 
 class AggregatesFunctionalSpecification extends OperationFunctionalSpecification {
 
@@ -133,6 +136,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                             new Document('_id', false).append('acc', [false])]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def '$out'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
