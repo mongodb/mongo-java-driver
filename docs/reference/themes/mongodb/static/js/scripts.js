@@ -17,4 +17,10 @@ jQuery(document).ready(function(){
     jQuery('[data-toggle="tooltip"]').tooltip();
     jQuery("body").addClass("hljsCode");
     hljs.initHighlightingOnLoad();
+    var linkRegex = new RegExp('/' + window.location.host + '/');
+    jQuery('a').not('[href*="mailto:"]').each(function () {
+        if ( ! linkRegex.test(this.href) ) {
+            $(this).attr('target', '_blank');
+        }
+    });
 });
