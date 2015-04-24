@@ -41,7 +41,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoDatabaseSpecification extends Specification {
 
     def name = 'databaseName'
-    def codecRegistry = MongoClientImpl.getDefaultCodecRegistry()
+    def codecRegistry = MongoClients.getDefaultCodecRegistry()
     def readPreference = secondary()
     def writeConcern = WriteConcern.ACKNOWLEDGED
 
