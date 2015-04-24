@@ -23,4 +23,5 @@ jQuery(document).ready(function(){
             $(this).attr('target', '_blank');
         }
     });
+    jQuery('.body table').addClass('table').addClass('table-striped');
 });
