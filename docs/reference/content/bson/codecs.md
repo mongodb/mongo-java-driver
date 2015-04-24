@@ -145,13 +145,13 @@ to determine with type to decode each BSON value to, then use the `CodecRegistry
 
 Finally, we create a `CodecRegistry` instance
 
-```java
-        CodecRegistry defaultCodecRegistry = ... 
-        DocumentCodecProvider documentCodecProvider = ... 
-        Codec<Instant> instantCodec = ...   
-        codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(instantCodec),
-                                                       CodecRegistries.fromProviders(documentCodecProvider),
-                                                       defaultCodecRegistry);
+```bash
+CodecRegistry defaultCodecRegistry = ... 
+DocumentCodecProvider documentCodecProvider = ... 
+Codec<Instant> instantCodec = ...   
+codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(instantCodec),
+                                               CodecRegistries.fromProviders(documentCodecProvider),
+                                               defaultCodecRegistry);
 ```
 
 using two additional static factory methods from the `CodecRegistries` class: one that takes a list of `CodecProvider`s and one which 

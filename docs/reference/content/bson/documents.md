@@ -50,8 +50,8 @@ There is less code to write, but runtime errors are possible if you inadvertentl
 
 The most commonly used value types are: 
    
-| BSON type | Java type               |
-|-----------|-------------------------|
+| BSON type | Java type                 |
+|-----------|---------------------------|
 | Document  | `org.bson.Document`       |
 | Array     | `java.util.List`          |
 | Date      | `java.util.Date`          |
