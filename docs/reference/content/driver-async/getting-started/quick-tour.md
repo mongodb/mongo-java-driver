@@ -202,8 +202,6 @@ method to query the collection.
 
 ### Find the First Document in a Collection
 
-call the first() method on the result of the find() of method
-
 To get the first document in the collection, call the
 [first()]({{< apiref "com/mongodb/async/client/MongoIterable.html#first--">}})
 method on the [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}})
