@@ -4,7 +4,7 @@ title = "Builders"
 [menu.main]
   identifier = "Builders"
   weight = 50
-  pre = "<i class='fa fa-th'></i>"
+  pre = "<i class='fa fa-wrench'></i>"
 +++
 
 ## Builders
