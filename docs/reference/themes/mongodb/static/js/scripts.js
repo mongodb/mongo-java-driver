@@ -15,12 +15,16 @@ function initializeJS() {
 jQuery(document).ready(function(){
     initializeJS();
     jQuery('[data-toggle="tooltip"]').tooltip();
-    jQuery("body").addClass("hljsCode");
+    jQuery("body").addClass("jsEnabled");
     hljs.initHighlightingOnLoad();
     var linkRegex = new RegExp('/' + window.location.host + '/');
     jQuery('a').not('[href*="mailto:"]').each(function () {
         if ( ! linkRegex.test(this.href) ) {
             $(this).attr('target', '_blank');
         }
+    });
+    jQuery('.body table').addClass('table').addClass('table-striped');
+    jQuery("#search form").submit(function() {
+        $('#search input[name="q"]').attr("value", $('#search input[name="searchQuery"]').val() + ' ' + $('#search input[name="site"]').val());
     });
 });
