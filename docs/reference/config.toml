@@ -1,4 +1,4 @@
-baseurl = "/mongo-java-driver/3.0"
+baseurl = "/mongo-java-driver/3.1"
 languageCode = "en-us"
 title = "MongoDB Java Driver"
 theme = "mongodb"
@@ -14,11 +14,11 @@ canonifyurls = false
     pre = "<i class='fa fa-file-text-o'></i>"
     weight = 90
     identifier = "apiDocs"
-    url = "http://api.mongodb.org/java/3.0"
+    url = "http://api.mongodb.org/java/3.1"
 
 [[menu.main]]
     name = "Source Code"
     pre = "<i class='fa fa-github'></i>"
     weight = 90
     identifier = "githubLink"
-    url = "https://github.com/mongodb/mongo-java-driver/tree/3.0.x"
+    url = "https://github.com/mongodb/mongo-java-driver/tree/master"

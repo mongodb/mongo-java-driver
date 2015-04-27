@@ -34,7 +34,7 @@
     {{ with $.Site.Data.releases.versions }}
       <select class="releasePicker">
         {{ range . }}
-        <option value="{{$.Scratch.Get "qs.pos"}}"{{ if eq (in .version $firstDriver.versions) false }}disabled="disabled"{{end}}>{{.version}}</option>
+        <option value="{{$.Scratch.Get "qs.pos"}}"{{ if eq (in $firstDriver.versions .version) false }}disabled="disabled"{{else if eq .status "current"}}selected{{end}}>{{.version}}</option>
         {{ $.Scratch.Add "qs.pos" 1 }}
         {{ end }}
       </select>
@@ -69,7 +69,29 @@
           {{ $driverPos := $.Scratch.Get "qs.driverPos" }}
           {{ $versionPos := $.Scratch.Get "qs.versionPos" }}
           {{ if in $currentDriver.versions $currentVersion.version }}
-<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if ne $firstDriver true}} hidden{{end}}">
+<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if or (ne $firstDriver true) (ne $currentVersion.status "current") }} hidden{{end}}">
+{{ if eq $currentVersion.status "snapshot" }}
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;{{$currentDriver.name}}&lt;/artifactId&gt;
+        &lt;version&gt;{{$currentVersion.version}}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+&lt;repositories&gt;
+    &lt;repository&gt;
+        &lt;id&gt;sonatype-snapshots&lt;/id&gt;
+        &lt;name&gt;Sontatype Snapshots&lt;/name&gt;
+        &lt;url&gt;https://oss.sonatype.org/content/repositories/snapshots&lt;/url&gt;
+        &lt;snapshots&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/snapshots&gt;
+    &lt;/repository&gt;
+&lt;/repositories&gt;
+
+</code></pre>
+{{ else }}
 <pre><code>
 &lt;dependencies&gt;
     &lt;dependency&gt;
@@ -80,16 +102,33 @@
 &lt;/dependencies&gt;
 
 </code></pre>
+{{ end }}
 </div>
 <div id="gradle-{{$versionPos}}-{{$driverPos}}" class="download hidden">
+{{ if eq $currentVersion.status "snapshot" }}
 <pre><code>
   dependencies {
       compile 'org.mongodb:{{$currentDriver.name}}:{{$currentVersion.version}}'
   }
+  repositories {
+    maven {
+      url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+  }
+</code></pre>
+{{ else }}
+<pre><code>
+  dependencies {
+    compile 'org.mongodb:{{$currentDriver.name}}:{{$currentVersion.version}}'
+  }
+
 
 </code></pre>
+{{ end }}
 </div>
+         {{ if eq $currentVersion.status "current" }}
           {{ $.Scratch.Set "qs.firstDriver" false }}
+         {{end}}
           {{ $.Scratch.Add "qs.versionPos" 1 }}
           {{ end }}
           {{ end }}
