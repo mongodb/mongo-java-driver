@@ -218,6 +218,10 @@ public class DBTCPConnector implements DBConnector {
             _myPort.error(port, re);
             throw re;
         }
+        catch ( Error e ){
+            _myPort.error(port, e);
+            throw e;
+        }
     }
 
     /**
@@ -301,6 +305,10 @@ public class DBTCPConnector implements DBConnector {
         catch ( RuntimeException re ){
             _myPort.error(port, re);
             throw re;
+        }
+        catch ( Error e ){
+            _myPort.error(port, e);
+            throw e;
         } finally {
             _myPort.done(port);
         }
@@ -476,10 +484,10 @@ public class DBTCPConnector implements DBConnector {
         /**
          * call this method when there is an IOException or other low level error on port.
          * @param port
-         * @param e
+         * @param t
          */
-        void error( DBPort port , Exception e ){
-            if (!(e instanceof InterruptedIOException)) {
+        void error( DBPort port , Throwable t ){
+            if (!(t instanceof InterruptedIOException)) {
                 try {
                     // no need to wait if the server is no longer available
                     cluster.getServer(new ServerAddressSelector(port.getAddress()), 1, NANOSECONDS).invalidate();
