@@ -1,0 +1,208 @@
+#########################################
+#      Java Driver Config for Evergreen #
+#########################################
+
+java_driver_variables:
+
+  topology_test_list: &topology_tests
+    - name: "integration-test-latest"
+#    - name: "integration-test-latest-replica-set"
+#    - name: "integration-test-latest-sharded"
+
+  ## Scripts that are shared between buildvariants
+  scripts:
+    mongo_orchestration:
+      windows: &mongo_orchestration_windows
+        start_mongo_orchestration: |
+          trap 'set +o errexit; mongo-orchestration --pidfile c:\\mo.pid stop;' EXIT
+          pidfile=/cygdrive/c/mo.pid
+          if [ -f $pidfile ]; then
+            echo "Existing pidfile $pidfile"
+            cat $pidfile
+            mongo-orchestration --pidfile c:\\mo.pid stop
+            rm -f $pidfile
+          fi
+          ls -la
+          fsutil volume diskfree c:
+          if [ ! -d /cygdrive/c/tmp/mongoc-test-certificates ]; then
+             mkdir -p /cygdrive/c/tmp/mongoc-test-certificates
+          fi
+          echo "Starting Mongo Orchestration..."
+          echo "{ \"releases\": { \"default\": \"c:\\\\mongodb\\\\bin\" }}" > orchestration.config
+          mongo-orchestration -f orchestration.config -e default -s wsgiref start --socket-timeout-ms=60000 --bind=127.0.0.1 --enable-majority-read-concern --pidfile c:\\mo.pid
+          sleep 10
+          cat c:\\mo.pid
+          cat orchestration.config
+          curl -s http://localhost:8889/
+      unix: &mongo_orchestration_unix
+        start_mongo_orchestration: |
+          trap 'set +o errexit; mongo-orchestration --pidfile /data/mo.pid stop;' EXIT
+          pidfile=/data/mo.pid
+          if [ -f $pidfile ]; then
+            echo "Existing pidfile $pidfile"
+            cat $pidfile
+            mongo-orchestration --pidfile /data/mo.pid stop;
+            rm -f $pidfile
+          fi
+          df -h
+          ls -la
+          if [ ! -d /tmp/mongoc-test-certificates ]; then
+             mkdir /tmp/mongoc-test-certificates
+          fi
+          echo "Starting Mongo Orchestration..."
+          echo "{ \"releases\": { \"default\": \"`pwd`/mongodb/bin\" } }" > orchestration.config
+          TMPDIR=/data/db mongo-orchestration -f orchestration.config -e default start --socket-timeout-ms=60000 --bind=127.0.0.1  --enable-majority-read-concern --pidfile $pidfile
+          curl -s http://localhost:8889/
+      start_topology_command: &start_topology_command
+        start_topology: |
+          curl -s --data @"$ORCHESTRATION_FILE" "$ORCHESTRATION_URL"
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.serverBuildInfo())' admin
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.adminCommand({getCmdLineOpts:1}))' admin
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.isMaster())' admin
+
+#######################################
+#            Functions                #
+#######################################
+
+functions:
+  "fetch source" :
+      command: git.get_project
+      params:
+          directory: "mongo-java-driver"
+
+  "start_mongod":
+      command: shell.exec
+      params:
+          background: true
+          working_dir: "."
+          script: |
+              wget -O mongodb.tgz https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-latest.tgz
+              tar --extract --file mongodb.tgz --strip-components=2 --wildcards --no-anchored "*/bin/mongod"
+              mkdir -p /data/log
+              mkdir -p /data/db
+              ./mongod --logpath=/data/log --dbpath=/data/db --pidfilepath=/data/pid
+
+  "stop_mongod":
+      command: shell.exec
+      params:
+          working_dir: "."
+          script:
+              kill -TERM $(cat /data/pid)
+
+
+#######################################
+#              Pre Task               #
+#######################################
+
+pre:
+  - command: shell.exec
+    params:
+      script: |
+        rm -rf "mongo-java-driver"
+        rm mongod
+
+#######################################
+#               Tasks                 #
+#######################################
+
+tasks:
+    - name: compileAndAnalyze
+      commands:
+        - func: "fetch source"
+        - command: git.apply_patch
+          params:
+              directory: "mongo-java-driver"
+        - command: shell.exec
+          params:
+              working_dir: "mongo-java-driver"
+              script: |
+                  ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses
+    - name: test
+      commands:
+        - func: "fetch source"
+        - command: git.apply_patch
+          params:
+              directory: "mongo-java-driver"
+#        - command: shell.exec
+#          params:
+#              working_dir: "mongo-java-driver"
+#              script: |
+#                  ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses javadoc
+        - func: "start_mongod"
+#        - command: shell.exec
+#          params:
+#              working_dir: "mongo-java-driver"
+#              script: |
+#                  ./gradlew --stacktrace --info -x classes -x testClasses --rerun-tasks test
+        - command: shell.exec
+          params:
+              working_dir: "mongo-java-driver"
+              script: |
+                  ./gradlew --stacktrace --info test
+        - func: "stop_mongod"
+
+
+scripts:
+  ## Scripts that are shared between buildvariants
+  scripts:
+    mongo_orchestration:
+      windows: &mongo_orchestration_windows
+        start_mongo_orchestration: |
+          trap 'set +o errexit; mongo-orchestration --pidfile c:\\mo.pid stop;' EXIT
+          pidfile=/cygdrive/c/mo.pid
+          if [ -f $pidfile ]; then
+            echo "Existing pidfile $pidfile"
+            cat $pidfile
+            mongo-orchestration --pidfile c:\\mo.pid stop
+            rm -f $pidfile
+          fi
+          ls -la
+          fsutil volume diskfree c:
+          if [ ! -d /cygdrive/c/tmp/mongoc-test-certificates ]; then
+             mkdir -p /cygdrive/c/tmp/mongoc-test-certificates
+          fi
+          echo "Starting Mongo Orchestration..."
+          echo "{ \"releases\": { \"default\": \"c:\\\\mongodb\\\\bin\" }}" > orchestration.config
+          mongo-orchestration -f orchestration.config -e default -s wsgiref start --socket-timeout-ms=60000 --bind=127.0.0.1 --enable-majority-read-concern --pidfile c:\\mo.pid
+          sleep 10
+          cat c:\\mo.pid
+          cat orchestration.config
+          curl -s http://localhost:8889/
+      unix: &mongo_orchestration_unix
+        start_mongo_orchestration: |
+          trap 'set +o errexit; mongo-orchestration --pidfile /data/mo.pid stop;' EXIT
+          pidfile=/data/mo.pid
+          if [ -f $pidfile ]; then
+            echo "Existing pidfile $pidfile"
+            cat $pidfile
+            mongo-orchestration --pidfile /data/mo.pid stop;
+            rm -f $pidfile
+          fi
+          df -h
+          ls -la
+          if [ ! -d /tmp/mongoc-test-certificates ]; then
+             mkdir /tmp/mongoc-test-certificates
+          fi
+          echo "Starting Mongo Orchestration..."
+          echo "{ \"releases\": { \"default\": \"`pwd`/mongodb/bin\" } }" > orchestration.config
+          TMPDIR=/data/db mongo-orchestration -f orchestration.config -e default start --socket-timeout-ms=60000 --bind=127.0.0.1  --enable-majority-read-concern --pidfile $pidfile
+          curl -s http://localhost:8889/
+      start_topology_command: &start_topology_command
+        start_topology: |
+          curl -s --data @"$ORCHESTRATION_FILE" "$ORCHESTRATION_URL"
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.serverBuildInfo())' admin
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.adminCommand({getCmdLineOpts:1}))' admin
+          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.isMaster())' admin
+
+#######################################
+#               Variants              #
+#######################################
+
+buildvariants:
+- name: ubuntu-1404
+  display_name: "Ubuntu-1404"
+  expansions:
+  run_on:
+    - ubuntu1404-build
+  tasks:
+  - name: compileAndAnalyze
