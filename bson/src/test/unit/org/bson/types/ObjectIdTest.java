@@ -113,11 +113,13 @@ public class ObjectIdTest {
         assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(1, 0, (short) 0, 0)));
         assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 1, (short) 0, 0)));
         assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 1, 0)));
+        assertEquals(-1, new ObjectId(0, 0, (short) 1, 0).compareTo(new ObjectId(0, 0, (short) -1, 0)));
         assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 1)));
         assertEquals(0, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
         assertEquals(1, new ObjectId(1, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
         assertEquals(1, new ObjectId(0, 1, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
         assertEquals(1, new ObjectId(0, 0, (short) 1, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
+        assertEquals(1, new ObjectId(0, 0, (short) -1, 0).compareTo(new ObjectId(0, 0, (short) 1, 0)));
         assertEquals(1, new ObjectId(0, 0, (short) 0, 1).compareTo(new ObjectId(0, 0, (short) 0, 0)));
     }
 
