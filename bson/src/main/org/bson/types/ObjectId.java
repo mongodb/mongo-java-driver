@@ -59,6 +59,10 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     private static final short PROCESS_IDENTIFIER;
     private static final AtomicInteger NEXT_COUNTER = new AtomicInteger(new SecureRandom().nextInt());
 
+    private static final char[] HEX_CHARS = new char[] {
+      '0', '1', '2', '3', '4', '5', '6', '7',
+      '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
     private final int timestamp;
     private final int machineIdentifier;
     private final short processIdentifier;
@@ -354,13 +358,13 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @return a string representation of the ObjectId in hexadecimal format
      */
     public String toHexString() {
-        StringBuilder buf = new StringBuilder(24);
-
-        for (final byte b : toByteArray()) {
-            buf.append(String.format("%02x", b & 0xff));
-        }
-
-        return buf.toString();
+      char[] chars = new char[24];
+      int i = 0;
+      for (byte b : toByteArray()) {
+        chars[i++] = HEX_CHARS[b >> 4 & 0xF];
+        chars[i++] = HEX_CHARS[b & 0xF];
+      }
+      return new String(chars);
     }
 
     @Override
