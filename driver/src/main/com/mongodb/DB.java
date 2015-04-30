@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.bson.codecs.Codec;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -355,7 +356,7 @@ public class DB {
      */
     public CommandResult command(final DBObject command, final ReadPreference readPreference, final DBEncoder encoder) {
         try {
-            return executeCommand(wrap(command, encoder), readPreference);
+            return executeCommand(wrap(command, encoder), getCommandReadPreference(command, readPreference));
         } catch (MongoCommandException ex) {
             return new CommandResult(ex.getResponse(), ex.getServerAddress());
         }
@@ -616,5 +617,44 @@ public class DB {
         } else {
             return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
         }
+    }
+
+    /**
+     * Determines the read preference that should be used for the given command.
+     *
+     * @param command             the {@link DBObject} representing the command
+     * @param requestedPreference the preference requested by the client.
+     * @return the read preference to use for the given command.  It will never return {@code null}.
+     * @see com.mongodb.ReadPreference
+     */
+    ReadPreference getCommandReadPreference(final DBObject command, final ReadPreference requestedPreference) {
+        String comString = command.keySet().iterator().next().toLowerCase();
+        boolean primaryRequired = !OBEDIENT_COMMANDS.contains(comString);
+
+        if (primaryRequired) {
+            return ReadPreference.primary();
+        } else if (requestedPreference == null) {
+            return ReadPreference.primary();
+        } else {
+            return requestedPreference;
+        }
+    }
+
+    private static final Set<String> OBEDIENT_COMMANDS = new HashSet<String>();
+
+    static {
+        OBEDIENT_COMMANDS.add("aggregate");
+        OBEDIENT_COMMANDS.add("collstats");
+        OBEDIENT_COMMANDS.add("count");
+        OBEDIENT_COMMANDS.add("dbstats");
+        OBEDIENT_COMMANDS.add("distinct");
+        OBEDIENT_COMMANDS.add("geonear");
+        OBEDIENT_COMMANDS.add("geosearch");
+        OBEDIENT_COMMANDS.add("geowalk");
+        OBEDIENT_COMMANDS.add("group");
+        OBEDIENT_COMMANDS.add("listcollections");
+        OBEDIENT_COMMANDS.add("listindexes");
+        OBEDIENT_COMMANDS.add("parallelcollectionscan");
+        OBEDIENT_COMMANDS.add("text");
     }
 }
