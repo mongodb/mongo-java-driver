@@ -2,7 +2,6 @@ current = "3.0.0"
 
 [[versions]]
   version = "3.1.0-SNAPSHOT"
-  status = "snapshot"
   docs = "./3.1"
   api = "http://api.mongodb.org/java/3.1"
 

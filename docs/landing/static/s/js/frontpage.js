@@ -30,7 +30,8 @@ function initializeJS() {
 
 var toggleDownload = function() {
   downloadLink = 'https://oss.sonatype.org/content/repositories/releases/org/mongodb/';
-  prefix = $('.distroPicker').prop('checked') ? "#maven" : "#gradle"
+  downloadSnapshotLink = 'https://oss.sonatype.org/content/repositories/snapshots/org/mongodb/';
+  prefix = $('.distroPicker').prop('checked') ? "#maven" : "#gradle";
   driverVersion = $('.driverPicker').selectpicker().val();
   releaseVersion = $('.releasePicker').selectpicker().val();
   activeDriver = $('.driverPicker option:selected').text();
@@ -51,7 +52,12 @@ var toggleDownload = function() {
 
   activeSample = prefix + "-" + releaseVersion + "-" + driverVersion;
   activeDescription = "#driver-" + driverVersion;
-  activeLink = downloadLink + activeDriver +'/' + activeVersion + '/';
+
+  if (activeVersion.indexOf("SNAPSHOT") > -1) {
+    activeLink = downloadSnapshotLink + activeDriver +'/' + activeVersion + '/';
+  } else {
+    activeLink = downloadLink + activeDriver +'/' + activeVersion + '/';
+  }
 
   $('.download').addClass('hidden');
   $(activeSample).removeClass('hidden');

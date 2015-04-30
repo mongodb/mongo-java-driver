@@ -69,8 +69,8 @@
           {{ $driverPos := $.Scratch.Get "qs.driverPos" }}
           {{ $versionPos := $.Scratch.Get "qs.versionPos" }}
           {{ if in $currentDriver.versions $currentVersion.version }}
+{{ if in $currentVersion.version "SNAPSHOT" }}
 <div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if or (ne $firstDriver true) (ne $currentVersion.status "current") }} hidden{{end}}">
-{{ if eq $currentVersion.status "snapshot" }}
 <pre><code>
 &lt;dependencies&gt;
     &lt;dependency&gt;
@@ -91,21 +91,8 @@
 &lt;/repositories&gt;
 
 </code></pre>
-{{ else }}
-<pre><code>
-&lt;dependencies&gt;
-    &lt;dependency&gt;
-        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
-        &lt;artifactId&gt;{{$currentDriver.name}}&lt;/artifactId&gt;
-        &lt;version&gt;{{$currentVersion.version}}&lt;/version&gt;
-    &lt;/dependency&gt;
-&lt;/dependencies&gt;
-
-</code></pre>
-{{ end }}
 </div>
 <div id="gradle-{{$versionPos}}-{{$driverPos}}" class="download hidden">
-{{ if eq $currentVersion.status "snapshot" }}
 <pre><code>
   dependencies {
       compile 'org.mongodb:{{$currentDriver.name}}:{{$currentVersion.version}}'
@@ -116,7 +103,21 @@
     }
   }
 </code></pre>
+</div>
 {{ else }}
+<div id="maven-{{$versionPos}}-{{$driverPos}}" class="download {{if or (ne $firstDriver true) (ne $currentVersion.status "current") }} hidden{{end}}">
+<pre><code>
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;artifactId&gt;{{$currentDriver.name}}&lt;/artifactId&gt;
+        &lt;version&gt;{{$currentVersion.version}}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</div>
+<div id="gradle-{{$versionPos}}-{{$driverPos}}" class="download hidden">
 <pre><code>
   dependencies {
     compile 'org.mongodb:{{$currentDriver.name}}:{{$currentVersion.version}}'
@@ -124,8 +125,8 @@
 
 
 </code></pre>
-{{ end }}
 </div>
+{{ end }}
          {{ if eq $currentVersion.status "current" }}
           {{ $.Scratch.Set "qs.firstDriver" false }}
          {{end}}
