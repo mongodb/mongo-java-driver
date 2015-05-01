@@ -733,7 +733,7 @@ public class JsonReader extends AbstractBsonReader {
             throw new JsonParseException("JSON reader expected a string but found '%s'.", valueToken.getValue());
         }
         verifyToken(")");
-        String[] patterns = {"yyyy-MM-dd", "yyyy-MM-dd'T'hh:mm:ssz", "yyyy-MM-dd'T'hh:mm:ss.SSSz"};
+        String[] patterns = {"yyyy-MM-dd", "yyyy-MM-dd'T'HH:mm:ssz", "yyyy-MM-dd'T'HH:mm:ss.SSSz"};
 
         SimpleDateFormat format = new SimpleDateFormat(patterns[0], Locale.ENGLISH);
         ParsePosition pos = new ParsePosition(0);

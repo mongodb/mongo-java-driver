@@ -119,6 +119,15 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testDateTimeISOString2() {
+        String json = "ISODate(\"2013-10-04T12:07:30.443Z\")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DATE_TIME, bsonReader.readBsonType());
+        assertEquals(1380888450443L, bsonReader.readDateTime());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
     public void testDateTimeStrict() {
         String json = "{ \"$date\" : 0 }";
         bsonReader = new JsonReader(json);
