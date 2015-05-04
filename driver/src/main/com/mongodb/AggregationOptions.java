@@ -17,6 +17,8 @@
 package com.mongodb;
 
 
+import com.mongodb.annotations.NotThreadSafe;
+
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -131,6 +133,7 @@ public class AggregationOptions {
      * @mongodb.server.release 2.2
      * @mongodb.driver.manual reference/command/aggregate/ aggregate
      */
+    @NotThreadSafe
     public static class Builder {
         private Integer batchSize;
         private Boolean allowDiskUse;

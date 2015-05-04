@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -45,6 +46,7 @@ public final class ParallelScanOptions {
     /**
      * A builder for the options
      */
+    @NotThreadSafe
     public static class Builder {
         private int numCursors = 1;
         private int batchSize;

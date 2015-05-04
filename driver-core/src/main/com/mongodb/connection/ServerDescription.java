@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 import java.text.DecimalFormat;
 import java.util.Collections;
@@ -79,6 +80,7 @@ public class ServerDescription {
     /**
      * A builder for creating ServerDescription.
      */
+    @NotThreadSafe
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;

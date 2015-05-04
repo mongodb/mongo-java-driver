@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
@@ -681,6 +682,7 @@ public class MongoClientOptions {
      *
      * @since 2.10.0
      */
+    @NotThreadSafe
     public static class Builder {
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();

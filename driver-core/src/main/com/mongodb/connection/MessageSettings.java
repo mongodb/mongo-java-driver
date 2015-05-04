@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 /**
  * The message settings
@@ -45,6 +46,7 @@ final class MessageSettings {
     /**
      * A MessageSettings builder.
      */
+    @NotThreadSafe
     public static final class Builder {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;

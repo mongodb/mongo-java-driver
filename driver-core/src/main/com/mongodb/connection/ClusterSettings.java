@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public final class ClusterSettings {
     /**
      * A builder for the cluster settings.
      */
+    @NotThreadSafe
     public static final class Builder {
         private List<ServerAddress> hosts;
         private ClusterConnectionMode mode = ClusterConnectionMode.MULTIPLE;

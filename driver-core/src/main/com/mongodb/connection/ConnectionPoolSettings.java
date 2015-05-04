@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +54,7 @@ public class ConnectionPoolSettings {
     /**
      * A builder for creating ConnectionPoolSettings.
      */
+    @NotThreadSafe
     public static class Builder {
         private int maxSize = 100;
         private int minSize;

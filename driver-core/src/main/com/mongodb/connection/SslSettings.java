@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoInternalException;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 /**
  * Settings for connecting to MongoDB via SSL.
@@ -42,6 +43,7 @@ public class SslSettings {
     /**
      * A builder for creating SSLSettings.
      */
+    @NotThreadSafe
     public static class Builder {
         private boolean enabled;
         private boolean invalidHostNameAllowed;

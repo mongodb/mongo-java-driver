@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.annotations.NotThreadSafe;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +43,7 @@ public class ServerSettings {
     /**
      * A builder for the settings.
      */
+    @NotThreadSafe
     public static class Builder {
         private long heartbeatFrequencyMS = 10000;
         private long minHeartbeatFrequencyMS = 500;
