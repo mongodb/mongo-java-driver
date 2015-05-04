@@ -24,6 +24,8 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
+import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.operation.AggregateOperation;
@@ -35,6 +37,7 @@ import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
+import com.mongodb.operation.MixedBulkWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
@@ -55,6 +58,7 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.executeAsync;
 import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public final class CollectionHelper<T> {
 
@@ -153,6 +157,20 @@ public final class CollectionHelper<T> {
             results.addAll(cursor.next());
         }
         return results;
+    }
+
+    public void updateOne(final Bson filter, final Bson update) {
+        updateOne(filter, update, false);
+    }
+
+    public void updateOne(final Bson filter, final Bson update, final boolean isUpsert) {
+        new MixedBulkWriteOperation(namespace,
+                                    singletonList(new UpdateRequest(filter.toBsonDocument(Document.class, registry),
+                                                                    update.toBsonDocument(Document.class, registry),
+                                                                    WriteRequest.Type.UPDATE)
+                                                  .upsert(isUpsert)),
+                                    true, WriteConcern.ACKNOWLEDGED)
+        .execute(getBinding());
     }
 
     public List<T> find(final Bson filter) {
