@@ -18,6 +18,8 @@ package com.mongodb;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
  * which can be used to create a MongoClient instance. The URI describes the hosts to
@@ -154,12 +156,17 @@ public class MongoClientURI {
      * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
      * which may be overridden by options specified in the URI string.
      *
+     * <p>
+     * The {@code MongoClientURI} takes ownership of the {@code MongoClientOptions.Builder} instance that is passed to this constructor,
+     * and may modify it.
+     * </p>
+     *
      * @param uri     the URI
-     * @param builder a Builder
+     * @param builder a non-null Builder, which may be modified within this constructor,
      * @since 2.11.0
      */
     public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
-        this.builder = builder;
+        this.builder = notNull("builder", builder);
         proxied = new ConnectionString(uri);
     }
 
