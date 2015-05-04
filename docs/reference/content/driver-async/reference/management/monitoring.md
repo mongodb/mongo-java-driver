@@ -26,4 +26,9 @@ the following properties:
 - `clusterId`: a client-generated unique identifier, required to ensure object name uniqueness in situations where an
 application has multiple `MongoClient` instances connected to the same MongoDB server deployment
 - `host`: the host name of the server
-- `port`: the port the server is listening on
+- `port`: the port on which the server is listening
+- `minSize`: the minimum allowed size of the pool, including idle and in-use members
+- `maxSize`: the maximum allowed size of the pool, including idle and in-use members
+- `size`: the current size of the pool, including idle and and in-use members
+- `waitQueueSize`: the current size of the wait queue for a connection from this pool
+- `checkedOutCount`: the current count of connections that are currently in use
