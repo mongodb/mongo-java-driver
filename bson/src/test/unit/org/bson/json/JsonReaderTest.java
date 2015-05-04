@@ -486,10 +486,32 @@ public class JsonReaderTest {
 
     @Test
     public void testString() {
-        String json = "\"abc\"";
+        String str = "abc";
+        String json = '"' + str + '"';
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.STRING, bsonReader.readBsonType());
-        assertEquals("abc", bsonReader.readString());
+        assertEquals(str, bsonReader.readString());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+
+        str = "\ud806\udc5c";
+        json = '"' + str + '"';
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.STRING, bsonReader.readBsonType());
+        assertEquals(str, bsonReader.readString());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+
+        str = "\\ud806\\udc5c";
+        json = '"' + str + '"';
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.STRING, bsonReader.readBsonType());
+        assertEquals("\ud806\udc5c", bsonReader.readString());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+
+        str = "꼢𑡜ᳫ鉠鮻罖᧭䆔瘉";
+        json = '"' + str + '"';
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.STRING, bsonReader.readBsonType());
+        assertEquals(str, bsonReader.readString());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
