@@ -34,11 +34,11 @@ class JsonBuffer {
     }
 
     public int read() {
-        return (position >= buffer.length()) ? -1 : buffer.codePointAt(position++);
+        return (position >= buffer.length()) ? -1 : buffer.charAt(position++);
     }
 
     public void unread(final int c) {
-        if (c != -1 && buffer.codePointAt(position - 1) == c) {
+        if (c != -1 && buffer.charAt(position - 1) == c) {
             position--;
         }
     }
