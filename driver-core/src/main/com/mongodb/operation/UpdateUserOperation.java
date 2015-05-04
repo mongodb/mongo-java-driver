@@ -39,8 +39,8 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static com.mongodb.operation.UserOperationHelper.asCollectionQueryDocument;
+import static com.mongodb.operation.UserOperationHelper.asCollectionUpdateDocument;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
 import static java.util.Arrays.asList;
 
@@ -124,7 +124,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     private UpdateRequest getUpdateRequest() {
-        return new UpdateRequest(asCollectionQueryDocument(credential), asCollectionDocument(credential, readOnly),
+        return new UpdateRequest(asCollectionQueryDocument(credential), asCollectionUpdateDocument(credential, readOnly),
                                  WriteRequest.Type.REPLACE);
     }
 

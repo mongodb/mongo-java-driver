@@ -38,7 +38,7 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.UserOperationHelper.asCollectionDocument;
+import static com.mongodb.operation.UserOperationHelper.asCollectionInsertDocument;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
 import static java.util.Arrays.asList;
 
@@ -122,7 +122,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     private InsertRequest getInsertRequest() {
-        return new InsertRequest(asCollectionDocument(credential, readOnly));
+        return new InsertRequest(asCollectionInsertDocument(credential, readOnly));
     }
 
     private MongoNamespace getNamespace() {
