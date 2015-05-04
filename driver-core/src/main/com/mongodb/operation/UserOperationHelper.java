@@ -20,8 +20,10 @@ import com.mongodb.MongoCredential;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.types.ObjectId;
 
 import java.util.Arrays;
 
@@ -48,12 +50,15 @@ final class UserOperationHelper {
         return new BsonDocument("user", new BsonString(credential.getUserName()));
     }
 
-    static BsonDocument asCollectionDocument(final MongoCredential credential, final boolean readOnly) {
-        BsonDocument document = asCollectionQueryDocument(credential);
-        document.put("pwd", new BsonString(createAuthenticationHash(credential.getUserName(),
-                                                                    credential.getPassword())));
-        document.put("readOnly", BsonBoolean.valueOf(readOnly));
-        return document;
+    static BsonDocument asCollectionUpdateDocument(final MongoCredential credential, final boolean readOnly) {
+        return asCollectionQueryDocument(credential)
+               .append("pwd", new BsonString(createAuthenticationHash(credential.getUserName(), credential.getPassword())))
+               .append("readOnly", BsonBoolean.valueOf(readOnly));
+    }
+
+    static BsonDocument asCollectionInsertDocument(final MongoCredential credential, final boolean readOnly) {
+        return asCollectionUpdateDocument(credential, readOnly)
+               .append("_id", new BsonObjectId(new ObjectId()));
     }
 
     private UserOperationHelper() {
