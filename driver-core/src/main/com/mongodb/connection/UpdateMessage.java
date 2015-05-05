@@ -65,7 +65,11 @@ class UpdateMessage extends RequestMessage {
         if (updateRequest.getType() == REPLACE) {
             addCollectibleDocument(updateRequest.getUpdate(), bsonOutput, new CollectibleDocumentFieldNameValidator());
         } else {
+            int bufferPosition = bsonOutput.getPosition();
             addDocument(updateRequest.getUpdate(), bsonOutput, new UpdateFieldNameValidator());
+            if (bsonOutput.getPosition() == bufferPosition + 5) {
+                throw new IllegalArgumentException("Invalid BSON document for an update");
+            }
         }
 
         if (updates.size() == 1) {

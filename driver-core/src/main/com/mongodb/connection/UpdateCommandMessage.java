@@ -80,7 +80,14 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             writer.writeName("q");
             getCodec(update.getFilter()).encode(writer, update.getFilter(), EncoderContext.builder().build());
             writer.writeName("u");
+
+            int bufferPosition = bsonOutput.getPosition();
             getCodec(update.getUpdate()).encode(writer, update.getUpdate(), EncoderContext.builder().build());
+
+            if (update.getType() == WriteRequest.Type.UPDATE && bsonOutput.getPosition() == bufferPosition + 8) {
+                throw new IllegalArgumentException("Invalid BSON document for an update");
+            }
+
             if (update.isMulti()) {
                 writer.writeBoolean("multi", update.isMulti());
             }
