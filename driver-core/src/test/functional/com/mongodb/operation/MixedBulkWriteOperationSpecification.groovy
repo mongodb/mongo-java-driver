@@ -18,11 +18,11 @@ package com.mongodb.operation
 
 import category.Slow
 import com.mongodb.ClusterFixture
+import com.mongodb.MongoBulkWriteException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.binding.SingleConnectionBinding
-import com.mongodb.MongoBulkWriteException
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
@@ -247,6 +247,40 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'when updating with an empty document, update should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), UPDATE)],
+                true, ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'when updating with an invalid document, update should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument('a', new BsonInt32(1)), UPDATE)],
+                true, ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
 
         where:
         ordered << [true, false]

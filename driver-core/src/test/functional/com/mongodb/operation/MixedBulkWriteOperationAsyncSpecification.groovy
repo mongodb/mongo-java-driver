@@ -253,6 +253,44 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         ordered << [true, false]
     }
 
+
+    def 'when updating with an empty document, update should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), UPDATE)],
+                true, ACKNOWLEDGED)
+
+        when:
+        executeAsync(op)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'when updating with an invalid document, update should throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument('a', new BsonInt32(1)), UPDATE)],
+                true, ACKNOWLEDGED)
+
+        when:
+        executeAsync(op)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.getCause() instanceof IllegalArgumentException
+
+        where:
+        ordered << [true, false]
+    }
+
+
     def 'when a document contains a key with an illegal character, replacing a document with it should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()

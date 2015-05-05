@@ -223,4 +223,19 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         ordered << [true, false]
     }
 
+
+    def 'when an update document is empty, update should throw IllegalArgumentException'() {
+        when:
+        new UpdateOperation(getNamespace(), ordered, ACKNOWLEDGED,
+                [new UpdateRequest(new BsonDocument(),
+                        new BsonDocument(), WriteRequest.Type.UPDATE)])
+                .execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        ordered << [true, false]
+    }
+
 }
