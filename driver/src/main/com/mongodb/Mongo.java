@@ -469,7 +469,9 @@ public class Mongo {
      */
     public void close() {
         cluster.close();
-        cursorCleaningService.shutdownNow();
+        if (cursorCleaningService != null) {
+            cursorCleaningService.shutdownNow();
+        }
     }
 
     /**
