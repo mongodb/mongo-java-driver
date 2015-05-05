@@ -115,6 +115,12 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    public void shouldCloseWithoutExceptionWhenCursorFinalizerIsDisabled() {
+        Mongo mongo = new MongoClient(new ServerAddress(), MongoClientOptions.builder().cursorFinalizerEnabled(false).build());
+        mongo.close();
+    }
+
+    @Test
     @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void shouldGetDB() throws UnknownHostException {
         Mongo mongo = new MongoClient();
