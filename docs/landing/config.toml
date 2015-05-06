@@ -1,6 +1,0 @@
-baseurl = "/mongo-java-driver/"
-languageCode = "en-us"
-title = "MongoDB Java Driver"
-canonifyurls = false
-
-githubRepo = "mongo-java-driver"
