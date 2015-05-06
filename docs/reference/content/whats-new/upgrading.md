@@ -11,9 +11,9 @@ title = "Upgrading to 3.0"
 # Upgrading to 3.0
 
 The 3.0 release is **incompatible** with the 2.x release series. However, where possible, the 2.13.0 driver has deprecated classes or 
-methods that have been removed in 3.0.0.
+methods that have been removed in 3.0.
 
-Before upgrading to 3.0.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.
+Before upgrading to 3.0, compile against 2.13.0 with deprecation warnings enabled and remove use of any deprecated methods or classes.
 
 ## System Requirements
 
