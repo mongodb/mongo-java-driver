@@ -22,10 +22,10 @@ The MongoDB Driver is the updated synchronous Java driver that includes the
 legacy API as well as a new generic MongoCollection interface that complies with
 a new cross-driver CRUD specification.
 
-{{< install artifactId="mongodb-driver" version="3.0.0" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.0.1" dependencies="true">}}
 
 
 ## Uber MongoDB Java Driver
 An uber jar that contains everything you need; the BSON library, the core library and the mongodb-driver.
 
-{{< install artifactId="mongo-java-driver" version="3.0.0" >}}
+{{< install artifactId="mongo-java-driver" version="3.0.1" >}}
