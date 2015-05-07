@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-def configDir = new File(rootDir, 'config')
-
-apply plugin: 'clirr'
+apply plugin: 'org.kordamp.gradle.clirr'
 
 archivesBaseName = 'mongodb-driver'
+def configDir = new File(rootDir, 'config')
 
 sourceSets {
     test.java.srcDirs += ['src/test/acceptance', 'src/examples']
@@ -36,9 +35,8 @@ dependencies {
 }
 
 clirr {
-    ignoreFailures = true
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongo-java-driver:2.12.0'
+    baseline 'org.mongodb:mongodb-driver:3.0.0'
 }
 
 tasks.withType(Checkstyle) {

@@ -15,8 +15,15 @@
  */
 
 apply plugin: 'osgi'
+apply plugin: 'org.kordamp.gradle.clirr'
 
+def configDir = new File(rootDir, 'config')
 archivesBaseName = 'mongodb-driver-core'
+
+clirr {
+    excludeFilter = new File("$configDir/clirr-exclude.yml")
+    baseline 'org.mongodb:mongodb-driver-core:3.0.0'
+}
 
 dependencies {
     compile project(':bson')
@@ -49,5 +56,5 @@ modifyPom {
         description 'The Java operations layer for the MongoDB Java Driver. Third parties can \' +\n' +
                     '                                                   \'wrap this layer to provide custom higher-level APIs'
         url 'http://www.mongodb.org'
-}
+    }
 }

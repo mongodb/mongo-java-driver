@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 
 apply plugin: 'osgi'
+apply plugin: 'org.kordamp.gradle.clirr'
 
+def configDir = new File(rootDir, 'config')
 archivesBaseName = 'mongodb-driver-async'
-
 
 sourceSets {
     test.java.srcDirs += 'src/examples'
@@ -28,6 +29,11 @@ dependencies {
     compile project(':driver-core')
 
     testCompile project(':driver-core').sourceSets.test.output
+}
+
+clirr {
+    excludeFilter = new File("$configDir/clirr-exclude.yml")
+    baseline 'org.mongodb:mongodb-driver-async:3.0.0'
 }
 
 tasks.withType(Checkstyle) {
