@@ -23,6 +23,7 @@ archivesBaseName = 'mongodb-driver-core'
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
     baseline 'org.mongodb:mongodb-driver-core:3.0.0'
+    failOnErrors = false
 }
 
 dependencies {
