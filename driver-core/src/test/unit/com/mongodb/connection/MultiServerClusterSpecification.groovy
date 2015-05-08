@@ -20,11 +20,13 @@ import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterListener
 import com.mongodb.selector.PrimaryServerSelector
+import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.SHARDED
+import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
@@ -257,6 +259,21 @@ class MultiServerClusterSpecification extends Specification {
 
         then:
         factory.getDescription(firstServer).state == CONNECTING
+        cluster.getDescription().all == factory.getDescriptions(firstServer, secondServer, thirdServer)
+    }
+
+    def 'should invalidate new primary if its electionId is less than the previously reported electionId'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+        factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], new ObjectId(new Date(1000)))
+
+        when:
+        factory.sendNotification(secondServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], new ObjectId(new Date(999)))
+        then:
+        factory.getDescription(firstServer).state == CONNECTED
+        factory.getDescription(firstServer).type == REPLICA_SET_PRIMARY
+        factory.getDescription(secondServer).state == CONNECTING
         cluster.getDescription().all == factory.getDescriptions(firstServer, secondServer, thirdServer)
     }
 

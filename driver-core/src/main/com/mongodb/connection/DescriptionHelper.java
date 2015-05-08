@@ -25,6 +25,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,8 +78,13 @@ final class DescriptionHelper {
                                                                         new BsonInt32(getDefaultMinWireVersion())).getValue())
                                 .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
                                                                         new BsonInt32(getDefaultMaxWireVersion())).getValue())
+                                .electionId(getElectionId(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
+    }
+
+    private static ObjectId getElectionId(final BsonDocument isMasterResult) {
+        return isMasterResult.containsKey("electionId") ? isMasterResult.getObjectId("electionId").getValue() : null;
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
