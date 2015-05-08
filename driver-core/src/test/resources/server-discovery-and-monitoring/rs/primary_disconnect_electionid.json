@@ -1,43 +1,6 @@
 {
-    "description": "New primary with greater electionId", 
+    "description": "Disconnected from primary, reject stale primary", 
     "phases": [
-        {
-            "outcome": {
-                "servers": {
-                    "a:27017": {
-                        "electionId": {
-                            "$oid": "000000000000000000000001"
-                        }, 
-                        "setName": "rs", 
-                        "type": "RSPrimary"
-                    }, 
-                    "b:27017": {
-                        "electionId": null, 
-                        "setName": null, 
-                        "type": "Unknown"
-                    }
-                }, 
-                "setName": "rs", 
-                "topologyType": "ReplicaSetWithPrimary"
-            }, 
-            "responses": [
-                [
-                    "a:27017", 
-                    {
-                        "electionId": {
-                            "$oid": "000000000000000000000001"
-                        }, 
-                        "hosts": [
-                            "a:27017", 
-                            "b:27017"
-                        ], 
-                        "ismaster": true, 
-                        "ok": 1, 
-                        "setName": "rs"
-                    }
-                ]
-            ]
-        }, 
         {
             "outcome": {
                 "servers": {
@@ -58,6 +21,21 @@
                 "topologyType": "ReplicaSetWithPrimary"
             }, 
             "responses": [
+                [
+                    "a:27017", 
+                    {
+                        "electionId": {
+                            "$oid": "000000000000000000000001"
+                        }, 
+                        "hosts": [
+                            "a:27017", 
+                            "b:27017"
+                        ], 
+                        "ismaster": true, 
+                        "ok": 1, 
+                        "setName": "rs"
+                    }
+                ], 
                 [
                     "b:27017", 
                     {
@@ -84,11 +62,70 @@
                         "type": "Unknown"
                     }, 
                     "b:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
+                    }
+                }, 
+                "setName": "rs", 
+                "topologyType": "ReplicaSetNoPrimary"
+            }, 
+            "responses": [
+                [
+                    "b:27017", 
+                    {}
+                ]
+            ]
+        }, 
+        {
+            "outcome": {
+                "servers": {
+                    "a:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
+                    }, 
+                    "b:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
+                    }
+                }, 
+                "setName": "rs", 
+                "topologyType": "ReplicaSetNoPrimary"
+            }, 
+            "responses": [
+                [
+                    "a:27017", 
+                    {
                         "electionId": {
-                            "$oid": "000000000000000000000002"
+                            "$oid": "000000000000000000000001"
+                        }, 
+                        "hosts": [
+                            "a:27017", 
+                            "b:27017"
+                        ], 
+                        "ismaster": true, 
+                        "ok": 1, 
+                        "setName": "rs"
+                    }
+                ]
+            ]
+        }, 
+        {
+            "outcome": {
+                "servers": {
+                    "a:27017": {
+                        "electionId": {
+                            "$oid": "000000000000000000000003"
                         }, 
                         "setName": "rs", 
                         "type": "RSPrimary"
+                    }, 
+                    "b:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
                     }
                 }, 
                 "setName": "rs", 
@@ -99,7 +136,7 @@
                     "a:27017", 
                     {
                         "electionId": {
-                            "$oid": "000000000000000000000001"
+                            "$oid": "000000000000000000000003"
                         }, 
                         "hosts": [
                             "a:27017", 
