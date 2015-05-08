@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import org.bson.types.ObjectId;
 
 import java.text.DecimalFormat;
 import java.util.Collections;
@@ -66,7 +67,9 @@ public class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
-    private Throwable exception;
+    private final ObjectId electionId;
+
+    private final Throwable exception;
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -97,6 +100,7 @@ public class ServerDescription {
         private ServerVersion version = new ServerVersion();
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
+        private ObjectId electionId;
         private Throwable exception;
 
         /**
@@ -268,6 +272,17 @@ public class ServerDescription {
          */
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
+            return this;
+        }
+
+        /**
+         * Sets the electionId reported by this server.
+         *
+         * @param electionId the electionId
+         * @return this
+         */
+        public Builder electionId(final ObjectId electionId) {
+            this.electionId = electionId;
             return this;
         }
 
@@ -471,6 +486,15 @@ public class ServerDescription {
     }
 
     /**
+     * The replica set electionid reported by this MongoDB server.
+     *
+     * @return the electionId, which may be null
+     */
+    public ObjectId getElectionId() {
+        return electionId;
+    }
+
+    /**
      * Returns true if the server has the given tags.  A server of either type {@code ServerType.STANDALONE} or {@code
      * ServerType.SHARD_ROUTER} is considered to have all tags, so this method will always return true for instances of either of those
      * types.
@@ -622,6 +646,9 @@ public class ServerDescription {
         if (maxWireVersion != that.maxWireVersion) {
             return false;
         }
+        if (electionId != null ? !electionId.equals(that.electionId) : that.electionId != null) {
+            return false;
+        }
 
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
@@ -650,6 +677,7 @@ public class ServerDescription {
         result = 31 * result + maxDocumentSize;
         result = 31 * result + tagSet.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
+        result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
@@ -672,6 +700,7 @@ public class ServerDescription {
                   + ", version=" + version
                   + ", minWireVersion=" + minWireVersion
                   + ", maxWireVersion=" + maxWireVersion
+                  + ", electionId=" + electionId
                   + ", maxDocumentSize=" + maxDocumentSize
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
                   : "")
@@ -742,6 +771,7 @@ public class ServerDescription {
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
+        electionId = builder.electionId;
         exception = builder.exception;
     }
 }

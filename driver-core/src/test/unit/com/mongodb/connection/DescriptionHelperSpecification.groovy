@@ -19,6 +19,7 @@ package com.mongodb.connection
 import com.mongodb.ServerAddress
 import com.mongodb.Tag
 import com.mongodb.TagSet
+import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -172,6 +173,7 @@ class DescriptionHelperSpecification extends Specification {
 
     def 'server description should reflect ismaster result from primary'() {
         expect:
+        ObjectId electionId = new ObjectId();
         createServerDescription(serverAddress,
                                 parse('{' +
                                       '"setName" : "replset",' +
@@ -194,6 +196,7 @@ class DescriptionHelperSpecification extends Specification {
                                       '"localTime" : ISODate("2015-03-04T23:24:18.452Z"),' +
                                       '"maxWireVersion" : 3,' +
                                       '"minWireVersion" : 0,' +
+                                      '"electionId" : {$oid : "' + electionId.toHexString() + '" },' +
                                       'tags : { "dc" : "east", "use" : "production" }' +
                                       '"ok" : 1' +
                                       '}'), serverVersion, roundTripTime) ==
@@ -204,6 +207,7 @@ class DescriptionHelperSpecification extends Specification {
                          .version(serverVersion)
                          .maxWireVersion(3)
                          .maxDocumentSize(16777216)
+                         .electionId(electionId)
                          .type(ServerType.REPLICA_SET_PRIMARY)
                          .setName('replset')
                          .primary('localhost:27017')
