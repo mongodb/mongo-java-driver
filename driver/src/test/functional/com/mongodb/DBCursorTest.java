@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
@@ -342,12 +343,13 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testShowDiskLoc() {
+        String fieldName = serverVersionAtLeast(Arrays.asList(3, 1, 0)) ? "$recordId" : "$diskLoc";
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                           .addSpecial("$showDiskLoc", true);
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
-                Assert.assertNotNull(next.toString(), next.get("$diskLoc"));
+                Assert.assertNotNull(next.toString(), next.get(fieldName));
             }
         } finally {
             cursor.close();
@@ -357,7 +359,7 @@ public class DBCursorTest extends DatabaseTestCase {
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
-                Assert.assertNotNull(next.toString(), next.get("$diskLoc"));
+                Assert.assertNotNull(next.toString(), next.get(fieldName));
             }
         } finally {
             cursor.close();
