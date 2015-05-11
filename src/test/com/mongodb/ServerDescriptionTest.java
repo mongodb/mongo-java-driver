@@ -17,6 +17,7 @@
 package com.mongodb;
 
 
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -85,6 +86,7 @@ public class ServerDescriptionTest {
         assertEquals(new ServerVersion(), serverDescription.getVersion());
         assertEquals(0, serverDescription.getMinWireVersion());
         assertEquals(0, serverDescription.getMaxWireVersion());
+        assertNull(serverDescription.getElectionId());
         assertNull(serverDescription.getException());
     }
 
@@ -112,6 +114,7 @@ public class ServerDescriptionTest {
                                               .version(new ServerVersion(asList(2, 4, 1)))
                                               .minWireVersion(1)
                                               .maxWireVersion(2)
+                                              .electionId(new ObjectId("123412341234123412341234"))
                                               .exception(exception)
                                               .build();
 
@@ -144,6 +147,7 @@ public class ServerDescriptionTest {
         assertEquals(new ServerVersion(asList(2, 4, 1)), serverDescription.getVersion());
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
+        assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
         assertEquals(exception, serverDescription.getException());
     }
 
@@ -167,6 +171,7 @@ public class ServerDescriptionTest {
                                             .version(new ServerVersion(asList(2, 4, 1)))
                                             .minWireVersion(1)
                                             .maxWireVersion(2)
+                                            .electionId(new ObjectId())
                                             .exception(new IllegalArgumentException("This is illegal"));
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());

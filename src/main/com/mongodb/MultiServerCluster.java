@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.types.ObjectId;
+
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,6 +44,7 @@ final class MultiServerCluster extends BaseCluster {
 
     private ClusterType clusterType;
     private String replicaSetName;
+    private ObjectId maxElectionId;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
@@ -117,6 +120,7 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
+        boolean shouldUpdateDescription = true;
         synchronized (this) {
             ServerDescription newDescription = event.getNewValue();
             ServerTuple serverTuple = addressToServerTupleMap.get(newDescription.getAddress());
@@ -132,36 +136,40 @@ final class MultiServerCluster extends BaseCluster {
 
                 switch (clusterType) {
                     case ReplicaSet:
-                        handleReplicaSetMemberChanged(newDescription);
+                        shouldUpdateDescription = handleReplicaSetMemberChanged(newDescription);
                         break;
                     case Sharded:
-                        handleShardRouterChanged(newDescription);
+                        shouldUpdateDescription = handleShardRouterChanged(newDescription);
                         break;
                     case StandAlone:
-                        handleStandAloneChanged(newDescription);
+                        shouldUpdateDescription = handleStandAloneChanged(newDescription);
                         break;
                     default:
                         break;
                 }
             }
 
-            serverTuple.description = newDescription;
-            updateDescription();
+            if (shouldUpdateDescription) {
+                serverTuple.description = newDescription;
+                updateDescription();
+            }
         }
-        fireChangeEvent();
+        if (shouldUpdateDescription) {
+            fireChangeEvent();
+        }
     }
 
-    private void handleReplicaSetMemberChanged(final ServerDescription newDescription) {
+    private boolean handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
             LOGGER.severe(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
                                  newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
-            return;
+            return true;
         }
 
         if (newDescription.getType() == ReplicaSetGhost) {
             LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
-            return;
+            return true;
         }
 
         if (replicaSetName == null) {
@@ -174,17 +182,27 @@ final class MultiServerCluster extends BaseCluster {
                                  replicaSetName, newDescription.getSetName(), newDescription.getAddress()
                                 ));
             removeServer(newDescription.getAddress());
-            return;
+            return true;
         }
 
         ensureServers(newDescription);
 
         if (newDescription.isPrimary()) {
+            if (newDescription.getElectionId() != null) {
+                if (maxElectionId != null && maxElectionId.compareTo(newDescription.getElectionId()) > 0) {
+                    addressToServerTupleMap.get(newDescription.getAddress()).server.invalidate();
+                    return false;
+                }
+
+                maxElectionId = newDescription.getElectionId();
+            }
+
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
                 LOGGER.info(format("Discovered replica set primary %s", newDescription.getAddress()));
             }
             invalidateOldPrimaries(newDescription.getAddress());
         }
+        return true;
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {
@@ -192,21 +210,23 @@ final class MultiServerCluster extends BaseCluster {
         return serverTuple == null || !serverTuple.description.isPrimary();
     }
 
-    private void handleShardRouterChanged(final ServerDescription newDescription) {
+    private boolean handleShardRouterChanged(final ServerDescription newDescription) {
         if (newDescription.getClusterType() != Sharded) {
             LOGGER.severe(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
                                  ShardRouter, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
+        return true;
     }
 
-    private void handleStandAloneChanged(final ServerDescription newDescription) {
+    private boolean handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
             LOGGER.severe(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
                                  ServerType.StandAlone, newDescription.getAddress()));
             clusterType = Unknown;
             removeServer(newDescription.getAddress());
         }
+        return true;
     }
 
     private void addServer(final ServerAddress serverAddress) {

@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.types.ObjectId;
 import org.bson.util.annotations.Immutable;
 
 import java.text.DecimalFormat;
@@ -71,6 +72,8 @@ class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
+    private final ObjectId electionId;
+
     private Throwable exception;
 
     static class Builder {
@@ -91,6 +94,7 @@ class ServerDescription {
         private ServerVersion version = new ServerVersion();
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
+        private ObjectId electionId;
         private Throwable exception;
 
         // CHECKSTYLE:OFF
@@ -177,6 +181,17 @@ class ServerDescription {
 
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
+            return this;
+        }
+
+        /**
+         * Sets the electionId reported by this server.
+         *
+         * @param electionId the electionId
+         * @return this
+         */
+        public Builder electionId(final ObjectId electionId) {
+            this.electionId = electionId;
             return this;
         }
 
@@ -303,6 +318,15 @@ class ServerDescription {
     }
 
     /**
+     * The replica set electionid reported by this MongoDB server.
+     *
+     * @return the electionId, which may be null
+     */
+    public ObjectId getElectionId() {
+        return electionId;
+    }
+
+    /**
      * Returns true if the server has the given tags.  A server of either type {@code ServerType.StandAlone} or
      * {@code ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
      * those types.
@@ -420,6 +444,9 @@ class ServerDescription {
         if (maxWireVersion != that.maxWireVersion) {
             return false;
         }
+        if (electionId != null ? !electionId.equals(that.electionId) : that.electionId != null) {
+            return false;
+        }
 
         // Compare class equality and message as exceptions rarely override equals
         Class thisExceptionClass = exception != null ? exception.getClass() : null;
@@ -456,6 +483,7 @@ class ServerDescription {
         result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
+        result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
         result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
         result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
@@ -473,6 +501,7 @@ class ServerDescription {
                + ", maxDocumentSize=" + maxDocumentSize
                + ", maxMessageSize=" + maxMessageSize
                + ", maxWriteBatchSize=" + maxWriteBatchSize
+               + ", electionId=" + electionId
                + ", tagSet=" + tagSet
                + ", setName='" + setName + '\''
                + ", averageLatencyNanos=" + averageLatencyNanos
@@ -534,6 +563,7 @@ class ServerDescription {
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
+        electionId = builder.electionId;
         exception = builder.exception;
     }
 }

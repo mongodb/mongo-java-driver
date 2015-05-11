@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import static com.mongodb.ClusterConnectionMode.Multiple
@@ -259,6 +260,22 @@ class MultiServerClusterSpecification extends Specification {
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
+    def 'should invalidate new primary if its electionId is less than the previously reported electionId'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], new ObjectId(new Date(1000)))
+
+        when:
+        sendNotification(secondServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], new ObjectId(new Date(999)))
+
+        then:
+        getServerDescription(firstServer).state == Connected
+        getServerDescription(firstServer).type == ReplicaSetPrimary
+        getServerDescription(secondServer).state == Connecting
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
+    }
+
     def 'should remove a server when a server in the seed list is not in hosts list, it should be removed'() {
         given:
         def serverAddressAlias = new ServerAddress('alternate')
@@ -465,11 +482,17 @@ class MultiServerClusterSpecification extends Specification {
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives,
                          String setName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName, null)
+                                                                  .build())
+    }
+
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, ObjectId electionId) {
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, 'test', electionId)
+                                                                  .build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null, null).build())
     }
 
     def getClusterDescription(MultiServerCluster cluster) {
@@ -485,7 +508,7 @@ class MultiServerClusterSpecification extends Specification {
     }
 
     def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives, boolean ok,
-                   String setName) {
+                   String setName, ObjectId electionId) {
         ServerDescription.builder()
                          .address(serverAddress)
                          .type(serverType)
@@ -494,5 +517,6 @@ class MultiServerClusterSpecification extends Specification {
                          .hosts(hosts*.toString() as Set)
                          .passives(passives*.toString() as Set)
                          .setName(setName)
+                         .electionId(electionId)
     }
 }
