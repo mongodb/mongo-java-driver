@@ -257,6 +257,7 @@ class ServerMonitor {
                                 .setName(commandResult.getString("setName"))
                                 .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
+                                .electionId(commandResult.containsKey("electionId") ? commandResult.getObjectId("electionId") : null)
                                 .averageLatency(averageLatencyNanos, TimeUnit.NANOSECONDS)
                                 .ok(commandResult.ok()).build();
     }

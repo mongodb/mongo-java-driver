@@ -1,4 +1,5 @@
 package com.mongodb
+
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
@@ -43,6 +44,19 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
         then:
         newDescription.maxWriteBatchSize == expected
+    }
+
+    def 'should set electionId'() {
+        given:
+        initializeServerMonitor(new ServerAddress())
+        CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
+        def expected = commandResult.get('electionId')
+
+        when:
+        latch.await()
+
+        then:
+        newDescription.electionId == expected
     }
 
     @IgnoreIf( { serverIsAtLeastVersion(2.6) } )
