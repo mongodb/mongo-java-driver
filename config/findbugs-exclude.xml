@@ -19,6 +19,12 @@
             <Bug pattern="RV_RETURN_VALUE_IGNORED"/>  <!-- Deliberately ignoring return value of CountDownLatch.await -->
         </Class>
     </Match>
+
+    <Match>
+        <Class name="com.mongodb.gridfs.GridFS" />
+        <Method name="createFile" params="java.io.File" /> <!-- The underlying call to GridFSInputFile closes the file -->
+        <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
+    </Match>
     <Match>
         <Class name="com.mongodb.DocumentCodec">
             <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
