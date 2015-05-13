@@ -28,9 +28,13 @@ import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertArrayEquals;
@@ -112,6 +116,20 @@ public class GridFSTest extends DatabaseTestCase {
         }
         String s = buf.toString();
         testOutStream(s);
+    }
+
+    @Test
+    public void testCreateFileWithFile() throws Exception {
+        URI fileURI = GridFSTest.class.getResource("/GridFS/GridFSTestFile.txt").toURI();
+        GridFSInputFile in = gridFS.createFile(new File(fileURI));
+        in.save();
+
+        GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        out.writeTo(bout);
+        String outString = new String(bout.toByteArray(), defaultCharset());
+
+        assertEquals(new String(Files.readAllBytes(Paths.get(fileURI))), outString);
     }
 
     @Test
