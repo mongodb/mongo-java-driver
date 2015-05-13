@@ -33,8 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.Scanner;
 
 import static java.nio.charset.Charset.defaultCharset;
 import static org.junit.Assert.assertArrayEquals;
@@ -124,12 +123,14 @@ public class GridFSTest extends DatabaseTestCase {
         GridFSInputFile in = gridFS.createFile(new File(fileURI));
         in.save();
 
+        String expectedString = new Scanner(new File(fileURI)).useDelimiter("\\Z").next();
+
         GridFSDBFile out = gridFS.findOne(new BasicDBObject("_id", in.getId()));
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         out.writeTo(bout);
-        String outString = new String(bout.toByteArray(), defaultCharset());
+        String outString = new String(bout.toByteArray(), defaultCharset()).trim();
 
-        assertEquals(new String(Files.readAllBytes(Paths.get(fileURI))), outString);
+        assertEquals(expectedString, outString);
     }
 
     @Test
