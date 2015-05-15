@@ -139,6 +139,7 @@ class FindIterableSpecification extends Specification {
         findIterable.filter(new Document('filter', 1))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .modifiers(new Document('modifier', 1))
+                .batchSize(100)
                 .into([]) { result, t -> }
 
         def operation = executor.getReadOperation() as FindOperation<Document>
@@ -150,6 +151,7 @@ class FindIterableSpecification extends Specification {
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .batchSize(100)
         )
     }
 
