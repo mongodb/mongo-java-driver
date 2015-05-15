@@ -121,6 +121,34 @@ class MultiServerClusterSpecification extends Specification {
         cluster.getDescription().all == factory.getDescriptions(firstServer, secondServer, thirdServer)
     }
 
+    def 'should remove a secondary server whose reported host name does not match the address connected to'() {
+        given:
+        def seedListAddress = new ServerAddress('127.0.0.1:27017')
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([seedListAddress]).build(), factory,
+                                             CLUSTER_LISTENER);
+
+        when:
+        factory.sendNotification(seedListAddress, REPLICA_SET_SECONDARY, [firstServer, secondServer], firstServer)
+
+        then:
+        cluster.getCurrentDescription().all == factory.getDescriptions(firstServer, secondServer)
+    }
+
+    def 'should remove a primary server whose reported host name does not match the address connected to'() {
+        given:
+        def seedListAddress = new ServerAddress('127.0.0.1:27017')
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([seedListAddress]).build(), factory,
+                                             CLUSTER_LISTENER);
+
+        when:
+        factory.sendNotification(seedListAddress, REPLICA_SET_PRIMARY, [firstServer, secondServer], firstServer)
+
+        then:
+        cluster.getCurrentDescription().all == factory.getDescriptions(firstServer, secondServer)
+    }
+
     def 'should remove a server when it no longer appears in hosts reported by the primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID,

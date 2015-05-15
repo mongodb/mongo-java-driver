@@ -67,6 +67,7 @@ final class DescriptionHelper {
                                 .version(serverVersion)
                                 .address(serverAddress)
                                 .type(getServerType(isMasterResult))
+                                .canonicalAddress(isMasterResult.containsKey("me") ? isMasterResult.getString("me").getValue() : null)
                                 .hosts(listToSet(isMasterResult.getArray("hosts", new BsonArray())))
                                 .passives(listToSet(isMasterResult.getArray("passives", new BsonArray())))
                                 .arbiters(listToSet(isMasterResult.getArray("arbiters", new BsonArray())))
