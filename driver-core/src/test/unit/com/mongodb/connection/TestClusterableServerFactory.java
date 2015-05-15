@@ -56,31 +56,55 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
+                                 final ServerAddress trueAddress) {
+        sendNotification(serverAddress, serverType, hosts, "test", trueAddress);
+    }
+
+    public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final ObjectId electionId) {
         sendNotification(serverAddress, serverType, hosts, "test", electionId);
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final List<ServerAddress> passives) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, "test", null).build());
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress,
+                                                             serverType,
+                                                             hosts,
+                                                             passives,
+                                                             true,
+                                                             "test",
+                                                             null,
+                                                             null).build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName) {
-        sendNotification(serverAddress, serverType, hosts, setName, null);
+        sendNotification(serverAddress, serverType, hosts, setName, (ObjectId) null);
+    }
+
+    public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
+                                 final String setName, final ServerAddress trueAddress) {
+        sendNotification(serverAddress, serverType, hosts, setName, null, trueAddress);
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName, final ObjectId electionId) {
         getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
-                                                             true, setName, electionId)
+                                                             true, setName, electionId, null)
+                                                  .build());
+    }
+
+    public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
+                                 final String setName, final ObjectId electionId, final ServerAddress trueAddress) {
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+                                                             true, setName, electionId, trueAddress)
                                                   .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final boolean ok) {
         getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
-                                                             ok, null, null)
+                                                             ok, null, null, null)
                                                   .build());
     }
 
@@ -98,7 +122,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
 
     private ServerDescription.Builder getBuilder(final ServerAddress serverAddress, final ServerType serverType,
                                                  final List<ServerAddress> hosts, final List<ServerAddress> passives, final boolean ok,
-                                                 final String setName, final ObjectId electionId) {
+                                                 final String setName, final ObjectId electionId, final ServerAddress trueAddress) {
         Set<String> hostsSet = new HashSet<String>();
         for (ServerAddress cur : hosts) {
             hostsSet.add(cur.toString());
@@ -113,6 +137,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .type(serverType)
                                 .ok(ok)
                                 .state(CONNECTED)
+                                .canonicalAddress(trueAddress == null ? serverAddress.toString() : trueAddress.toString())
                                 .hosts(hostsSet)
                                 .passives(passivesSet)
                                 .setName(setName)
