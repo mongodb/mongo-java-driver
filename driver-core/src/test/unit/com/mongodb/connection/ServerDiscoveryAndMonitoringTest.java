@@ -44,6 +44,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
 @RunWith(Parameterized.class)
@@ -80,6 +81,10 @@ public class ServerDiscoveryAndMonitoringTest {
     }
 
     private void assertServers(final BsonDocument servers) {
+        if (servers.size() != cluster.getCurrentDescription().getAll().size()) {
+            fail("Cluster description contains servers that are not part of the expected outcome");
+        }
+
         for (String serverName : servers.keySet()) {
             assertServer(serverName, servers.getDocument(serverName));
         }
