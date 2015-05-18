@@ -278,4 +278,19 @@ class ClusterSettingsSpecification extends Specification {
                        .maxWaitQueueSize(100)
                        .build().hashCode() != ClusterSettings.builder().hosts(hosts).build().hashCode()
     }
+
+    def 'should replace ServerAddress subclass instances with ServerAddress'() {
+        when:
+        def settings = ClusterSettings.builder().hosts([new ServerAddressSubclass('server1'),
+                                                        new ServerAddressSubclass('server2')]).build();
+
+        then:
+        settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
+    }
+
+    static class ServerAddressSubclass extends ServerAddress {
+        ServerAddressSubclass(final String host) {
+            super(host)
+        }
+    }
 }

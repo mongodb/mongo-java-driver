@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -94,7 +95,11 @@ public final class ClusterSettings {
             if (hosts.isEmpty()) {
                 throw new IllegalArgumentException("hosts list may not be empty");
             }
-            this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(new LinkedHashSet<ServerAddress>(hosts)));
+            Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
+            for (ServerAddress host : hosts) {
+                hostsSet.add(new ServerAddress(host.getHost(), host.getPort()));
+            }
+            this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(hostsSet));
             return this;
         }
 
