@@ -37,6 +37,7 @@ import java.util.Map;
  *     <li>{@link org.bson.codecs.MaxKeyCodec}</li>
  *     <li>{@link org.bson.codecs.CodeCodec}</li>
  *     <li>{@link org.bson.codecs.ObjectIdCodec}</li>
+ *     <li>{@link org.bson.codecs.CharacterCodec}</li>
  *     <li>{@link org.bson.codecs.StringCodec}</li>
  *     <li>{@link org.bson.codecs.SymbolCodec}</li>
  *     <li>{@link org.bson.codecs.UuidCodec}</li>
@@ -78,6 +79,7 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new MaxKeyCodec());
         addCodec(new CodeCodec());
         addCodec(new ObjectIdCodec());
+        addCodec(new CharacterCodec());
         addCodec(new StringCodec());
         addCodec(new SymbolCodec());
         addCodec(new UuidCodec());
