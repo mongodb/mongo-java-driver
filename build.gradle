@@ -28,7 +28,7 @@ buildscript {
         mavenLocal()
     }
     dependencies {
-        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.1'
+        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.2'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
         classpath 'com.bmuschko:gradle-nexus-plugin:2.2'
     }
