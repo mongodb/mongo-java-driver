@@ -23,7 +23,6 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.singletonList;
 
 /**
  * Settings for the cluster.
@@ -86,7 +86,7 @@ public final class ClusterSettings {
         }
 
         /**
-         * Sets the hosts for the cluster. And duplicate server addresses are removed from the list.
+         * Sets the hosts for the cluster. Any duplicate server addresses are removed from the list.
          *
          * @param hosts the seed list of hosts
          * @return this
@@ -183,7 +183,7 @@ public final class ClusterSettings {
         public Builder applyConnectionString(final ConnectionString connectionString) {
             if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
-                .hosts(Arrays.asList(new ServerAddress(connectionString.getHosts().get(0))));
+                .hosts(singletonList(new ServerAddress(connectionString.getHosts().get(0))));
             } else {
                 List<ServerAddress> seedList = new ArrayList<ServerAddress>();
                 for (final String cur : connectionString.getHosts()) {
