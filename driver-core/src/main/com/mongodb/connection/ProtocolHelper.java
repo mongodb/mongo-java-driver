@@ -58,7 +58,9 @@ final class ProtocolHelper {
 
     static boolean isCommandOk(final BsonDocument response) {
         BsonValue okValue = response.get("ok");
-        if (okValue.isBoolean()) {
+        if (okValue == null) {
+            return false;
+        } else if (okValue.isBoolean()) {
             return okValue.asBoolean().getValue();
         } else if (okValue.isNumber()) {
             return okValue.asNumber().intValue() == 1;

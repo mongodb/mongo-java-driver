@@ -85,18 +85,10 @@ public class MongoCommandException extends MongoServerException {
     }
 
     private static int extractErrorCode(final BsonDocument response) {
-        if (response.containsKey("code")) {
-            return ((BsonInt32) response.get("code")).getValue();
-        } else {
-            return -1;
-        }
+        return response.getNumber("code", new BsonInt32(-1)).intValue();
     }
 
     private static String extractErrorMessage(final BsonDocument response) {
-        if (response.containsKey("errmsg")) {
-            return ((BsonString) response.get("errmsg")).getValue();
-        } else {
-            return null;
-        }
+        return response.getString("errmsg", new BsonString("")).getValue();
     }
 }
