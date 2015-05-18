@@ -224,7 +224,7 @@ task docs(type: Javadoc) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '2.4'
 }
 
 gradle.buildFinished { BuildResult result ->
