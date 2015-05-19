@@ -20,6 +20,7 @@ import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.client.model.Updates.addEachToSet
 import static com.mongodb.client.model.Updates.addToSet
 import static com.mongodb.client.model.Updates.combine
 import static com.mongodb.client.model.Updates.popFirst
@@ -30,7 +31,6 @@ import static com.mongodb.client.model.Updates.pullByFilter
 import static com.mongodb.client.model.Updates.push
 import static com.mongodb.client.model.Updates.pushEach
 import static com.mongodb.client.model.Updates.unset
-import static org.bson.BsonDocument.parse
 
 class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecification {
     def a = new Document('_id', 1).append('x', [1, 2, 3])
@@ -70,7 +70,7 @@ class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecificati
         find() == [new Document('_id', 1).append('x', [1, 2, 3, 4])]
 
         when:
-        updateOne(addToSet('x', 4, 5, 6))
+        updateOne(addEachToSet('x', [4, 5, 6]))
 
         then:
         find() == [new Document('_id', 1).append('x', [1, 2, 3, 4, 5, 6])]
@@ -129,7 +129,7 @@ class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecificati
 
     def 'pullByFilter'() {
         when:
-        updateOne(pullByFilter('x', parse('{$gt : 1}')))
+        updateOne(pullByFilter(Filters.gt('x', 1)))
 
         then:
         find() == [new Document('_id', 1).append('x', [1])]

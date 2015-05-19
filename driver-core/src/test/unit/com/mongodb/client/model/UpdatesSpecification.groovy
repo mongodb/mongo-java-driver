@@ -20,6 +20,7 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.conversions.Bson
 import spock.lang.Specification
 
+import static com.mongodb.client.model.Updates.addEachToSet
 import static com.mongodb.client.model.Updates.addToSet
 import static com.mongodb.client.model.Updates.bitwiseAnd
 import static com.mongodb.client.model.Updates.bitwiseOr
@@ -103,8 +104,7 @@ class UpdatesSpecification extends Specification {
     def 'should render $addToSet'() {
         expect:
         toBson(addToSet('x', 1)) == parse('{$addToSet : { x : 1} }')
-        toBson(addToSet('x', 1, 2, 3)) == parse('{$addToSet : { x : { $each : [1, 2, 3] } } }')
-        toBson(addToSet('x', [1, 2, 3])) == parse('{$addToSet : { x : { $each : [1, 2, 3] } } }')
+        toBson(addEachToSet('x', [1, 2, 3])) == parse('{$addToSet : { x : { $each : [1, 2, 3] } } }')
     }
 
     def 'should render $push'() {
@@ -123,7 +123,7 @@ class UpdatesSpecification extends Specification {
     def 'should render "$pull'() {
         expect:
         toBson(pull('x', 1)) == parse('{$pull : { x : 1} }')
-        toBson(pullByFilter('x', parse('{ $gte : 5 }'))) == parse('{$pull : { x : { $gte : 5 }} }')
+        toBson(pullByFilter(Filters.gte('x', 5))) == parse('{$pull : { x : { $gte : 5 }} }')
     }
 
     def 'should render "$pullAll'() {

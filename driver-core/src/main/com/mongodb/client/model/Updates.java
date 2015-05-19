@@ -23,7 +23,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -195,25 +194,17 @@ public final class Updates {
     }
 
     /**
-     * Creates an update that adds each of the given values to the array value of the field with the given name, unless the value is
+     * Creates an update that adds the given value to the array value of the field with the given name, unless the value is
      * already present, in which case it does nothing
      *
      * @param fieldName the non-null field name
      * @param value     the value
-     * @param additionalValues additional values to add to the set
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
-    public static <TItem> Bson addToSet(final String fieldName, final TItem value, final TItem... additionalValues) {
-        if (additionalValues.length == 0) {
-            return new SimpleUpdate<TItem>(fieldName, value, "$addToSet");
-        } else {
-            List<TItem> values = new ArrayList<TItem>(additionalValues.length + 1);
-            values.add(value);
-            values.addAll(asList(additionalValues));
-            return addToSet(fieldName, values);
-        }
+    public static <TItem> Bson addToSet(final String fieldName, final TItem value) {
+        return new SimpleUpdate<TItem>(fieldName, value, "$addToSet");
     }
 
     /**
@@ -226,7 +217,7 @@ public final class Updates {
      * @return the update
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
-    public static <TItem> Bson addToSet(final String fieldName, final List<TItem> values) {
+    public static <TItem> Bson addEachToSet(final String fieldName, final List<TItem> values) {
         return new WithEachUpdate<TItem>(fieldName, values, "$addToSet");
     }
 
@@ -244,8 +235,21 @@ public final class Updates {
     }
 
     /**
+     * Creates an update that adds each of the given values to the array value of the field with the given name.
+     *
+     * @param fieldName the non-null field name
+     * @param values    the values
+     * @param <TItem>   the value type
+     * @return the update
+     * @mongodb.driver.manual reference/operator/update/push/ $push
+     */
+    public static <TItem> Bson pushEach(final String fieldName, final List<TItem> values) {
+        return new PushUpdate<TItem>(fieldName, values, new PushOptions());
+    }
+
+    /**
      * Creates an update that adds each of the given values to the array value of the field with the given name, applying the given
-     * options for position the pushed values, and then slicing and/or sorting the array.
+     * options for positioning the pushed values, and then slicing and/or sorting the array.
      *
      * @param fieldName the non-null field name
      * @param values    the values
@@ -272,15 +276,28 @@ public final class Updates {
     }
 
     /**
-     * Creates an update that removes from the array value of the field with the given name all elements that match the given filter.
+     * Creates an update that removes from an array all elements that match the given filter.
      *
-     * @param fieldName the non-null field name
-     * @param filter    the query filter
+     * @param filter the query filter
      * @return the update
      * @mongodb.driver.manual reference/operator/update/pull/ $pull
      */
-    public static Bson pullByFilter(final String fieldName, final Bson filter) {
-        return new SimpleUpdate<Bson>(fieldName, filter, "$pull");
+    public static Bson pullByFilter(final Bson filter) {
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+                writer.writeStartDocument();
+                writer.writeName("$pull");
+
+                encodeValue(writer, filter, codecRegistry);
+
+                writer.writeEndDocument();
+
+                return writer.getDocument();
+            }
+        };
     }
 
     /**
@@ -336,6 +353,7 @@ public final class Updates {
      * @param fieldName the field name
      * @param value     the value
      * @return the update
+     * @mongodb.driver.manual reference/operator/update/bit/ $bit
      */
     public static Bson bitwiseAnd(final String fieldName, final long value) {
         return createBitUpdateDocument(fieldName, "and", value);
@@ -348,6 +366,7 @@ public final class Updates {
      * @param fieldName the field name
      * @param value     the value
      * @return the update
+     * @mongodb.driver.manual reference/operator/update/bit/ $bit
      */
     public static Bson bitwiseOr(final String fieldName, final int value) {
         return createBitUpdateDocument(fieldName, "or", value);
@@ -359,6 +378,7 @@ public final class Updates {
      * @param fieldName the field name
      * @param value     the value
      * @return the update
+     * @mongodb.driver.manual reference/operator/update/bit/ $bit
      */
     public static Bson bitwiseOr(final String fieldName, final long value) {
         return createBitUpdateDocument(fieldName, "or", value);
