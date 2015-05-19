@@ -18,10 +18,12 @@ package com.mongodb;
 
 import org.bson.util.annotations.Immutable;
 
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.bson.util.Assertions.isTrueArgument;
 import static org.bson.util.Assertions.notNull;
@@ -65,7 +67,15 @@ final class ClusterSettings {
             if (hosts.isEmpty()) {
                 throw new IllegalArgumentException("hosts list may not be empty");
             }
-            this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(new LinkedHashSet<ServerAddress>(hosts)));
+            Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
+            for (ServerAddress host : hosts) {
+                try {
+                    hostsSet.add(new ServerAddress(host.getHost(), host.getPort()));
+                } catch (UnknownHostException e) {
+                    throw new MongoInternalException("This can't happen", e);
+                }
+            }
+            this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(hostsSet));
             return this;
         }
 

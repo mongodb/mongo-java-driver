@@ -110,4 +110,13 @@ class ClusterSettingsSpecification extends Specification {
         then:
         settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
     }
+
+    def 'should replace ServerAddress subclass instances with ServerAddress'() {
+        when:
+        def settings = ClusterSettings.builder().hosts([new DBAddress('server1/mydb'),
+                                                        new DBAddress('server2/mydb')]).build();
+
+        then:
+        settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
+    }
 }
