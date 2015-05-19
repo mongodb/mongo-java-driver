@@ -115,6 +115,34 @@ class MultiServerClusterSpecification extends Specification {
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
+    def 'should remove a secondary server whose reported host name does not match the address connected to'() {
+        given:
+        def seedListAddress = new ServerAddress('127.0.0.1:27017')
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([seedListAddress]).build(), factory,
+                                             CLUSTER_LISTENER);
+
+        when:
+        sendNotification(seedListAddress, ReplicaSetSecondary, [firstServer, secondServer], 'test', firstServer)
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
+    }
+
+    def 'should remove a primary server whose reported host name does not match the address connected to'() {
+        given:
+        def seedListAddress = new ServerAddress('127.0.0.1:27017')
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([seedListAddress]).build(), factory,
+                                             CLUSTER_LISTENER);
+
+        when:
+        sendNotification(seedListAddress, ReplicaSetPrimary, [firstServer, secondServer], 'test', firstServer)
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
+    }
+
     def 'should remove a server when it no longer appears in hosts reported by the primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID,
@@ -480,19 +508,25 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(serverAddress, serverType, hosts, [], setName)
     }
 
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName,
+                         ServerAddress trueAddress) {
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, setName, null, trueAddress)
+                                                                  .build())
+    }
+
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives,
                          String setName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName, null)
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName, null, null)
                                                                   .build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, ObjectId electionId) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, 'test', electionId)
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, 'test', electionId, null)
                                                                   .build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null, null).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null, null, null).build())
     }
 
     def getClusterDescription(MultiServerCluster cluster) {
@@ -508,10 +542,11 @@ class MultiServerClusterSpecification extends Specification {
     }
 
     def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives, boolean ok,
-                   String setName, ObjectId electionId) {
+                   String setName, ObjectId electionId, ServerAddress trueAddress) {
         ServerDescription.builder()
                          .address(serverAddress)
                          .type(serverType)
+                         .canonicalAddress(trueAddress == null ? serverAddress.toString() : trueAddress.toString())
                          .ok(ok)
                          .state(Connected)
                          .hosts(hosts*.toString() as Set)

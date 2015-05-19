@@ -32,6 +32,19 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         newDescription.version == expectedVersion
     }
 
+    def 'should set canonicalAddress'() {
+        given:
+        initializeServerMonitor(new ServerAddress())
+        CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
+        def expectedCanonicalAddress = commandResult.getString('me')
+
+        when:
+        latch.await()
+
+        then:
+        newDescription.canonicalAddress == expectedCanonicalAddress
+    }
+
     @IgnoreIf( { !serverIsAtLeastVersion(2.6) } )
     def 'should set max wire batch size when provided by server'() {
         given:
