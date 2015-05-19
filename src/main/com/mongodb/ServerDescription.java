@@ -54,6 +54,7 @@ class ServerDescription {
     private final ServerAddress address;
 
     private final ServerType type;
+    private final String canonicalAddress;
     private final Set<String> hosts;
     private final Set<String> passives;
     private final Set<String> arbiters;
@@ -74,11 +75,12 @@ class ServerDescription {
 
     private final ObjectId electionId;
 
-    private Throwable exception;
+    private final Throwable exception;
 
     static class Builder {
         private ServerAddress address;
         private ServerType type = Unknown;
+        private String canonicalAddress;
         private Set<String> hosts = Collections.emptySet();
         private Set<String> passives = Collections.emptySet();
         private Set<String> arbiters = Collections.emptySet();
@@ -105,6 +107,11 @@ class ServerDescription {
 
         public Builder type(final ServerType type) {
             this.type = notNull("type", type);
+            return this;
+        }
+
+        public Builder canonicalAddress(final String canonicalAddress) {
+            this.canonicalAddress = canonicalAddress;
             return this;
         }
 
@@ -277,6 +284,16 @@ class ServerDescription {
         return ok && (type == ReplicaSetSecondary || type == ShardRouter || type == StandAlone);
     }
 
+    /**
+     * Gets the string representing the host name and port that this member of a replica set was configured with,
+     * e.g. {@code "somehost:27019"}. This is typically derived from the "me" field from the "isMaster" command response.
+     *
+     * @return the host name and port that this replica set member is configured with.
+     */
+    public String getCanonicalAddress() {
+        return canonicalAddress;
+    }
+
     public Set<String> getHosts() {
         return hosts;
     }
@@ -411,6 +428,9 @@ class ServerDescription {
         if (!address.equals(that.address)) {
             return false;
         }
+        if (canonicalAddress != null ? !canonicalAddress.equals(that.canonicalAddress) : that.canonicalAddress != null) {
+            return false;
+        }
         if (!arbiters.equals(that.arbiters)) {
             return false;
         }
@@ -469,6 +489,7 @@ class ServerDescription {
     public int hashCode() {
         int result = address.hashCode();
         result = 31 * result + type.hashCode();
+        result = 31 * result + (canonicalAddress != null ? canonicalAddress.hashCode() : 0);
         result = 31 * result + hosts.hashCode();
         result = 31 * result + passives.hashCode();
         result = 31 * result + arbiters.hashCode();
@@ -494,6 +515,7 @@ class ServerDescription {
         return "ServerDescription{"
                + "address=" + address
                + ", type=" + type
+               + ", canonicalAddress=" + canonicalAddress
                + ", hosts=" + hosts
                + ", passives=" + passives
                + ", arbiters=" + arbiters
@@ -550,6 +572,7 @@ class ServerDescription {
         type = notNull("type", builder.type);
         state = notNull("state", builder.state);
         version = notNull("version", builder.version);
+        canonicalAddress = builder.canonicalAddress;
         hosts = builder.hosts;
         passives = builder.passives;
         arbiters = builder.arbiters;

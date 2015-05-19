@@ -245,6 +245,7 @@ class ServerMonitor {
                                 .version(serverVersion)
                                 .address(commandResult.getServerUsed())
                                 .type(getServerType(commandResult))
+                                .canonicalAddress(commandResult.getString("me"))
                                 .hosts(listToSet((List<String>) commandResult.get("hosts")))
                                 .passives(listToSet((List<String>) commandResult.get("passives")))
                                 .arbiters(listToSet((List<String>) commandResult.get("arbiters")))

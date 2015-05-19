@@ -187,6 +187,11 @@ final class MultiServerCluster extends BaseCluster {
 
         ensureServers(newDescription);
 
+        if (newDescription.getCanonicalAddress() != null && !newDescription.getAddress().sameHost(newDescription.getCanonicalAddress())) {
+            removeServer(newDescription.getAddress());
+            return true;
+        }
+
         if (newDescription.isPrimary()) {
             if (newDescription.getElectionId() != null) {
                 if (maxElectionId != null && maxElectionId.compareTo(newDescription.getElectionId()) > 0) {
@@ -239,7 +244,10 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void removeServer(final ServerAddress serverAddress) {
-        addressToServerTupleMap.remove(serverAddress).server.close();
+        ServerTuple removed = addressToServerTupleMap.remove(serverAddress);
+        if (removed != null) {
+            removed.server.close();
+        }
     }
 
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {

@@ -80,6 +80,7 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getPrimary());
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(new TagSet(), serverDescription.getTagSet());
+        assertNull(serverDescription.getCanonicalAddress());
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
@@ -103,6 +104,7 @@ public class ServerDescriptionTest {
                                               .maxWriteBatchSize(1024)
                                               .averageLatency(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                               .primary("localhost:27017")
+                                              .canonicalAddress("localhost:27018")
                                               .hosts(new HashSet<String>(asList("localhost:27017",
                                                                                 "localhost:27018",
                                                                                 "localhost:27019",
@@ -138,6 +140,7 @@ public class ServerDescriptionTest {
         assertEquals(1024, serverDescription.getMaxWriteBatchSize());
 
         assertEquals("localhost:27017", serverDescription.getPrimary());
+        assertEquals("localhost:27018", serverDescription.getCanonicalAddress());
         assertEquals(new HashSet<String>(asList("localhost:27017", "localhost:27018", "localhost:27019", "localhost:27020")),
                      serverDescription.getHosts());
         assertEquals(new TagSet(new Tag("dc", "ny")), serverDescription.getTagSet());
@@ -163,6 +166,7 @@ public class ServerDescriptionTest {
                                             .maxWriteBatchSize(1024)
                                             .averageLatency(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                             .primary("localhost:27017")
+                                            .canonicalAddress("localhost:27017")
                                             .hosts(new HashSet<String>(asList("localhost:27017",
                                                                               "localhost:27018")))
                                             .passives(new HashSet<String>(asList("localhost:27019")))
