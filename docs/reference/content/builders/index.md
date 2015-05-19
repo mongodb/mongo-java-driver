@@ -15,4 +15,5 @@ The driver provides several classes that make it easier to use the CRUD API.
 - [Projections]({{< relref "projections.md" >}}): Documentation of the driver's support for building projections
 - [Sorts]({{< relref "sorts.md" >}}): Documentation of the driver's support for building sort criteria
 - [Aggregation]({{< relref "aggregation.md" >}}): Documentation of the driver's support for building aggregation pipelines
+- [Updates]({{< relref "updates.md" >}}): Documentation of the driver's support for building updates
 
