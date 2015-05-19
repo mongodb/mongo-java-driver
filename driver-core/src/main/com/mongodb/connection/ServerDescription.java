@@ -734,7 +734,7 @@ public class ServerDescription {
                + (isReplicaSetMember()
                   ?
                   ", setName='" + setName + '\''
-                  + ", host=" + canonicalAddress
+                  + ", canonicalAddress=" + canonicalAddress
                   + ", hosts=" + hosts
                   + ", passives=" + passives
                   + ", arbiters=" + arbiters
