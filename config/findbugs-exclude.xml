@@ -8,9 +8,8 @@
     </Match>
 
     <Match>
-        <Package name="com.mongodb">
-            <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>  <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
-        </Package>
+        <Package name="com.mongodb" />
+        <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>  <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
     </Match>
 
     <!-- these specific issues are deliberate design decisions -->
