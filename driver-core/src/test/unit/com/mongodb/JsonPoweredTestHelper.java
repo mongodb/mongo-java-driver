@@ -23,9 +23,11 @@ import org.bson.json.JsonReader;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,26 +44,31 @@ public final class JsonPoweredTestHelper {
     }
 
     private static String getFileAsString(final File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
         StringBuilder stringBuilder = new StringBuilder();
+        String line;
         String ls = System.getProperty("line.separator");
-
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
-            stringBuilder.append(ls);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8")));
+        try {
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+                stringBuilder.append(ls);
+            }
+        } finally {
+            reader.close();
         }
-
         return stringBuilder.toString();
     }
 
     private static void addFilesFromDirectory(final File directory, final List<File> files) {
-        for (String fileName : directory.list()) {
-            File file = new File(directory, fileName);
-            if (file.isDirectory()) {
-                addFilesFromDirectory(file, files);
-            } else if (file.getName().endsWith(".json")) {
-                files.add(file);
+        String[] fileNames = directory.list();
+        if (fileNames != null) {
+            for (String fileName : fileNames) {
+                File file = new File(directory, fileName);
+                if (file.isDirectory()) {
+                    addFilesFromDirectory(file, files);
+                } else if (file.getName().endsWith(".json")) {
+                    files.add(file);
+                }
             }
         }
     }

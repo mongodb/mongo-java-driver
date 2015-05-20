@@ -197,11 +197,5 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
             BatchCursor<TResult> batchCursor = executor.execute(findFirstOperation, readPreference);
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         }
-
-        @Override
-        public FindOperationIterable batchSize(final int batchSize) {
-            batchSize(batchSize);
-            return this;
-        }
     }
 }

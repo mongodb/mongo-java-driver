@@ -39,7 +39,7 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
 
     @Override
     public int compareTo(final BsonDouble o) {
-        return Double.valueOf(value).compareTo(o.value);
+        return Double.compare(value, o.value);
     }
 
     @Override
