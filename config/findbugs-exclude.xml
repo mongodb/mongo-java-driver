@@ -14,9 +14,8 @@
 
     <!-- these specific issues are deliberate design decisions -->
     <Match>
-        <Class name="com.mongodb.connection.BaseCluster">
-            <Bug pattern="RV_RETURN_VALUE_IGNORED"/>  <!-- Deliberately ignoring return value of CountDownLatch.await -->
-        </Class>
+        <Class name="com.mongodb.connection.BaseCluster" />
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>  <!-- Deliberately ignoring return value of CountDownLatch.await -->
     </Match>
 
     <Match>
@@ -25,9 +24,8 @@
         <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
     </Match>
     <Match>
-        <Class name="com.mongodb.DocumentCodec">
+        <Class name="com.mongodb.DocumentCodec" />
             <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
-        </Class>
     </Match>
     <Match>
         <Class name="org.mongodb.DatabaseTestCase">
@@ -35,19 +33,16 @@
         </Class>
     </Match>
     <Match>
-        <Class name="org.mongodb.FunctionalSpecification">
+        <Class name="org.mongodb.FunctionalSpecification"/>
             <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
     </Match>
     <Match>
-        <Class name="com.mongodb.DatabaseTestCase">
+        <Class name="com.mongodb.DatabaseTestCase"/>
             <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
     </Match>
     <Match>
-        <Class name="org.bson.types.StringRangeSet$NumberStringComparator">
+        <Class name="org.bson.types.StringRangeSet$NumberStringComparator"/>
             <Bug pattern="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE"/>
-        </Class>
     </Match>
 
     <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
@@ -59,9 +54,8 @@
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
         <Class name="~.*\.*Test"/>
-        <Not>
-            <Bug code="IJU"/>
-        </Not>
+        <Not/>
+        <Bug code="IJU"/>
     </Match>
 
 </FindBugsFilter>
