@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
@@ -140,7 +140,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
             connectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
                 @Override
                 public void onResult(final AsyncConnection connection, final Throwable connectionException) {
-                    connection.killCursorAsync(asList(localCursor.getId()), new SingleResultCallback<Void>() {
+                    connection.killCursorAsync(singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
                                   @Override
                                   public void onResult(final Void result, final Throwable t) {
                                       connection.release();
