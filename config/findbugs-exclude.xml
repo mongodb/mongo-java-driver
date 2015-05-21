@@ -34,9 +34,8 @@
     </Match>
 
     <Match>
-        <Class name="org.mongodb.DatabaseTestCase">
-            <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
+        <Class name="org.mongodb.DatabaseTestCase" />
+        <Bug pattern="MS_PKGPROTECT"/>
     </Match>
 
     <Match>
