@@ -37,7 +37,7 @@ class NameCodec implements CollectibleCodec<Name> {
     public Name decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartDocument();
         String name = reader.readString("_id");
-        int count = new Double(reader.readDouble("value")).intValue();
+        int count = (int) reader.readDouble("value");
 
         reader.readEndDocument();
         return new Name(name, count);
