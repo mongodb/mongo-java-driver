@@ -93,7 +93,7 @@ public abstract class WriteConcernResult {
                 if (this == o) {
                     return true;
                 }
-                if (getClass() != o.getClass()) {
+                if (o == null || getClass() != o.getClass()) {
                     return false;
                 }
 

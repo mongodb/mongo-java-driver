@@ -195,7 +195,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     findbugs {
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
         sourceSets = [sourceSets.main]
-        toolVersion = '3.0.0'
+        toolVersion = '3.0.1'
     }
 
     codenarc {

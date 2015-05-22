@@ -369,13 +369,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def cursorToListWithNext(BatchCursor cursor) {
         def list = []
-        try {
-            while (true) {
-                list += cursor.next()
-            }
-        } catch (NoSuchElementException e) {
-            return list
+        while (cursor.hasNext()) {
+            list += cursor.next()
         }
+        list
     }
 
     def cursorToListWithTryNext(BatchCursor cursor) {

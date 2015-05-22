@@ -7,62 +7,77 @@
         <Bug code="EI,EI2"/>
     </Match>
 
-    <Match>
-        <Package name="com.mongodb">
-            <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>  <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
-        </Package>
-    </Match>
 
     <!-- these specific issues are deliberate design decisions -->
+    <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
     <Match>
-        <Class name="com.mongodb.connection.BaseCluster">
-            <Bug pattern="RV_RETURN_VALUE_IGNORED"/>  <!-- Deliberately ignoring return value of CountDownLatch.await -->
-        </Class>
+        <Package name="com.mongodb"/>
+        <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>
     </Match>
 
+    <!-- Deliberately ignoring return value of CountDownLatch.await -->
     <Match>
-        <Class name="com.mongodb.gridfs.GridFS" />
-        <Method name="createFile" params="java.io.File" /> <!-- The underlying call to GridFSInputFile closes the file -->
+        <Class name="com.mongodb.connection.BaseCluster"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+
+    <!-- The underlying call to GridFSInputFile closes the file -->
+    <Match>
+        <Class name="com.mongodb.gridfs.GridFS"/>
+        <Method name="createFile" params="java.io.File"/>
         <Bug pattern="OBL_UNSATISFIED_OBLIGATION"/>
     </Match>
+
     <Match>
-        <Class name="com.mongodb.DocumentCodec">
-            <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
-        </Class>
-    </Match>
-    <Match>
-        <Class name="org.mongodb.DatabaseTestCase">
-            <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
-    </Match>
-    <Match>
-        <Class name="org.mongodb.FunctionalSpecification">
-            <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
-    </Match>
-    <Match>
-        <Class name="com.mongodb.DatabaseTestCase">
-            <Bug pattern="MS_PKGPROTECT"/>
-        </Class>
-    </Match>
-    <Match>
-        <Class name="org.bson.types.StringRangeSet$NumberStringComparator">
-            <Bug pattern="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE"/>
-        </Class>
+        <Class name="com.mongodb.DocumentCodec"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS"/>
     </Match>
 
-    <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
     <Match>
-        <Class name="~.*\.*Specification.*"/>
-        <Bug pattern="SE_NO_SERIALVERSIONID,LI_LAZY_INIT_STATIC"/>
+        <Class name="org.mongodb.DatabaseTestCase" />
+        <Bug pattern="MS_PKGPROTECT"/>
     </Match>
 
+    <Match>
+        <Class name="org.mongodb.FunctionalSpecification"/>
+        <Bug pattern="MS_PKGPROTECT"/>
+    </Match>
+
+    <Match>
+        <Class name="com.mongodb.DatabaseTestCase"/>
+        <Bug pattern="MS_PKGPROTECT"/>
+    </Match>
+
+    <Match>
+        <Class name="org.bson.types.StringRangeSet$NumberStringComparator"/>
+        <Bug pattern="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE"/>
+    </Match>
+
+    <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
         <Class name="~.*\.*Test"/>
         <Not>
             <Bug code="IJU"/>
         </Not>
+    </Match>
+
+    <!-- Deliberate use of an unused field in the Person POJO class -->
+    <Match>
+        <Class name="com.mongodb.acceptancetest.crud.pojo.Person"/>
+        <Bug pattern="SS_SHOULD_BE_STATIC"/>
+    </Match>
+
+    <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
+    <Match>
+        <Source name="~.*\.groovy"/>
+        <Bug pattern="SE_NO_SERIALVERSIONID,LI_LAZY_INIT_STATIC,EQ_UNUSUAL,IT_NO_SUCH_ELEMENT,RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
+    <!-- Strange findbugs issues -->
+    <Match>
+        <Source name="~.*ClusterSettingsSpecification\.groovy"/>
+        <Bug pattern="RANGE_ARRAY_INDEX"/>
     </Match>
 
 </FindBugsFilter>

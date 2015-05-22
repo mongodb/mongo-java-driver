@@ -162,14 +162,14 @@ public final class ClusterFixture {
         return new AsyncClusterBinding(cluster, ReadPreference.primary());
     }
 
-    public static Cluster getCluster() {
+    public static synchronized Cluster getCluster() {
         if (cluster == null) {
             cluster = createCluster(new SocketStreamFactory(getSocketSettings(), getSslSettings()));
         }
         return cluster;
     }
 
-    public static Cluster getAsyncCluster() {
+    public static synchronized Cluster getAsyncCluster() {
         if (asyncCluster == null) {
             asyncCluster = createCluster(getAsyncStreamFactory());
         }
