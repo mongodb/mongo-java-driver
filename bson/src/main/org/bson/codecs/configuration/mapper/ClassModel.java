@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class MappedClass extends MappedType {
-    private final Map<String, MappedField> fields = new TreeMap<String, MappedField>(); 
+public class ClassModel extends MappedType {
+    private final Map<String, FieldModel> fields = new TreeMap<String, FieldModel>(); 
 
-    public MappedClass(final PojoCodec pojoCodec, final TypeResolver resolver, final Class<?> aClass) {
+    public ClassModel(final PojoCodec pojoCodec, final TypeResolver resolver, final Class<?> aClass) {
         super(aClass);
 
         final ResolvedType type = resolver.resolve(aClass);
@@ -27,21 +27,21 @@ public class MappedClass extends MappedType {
                                                  .resolve(type, null, null);
         final ResolvedField[] fields = bean.getMemberFields();
         for (final ResolvedField field : fields) {
-            addField(new MappedField(pojoCodec, this, field));
+            addField(new FieldModel(pojoCodec, this, field));
         }
         System.out.println("************ bean = " + bean);
         
     }
 
-    public MappedField getField(final String name) {
+    public FieldModel getField(final String name) {
         return fields.get(name);
     }
 
-    public Collection<MappedField> getFields() {
+    public Collection<FieldModel> getFields() {
         return fields.values();
     }
 
-    public void addField(final MappedField field) {
+    public void addField(final FieldModel field) {
         fields.put(field.getName(), field);
     }
 }

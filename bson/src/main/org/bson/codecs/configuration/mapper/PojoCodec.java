@@ -7,17 +7,17 @@ import java.util.Map;
 
 public class PojoCodec {
     private final TypeResolver resolver = new TypeResolver();
-    private final Map<Class, MappedClass> mapped = new HashMap<Class, MappedClass>();
+    private final Map<Class, ClassModel> mapped = new HashMap<Class, ClassModel>();
 
-    public MappedClass map(final Class<?> entityClass) {
-        MappedClass mappedClass = mapped.get(entityClass);
-        if(mappedClass == null) {
-            mappedClass = new MappedClass(this, resolver, entityClass);
-            mapped.put(entityClass, mappedClass);
+    public ClassModel map(final Class<?> entityClass) {
+        ClassModel classModel = mapped.get(entityClass);
+        if(classModel == null) {
+            classModel = new ClassModel(this, resolver, entityClass);
+            mapped.put(entityClass, classModel);
         }
 
 
-        return mappedClass;
+        return classModel;
 
     }
 }

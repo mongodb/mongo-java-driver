@@ -22,10 +22,10 @@ public class PojoCodecTest {
     public void resolveEntityTypes() {
         final PojoCodec mapper = new PojoCodec();
 
-        final MappedClass map = mapper.map(Entity.class);
+        final ClassModel map = mapper.map(Entity.class);
         assertEquals("Should find 3 fields", 3, map.getFields().size());
 
-        final MappedField field = map.getField("map");
+        final FieldModel field = map.getField("map");
         
 //        assertEquals("Should have two parameter types", 2, field.getParameters().size());
     }
