@@ -823,7 +823,7 @@ public class JsonReader extends AbstractBsonReader {
             }
             if (pos == 1) {
                 return values[0];
-            } else if (pos < 3 && pos > 7) {
+            } else if (pos < 3 || pos > 7) {
                 throw new JsonParseException("JSON reader expected 1 or 3-7 integers but found %d.", pos);
             }
 
