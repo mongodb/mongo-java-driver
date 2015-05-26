@@ -19,12 +19,12 @@ current = "3.0.1"
 
 [[drivers]]
   name = "mongodb-driver"
-  description = "The synchronous driver, new in 3.0, for older versions select the: `mongo-java-driver`"
+  description = "The synchronous driver, new in 3.0.<br/>For older versions of the driver or for OSGi-based applications please use the `mongo-java-driver`."
   versions = "3.1.0-SNAPSHOT,3.0.1"
 
 [[drivers]]
   name = "mongo-java-driver"
-  description = "An uber jar containing the bson library, the core library and the mongodb-driver."
+  description = "An uber jar containing the bson library, the core library and the mongodb-driver.<br/>This artifact is a valid OSGi bundle."
   versions = "3.1.0-SNAPSHOT,3.0.1,2.13.1"
 
 [[drivers]]
