@@ -63,6 +63,10 @@ public final class Fixture {
         return Double.parseDouble(serverVersion.substring(0, 3)) >= version;
     }
 
+    public static boolean isAuthenticated() {
+        return getMongoClientURI().getCredentials() != null;
+    }
+
     public static boolean isStandalone() {
         return !isReplicaSet() && !isSharded();
     }
