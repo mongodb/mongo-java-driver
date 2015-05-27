@@ -21,11 +21,14 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collections;
@@ -44,6 +47,7 @@ public final class MongoClientSettings {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final List<MongoCredential> credentialList;
+    private final StreamFactoryFactory streamFactoryFactory;
 
     private final CodecRegistry codecRegistry;
 
@@ -82,6 +86,7 @@ public final class MongoClientSettings {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private CodecRegistry codecRegistry = MongoClients.getDefaultCodecRegistry();
+        private StreamFactoryFactory streamFactoryFactory = createDefaultStreamFactoryFactory();
 
         private ClusterSettings clusterSettings;
         private SocketSettings socketSettings = SocketSettings.builder().build();
@@ -107,6 +112,8 @@ public final class MongoClientSettings {
             writeConcern = settings.getWriteConcern();
             credentialList = settings.getCredentialList();
             codecRegistry = settings.getCodecRegistry();
+            streamFactoryFactory = settings.getStreamFactoryFactory();
+
             clusterSettings = settings.getClusterSettings();
             serverSettings = settings.getServerSettings();
             socketSettings = settings.getSocketSettings();
@@ -238,12 +245,36 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the factory to use to create a {@code StreamFactory}.
+         *
+         * @param streamFactoryFactory the stream factory factory
+         * @return this
+         * @since 3.1
+         */
+        public Builder streamFactoryFactory(final StreamFactoryFactory streamFactoryFactory) {
+            this.streamFactoryFactory = notNull("streamFactoryFactory", streamFactoryFactory);
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
          */
         public MongoClientSettings build() {
             return new MongoClientSettings(this);
+        }
+
+        private static StreamFactoryFactory createDefaultStreamFactoryFactory() {
+            String streamType = System.getProperty("org.mongodb.async.type", "nio2");
+
+            if (streamType.equals("netty")) {
+                return new NettyStreamFactoryFactory();
+            } else if (streamType.equals("nio2")) {
+                return new AsynchronousSocketChannelStreamFactoryFactory();
+            } else {
+                throw new IllegalArgumentException("Unsupported stream type " + streamType);
+            }
         }
     }
 
@@ -290,6 +321,16 @@ public final class MongoClientSettings {
      */
     public CodecRegistry getCodecRegistry() {
         return codecRegistry;
+    }
+
+    /**
+     * Gets the factory to use to create a {@code StreamFactory}.
+     *
+     * @return the stream factory factory
+     * @since 3.1
+     */
+    public StreamFactoryFactory getStreamFactoryFactory() {
+        return streamFactoryFactory;
     }
 
     /**
@@ -360,6 +401,7 @@ public final class MongoClientSettings {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         credentialList = builder.credentialList;
+        streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;
         clusterSettings = builder.clusterSettings;
         serverSettings = builder.serverSettings;

@@ -20,11 +20,13 @@ import com.mongodb.MongoCredential
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
@@ -44,6 +46,10 @@ class MongoClientSettingsSpecification extends Specification {
         options.socketSettings == SocketSettings.builder().build()
         options.heartbeatSocketSettings == SocketSettings.builder().build()
         options.serverSettings == ServerSettings.builder().build()
+
+        System.getProperty('org.mongodb.async.type', 'nio2') == 'netty' ?
+        options.streamFactoryFactory instanceof NettyStreamFactoryFactory :
+        options.streamFactoryFactory instanceof AsynchronousSocketChannelStreamFactoryFactory
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -100,10 +106,16 @@ class MongoClientSettingsSpecification extends Specification {
         builder.codecRegistry(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.streamFactoryFactory(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set options'() {
         given:
+        def streamFactoryFactory = new NettyStreamFactoryFactory()
         def sslSettings = Stub(SslSettings)
         def socketSettings = Stub(SocketSettings)
         def serverSettings = Stub(ServerSettings)
@@ -124,6 +136,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .connectionPoolSettings(connectionPoolSettings)
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
+                                         .streamFactoryFactory(streamFactoryFactory)
                 .build()
 
         expect:
@@ -137,6 +150,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.credentialList == credentialList
         options.connectionPoolSettings == connectionPoolSettings
         options.clusterSettings == clusterSettings
+        options.streamFactoryFactory == streamFactoryFactory
     }
 
     def 'should be easy to create new options from existing'() {
@@ -169,10 +183,10 @@ class MongoClientSettingsSpecification extends Specification {
 
     def 'should only have the following methods in the builder'() {
         when:
-        // A regression test so that if anymore methods are added then the builder(final MongoClientOptions options) should be updated
+        // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['clusterSettings', 'codecRegistry', 'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings',
-                        'readPreference', 'serverSettings', 'socketSettings', 'sslSettings', 'writeConcern']
+                        'readPreference', 'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected

@@ -28,7 +28,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SocketSettings settings;
-    private final SslSettings sslSettings;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     /**
@@ -38,16 +37,16 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
      * @param sslSettings the settings for connecting via SSL
      */
     public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
+        if (sslSettings.isEnabled()) {
+            throw new UnsupportedOperationException("No SSL support in java.nio.channels.AsynchronousSocketChannel. For SSL support use "
+                                                    + "com.mongodb.connection.netty.NettyStreamFactoryFactory");
+        }
+
         this.settings = notNull("settings", settings);
-        this.sslSettings = notNull("sslSettings", sslSettings);
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        if (sslSettings.isEnabled()) {
-            throw new UnsupportedOperationException("No SSL support here.");
-        }
-
         return new AsynchronousSocketChannelStream(serverAddress, settings, bufferProvider);
     }
 

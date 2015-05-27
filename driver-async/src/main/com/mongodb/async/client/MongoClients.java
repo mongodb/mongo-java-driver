@@ -18,16 +18,14 @@ package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
@@ -131,28 +129,11 @@ public final class MongoClients {
     }
 
     private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {
-        return getStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings());
+        return settings.getStreamFactoryFactory().create(settings.getHeartbeatSocketSettings(), settings.getSslSettings());
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
-        return getStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
-    }
-
-    private static StreamFactory getStreamFactory(final SocketSettings socketSettings,
-                                                  final SslSettings sslSettings) {
-        String streamType = System.getProperty("org.mongodb.async.type", "nio2");
-
-        if (streamType.equals("netty")) {
-            return new NettyStreamFactory(socketSettings, sslSettings);
-        } else if (streamType.equals("nio2")) {
-            if (sslSettings.isEnabled()) {
-                throw new IllegalArgumentException("Unsupported stream type " + streamType + " when SSL is enabled. Please use Netty "
-                                                   + "instead");
-            }
-            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
-        } else {
-            throw new IllegalArgumentException("Unsupported stream type " + streamType);
-        }
+        return settings.getStreamFactoryFactory().create(settings.getSocketSettings(), settings.getSslSettings());
     }
 
     private MongoClients() {
