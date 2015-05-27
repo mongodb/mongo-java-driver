@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.Fixture.isAuthenticated;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.ReadPreference.secondary;
@@ -426,7 +427,7 @@ public class DBTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void shouldDoEval() {
-        assumeFalse(getDatabase().isAuthenticated());
+        assumeFalse(isAuthenticated());
         String code = "function(name, incAmount) {\n"
                       + "var doc = db.myCollection.findOne( { name : name } );\n"
                       + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"
@@ -446,6 +447,7 @@ public class DBTest extends TestCase {
 
     @Test(expected = MongoException.class)
     public void shouldThrowErrorwhileDoingEval() {
+        assumeFalse(isAuthenticated());
         String code = "function(a, b) {\n"
                       + "var doc = db.myCollection.findOne( { name : b } );\n"
                       + "}";

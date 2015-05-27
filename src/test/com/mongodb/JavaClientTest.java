@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.mongodb.Fixture.isAuthenticated;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -272,6 +273,8 @@ public class JavaClientTest extends TestCase {
     @Test
     public void testEval()
         throws MongoException {
+        assumeFalse(isAuthenticated());
+
         assertEquals( 17 , ((Number)(getDatabase().eval( "return 17" ))).intValue() );
         assertEquals( 18 , ((Number)(getDatabase().eval( "function(x){ return 17 + x; }" , 1 ))).intValue() );
     }
@@ -794,6 +797,8 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testObjectIdCompat(){
+        assumeFalse(isAuthenticated());
+
         DBCollection c = collection;
 
         c.save( new BasicDBObject( "x" , 1 ) );
@@ -810,6 +815,8 @@ public class JavaClientTest extends TestCase {
 
     @Test
     public void testObjectIdCompat2(){
+        assumeFalse(isAuthenticated());
+
         DBCollection c = collection;
 
         c.save(new BasicDBObject("x", 1));
