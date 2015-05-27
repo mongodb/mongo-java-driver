@@ -52,8 +52,8 @@ public abstract class DB {
         _obedientCommands.add("geowalk");
         _obedientCommands.add("text");
         _obedientCommands.add("parallelcollectionscan");
-        _obedientCommands.add("listIndexes");
-        _obedientCommands.add("listCollections");
+        _obedientCommands.add("listindexes");
+        _obedientCommands.add("listcollections");
     }
 
     /**
@@ -119,10 +119,10 @@ public abstract class DB {
 
     /**
      * <p>Starts a new 'consistent request'</p>.
-     * 
+     *
      * <p>Following this call and until {@link com.mongodb.DB#requestDone()} is called, all db operations will use the same underlying
      * connection.</p>
-     * 
+     *
      * @deprecated  The main use case for this method is to ensure that applications can read their own unacknowledged writes,
      * but this is no longer so prevalent since the driver started defaulting to acknowledged writes. The other main use case is to
      * ensure that related read operations are all routed to the same server when using a non-primary read preference.  But this is
@@ -156,8 +156,8 @@ public abstract class DB {
     public abstract void requestEnsureConnection();
 
     /**
-     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p> 
-     * 
+     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p>
+     *
      * <p>This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
      *
      * @param name the name of the collection
@@ -177,15 +177,15 @@ public abstract class DB {
     }
 
     /**
-     * <p>Creates a collection with a given name and options. If the collection already exists, this throws a 
+     * <p>Creates a collection with a given name and options. If the collection already exists, this throws a
      * {@code CommandFailureException}.</p>
      *
      * <p>Possible options:</p>
-     * <ul> 
-     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, 
-     *     you must specify a size parameter. </li> 
-     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When 
-     *     capped is false, you may use size to preallocate space. </li> 
+     * <ul>
+     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled,
+     *     you must specify a size parameter. </li>
+     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When
+     *     capped is false, you may use size to preallocate space. </li>
      *     <li> <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections. You must
      *     also specify size when specifying max. </li>
      * </ul>
@@ -262,9 +262,9 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command. This method calls 
-     * {@link #command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with the database default read 
-     * preference.  The only option used by this method was "slave ok", therefore this method has been replaced with 
+     * Executes a database command. This method calls
+     * {@link #command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with the database default read
+     * preference.  The only option used by this method was "slave ok", therefore this method has been replaced with
      * {@link #command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd     {@code DBObject} representation the command to be executed
@@ -300,7 +300,7 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.  The only option used by this method was "slave ok", therefore this method has been replaced with 
+     * Executes a database command.  The only option used by this method was "slave ok", therefore this method has been replaced with
      * {@link #command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd            A {@code DBObject} representation the command to be executed
@@ -583,10 +583,10 @@ public abstract class DB {
     /**
      * Returns the error status of the last operation on the current connection.
      *
-     * @param w        when running with replication, this is the number of servers to replicate to before returning. A {@code w} value 
-     *                 of {@code 1} indicates the primary only. A {@code w} value of {@code 2} includes the primary and at least one 
-     *                 secondary, etc. In place of a number, you may also set {@code w} to majority to indicate that the command should 
-     *                 wait until the latest write propagates to a majority of replica set members. If using {@code w}, 
+     * @param w        when running with replication, this is the number of servers to replicate to before returning. A {@code w} value
+     *                 of {@code 1} indicates the primary only. A {@code w} value of {@code 2} includes the primary and at least one
+     *                 secondary, etc. In place of a number, you may also set {@code w} to majority to indicate that the command should
+     *                 wait until the latest write propagates to a majority of replica set members. If using {@code w},
      *                 you should also use {@code wtimeout}. Specifying a value for {@code w} without also providing a {@code wtimeout} may
      *                 cause {@code getLastError} to block indefinitely.
      * @param wtimeout a value in milliseconds that controls how long to wait for write propagation to complete. If replication does not
