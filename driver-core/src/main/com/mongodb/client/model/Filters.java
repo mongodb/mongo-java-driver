@@ -550,6 +550,10 @@ public final class Filters {
                 }
             }
 
+            if (andRenderable.isEmpty()) {
+                andRenderable.append("$and", new BsonArray());
+            }
+
             return andRenderable;
         }
 
