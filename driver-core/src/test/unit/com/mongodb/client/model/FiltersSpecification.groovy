@@ -126,10 +126,22 @@ class FiltersSpecification extends Specification {
         toBson(exists('x', false)) == parse('{x : {$exists : false} }')
     }
 
+    def 'or should render empty or using $or'() {
+        expect:
+        toBson(or([])) == parse('{$or : []}')
+        toBson(or()) == parse('{$or : []}')
+    }
+
     def 'should render $or'() {
         expect:
         toBson(or([eq('x', 1), eq('y', 2)])) == parse('{$or : [{x : 1}, {y : 2}]}')
         toBson(or(eq('x', 1), eq('y', 2))) == parse('{$or : [{x : 1}, {y : 2}]}')
+    }
+
+    def 'and should render empty and using $and'() {
+        expect:
+        toBson(and([])) == parse('{$and : []}')
+        toBson(and()) == parse('{$and : []}')
     }
 
     def 'and should render and without using $and'() {
