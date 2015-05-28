@@ -49,11 +49,15 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public T first() {
-        MongoCursor<T> iterator = iterator();
-        if (!iterator.hasNext()) {
-            return null;
+        MongoCursor<T> cursor = iterator();
+        try {
+            if (!cursor.hasNext())  {
+                return null;
+            }
+            return cursor.next();
+        } finally {
+            cursor.close();
         }
-        return iterator.next();
     }
 
     @Override
@@ -64,8 +68,12 @@ class OperationIterable<T> implements MongoIterable<T> {
     @Override
     public void forEach(final Block<? super T> block) {
         MongoCursor<T> cursor = iterator();
-        while (cursor.hasNext()) {
-            block.apply(cursor.next());
+        try {
+            while (cursor.hasNext()) {
+                block.apply(cursor.next());
+            }
+        } finally {
+            cursor.close();
         }
     }
 
