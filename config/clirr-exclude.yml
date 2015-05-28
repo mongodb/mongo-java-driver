@@ -1,15 +1,6 @@
 ---
 differenceTypes:
-- 5001 # Removed class from the list of superclasses
-- 7013 # Added public abstract method to a public class
 
 classes:
-- com.mongodb.util.MyAsserts
-- com.mongodb.util.MyAsserts$MyAssert
 
 members:
- com.mongodb.DBPortPool:
-  - getStatistics()
-  - memSize(com.mongodb.DBPort)
- com.mongodb.DBApiLayer:
-  - doGetCollection(java.lang.String)
