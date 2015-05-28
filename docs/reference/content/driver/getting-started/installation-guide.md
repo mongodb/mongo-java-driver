@@ -38,4 +38,4 @@ An uber jar that contains everything you need; the BSON library, the core librar
 For OSGi-based applications: this artifact is a valid OSGi bundle. 
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.0.1" >}}
+{{< install artifactId="mongo-java-driver" version="3.0.2" >}}
