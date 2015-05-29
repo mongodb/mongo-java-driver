@@ -17,7 +17,7 @@
 package com.mongodb.client.model;
 
 /**
- * The options for updating documents.
+ * The options to apply when updating documents.
  *
  * @since 3.0
  * @mongodb.driver.manual tutorial/modify-documents/ Updates

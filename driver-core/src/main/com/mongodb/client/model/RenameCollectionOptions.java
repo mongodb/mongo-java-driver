@@ -17,7 +17,7 @@
 package com.mongodb.client.model;
 
 /**
- * Options for renaming a collection
+ * The options to apply when renaming a collection.
  *
  * @mongodb.driver.manual reference/command/renameCollection renameCollection
  * @since 3.0

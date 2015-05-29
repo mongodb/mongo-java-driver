@@ -18,7 +18,7 @@ package com.mongodb.client.result;
 
 /**
  * The result of a delete operation. If the delete was unacknowledged, then {@code wasAcknowledged} will return false and all other methods
- * with throw {@code MongoUnacknowledgedWriteException}.
+ * with throw {@code UnsupportedOperationException}.
  *
  * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0

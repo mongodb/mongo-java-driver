@@ -20,7 +20,7 @@ import org.bson.BsonValue;
 
 /**
  * The result of an update operation.  If the update was unacknowledged, then {@code wasAcknowledged} will return false and all other
- * methods with throw {@code MongoUnacknowledgedWriteException}.
+ * methods with throw {@code UnsupportedOperationException}.
  *
  * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0

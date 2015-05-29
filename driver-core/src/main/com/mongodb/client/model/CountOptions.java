@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A model describing a count operation.
+ * The options for a count operation.
  *
  * @since 3.0
  * @mongodb.driver.manual reference/command/count/ Count
