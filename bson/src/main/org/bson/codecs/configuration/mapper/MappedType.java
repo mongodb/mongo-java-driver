@@ -17,6 +17,10 @@ public class MappedType {
         this.type = type;
     }
 
+    public Class getType() {
+        return type;
+    }
+
     public MappedType getOwner() {
         return owner;
     }
