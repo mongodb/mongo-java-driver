@@ -28,27 +28,6 @@ public class ClassModel extends MappedType {
         map();
     }
 
-    public <T> T decode(final BsonReader reader, final DecoderContext decoderContext) {
-        reader.readStartDocument();
-        try {
-            final Object entity = getType().newInstance();
-            for (final FieldModel fieldModel : fields.values()) {
-                fieldModel.decode(reader, entity, decoderContext);
-            }
-            return (T) entity;
-        } catch (final Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    public void encode(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
-        for (final FieldModel fieldModel : fields.values()) {
-            fieldModel.encode(writer, value, encoderContext);
-        }
-        writer.writeEndDocument();
-    }
-
     protected void map() {
         final ResolvedType type = resolver.resolve(getType());
         final List<ResolvedType> resolvedTypes = type.getTypeParameters();

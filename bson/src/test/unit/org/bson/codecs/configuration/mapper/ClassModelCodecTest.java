@@ -4,13 +4,15 @@ import com.fasterxml.classmate.TypeResolver;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,18 +31,34 @@ public class ClassModelCodecTest {
 
     private CodecRegistry getCodecRegistry() {
         if (registry == null) {
-
-            codecProvider = new ClassModelCodecProvider();
+            codecProvider = ClassModelCodecProvider
+                                .builder()
+                                .register(Entity.class)
+                                .build();
             registry = CodecRegistries.fromProviders(codecProvider, new ValueCodecProvider());
-            codecProvider.setRegistry(registry);
         }
         return registry;
     }
 
     @Test
+    public void testDecode() {
+        Entity entity = new Entity(800L, 12, "James Bond");
+
+        final BsonDocument document = new BsonDocument("age", new BsonInt64(800))
+                                          .append("faves", new BsonInt32(12))
+                                          .append("name", new BsonString("James Bond"));
+        final CodecRegistry codecRegistry = getCodecRegistry();
+
+        final Entity decoded = codecRegistry
+                                   .get(Entity.class)
+                                   .decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+
+        Assert.assertEquals(entity, decoded);
+    }
+
+    @Test
     public void testProvider() {
         final CodecRegistry codecRegistry = getCodecRegistry();
-        codecProvider.register(Entity.class);
 
         Assert.assertTrue(codecRegistry.get(Entity.class) instanceof ClassModelCodec);
     }
@@ -50,7 +68,6 @@ public class ClassModelCodecTest {
         Entity entity = new Entity(800L, 12, "James Bond");
 
         final CodecRegistry codecRegistry = getCodecRegistry();
-        codecProvider.register(Entity.class);
 
         final BsonDocument document = new BsonDocument();
         final BsonDocumentWriter writer = new BsonDocumentWriter(document);

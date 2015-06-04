@@ -34,9 +34,16 @@ public class FieldModel extends MappedType {
             addParameter(parameter.getErasedType());
         }
     }
+    
+    public Object get(final Object value) {
+        try {
+            return field.get(value);
+        } catch (final IllegalAccessException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 
-    public void decode(final BsonReader reader, final Object entity, final DecoderContext decoderContext) {
-        final Object value = getCodec().decode(reader, decoderContext);
+    public void set(final Object entity, final Object value) {
         try {
             field.set(entity, value);
         } catch (final IllegalAccessException e) {
@@ -44,16 +51,7 @@ public class FieldModel extends MappedType {
         }
     }
 
-    public void encode(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
-        try {
-            writer.writeName(field.getName());
-            getCodec().encode(writer, field.get(value), encoderContext);
-        } catch (final IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private Codec getCodec() {
+    Codec getCodec() {
         if ( codec == null ) {
             codec = registry.get(field.getType());
         }

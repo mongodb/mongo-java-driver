@@ -5,30 +5,40 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ClassModelCodecProvider implements CodecProvider {
     private final TypeResolver resolver = new TypeResolver();
-    private final Map<Class, ClassModelCodec> codecs = new HashMap<Class, ClassModelCodec>();
-    private CodecRegistry registry;
+    private final Set<Class> registered;
+
+    public ClassModelCodecProvider(final Set<Class> registered) {
+        this.registered = registered;
+    }
 
     @Override
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        return codecs.get(clazz);
-    }
-
-    public boolean register(final Class clazz) {
-        ClassModelCodec codec = codecs.get(clazz);
-        if (codec == null) {
+        Codec<T> codec = null;
+        if(registered.contains(clazz)) {
             codec = new ClassModelCodec(new ClassModel(registry, resolver, clazz));
-            codecs.put(clazz, codec);
         }
-
-        return codec != null;
+        return codec;
     }
 
-    public void setRegistry(final CodecRegistry registry) {
-        this.registry = registry;
+    public static ProviderBuilder builder() {
+        return new ProviderBuilder();
+    }
+
+    public static class ProviderBuilder {
+        private final Set<Class> registered = new HashSet<Class>();
+        
+        public ProviderBuilder register(final Class clazz) {
+            registered.add(clazz);
+            return this;
+        }
+        
+        public ClassModelCodecProvider build() {
+            return new ClassModelCodecProvider(registered);
+        }
     }
 }
