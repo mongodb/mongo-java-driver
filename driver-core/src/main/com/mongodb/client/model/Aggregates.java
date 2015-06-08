@@ -51,7 +51,7 @@ public final class Aggregates {
      * @param projection the projection
      * @return the $project pipeline stage
      * @see Projections
-     * @mongodb.driver.manual reference/operator/aggregation/match/ $match
+     * @mongodb.driver.manual reference/operator/aggregation/project/ $project
      */
     public static Bson project(final Bson projection) {
         return new SimplePipelineStage("$project", projection);
@@ -145,7 +145,7 @@ public final class Aggregates {
      * Creates a $unwind pipeline stage for the specified field name, which must be prefixed by a {@code '$'} sign.
      *
      * @param fieldName the field name, prefixed by a {@code '$' sign}
-     * @return the $group pipeline stage
+     * @return the $unwind pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/unwind/ $unwind
      */
     public static Bson unwind(final String fieldName) {
@@ -154,7 +154,7 @@ public final class Aggregates {
 
 
     /**
-     * Creates a $limit pipeline stage for the specified filter
+     * Creates a $out pipeline stage for the specified filter
      *
      * @param collectionName the collection name
      * @return the $out pipeline stage
