@@ -26,14 +26,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.1
  */
 public final class GeometryCollection extends Geometry {
-    private final List<Geometry> geometries;
+    private final List<? extends Geometry> geometries;
 
     /**
      * Construct an instance with the given list of Geometry objects
      *
      * @param geometries  the list of Geometry objects
      */
-    public GeometryCollection(final List<Geometry> geometries) {
+    public GeometryCollection(final List<? extends Geometry> geometries) {
         this(null, geometries);
     }
 
@@ -44,7 +44,7 @@ public final class GeometryCollection extends Geometry {
      * @param geometries  the list of Geometry objects
      */
     public GeometryCollection(final CoordinateReferenceSystem coordinateReferenceSystem,
-                              final List<Geometry> geometries) {
+                              final List<? extends Geometry> geometries) {
         super(coordinateReferenceSystem);
         notNull("geometries", geometries);
         isTrueArgument("geometries contains only non-null elements", !geometries.contains(null));
@@ -61,7 +61,7 @@ public final class GeometryCollection extends Geometry {
      *
      * @return the list
      */
-    public List<Geometry> getGeometries() {
+    public List<? extends Geometry> getGeometries() {
         return geometries;
     }
 

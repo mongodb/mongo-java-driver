@@ -14,10 +14,18 @@
 
 package com.mongodb.client.model.geojson
 
+import groovy.transform.CompileStatic
 import spock.lang.Specification
 
 class GeometryCollectionSpecification extends Specification {
     def geometries = [new Point(new Position(1d, 2d)), new Point(new Position(2d, 2d))]
+
+    @CompileStatic
+    @SuppressWarnings('UnusedVariable')
+    def 'constructor should accept lists containing subtype of Geometry'() {
+        expect:
+        GeometryCollection gc = new GeometryCollection((List<Point>) geometries)
+    }
 
     def 'constructor should set geometries'() {
         expect:
