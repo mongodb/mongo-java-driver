@@ -90,7 +90,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
-        this.documentClass = notNull("clazz", documentClass);
+        this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
