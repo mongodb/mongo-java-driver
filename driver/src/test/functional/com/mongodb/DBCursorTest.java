@@ -211,6 +211,11 @@ public class DBCursorTest extends DatabaseTestCase {
         assertEquals(0, cursor.getCursorId());
         cursor.hasNext();
         assertThat(cursor.getCursorId(), is(not(0L)));
+
+        cursor = collection.find();
+        assertEquals(0, cursor.getCursorId());
+        cursor.hasNext();
+        assertThat(cursor.getCursorId(), is(0L));
     }
 
     @Test

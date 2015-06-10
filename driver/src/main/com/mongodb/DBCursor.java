@@ -576,7 +576,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     @Override
     public long getCursorId() {
-        if (cursor != null) {
+        if (cursor != null && cursor.getServerCursor() != null) {
             return cursor.getServerCursor().getId();
         } else {
             return 0;
