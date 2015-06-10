@@ -42,7 +42,7 @@ public class ClassModel extends MappedType {
      * @param resolver the TypeResolver used in discovery of Class metatadata
      * @param aClass   the Class to model
      */
-    public ClassModel(final CodecRegistry registry, final TypeResolver resolver, final Class<Object> aClass) {
+    public ClassModel(final CodecRegistry registry, final TypeResolver resolver, final Class<?> aClass) {
         super(aClass);
         this.registry = registry;
         this.resolver = resolver;
