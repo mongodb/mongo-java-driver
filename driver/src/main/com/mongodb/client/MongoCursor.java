@@ -52,9 +52,9 @@ public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
     TResult tryNext();
 
     /**
-     * Returns the server cursor
+     * Returns the server cursor, which can be null if the no cursor was created or if the cursor has been exhausted or killed.
      *
-     * @return ServerCursor
+     * @return the ServerCursor, which can be null.
      */
     ServerCursor getServerCursor();
 

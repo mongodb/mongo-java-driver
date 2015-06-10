@@ -244,11 +244,10 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, new DocumentCodec(), connectionSource)
 
-        ServerCursor serverCursor = cursor.getServerCursor()
         Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
 
         when:
-        makeAdditionalGetMoreCall(serverCursor)
+        makeAdditionalGetMoreCall(firstBatch.cursor)
 
         then:
         thrown(MongoCursorNotFoundException)

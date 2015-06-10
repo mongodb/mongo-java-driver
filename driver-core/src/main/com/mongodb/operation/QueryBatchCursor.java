@@ -38,7 +38,6 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private final ConnectionSource connectionSource;
     private int batchSize;
     private ServerCursor serverCursor;
-    private boolean killed;
     private List<T> nextBatch;
     private int count;
     private boolean closed;
@@ -221,9 +220,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     }
 
     private void killCursor(final Connection connection) {
-        if (serverCursor != null && !killed) {
+        if (serverCursor != null) {
             connection.killCursor(singletonList(serverCursor.getId()));
-            killed = true;
+            serverCursor = null;
         }
     }
 }
