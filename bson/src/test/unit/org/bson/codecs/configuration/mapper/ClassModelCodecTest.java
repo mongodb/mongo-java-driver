@@ -26,10 +26,13 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.awt.Color;
 
 import static org.junit.Assert.assertEquals;
 
@@ -57,7 +60,7 @@ public class ClassModelCodecTest {
 
     @Test
     public void testDecode() {
-        Entity entity = new Entity(800L, 12, "James Bond");
+        final Entity entity = new Entity(800L, 12, "James Bond");
 
         final BsonDocument document = new BsonDocument("age", new BsonInt64(800))
                                           .append("faves", new BsonInt32(12))
@@ -68,7 +71,7 @@ public class ClassModelCodecTest {
                                    .get(Entity.class)
                                    .decode(new BsonDocumentReader(document), DecoderContext.builder().build());
 
-        Assert.assertEquals(entity, decoded);
+        assertEquals(entity, decoded);
     }
 
     @Test
@@ -76,11 +79,17 @@ public class ClassModelCodecTest {
         final CodecRegistry codecRegistry = getCodecRegistry();
 
         Assert.assertTrue(codecRegistry.get(Entity.class) instanceof ClassModelCodec);
+        try {
+            codecRegistry.get(Color.class);
+            Assert.fail("The get should throw an exception on an unknown class.");
+        }catch(CodecConfigurationException e) {
+            // expected
+        }
     }
 
     @Test
     public void testRoundTrip() {
-        Entity entity = new Entity(800L, 12, "James Bond");
+        final Entity entity = new Entity(800L, 12, "James Bond");
 
         final CodecRegistry codecRegistry = getCodecRegistry();
 
@@ -90,7 +99,7 @@ public class ClassModelCodecTest {
         codec.encode(writer, entity, EncoderContext.builder().build());
         final Entity decoded = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
 
-        Assert.assertEquals(entity, decoded);
+        assertEquals(entity, decoded);
     }
 
     private static class Fooble<T> {
