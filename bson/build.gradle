@@ -41,7 +41,10 @@ jar {
                     'javax.xml.bind.*',
                     'org.slf4j;resolution:=optional'
     }
-}
+    from(zipTree("build/libs/bson-${project.version}-all.jar")) {
+        exclude('META-INF/')
+    }
+}.dependsOn('shadowJar')
 
 modifyPom {
     project {
@@ -59,6 +62,5 @@ shadowJar {
     dependencies {
         include(dependency('com.fasterxml:classmate:1.2.0'))
     }
-    classifier = ''
     relocate 'com.fasterxml.classmate', 'com.mongodb.classmate'
 }
