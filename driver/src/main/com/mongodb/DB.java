@@ -46,6 +46,13 @@ import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 
 /**
+ * This class has been superseded by {@link com.mongodb.client.MongoDatabase}, instances of which
+ * can be created via {@link MongoClient#getDatabase(String)}. While instances of this class can
+ * still be created via {@link MongoClient#getDB(String)}, this method has been deprecated in order
+ * to signal that {@link com.mongodb.client.MongoDatabase} is now preferred. This class, however,
+ * has not been deprecated yet, in order to give users time to migrate their code without
+ * experiencing a huge number of deprecation warnings.
+ *
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
  * using code like:
  * <pre>
