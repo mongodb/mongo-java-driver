@@ -44,6 +44,7 @@ jar {
     from(zipTree("build/libs/bson-${project.version}-all.jar")) {
         exclude('META-INF/')
     }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }.dependsOn('shadowJar')
 
 modifyPom {
