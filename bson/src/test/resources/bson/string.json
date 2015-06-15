@@ -1,0 +1,29 @@
+{
+    "description": "String type", 
+    "documents": [
+        {
+            "decoded": {
+                "s": ""
+            }, 
+            "encoded": "0D000000027300010000000000"
+        }, 
+        {
+            "decoded": {
+                "s": "a"
+            }, 
+            "encoded": "0E00000002730002000000610000"
+        }, 
+        {
+            "decoded": {
+                "s": "This is a string"
+            }, 
+            "encoded": "1D0000000273001100000054686973206973206120737472696E670000"
+        }, 
+        {
+            "decoded": {
+                "s": "\u03ba\u1f79\u03c3\u03bc\u03b5"
+            }, 
+            "encoded": "180000000273000C000000CEBAE1BDB9CF83CEBCCEB50000"
+        }
+    ]
+}

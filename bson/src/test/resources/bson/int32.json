@@ -1,0 +1,35 @@
+{
+    "description": "Int32 type", 
+    "documents": [
+        {
+            "decoded": {
+                "i": -2147483648
+            }, 
+            "encoded": "0C0000001069000000008000"
+        }, 
+        {
+            "decoded": {
+                "i": 2147483647
+            }, 
+            "encoded": "0C000000106900FFFFFF7F00"
+        }, 
+        {
+            "decoded": {
+                "i": -1
+            }, 
+            "encoded": "0C000000106900FFFFFFFF00"
+        }, 
+        {
+            "decoded": {
+                "i": 0
+            }, 
+            "encoded": "0C0000001069000000000000"
+        }, 
+        {
+            "decoded": {
+                "i": 1
+            }, 
+            "encoded": "0C0000001069000100000000"
+        }
+    ]
+}

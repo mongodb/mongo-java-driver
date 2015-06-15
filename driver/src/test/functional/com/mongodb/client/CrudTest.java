@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.JsonPoweredTestHelper;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -34,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.JsonPoweredTestHelper;
 
 import java.io.File;
 import java.io.IOException;

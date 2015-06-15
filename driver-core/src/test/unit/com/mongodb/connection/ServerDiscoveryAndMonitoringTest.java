@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.JsonPoweredTestHelper;
 import com.mongodb.ServerAddress;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -26,6 +25,7 @@ import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.JsonPoweredTestHelper;
 
 import java.io.File;
 import java.io.IOException;

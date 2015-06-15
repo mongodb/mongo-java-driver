@@ -16,7 +16,6 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.JsonPoweredTestHelper;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.CountOptions;
@@ -37,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.JsonPoweredTestHelper;
 
 import java.io.File;
 import java.io.IOException;

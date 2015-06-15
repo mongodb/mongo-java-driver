@@ -1,0 +1,17 @@
+{
+    "description": "Boolean type", 
+    "documents": [
+        {
+            "decoded": {
+                "b": true
+            }, 
+            "encoded": "090000000862000100"
+        }, 
+        {
+            "decoded": {
+                "b": false
+            }, 
+            "encoded": "090000000862000000"
+        }
+    ]
+}
