@@ -28,7 +28,6 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
-import java.nio.BufferUnderflowException
 import java.util.regex.Pattern
 
 @SuppressWarnings(['LineLength', 'DuplicateMapLiteral', 'UnnecessaryBooleanExpression'])
@@ -159,9 +158,9 @@ class BasicBSONDecoderSpecification extends Specification {
         where:
         exception                  | bytes
         BsonSerializationException | [13, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
-        BufferUnderflowException   | [12, 0, 0, 0, 17, 97, 0, 1, 0, 0, 0, 0]
+        BsonSerializationException | [12, 0, 0, 0, 17, 97, 0, 1, 0, 0, 0, 0]
         BsonSerializationException | [12, 0, 2, 0, 16, 97, 0, 1, 0, 0, 0, 0]
         BsonSerializationException | [5, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
-        BufferUnderflowException   | [5, 0, 0, 0, 16, 97, 45, 1, 0, 0, 0, 0]
+        BsonSerializationException | [5, 0, 0, 0, 16, 97, 45, 1, 0, 0, 0, 0]
     }
 }

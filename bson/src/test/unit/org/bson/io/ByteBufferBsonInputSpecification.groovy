@@ -16,6 +16,7 @@
 
 package org.bson.io
 
+import org.bson.BsonSerializationException
 import org.bson.ByteBufNIO
 import org.bson.types.ObjectId
 import spock.lang.Specification
@@ -254,4 +255,102 @@ class ByteBufferBsonInputSpecification extends Specification {
         thrown(IllegalStateException)
     }
 
+    def 'should throw BsonSerializationException reading a byte if no byte is available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([] as byte[])))
+
+        when:
+        stream.readByte()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading an Int32 if less than 4 bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0] as byte[])))
+
+        when:
+        stream.readInt32()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading an Int64 if less than 8 bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0, 0, 0, 0, 0] as byte[])))
+
+        when:
+        stream.readInt64()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading a double if less than 8 bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0, 0, 0, 0, 0] as byte[])))
+
+        when:
+        stream.readDouble()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading an ObjectId if less than 12 bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] as byte[])))
+
+        when:
+        stream.readObjectId()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading into a byte array if not enough bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0, 0, 0, 0, 0] as byte[])))
+
+        when:
+        stream.readBytes(new byte[8])
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException reading partially into a byte array if not enough bytes are available'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0, 0, 0, 0] as byte[])))
+
+        when:
+        stream.readBytes(new byte[8], 2, 5)
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException if the length of a BSON string is not positive'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([-1, -1, -1, -1, 41, 42, 43, 0] as byte[])))
+
+        when:
+        stream.readString()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw BsonSerializationException if a BSON string is not null-terminated'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([4, 0, 0, 0, 41, 42, 43, 99] as byte[])))
+
+        when:
+        stream.readString()
+
+        then:
+        thrown(BsonSerializationException)
+    }
 }
