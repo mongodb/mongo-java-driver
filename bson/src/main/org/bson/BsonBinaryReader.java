@@ -151,7 +151,11 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     @Override
     protected boolean doReadBoolean() {
-        return bsonInput.readByte() == 0x1;
+        byte booleanByte = bsonInput.readByte();
+        if (booleanByte != 0 && booleanByte != 1) {
+           throw new BsonSerializationException(format("Expected a boolean value but found %d", booleanByte));
+        }
+        return booleanByte == 0x1;
     }
 
     @Override
