@@ -87,7 +87,12 @@ public class BsonBinaryReader extends AbstractBsonReader {
             throwInvalidState("ReadBSONType", State.TYPE);
         }
 
-        setCurrentBsonType(BsonType.findByValue(bsonInput.readByte()));
+        byte bsonTypeByte = bsonInput.readByte();
+        BsonType bsonType = BsonType.findByValue(bsonTypeByte);
+        if (bsonType == null) {
+            throw new BsonSerializationException(format("Expecting a valid BSON type but found %d", bsonTypeByte));
+        }
+        setCurrentBsonType(bsonType);
 
         if (getCurrentBsonType() == BsonType.END_OF_DOCUMENT) {
             switch (getContext().getContextType()) {
@@ -123,7 +128,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     @Override
     protected BsonBinary doReadBinaryData() {
-        int numBytes = bsonInput.readInt32();
+        int numBytes = readSize();
         byte type = bsonInput.readByte();
 
         if (type == BsonBinarySubType.OLD_BINARY.getValue()) {
@@ -138,7 +143,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     @Override
     protected byte doPeekBinarySubType() {
         mark();
-        bsonInput.readInt32();
+        readSize();
         byte type = bsonInput.readByte();
         reset();
         return type;
