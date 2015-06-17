@@ -20,6 +20,7 @@ import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.classmate.members.ResolvedField;
+import com.fasterxml.classmate.members.ResolvedMethod;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -34,6 +35,10 @@ public class ClassModel extends MappedType {
     private final Map<String, FieldModel> fields = new TreeMap<String, FieldModel>();
     private final CodecRegistry registry;
     private final TypeResolver resolver;
+    private final MemberResolver memberResolver;
+    private final WeightedValue<String> collectionName = new WeightedValue<String>();
+    private final Map<String, List<MethodModel>> methods = new TreeMap<String, List<MethodModel>>();
+    private boolean mapped;
 
     /**
      * Construct a ClassModel for the given Classs.
@@ -42,35 +47,20 @@ public class ClassModel extends MappedType {
      * @param resolver the TypeResolver used in discovery of Class metatadata
      * @param aClass   the Class to model
      */
-    public ClassModel(final CodecRegistry registry, final TypeResolver resolver, final Class<?> aClass) {
+    ClassModel(final CodecRegistry registry, final TypeResolver resolver, final Class<?> aClass) {
         super(aClass);
         this.registry = registry;
         this.resolver = resolver;
-        map();
-    }
-
-    protected void map() {
-        final ResolvedType type = resolver.resolve(getType());
-        final List<ResolvedType> resolvedTypes = type.getTypeParameters();
-        for (final ResolvedType resolvedType : resolvedTypes) {
-            addParameter(resolvedType.getErasedType());
-        }
-
-        final ResolvedTypeWithMembers bean = new MemberResolver(resolver)
-                                                 .resolve(type, null, null);
-        final ResolvedField[] fields = bean.getMemberFields();
-        for (final ResolvedField field : fields) {
-            addField(new FieldModel(this, registry, field));
-        }
+        memberResolver = new MemberResolver(resolver);
     }
 
     /**
-     * Adds a field to the model
+     * Returns the collection name to use when de/encoding BSON documents.
      *
-     * @param field the field to add
+     * @return the collection name
      */
-    public void addField(final FieldModel field) {
-        fields.put(field.getName(), field);
+    public String getCollectionName() {
+        return collectionName.get();
     }
 
     /**
@@ -90,5 +80,73 @@ public class ClassModel extends MappedType {
      */
     public List<FieldModel> getFields() {
         return new ArrayList<FieldModel>(fields.values());
+    }
+
+    /**
+     * Returns the name of the class represented by this ClassModel
+     *
+     * @return the name
+     */
+    public String getName() {
+        return getType().getName();
+    }
+
+    /**
+     * Suggests a new value for the collection name.
+     *
+     * @param weight         The weight to give this value relative to other values set
+     * @param collectionName the new collection name to suggest
+     * @see WeightedValue
+     */
+    public void setCollectionName(final Integer weight, final String collectionName) {
+        this.collectionName.set(weight, collectionName);
+    }
+
+    /**
+     * Executes the actual mapping of the class.
+     */
+    public void map() {
+        if (!mapped) {
+            final ResolvedType resolved = resolver.resolve(getType());
+            final ResolvedTypeWithMembers type = memberResolver.resolve(resolved, null, null);
+
+            for (final ResolvedType resolvedType : resolved.getTypeParameters()) {
+                addParameter(resolvedType.getErasedType());
+            }
+
+            for (final ResolvedField field : type.getMemberFields()) {
+                addField(field);
+            }
+
+            for (final ResolvedMethod memberMethod : type.getMemberMethods()) {
+                addMethod(memberMethod);
+            }
+            mapped = true;
+        }
+    }
+
+    private void addField(final ResolvedField field) {
+        final FieldModel model = new FieldModel(this, registry, field);
+        fields.put(model.getName(), model);
+    }
+
+    private void addMethod(final ResolvedMethod method) {
+        final MethodModel model = new MethodModel(this, registry, method);
+        final List<MethodModel> list = getMethods(model.getName());
+        if (list.isEmpty()) {
+            methods.put(model.getName(), list);
+        }
+        list.add(model);
+    }
+
+    /**
+     * Gets the named method if it exists
+     *
+     * @param name the name of the method to fetch
+     * @return the MethodModel named
+     */
+    public List<MethodModel> getMethods(final String name) {
+        final List<MethodModel> list = methods.get(name);
+        return list == null ? new ArrayList<MethodModel>() : list;
     }
 }
