@@ -358,6 +358,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     private void addSeveralIndexes() {
+        getCollectionHelper().create(getCollectionName(), new CreateCollectionOptions())
         getCollectionHelper().createIndex(['a': 1] as Document)
         getCollectionHelper().createIndex(['b': 1] as Document)
         getCollectionHelper().createIndex(['c': 1] as Document)
