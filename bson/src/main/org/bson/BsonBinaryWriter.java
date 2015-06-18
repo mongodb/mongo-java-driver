@@ -293,6 +293,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             }
             BsonInput bsonInput = binaryReader.getBsonInput();
             int size = bsonInput.readInt32();
+            if (size < 5) {
+                throw new BsonSerializationException("Document size must be at least 5");
+            }
             bsonOutput.writeInt32(size);
             byte[] bytes = new byte[size - 4];
             bsonInput.readBytes(bytes);

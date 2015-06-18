@@ -31,6 +31,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class BsonBinaryWriterTest {
 
@@ -625,6 +626,29 @@ public class BsonBinaryWriterTest {
         assertEquals(0, reader2.readInt32("i"));
         reader2.readEndDocument();
         reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeOfDocumentWithInvalidSize() {
+        byte[] bytes = {4, 0, 0, 0};  // minimum document size is 5;
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
+        try {
+            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))));
+            try {
+                newWriter.pipe(reader);
+                fail("Pipe is expected to fail with document size is < 5");
+            } catch (BsonSerializationException e) {
+                // expected
+            }
+            finally {
+                reader.close();
+            }
+        } finally {
+            newWriter.close();
+        }
+
     }
 
     // CHECKSTYLE:OFF
