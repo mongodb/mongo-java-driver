@@ -25,14 +25,6 @@ class FunctionalSpecification extends Specification {
     protected DB database;
     protected DBCollection collection;
 
-    def setupSpec() {
-        getMongoClient().getDB(getDefaultDatabaseName()).dropDatabase()
-    }
-
-    def cleanupSpec() {
-        getMongoClient().getDB(getDefaultDatabaseName()).dropDatabase()
-    }
-
     def setup() {
         database = getMongoClient().getDB(getDefaultDatabaseName())
         collection = database.getCollection(getClass().getName())

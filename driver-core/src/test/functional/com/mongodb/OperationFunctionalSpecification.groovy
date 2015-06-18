@@ -35,13 +35,13 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 
 class OperationFunctionalSpecification extends Specification {
 
-    def setupSpec() {
-        CollectionHelper.dropDatabase(getDatabaseName())
-    }
-
-    def cleanupSpec() {
-        CollectionHelper.dropDatabase(getDatabaseName())
-    }
+//    def setupSpec() {
+//        CollectionHelper.dropDatabase(getDatabaseName())
+//    }
+//
+//    def cleanupSpec() {
+//        CollectionHelper.dropDatabase(getDatabaseName())
+//    }
 
     def setup() {
         CollectionHelper.drop(getNamespace())
