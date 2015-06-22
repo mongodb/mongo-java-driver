@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CommandWriteOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
 import org.bson.BsonDocument
@@ -107,10 +106,11 @@ class MongoDatabaseSpecification extends Specification {
         futureResultCallback.get()
 
         then:
-        def operation = executor.getWriteOperation() as CommandWriteOperation<Document>
+        def operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
         operation.command == command
+        executor.getReadPreference() == primary()
 
         when:
         futureResultCallback = new FutureResultCallback<Document>()
@@ -125,11 +125,12 @@ class MongoDatabaseSpecification extends Specification {
         when:
         futureResultCallback = new FutureResultCallback<BsonDocument>()
         database.runCommand(command, BsonDocument, futureResultCallback)
-        operation = executor.getWriteOperation() as CommandWriteOperation<BsonDocument>
+        operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
         futureResultCallback.get()
 
         then:
         operation.command == command
+        executor.getReadPreference() == primary()
 
         when:
         futureResultCallback = new FutureResultCallback<BsonDocument>()

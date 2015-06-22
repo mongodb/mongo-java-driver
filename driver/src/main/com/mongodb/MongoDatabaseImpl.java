@@ -22,7 +22,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.OperationExecutor;
@@ -108,7 +107,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final Class<TResult> resultClass) {
-        return executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)));
+        return runCommand(command, ReadPreference.primary(), resultClass);
     }
 
     @Override
