@@ -105,7 +105,7 @@ public interface MongoDatabase {
     <TDocument> MongoCollection<TDocument> getCollection(String collectionName, Class<TDocument> documentClass);
 
     /**
-     * Executes command in the context of the current database.
+     * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
      * @param command the command to be run
      * @return the command result
@@ -113,7 +113,7 @@ public interface MongoDatabase {
     Document runCommand(Bson command);
 
     /**
-     * Executes command in the context of the current database.
+     * Executes the given command in the context of the current database with the given read preference.
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
@@ -122,7 +122,7 @@ public interface MongoDatabase {
     Document runCommand(Bson command, ReadPreference readPreference);
 
     /**
-     * Executes command in the context of the current database.
+     * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
      * @param command     the command to be run
      * @param resultClass the default class to cast any documents returned from the database into.
@@ -132,7 +132,7 @@ public interface MongoDatabase {
     <TResult> TResult runCommand(Bson command, Class<TResult> resultClass);
 
     /**
-     * Executes command in the context of the current database.
+     * Executes the given command in the context of the current database with the given read preference.
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command

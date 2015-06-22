@@ -24,7 +24,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
-import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
@@ -132,7 +131,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     public <TResult> void runCommand(final Bson command, final Class<TResult> resultClass,
                                      final SingleResultCallback<TResult> callback) {
         notNull("command", command);
-        executor.execute(new CommandWriteOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)), callback);
+        runCommand(command, ReadPreference.primary(), resultClass, callback);
     }
 
     @Override
