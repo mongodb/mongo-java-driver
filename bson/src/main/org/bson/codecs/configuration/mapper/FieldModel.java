@@ -42,7 +42,7 @@ public class FieldModel extends MappedType {
     private final ClassModel owner;
     private final CodecRegistry registry;
     private final ResolvedField field;
-    private Codec<Object> codec;
+    private Codec<?> codec;
 
     /**
      * Create the FieldModel
@@ -69,8 +69,8 @@ public class FieldModel extends MappedType {
     /**
      * Creates a FieldModel based on an existing FieldModel
      *
-     * @param type the type of this new FieldModel.  e.g., when encrypting this might be a byte[] rather than the original field's String
-     *             type
+     * @param type       the type of this new FieldModel.  e.g., when encrypting this might be a byte[] rather than the original field's
+     *                   String type
      * @param fieldModel the model to duplicate
      */
     public FieldModel(final Class<?> type, final FieldModel fieldModel) {
@@ -87,10 +87,6 @@ public class FieldModel extends MappedType {
      */
     public String getFieldName() {
         return rawField.getName();
-    }
-
-    public Field getRawField() {
-        return rawField;
     }
 
     /**
@@ -202,7 +198,8 @@ public class FieldModel extends MappedType {
             }
             if (toStore) {
                 writer.writeName(getName());
-                getCodec().encode(writer, value, encoderContext);
+                final Codec<Object> codec = (Codec<Object>) getCodec();
+                codec.encode(writer, value, encoderContext);
             }
         }
     }
@@ -236,11 +233,31 @@ public class FieldModel extends MappedType {
         return name.get();
     }
 
-    public Codec<Object> getCodec() {
+
+    /**
+     * @return the Codec for this FieldModel
+     */
+    public Codec<?> getCodec() {
         if (codec == null) {
-            codec = (Codec<Object>) registry.get(getRawField().getType());
+            codec = registry.get(getRawField().getType());
         }
         return codec;
+    }
+
+    /**
+     * Explicity sets the Codec to use for this FieldModel.  If not explicitly set, the Codec is looked up via the CodecRegistry.
+     *
+     * @param codec the code to use
+     */
+    public void setCodec(final Codec<?> codec) {
+        this.codec = codec;
+    }
+
+    /**
+     * @return the Java field backing this FieldModel.  May be null in synthetic FieldModels.
+     */
+    public Field getRawField() {
+        return rawField;
     }
 
     @Override

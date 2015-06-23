@@ -19,6 +19,7 @@ package org.bson.codecs.configuration.mapper.conventions;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -40,14 +41,11 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Map;
 
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD })
+@Target({ElementType.FIELD})
 @interface Secure {
 }
 
@@ -105,7 +103,7 @@ public class ConventionPackTest {
         final BsonDocument document = new BsonDocument();
         final BsonDocumentWriter writer = new BsonDocumentWriter(document);
         final SecureEntity entity = new SecureEntity("Bob", "my voice is my passport");
-        
+
         codec.encode(writer, entity, EncoderContext.builder().build());
         Assert.assertEquals(document.getString("name").getValue(), "Bob");
         Assert.assertEquals(document.getString("password").getValue(), "zl ibvpr vf zl cnffcbeg");
@@ -143,6 +141,13 @@ public class ConventionPackTest {
         }
 
         @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (password != null ? password.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public boolean equals(final Object o) {
             if (this == o) {
                 return true;
@@ -158,13 +163,6 @@ public class ConventionPackTest {
             }
             return !(password != null ? !password.equals(that.password) : that.password != null);
 
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (password != null ? password.hashCode() : 0);
-            return result;
         }
     }
 
@@ -182,8 +180,7 @@ class Rot13Convention implements Convention {
     public void apply(final ClassModel classModel) {
         for (final FieldModel fieldModel : classModel.getFields()) {
             if (fieldModel.hasAnnotation(Secure.class)) {
-                classModel.addField(new Rot13FieldModel(fieldModel));
-                fieldModel.setIncluded(Weights.USER_ATTRIBUTE, false);
+                fieldModel.setCodec(new Rot13Codec());
             }
         }
     }
@@ -195,44 +192,23 @@ class Rot13Convention implements Convention {
 
 }
 
-class Rot13FieldModel extends FieldModel {
-    private final FieldModel original;
+class Rot13Codec implements Codec<String> {
 
-    public Rot13FieldModel(final FieldModel fieldModel) {
-        super(String.class, fieldModel);
-        original = fieldModel;
+    @Override
+    public String decode(final BsonReader reader, final DecoderContext decoderContext) {
+        return rot13(reader.readString());
     }
 
     @Override
-    public void store(final BsonWriter writer, final Object entity, final EncoderContext encoderContext) {
-        final Object value = get(entity);
-        if (value != null) {
-            writer.writeName(getName());
-            original.getCodec().encode(writer, value, encoderContext);
-        }
-        
-    }
-
-    @Override
-    public void set(final Object entity, final Object value) {
-        original.set(entity, rot13((String) value));
-    }
-
-    @Override
-    public Object get(final Object entity) {
-        return rot13((String) original.get(entity));
-    }
-
-    @Override
-    public Field getRawField() {
-        return original.getRawField();
+    public void encode(final BsonWriter writer, final String value, final EncoderContext encoderContext) {
+        writer.writeString(rot13(value));
     }
 
     private String rot13(final String value) {
         if (value == null) {
             return null;
         }
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         for (char c : value.toCharArray()) {
             if (c >= 'a' && c <= 'm') {
                 c += 13;
@@ -247,6 +223,11 @@ class Rot13FieldModel extends FieldModel {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public Class<String> getEncoderClass() {
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 }
 
