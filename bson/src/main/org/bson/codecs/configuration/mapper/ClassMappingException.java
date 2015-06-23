@@ -26,6 +26,16 @@ public class ClassMappingException extends RuntimeException {
      * Indicates an error when trying to map a class.
      *
      * @param message the reason for the error
+     * @param cause   the underlying cause
+     */
+    public ClassMappingException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * Indicates an error when trying to map a class.
+     *
+     * @param message the reason for the error
      */
     public ClassMappingException(final String message) {
         super(message);

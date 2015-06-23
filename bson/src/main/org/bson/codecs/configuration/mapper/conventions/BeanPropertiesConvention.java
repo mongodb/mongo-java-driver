@@ -19,6 +19,7 @@ package org.bson.codecs.configuration.mapper.conventions;
 import org.bson.codecs.configuration.mapper.ClassModel;
 import org.bson.codecs.configuration.mapper.FieldModel;
 import org.bson.codecs.configuration.mapper.MethodModel;
+import org.bson.codecs.configuration.mapper.Weights;
 
 import java.util.List;
 
@@ -29,9 +30,8 @@ import java.util.List;
  * @see <a target="_blank" href="http://www.oracle.com/technetwork/articles/javaee/spec-136004.html">JavaBeans Spec</a>
  */
 public class BeanPropertiesConvention implements Convention {
-    @Override
-    public Integer getWeight() {
-        return 100;
+    private Integer getWeight() {
+        return Weights.BUILT_IN_CONVENTION;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class BeanPropertiesConvention implements Convention {
         final List<FieldModel> resolvedFields = model.getFields();
         for (final FieldModel field : resolvedFields) {
             if (field.isPrivate() && !field.isTransient() && !field.isFinal()) {
-                final String name = field.getName();
+                final String name = field.getFieldName();
                 final String propertyName = name.substring(0, 1).toUpperCase() + name.substring(1);
 
                 if (!validGetter(model, field, propertyName) || !validSetter(model, field, propertyName)) {

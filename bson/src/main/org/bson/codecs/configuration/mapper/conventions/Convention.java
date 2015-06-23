@@ -36,10 +36,4 @@ public interface Convention {
      * @return the phase
      */
     String getPhase();
-
-    /**
-     * @return the weight to be applied to any suggested values coming from this Convention
-     * @see org.bson.codecs.configuration.mapper.WeightedValue
-     */
-    Integer getWeight();
 }

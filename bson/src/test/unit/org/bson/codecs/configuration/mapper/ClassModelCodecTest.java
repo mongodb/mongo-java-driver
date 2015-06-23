@@ -61,11 +61,12 @@ public class ClassModelCodecTest {
 
     @Test
     public void testDecode() {
-        final Entity entity = new Entity(800L, 12, "James Bond");
+        final Entity entity = new Entity(800L, 12, "Bond", "James Bond");
 
         final BsonDocument document = new BsonDocument("age", new BsonInt64(800))
                                           .append("faves", new BsonInt32(12))
-                                          .append("name", new BsonString("James Bond"));
+                                          .append("name", new BsonString("Bond"))
+                                          .append("fullName", new BsonString("James Bond"));
         final CodecRegistry codecRegistry = getCodecRegistry();
 
         final Entity decoded = codecRegistry
@@ -90,7 +91,7 @@ public class ClassModelCodecTest {
 
     @Test
     public void testRoundTrip() {
-        final Entity entity = new Entity(800L, 12, "James Bond");
+        final Entity entity = new Entity(800L, 12, "Bond", "James Bond");
 
         final CodecRegistry codecRegistry = getCodecRegistry();
 

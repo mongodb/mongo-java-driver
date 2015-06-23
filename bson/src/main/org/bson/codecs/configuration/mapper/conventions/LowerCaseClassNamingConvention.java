@@ -33,8 +33,7 @@ public class LowerCaseClassNamingConvention implements Convention {
         return ConventionPack.CLASS_MAPPING;
     }
 
-    @Override
-    public Integer getWeight() {
+    private Integer getWeight() {
         return Weights.DEFAULT;
     }
 }

@@ -22,9 +22,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 /**
  * Represents the metamodel of a method on a class mapped by a ClassModel
  */
-public class MethodModel {
-    private final ClassModel owner;
-    private final CodecRegistry registry;
+public class MethodModel extends MappedType {
+//    private final ClassModel owner;
+//    private final CodecRegistry registry;
     private final ResolvedMethod method;
 
     /**
@@ -33,8 +33,10 @@ public class MethodModel {
      * @param method the method being modeled
      */
     public MethodModel(final ClassModel model, final CodecRegistry registry, final ResolvedMethod method) {
-        owner = model;
-        this.registry = registry;
+        super(method.getType() == null ? Void.class : method.getType().getErasedType(), model);
+        
+//        owner = model;
+//        this.registry = registry;
         this.method = method;
     }
 

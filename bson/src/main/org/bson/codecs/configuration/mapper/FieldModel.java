@@ -22,6 +22,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
@@ -63,6 +64,43 @@ public class FieldModel extends MappedType {
         for (final ResolvedType parameter : typeParameters) {
             addParameter(parameter.getErasedType());
         }
+    }
+
+    /**
+     * Creates a FieldModel based on an existing FieldModel
+     *
+     * @param type the type of this new FieldModel.  e.g., when encrypting this might be a byte[] rather than the original field's String
+     *             type
+     * @param fieldModel the model to duplicate
+     */
+    public FieldModel(final Class<?> type, final FieldModel fieldModel) {
+        super(type);
+        this.registry = fieldModel.registry;
+        this.name = fieldModel.name;
+        this.owner = fieldModel.owner;
+        this.field = fieldModel.field;
+        this.rawField = null;
+    }
+
+    /**
+     * @return the unmapped field name as defined in the java source.
+     */
+    public String getFieldName() {
+        return rawField.getName();
+    }
+
+    public Field getRawField() {
+        return rawField;
+    }
+
+    /**
+     * Checks if this field is annotated with the given annotation.
+     *
+     * @param aClass the annotation to check for
+     * @return true if the field is annotated with this type
+     */
+    public boolean hasAnnotation(final Class<? extends Annotation> aClass) {
+        return field.getAnnotations().get(aClass) != null;
     }
 
     /**
@@ -135,6 +173,16 @@ public class FieldModel extends MappedType {
     }
 
     /**
+     * Suggests a value for the name with a particular weight.
+     *
+     * @param weight the weight of the suggested value
+     * @param value  the suggested value
+     */
+    public void setName(final Integer weight, final String value) {
+        name.set(weight, value);
+    }
+
+    /**
      * Gives this field a chance to store itself in to the BsonWriter given.  If this field has been excluded by a Convention, this method
      * will do nothing.
      *
@@ -188,9 +236,9 @@ public class FieldModel extends MappedType {
         return name.get();
     }
 
-    Codec<Object> getCodec() {
+    public Codec<Object> getCodec() {
         if (codec == null) {
-            codec = (Codec<Object>) registry.get(rawField.getType());
+            codec = (Codec<Object>) registry.get(getRawField().getType());
         }
         return codec;
     }

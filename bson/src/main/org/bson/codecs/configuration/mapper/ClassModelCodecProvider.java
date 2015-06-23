@@ -105,9 +105,11 @@ public class ClassModelCodecProvider implements CodecProvider {
          * Sets the conventions to use when mapping types.
          *
          * @param conventionPack the ConventionPack to use with the ClassModelCodecProvider
+         * @return this
          */
-        public void setConventionPack(final ConventionPack conventionPack) {
+        public ProviderBuilder setConventionPack(final ConventionPack conventionPack) {
             this.conventionPack = conventionPack;
+            return this;
         }
     }
 }

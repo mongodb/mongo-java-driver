@@ -15,6 +15,8 @@
  */
 package org.bson.codecs.configuration.mapper;
 
+import com.fasterxml.classmate.AnnotationConfiguration.StdConfiguration;
+import com.fasterxml.classmate.AnnotationInclusion;
 import com.fasterxml.classmate.MemberResolver;
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
@@ -52,6 +54,11 @@ public class ClassModel extends MappedType {
         this.registry = registry;
         this.resolver = resolver;
         memberResolver = new MemberResolver(resolver);
+        try {
+            aClass.getConstructor().setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            throw new ClassMappingException(e.getMessage(), e);
+        }
     }
 
     /**
@@ -92,23 +99,13 @@ public class ClassModel extends MappedType {
     }
 
     /**
-     * Suggests a new value for the collection name.
-     *
-     * @param weight         The weight to give this value relative to other values set
-     * @param collectionName the new collection name to suggest
-     * @see WeightedValue
-     */
-    public void setCollectionName(final Integer weight, final String collectionName) {
-        this.collectionName.set(weight, collectionName);
-    }
-
-    /**
      * Executes the actual mapping of the class.
      */
     public void map() {
         if (!mapped) {
             final ResolvedType resolved = resolver.resolve(getType());
-            final ResolvedTypeWithMembers type = memberResolver.resolve(resolved, null, null);
+            final ResolvedTypeWithMembers type =
+                memberResolver.resolve(resolved, new StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED), null);
 
             for (final ResolvedType resolvedType : resolved.getTypeParameters()) {
                 addParameter(resolvedType.getErasedType());
@@ -126,17 +123,31 @@ public class ClassModel extends MappedType {
     }
 
     private void addField(final ResolvedField field) {
-        final FieldModel model = new FieldModel(this, registry, field);
-        fields.put(model.getName(), model);
+        addField(new FieldModel(this, registry, field));
     }
 
     private void addMethod(final ResolvedMethod method) {
-        final MethodModel model = new MethodModel(this, registry, method);
-        final List<MethodModel> list = getMethods(model.getName());
-        if (list.isEmpty()) {
-            methods.put(model.getName(), list);
+        final MethodModel model;
+        try {
+            model = new MethodModel(this, registry, method);
+            final List<MethodModel> list = getMethods(model.getName());
+            if (list.isEmpty()) {
+                methods.put(model.getName(), list);
+            }
+            list.add(model);
+        } catch (final Exception e) {
+            throw new ClassMappingException(e.getMessage(), e);
         }
-        list.add(model);
+    }
+
+    /**
+     * Adds a new FieldModel to this ClassModel.  This is useful for transformative conventions such encrypting conventions than need to
+     * operate in response to mappings on other FieldModels.
+     *
+     * @param model the model to add
+     */
+    public void addField(final FieldModel model) {
+        fields.put(model.getName(), model);
     }
 
     /**
@@ -149,4 +160,16 @@ public class ClassModel extends MappedType {
         final List<MethodModel> list = methods.get(name);
         return list == null ? new ArrayList<MethodModel>() : list;
     }
+
+    /**
+     * Suggests a new value for the collection name.
+     *
+     * @param weight         The weight to give this value relative to other values set
+     * @param collectionName the new collection name to suggest
+     * @see WeightedValue
+     */
+    public void setCollectionName(final Integer weight, final String collectionName) {
+        this.collectionName.set(weight, collectionName);
+    }
+
 }

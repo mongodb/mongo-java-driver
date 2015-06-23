@@ -18,6 +18,7 @@ package org.bson.codecs.configuration.mapper;
 
 public class Entity {
     private String name;
+    private String fullName;
     private Integer faves;
     private Long age;
     private Boolean debug = false;
@@ -25,10 +26,11 @@ public class Entity {
     public Entity() {
     }
 
-    public Entity(final Long age, final int faves, final String name) {
+    public Entity(final Long age, final int faves, final String name, final String fullName) {
         this.age = age;
         this.faves = faves;
         this.name = name;
+        this.fullName = fullName;
     }
 
     public Long getAge() {
@@ -49,6 +51,14 @@ public class Entity {
 
     public void setFaves(final Integer faves) {
         this.faves = faves;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(final String fullName) {
+        this.fullName = fullName;
     }
 
     public String getName() {
