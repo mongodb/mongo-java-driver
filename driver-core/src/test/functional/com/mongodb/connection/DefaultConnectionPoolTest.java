@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,5 +226,35 @@ public class DefaultConnectionPoolTest {
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
+    }
+
+    @Test
+    public void shouldNotCallWaitQueueExitedIfWaitQueueEnteredWasNotCalled() throws InterruptedException {
+        // given
+        QueueEventsConnectionPoolListener listener = new QueueEventsConnectionPoolListener();
+
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                             ConnectionPoolSettings.builder()
+                                                                   .maxSize(1)
+                                                                   .maxWaitQueueSize(1)
+                                                                   .maxWaitTime(500, MILLISECONDS)
+                                                                   .build(),
+                                             listener);
+
+        // when
+        provider.get();
+
+        new Thread(new TimeoutTrackingConnectionGetter(provider)).start();
+        Thread.sleep(100);
+
+        try {
+            provider.get();
+            fail();
+        } catch (MongoWaitQueueFullException e) {
+            // all good
+        }
+
+        // then
+        assertEquals(1, listener.getWaitQueueSize());
     }
 }
