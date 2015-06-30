@@ -16,7 +16,7 @@ be passed to any method that expects a projection.
 For brevity, you may choose to import the methods of the `Projections` class statically:
 
 ```java
-import com.mongodb.client.model.Projections.*;
+import static com.mongodb.client.model.Projections.*;
 ```
   
 All the examples below assume this static import.
