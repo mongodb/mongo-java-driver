@@ -18,11 +18,13 @@
 
 package org.bson;
 
+import category.Slow;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
@@ -50,6 +52,7 @@ public class GenericBsonTest {
     }
 
     @Test
+    @Category(Slow.class)
     public void shouldPassAllOutcomes() {
         for (BsonValue curValue : definition.getArray("documents")) {
             BsonDocument curDocument = curValue.asDocument();
