@@ -17,7 +17,7 @@
 package com.mongodb;
 
 /**
- * Exception indicating that the execution of the current operation timed outas a result of the maximum operation time being exceeded.
+ * Exception indicating that the execution of the current operation timed out as a result of the maximum operation time being exceeded.
  *
  * @since 2.12
  */

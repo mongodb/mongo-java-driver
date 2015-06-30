@@ -17,7 +17,7 @@
 package com.mongodb;
 
 /**
- * A base class for exceptions indicating a failure condition within the driver.
+ * A base class for exceptions indicating a failure condition with the MongoClient.
  *
  * @since 2.12
  */
