@@ -82,7 +82,7 @@ mongoClient.getDatabase("databaseToBeDropped").drop(callbackWhenFinished);
 
 Collections in MongoDB are created automatically simply by inserted a document into it. Using the 
 [`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) 
-method, you can also create a collection explicitly in order to to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
+method, you can also create a collection explicitly in order to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
 
 ```java
 database.createCollection("cappedCollection",
@@ -222,7 +222,7 @@ For more information about text search see the [text index]({{< docsref "/core/i
 
 ## Running a command
 
-Not all commands have a specific helper, however you can run any [command]({{< docsref "/reference/command">}})
+While not all commands have a specific helper, however you can run any [command]({{< docsref "/reference/command">}})
 by using the [`runCommand()`](http://api.mongodb.org/java/3.0/?com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-) method.  Here we call the [buildInfo]({{ docsref "reference/command/buildInfo" }}) command:
 
 ```java
