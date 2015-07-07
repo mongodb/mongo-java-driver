@@ -17,10 +17,13 @@ package org.bson.codecs.configuration.mapper;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.ResolvedField;
+import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.mapper.conventions.Converter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -32,7 +35,7 @@ import java.util.Map;
  * Represents a field on a class and stores various metadata such as generic parameters for use by the {@link ClassModelCodec}
  */
 @SuppressWarnings("unchecked")
-public class FieldModel extends MappedType {
+public final class FieldModel extends MappedType {
     private final Field rawField;
 
     private final WeightedValue<String> name;
@@ -43,6 +46,7 @@ public class FieldModel extends MappedType {
     private final CodecRegistry registry;
     private final ResolvedField field;
     private Codec<?> codec;
+    private Converter<?, ?> converter = new IdentityConverter();
 
     /**
      * Create the FieldModel
@@ -83,10 +87,126 @@ public class FieldModel extends MappedType {
     }
 
     /**
+     * Sets the field on entity with the given value
+     *
+     * @param entity  the entity to update
+     * @param reader  The BsonReader to use
+     * @param context the DecoderContext to use
+     */
+    public void decode(final Object entity, final BsonReader reader, final DecoderContext context) {
+        try {
+            rawField.set(entity, getConverter().unapply(getCodec().decode(reader, context)));
+        } catch (final IllegalAccessException e) {
+            // shouldn't get this but just in case...
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @return the Codec for this FieldModel
+     */
+    Codec<?> getCodec() {
+        if (codec == null) {
+            codec = registry.get(getConverter().getType());
+        }
+        return codec;
+    }
+
+    /**
+     * Explicity sets the Codec to use for this FieldModel.  If not explicitly set, the Codec is looked up via the CodecRegistry.
+     *
+     * @param codec the code to use
+     */
+    public void setCodec(final Codec<?> codec) {
+        this.codec = codec;
+    }
+
+    /**
+     * @return returns the Converter for this field.
+     */
+    @SuppressWarnings("rawtypes")
+    public Converter getConverter() {
+        return converter;
+    }
+
+    /**
+     * @param converter the Converter to use for this field.  Can not be null.
+     */
+    @SuppressWarnings("rawtypes")
+    public void setConverter(final Converter converter) {
+        if (converter == null) {
+            throw new IllegalArgumentException("The converter can not be null");
+        }
+        this.converter = converter;
+    }
+
+    /**
+     * Gives this field a chance to store itself in to the BsonWriter given.  If this field has been excluded by a Convention, this method
+     * will do nothing.
+     *
+     * @param entity         the entity from which to pull the value this FieldModel represents
+     * @param writer         the BsonWriter to use if this field is included
+     * @param encoderContext the encoding context
+     */
+    public void encode(final Object entity, final BsonWriter writer, final EncoderContext encoderContext) {
+        if (isIncluded()) {
+            final Object value = get(entity);
+            boolean toStore = value != null || storeNulls.get();
+            if (Collection.class.isAssignableFrom(rawField.getType())) {
+                toStore &= (!((Collection<?>) value).isEmpty() || storeEmpties.get());
+            }
+            if (Map.class.isAssignableFrom(rawField.getType())) {
+                toStore &= (!((Map<?, ?>) value).isEmpty() || storeEmpties.get());
+            }
+            if (toStore) {
+                writer.writeName(getName());
+                final Codec<Object> codec = (Codec<Object>) getCodec();
+                codec.encode(writer, getConverter().apply(value), encoderContext);
+            }
+        }
+    }
+
+    /**
+     * @return true if the field should included
+     */
+    public Boolean isIncluded() {
+        return included.get();
+    }
+
+    /**
+     * Gets the value of the field from the given reference.
+     *
+     * @param entity the entity from which to pull the value
+     * @return the value of the field
+     */
+    public Object get(final Object entity) {
+        try {
+            return rawField.get(entity);
+        } catch (final IllegalAccessException e) {
+            // shouldn't get this but just in case...
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @return the name of the mapped field
+     */
+    public String getName() {
+        return name.get();
+    }
+
+    /**
      * @return the unmapped field name as defined in the java source.
      */
     public String getFieldName() {
         return rawField.getName();
+    }
+
+    /**
+     * @return the Java field backing this FieldModel.  May be null in synthetic FieldModels.
+     */
+    public Field getRawField() {
+        return rawField;
     }
 
     /**
@@ -142,21 +262,6 @@ public class FieldModel extends MappedType {
     }
 
     /**
-     * Sets the field on entity with the given value
-     *
-     * @param entity the entity to update
-     * @param value  the value to set
-     */
-    public void set(final Object entity, final Object value) {
-        try {
-            rawField.set(entity, value);
-        } catch (final IllegalAccessException e) {
-            // shouldn't get this but just in case...
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    /**
      * Sets whether this field is to be included when de/encoding BSON documents.  Conventions are free to turn this field "off" or "on"
      * based on whatever criteria they need.  e.g., {@link org.bson.codecs.configuration.mapper.conventions.BeanPropertiesConvention} can
      * set this to false if a field isn't an instance field with proper set and get methods.
@@ -178,90 +283,25 @@ public class FieldModel extends MappedType {
         name.set(weight, value);
     }
 
-    /**
-     * Gives this field a chance to store itself in to the BsonWriter given.  If this field has been excluded by a Convention, this method
-     * will do nothing.
-     *
-     * @param writer         the BsonWriter to use if this field is included
-     * @param entity         the entity from which to pull the value this FieldModel represents
-     * @param encoderContext the encoding context
-     */
-    public void store(final BsonWriter writer, final Object entity, final EncoderContext encoderContext) {
-        if (isIncluded()) {
-            final Object value = get(entity);
-            boolean toStore = value != null || storeNulls.get();
-            if (Collection.class.isAssignableFrom(rawField.getType())) {
-                toStore &= (!((Collection<?>) value).isEmpty() || storeEmpties.get());
-            }
-            if (Map.class.isAssignableFrom(rawField.getType())) {
-                toStore &= (!((Map<?, ?>) value).isEmpty() || storeEmpties.get());
-            }
-            if (toStore) {
-                writer.writeName(getName());
-                final Codec<Object> codec = (Codec<Object>) getCodec();
-                codec.encode(writer, value, encoderContext);
-            }
-        }
-    }
-
-    /**
-     * @return true if the field should included
-     */
-    public Boolean isIncluded() {
-        return included.get();
-    }
-
-    /**
-     * Gets the value of the field from the given reference.
-     *
-     * @param entity the entity from which to pull the value
-     * @return the value of the field
-     */
-    public Object get(final Object entity) {
-        try {
-            return rawField.get(entity);
-        } catch (final IllegalAccessException e) {
-            // shouldn't get this but just in case...
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * @return the name of the mapped field
-     */
-    public String getName() {
-        return name.get();
-    }
-
-
-    /**
-     * @return the Codec for this FieldModel
-     */
-    public Codec<?> getCodec() {
-        if (codec == null) {
-            codec = registry.get(getRawField().getType());
-        }
-        return codec;
-    }
-
-    /**
-     * Explicity sets the Codec to use for this FieldModel.  If not explicitly set, the Codec is looked up via the CodecRegistry.
-     *
-     * @param codec the code to use
-     */
-    public void setCodec(final Codec<?> codec) {
-        this.codec = codec;
-    }
-
-    /**
-     * @return the Java field backing this FieldModel.  May be null in synthetic FieldModels.
-     */
-    public Field getRawField() {
-        return rawField;
-    }
-
     @Override
     public String toString() {
         return String.format("%s#%s", owner.getName(), field.getName());
+    }
+
+    private class IdentityConverter implements Converter<Object, Object> {
+        @Override
+        public Object apply(final Object value) {
+            return value;
+        }
+
+        @Override
+        public Class<Object> getType() {
+            return (Class<Object>) getRawField().getType();
+        }
+
+        @Override
+        public Object unapply(final Object value) {
+            return value;
+        }
     }
 }

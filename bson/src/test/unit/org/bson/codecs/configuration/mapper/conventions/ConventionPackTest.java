@@ -19,35 +19,17 @@ package org.bson.codecs.configuration.mapper.conventions;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.mapper.ClassModel;
 import org.bson.codecs.configuration.mapper.ClassModelCodecProvider;
 import org.bson.codecs.configuration.mapper.Entity;
-import org.bson.codecs.configuration.mapper.FieldModel;
-import org.bson.codecs.configuration.mapper.Weights;
+import org.bson.codecs.configuration.mapper.conventions.entities.SecureEntity;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Documented
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
-@interface Secure {
-}
 
 public class ConventionPackTest {
 
@@ -63,11 +45,11 @@ public class ConventionPackTest {
         final Codec<Entity> codec = registry.get(Entity.class);
         final BsonDocument document = new BsonDocument();
         final BsonDocumentWriter writer = new BsonDocumentWriter(document);
-        codec.encode(writer, new Entity(102L, 0, "Scrooge", "Ebenzer Scrooge"), EncoderContext.builder().build());
+        codec.encode(writer, new Entity(102L, 0, "Scrooge", "Ebenezer Scrooge"), EncoderContext.builder().build());
         Assert.assertEquals(document.getNumber("age").longValue(), 102L);
         Assert.assertEquals(document.getNumber("faves").intValue(), 0);
         Assert.assertEquals(document.getString("name").getValue(), "Scrooge");
-        Assert.assertEquals(document.getString("full_name").getValue(), "Ebenzer Scrooge");
+        Assert.assertEquals(document.getString("full_name").getValue(), "Ebenezer Scrooge");
         Assert.assertFalse(document.containsKey("debug"));
     }
 
@@ -111,146 +93,5 @@ public class ConventionPackTest {
         Assert.assertEquals(entity, codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build()));
     }
 
-    public static class SecureEntity {
-        private String name;
-        @Secure
-        private String password;
-
-        public SecureEntity() {
-        }
-
-        public SecureEntity(final String name, final String password) {
-            this.name = name;
-            this.password = password;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(final String name) {
-            this.name = name;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(final String password) {
-            this.password = password;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (password != null ? password.hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            final SecureEntity that = (SecureEntity) o;
-
-            if (name != null ? !name.equals(that.name) : that.name != null) {
-                return false;
-            }
-            return !(password != null ? !password.equals(that.password) : that.password != null);
-
-        }
-    }
-
 }
 
-class TransformingConventionPack extends DefaultConventionPack {
-    public TransformingConventionPack() {
-        addConvention(new Rot13Convention());
-    }
-
-}
-
-class Rot13Convention implements Convention {
-    @Override
-    public void apply(final ClassModel classModel) {
-        for (final FieldModel fieldModel : classModel.getFields()) {
-            if (fieldModel.hasAnnotation(Secure.class)) {
-                fieldModel.setCodec(new Rot13Codec());
-            }
-        }
-    }
-
-    @Override
-    public String getPhase() {
-        return ConventionPack.FIELD_MAPPING;
-    }
-
-}
-
-class Rot13Codec implements Codec<String> {
-
-    @Override
-    public String decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return rot13(reader.readString());
-    }
-
-    @Override
-    public void encode(final BsonWriter writer, final String value, final EncoderContext encoderContext) {
-        writer.writeString(rot13(value));
-    }
-
-    private String rot13(final String value) {
-        if (value == null) {
-            return null;
-        }
-        final StringBuffer sb = new StringBuffer();
-        for (char c : value.toCharArray()) {
-            if (c >= 'a' && c <= 'm') {
-                c += 13;
-            } else if (c >= 'n' && c <= 'z') {
-                c -= 13;
-            } else if (c >= 'A' && c <= 'M') {
-                c += 13;
-            } else if (c >= 'N' && c <= 'Z') {
-                c -= 13;
-            }
-            sb.append(c);
-        }
-
-        return sb.toString();
-    }
-
-    @Override
-    public Class<String> getEncoderClass() {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-}
-
-class CustomConventionPack extends DefaultConventionPack {
-    public CustomConventionPack() {
-        addConvention(new SnakeCaseConvention());
-    }
-}
-
-class SnakeCaseConvention implements Convention {
-    @Override
-    public void apply(final ClassModel model) {
-        for (final FieldModel fieldModel : model.getFields()) {
-            fieldModel.setName(Weights.USER_CONVENTION, snake(fieldModel.getFieldName()));
-        }
-    }
-
-    private String snake(final String name) {
-        return name.replaceAll("([A-Z])", "_$1").toLowerCase();
-    }
-
-    @Override
-    public String getPhase() {
-        return ConventionPack.FIELD_MAPPING;
-    }
-}

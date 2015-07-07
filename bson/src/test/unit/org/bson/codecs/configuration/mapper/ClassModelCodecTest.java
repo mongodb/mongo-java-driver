@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bson.codecs.configuration.mapper;
 
 import com.fasterxml.classmate.TypeResolver;
@@ -107,5 +108,4 @@ public class ClassModelCodecTest {
     private static class Fooble<T> {
         private T value;
     }
-
 }

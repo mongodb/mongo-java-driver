@@ -33,7 +33,7 @@ import java.util.TreeMap;
 /**
  * This class represents the various generics and field metadata of a class for use in mapping data to and from the database.
  */
-public class ClassModel extends MappedType {
+public final class ClassModel extends MappedType {
     private final Map<String, FieldModel> fields = new TreeMap<String, FieldModel>();
     private final CodecRegistry registry;
     private final TypeResolver resolver;
