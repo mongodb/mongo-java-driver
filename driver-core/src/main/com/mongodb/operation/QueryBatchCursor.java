@@ -50,6 +50,11 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
+        this(firstQueryResult, limit, batchSize, decoder, connectionSource, null);
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
+                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection) {
         this.namespace = firstQueryResult.getNamespace();
         this.limit = limit;
         this.batchSize = batchSize;
@@ -65,7 +70,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
         initFromQueryResult(firstQueryResult);
         if (limitReached()) {
-            killCursor();
+            notNull("connection", connection);
+            killCursor(connection);
         }
     }
 

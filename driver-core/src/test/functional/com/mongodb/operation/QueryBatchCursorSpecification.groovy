@@ -116,12 +116,16 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     def 'test limit exhaustion'() {
         given:
         def firstBatch = executeQuery(2)
+        def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), connectionSource, connection)
 
         then:
         cursor.iterator().sum { it.size } == 5
+
+        cleanup:
+        connection?.release()
     }
 
     def 'test remove'() {
@@ -241,8 +245,9 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
+        def connection = connectionSource.getConnection()
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, new DocumentCodec(), connectionSource, connection)
 
         ServerCursor serverCursor = cursor.getServerCursor()
         Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
@@ -252,6 +257,9 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
         then:
         thrown(MongoCursorNotFoundException)
+
+        cleanup:
+        connection?.release()
     }
 
     @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })

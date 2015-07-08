@@ -406,7 +406,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                               isPartial(),
                                                               isOplogReplay(),
                                                               decoder);
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source, connection);
             }
         });
     }
