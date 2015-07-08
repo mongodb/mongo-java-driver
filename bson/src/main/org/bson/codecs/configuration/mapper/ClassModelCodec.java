@@ -48,7 +48,7 @@ public class ClassModelCodec<T extends Object> implements Codec<T> {
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 final String name = reader.readName();
                 final FieldModel fieldModel = classModel.getField(name);
-                fieldModel.set(entity, fieldModel.getCodec().decode(reader, decoderContext));
+                fieldModel.decode(entity, reader, decoderContext);
 
             }
             reader.readEndDocument();
@@ -59,12 +59,10 @@ public class ClassModelCodec<T extends Object> implements Codec<T> {
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Object value, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final Object entity, final EncoderContext encoderContext) {
         writer.writeStartDocument();
         for (final FieldModel fieldModel : classModel.getFields()) {
-            writer.writeName(fieldModel.getName());
-            final Codec<Object> codec = fieldModel.getCodec();
-            codec.encode(writer, fieldModel.get(value), encoderContext);
+            fieldModel.encode(entity, writer, encoderContext);
         }
         writer.writeEndDocument();
     }
