@@ -19,8 +19,12 @@ import com.fasterxml.classmate.TypeResolver;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.mapper.conventions.ConventionPack;
+import org.bson.codecs.configuration.mapper.conventions.DefaultConventionPack;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,13 +33,17 @@ import java.util.Set;
 public class ClassModelCodecProvider implements CodecProvider {
     private final TypeResolver resolver = new TypeResolver();
     private final Set<Class<?>> registered;
+    private final Map<Class<?>, ClassModelCodec<?>> mapped = new HashMap<Class<?>, ClassModelCodec<?>>();
+    private final ConventionPack conventionPack;
 
     /**
      * Creates a provider for a given set of classes.
      *
-     * @param registered the classes to use
+     * @param conventionPack The conventions to use when mapping
+     * @param registered     the classes to use
      */
-    public ClassModelCodecProvider(final Set<Class<?>> registered) {
+    public ClassModelCodecProvider(final ConventionPack conventionPack, final Set<Class<?>> registered) {
+        this.conventionPack = conventionPack;
         this.registered = registered;
     }
 
@@ -52,12 +60,17 @@ public class ClassModelCodecProvider implements CodecProvider {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        Codec<T> codec = null;
+        ClassModelCodec<?> codec = null;
         if (registered.contains(clazz)) {
-            final ClassModel model = new ClassModel(registry, resolver, (Class<Object>) clazz);
-            codec = (Codec<T>) new ClassModelCodec(model);
+            codec = mapped.get(clazz);
+            if (codec == null && conventionPack.isMappable(clazz)) {
+                final ClassModel model = new ClassModel(registry, resolver, clazz);
+                conventionPack.apply(model);
+                codec = new ClassModelCodec(model);
+                mapped.put(clazz, codec);
+            }
         }
-        return codec;
+        return (Codec<T>) codec;
     }
 
     /**
@@ -65,6 +78,7 @@ public class ClassModelCodecProvider implements CodecProvider {
      */
     public static class ProviderBuilder {
         private final Set<Class<?>> registered = new HashSet<Class<?>>();
+        private ConventionPack conventionPack = new DefaultConventionPack();
 
         /**
          * Creates the ClassModelCodecProvider with the classes that have been registered.
@@ -73,7 +87,7 @@ public class ClassModelCodecProvider implements CodecProvider {
          * @see #register(Class)
          */
         public ClassModelCodecProvider build() {
-            return new ClassModelCodecProvider(registered);
+            return new ClassModelCodecProvider(conventionPack, registered);
         }
 
         /**
@@ -84,6 +98,17 @@ public class ClassModelCodecProvider implements CodecProvider {
          */
         public ProviderBuilder register(final Class<?> clazz) {
             registered.add(clazz);
+            return this;
+        }
+
+        /**
+         * Sets the conventions to use when mapping types.
+         *
+         * @param conventionPack the ConventionPack to use with the ClassModelCodecProvider
+         * @return this
+         */
+        public ProviderBuilder setConventionPack(final ConventionPack conventionPack) {
+            this.conventionPack = conventionPack;
             return this;
         }
     }
