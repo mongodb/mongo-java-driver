@@ -26,8 +26,11 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.mapper.ClassModelCodecProvider;
-import org.bson.codecs.configuration.mapper.Entity;
+import org.bson.codecs.configuration.mapper.conventions.entities.Address;
+import org.bson.codecs.configuration.mapper.conventions.entities.Entity;
+import org.bson.codecs.configuration.mapper.conventions.entities.Person;
 import org.bson.codecs.configuration.mapper.conventions.entities.SecureEntity;
+import org.bson.codecs.configuration.mapper.conventions.entities.ZipCode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -91,6 +94,45 @@ public class ConventionPackTest {
         Assert.assertEquals(document.getString("password").getValue(), "zl ibvpr vf zl cnffcbeg");
 
         Assert.assertEquals(entity, codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build()));
+    }
+
+    @Test
+    public void testEmbeddedEntities() {
+        final ClassModelCodecProvider codecProvider = ClassModelCodecProvider
+                                                          .builder()
+                                                          .register(Person.class)
+                                                          .register(Address.class)
+                                                          .register(ZipCode.class)
+                                                          .build();
+        final CodecRegistry registry = CodecRegistries.fromProviders(codecProvider, new ValueCodecProvider());
+
+        final Codec<Person> personCodec = registry.get(Person.class);
+        final Codec<Address> addressCodec = registry.get(Address.class);
+        final Codec<ZipCode> zipCodeCodec = registry.get(ZipCode.class);
+        final BsonDocument personDocument = new BsonDocument();
+        final BsonDocument addressDocument = new BsonDocument();
+        final BsonDocument zipDocument = new BsonDocument();
+
+        final ZipCode zip = new ZipCode(12345, 1234);
+        final Address address = new Address("1000 Quiet Lane", "Whispering Pines", "HA", zip);
+        final Person entity = new Person("Bob", "Ross", address);
+
+        zipCodeCodec.encode(new BsonDocumentWriter(zipDocument), zip, EncoderContext.builder().build());
+        Assert.assertEquals(zipDocument.getInt32("number").getValue(), 12345);
+        Assert.assertEquals(zipDocument.getInt32("extended").getValue(), 1234);
+
+        addressCodec.encode(new BsonDocumentWriter(addressDocument), address, EncoderContext.builder().build());
+        Assert.assertEquals(addressDocument.getString("street").getValue(), "1000 Quiet Lane");
+        Assert.assertEquals(addressDocument.getString("city").getValue(), "Whispering Pines");
+        Assert.assertEquals(addressDocument.getString("state").getValue(), "HA");
+        Assert.assertEquals(addressDocument.getDocument("zip"), zipDocument);
+
+        personCodec.encode(new BsonDocumentWriter(personDocument), entity, EncoderContext.builder().build());
+        Assert.assertEquals(personDocument.getString("firstName").getValue(), "Bob");
+        Assert.assertEquals(personDocument.getString("lastName").getValue(), "Ross");
+        Assert.assertEquals(personDocument.getDocument("home"), addressDocument);
+
+        Assert.assertEquals(entity, personCodec.decode(new BsonDocumentReader(personDocument), DecoderContext.builder().build()));
     }
 
 }

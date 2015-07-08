@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration.mapper;
+package org.bson.codecs.configuration.mapper.conventions.entities;
 
 public class Entity {
     private String name;

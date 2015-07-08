@@ -30,6 +30,7 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.mapper.conventions.entities.Entity;
 import org.junit.Assert;
 import org.junit.Test;
 
