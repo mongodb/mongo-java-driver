@@ -77,7 +77,7 @@ final class OperationHelper {
                                                           final ServerAddress serverAddress, final int batchSize) {
         return new QueryBatchCursor<T>(new QueryResult<T>(namespace, Collections.<T>emptyList(), 0L,
                                                           serverAddress),
-                                       0, batchSize, decoder, serverAddress);
+                                       0, batchSize, decoder);
     }
 
     static <T> AsyncBatchCursor<T> createEmptyAsyncBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,

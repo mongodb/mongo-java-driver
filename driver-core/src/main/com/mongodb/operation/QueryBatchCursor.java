@@ -34,7 +34,6 @@ import static java.util.Arrays.asList;
 class QueryBatchCursor<T> implements BatchCursor<T> {
     private final MongoNamespace namespace;
     private final int limit;
-    private final ServerAddress serverAddress;
     private final Decoder<T> decoder;
     private final ConnectionSource connectionSource;
     private int batchSize;
@@ -45,22 +44,16 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private boolean closed;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
-                     final Decoder<T> decoder, final ServerAddress serverAddress) {
-        this(firstQueryResult, limit, batchSize, decoder, (ConnectionSource) null, serverAddress);
+                     final Decoder<T> decoder) {
+        this(firstQueryResult, limit, batchSize, decoder, (ConnectionSource) null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
-        this(firstQueryResult, limit, batchSize, decoder, connectionSource, connectionSource.getServerDescription().getAddress());
-    }
-
-    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
-                     final Decoder<T> decoder, final ConnectionSource connectionSource, final ServerAddress serverAddress) {
         this.namespace = firstQueryResult.getNamespace();
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);
-        this.serverAddress = notNull("serverAddress", serverAddress);
         if (firstQueryResult.getCursor() != null) {
             notNull("connectionSource", connectionSource);
         }
