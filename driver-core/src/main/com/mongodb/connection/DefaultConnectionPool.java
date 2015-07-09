@@ -246,7 +246,9 @@ class DefaultConnectionPool implements ConnectionPool {
             internalConnection = pool.get(timeout, timeUnit);
         }
         connectionPoolListener.connectionCheckedOut(new ConnectionEvent(internalConnection.getDescription().getConnectionId()));
-        LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
+        }
         return new PooledConnection(internalConnection);
     }
 
