@@ -356,6 +356,10 @@ public class DBPort implements Connection {
         return _sa;
     }
 
+    DBDecoder getDecoder() {
+        return _decoder;
+    }
+
     @Override
     public String toString(){
         return "{DBPort  " + host() + "}";

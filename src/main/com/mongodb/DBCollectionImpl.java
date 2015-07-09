@@ -515,7 +515,7 @@ class DBCollectionImpl extends DBCollection {
 
     private BaseWriteCommandMessage sendWriteCommandMessage(final BaseWriteCommandMessage message, final int batchNum,
                                                             final DBPort port) throws IOException {
-        final PoolOutputBuffer buffer = new PoolOutputBuffer();
+        PoolOutputBuffer buffer = _db.getMongo()._bufferPool.get();
         try {
             BaseWriteCommandMessage nextMessage = message.encode(buffer);
             if (nextMessage != null || batchNum > 1) {
@@ -525,11 +525,12 @@ class DBCollectionImpl extends DBCollection {
             return nextMessage;
         } finally {
             buffer.reset();
+            _db.getMongo()._bufferPool.done(buffer);
         }
     }
 
     private CommandResult receiveWriteCommandMessage(final DBPort port) throws IOException {
-        Response response = new Response(port.getAddress(), null, port.getInputStream(), DefaultDBDecoder.FACTORY.create());
+        Response response = new Response(port.getAddress(), null, port.getInputStream(), port.getDecoder());
         CommandResult writeCommandResult = new CommandResult(port.getAddress());
         writeCommandResult.putAll(response.get(0));
         writeCommandResult.throwOnError();
