@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import org.bson.ByteBuf;
@@ -212,7 +213,10 @@ final class AsynchronousSocketChannelStream implements Stream {
 
         @Override
         public void completed(final Integer result, final Void attachment) {
-            if (!dst.hasRemaining()) {
+            if (result == -1) {
+                dst.release();
+                handler.failed(new MongoSocketReadException("Prematurely reached end of stream", serverAddress));
+            } else if (!dst.hasRemaining()) {
                 dst.flip();
                 handler.completed(dst);
             } else {
