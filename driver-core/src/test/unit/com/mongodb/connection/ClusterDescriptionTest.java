@@ -73,7 +73,7 @@ public class ClusterDescriptionTest {
                     .build();
 
         otherSecondary = builder()
-                         .state(CONNECTED).address(new ServerAddress("localhost", 27019)).ok(true)
+                         .state(CONNECTED).address(new ServerAddress("otherhost", 27019)).ok(true)
                          .type(REPLICA_SET_SECONDARY).tagSet(tags3)
                          .build();
         uninitiatedMember = builder()
@@ -105,7 +105,7 @@ public class ClusterDescriptionTest {
 
     @Test
     public void testAny() throws UnknownHostException {
-        assertEquals(asList(primary, secondary, otherSecondary, uninitiatedMember), cluster.getAny());
+        assertEquals(asList(primary, secondary, uninitiatedMember, otherSecondary), cluster.getAny());
     }
 
     @Test

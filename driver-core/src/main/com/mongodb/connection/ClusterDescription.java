@@ -57,7 +57,11 @@ public class ClusterDescription {
         Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>(new Comparator<ServerDescription>() {
             @Override
             public int compare(final ServerDescription o1, final ServerDescription o2) {
-                return o1.getAddress().toString().compareTo(o2.getAddress().toString());
+                int val = o1.getAddress().getHost().compareTo(o2.getAddress().getHost());
+                if (val != 0) {
+                    return val;
+                }
+                return Integer.compare(o1.getAddress().getPort(), o2.getAddress().getPort());
             }
         });
         serverDescriptionSet.addAll(serverDescriptions);
