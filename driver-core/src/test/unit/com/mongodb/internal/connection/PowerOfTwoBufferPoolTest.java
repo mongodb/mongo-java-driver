@@ -36,13 +36,24 @@ public class PowerOfTwoBufferPoolTest {
 
     @Test
     public void testNormalRequest() {
-        ByteBuf buf = pool.getBuffer((int) Math.pow(2, 10));
-        assertEquals((int) Math.pow(2, 10), buf.capacity());
-        assertEquals((int) Math.pow(2, 10), buf.limit());
 
-        buf = pool.getBuffer((int) Math.pow(2, 10) - 1);
-        assertEquals((int) Math.pow(2, 10), buf.capacity());
-        assertEquals((int) Math.pow(2, 10) - 1, buf.limit());
+        for (int i = 0; i <= 10; i++) {
+            ByteBuf buf = pool.getBuffer((int) Math.pow(2, i));
+            assertEquals((int) Math.pow(2, i), buf.capacity());
+            assertEquals((int) Math.pow(2, i), buf.limit());
+
+            if (i > 1) {
+                buf = pool.getBuffer((int) Math.pow(2, i) - 1);
+                assertEquals((int) Math.pow(2, i), buf.capacity());
+                assertEquals((int) Math.pow(2, i) - 1, buf.limit());
+            }
+
+            if (i < 10) {
+                buf = pool.getBuffer((int) Math.pow(2, i) + 1);
+                assertEquals((int) Math.pow(2, i + 1), buf.capacity());
+                assertEquals((int) Math.pow(2, i) + 1, buf.limit());
+            }
+        }
     }
 
     @Test

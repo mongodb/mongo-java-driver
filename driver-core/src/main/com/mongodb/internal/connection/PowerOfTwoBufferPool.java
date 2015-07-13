@@ -47,11 +47,10 @@ public class PowerOfTwoBufferPool implements BufferProvider {
      * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
      */
     public PowerOfTwoBufferPool(final int highestPowerOfTwo) {
-        int x = 1;
+        int powerOfTwo = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {
-            final int size = x;
-            // TODO: Determine max size of each pool.
-            powerOfTwoToPoolMap.put(size, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
+            final int size = powerOfTwo;
+            powerOfTwoToPoolMap.put(i, new ConcurrentPool<ByteBuffer>(Integer.MAX_VALUE,
                                                                          new ConcurrentPool.ItemFactory<ByteBuffer>() {
                                                                              @Override
                                                                              public ByteBuffer create() {
@@ -67,13 +66,13 @@ public class PowerOfTwoBufferPool implements BufferProvider {
                                                                                  return false;
                                                                              }
                                                                          }));
-            x = x << 1;
+            powerOfTwo = powerOfTwo << 1;
         }
     }
 
     @Override
     public ByteBuf getBuffer(final int size) {
-        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(size));
+        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
         byteBuffer.clear();
@@ -88,10 +87,14 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private void release(final ByteBuffer buffer) {
-        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(roundUpToNextHighestPowerOfTwo(buffer.capacity()));
+        ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(buffer.capacity())));
         if (pool != null) {
             pool.release(buffer);
         }
+    }
+
+    static int log2(final int powerOfTwo) {
+        return 31 - Integer.numberOfLeadingZeros(powerOfTwo);
     }
 
     static int roundUpToNextHighestPowerOfTwo(final int size) {
