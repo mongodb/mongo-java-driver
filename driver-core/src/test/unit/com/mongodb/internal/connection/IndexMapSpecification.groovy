@@ -34,17 +34,6 @@ class IndexMapSpecification extends Specification {
         2 == indexMap.map(1)
     }
 
-    def 'should throw on unmapped contiguous index'() {
-        given:
-        def indexMap = IndexMap.create()
-        indexMap.add(0, 1)
-        when:
-        indexMap.map(3)
-
-        then:
-        thrown(MongoInternalException)
-    }
-
     def 'should map non-contiguous indexes'() {
         given:
         def indexMap = IndexMap.create()
@@ -60,17 +49,22 @@ class IndexMapSpecification extends Specification {
         5 == indexMap.map(2)
     }
 
-    def 'should throw on unmapped non-contiguous index'() {
-        given:
-        def indexMap = IndexMap.create()
-        indexMap = indexMap.add(0, 1)
-        indexMap = indexMap.add(3, 5)
+    def 'should throw on unmapped index'() {
 
         when:
-        indexMap.map(7)
+        indexMap.map(-1)
 
         then:
         thrown(MongoInternalException)
+
+        when:
+        indexMap.map(4)
+
+        then:
+        thrown(MongoInternalException)
+
+        where:
+        indexMap << [IndexMap.create().add(0, 1), IndexMap.create(1000, 3).add(5, 1005)]
     }
 
     def 'should map indexes when count is provided up front'() {
@@ -81,4 +75,33 @@ class IndexMapSpecification extends Specification {
         1 == indexMap.map(0)
         2 == indexMap.map(1)
     }
+
+    def 'should include ranges when converting from range based to hash based indexMap'() {
+        given:
+        def indexMap = IndexMap.create(1000, 3)
+
+        when: 'converts from range based with a high startIndex to hash based'
+        indexMap = indexMap.add(5, 1005)
+
+        then:
+        1000 == indexMap.map(0)
+        1001 == indexMap.map(1)
+        1002 == indexMap.map(2)
+        1005 == indexMap.map(5)
+    }
+
+    def 'should not allow a negative startIndex or count'() {
+        when:
+        IndexMap.create(-1, 10)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        IndexMap.create(1, -10)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 }

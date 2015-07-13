@@ -21,6 +21,8 @@ import com.mongodb.MongoInternalException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+
 /**
  * <p>Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be
  * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have
@@ -71,7 +73,7 @@ public abstract class IndexMap {
         private final Map<Integer, Integer> indexMap = new HashMap<Integer, Integer>();
 
         public HashBased(final int startIndex, final int count) {
-            for (int i = startIndex; i <= count; i++) {
+            for (int i = startIndex; i < startIndex + count; i++) {
                 indexMap.put(i - startIndex, i);
             }
         }
@@ -100,6 +102,8 @@ public abstract class IndexMap {
         }
 
         public RangeBased(final int startIndex, final int count) {
+            isTrueArgument("startIndex", startIndex >= 0);
+            isTrueArgument("count", count > 0);
             this.startIndex = startIndex;
             this.count = count;
         }
@@ -122,8 +126,10 @@ public abstract class IndexMap {
 
         @Override
         public int map(final int index) {
-            if (index >= count) {
-                throw new MongoInternalException("index should not be greater than count");
+            if (index < 0) {
+                throw new MongoInternalException("no mapping found for index " + index);
+            } else if (index >= count) {
+                throw new MongoInternalException("index should not be greater than or equal to count");
             }
             return startIndex + index;
         }
