@@ -32,6 +32,7 @@ public final class MongoNamespace {
 
     private final String databaseName;
     private final String collectionName;
+    private final String fullName;  // cache to avoid repeated string building
 
     /**
      * Construct an instance.
@@ -45,6 +46,7 @@ public final class MongoNamespace {
 
         this.databaseName = getDatatabaseNameFromFullName(fullName);
         this.collectionName = getCollectionNameFullName(fullName);
+        this.fullName = fullName;
     }
 
     /**
@@ -56,6 +58,7 @@ public final class MongoNamespace {
     public MongoNamespace(final String databaseName, final String collectionName) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
+        this.fullName = databaseName + "." + collectionName;
     }
 
     /**
@@ -82,7 +85,7 @@ public final class MongoNamespace {
      * @return the full name
      */
     public String getFullName() {
-        return getDatabaseName() + "." + getCollectionName();
+        return fullName;
     }
 
     @Override
@@ -113,7 +116,7 @@ public final class MongoNamespace {
      */
     @Override
     public String toString() {
-        return databaseName + "." + collectionName;
+        return fullName;
     }
 
     @Override
