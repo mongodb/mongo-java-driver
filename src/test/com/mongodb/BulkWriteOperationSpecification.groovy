@@ -480,6 +480,27 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'should be able to merge upserts across batches'() {
+        given:
+        def operation = initializeBulkOperation(ordered)
+
+        (0..1002).each {
+            operation.addRequest(new UpdateRequest(new BasicDBObject('key', it), true,
+                    new BasicDBObject('$set', new BasicDBObject('key', it)), false));
+            operation.addRequest(new RemoveRequest(new BasicDBObject('key', it), false));
+        }
+
+        when:
+        def result = operation.execute(WriteConcern.ACKNOWLEDGED)
+
+        then:
+        result.removedCount == result.upserts.size()
+        collection.count() == 0
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'error details should have correct index on ordered write failure'() {
         given:
         def operation = initializeBulkOperation(ordered)
