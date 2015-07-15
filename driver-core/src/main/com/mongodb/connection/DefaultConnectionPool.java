@@ -186,6 +186,7 @@ class DefaultConnectionPool implements ConnectionPool {
                                                        pooledConnection.getDescription().getConnectionId(), serverId));
                         }
                         callback.onResult(null, t);
+                        pool.release(pooledConnection.wrapped, true);
                     } else {
                         if (LOGGER.isTraceEnabled()) {
                             LOGGER.trace(String.format("Pooled connection %s to server %s is now open",
