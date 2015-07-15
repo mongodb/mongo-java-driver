@@ -66,8 +66,8 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     public int getModifiedCount() {
         if (modifiedCount == null) {
             throw new UnsupportedOperationException("The modifiedCount is not available because at least one of the servers that was "
-                                                    + "updated was not able to provide this information (the server is must be at least "
-                                                    + "version 2.6");
+                                                    + "updated was not able to provide this information (the server must be at least "
+                                                    + "version 2.6 or higher.");
         }
         return modifiedCount;
     }
@@ -120,11 +120,11 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     @Override
     public String toString() {
         return "AcknowledgedBulkWriteResult{"
-               + "insertedCount=" + insertedCount
-               + ", matchedCount=" + matchedCount
-               + ", removedCount=" + removedCount
-               + ", modifiedCount=" + modifiedCount
-               + ", upserts=" + upserts
+               + "insertedCount = " + insertedCount
+               + ", matchedCount = " + matchedCount
+               + ", removedCount = " + removedCount
+               + ", modifiedCount = " + modifiedCount
+               + ", upserts = " + upserts
                + '}';
     }
 }
