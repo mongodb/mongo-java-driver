@@ -293,6 +293,33 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
+    def 'should call query on Connection with no $query when there are no other meta operators'() {
+        given:
+        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .projection(new BsonDocument('x', new BsonInt32(1)))
+                .filter(new BsonDocument('z', new BsonString('val')))
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        source.connection >> connection
+        source.retain() >> source
+
+        when:
+        findOperation.execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                                                                new ServerVersion(2, 6), ServerType.STANDALONE, 1000, 100000, 100000)
+
+        1 * connection.query(getNamespace(), findOperation.filter,
+                             findOperation.projection, 0, 0, false, false, false, false, false, false, _) >>
+        new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
+
+        1 * connection.release()
+    }
+
     def 'should call query on Connection with correct arguments for an explain'() {
         given:
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())

@@ -21,7 +21,9 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class MongoMethodsTest extends DatabaseTestCase {
     @Test
@@ -36,5 +38,16 @@ public class MongoMethodsTest extends DatabaseTestCase {
             getClient().dropDatabase("test1");
             getClient().dropDatabase("test2");
         }
+    }
+
+    @Test
+    public void shouldLockAndUnlock() {
+        assertFalse(getClient().isLocked());
+
+        getClient().fsyncAndLock();
+        assertTrue(getClient().isLocked());
+
+        getClient().unlock();
+        assertFalse(getClient().isLocked());
     }
 }
