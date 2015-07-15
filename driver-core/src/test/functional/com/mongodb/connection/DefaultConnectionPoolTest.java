@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -237,14 +238,15 @@ public class DefaultConnectionPoolTest {
                                              ConnectionPoolSettings.builder()
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
-                                                                   .maxWaitTime(500, MILLISECONDS)
+                                                                   .maxWaitTime(5, SECONDS)
                                                                    .build(),
                                              listener);
 
         // when
-        provider.get();
+        InternalConnection connection = provider.get();
 
-        new Thread(new TimeoutTrackingConnectionGetter(provider)).start();
+        TimeoutTrackingConnectionGetter timeoutTrackingConnectionGetter = new TimeoutTrackingConnectionGetter(provider);
+        new Thread(timeoutTrackingConnectionGetter).start();
         Thread.sleep(100);
 
         try {
@@ -254,7 +256,15 @@ public class DefaultConnectionPoolTest {
             // all good
         }
 
+        // when
+        connection.close();
+
+        timeoutTrackingConnectionGetter.getLatch().await();
+
         // then
-        assertEquals(1, listener.getWaitQueueSize());
+        connection = provider.get();
+
+        // cleanup
+        connection.close();
     }
 }
