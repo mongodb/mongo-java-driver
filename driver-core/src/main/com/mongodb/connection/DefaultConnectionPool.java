@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,10 +83,10 @@ class DefaultConnectionPool implements ConnectionPool {
     @Override
     public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         try {
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw createWaitQueueFullException();
             }
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
             PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
             if (!pooledConnection.opened()) {
                 try {
