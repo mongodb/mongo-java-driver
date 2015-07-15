@@ -61,7 +61,11 @@ public class ClusterDescription {
                 if (val != 0) {
                     return val;
                 }
-                return Integer.compare(o1.getAddress().getPort(), o2.getAddress().getPort());
+                return integerCompare(o1.getAddress().getPort(), o2.getAddress().getPort());
+            }
+
+            private int integerCompare(final int p1, final int p2) {
+                return (p1 < p2) ? -1 : ((p1 == p2) ? 0 : 1);
             }
         });
         serverDescriptionSet.addAll(serverDescriptions);
