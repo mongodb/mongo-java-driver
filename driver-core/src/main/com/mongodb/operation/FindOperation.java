@@ -537,8 +537,8 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     }
 
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
-        BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
-        document.put("$query", filter != null ? filter : new BsonDocument());
+        BsonDocument document = new BsonDocument();
+
         if (sort != null) {
             document.put("$orderby", sort);
         }
@@ -549,6 +549,16 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
         if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
+        }
+
+        if (modifiers != null) {
+            document.putAll(modifiers);
+        }
+
+        if (document.isEmpty()) {
+            document = filter != null ? filter : new BsonDocument();
+        } else {
+            document.put("$query", filter != null ? filter : new BsonDocument());
         }
 
         return document;
