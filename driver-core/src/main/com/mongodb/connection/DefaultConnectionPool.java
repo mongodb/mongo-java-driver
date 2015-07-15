@@ -83,28 +83,31 @@ class DefaultConnectionPool implements ConnectionPool {
     @Override
     public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         try {
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw createWaitQueueFullException();
             }
-            PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
-            if (!pooledConnection.opened()) {
-                try {
-                    pooledConnection.open();
-                } catch (Throwable t) {
-                    pool.release(pooledConnection.wrapped, true);
-                    if (t instanceof MongoException) {
-                        throw (MongoException) t;
-                    } else {
-                        throw new MongoInternalException(t.toString(), t);
+            try {
+                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
+                if (!pooledConnection.opened()) {
+                    try {
+                        pooledConnection.open();
+                    } catch (Throwable t) {
+                        pool.release(pooledConnection.wrapped, true);
+                        if (t instanceof MongoException) {
+                            throw (MongoException) t;
+                        } else {
+                            throw new MongoInternalException(t.toString(), t);
+                        }
                     }
                 }
-            }
 
-            return pooledConnection;
+                return pooledConnection;
+            } finally {
+                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+            }
         } finally {
             waitQueueSize.decrementAndGet();
-            connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
         }
     }
 

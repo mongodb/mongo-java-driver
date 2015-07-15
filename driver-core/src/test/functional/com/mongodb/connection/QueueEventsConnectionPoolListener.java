@@ -25,12 +25,12 @@ class QueueEventsConnectionPoolListener extends ConnectionPoolListenerAdapter {
     private final AtomicInteger waitQueueSize = new AtomicInteger();
 
     @Override
-    public void waitQueueExited(ConnectionPoolWaitQueueEvent event) {
+    public void waitQueueExited(final ConnectionPoolWaitQueueEvent event) {
         waitQueueSize.decrementAndGet();
     }
 
     @Override
-    public void waitQueueEntered(ConnectionPoolWaitQueueEvent event) {
+    public void waitQueueEntered(final ConnectionPoolWaitQueueEvent event) {
         waitQueueSize.incrementAndGet();
     }
 
