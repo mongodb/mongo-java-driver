@@ -20,10 +20,13 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 
+import static com.mongodb.ClusterFixture.clusterIsType;
+import static com.mongodb.connection.ClusterType.SHARDED;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class MongoMethodsTest extends DatabaseTestCase {
     @Test
@@ -42,6 +45,8 @@ public class MongoMethodsTest extends DatabaseTestCase {
 
     @Test
     public void shouldLockAndUnlock() {
+        assumeFalse(clusterIsType(SHARDED));
+
         assertFalse(getClient().isLocked());
 
         getClient().fsyncAndLock();
