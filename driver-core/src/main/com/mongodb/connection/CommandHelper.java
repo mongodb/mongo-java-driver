@@ -157,7 +157,9 @@ final class CommandHelper {
                                                                                                                 message.getId()), null);
                                                            }
                                                        } finally {
-                                                          result.close();
+                                                           if (result != null) {
+                                                               result.close();
+                                                           }
                                                        }
                                                    }
                                                });
