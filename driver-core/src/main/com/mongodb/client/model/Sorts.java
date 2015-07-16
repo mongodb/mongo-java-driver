@@ -101,7 +101,7 @@ public final class Sorts {
     }
 
     /**
-     * Combine multiple sort specifications.  If any field names are repeated, the last one takes precendence.
+     * Combine multiple sort specifications.  If any field names are repeated, the last one takes precedence.
      *
      * @param sorts the sort specifications
      * @return the combined sort specification
@@ -111,7 +111,7 @@ public final class Sorts {
     }
 
     /**
-     * Combine multiple sort specifications.  If any field names are repeated, the last one takes precendence.
+     * Combine multiple sort specifications.  If any field names are repeated, the last one takes precedence.
      *
      * @param sorts the sort specifications
      * @return the combined sort specification
@@ -125,7 +125,6 @@ public final class Sorts {
                 for (Bson sort : sorts) {
                     BsonDocument sortDocument = sort.toBsonDocument(documentClass, codecRegistry);
                     for (String key : sortDocument.keySet()) {
-                        combinedDocument.remove(key);
                         combinedDocument.append(key, sortDocument.get(key));
                     }
                 }

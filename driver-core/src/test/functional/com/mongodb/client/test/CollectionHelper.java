@@ -37,10 +37,12 @@ import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
+import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
@@ -252,5 +254,23 @@ public final class CollectionHelper<T> {
 
     public void createIndex(final Document key) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)))).execute(getBinding());
+    }
+
+    public void createIndex(final Bson key) {
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry)))).execute(getBinding());
+    }
+
+    public void createIndex(final Bson key, final Double bucketSize) {
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry))
+                .bucketSize(bucketSize))).execute(getBinding());
+    }
+
+    public List<BsonDocument> listIndexes(){
+        List<BsonDocument> indexes = new ArrayList<BsonDocument>();
+        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<BsonDocument>(namespace, new BsonDocumentCodec()).execute(getBinding());
+        while (cursor.hasNext()) {
+            indexes.addAll(cursor.next());
+        }
+        return indexes;
     }
 }
