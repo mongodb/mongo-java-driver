@@ -88,4 +88,9 @@
     <suppress checks="HideUtilityClassConstructor" files="JSON"/>
     <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
+
+    <!-- Alternative copyrights -->
+    <suppress checks="RegexpSingleline" files="Immutable"/>
+    <suppress checks="RegexpSingleline" files="NotThreadSafe"/>
+    <suppress checks="RegexpSingleline" files="ThreadSafe"/>
 </suppressions>
