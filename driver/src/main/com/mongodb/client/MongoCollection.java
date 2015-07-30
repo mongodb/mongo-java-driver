@@ -368,7 +368,7 @@ public interface MongoCollection<TDocument> {
     UpdateResult updateOne(Bson filter, Bson update, UpdateOptions updateOptions);
 
     /**
-     * Update a single document in the collection according to the specified arguments.
+     * Update all documents in the collection according to the specified arguments.
      *
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
@@ -382,7 +382,7 @@ public interface MongoCollection<TDocument> {
     UpdateResult updateMany(Bson filter, Bson update);
 
     /**
-     * Update a single document in the collection according to the specified arguments.
+     * Update all documents in the collection according to the specified arguments.
      *
      * @param filter        a document describing the query filter, which may not be null.
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
