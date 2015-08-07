@@ -108,7 +108,7 @@ public final class MongoCredential {
 
     /**
      * Creates a MongoCredential instance for the SCRAM-SHA-1 SASL mechanism. Use this method only if you want to ensure that
-     * the driver uses the MONGODB_CR mechanism regardless of whether the server you are connecting to supports a more secure
+     * the driver uses the SCRAM-SHA-1 mechanism regardless of whether the server you are connecting to supports the
      * authentication mechanism.  Otherwise use the {@link #createCredential(String, String, char[])} method to allow the driver to
      * negotiate the best mechanism based on the server version.
      *
