@@ -20,7 +20,7 @@ each of the supported authentication mechanisms.  A list of these instances must
 parameter of type `List<MongoCredential>`.  Alternatively, a single [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}})
 can be created implicity via a 
 [`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) and passed to a [`MongoClient`]({{< apiref "com/mongodb/MongoClient" >}})
-constructor that takes a `[`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) parameter. 
+constructor that takes a [`MongoClientURI`]({{< apiref "com/mongodb/MongoClientURI" >}}) parameter. 
 
 {{% note %}}
 Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.
