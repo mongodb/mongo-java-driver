@@ -19,9 +19,10 @@ package com.mongodb;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
@@ -41,7 +42,7 @@ public class DBCollectionObjectFactoryTest {
 
     @Test
     public void testDefaultInternalClass() {
-        assertThat(factory.getInstance(Arrays.asList("a", "b", "c")), instanceOf(DBObject.class));
+        assertThat(factory.getInstance(asList("a", "b", "c")), instanceOf(DBObject.class));
     }
 
     @Test
@@ -59,16 +60,16 @@ public class DBCollectionObjectFactoryTest {
     @Test
     public void testInternalClassWhenTopLevelSet() {
         factory = factory.update(TopLevelDBObject.class);
-        assertThat(factory.getInstance(Arrays.asList("a", "b", "c")), instanceOf(DBObject.class));
+        assertThat(factory.getInstance(asList("a", "b", "c")), instanceOf(DBObject.class));
     }
 
     @Test
     public void testSeveralInternalClassesSet() {
-        factory = factory.update(NestedOneDBObject.class, Arrays.asList("a", "b"));
-        factory = factory.update(NestedTwoDBObject.class, Arrays.asList("a", "c"));
+        factory = factory.update(NestedOneDBObject.class, asList("a", "b"));
+        factory = factory.update(NestedTwoDBObject.class, asList("a", "c"));
 
-        assertThat(factory.getInstance(Arrays.asList("a", "b")), instanceOf(NestedOneDBObject.class));
-        assertThat(factory.getInstance(Arrays.asList("a", "c")), instanceOf(NestedTwoDBObject.class));
+        assertThat(factory.getInstance(asList("a", "b")), instanceOf(NestedOneDBObject.class));
+        assertThat(factory.getInstance(asList("a", "c")), instanceOf(NestedTwoDBObject.class));
     }
 
     @Test
@@ -80,7 +81,7 @@ public class DBCollectionObjectFactoryTest {
     @Test
     public void testReflectionNestedObject() {
         factory = factory.update(Tweet.class);
-        assertThat(factory.getInstance(Arrays.asList("Next")), instanceOf(Tweet.class));
+        assertThat(factory.getInstance(singletonList("Next")), instanceOf(Tweet.class));
     }
 
 
