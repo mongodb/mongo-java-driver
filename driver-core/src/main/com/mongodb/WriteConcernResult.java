@@ -20,7 +20,7 @@ import org.bson.BsonValue;
 
 /**
  * The result of a successful write operation.  If the write was unacknowledged, then {@code wasAcknowledged} will return false and all
- * other methods with throw {@code MongoUnacknowledgedWriteException}.
+ * other methods will throw {@code MongoUnacknowledgedWriteException}.
  *
  * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0
