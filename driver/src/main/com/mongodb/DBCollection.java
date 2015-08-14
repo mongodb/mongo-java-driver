@@ -1855,7 +1855,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/collStats/ collStats Command
      */
     public CommandResult getStats() {
-        return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())));
+        return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())), getReadPreference());
     }
 
     /**

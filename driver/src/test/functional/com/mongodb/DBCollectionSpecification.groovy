@@ -17,10 +17,12 @@
 package com.mongodb
 
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateIndexesOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -150,5 +152,21 @@ class DBCollectionSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'getStats should execute the expected command with the collection default read preference'() {
+        given:
+        def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonInt32(1))]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadPreference(ReadPreference.secondary())
+
+        when:
+        collection.getStats()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new CommandReadOperation('myDatabase',
+                                                                                 new BsonDocument('collStats', new BsonString('test')),
+                                                                new BsonDocumentCodec()))
+        executor.getReadPreference() == collection.getReadPreference()
     }
 }
