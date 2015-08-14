@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,12 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
 
     private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(final Class<? extends DBObject> aClass,
                                                                               final List<String> path) {
-        Map<List<String>, Class<? extends DBObject>> map
-        = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
-        map.put(path, aClass);
+        Map<List<String>, Class<? extends DBObject>> map = new HashMap<List<String>, Class<? extends DBObject>>(pathToClassMap);
+        if (aClass != null) {
+            map.put(path, aClass);
+        } else {
+            map.remove(path);
+        }
         return map;
     }
 
@@ -83,7 +86,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     private boolean isReflectionDBObject(final Class<? extends DBObject> aClass) {
-        return ReflectionDBObject.class.isAssignableFrom(aClass);
+        return aClass != null && ReflectionDBObject.class.isAssignableFrom(aClass);
     }
 
     private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Exception e) {
