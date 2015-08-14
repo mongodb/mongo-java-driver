@@ -41,7 +41,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  */
 public class RawBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 5551249268878132972L;
-    private static CodecRegistry registry = fromProviders(new BsonValueCodecProvider());
+    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final byte[] bytes;
 
@@ -256,7 +256,7 @@ public class RawBsonDocument extends BsonDocument {
     }
 
     private BsonValue deserializeBsonValue(final BsonBinaryReader bsonReader) {
-        return registry.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
+        return REGISTRY.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
     }
 
     private BsonBinaryReader createReader() {
