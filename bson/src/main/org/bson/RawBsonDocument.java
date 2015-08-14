@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,14 @@ import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
@@ -243,6 +247,18 @@ public class RawBsonDocument extends BsonDocument {
         }
 
         return null;
+    }
+
+    @Override
+    public String toJson() {
+        return toJson(new JsonWriterSettings());
+    }
+
+    @Override
+    public String toJson(final JsonWriterSettings settings) {
+        StringWriter writer = new StringWriter();
+        new RawBsonDocumentCodec().encode(new JsonWriter(writer, settings), this, EncoderContext.builder().build());
+        return writer.toString();
     }
 
     @Override

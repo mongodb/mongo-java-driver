@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,13 @@
 package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
+import org.bson.codecs.RawBsonDocumentCodec
+import org.bson.json.JsonMode
+import org.bson.json.JsonReader
+import org.bson.json.JsonWriter
+import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
 
 import static java.util.Arrays.asList
@@ -106,6 +113,34 @@ class RawBsonDocumentSpecification extends Specification {
                                    new TestEntry('b', document.get('b')),
                                    new TestEntry('c', document.get('c')),
                                    new TestEntry('d', document.get('d'))] as Set
+    }
+
+    def 'toJson should return equivalent JSON'() {
+        expect:
+        new RawBsonDocumentCodec().decode(new JsonReader(rawDocument.toJson()), DecoderContext.builder().build()) == rawDocument
+    }
+
+    def 'toJson should respect default JsonWriterSettings'() {
+        given:
+        def writer = new StringWriter();
+
+        when:
+        new BsonDocumentCodec().encode(new JsonWriter(writer), document, EncoderContext.builder().build());
+
+        then:
+        writer.toString() == rawDocument.toJson()
+    }
+
+    def 'toJson should respect JsonWriterSettings'() {
+        given:
+        def jsonWriterSettings = new JsonWriterSettings(JsonMode.SHELL)
+        def writer = new StringWriter();
+
+        when:
+        new RawBsonDocumentCodec().encode(new JsonWriter(writer, jsonWriterSettings), rawDocument, EncoderContext.builder().build());
+
+        then:
+        writer.toString() == rawDocument.toJson(jsonWriterSettings)
     }
 
     def 'all write methods should throw UnsupportedOperationException'() {
