@@ -22,9 +22,9 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
+import com.mongodb.selector.WritableServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -67,7 +67,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncClusterBindingConnectionSource(new PrimaryServerSelector(), callback);
+        getAsyncClusterBindingConnectionSource(new WritableServerSelector(), callback);
     }
 
     private void getAsyncClusterBindingConnectionSource(final ServerSelector serverSelector,

@@ -24,8 +24,8 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.WritableServerSelector;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +71,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
         final CountDownLatch latch = new CountDownLatch(2);
-        cluster.selectServerAsync(new PrimaryServerSelector(), new SingleResultCallback<Server>() {
+        cluster.selectServerAsync(new WritableServerSelector(), new SingleResultCallback<Server>() {
             @Override
             public void onResult(final Server result, final Throwable t) {
                 if (t == null) {

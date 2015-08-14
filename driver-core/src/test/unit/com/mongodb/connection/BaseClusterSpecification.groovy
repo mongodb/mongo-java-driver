@@ -24,9 +24,9 @@ import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterListener
-import com.mongodb.selector.PrimaryServerSelector
 import com.mongodb.selector.ReadPreferenceServerSelector
 import com.mongodb.selector.ServerAddressSelector
+import com.mongodb.selector.WritableServerSelector
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -105,11 +105,11 @@ class BaseClusterSpecification extends Specification {
         '{address=localhost:27018, type=UNKNOWN, state=CONNECTING}]'
 
         when:
-        cluster.selectServer(new PrimaryServerSelector())
+        cluster.selectServer(new WritableServerSelector())
 
         then:
         e = thrown(MongoTimeoutException)
-        e.getMessage() == 'Timed out after 1 ms while waiting for a server that matches PrimaryServerSelector. Client view of cluster ' +
+        e.getMessage() == 'Timed out after 1 ms while waiting for a server that matches WritableServerSelector. Client view of cluster ' +
         'state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
         'exception={com.mongodb.MongoInternalException: oops}}, {address=localhost:27018, type=UNKNOWN, state=CONNECTING}]'
 

@@ -19,7 +19,7 @@ package com.mongodb.connection
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterListener
-import com.mongodb.selector.PrimaryServerSelector
+import com.mongodb.selector.WritableServerSelector
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -369,7 +369,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.selectServer(new PrimaryServerSelector())
+        cluster.selectServer(new WritableServerSelector())
 
         then:
         thrown(IllegalStateException)

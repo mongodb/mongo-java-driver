@@ -21,8 +21,8 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.WritableServerSelector;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -60,7 +60,7 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference) {
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        writeServer = cluster.selectServer(new PrimaryServerSelector());
+        writeServer = cluster.selectServer(new WritableServerSelector());
         writeConnection = writeServer.getConnection();
         readServer = cluster.selectServer(new ReadPreferenceServerSelector(readPreference));
         readConnection = readServer.getConnection();

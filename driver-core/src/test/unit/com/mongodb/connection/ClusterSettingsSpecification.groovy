@@ -18,14 +18,14 @@ package com.mongodb.connection
 
 import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
-import com.mongodb.selector.PrimaryServerSelector
+import com.mongodb.selector.WritableServerSelector
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
 class ClusterSettingsSpecification extends Specification {
     def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
-    def serverSelector = new PrimaryServerSelector()
+    def serverSelector = new WritableServerSelector()
 
     def 'should set all default values'() {
         when:

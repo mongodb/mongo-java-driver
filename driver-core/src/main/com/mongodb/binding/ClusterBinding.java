@@ -21,9 +21,9 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
+import com.mongodb.selector.WritableServerSelector;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -65,7 +65,7 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new ClusterBindingConnectionSource(new PrimaryServerSelector());
+        return new ClusterBindingConnectionSource(new WritableServerSelector());
     }
 
     private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
