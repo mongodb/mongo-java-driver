@@ -23,7 +23,9 @@ import java.net.InetAddress;
  *
  * @mongodb.driver.manual reference/default-mongodb-port/ MongoDB Ports
  * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
+ * @deprecated This class is no longer needed, as the driver does not rely on it for anything anymore.  Use {@link ServerAddress} instead.
  */
+@Deprecated
 public class DBAddress extends ServerAddress {
     private static final long serialVersionUID = -813211264765778133L;
     private final String _db;
