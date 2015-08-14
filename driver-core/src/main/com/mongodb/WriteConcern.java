@@ -217,7 +217,6 @@ public class WriteConcern implements Serializable {
      *
      * <p> {@code w} represents the number of servers:</p>
      * <ul>
-     *     <li>{@code w=-1} None, no checking is done</li>
      *     <li>{@code w=0} None, network socket errors raised</li>
      *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -238,7 +237,6 @@ public class WriteConcern implements Serializable {
      *
      * <p> {@code w} represents the number of servers:</p>
      * <ul>
-     *     <li>{@code w=-1} None, no checking is done</li>
      *     <li>{@code w=0} None, network socket errors raised</li>
      *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
@@ -264,7 +262,6 @@ public class WriteConcern implements Serializable {
      *
      * <p> {@code w} represents the number of servers:</p>
      * <ul>
-     *     <li>{@code w=-1} None, no checking is done</li>
      *     <li>{@code w=0} None, network socket errors raised</li>
      *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li>
      *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li>
