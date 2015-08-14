@@ -22,7 +22,9 @@ package com.mongodb.client.model;
  * @mongodb.driver.manual reference/command/parallelCollectionScan/ parallelCollectionScan
  * @mongodb.server.release 2.6
  * @since 3.0
+ * @deprecated this is an unused class and there should be no reason to use it
  */
+@Deprecated
 public class ParallelCollectionScanOptions {
     private int batchSize;
 
