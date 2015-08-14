@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,14 +130,14 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * doc.get("name", String.class)} instead of {@code String name = (String) doc.get("x") }.
      *
      * @param key   the key
-     * @param clazz the class to cast the value to
+     * @param clazz the non-null class to cast the value to
      * @param <T>   the type of the class
      * @return the value of the given key, or null if the instance does not contain this key.
      * @throws ClassCastException if the value of the given key is not of type T
      */
-    @SuppressWarnings("unchecked")
     public <T> T get(final Object key, final Class<T> clazz) {
-        return (T) documentAsMap.get(key);
+        notNull("clazz", clazz);
+        return clazz.cast(documentAsMap.get(key));
     }
 
     /**

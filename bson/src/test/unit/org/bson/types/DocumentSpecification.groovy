@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,5 +86,27 @@ class DocumentSpecification extends Specification {
 
         then:
         thrown(JsonParseException)
+    }
+
+    def 'should cast to correct type'() {
+        given:
+        Document document = new Document('str', 'a string')
+
+        when:
+        String s = document.get('str', String)
+
+        then:
+        s == document.get('str')
+    }
+
+    def 'should throw ClassCastException when value is the wrong type'() {
+        given:
+        Document document = new Document('int', 'not an int')
+
+        when:
+        document.get('int', Integer)
+
+        then:
+        thrown(ClassCastException)
     }
 }
