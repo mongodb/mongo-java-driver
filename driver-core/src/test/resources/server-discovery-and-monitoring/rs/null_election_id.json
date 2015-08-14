@@ -1,5 +1,5 @@
 {
-    "description": "Primary with no electionId, then a primary with electionId", 
+    "description": "Primaries with and without electionIds", 
     "phases": [
         {
             "outcome": {
@@ -13,6 +13,11 @@
                         "electionId": null, 
                         "setName": null, 
                         "type": "Unknown"
+                    }, 
+                    "c:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
                     }
                 }, 
                 "setName": "rs", 
@@ -24,7 +29,8 @@
                     {
                         "hosts": [
                             "a:27017", 
-                            "b:27017"
+                            "b:27017", 
+                            "c:27017"
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
@@ -43,10 +49,15 @@
                     }, 
                     "b:27017": {
                         "electionId": {
-                            "$oid": "000000000000000000000001"
+                            "$oid": "000000000000000000000002"
                         }, 
                         "setName": "rs", 
                         "type": "RSPrimary"
+                    }, 
+                    "c:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
                     }
                 }, 
                 "setName": "rs", 
@@ -57,11 +68,12 @@
                     "b:27017", 
                     {
                         "electionId": {
-                            "$oid": "000000000000000000000001"
+                            "$oid": "000000000000000000000002"
                         }, 
                         "hosts": [
                             "a:27017", 
-                            "b:27017"
+                            "b:27017", 
+                            "c:27017"
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
@@ -82,6 +94,11 @@
                         "electionId": null, 
                         "setName": null, 
                         "type": "Unknown"
+                    }, 
+                    "c:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
                     }
                 }, 
                 "setName": "rs", 
@@ -93,7 +110,49 @@
                     {
                         "hosts": [
                             "a:27017", 
-                            "b:27017"
+                            "b:27017", 
+                            "c:27017"
+                        ], 
+                        "ismaster": true, 
+                        "ok": 1, 
+                        "setName": "rs"
+                    }
+                ]
+            ]
+        }, 
+        {
+            "outcome": {
+                "servers": {
+                    "a:27017": {
+                        "electionId": null, 
+                        "setName": "rs", 
+                        "type": "RSPrimary"
+                    }, 
+                    "b:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
+                    }, 
+                    "c:27017": {
+                        "electionId": null, 
+                        "setName": null, 
+                        "type": "Unknown"
+                    }
+                }, 
+                "setName": "rs", 
+                "topologyType": "ReplicaSetWithPrimary"
+            }, 
+            "responses": [
+                [
+                    "c:27017", 
+                    {
+                        "electionId": {
+                            "$oid": "000000000000000000000001"
+                        }, 
+                        "hosts": [
+                            "a:27017", 
+                            "b:27017", 
+                            "c:27017"
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
