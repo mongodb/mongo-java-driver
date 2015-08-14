@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,6 +85,16 @@ public class DBCollectionObjectFactoryTest {
         assertThat(factory.getInstance(singletonList("Next")), instanceOf(Tweet.class));
     }
 
+    @Test
+    public void testThatNullObjectClassRevertsToDefault() {
+        factory = factory.update(Tweet.class, singletonList("a")).update(null);
+        assertThat(factory.getInstance(), Matchers.instanceOf(BasicDBObject.class));
+        assertThat(factory.getInstance(singletonList("a")), instanceOf(Tweet.class));
+
+        factory = factory.update(null, singletonList("a"));
+        assertThat(factory.getInstance(), Matchers.instanceOf(BasicDBObject.class));
+        assertThat(factory.getInstance(singletonList("a")), instanceOf(BasicDBObject.class));
+    }
 
     public static class TopLevelDBObject extends BasicDBObject {
         private static final long serialVersionUID = 7029929727222305692L;
