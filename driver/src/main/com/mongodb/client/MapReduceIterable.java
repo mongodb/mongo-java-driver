@@ -22,7 +22,10 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Iterable for map reduce.
+ * Iterable for map-reduce.
+ *
+ * <p>By default the {@code MapReduceIterable} returns the results inline. You can write map-reduce output to a collection by using the
+ * {@link MapReduceIterable#collectionName(String)} method.</p>
  *
  * @param <TResult> The type of the result.
  * @since 3.0
