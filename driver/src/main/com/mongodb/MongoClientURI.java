@@ -76,6 +76,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  *          <li>{@code false}: the driver does not send a getLastError command after every update.</li>
  *      </ul>
  *  </li>
+ * <li>{@code journal=true|false}
+ *  <ul>
+ *      <li>{@code true}: the driver waits for the server to group commit to the journal file on disk.</li>
+ *      <li>{@code false}: the driver does not wait for the server to group commit to the journal file on disk.</li>
+ *  </ul>
+ * </li>
  *  <li>{@code w=wValue}
  *      <ul>
  *          <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
@@ -225,7 +231,7 @@ public class MongoClientURI {
      * @return the URI
      */
     public String getURI() {
-        return proxied.getURI();
+        return proxied.getConnectionString();
     }
 
     /**

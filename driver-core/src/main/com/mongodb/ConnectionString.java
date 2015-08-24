@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,13 +36,14 @@ import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 
 /**
- * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
- * be used and options.</p>
+ * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">Connection String</a>. The Connection String describes the
+ * hosts to be used and options.</p>
  *
- * <p>The format of the URI is:</p>
+ * <p>The format of the Connection String is:</p>
  * <pre>
  *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
  * </pre>
@@ -52,7 +52,7 @@ import static java.util.Arrays.asList;
  * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
- * <li>{@code host1} is the only required part of the URI.  It identifies a server address to connect to.</li>
+ * <li>{@code host1} is the only required part of the connection string.  It identifies a server address to connect to.</li>
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
@@ -93,6 +93,12 @@ import static java.util.Arrays.asList;
  * <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
  * (see also {@code w} and {@code wtimeoutMS}).</li>
  * <li>{@code false}: the driver does not send a getLastError command after every update.</li>
+ * </ul>
+ * </li>
+ * <li>{@code journal=true|false}
+ * <ul>
+ * <li>{@code true}: the driver waits for the server to group commit to the journal file on disk.</li>
+ * <li>{@code false}: the driver does not wait for the server to group commit to the journal file on disk.</li>
  * </ul>
  * </li>
  * <li>{@code w=wValue}
@@ -141,7 +147,7 @@ import static java.util.Arrays.asList;
  * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
- * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
+ * the credentials have been created.  The value defaults to the database specified in the path portion of the connection string.
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
@@ -153,7 +159,7 @@ import static java.util.Arrays.asList;
  * </li>
  * </ul>
  *
- * @mongodb.driver.manual reference/connection-string Connection String URI Format
+ * @mongodb.driver.manual reference/connection-string Connection String Format
  * @since 3.0.0
  */
 public class ConnectionString {
@@ -167,7 +173,7 @@ public class ConnectionString {
     private final List<String> hosts;
     private final String database;
     private final String collection;
-    private final String uri;
+    private final String connectionString;
 
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
@@ -184,92 +190,91 @@ public class ConnectionString {
     private String requiredReplicaSetName;
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
-     * which may be overridden by options specified in the URI string.
+     * Creates a ConnectionString from the given string.
      *
-     * @param uri     the URI
-     * @since 2.11.0
+     * @param connectionString     the connection string
+     * @since 3.0
      */
-    public ConnectionString(final String uri) {
-        try {
-            if (!uri.startsWith(PREFIX)) {
-                throw new IllegalArgumentException("uri needs to start with " + PREFIX);
-            }
-
-            this.uri = uri;
-
-            String unprefixedURI = uri.substring(PREFIX.length());
-
-            String serverPart;
-            String nsPart;
-            String optionsPart;
-            String userName = null;
-            char[] password = null;
-
-            int idx = unprefixedURI.lastIndexOf("/");
-            if (idx < 0) {
-                if (unprefixedURI.contains("?")) {
-                    throw new IllegalArgumentException("URI contains options without trailing slash");
-                }
-                serverPart = unprefixedURI;
-                nsPart = null;
-                optionsPart = "";
-            } else {
-                serverPart = unprefixedURI.substring(0, idx);
-                nsPart = unprefixedURI.substring(idx + 1);
-
-                idx = nsPart.indexOf("?");
-                if (idx >= 0) {
-                    optionsPart = nsPart.substring(idx + 1);
-                    nsPart = nsPart.substring(0, idx);
-                } else {
-                    optionsPart = "";
-                }
-
-            }
-            List<String> all = new LinkedList<String>();
-
-            idx = serverPart.indexOf("@");
-
-            if (idx > 0) {
-                String authPart = serverPart.substring(0, idx);
-                serverPart = serverPart.substring(idx + 1);
-
-                idx = authPart.indexOf(":");
-                if (idx == -1) {
-                    userName = URLDecoder.decode(authPart, UTF_8);
-                } else {
-                    userName = URLDecoder.decode(authPart.substring(0, idx), UTF_8);
-                    password = URLDecoder.decode(authPart.substring(idx + 1), UTF_8).toCharArray();
-                }
-            }
-
-            Collections.addAll(all, serverPart.split(","));
-
-            Collections.sort(all);
-            hosts = Collections.unmodifiableList(all);
-
-            if (nsPart != null && !nsPart.isEmpty()) { // database,_collection
-                idx = nsPart.indexOf(".");
-                if (idx < 0) {
-                    database = nsPart;
-                    collection = null;
-                } else {
-                    database = nsPart.substring(0, idx);
-                    collection = nsPart.substring(idx + 1);
-                }
-            } else {
-                database = null;
-                collection = null;
-            }
-
-            Map<String, List<String>> optionsMap = parseOptions(optionsPart);
-            translateOptions(optionsMap);
-            credentials = createCredentials(optionsMap, userName, password);
-            warnOnUnsupportedOptions(optionsMap);
-        } catch (UnsupportedEncodingException e) {
-            throw new MongoInternalException("This should not happen", e);
+public ConnectionString(final String connectionString) {
+        this.connectionString = connectionString;
+        if (!connectionString.startsWith(PREFIX)) {
+            throw new IllegalArgumentException(format("The connection string is invalid. "
+                    + "Connection strings must start with '%s'", PREFIX));
         }
+
+        String unprocessedConnectionString = connectionString.substring(PREFIX.length());
+
+        // Split out the user and host information
+        String userAndHostInformation = null;
+        int idx = unprocessedConnectionString.lastIndexOf("/");
+        if (idx == -1) {
+            if (unprocessedConnectionString.contains("?")) {
+                throw new IllegalArgumentException("The connection string contains options without trailing slash");
+            }
+            userAndHostInformation = unprocessedConnectionString;
+            unprocessedConnectionString = "";
+        } else {
+            userAndHostInformation = unprocessedConnectionString.substring(0, idx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+        }
+
+        // Split the user and host information
+        String userInfo = null;
+        String hostIdentifier = null;
+        String userName = null;
+        char[] password = null;
+        idx = userAndHostInformation.lastIndexOf("@");
+        if (idx > 0) {
+            userInfo = userAndHostInformation.substring(0, idx);
+            hostIdentifier = userAndHostInformation.substring(idx + 1);
+            int colonCount = countOccurrences(userInfo, ":");
+            if (userInfo.contains("@") || colonCount > 1) {
+                throw new IllegalArgumentException("The connection string contains invalid user information. "
+                        + "If the username or password contains a colon (:) or an at-sign (@) then it must be urlencoded");
+            }
+            if (colonCount == 0) {
+                userName = urldecode(userInfo);
+            } else {
+                idx = userInfo.indexOf(":");
+                userName = urldecode(userInfo.substring(0, idx));
+                password = urldecode(userInfo.substring(idx + 1), true).toCharArray();
+            }
+        } else {
+            hostIdentifier = userAndHostInformation;
+        }
+
+        // Validate the hosts
+        hosts = Collections.unmodifiableList(parseHosts(asList(hostIdentifier.split(","))));
+
+        // Process the authDB section
+        String nsPart = null;
+        idx = unprocessedConnectionString.indexOf("?");
+        if (idx == -1) {
+            nsPart = unprocessedConnectionString;
+            unprocessedConnectionString = "";
+        } else {
+            nsPart = unprocessedConnectionString.substring(0, idx);
+            unprocessedConnectionString = unprocessedConnectionString.substring(idx + 1);
+        }
+        if (nsPart.length() > 0) {
+            nsPart = urldecode(nsPart);
+            idx = nsPart.indexOf(".");
+            if (idx < 0) {
+                database = nsPart;
+                collection = null;
+            } else {
+                database = nsPart.substring(0, idx);
+                collection = nsPart.substring(idx + 1);
+            }
+        } else {
+            database = null;
+            collection = null;
+        }
+
+        Map<String, List<String>> optionsMap = parseOptions(unprocessedConnectionString);
+        translateOptions(optionsMap);
+        credentials = createCredentials(optionsMap, userName, password);
+        warnOnUnsupportedOptions(optionsMap);
     }
 
     private static final Set<String> GENERAL_OPTIONS_KEYS = new HashSet<String>();
@@ -298,7 +303,7 @@ public class ConnectionString {
         WRITE_CONCERN_KEYS.add("w");
         WRITE_CONCERN_KEYS.add("wtimeoutms");
         WRITE_CONCERN_KEYS.add("fsync");
-        WRITE_CONCERN_KEYS.add("j");
+        WRITE_CONCERN_KEYS.add("journal");
 
         AUTH_KEYS.add("authmechanism");
         AUTH_KEYS.add("authsource");
@@ -315,7 +320,7 @@ public class ConnectionString {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
                 if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Unsupported option '%s' on URI '%s'.", key, uri));
+                    LOGGER.warn(format("Unsupported option '%s' in the connection string '%s'.", key, connectionString));
                 }
             }
         }
@@ -329,22 +334,22 @@ public class ConnectionString {
             }
 
             if (key.equals("maxpoolsize")) {
-                maxConnectionPoolSize = Integer.parseInt(value);
+                maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
             } else if (key.equals("minpoolsize")) {
-                minConnectionPoolSize = Integer.parseInt(value);
+                minConnectionPoolSize = parseInteger(value, "minpoolsize");
             } else if (key.equals("maxidletimems")) {
-                maxConnectionIdleTime = Integer.parseInt(value);
+                maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
-                maxConnectionLifeTime = Integer.parseInt(value);
+                maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
             } else if (key.equals("waitqueuemultiple")) {
-                threadsAllowedToBlockForConnectionMultiplier  = Integer.parseInt(value);
+                threadsAllowedToBlockForConnectionMultiplier  = parseInteger(value, "waitqueuemultiple");
             } else if (key.equals("waitqueuetimeoutms")) {
-                maxWaitTime = Integer.parseInt(value);
+                maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
-                connectTimeout = Integer.parseInt(value);
+                connectTimeout = parseInteger(value, "connecttimeoutms");
             } else if (key.equals("sockettimeoutms")) {
-                socketTimeout = Integer.parseInt(value);
-            } else if (key.equals("ssl") && parseBoolean(value)) {
+                socketTimeout = parseInteger(value, "sockettimeoutms");
+            } else if (key.equals("ssl") && parseBoolean(value, "ssl")) {
                 sslEnabled = true;
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
@@ -369,15 +374,15 @@ public class ConnectionString {
             }
 
             if (key.equals("safe")) {
-                safe = parseBoolean(value);
+                safe = parseBoolean(value, "safe");
             } else if (key.equals("w")) {
                 w = value;
             } else if (key.equals("wtimeoutms")) {
                 wTimeout = Integer.parseInt(value);
             } else if (key.equals("fsync")) {
-                fsync = parseBoolean(value);
-            } else if (key.equals("j")) {
-                journal = parseBoolean(value);
+                fsync = parseBoolean(value, "fsync");
+            } else if (key.equals("journal")) {
+                journal = parseBoolean(value, "journal");
             }
         }
         return buildWriteConcern(safe, w, wTimeout, fsync, journal);
@@ -451,14 +456,16 @@ public class ConnectionString {
         } else if (mechanism == null) {
             credential = MongoCredential.createCredential(userName, authSource, password);
         } else {
-            throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);
+            throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
+                    + "'%s' is not a supported authentication mechanism", mechanism));
         }
 
         if (authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
                 String[] mechanismPropertyKeyValue = part.split(":");
                 if (mechanismPropertyKeyValue.length != 2) {
-                    throw new IllegalArgumentException("Bad authMechanismProperties: " + authMechanismProperties);
+                    throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
+                            + "'%s' is not a key value pair", part));
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
@@ -482,8 +489,14 @@ public class ConnectionString {
 
     private Map<String, List<String>> parseOptions(final String optionsPart) {
         Map<String, List<String>> optionsMap = new HashMap<String, List<String>>();
+        if (optionsPart.length() == 0) {
+            return optionsMap;
+        }
 
         for (final String part : optionsPart.split("&|;")) {
+            if (part.length() == 0) {
+                continue;
+            }
             int idx = part.indexOf("=");
             if (idx >= 0) {
                 String key = part.substring(0, idx).toLowerCase();
@@ -492,18 +505,34 @@ public class ConnectionString {
                 if (valueList == null) {
                     valueList = new ArrayList<String>(1);
                 }
-                valueList.add(value);
+                valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
+            } else {
+                throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "
+                        + "'%s' is missing the value delimiter eg '%s=value'", optionsPart, part, part));
             }
         }
 
         // handle legacy wtimeout settings
         if (optionsMap.containsKey("wtimeout") && !optionsMap.containsKey("wtimeoutms")) {
             optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn("Uri option 'wtimeout' has been deprecated, use 'wtimeoutms' instead.");
+            }
         }
         // handle legacy slaveok settings
         if (optionsMap.containsKey("slaveok") && !optionsMap.containsKey("readpreference")) {
-            optionsMap.put("readpreference", asList("secondaryPreferred"));
+            optionsMap.put("readpreference", singletonList("secondaryPreferred"));
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
+            }
+        }
+        // handle legacy j settings
+        if (optionsMap.containsKey("j") && !optionsMap.containsKey("journal")) {
+            optionsMap.put("journal", optionsMap.remove("j"));
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn("Uri option 'j' has been deprecated, use 'journal' instead.");
+            }
         }
 
         return optionsMap;
@@ -548,7 +577,8 @@ public class ConnectionString {
             for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
-                    throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
+                    throw new IllegalArgumentException(format("The connection string contains an invalid read preference tag. "
+                            + "'%s' is not a key value pair", tagSetString));
                 }
                 tagList.add(new Tag(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim()));
             }
@@ -556,10 +586,98 @@ public class ConnectionString {
         return new TagSet(tagList);
     }
 
-    boolean parseBoolean(final String input) {
+    private boolean parseBoolean(final String input, final String key) {
         String trimmedInput = input.trim();
-        return trimmedInput.length() > 0
-               && (trimmedInput.equals("1") || trimmedInput.toLowerCase().equals("true") || trimmedInput.toLowerCase().equals("yes"));
+        boolean isTrue = trimmedInput.length() > 0 && (trimmedInput.equals("1") || trimmedInput.toLowerCase().equals("true")
+                || trimmedInput.toLowerCase().equals("yes"));
+
+        if ((!input.equals("true") && !input.equals("false")) && LOGGER.isWarnEnabled()) {
+            LOGGER.warn(format("Deprecated boolean value ('%s') in the connection string for '%s', please update to %s=%s",
+                    input, key, key, isTrue));
+        }
+        return isTrue;
+    }
+
+    private int parseInteger(final String input, final String key) {
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
+                    + "'%s' is not a valid integer", key, input));
+        }
+    }
+
+    private List<String> parseHosts(final List<String> rawHosts) {
+        if (rawHosts.size() == 0){
+            throw new IllegalArgumentException("The connection string must contain at least one host");
+        }
+        List<String> hosts = new ArrayList<String>();
+        for (String host : rawHosts) {
+            if (host.length() == 0) {
+                throw new IllegalArgumentException(format("The connection string contains an empty host '%s'. ", rawHosts));
+            } else if (host.endsWith(".sock")) {
+                throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
+                        + "Unix Domain Socket which is not supported by the Java driver", host));
+            } else if (host.startsWith("[")) {
+                if (!host.contains("]")) {
+                    throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
+                            + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732", host));
+                }
+                int idx = host.indexOf("]:");
+                if (idx != -1) {
+                    validatePort(host, host.substring(idx + 2));
+                }
+            } else {
+                int colonCount = countOccurrences(host, ":");
+                if (colonCount > 1) {
+                    throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
+                            + "Reserved characters such as ':' must be escaped according RFC 2396. "
+                            + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
+                } else if (colonCount == 1) {
+                    validatePort(host, host.substring(host.indexOf(":") + 1));
+                }
+            }
+            hosts.add(host);
+        }
+        Collections.sort(hosts);
+        return hosts;
+    }
+
+    private void validatePort(final String host, final String port) {
+        boolean invalidPort = false;
+        try {
+            int portInt = Integer.parseInt(port);
+            if (portInt <= 0 || portInt > 65535) {
+                invalidPort = true;
+            }
+        } catch (NumberFormatException e) {
+            invalidPort = true;
+        }
+        if (invalidPort) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
+                    + "The port '%s' is not a valid, it must be an integer between 0 and 65535", host, port));
+        }
+    }
+
+    private int countOccurrences(final String haystack, final String needle) {
+        return haystack.length() - haystack.replace(needle, "").length();
+    }
+
+    private String urldecode(final String input) {
+        return urldecode(input, false);
+    }
+
+    private String urldecode(final String input, final boolean password) {
+        try {
+            return URLDecoder.decode(input, UTF_8);
+        } catch (UnsupportedEncodingException e) {
+            if (password) {
+                throw new IllegalArgumentException("The connection string contained unsupported characters in the password.");
+            } else {
+                throw new IllegalArgumentException(format("The connection string contained unsupported characters: '%s'."
+                        + "Decoding produced the following error: %s", input, e.getMessage()));
+            }
+        }
     }
 
     // ---------------------------------
@@ -611,12 +729,24 @@ public class ConnectionString {
     }
 
     /**
-     * Get the unparsed URI.
+     * Get the unparsed connection string.
      *
-     * @return the URI
+     * @return the connection string
+     * deprecated use {@link #getConnectionString()}
      */
+    @Deprecated
     public String getURI() {
-        return uri;
+        return getConnectionString();
+    }
+
+    /**
+     * Get the unparsed connection string.
+     *
+     * @return the connection string
+     * @since 3.1
+     */
+    public String getConnectionString() {
+        return connectionString;
     }
 
 
@@ -727,7 +857,7 @@ public class ConnectionString {
 
     @Override
     public String toString() {
-        return uri;
+        return connectionString;
     }
 
     @Override

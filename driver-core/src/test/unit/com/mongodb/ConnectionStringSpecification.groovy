@@ -29,13 +29,6 @@ import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 
 class ConnectionStringSpecification extends Specification {
-    def 'should throw Exception if URI does not have a trailing slash'() {
-        when:
-        new ConnectionString('mongodb://localhost?wTimeout=5');
-
-        then:
-        thrown(IllegalArgumentException)
-    }
 
     @Unroll
     def 'should parse #connectionString into correct components'() {
@@ -129,6 +122,35 @@ class ConnectionStringSpecification extends Specification {
                                             + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true')]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
+    }
+
+    @Unroll
+    def 'should throw Exception when the string #cause'() {
+        when:
+        new ConnectionString(connectionString);
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+
+        cause                                       | connectionString
+        'is not a connection string'                | 'hello world'
+        'is a unix socket'                          | 'mongodb://%2Ftmp%2Fmongodb-27017.sock'
+        'is missing a host'                         | 'mongodb://'
+        'has an empty host'                         | 'mongodb://localhost:27017,,localhost:27019'
+        'has an malformed IPv6 host'                | 'mongodb://[::1'
+        'has unescaped colons'                      | 'mongodb://locahost::1'
+        'is missing a slash'                        | 'mongodb://localhost?wTimeout=5'
+        'contains an invalid port string'           | 'mongodb://localhost:twenty'
+        'contains an invalid port negative'         | 'mongodb://localhost:-1'
+        'contains an invalid port out of range'     | 'mongodb://localhost:1000000'
+        'contains multiple at-signs'                | 'mongodb://user@123:password@localhost'
+        'contains multiple colons'                  | 'mongodb://user:123:password@localhost'
+        'invalid integer in options'                | 'mongodb://localhost/?wTimeout=five'
+        'has incomplete options'                    | 'mongodb://localhost/?wTimeout'
+        'has an unknown auth mechanism'             | 'mongodb://user:password@localhost/?authMechanism=postItNote'
+
     }
 
     def 'should have correct defaults for options'() {
