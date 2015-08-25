@@ -48,8 +48,8 @@ dt {
 }
 
 #header-db .header-content {
-    width: 1385px;
-    padding-left: 12px;
+    width: 100%;
+    padding: 0 12px;
 
     transition: width 0.4s cubic-bezier(.02,.01,.47,1);
     -moz-transition: width 0.4s cubic-bezier(.02,.01,.47,1);
