@@ -23,11 +23,13 @@ import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonSymbol
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.Binary
+import org.bson.types.Symbol
 import spock.lang.Specification
 
 import static org.bson.UuidRepresentation.STANDARD
@@ -114,5 +116,23 @@ class DBObjectCodecSpecification extends Specification {
 
         then:
         decodedUuid.get('byteArray') == new Binary(subType, array)
+    }
+
+    def 'should encode Symbol to BsonSymbol and decode BsonSymbol to String'() {
+        given:
+        def symbol = new Symbol('symbol');
+        def doc = new BasicDBObject('symbol', symbol)
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc, EncoderContext.builder().build())
+
+        then:
+        bsonDoc.get('symbol') == new BsonSymbol('symbol')
+
+        when:
+        def decodedSymbol = dbObjectCodec.decode(new BsonDocumentReader(bsonDoc), DecoderContext.builder().build())
+
+        then:
+        decodedSymbol.get('symbol') == symbol.toString()
     }
 }
