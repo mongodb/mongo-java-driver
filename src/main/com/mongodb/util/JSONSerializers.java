@@ -27,6 +27,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
 
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
@@ -47,7 +48,7 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in 
+     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in
      * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>, but with a few differences to keep
      * compatibility with previous versions of the driver.  Clients should generally prefer {@code getStrict} in preference to this method.
      *
@@ -67,7 +68,7 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in 
+     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in
      * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>.
      *
      * @return object serializer
@@ -102,6 +103,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(ObjectId.class, new ObjectIdSerializer(serializer));
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
+        serializer.addObjectSerializer(Symbol.class, new SymbolSerializer(serializer));
         serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
         return serializer;
     }
@@ -385,6 +387,21 @@ public class JSONSerializers {
         @Override
         public void serialize(Object obj, StringBuilder buf) {
             JSON.string(buf, (String) obj);
+        }
+    }
+
+    private static class SymbolSerializer extends CompoundObjectSerializer {
+
+        SymbolSerializer(final ObjectSerializer serializer) {
+            super(serializer);
+        }
+
+        @Override
+        public void serialize(final Object obj, final StringBuilder buf) {
+            Symbol symbol = (Symbol) obj;
+            BasicDBObject temp = new BasicDBObject();
+            temp.put("$symbol", symbol.toString());
+            serializer.serialize(temp, buf);
         }
     }
 
