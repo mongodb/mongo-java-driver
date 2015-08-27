@@ -27,6 +27,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
 import org.junit.Test;
 
 import javax.xml.bind.DatatypeConverter;
@@ -209,6 +210,11 @@ public class JSONSerializersTest {
         buf = new StringBuilder();
         serializer.serialize(d, buf);
         assertEquals("{ \"$date\" : " + (d.getTime()) + "}", buf.toString());
+
+        // test  SYMBOL
+        buf = new StringBuilder();
+        serializer.serialize(new Symbol("test"), buf);
+        assertEquals("{ \"$symbol\" : \"test\"}", buf.toString());
     }
 
     @Test
