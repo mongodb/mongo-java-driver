@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -24,7 +25,8 @@ import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class MapReduceCommandSpecification extends Specification {
-    private static MapReduceCommand cmd
+    @Shared
+    private MapReduceCommand cmd
     private static final String COLLECTION_NAME = 'collectionName'
 
     def mapReduceCommand() {
