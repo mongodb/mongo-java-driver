@@ -261,6 +261,209 @@ class GridFSDownloadStreamSpecification extends Specification {
         0 * chunksCollection.find(_)
     }
 
+    def 'should mark and reset to the correct point'() {
+        given:
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), 'abc', new Document())
+
+        def expected10Bytes = 11 .. 20 as byte[]
+        def firstChunkBytes = 1..25 as byte[]
+
+        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes))
+
+        def mongoCursor = Mock(MongoCursor)
+        def findIterable = Mock(FindIterable)
+        def chunksCollection = Mock(MongoCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(fileInfo, chunksCollection)
+
+        when:
+        def readByte = new byte[10]
+        downloadStream.read(readByte)
+
+        then:
+        1 * chunksCollection.find(_) >> findIterable
+        1 * findIterable.sort(_) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.iterator() >> mongoCursor
+        1 * mongoCursor.hasNext() >> true
+        1 * mongoCursor.next() >> chunkDocument
+
+        then:
+        readByte == 1 .. 10 as byte[]
+
+        when:
+        downloadStream.mark()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        downloadStream.read(readByte)
+
+        then:
+        readByte == expected10Bytes
+
+        when:
+        downloadStream.reset()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        downloadStream.read(readByte)
+
+        then:
+        0 * chunksCollection.find(_)
+        readByte == expected10Bytes
+    }
+
+
+    def 'should mark and reset across chunks'() {
+        given:
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 50L, 25, new Date(), 'abc', new Document())
+
+        def firstChunkBytes = 1..25 as byte[]
+        def secondChunkBytes = 26 .. 50 as byte[]
+
+        def chunkDocuments =
+                [new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes)),
+                 new Document('files_id', fileInfo.getId()).append('n', 1).append('data', new Binary(secondChunkBytes))]
+
+        def mongoCursor = Mock(MongoCursor)
+        def findIterable = Mock(FindIterable)
+        def chunksCollection = Mock(MongoCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(fileInfo, chunksCollection)
+
+        when:
+        downloadStream.mark()
+        def readByte = new byte[25]
+        downloadStream.read(readByte)
+
+        then:
+        1 * chunksCollection.find(_) >> findIterable
+        1 * findIterable.sort(_) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.iterator() >> mongoCursor
+        1 * mongoCursor.hasNext() >> true
+        1 * mongoCursor.next() >> chunkDocuments[0]
+
+        then:
+        readByte == firstChunkBytes
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        downloadStream.read(readByte)
+
+        then:
+        readByte == secondChunkBytes
+        1 * mongoCursor.hasNext() >> true
+        1 * mongoCursor.next() >> chunkDocuments[1]
+
+        when: 'check read to EOF'
+        def result = downloadStream.read(readByte)
+
+        then:
+        result == -1
+
+        when:
+        downloadStream.reset()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        downloadStream.read(readByte)
+
+        then:
+        readByte == firstChunkBytes
+        1 * chunksCollection.find(_) >> findIterable
+        1 * findIterable.sort(_) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.iterator() >> mongoCursor
+        1 * mongoCursor.hasNext() >> true
+        1 * mongoCursor.next() >> chunkDocuments[0]
+    }
+
+    def 'should validate next chunk when marked and reset at eof'() {
+        given:
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 25L, 25, new Date(), 'abc', new Document())
+
+        def chunkBytes = 1..25 as byte[]
+        def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(chunkBytes))
+
+        def mongoCursor = Mock(MongoCursor)
+        def findIterable = Mock(FindIterable)
+        def chunksCollection = Mock(MongoCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(fileInfo, chunksCollection)
+
+        when:
+        def readByte = new byte[25]
+        downloadStream.read(readByte)
+
+        then:
+        1 * chunksCollection.find(_) >> findIterable
+        1 * findIterable.sort(_) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.iterator() >> mongoCursor
+        1 * mongoCursor.hasNext() >> true
+        1 * mongoCursor.next() >> chunkDocument
+
+        then:
+        readByte == chunkBytes
+
+        when:
+        downloadStream.mark()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        downloadStream.reset()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when: 'Trying to read past eof - validates next chunk if any'
+        def result = downloadStream.read(readByte)
+
+        then:
+        result == -1
+        1 * mongoCursor.hasNext() >> false
+
+        when: 'Resets back to eof'
+        downloadStream.reset()
+
+        then:
+        0 * chunksCollection.find(_)
+
+        when:
+        result = downloadStream.read(readByte)
+
+        then: 'eof flag already set no need to validate'
+        result == -1
+        0 * mongoCursor.hasNext()
+
+    }
+
+    def 'should not throw an exception when trying to mark post close'() {
+        given:
+        def downloadStream = new GridFSDownloadStreamImpl(fileInfo, Stub(MongoCollection))
+        downloadStream.close()
+
+        when:
+        downloadStream.mark()
+
+        then:
+        notThrown(MongoGridFSException)
+
+        when:
+        downloadStream.mark(1)
+
+        then:
+        notThrown(MongoGridFSException)
+    }
+
     def 'should handle negative skip value correctly '() {
         given:
         def downloadStream = new GridFSDownloadStreamImpl(fileInfo, Stub(MongoCollection))
@@ -495,6 +698,11 @@ class GridFSDownloadStreamSpecification extends Specification {
         then:
         thrown(MongoGridFSException)
 
+        when:
+        downloadStream.reset()
+
+        then:
+        thrown(MongoGridFSException)
 
         when:
         downloadStream.read(new byte[10])

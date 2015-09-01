@@ -16,7 +16,6 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoGridFSException;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.gridfs.model.GridFSFile;
 
@@ -69,10 +68,16 @@ public abstract class GridFSDownloadStream extends InputStream {
     @Override
     public abstract int available();
 
+    /**
+     * Marks the current position in this input stream.
+     *
+     * <p>A subsequent call to the {@code reset} method repositions this stream at the last marked position so that subsequent reads
+     * re-read the same bytes.</p>
+     */
+    public abstract void mark();
+
     @Override
-    public void reset() {
-        throw new MongoGridFSException("Reset not supported");
-    }
+    public abstract void reset();
 
     @Override
     public abstract void close();

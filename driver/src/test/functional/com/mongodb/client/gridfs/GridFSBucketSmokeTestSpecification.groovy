@@ -421,4 +421,43 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         where:
         direct << [true, false]
     }
+
+    def 'should mark and reset'() {
+        given:
+        def content = 1 .. 1000 as byte[]
+        def readByte = new byte[500]
+
+        when:
+        def fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(content),
+                new GridFSUploadOptions().chunkSizeBytes(500));
+
+        then:
+        filesCollection.count() == 1
+        chunksCollection.count() == 2
+
+        when:
+        def gridFSDownloadStream = gridFSBucket.openDownloadStream(fileId)
+        gridFSDownloadStream.read(readByte)
+
+        then:
+        readByte == 1 .. 500 as byte[]
+
+        when:
+        gridFSDownloadStream.mark()
+
+        then:
+        gridFSDownloadStream.read(readByte)
+
+        then:
+        readByte == 501 .. 1000 as byte[]
+
+        when:
+        gridFSDownloadStream.reset()
+
+        then:
+        gridFSDownloadStream.read(readByte)
+
+        then:
+        readByte == 501 .. 1000 as byte[]
+    }
 }
