@@ -82,4 +82,11 @@ public class BsonObjectId extends BsonValue implements Comparable<BsonObjectId>,
     public int hashCode() {
         return value.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "BsonObjectId{"
+                + "value=" + value.toHexString()
+                + '}';
+    }
 }
