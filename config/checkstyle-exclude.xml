@@ -35,6 +35,9 @@
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
 
+    <!--Do not check The GridFSTour -->
+    <suppress checks="Regexp" files="GridFSTour"/>
+
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
 
