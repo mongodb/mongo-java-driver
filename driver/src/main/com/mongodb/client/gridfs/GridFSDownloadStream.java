@@ -42,6 +42,18 @@ public abstract class GridFSDownloadStream extends InputStream {
      */
     public abstract GridFSFile getGridFSFile();
 
+    /**
+     * Sets the number of chunks to return per batch.
+     *
+     * <p>Can be used to control the memory consumption of this InputStream. The smaller the batchSize the lower the memory consumption
+     * and higher latency.</p>
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public abstract GridFSDownloadStream batchSize(int batchSize);
+
     @Override
     public abstract int read();
 

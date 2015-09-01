@@ -107,6 +107,39 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         'a large file to stream' | 'qwerty' * 1024  | 25         | false
     }
 
+    def 'should round trip with a batchSize of 1'() {
+        given:
+        def content = 'qwerty' * 1024
+        def contentBytes = content as byte[]
+        def expectedLength = contentBytes.length as Long
+        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
+        ObjectId fileId
+        byte[] gridFSContentBytes
+
+        when:
+        fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
+
+        then:
+        filesCollection.count() == 1
+        chunksCollection.count() == 25
+
+        when:
+        def file = filesCollection.find().first()
+
+        then:
+        file.getObjectId('_id') == fileId
+        file.getInteger('chunkSize') == gridFSBucket.getChunkSizeBytes()
+        file.getLong('length') == expectedLength
+        file.getString('md5') == expectedMD5
+        !file.containsKey('metadata')
+
+        when:
+        gridFSContentBytes = gridFSBucket.openDownloadStream(fileId).batchSize(1).getBytes()
+
+        then:
+        gridFSContentBytes == contentBytes
+    }
+
     def 'should use custom uploadOptions when uploading' () {
         given:
         def chunkSize = 20
@@ -274,7 +307,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         chunksCollection.count() == 0
     }
 
-    def 'should thrown when deleting nonexistant file'() {
+    def 'should thrown when deleting nonexistent file'() {
         when:
         gridFSBucket.delete(new ObjectId())
 
@@ -330,7 +363,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         notThrown(MongoGridFSException)
     }
 
-    def 'should thrown an exception when rename a nonexistant file'() {
+    def 'should thrown an exception when rename a nonexistent file'() {
         when:
         gridFSBucket.rename(new ObjectId(), 'newFileName')
 
