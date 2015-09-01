@@ -121,11 +121,36 @@ class GridFSUploadStreamSpecification extends Specification {
         1 * filesCollection.insertOne(_)
     }
 
+    def 'should delete any chunks when calling abort'() {
+        given:
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata)
+
+        when:
+        uploadStream.write('file content ' as byte[])
+        uploadStream.abort()
+
+        then:
+        1 * chunksCollection.deleteMany(new Document('files_id', fileId))
+    }
+
+    def 'should close the stream on abort'() {
+        given:
+        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata)
+        uploadStream.write('file content ' as byte[])
+        uploadStream.abort()
+
+        when:
+        uploadStream.write(1)
+
+        then:
+        thrown(MongoGridFSException)
+    }
+
     def 'should not do anything when calling flush'() {
         given:
-        def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata)
+        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata)
 
         when:
         uploadStream.write('file content ' as byte[])

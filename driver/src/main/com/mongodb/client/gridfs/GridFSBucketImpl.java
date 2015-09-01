@@ -149,26 +149,14 @@ final class GridFSBucketImpl implements GridFSBucket {
         int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
         byte[] buffer = new byte[chunkSize];
         int len;
-        MongoGridFSException savedThrowable = null;
         try {
             while ((len = source.read(buffer)) != -1) {
                 uploadStream.write(buffer, 0, len);
             }
+            uploadStream.close();
         } catch (IOException e) {
-            savedThrowable = new MongoGridFSException("IO Exception when reading from the InputStream", e);
-        } catch (Exception e) {
-            savedThrowable = new MongoGridFSException("Unexpected exception when reading stream and writing to GridFS", e);
-        } finally {
-            try {
-                uploadStream.close();
-            } catch (Exception e) {
-                if (savedThrowable == null) {
-                    throw new MongoGridFSException("Unexpected exception when closing the GridFSUploadStream", e);
-                }
-            }
-            if (savedThrowable != null) {
-                throw savedThrowable;
-            }
+            uploadStream.abort();
+            throw new MongoGridFSException("IOException when reading from the InputStream", e);
         }
         return uploadStream.getFileId();
     }
@@ -325,7 +313,7 @@ final class GridFSBucketImpl implements GridFSBucket {
                 destination.write(buffer, 0, len);
             }
         } catch (IOException e) {
-            savedThrowable = new MongoGridFSException("IO Exception when reading from the OutputStream", e);
+            savedThrowable = new MongoGridFSException("IOException when reading from the OutputStream", e);
         } catch (Exception e) {
             savedThrowable = new MongoGridFSException("Unexpected Exception when reading GridFS and writing to the Stream", e);
         } finally {

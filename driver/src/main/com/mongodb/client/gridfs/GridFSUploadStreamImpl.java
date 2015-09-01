@@ -69,6 +69,15 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     @Override
+    public void abort() {
+        synchronized (closeLock) {
+            checkClosed();
+            closed = true;
+        }
+        chunksCollection.deleteMany(new Document("files_id", fileId));
+    }
+
+    @Override
     public void write(final int b) {
         byte[] byteArray = new byte[1];
         byteArray[0] = (byte) (0xFF & b);
@@ -156,8 +165,10 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     private void checkClosed() {
-        if (closed) {
-            throw new MongoGridFSException("The OutputStream has been closed");
+        synchronized (closeLock) {
+            if (closed) {
+                throw new MongoGridFSException("The OutputStream has been closed");
+            }
         }
     }
 

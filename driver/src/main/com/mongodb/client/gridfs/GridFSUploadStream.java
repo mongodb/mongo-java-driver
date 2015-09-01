@@ -41,6 +41,11 @@ public abstract class GridFSUploadStream extends OutputStream {
      */
     public abstract ObjectId getFileId();
 
+    /**
+     * Aborts the upload and deletes any data.
+     */
+    public abstract void abort();
+
     @Override
     public abstract void write(int b);
 
