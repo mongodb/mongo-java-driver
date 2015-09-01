@@ -22,7 +22,7 @@ import org.hamcrest.Description
 @SuppressWarnings('NoDef')
 class CustomMatchers {
 
-    def nullList = [null, null]
+    static nullList = [null, null]
     static isTheSameAs(final Object e) {
         [
                 matches         : { a -> compare(e, a) },
@@ -32,7 +32,20 @@ class CustomMatchers {
         ] as BaseMatcher
     }
 
+    static isTheSameAs(final Object e, final List<String> ignoreNames) {
+        [
+                matches         : { a -> compare(e, a, ignoreNames) },
+                describeTo      : { Description description -> description.appendText("Operation has the same attributes ${e.class.name}")
+                },
+                describeMismatch: { a, description -> describer(e, a, ignoreNames, description) }
+        ] as BaseMatcher
+    }
+
     static compare(expected, actual) {
+        compare(expected, actual, [])
+    }
+
+    static compare(expected, actual, ignoreNames) {
         if (expected == actual) {
             return true
         }
@@ -42,7 +55,7 @@ class CustomMatchers {
         if (actual.class.name != expected.class.name) {
             return false
         }
-        getFieldNames(actual.class).collect { it ->
+        getFieldNames(actual.class).findAll { !ignoreNames.contains(it) } .collect {
             if (nominallyTheSame(it)) {
                 return actual."$it".class == expected."$it".class
             } else if (actual."$it" != expected."$it") {
@@ -62,6 +75,10 @@ class CustomMatchers {
     }
 
     static describer(expected, actual, description) {
+        describer(expected, actual, [], description)
+    }
+
+    static describer(expected, actual, ignoreNames, description) {
         if (expected == actual) {
             return true
         }
@@ -74,7 +91,7 @@ class CustomMatchers {
             return false
         }
 
-        getFieldNames(actual.class).collect { it ->
+        getFieldNames(actual.class).findAll { !ignoreNames.contains(it) } .collect {
             if (nominallyTheSame(it)) {
                 if (actual."$it".class != expected."$it".class) {
                     description.appendText("different classes $it :" +
@@ -83,7 +100,8 @@ class CustomMatchers {
                 }
             } else if (actual."$it" != expected."$it") {
                 def (a1, e1) = [actual."$it", expected."$it"]
-                if ([a1, e1].contains(null) && [a1, e1] != nullList) {
+                if (([a1, e1].contains(null) || [a1.class, e1.class].contains(null)) && [a1, e1] != nullList) {
+                    description.appendText("different values in $it : $e1 != $a1\n")
                     return false
                 } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
                     def i = -1
@@ -93,7 +111,7 @@ class CustomMatchers {
                         }
                     }.every { it }
                 } else if (a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
-                    return compare(a1, e1, description)
+                    return describer(a1, e1, description)
                 }
                 description.appendText("different values in $it : $e1 != $a1\n")
                 return false
@@ -102,11 +120,11 @@ class CustomMatchers {
         }
     }
 
-    static getFieldNames(Class curClass) {
+    static List<String> getFieldNames(Class curClass) {
         getFieldNames(curClass, [])
     }
 
-    static getFieldNames(Class curClass, names) {
+    static List<String> getFieldNames(Class curClass, names) {
         if (curClass != Object) {
             getFieldNames(curClass.getSuperclass(), names += curClass.declaredFields.findAll { !it.synthetic }*.name)
         }

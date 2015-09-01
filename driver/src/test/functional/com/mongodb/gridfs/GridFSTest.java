@@ -119,7 +119,7 @@ public class GridFSTest extends DatabaseTestCase {
 
     @Test
     public void testCreateFileWithFile() throws Exception {
-        URI fileURI = GridFSTest.class.getResource("/GridFS/GridFSTestFile.txt").toURI();
+        URI fileURI = GridFSTest.class.getResource("/GridFSLegacy/GridFSTestFile.txt").toURI();
         GridFSInputFile in = gridFS.createFile(new File(fileURI));
         in.save();
 
