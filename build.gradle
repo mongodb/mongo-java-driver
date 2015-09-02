@@ -86,6 +86,28 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.encoding = 'UTF-8'
         options.charSet 'UTF-8'
         options.docEncoding 'UTF-8'
+        options.header = '''
+            <script type="text/javascript">
+            <!-- Set the location hash in the classFrame -->
+            try {
+              locationHash = top.location.hash;
+              if (window.name == "classFrame" && locationHash != "") {
+                window.location.hash = locationHash;
+              }
+            } catch (error) {}
+            <!-- GA Tracking code -->
+            if (window.name == "" || window.name == "classFrame") {
+                var _elqQ = _elqQ || [];
+                _elqQ.push(["elqSetSiteId", "413370795"]);
+                _elqQ.push(["elqTrackPageView"]);
+                (function () {
+                function async_load() { var s = document.createElement("script"); s.type = "text/javascript"; s.async = true; s.src = "//img03.en25.com/i/elqCfg.min.js"; var x = document.getElementsByTagName("script")[0]; x.parentNode.insertBefore(s, x); }
+                if (window.addEventListener) window.addEventListener("DOMContentLoaded", async_load, false);
+                else if (window.attachEvent) window.attachEvent("onload", async_load);
+                })();
+            }
+            </script>
+        '''
     }
 }
 
