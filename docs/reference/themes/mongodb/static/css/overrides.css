@@ -115,3 +115,28 @@ a code {
 .jsEnabled #search {
   visibility: visible;
 }
+
+
+@media (min-width: 800px) {
+  .nav-items a {
+    display: inline-block !important;
+  }
+  .nav-items { padding-right: 5px; }
+}
+
+#header-db .nav-items > a {
+  display: none;
+}
+
+@media (max-width: 1093px) {
+  #header-db .header-content {
+    width: auto;
+    padding-left: 25px;
+  }
+}
+
+@media (max-width: 1393px) {
+  #header-db .header-content {
+    width: auto;
+  }
+}

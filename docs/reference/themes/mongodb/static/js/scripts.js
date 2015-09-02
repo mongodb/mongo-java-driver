@@ -1,15 +1,35 @@
 function initializeJS() {
     jQuery('.toggle-nav').click(function () {
-        if (jQuery('#sidebar > .ssidebar').is(":visible") === true) {
-            jQuery('#sidebar > .ssidebar').hide();
-            jQuery('#sidebar > .nav-footer').hide();
-            jQuery("#container").addClass("sidebar-closed");
+        var $container = jQuery('#container')
+            $sidebar = jQuery('#sidebar'),
+            $ssidebar = jQuery('#sidebar > .ssidebar'),
+            $footer = jQuery('#sidebar > .nav-footer'),
+            isVisible = $ssidebar.is(":visible") && !$container.hasClass("sidebar-closed");
+
+        if (isVisible) {
+            $sidebar.removeClass("reveal");
+            $container.addClass("sidebar-closed");
+            $ssidebar.hide();
+            $footer.hide();
         } else {
-            jQuery("#container").removeClass("sidebar-closed");
-            jQuery('#sidebar > .ssidebar').show();
-            jQuery('#sidebar > .nav-footer').show();
+            $sidebar.addClass("reveal");
+            $container.removeClass("sidebar-closed");
+            $ssidebar.show();
+            $footer.show();
         }
     });
+
+    var resizer = function() {
+        var $container = jQuery('#container');
+        if (jQuery(window).width() <= 1093) {
+            $container.addClass("sidebar-closed");
+            $container.addClass("sidebar-closed-winSize");
+        } else if ($container.hasClass("sidebar-closed-winSize")) {
+            $container.removeClass("sidebar-closed-winSize");
+        }
+    };
+    jQuery(window).resize(resizer);
+    resizer();
 };
 
 jQuery(document).ready(function() {
