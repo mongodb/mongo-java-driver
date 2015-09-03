@@ -105,7 +105,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
                 String serverResponse = encodeUTF8(challenge);
                 HashMap<String, String> map = parseServerResponse(serverResponse);
 
-                if (!map.get("v").equals(encodeBase64(this.serverSignature))) {
+                if (!MessageDigest.isEqual(decodeBase64(map.get("v")), this.serverSignature)) {
                     throw new SaslException("Server signature was invalid.");
                 }
 
