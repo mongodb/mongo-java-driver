@@ -118,7 +118,7 @@ more information about determining the subject name from the certificate.
 
 ## Kerberos (GSSAPI)
 
-[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through Kerberos service.  To
+[MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Kerberos service.  To
 create a credential of type [Kerberos (GSSAPI)](http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication) use the
 following static factory method:
 
@@ -135,7 +135,8 @@ ConnectionString uri = new ConnectionString("mongodb://username%40REALM.com@host
 ```
 
 {{% note %}}
-The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating via the [GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
+The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating via the 
+[GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
 {{% /note %}}
 
 To successfully authenticate via Kerberos, the application typically must specify several system properties so that the underlying GSSAPI
@@ -144,6 +145,13 @@ Java libraries can acquire a Kerberos ticket:
     java.security.krb5.realm=MYREALM.ME
     java.security.krb5.kdc=mykdc.myrealm.me
 
+{{% note %}}
+The `GSSAPI` authentication mechanism is supported only in the following environments:
+
+* Linux: Java 6 and above 
+* Windows: Java 7 and above with [SSPI](https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493)
+* OS X: Java 7 and above
+{{% /note %}}
 
 ## LDAP (PLAIN)
 
