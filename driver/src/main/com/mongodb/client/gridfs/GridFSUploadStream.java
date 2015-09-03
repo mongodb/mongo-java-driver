@@ -26,7 +26,7 @@ import java.io.OutputStream;
  *
  * <p>Provides the {@code id} for the file to be uploaded as well as the {@code write} methods of a {@link OutputStream}</p>
  *
- * <p>This implementation of a {@code OutputStream} will not throw {@link @IOException}s. However, it  will throw a
+ * <p>This implementation of a {@code OutputStream} will not throw {@link java.io.IOException}s. However, it  will throw a
  * {@link com.mongodb.MongoException} if there is an error writing to MongoDB.</p>
  *
  * @since 3.1

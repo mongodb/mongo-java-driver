@@ -26,7 +26,7 @@ import java.io.InputStream;
  *
  * <p>Provides the {@code GridFSFile} for the file to being downloaded as well as the {@code read} methods of a {@link InputStream}</p>
  *
- * <p>This implementation of a {@code InputStream} will not throw {@link @IOException}s. However, it  will throw a
+ * <p>This implementation of a {@code InputStream} will not throw {@link java.io.IOException}s. However, it  will throw a
  * {@link com.mongodb.MongoException} if there is an error reading from MongoDB.</p>
  *
  * @since 3.1

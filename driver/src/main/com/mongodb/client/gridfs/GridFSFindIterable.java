@@ -39,7 +39,6 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      *      Filters.and(Filters.eq("filename", "mongodb.png"), Filters.eq("metadata.contentType", "image/png"));
      *  }
      *  </pre>
-     * </p>
      *
      * @param filter the filter, which may be null.
      * @return this

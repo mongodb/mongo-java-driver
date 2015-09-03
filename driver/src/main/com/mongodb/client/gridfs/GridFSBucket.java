@@ -235,7 +235,6 @@ public interface GridFSBucket {
      *      Filters.and(Filters.eq("filename", "mongodb.png"), Filters.eq("metadata.contentType", "image/png"));
      *  }
      *  </pre>
-     * </p>
      *
      * @param filter the query filter
      * @return the GridFS find iterable interface
