@@ -423,6 +423,13 @@ public class Mongo {
     /**
      * Gets a database object. Users should use {@link com.mongodb.MongoClient#getDatabase(String)} instead.
      *
+     * <p>
+     * The {@link DB} class has been superseded by {@link com.mongodb.client.MongoDatabase}.  The deprecation of this method effectively
+     * deprecates the {@link DB}, {@link DBCollection}, and {@link DBCursor} classes, among others; but in order to give users time to
+     * migrate to the new API without experiencing a huge number of compiler warnings, those classes have not yet been formally
+     * deprecated.
+     * </p>
+     *
      * @param dbName the name of the database to retrieve
      * @return a DB representing the specified database
      * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}

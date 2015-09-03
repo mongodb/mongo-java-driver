@@ -105,6 +105,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * DBObject myDoc = coll.findOne();
  * System.out.println(myDoc); }
  * </pre>
+ *
+ * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ *
  * @mongodb.driver.manual reference/glossary/#term-collection Collection
  */
 @ThreadSafe

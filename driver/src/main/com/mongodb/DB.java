@@ -55,6 +55,8 @@ import static java.util.Arrays.asList;
  * }
  * </pre>
  *
+ * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ *
  * @mongodb.driver.manual reference/glossary/#term-database Database
  * @see MongoClient
  */

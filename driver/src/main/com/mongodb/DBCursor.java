@@ -53,6 +53,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *    List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray();
  * }</pre>
  *
+ * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ *
  * @mongodb.driver.manual core/read-operations Read Operations
  */
 @NotThreadSafe
