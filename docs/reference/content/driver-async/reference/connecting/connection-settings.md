@@ -94,3 +94,31 @@ ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(new Ser
 MongoClientSettings settings = MongoClientSettings.builder().clusterSettings(clusterSettings).build();
 MongoClient client = MongoClients.create(settings);
 ```
+
+### Netty Configuration
+
+By default, the async driver relies on the
+[`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) class, introduced
+in Java 7.  If configured properly, the driver will use [Netty](http://netty.io/) instead.  An application must use Netty for the 
+following reasons:
+      
+* The application is configured to use SSL to communicate with the MongoDB server.
+* The application runs on Java 6.
+         
+To configure the driver to use Netty, the application must configure the MongoClientSettings appropriately:
+         
+```java
+MongoClientSettings.builder()
+                   .streamFactoryFactory(new NettyStreamFactoryFactory())
+                   .build();
+         
+```         
+
+By default the Netty-based streams will use the [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html) 
+and Netty's [default `ByteBufAllocator`](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html#DEFAULT), but these are 
+configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}) constructor.   
+
+{{% note %}}
+Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as 
+deprecated as of the 3.1 driver release.
+{{% /note %}}

@@ -10,24 +10,21 @@ title = "SSL"
 
 ## SSL
 
-The Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by the JDK. You can configure 
-the driver to use SSL either with `ConnectionString` or with `MongoClientSettings`.  
-
-With `ConnectionString`, specify `ssl=true as a query parameter, as in:
-
-```java
-new ConnectionString("mongodb://localhost/?ssl=true")
-```
-
-With `MongoClientSettings`, set the sslEnabled property to true, as in:
+The async Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by
+[Netty](http://netty .io/). You can configure the driver to use SSL with `MongoClientSettings` by setting the sslEnabled property to true 
+and the stream factory to [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in:
 
 ```java
 MongoClientSettings.builder()                                                  
                    .sslSettings(SslSettings.builder()
                                            .enabled(true)
                                            .build())   
+                   .streamFactoryFactory(new NettyStreamFactoryFactory())
                    .build()                                                    
 ```
+
+See [Netty Configuration]({{< relref "driver-async/reference/connecting/connection-settings.md#netty-configuration" >}}) for details on 
+configuring Netty.
 
 ### Host name verification
 
@@ -42,6 +39,7 @@ MongoClientSettings.builder()
                                            .enabled(true)                 
                                            .invalidHostNameAllowed(true)  
                                            .build())                      
+                   .streamFactoryFactory(new NettyStreamFactoryFactory())
                    .build()                                              
 ``` 
 
