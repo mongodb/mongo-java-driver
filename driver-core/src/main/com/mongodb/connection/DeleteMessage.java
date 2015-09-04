@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,12 @@ class DeleteMessage extends RequestMessage {
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        writeDelete(deleteRequests.get(0), bsonOutput);
-        if (deleteRequests.size() == 1) {
-            return null;
-        } else {
-            return new DeleteMessage(getCollectionName(), deleteRequests.subList(1, deleteRequests.size()), getSettings());
-        }
+        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
     }
 
-    private void writeDelete(final DeleteRequest deleteRequest, final BsonOutput bsonOutput) {
+    @Override
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+        DeleteRequest deleteRequest = deleteRequests.get(0);
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());
 
@@ -63,7 +60,17 @@ class DeleteMessage extends RequestMessage {
             bsonOutput.writeInt32(1);
         }
 
+        int firstDocumentStartPosition = bsonOutput.getPosition();
+
         addDocument(deleteRequest.getFilter(), bsonOutput, new NoOpFieldNameValidator());
+        if (deleteRequests.size() == 1) {
+            return new EncodingMetadata(null, firstDocumentStartPosition);
+        } else {
+            return new EncodingMetadata(new DeleteMessage(getCollectionName(), deleteRequests.subList(1, deleteRequests.size()),
+                                                          getSettings()),
+                                        firstDocumentStartPosition);
+        }
     }
+
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                     return executeWrappedCommandProtocol(binding, databaseName, getCommand(), connection, transformer());
                 } else {
                     return transformQueryResult().apply(connection.query(new MongoNamespace(databaseName, "system.users"),
-                                                                         new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                                                         new BsonDocument("user", new BsonString(userName)), null, 0, 1, 0,
                                                                          binding.getReadPreference().isSlaveOk(), false,
                                                                          false, false, false, false,
                                                                          new BsonDocumentCodec()));
@@ -90,7 +90,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                                 transformer(), wrappedCallback);
                     } else {
                         connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
-                                              new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                              new BsonDocument("user", new BsonString(userName)), null, 0, 1, 0,
                                               binding.getReadPreference().isSlaveOk(), false,
                                               false, false, false, false,
                                               new BsonDocumentCodec(),

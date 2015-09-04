@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,7 +227,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     private void killCursor(final Connection connection) {
         if (serverCursor != null) {
-            connection.killCursor(singletonList(serverCursor.getId()));
+            connection.killCursor(namespace, singletonList(serverCursor.getId()));
             serverCursor = null;
         }
     }

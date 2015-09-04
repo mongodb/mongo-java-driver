@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,25 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.event.CommandListener;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.connection.ProtocolHelper.encodeMessage;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
-import static java.lang.String.format;
+import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
+import static java.util.Collections.singletonList;
 
 /**
  * Base class for wire protocol messages that perform writes.  In particular, it handles the write followed by the getlasterror command to
@@ -40,6 +48,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
+    private CommandListener commandListener;
 
     /**
      * Construct a new instance.
@@ -55,9 +64,112 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     }
 
     @Override
-    public WriteConcernResult execute(final InternalConnection connection) {
-        return receiveMessage(connection, sendMessage(connection));
+    public void setCommandListener(final CommandListener commandListener) {
+        this.commandListener = commandListener;
     }
+
+    @Override
+    public WriteConcernResult execute(final InternalConnection connection) {
+        WriteConcernResult writeConcernResult = null;
+        RequestMessage nextMessage = null;
+        do {
+            long startTimeNanos = System.nanoTime();
+            RequestMessage.EncodingMetadata encodingMetadata;
+            int messageId;
+            boolean sentCommandStartedEvent = false;
+            ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            try {
+                if (nextMessage == null) {
+                    nextMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
+                }
+                encodingMetadata = nextMessage.encodeWithMetadata(bsonOutput);
+
+                if (commandListener != null) {
+                    sendCommandStartedEvent(nextMessage, namespace.getDatabaseName(), getCommandName(),
+                                            getAsWriteCommand(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
+                                            connection.getDescription(), commandListener);
+                    sentCommandStartedEvent = true;
+                }
+                messageId = nextMessage.getId();
+                if (shouldAcknowledge(encodingMetadata)) {
+                    CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                                                                                               COMMAND_COLLECTION_NAME).getFullName(),
+                                                                            createGetLastErrorCommandDocument(), false,
+                                                                            getMessageSettings(connection.getDescription()));
+                    getLastErrorMessage.encode(bsonOutput);
+                    messageId = getLastErrorMessage.getId();
+                }
+
+                connection.sendMessage(bsonOutput.getByteBuffers(), messageId);
+            } catch (RuntimeException e) {
+                if (commandListener != null && sentCommandStartedEvent) {
+                    sendCommandFailedEvent(nextMessage, getCommandName(), connection.getDescription(), 0, e, commandListener);
+                }
+                throw e;
+            } finally {
+                bsonOutput.close();
+            }
+
+            if (shouldAcknowledge(encodingMetadata)) {
+                ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
+                try {
+                    ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                                                                                             messageId);
+                    writeConcernResult = ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0),
+                                                                       connection.getDescription().getServerAddress());
+                } catch (WriteConcernException e) {
+                    if (commandListener != null) {
+                        sendCommandSucceededEvent(nextMessage, getCommandName(), getResponseDocument(nextMessage,
+                                                                                                     encodingMetadata.getNextMessage(),
+                                                                                                     e.getWriteConcernResult(),
+                                                                                                     e),
+                                                  connection.getDescription(), 0, commandListener);
+                    }
+                    throw e;
+                } catch (RuntimeException e) {
+                    if (commandListener != null) {
+                        sendCommandFailedEvent(nextMessage, getCommandName(), connection.getDescription(), 0, e, commandListener);
+                    }
+                    throw e;
+                } finally {
+                    responseBuffers.close();
+                }
+            }
+
+            if (commandListener != null) {
+                sendCommandSucceededEvent(nextMessage, getCommandName(), getResponseDocument(nextMessage, encodingMetadata.getNextMessage(),
+                                                                                             writeConcernResult, null),
+                                          connection.getDescription(), startTimeNanos, commandListener);
+            }
+
+            nextMessage = encodingMetadata.getNextMessage();
+        } while (nextMessage != null);
+
+        return writeConcern.isAcknowledged() ? writeConcernResult : WriteConcernResult.unacknowledged();
+    }
+
+    private BsonDocument getResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
+                                             final WriteConcernResult writeConcernResult,
+                                             final WriteConcernException writeConcernException) {
+        BsonDocument response = new BsonDocument("ok", new BsonInt32(1));
+        if (writeConcern.isAcknowledged()) {
+            if (writeConcernException == null) {
+                appendToWriteCommandResponseDocument(curMessage, nextMessage, writeConcernResult, response);
+            } else {
+                response.put("n", new BsonInt32(0));
+                BsonDocument writeErrorDocument = new BsonDocument("index", new BsonInt32(0))
+                                                  .append("code", new BsonInt32(writeConcernException.getErrorCode()));
+                if (writeConcernException.getErrorMessage() != null) {
+                    writeErrorDocument.append("errmsg", new BsonString(writeConcernException.getErrorMessage()));
+                }
+                response.put("writeErrors", new BsonArray(singletonList(writeErrorDocument)));
+            }
+        }
+        return response;
+    }
+
+    protected abstract void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
+                                                                 final WriteConcernResult writeConcernResult, final BsonDocument response);
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
@@ -100,60 +212,28 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     }
 
 
-    private CommandMessage sendMessage(final InternalConnection connection) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        try {
-            RequestMessage lastMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
-            RequestMessage nextMessage = lastMessage.encode(bsonOutput);
-            int batchNum = 1;
-            if (nextMessage != null) {
-                if (getLogger().isDebugEnabled()) {
-                    getLogger().debug(format("Sending batch %d", batchNum));
-                }
-            }
+    protected abstract BsonDocument getAsWriteCommand(ByteBufferBsonOutput bsonOutput, int firstDocumentPosition);
 
-            while (nextMessage != null) {
-                batchNum++;
-                if (getLogger().isDebugEnabled()) {
-                    getLogger().debug(format("Sending batch %d", batchNum));
-                }
-                lastMessage = nextMessage;
-                nextMessage = nextMessage.encode(bsonOutput);
-            }
-            CommandMessage getLastErrorMessage = null;
-            if (writeConcern.isAcknowledged()) {
-                getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
-                                                                            COMMAND_COLLECTION_NAME).getFullName(),
-                                                         createGetLastErrorCommandDocument(), false,
-                                                         getMessageSettings(connection.getDescription()));
-                getLastErrorMessage.encode(bsonOutput);
-                lastMessage = getLastErrorMessage;
-            }
-            connection.sendMessage(bsonOutput.getByteBuffers(), lastMessage.getId());
-            return getLastErrorMessage;
-        } finally {
-            bsonOutput.close();
+    protected BsonDocument getBaseCommandDocument() {
+        BsonDocument baseCommandDocument = new BsonDocument(getCommandName(), new BsonString(getNamespace().getCollectionName()))
+                               .append("ordered", BsonBoolean.valueOf(isOrdered()));
+        if (!writeConcern.isServerDefault()) {
+            baseCommandDocument.append("writeConcern", writeConcern.asDocument());
         }
+        return baseCommandDocument;
+    }
+
+    protected abstract String getCommandName();
+
+
+    private boolean shouldAcknowledge(final RequestMessage.EncodingMetadata encodingMetadata) {
+        return writeConcern.isAcknowledged() || (isOrdered() && encodingMetadata.getNextMessage() != null);
     }
 
     private BsonDocument createGetLastErrorCommandDocument() {
         BsonDocument command = new BsonDocument("getlasterror", new BsonInt32(1));
         command.putAll(writeConcern.asDocument());
         return command;
-    }
-
-    private WriteConcernResult receiveMessage(final InternalConnection connection, final RequestMessage requestMessage) {
-        if (requestMessage == null) {
-            return WriteConcernResult.unacknowledged();
-        }
-        ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
-        try {
-            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
-                                                                                     requestMessage.getId());
-            return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getDescription().getServerAddress());
-        } finally {
-            responseBuffers.close();
-        }
     }
 
     /**

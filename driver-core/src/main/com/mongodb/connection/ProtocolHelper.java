@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,12 @@ import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.CommandFailedEvent;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -34,7 +40,10 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.io.BsonOutput;
 
+import static java.lang.String.format;
+
 final class ProtocolHelper {
+    private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
 
     static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
         if (!isCommandOk(result)) {
@@ -144,6 +153,47 @@ final class ProtocolHelper {
             throw new WriteConcernException(result, serverAddress, createWriteResult(result));
         }
     }
+
+    static void sendCommandStartedEvent(final RequestMessage message, final String databaseName, final String commandName,
+                                        final BsonDocument command, final ConnectionDescription connectionDescription,
+                                        final CommandListener commandListener) {
+        try {
+            commandListener.commandStarted(new CommandStartedEvent(message.getId(), connectionDescription,
+                                                                   databaseName, commandName, command));
+        } catch (Exception e) {
+            if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
+                PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command started event to listener %s", commandListener), e);
+            }
+        }
+    }
+
+    static void sendCommandSucceededEvent(final RequestMessage message, final String commandName, final BsonDocument response,
+                                          final ConnectionDescription connectionDescription, final long startTimeNanos,
+                                          final CommandListener commandListener) {
+        try {
+            commandListener.commandSucceeded(new CommandSucceededEvent(message.getId(), connectionDescription,
+                                                                       commandName,
+                                                                       response, System.nanoTime() - startTimeNanos));
+        } catch (Exception e) {
+            if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
+                PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command succeeded event to listener %s", commandListener), e);
+            }
+        }
+    }
+
+    static void sendCommandFailedEvent(final RequestMessage message, final String commandName,
+                                       final ConnectionDescription connectionDescription, final long startTimeNanos,
+                                       final Throwable throwable, final CommandListener commandListener) {
+        try {
+            commandListener.commandFailed(new CommandFailedEvent(message.getId(), connectionDescription, commandName,
+                                                                 System.nanoTime() - startTimeNanos, throwable));
+        } catch (Exception e) {
+            if (PROTOCOL_EVENT_LOGGER.isWarnEnabled()) {
+                PROTOCOL_EVENT_LOGGER.warn(format("Exception thrown raising command failed event to listener %s", commandListener), e);
+            }
+        }
+    }
+
 
     private ProtocolHelper() {
     }

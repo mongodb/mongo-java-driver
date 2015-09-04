@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     }
                 } else {
                     return new QueryBatchCursor<T>(connection.query(getIndexNamespace(),
-                            asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,
+                            asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                             binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder), 0, batchSize, decoder,
                             source);
                 }
@@ -182,7 +182,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                 });
                     } else {
                         connection.queryAsync(getIndexNamespace(),
-                                asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,
+                                asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, 0, 0, batchSize,
                                 binding.getReadPreference().isSlaveOk(), false, false, false, false, false, decoder,
                                 new SingleResultCallback<QueryResult<T>>() {
                                     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -397,8 +397,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                 QueryResult<T> queryResult = connection.query(namespace,
                                                               asDocument(connection.getDescription(), binding.getReadPreference()),
                                                               projection,
-                                                              getNumberToReturn(),
                                                               skip,
+                                                              limit,
+                                                              batchSize,
                                                               isSlaveOk() || binding.getReadPreference().isSlaveOk(),
                                                               isTailableCursor(),
                                                               isAwaitData(),
@@ -422,7 +423,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
                     connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()), projection,
-                                          getNumberToReturn(), skip, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                          skip, limit, batchSize, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
                                           isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
                                           decoder, new SingleResultCallback<QueryResult<T>>() {
                         @Override
@@ -508,32 +509,6 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                              .limit(Math.abs(limit) * -1)
                              .modifiers(explainModifiers);
 
-    }
-
-    /**
-     * Gets the limit of the number of documents in the first OP_REPLY response to the query.
-     *
-     * <p>A value of zero tells the server to use the default size. A negative value tells the server to return no more than that number
-     * and immediately close the cursor.  Otherwise, the server will return no more than that number and return a cursorId to allow the
-     * rest of the documents to be fetched, if it turns out there are more documents.</p>
-     *
-     * <p>The value returned by this method is based on the limit and the batch size, both of which can be positive, negative, or zero.</p>
-     *
-     * @return the value for numberToReturn in the OP_QUERY wire protocol message.
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
-     */
-    private int getNumberToReturn() {
-        if (limit < 0) {
-            return limit;
-        } else if (limit == 0) {
-            return batchSize;
-        } else if (batchSize == 0) {
-            return limit;
-        } else if (limit < Math.abs(batchSize)) {
-            return limit;
-        } else {
-            return batchSize;
-        }
     }
 
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,8 +124,19 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public byte get(final int index) {
+        return proxied.getByte(index);
+    }
+
+    @Override
     public ByteBuf get(final byte[] bytes) {
         proxied.readBytes(bytes);
+        return this;
+    }
+
+    @Override
+    public ByteBuf get(final int index, final byte[] bytes) {
+        proxied.getBytes(index, bytes);
         return this;
     }
 
@@ -136,8 +147,19 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public ByteBuf get(final int index, final byte[] bytes, final int offset, final int length) {
+        proxied.getBytes(index, bytes, offset, length);
+        return this;
+    }
+
+    @Override
     public long getLong() {
         return proxied.readLong();
+    }
+
+    @Override
+    public long getLong(final int index) {
+        return proxied.getLong(index);
     }
 
     @Override
@@ -146,8 +168,18 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public double getDouble(final int index) {
+        return proxied.getDouble(index);
+    }
+
+    @Override
     public int getInt() {
         return proxied.readInt();
+    }
+
+    @Override
+    public int getInt(final int index) {
+        return proxied.getInt(index);
     }
 
     @Override
@@ -161,7 +193,12 @@ final class NettyByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf limit(final int newLimit) {
-        throw new UnsupportedOperationException("This method should be unused!");
+        if (isWriting) {
+            throw new UnsupportedOperationException("Can not set the limit while writing");
+        } else {
+            proxied.writerIndex(newLimit);
+        }
+        return this;
     }
 
     @Override

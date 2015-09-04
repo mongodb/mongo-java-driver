@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,11 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         int total = 0;
         for (final ByteBuf cur : getByteBuffers()) {
-            out.write(cur.array(), 0, cur.limit());
-            total += cur.limit();
+            ByteBuf dup = cur.duplicate();
+            while (dup.hasRemaining()) {
+                out.write(dup.get());
+            }
+            total += dup.limit();
         }
         return total;
     }

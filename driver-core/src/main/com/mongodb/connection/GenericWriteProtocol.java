@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
+import org.bson.BsonDocument;
 
 class GenericWriteProtocol extends WriteProtocol {
     private final RequestMessage requestMessage;
@@ -26,6 +28,23 @@ class GenericWriteProtocol extends WriteProtocol {
                                 final WriteConcern writeConcern) {
         super(namespace, ordered, writeConcern);
         this.requestMessage = requestMessage;
+    }
+
+    @Override
+    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
+                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    protected String getCommandName() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+
     }
 
     @Override

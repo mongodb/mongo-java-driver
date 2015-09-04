@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                 @Override
                 public void onResult(final AsyncConnection connection, final Throwable connectionException) {
                     if (connection != null) {
-                        connection.killCursorAsync(singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
+                        connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
                             @Override
                             public void onResult(final Void result, final Throwable t) {
                                 connection.release();

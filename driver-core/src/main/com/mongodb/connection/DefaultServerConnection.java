@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
+@SuppressWarnings("deprecation")  // because this class implements deprecated methods
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
     private final InternalConnection wrapped;
     private final ProtocolExecutor protocolExecutor;
@@ -173,6 +174,22 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     }
 
     @Override
+    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
+                                    final int skip, final int limit, final int batchSize,
+                                    final boolean slaveOk, final boolean tailableCursor,
+                                    final boolean awaitData, final boolean noCursorTimeout,
+                                    final boolean partial, final boolean oplogReplay,
+                                    final Decoder<T> resultDecoder) {
+        return executeProtocol(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
+                               .tailableCursor(tailableCursor)
+                               .slaveOk(getSlaveOk(slaveOk))
+                               .oplogReplay(oplogReplay)
+                               .noCursorTimeout(noCursorTimeout)
+                               .awaitData(awaitData)
+                               .partial(partial));
+    }
+
+    @Override
     public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                final int numberToReturn, final int skip,
                                final boolean slaveOk, final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
@@ -180,6 +197,20 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                final boolean oplogReplay, final Decoder<T> resultDecoder,
                                final SingleResultCallback<QueryResult<T>> callback) {
         executeProtocolAsync(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
+                             .tailableCursor(tailableCursor)
+                             .slaveOk(getSlaveOk(slaveOk))
+                             .oplogReplay(oplogReplay)
+                             .noCursorTimeout(noCursorTimeout)
+                             .awaitData(awaitData)
+                             .partial(partial), callback);
+    }
+
+    @Override
+    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields, final int skip,
+                               final int limit, final int batchSize, final boolean slaveOk, final boolean tailableCursor,
+                               final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
+                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
+        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, limit, batchSize, queryDocument, fields, resultDecoder)
                              .tailableCursor(tailableCursor)
                              .slaveOk(getSlaveOk(slaveOk))
                              .oplogReplay(oplogReplay)
@@ -202,12 +233,22 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
 
     @Override
     public void killCursor(final List<Long> cursors) {
-        executeProtocol(new KillCursorProtocol(cursors));
+        killCursor(null, cursors);
+    }
+
+    @Override
+    public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
+        executeProtocol(new KillCursorProtocol(namespace, cursors));
     }
 
     @Override
     public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        executeProtocolAsync(new KillCursorProtocol(cursors), callback);
+        killCursorAsync(null, cursors, callback);
+    }
+
+    @Override
+    public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
+        executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
     }
 
     private boolean getSlaveOk(final boolean slaveOk) {

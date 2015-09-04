@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.CommandListener;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionPoolListener connectionPoolListener;
     private final ConnectionListener connectionListener;
     private final StreamFactory heartbeatStreamFactory;
+    private final CommandListener commandListener;
 
     public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
@@ -40,7 +42,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final StreamFactory heartbeatStreamFactory,
                                            final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener,
-                                           final ConnectionPoolListener connectionPoolListener) {
+                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener) {
         this.clusterId = clusterId;
         this.clusterSettings = clusterSettings;
         this.settings = settings;
@@ -50,6 +52,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         this.connectionPoolListener = connectionPoolListener;
         this.connectionListener = connectionListener;
         this.heartbeatStreamFactory = heartbeatStreamFactory;
+        this.commandListener = commandListener;
     }
 
     @Override
@@ -66,7 +69,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                                 connectionListener),
                                             connectionPool);
         return new DefaultServer(serverAddress, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(),
-                                 serverMonitorFactory);
+                                 serverMonitorFactory, commandListener);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,16 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonValue;
 
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 
 /**
  * An implementation of the MongoDB OP_UPDATE wire protocol.
@@ -86,10 +92,51 @@ class UpdateProtocol extends WriteProtocol {
         }
     }
 
+    @Override
+    protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
+        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
+        BsonDocument updateDocument = new BsonDocument("q", documents.get(0)).append("u", documents.get(1));
+        if (updates.get(0).isMulti()) {
+            updateDocument.append("multi", BsonBoolean.TRUE);
+        }
+        if (updates.get(0).isUpsert()) {
+            updateDocument.append("upsert", BsonBoolean.TRUE);
+        }
+        return getBaseCommandDocument().append("updates", new BsonArray(singletonList(updateDocument)));
+    }
+
+    @Override
+    protected String getCommandName() {
+        return "update";
+    }
+
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new UpdateMessage(getNamespace().getFullName(), updates, settings);
+    }
+
+    @Override
+    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
+                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
+        response.append("n", new BsonInt32(writeConcernResult.getCount()));
+
+        UpdateMessage updateMessage = (UpdateMessage) curMessage;
+        UpdateRequest updateRequest = updateMessage.getUpdateRequests().get(0);
+        BsonValue upsertedId = null;
+        if (writeConcernResult.getUpsertedId() != null) {
+            upsertedId = writeConcernResult.getUpsertedId();
+        } else if (!writeConcernResult.isUpdateOfExisting() && updateRequest.isUpsert()) {
+            if (updateRequest.getUpdate().containsKey("_id")) {
+                upsertedId = updateRequest.getUpdate().get("_id");
+            } else if (updateRequest.getFilter().containsKey("_id")) {
+                upsertedId = updateRequest.getFilter().get("_id");
+            }
+        }
+        if (upsertedId != null) {
+            response.append("upserted", new BsonArray(singletonList(new BsonDocument("index", new BsonInt32(0))
+                                                                    .append("_id", upsertedId))));
+        }
     }
 
     @Override

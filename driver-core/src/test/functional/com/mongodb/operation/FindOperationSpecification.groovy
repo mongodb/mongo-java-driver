@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,7 +320,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                                                                 new ServerVersion(2, 6), ServerType.STANDALONE, 1000, 100000, 100000)
 
         1 * connection.query(getNamespace(), findOperation.filter,
-                             findOperation.projection, 0, 0, false, false, false, false, false, false, _) >>
+                             findOperation.projection, 0, 0, 0, false, false, false, false, false, false, _) >>
         new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
 
         1 * connection.release()
@@ -352,7 +352,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         1 * connection.query(getNamespace(),
                              new BsonDocument('$query', findOperation.filter).append('$explain', BsonBoolean.TRUE)
                                                                              .append('$orderby', findOperation.sort),
-                             findOperation.projection, -20, 0, false, false, false, false, false, false, _) >>
+                             findOperation.projection, 0, -20, 0, false, false, false, false, false, false, _) >>
         new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
 
         1 * connection.release()
@@ -405,7 +405,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         1 * connectionSource.getConnection() >> connection
         1 * connection.getDescription() >> connectionDescription
         1 * readPreference.slaveOk >> slaveOk
-        1 * connection.query(namespace, _, _, _, _, slaveOk, _, _, _, _, _, _) >> queryResult
+        1 * connection.query(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _) >> queryResult
         1 * queryResult.getNamespace() >> namespace
         2 * queryResult.getResults() >> []
         1 * connection.release()
@@ -438,7 +438,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         1 * connectionSource.getConnection(_) >> { it[0].onResult(connection, null) }
         1 * connection.getDescription() >> connectionDescription
         1 * readPreference.slaveOk >> slaveOk
-        1 * connection.queryAsync(namespace, _, _, _, _, slaveOk, _, _, _, _, _, _, _) >> { it[12].onResult(queryResult, null) }
+        1 * connection.queryAsync(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
         1 * queryResult.getNamespace() >> namespace
         1 * queryResult.getResults() >> []
         1 * connection.release()

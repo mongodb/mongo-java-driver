@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
+import com.mongodb.event.CommandListener
 import org.bson.BsonDocument
 import spock.lang.Specification
 
@@ -53,7 +54,7 @@ class DefaultServerSpecification extends Specification {
 
         serverMonitorFactory.create(_) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
-        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory, null)
 
         when:
         def receivedConnection = server.getConnection()
@@ -80,7 +81,7 @@ class DefaultServerSpecification extends Specification {
         }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
-        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), mode, connectionPool, connectionFactory, serverMonitorFactory, null)
 
         when:
         def latch = new CountDownLatch(1)
@@ -102,7 +103,7 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionFactory = Mock(ConnectionFactory)
         def server = new DefaultServer(new ServerAddress(), SINGLE, new TestConnectionPool(),
-                                       connectionFactory, new TestServerMonitorFactory())
+                                       connectionFactory, new TestServerMonitorFactory(), null)
         def stateChanged = false;
 
         server.addChangeListener(new ChangeListener<ServerDescription>() {
@@ -131,7 +132,7 @@ class DefaultServerSpecification extends Specification {
         connectionPool.get() >> { throw new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed') }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
-        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory, null)
 
         when:
         server.getConnection()
@@ -153,7 +154,7 @@ class DefaultServerSpecification extends Specification {
                                                                            '123'.toCharArray()),
                                                           'Auth failed')
         def server = new DefaultServer(new ServerAddress(), SINGLE, new TestConnectionPool(exceptionToThrow), connectionFactory,
-                                       serverMonitorFactory)
+                                       serverMonitorFactory, null)
 
         when:
         def latch = new CountDownLatch(1)
@@ -179,7 +180,7 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory, null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -226,7 +227,8 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                                       null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -252,7 +254,8 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                                       null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -288,7 +291,8 @@ class DefaultServerSpecification extends Specification {
 
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
-        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory)
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                                       null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -329,6 +333,10 @@ class DefaultServerSpecification extends Specification {
         @Override
         void executeAsync(final InternalConnection connection, final SingleResultCallback callback) {
             callback.onResult(null, mongoException);
+        }
+
+        @Override
+        void setCommandListener(final CommandListener operationListener) {
         }
     }
 }

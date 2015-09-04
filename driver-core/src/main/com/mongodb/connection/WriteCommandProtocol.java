@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,23 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.IndexMap;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 
+import static com.mongodb.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
+import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.connection.WriteCommandResultHelper.getBulkWriteException;
 import static com.mongodb.connection.WriteCommandResultHelper.getBulkWriteResult;
 import static java.lang.String.format;
@@ -38,6 +44,7 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
+    private CommandListener commandListener;
 
     /**
      * Construct an instance.
@@ -52,6 +59,11 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
         this.writeConcern = writeConcern;
     }
 
+    @Override
+    public void setCommandListener(final CommandListener commandListener) {
+        this.commandListener = commandListener;
+    }
+
     /**
      * Gets the write concern.
      *
@@ -64,34 +76,51 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     @Override
     public BulkWriteResult execute(final InternalConnection connection) {
         BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getDescription()));
-        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
-                                                                                   ordered, writeConcern);
-        int batchNum = 0;
-        int currentRangeStartIndex = 0;
-        do {
-            batchNum++;
-            BaseWriteCommandMessage nextMessage = sendMessage(connection, message, batchNum);
-            int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
-            IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-            BsonDocument result = receiveMessage(connection, message);
+        long startTimeNanos = System.nanoTime();
+        try {
+            BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
+                                                                                       ordered, writeConcern);
+            int batchNum = 0;
+            int currentRangeStartIndex = 0;
+            do {
+                batchNum++;
+                startTimeNanos = System.nanoTime();
+                BaseWriteCommandMessage nextMessage = sendMessage(connection, message, batchNum);
+                int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
+                IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+                BsonDocument result = receiveMessage(connection, message);
 
-            if (nextMessage != null || batchNum > 1) {
-                if (getLogger().isDebugEnabled()) {
-                    getLogger().debug(format("Received response for batch %d", batchNum));
+                if (nextMessage != null || batchNum > 1) {
+                    if (getLogger().isDebugEnabled()) {
+                        getLogger().debug(format("Received response for batch %d", batchNum));
+                    }
                 }
-            }
 
-            if (WriteCommandResultHelper.hasError(result)) {
-                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
-                                                                            connection.getDescription().getServerAddress()), indexMap);
-            } else {
-                bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
-            }
-            currentRangeStartIndex += itemCount;
-            message = nextMessage;
-        } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
+                if (WriteCommandResultHelper.hasError(result)) {
+                    MongoBulkWriteException bulkWriteException = getBulkWriteException(getType(), result,
+                                                                                       connection.getDescription().getServerAddress());
+                    bulkWriteBatchCombiner.addErrorResult(bulkWriteException, indexMap);
+                } else {
+                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                }
+                if (commandListener != null) {
+                    sendCommandSucceededEvent(message, message.getCommandName(), result, connection.getDescription(),
+                                              startTimeNanos, commandListener);
+                }
+                currentRangeStartIndex += itemCount;
+                message = nextMessage;
+            } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
 
-        return bulkWriteBatchCombiner.getResult();
+            return bulkWriteBatchCombiner.getResult();
+        } catch (MongoBulkWriteException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            if (commandListener != null) {
+                sendCommandFailedEvent(message, message.getCommandName(), connection.getDescription(), startTimeNanos,
+                                       e, commandListener);
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -167,7 +196,15 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                                                 final int batchNum) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
+            RequestMessage.EncodingMetadata encodingMetadata = message.encodeWithMetadata(bsonOutput);
+            BaseWriteCommandMessage nextMessage = (BaseWriteCommandMessage) encodingMetadata.getNextMessage();
+
+            if (commandListener != null) {
+                sendCommandStartedEvent(message, namespace.getDatabaseName(), message.getCommandName(),
+                                        createOne(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
+                                        connection.getDescription(), commandListener);
+            }
+
             if (nextMessage != null || batchNum > 1) {
                 if (getLogger().isDebugEnabled()) {
                     getLogger().debug(format("Sending batch %d", batchNum));
@@ -233,4 +270,5 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     protected boolean isOrdered() {
         return ordered;
     }
+
 }

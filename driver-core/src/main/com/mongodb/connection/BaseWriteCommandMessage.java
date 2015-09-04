@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,11 +98,17 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
 
     @Override
     protected BaseWriteCommandMessage encodeMessageBody(final BsonOutput outputStream, final int messageStartPosition) {
+        return (BaseWriteCommandMessage) encodeMessageBodyWithMetadata(outputStream, messageStartPosition).getNextMessage();
+    }
+
+    @Override
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final int messageStartPosition) {
         BaseWriteCommandMessage nextMessage = null;
 
         writeCommandHeader(outputStream);
 
         int commandStartPosition = outputStream.getPosition();
+        int firstDocumentStartPosition = outputStream.getPosition();
         BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
                                                        new BsonBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
                                                        outputStream, getFieldNameValidator());
@@ -114,7 +120,7 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         } finally {
             writer.close();
         }
-        return nextMessage;
+        return new EncodingMetadata(nextMessage, firstDocumentStartPosition);
     }
 
     /**

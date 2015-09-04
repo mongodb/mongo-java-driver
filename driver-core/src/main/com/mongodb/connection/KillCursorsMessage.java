@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,16 @@ class KillCursorsMessage extends RequestMessage {
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
+        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
+    }
+
+    @Override
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
         writeKillCursorsPrologue(cursors.size(), bsonOutput);
         for (final Long cur : cursors) {
             bsonOutput.writeInt64(cur);
         }
-        return null;
+        return new EncodingMetadata(null, bsonOutput.getPosition());
     }
 
     private void writeKillCursorsPrologue(final int numCursors, final BsonOutput bsonOutput) {

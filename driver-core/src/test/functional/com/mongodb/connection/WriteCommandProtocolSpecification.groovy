@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 package com.mongodb.connection
 
 import category.Slow
-import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.MongoBulkWriteException
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -31,6 +31,7 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
+import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
@@ -41,16 +42,17 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
+    @Shared
     InternalStreamConnection connection;
 
-    def setup() {
+    def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                          getCredentialList(), new NoOpConnectionListener())
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
 
-    def cleanup() {
+    def cleanupSpec() {
         connection?.close()
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,23 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.CommandListener;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 
 import java.util.List;
 
+import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static java.lang.String.format;
 
 /**
@@ -31,15 +42,20 @@ import static java.lang.String.format;
  */
 class KillCursorProtocol implements Protocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
+    private static final String COMMAND_NAME = "killCursors";
 
+    private final MongoNamespace namespace;
     private final List<Long> cursors;
+    private CommandListener commandListener;
 
     /**
      * Construct an instance.
      *
+     * @param namespace  the namespace in which all the cursors live
      * @param cursors the list of cursors to kill
      */
-    public KillCursorProtocol(final List<Long> cursors) {
+    public KillCursorProtocol(final MongoNamespace namespace, final List<Long> cursors) {
+        this.namespace = namespace;
         this.cursors = cursors;
     }
 
@@ -50,12 +66,29 @@ class KillCursorProtocol implements Protocol<Void> {
                                 connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         }
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+        long startTimeNanos = System.nanoTime();
+        KillCursorsMessage message = null;
         try {
-            KillCursorsMessage message = new KillCursorsMessage(cursors);
+            message = new KillCursorsMessage(cursors);
+            if (commandListener != null && namespace != null) {
+                sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asCommandDocument(),
+                                        connection.getDescription(), commandListener);
+            }
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
+            if (commandListener != null && namespace != null) {
+                sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
+                                          connection.getDescription(),
+                                          startTimeNanos, commandListener);
+            }
             return null;
-        } finally {
+        } catch (RuntimeException e) {
+            if (commandListener != null && namespace != null) {
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, e, commandListener);
+            }
+            throw e;
+        }
+        finally {
             bsonOutput.close();
         }
     }
@@ -80,6 +113,30 @@ class KillCursorProtocol implements Protocol<Void> {
         } catch (Throwable t) {
             callback.onResult(null, t);
         }
+    }
+
+    @Override
+    public void setCommandListener(final CommandListener commandListener) {
+        this.commandListener = commandListener;
+    }
+
+    private BsonDocument asCommandDocument() {
+        BsonArray array = new BsonArray();
+        for (long cursor : cursors) {
+            array.add(new BsonInt64(cursor));
+        }
+        return new BsonDocument(COMMAND_NAME, namespace == null ? new BsonInt32(1) : new BsonString(namespace.getCollectionName()))
+               .append("cursors", array);
+    }
+
+    private BsonDocument asCommandResponseDocument() {
+        BsonArray cursorIdArray = new BsonArray();
+        for (long cursorId : cursors) {
+            cursorIdArray.add(new BsonInt64(cursorId));
+        }
+        return new BsonDocument("ok", new BsonDouble(1))
+               .append("cursorsUnknown", cursorIdArray);
+
     }
 
     private String getCursorIdListAsString() {

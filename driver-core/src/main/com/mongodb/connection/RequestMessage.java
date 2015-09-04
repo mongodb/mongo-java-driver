@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,23 @@ abstract class RequestMessage {
     private final int id;
     private final OpCode opCode;
 
+    static class EncodingMetadata {
+        private final RequestMessage nextMessage;
+        private final int firstDocumentPosition;
+
+        EncodingMetadata(final RequestMessage nextMessage, final int firstDocumentPosition) {
+            this.nextMessage = nextMessage;
+            this.firstDocumentPosition = firstDocumentPosition;
+        }
+
+        public RequestMessage getNextMessage() {
+            return nextMessage;
+        }
+
+        public int getFirstDocumentPosition() {
+            return firstDocumentPosition;
+        }
+    }
     /**
      * Gets the next available unique message identifier.
      *
@@ -127,11 +144,22 @@ abstract class RequestMessage {
      * being exceeded
      */
     public RequestMessage encode(final BsonOutput bsonOutput) {
+        return encodeWithMetadata(bsonOutput).getNextMessage();
+    }
+
+    /**
+     * Encoded the message to the given output.
+     *
+     * @param bsonOutput the output
+     * @return the next message to encode, if the current message is unable to fit all of its contents in a single message due to limits
+     * being exceeded
+     */
+    public EncodingMetadata encodeWithMetadata(final BsonOutput bsonOutput) {
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        RequestMessage nextMessage = encodeMessageBody(bsonOutput, messageStartPosition);
+        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition);
         backpatchMessageLength(messageStartPosition, bsonOutput);
-        return nextMessage;
+        return encodingMetadata;
     }
 
     /**
@@ -154,6 +182,15 @@ abstract class RequestMessage {
      * @return the next message to encode, if the contents of this message need to overflow into the next
      */
     protected abstract RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition);
+
+    /**
+     * Encode the message body to the given output.
+     *
+     * @param bsonOutput the output
+     * @param messageStartPosition the start position of the message
+     * @return the encoding metadata
+     */
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition);
 
     /**
      * Appends a document to the message.

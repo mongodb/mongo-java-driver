@@ -37,6 +37,8 @@ import java.util.List;
  *
  * <p> Implementations of this class are thread safe.  </p>
  *
+ * <p> This interface is not stable. While methods will not be removed, new ones may be added. </p>
+ *
  * @since 3.0
  */
 @ThreadSafe
@@ -151,9 +153,39 @@ public interface Connection extends ReferenceCounted {
      * @param resultDecoder   the decoder for the query result documents
      * @param <T>             the query result document type
      * @return the query results
+     * @deprecated Replaced by {@link #query(MongoNamespace, BsonDocument, BsonDocument, int, int, int, boolean, boolean, boolean,
+     * boolean, boolean, boolean, Decoder)}
      */
+    @Deprecated
     <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
                              int numberToReturn, int skip,
+                             boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
+                             boolean partial, boolean oplogReplay,
+                             Decoder<T> resultDecoder);
+
+    /**
+     * Execute the query.
+     *
+     * @param namespace       the namespace to query
+     * @param queryDocument   the query document
+     * @param fields          the field to include or exclude
+     * @param skip            the number of documents to skip
+     * @param limit           the maximum number of documents to return in all batches
+     * @param batchSize       the maximum number of documents to return in this batch
+     * @param slaveOk         whether the query can run on a secondary
+     * @param tailableCursor  whether to return a tailable cursor
+     * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
+     * @param noCursorTimeout whether the cursor should not timeout
+     * @param partial         whether partial results from sharded clusters are acceptable
+     * @param oplogReplay     whether to replay the oplog
+     * @param resultDecoder   the decoder for the query result documents
+     * @param <T>             the query result document type
+     * @return the query results
+     *
+     * @since 3.1
+     */
+    <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
+                             int skip, int limit, int batchSize,
                              boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
                              boolean partial, boolean oplogReplay,
                              Decoder<T> resultDecoder);
@@ -174,6 +206,16 @@ public interface Connection extends ReferenceCounted {
      * Kills the given list of cursors.
      *
      * @param cursors the cursors
+     * @deprecated Replaced by {@link #killCursor(MongoNamespace, List)}
      */
+    @Deprecated
     void killCursor(List<Long> cursors);
+
+    /**
+     * Kills the given list of cursors.
+     *
+     * @param namespace the namespace to in which the cursors live
+     * @param cursors   the cursors
+     */
+    void killCursor(MongoNamespace namespace, List<Long> cursors);
 }

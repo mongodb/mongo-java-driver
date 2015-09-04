@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                | commandDocument
+        WriteConcern.UNACKNOWLEDGED       | new BsonDocument('w', new BsonInt32(0))
         WriteConcern.ACKNOWLEDGED         | new BsonDocument('w', new BsonInt32(1))
         WriteConcern.REPLICA_ACKNOWLEDGED | new BsonDocument('w', new BsonInt32(2))
         WriteConcern.JOURNALED            | new BsonDocument('w', new BsonInt32(1)).append('j', BsonBoolean.TRUE)

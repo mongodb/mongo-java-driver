@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.event.CommandListener;
 
 import java.util.Collections;
 import java.util.Set;
@@ -43,6 +44,7 @@ class DefaultServer implements ClusterableServer {
     private final Set<ChangeListener<ServerDescription>> changeListeners =
     Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ChangeListener<ServerDescription> serverStateListener;
+    private final CommandListener commandListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
@@ -50,7 +52,8 @@ class DefaultServer implements ClusterableServer {
                          final ClusterConnectionMode clusterConnectionMode,
                          final ConnectionPool connectionPool,
                          final ConnectionFactory connectionFactory,
-                         final ServerMonitorFactory serverMonitorFactory) {
+                         final ServerMonitorFactory serverMonitorFactory, final CommandListener commandListener) {
+        this.commandListener = commandListener;
         notNull("serverMonitorFactory", serverMonitorFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
         this.connectionFactory = notNull("connectionFactory", connectionFactory);
@@ -152,6 +155,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> T execute(final Protocol<T> protocol, final InternalConnection connection) {
             try {
+                protocol.setCommandListener(commandListener);
                 return protocol.execute(connection);
             } catch (MongoException e) {
                 handleThrowable(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
 
@@ -37,6 +38,34 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final List<MongoCredential> credentialList,
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
+        return create(settings, serverSettings, connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList,
+                      clusterListener, connectionPoolListener, connectionListener, null);
+    }
+
+    /**
+     * Creates a cluster with the given settings.  The cluster mode will be based on the mode from the settings.
+     *
+     * @param settings               the cluster settings
+     * @param serverSettings         the server settings
+     * @param connectionPoolSettings the connection pool settings
+     * @param streamFactory          the stream factory
+     * @param heartbeatStreamFactory the heartbeat stream factory
+     * @param credentialList         the credential list
+     * @param clusterListener        an optional listener for cluster-related events
+     * @param connectionPoolListener an optional listener for connection pool-related events
+     * @param connectionListener     an optional listener for connection-related events
+     * @param commandListener        an optional listener for command-related events
+     * @return the cluster
+     *
+     * @since 3.1
+     */
+    public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
+                          final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
+                          final StreamFactory heartbeatStreamFactory,
+                          final List<MongoCredential> credentialList,
+                          final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
+                          final ConnectionListener connectionListener,
+                          final CommandListener commandListener) {
         ClusterId clusterId = new ClusterId(settings.getDescription());
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
                                                                                      settings,
@@ -49,7 +78,8 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                                                                                              : new NoOpConnectionListener(),
                                                                                      connectionPoolListener != null
                                                                                      ? connectionPoolListener
-                                                                                     : new NoOpConnectionPoolListener());
+                                                                                     : new NoOpConnectionPoolListener(),
+                                                                                     commandListener);
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
             return new SingleServerCluster(clusterId, settings, serverFactory,
