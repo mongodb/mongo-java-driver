@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 MongoDB, Inc.
+ * Copyright (c) 2014-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * Represents the value associated with the BSON Undefined type.  All values of this type are identical.  Note that this type has been
  * deprecated in the BSON specification.
@@ -26,8 +24,7 @@ import java.io.Serializable;
  * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
-public final class BsonUndefined extends BsonValue implements Serializable {
-    private static final long serialVersionUID = -6947231726163165009L;
+public final class BsonUndefined extends BsonValue {
 
     @Override
     public BsonType getBsonType() {

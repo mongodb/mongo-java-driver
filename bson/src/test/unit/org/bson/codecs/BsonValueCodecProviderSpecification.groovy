@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,5 +75,6 @@ class BsonValueCodecProviderSpecification extends Specification {
         provider.get(BsonDocument, codecRegistry).class == BsonDocumentCodec
         provider.get(BsonDocumentWrapper, codecRegistry).class == BsonDocumentWrapperCodec
         provider.get(RawBsonDocument, codecRegistry).class == RawBsonDocumentCodec
+        provider.get(BsonDocumentSubclass, codecRegistry).class == BsonDocumentCodec
     }
 }

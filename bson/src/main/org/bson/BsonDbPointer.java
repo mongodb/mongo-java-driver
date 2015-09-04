@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@ package org.bson;
 
 import org.bson.types.ObjectId;
 
-import java.io.Serializable;
-
 /**
  * Holder for a BSON type DBPointer(0x0c). It's deprecated in BSON Specification and present here because of compatibility reasons.
  *
  * @since 3.0
  */
-public class BsonDbPointer extends BsonValue implements Serializable {
-    private static final long serialVersionUID = -5105961452917374359L;
+public class BsonDbPointer extends BsonValue {
 
     private final String namespace;
     private final ObjectId id;

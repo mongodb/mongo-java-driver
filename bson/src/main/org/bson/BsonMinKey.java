@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,10 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * Represent the minimum key value regardless of the key's type
  */
-public final class BsonMinKey extends BsonValue implements Serializable {
-
-    private static final long serialVersionUID = 4075901136671855684L;
+public final class BsonMinKey extends BsonValue {
 
     @Override
     public BsonType getBsonType() {

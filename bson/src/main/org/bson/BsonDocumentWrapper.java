@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -34,9 +36,8 @@ import java.util.Set;
  * @see org.bson.BsonDocumentWriter
  * @since 3.0
  */
-public class BsonDocumentWrapper<T> extends BsonDocument {
-
-    private static final long serialVersionUID = 4164303588753136248L;
+public final class BsonDocumentWrapper<T> extends BsonDocument {
+    private static final long serialVersionUID = 1L;
 
     private final transient T wrappedDocument;
     private final transient Encoder<T> encoder;
@@ -179,6 +180,11 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
         return getUnwrapped().toString();
     }
 
+    @Override
+    public BsonDocument clone() {
+        return getUnwrapped().clone();
+    }
+
     private BsonDocument getUnwrapped() {
         if (encoder == null) {
             throw new BsonInvalidOperationException("Can not unwrap a BsonDocumentWrapper with no Encoder");
@@ -190,5 +196,15 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
             this.unwrapped = unwrapped;
         }
         return unwrapped;
+    }
+
+    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
+    private Object writeReplace() {
+        return getUnwrapped();
+    }
+
+    // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
+    private void readObject(final ObjectInputStream stream) throws InvalidObjectException {
+        throw new InvalidObjectException("Proxy required");
     }
 }

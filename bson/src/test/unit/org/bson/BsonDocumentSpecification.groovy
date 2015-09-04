@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,6 +188,41 @@ class BsonDocumentSpecification extends Specification {
         root.getBinary('m', binary).is(binary)
     }
 
+    def 'clone should make a deep copy of all mutable BsonValue types'() {
+        given:
+        def document = new BsonDocument('d', new BsonDocument().append('i2', new BsonInt32(1)))
+                .append('i', new BsonInt32(2))
+                .append('a', new BsonArray([new BsonInt32(3),
+                                            new BsonArray([new BsonInt32(11)]),
+                                            new BsonDocument('i3', new BsonInt32(6)),
+                                            new BsonBinary([1, 2, 3] as byte[]),
+                                            new BsonJavaScriptWithScope('code', new BsonDocument('a', new BsonInt32(4)))]))
+                .append('b', new BsonBinary([1, 2, 3] as byte[]))
+                .append('js', new BsonJavaScriptWithScope('code', new BsonDocument('a', new BsonInt32(4))))
+
+        when:
+        def clone = document.clone()
+
+        then:
+        document == clone
+        !clone.is(document)
+        clone.get('i').is(document.get('i'))
+        !clone.get('d').is(document.get('d'))
+        !clone.get('a').is(document.get('a'))
+        !clone.get('b').is(document.get('b'))
+        !clone.get('b').asBinary().getData().is(document.get('b').asBinary().getData())
+        !clone.get('js').asJavaScriptWithScope().getScope().is(document.get('js').asJavaScriptWithScope().getScope())
+
+        clone.get('a').asArray()[0].is(document.get('a').asArray()[0])
+        !clone.get('a').asArray()[1].is(document.get('a').asArray()[1])
+        !clone.get('a').asArray()[2].is(document.get('a').asArray()[2])
+        !clone.get('a').asArray()[3].is(document.get('a').asArray()[3])
+        !clone.get('a').asArray()[3].asBinary().getData().is(document.get('a').asArray()[3].asBinary().getData())
+        !clone.get('a').asArray()[4].is(document.get('a').asArray()[4])
+        !clone.get('a').asArray()[4].asJavaScriptWithScope().getScope().is(document.get('a').asArray()[4].asJavaScriptWithScope()
+                                                                                   .getScope())
+    }
+
     @SuppressWarnings('UnnecessaryObjectReferences')
     def 'get methods should throw if key is absent'() {
         given:
@@ -270,5 +305,30 @@ class BsonDocumentSpecification extends Specification {
 
         then:
         thrown(BsonInvalidOperationException)
+    }
+
+    def 'should serialize and deserialize'() {
+        given:
+        def document = new BsonDocument('d', new BsonDocument().append('i2', new BsonInt32(1)))
+                .append('i', new BsonInt32(2))
+                .append('a', new BsonArray([new BsonInt32(3),
+                                            new BsonArray([new BsonInt32(11)]),
+                                            new BsonDocument('i3', new BsonInt32(6)),
+                                            new BsonBinary([1, 2, 3] as byte[]),
+                                            new BsonJavaScriptWithScope('code', new BsonDocument('a', new BsonInt32(4)))]))
+                .append('b', new BsonBinary([1, 2, 3] as byte[]))
+                .append('js', new BsonJavaScriptWithScope('code', new BsonDocument('a', new BsonInt32(4))))
+
+        def baos = new ByteArrayOutputStream()
+        def oos = new ObjectOutputStream(baos)
+
+        when:
+        oos.writeObject(document)
+        def bais = new ByteArrayInputStream(baos.toByteArray())
+        def ois = new ObjectInputStream(bais)
+        def deserializedDocument = ois.readObject()
+
+        then:
+        document == deserializedDocument
     }
 }

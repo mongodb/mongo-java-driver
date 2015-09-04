@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -25,8 +23,7 @@ import static org.bson.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public final class BsonRegularExpression extends BsonValue implements Serializable {
-    private static final long serialVersionUID = 198506456131942797L;
+public final class BsonRegularExpression extends BsonValue {
 
     private final String pattern;
     private final String options;

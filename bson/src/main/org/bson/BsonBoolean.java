@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * A representation of the BSON Boolean type.
  *
  * @since 3.0
  */
-public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
-    private static final long serialVersionUID = 2215506922933899945L;
+public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean> {
 
     private final boolean value;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.bson;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,9 +28,8 @@ import java.util.ListIterator;
  *
  * @since 3.0
  */
-public class BsonArray extends BsonValue implements List<BsonValue>, Serializable {
+public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
 
-    private static final long serialVersionUID = -6848772175446898432L;
     private final List<BsonValue> values;
 
     /**
@@ -207,5 +205,29 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Serializabl
         return "BsonArray{"
                + "values=" + values
                + '}';
+    }
+
+    @Override
+    public BsonArray clone() {
+        BsonArray to = new BsonArray();
+        for (BsonValue cur : this) {
+            switch (cur.getBsonType()) {
+                case DOCUMENT:
+                    to.add(cur.asDocument().clone());
+                    break;
+                case ARRAY:
+                    to.add(cur.asArray().clone());
+                    break;
+                case BINARY:
+                    to.add(BsonBinary.clone(cur.asBinary()));
+                    break;
+                case JAVASCRIPT_WITH_SCOPE:
+                    to.add(BsonJavaScriptWithScope.clone(cur.asJavaScriptWithScope()));
+                    break;
+                default:
+                    to.add(cur);
+            }
+        }
+        return to;
     }
 }

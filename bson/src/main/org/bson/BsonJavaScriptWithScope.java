@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * A representation of the JavaScript Code with Scope BSON type.
  *
  * @since 3.0
  */
-public class BsonJavaScriptWithScope extends BsonValue implements Serializable {
-
-    private static final long serialVersionUID = -6284832275113680002L;
+public class BsonJavaScriptWithScope extends BsonValue {
 
     private final String code;
     private final BsonDocument scope;
@@ -104,6 +100,10 @@ public class BsonJavaScriptWithScope extends BsonValue implements Serializable {
                + "code=" + getCode()
                + "scope=" + scope
                + '}';
+    }
+
+    static BsonJavaScriptWithScope clone(final BsonJavaScriptWithScope from) {
+        return new BsonJavaScriptWithScope(from.code, from.scope.clone());
     }
 }
 

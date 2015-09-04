@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,14 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * Class to hold a BSON symbol object, which is an interned string in Ruby
  *
  * @since 3.0
  */
-public class BsonSymbol extends BsonValue implements Serializable {
+public class BsonSymbol extends BsonValue {
 
     private final String symbol;
-
-    private static final long serialVersionUID = 1326269319883146072L;
 
     /**
      * Creates a new instance.

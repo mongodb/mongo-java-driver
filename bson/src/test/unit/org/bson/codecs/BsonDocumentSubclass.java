@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,10 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.bson.codecs;
 
-/**
- * Represent the maximum key value regardless of the key's type
- */
-public final class BsonMaxKey extends BsonValue {
+import org.bson.BsonDocument;
 
-    @Override
-    public BsonType getBsonType() {
-        return BsonType.MAX_KEY;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        return o instanceof BsonMaxKey;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "BsonMaxKey";
-    }
-
+public class BsonDocumentSubclass extends BsonDocument {
+    private static final long serialVersionUID = 1L;
 }

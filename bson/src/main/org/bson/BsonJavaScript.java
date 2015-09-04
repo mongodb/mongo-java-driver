@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * For using the JavaScript Code type.
  *
  * @since 3.0
  */
-public class BsonJavaScript extends BsonValue implements Serializable {
+public class BsonJavaScript extends BsonValue {
 
     private final String code;
-
-    private static final long serialVersionUID = 475535263314046697L;
 
     /**
      * Construct a new instance with the given JavaScript code.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@ package org.bson;
 
 import org.bson.types.ObjectId;
 
-import java.io.Serializable;
-
 /**
  * A representation of the BSON ObjectId type.
  *
  * @since 3.0
  */
-public class BsonObjectId extends BsonValue implements Comparable<BsonObjectId>, Serializable {
+public class BsonObjectId extends BsonValue implements Comparable<BsonObjectId> {
 
-    private static final long serialVersionUID = -8584037677369278059L;
     private final ObjectId value;
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,14 @@
  * limitations under the License.
  */
 
-package org.bson;
+package util;
 
-/**
- * Represent the maximum key value regardless of the key's type
- */
-public final class BsonMaxKey extends BsonValue {
-
-    @Override
-    public BsonType getBsonType() {
-        return BsonType.MAX_KEY;
+public final class GroovyHelpers {
+    // Workaround for the fact that Groovy will use its own custom equals method instead of calling the one on the instance.
+    public static boolean areEqual(final Object first, final Object second) {
+        return first.equals(second);
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        return o instanceof BsonMaxKey;
+    private GroovyHelpers() {
     }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "BsonMaxKey";
-    }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 
 package org.bson;
 
-import java.io.Serializable;
-
 /**
  * A representation of the BSON Null type.
  *
  * @since 3.0
  */
-public final class BsonNull extends BsonValue implements Serializable {
-    private static final long serialVersionUID = -1197299174370690779L;
+public final class BsonNull extends BsonValue {
 
     public static final BsonNull VALUE = new BsonNull();
 
