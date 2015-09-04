@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,11 +71,15 @@ public final class Fixture {
         }
     }
 
+    public static synchronized String getMongoClientURIString() {
+        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        return mongoURIProperty == null || mongoURIProperty.isEmpty()
+               ? DEFAULT_URI : mongoURIProperty;
+    }
+
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
-            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                    ? DEFAULT_URI : mongoURIProperty;
+            String mongoURIString = getMongoClientURIString();
             MongoClientOptions.Builder builder = MongoClientOptions.builder();
             if (System.getProperty("java.version").startsWith("1.6.")) {
                 builder.sslInvalidHostNameAllowed(true);

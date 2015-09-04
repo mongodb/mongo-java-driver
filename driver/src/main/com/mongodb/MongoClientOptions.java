@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,14 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.event.CommandListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -78,6 +82,7 @@ public class MongoClientOptions {
     private final ServerSettings serverSettings;
     private final SocketSettings heartbeatSocketSettings;
     private final SslSettings sslSettings;
+    private final List<CommandListener> commandListeners;
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
@@ -107,6 +112,7 @@ public class MongoClientOptions {
         dbEncoderFactory = builder.dbEncoderFactory;
         socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
+        commandListeners = builder.commandListeners;
 
         connectionPoolSettings = ConnectionPoolSettings.builder()
                                                        .minSize(getMinConnectionsPerHost())
@@ -440,6 +446,16 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the list of added {@code CommandListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of command listeners
+     * @since 3.1
+     */
+    public List<CommandListener> getCommandListeners() {
+        return Collections.unmodifiableList(commandListeners);
+    }
+
+    /**
      * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
      *
      * @return the decoder factory
@@ -597,6 +613,9 @@ public class MongoClientOptions {
         if (!codecRegistry.equals(that.codecRegistry)) {
             return false;
         }
+        if (!commandListeners.equals(that.commandListeners)) {
+            return false;
+        }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
                                            : that.requiredReplicaSetName != null) {
             return false;
@@ -614,6 +633,7 @@ public class MongoClientOptions {
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + codecRegistry.hashCode();
+        result = 31 * result + commandListeners.hashCode();
         result = 31 * result + minConnectionsPerHost;
         result = 31 * result + maxConnectionsPerHost;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
@@ -647,6 +667,7 @@ public class MongoClientOptions {
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", codecRegistry=" + codecRegistry
+               + ", commandListeners=" + commandListeners
                + ", minConnectionsPerHost=" + minConnectionsPerHost
                + ", maxConnectionsPerHost=" + maxConnectionsPerHost
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
@@ -688,6 +709,7 @@ public class MongoClientOptions {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
+        private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
 
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
@@ -759,6 +781,7 @@ public class MongoClientOptions {
             dbEncoderFactory = options.getDbEncoderFactory();
             socketFactory = options.getSocketFactory();
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
+            commandListeners = options.commandListeners;
         }
 
         /**
@@ -975,6 +998,19 @@ public class MongoClientOptions {
          */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
             this.codecRegistry = notNull("codecRegistry", codecRegistry);
+            return this;
+        }
+
+        /**
+         * Adds the given command listener.
+         *
+         * @param commandListener the command listener
+         * @return this
+         * @since 3.1
+         */
+        public Builder addCommandListener(final CommandListener commandListener) {
+            notNull("commandListener", commandListener);
+            commandListeners.add(commandListener);
             return this;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.event.CommandListener
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -246,6 +247,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .requiredReplicaSetName('test')
                 .cursorFinalizerEnabled(false)
                 .dbEncoderFactory(new MyDBEncoderFactory())
+                .addCommandListener(Mock(CommandListener))
                 .build()
 
         then:
@@ -268,9 +270,53 @@ class MongoClientOptionsSpecification extends Specification {
         System.setProperty('java.version', javaVersion)
     }
 
+    def 'should add command listeners'() {
+        given:
+        CommandListener commandListenerOne = Mock(CommandListener)
+        CommandListener commandListenerTwo = Mock(CommandListener)
+        CommandListener commandListenerThree = Mock(CommandListener)
+
+        when:
+        def options = MongoClientOptions.builder()
+                                        .build()
+
+        then:
+        options.commandListeners.size() == 0
+
+        when:
+        options = MongoClientOptions.builder()
+                                    .addCommandListener(commandListenerOne)
+                                    .build()
+
+        then:
+        options.commandListeners.size() == 1
+        options.commandListeners[0].is commandListenerOne
+
+        when:
+        options = MongoClientOptions.builder()
+                                    .addCommandListener(commandListenerOne)
+                                    .addCommandListener(commandListenerTwo)
+                                    .build()
+
+        then:
+        options.commandListeners.size() == 2
+        options.commandListeners[0].is commandListenerOne
+        options.commandListeners[1].is commandListenerTwo
+
+        when:
+        options = MongoClientOptions.builder(options).addCommandListener(commandListenerThree).build()
+
+        then:
+        options.commandListeners.size() == 3
+        options.commandListeners[0].is commandListenerOne
+        options.commandListeners[1].is commandListenerTwo
+        options.commandListeners[2].is commandListenerThree
+    }
+
     def 'should copy all methods from the existing MongoClientOptions'() {
         given:
         def options = Mock(MongoClientOptions)
+
 
         when:
         MongoClientOptions.builder(options)
@@ -307,16 +353,16 @@ class MongoClientOptionsSpecification extends Specification {
         0 * options._ // Ensure no other interactions
     }
 
-    def 'should only have the following methods in the builder'() {
+    def 'should only have the following fields in the builder'() {
         when:
-        // A regression test so that if anymore methods are added then the builder(final MongoClientOptions options) should be updated
+        // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'codecRegistry', 'connectTimeout', 'cursorFinalizerEnabled', 'dbDecoderFactory',
-                        'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout',
-                        'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime',
-                        'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference', 'requiredReplicaSetName',
-                        'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslEnabled',
-                        'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+        def expected = ['alwaysUseMBeans', 'codecRegistry', 'commandListeners', 'connectTimeout', 'cursorFinalizerEnabled',
+                        'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
+                        'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
+                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference',
+                        'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout',
+                        'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:
         actual == expected

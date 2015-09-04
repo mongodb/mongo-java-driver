@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -816,7 +816,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private void initializeCursor(final FindOperation<DBObject> operation) {
         cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreferenceForCursor()));
         if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
-            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo());
+            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo(), collection.getNamespace());
         }
     }
 
@@ -902,9 +902,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private static class OptionalFinalizer {
         private final Mongo mongo;
+        private final MongoNamespace namespace;
         private volatile ServerCursor serverCursor;
 
-        private OptionalFinalizer(final Mongo mongo) {
+        private OptionalFinalizer(final Mongo mongo, final MongoNamespace namespace) {
+            this.namespace = notNull("namespace", namespace);
             this.mongo = notNull("mongo", mongo);
         }
 
@@ -915,7 +917,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         @Override
         protected void finalize() {
             if (serverCursor != null) {
-                mongo.addOrphanedCursor(serverCursor);
+                mongo.addOrphanedCursor(serverCursor, namespace);
             }
         }
     }

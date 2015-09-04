@@ -395,7 +395,6 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         META_OPERATOR_TO_COMMAND_FIELD_MAP.put("$returnKey", "returnKey");
         META_OPERATOR_TO_COMMAND_FIELD_MAP.put("$showDiskLoc", "showRecordId");
         META_OPERATOR_TO_COMMAND_FIELD_MAP.put("$snapshot", "snapshot");
-        META_OPERATOR_TO_COMMAND_FIELD_MAP.put("$readPreference", "readPreference");
     }
 
     private BsonDocument asFindCommandDocument(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {

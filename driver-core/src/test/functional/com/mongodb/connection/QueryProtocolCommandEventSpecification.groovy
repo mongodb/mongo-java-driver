@@ -20,7 +20,6 @@ package com.mongodb.connection
 
 import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.ReadPreference
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandFailedEvent
@@ -218,7 +217,6 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def returnKey = BsonBoolean.FALSE
         def showDiskLoc = BsonBoolean.FALSE
         def snapshot = BsonBoolean.FALSE
-        def readPreference = ReadPreference.secondary().toDocument()
         def query = new BsonDocument().append('$query', filter)
                                       .append('$orderby', sort)
                                       .append('$comment', comment)
@@ -230,7 +228,6 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                       .append('$returnKey', returnKey)
                                       .append('$showDiskLoc', showDiskLoc)
                                       .append('$snapshot', snapshot)
-                                      .append('$readPreference', readPreference)
         def projection = parse('{_id : 1}')
         def skip = 1
         def limit = 1000
@@ -263,7 +260,6 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('returnKey', returnKey)
                                                                              .append('showRecordId', showDiskLoc)
                                                                              .append('snapshot', snapshot)
-                                                                             .append('readPreference', readPreference)
                                                                              .append('projection', projection)
                                                                              .append('skip', new BsonInt32(skip))
                                                                              .append('limit', new BsonInt32(limit))
