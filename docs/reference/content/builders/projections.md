@@ -7,7 +7,7 @@ title = "Projections"
   pre = "<i class='fa'></i>"
 +++
 
-## Filters
+## Projections
 
 The [`Projections`]({{< apiref "com/mongodb/client/model/Projections" >}}) class provides static factory methods for all the MongoDB 
 projection opererators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn

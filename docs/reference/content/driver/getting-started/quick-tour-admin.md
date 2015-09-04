@@ -91,7 +91,7 @@ collection.dropCollection();
 
 MongoDB supports secondary indexes. To create an index, you just
 specify the field or combination of fields, and for each field specify the direction of the index for that field.
-We can use the [`Indexes`]({{< apiref "com/mongodb/client/model/Indexes">}}) helpers to create index keys:
+We can use the [`Indexes`]({{< relref "builders/indexes.md">}}) helpers to create index keys:
 
 ```java
 // create an ascending index on the "i" field
@@ -120,7 +120,7 @@ The example should print the following indexes:
 
 MongoDB also provides text indexes to support text search of string
 content. Text indexes can include any field whose value is a string or
-an array of string elements. To create a text index use the `Indexes.text`
+an array of string elements. To create a text index use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
 static helper:
 
 ```java
@@ -129,7 +129,7 @@ coll.createIndex(Indexes.text("content"));
 ```
 
 As of MongoDB 2.6, text indexes are now integrated into the main query
-language and enabled by default (here we use the [`Filters.text`]({{< apiref "com/mongodb/client/model/Filters.html#text-java.lang.String-">}}) helper):
+language and enabled by default (here we use the [`Filters.text`]({{< relref "builders/filters.md#evaluation">}}) helper):
 
 ```java
 // Insert some documents

@@ -293,7 +293,7 @@ will eventually print just one document:
 
 
 {{% note %}}
-Use the [Filters]({{< apiref "com/mongodb/client/model/Filters">}}), [Sorts]({{< apiref "com/mongodb/client/model/Sorts">}}) and [Projections]({{< apiref "com/mongodb/client/model/Projections">}})
+Use the [Filters]({{< relref "builders/filters.md">}}), [Sorts]({{<relref "builders/sorts.md">}}) and [Projections]({{< relref "builders/projections.md">}})
 helpers for simple and concise ways of building up queries.
 {{% /note %}}
 
@@ -317,10 +317,9 @@ collection.find(and(gt("i", 50), lte("i", 100))).forEach(printDocumentBlock, cal
 
 ## Sorting documents
 
-We can also use the [Sorts]({{< apiref "com/mongodb/client/model/Sorts">}}) helpers to sort documents.
-We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the [`exists()`]({{ < apiref "com/mongodb/client/model/Filters.html#exists-java.lang.String-">}}) helper and sort
-[`descending("i")`]({{ < apiref "com/mongodb/client/model/Sorts.html#exists-java.lang.String-">}}) helper to
-sort our documents:
+We can also use the [Sorts]({{< relref "builders/sorts.md">}}) helpers to sort documents.
+We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the [`exists()`]({{< relref "builders/filters.md#elements">}}) helper and sort
+[`descending("i")`]({{< relref "builders/sorts.md#descending">}}) helper to sort our documents:
 
 ```java
 collection.find(exists("i")).sort(descending("i")).first(printDocument);
@@ -328,7 +327,7 @@ collection.find(exists("i")).sort(descending("i")).first(printDocument);
 
 ## Projecting fields
 
-Sometimes we don't need all the data contained in a document. The [Projections]({{< apiref "com/mongodb/client/model/Projections">}}) 
+Sometimes we don't need all the data contained in a document. The [Projections]({{< relref "builders/projections.md">}}) 
 helpers can be used to build the projection parameter for the find operation and limit the fields returned.  
 Below we'll sort the collection, exclude the `_id` field and output the first matching document:
 

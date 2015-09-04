@@ -1,6 +1,6 @@
 +++
 date = "2015-07-16T14:27:51-04:00"
-title = "Index Keys"
+title = "Indexes"
 [menu.main]
   parent = "Builders"
   weight = 60
