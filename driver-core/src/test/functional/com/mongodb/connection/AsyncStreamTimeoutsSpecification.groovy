@@ -26,6 +26,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import java.util.concurrent.TimeUnit
@@ -36,6 +37,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.CommandHelper.executeCommand
 
 @Category(Slow)
+@IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build();
@@ -55,7 +57,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
 
         where:
         description             | streamFactory
-        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings())
+        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(openSocketSettings, SslSettings.builder().build())
         'NettyStream'           | new NettyStreamFactory(openSocketSettings, getSslSettings())
     }
 
@@ -81,7 +83,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
 
         where:
         description             | streamFactory
-        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings())
+        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(readSocketSettings, SslSettings.builder().build())
         'NettyStream'           | new NettyStreamFactory(readSocketSettings, getSslSettings())
     }
 
