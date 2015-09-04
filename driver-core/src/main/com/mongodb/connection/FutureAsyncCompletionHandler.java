@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 
@@ -61,6 +62,8 @@ class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
         if (error != null) {
             if (error instanceof IOException) {
                 throw (IOException) error;
+            } else if (error instanceof MongoException) {
+                throw (MongoException) error;
             } else {
                 throw new MongoInternalException(prefix + " the AsynchronousSocketChannelStream failed", error);
             }
