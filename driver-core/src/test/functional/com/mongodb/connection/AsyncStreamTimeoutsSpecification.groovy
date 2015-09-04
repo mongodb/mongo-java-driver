@@ -27,7 +27,6 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
-import spock.lang.Unroll
 
 import java.util.concurrent.TimeUnit
 
@@ -37,35 +36,33 @@ import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.CommandHelper.executeCommand
 
 @Category(Slow)
-@IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build();
     static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build();
 
-    @Unroll
-    def 'should throw a MongoSocketOpenException when the #description Stream fails to open'() {
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') || getSslSettings().isEnabled() })
+    def 'should throw a MongoSocketOpenException when the AsynchronousSocket Stream fails to open'() {
         given:
-        def connection = new InternalStreamConnectionFactory(streamFactory, getCredentialList(), new NoOpConnectionListener())
-                .create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
+        def connection = new InternalStreamConnectionFactory(
+                new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(),
+                new NoOpConnectionListener()
+        ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
 
         when:
         connection.open()
 
         then:
         thrown(MongoSocketOpenException)
-
-        where:
-        description             | streamFactory
-        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(openSocketSettings, SslSettings.builder().build())
-        'NettyStream'           | new NettyStreamFactory(openSocketSettings, getSslSettings())
     }
 
-    @Unroll
-    def 'should throw a MongoSocketReadTimeoutException with the #description stream'() {
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') || getSslSettings().isEnabled() })
+    def 'should throw a MongoSocketReadTimeoutException with the AsynchronousSocket stream'() {
         given:
-        def connection = new InternalStreamConnectionFactory(streamFactory, getCredentialList(), new NoOpConnectionListener())
-                .create(new ServerId(new ClusterId(), getPrimary()))
+        def connection = new InternalStreamConnectionFactory(
+                new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(),
+                new NoOpConnectionListener()
+        ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
@@ -80,11 +77,41 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
 
         cleanup:
         connection?.close()
+    }
 
-        where:
-        description             | streamFactory
-        'AsynchronousSocket'    | new AsynchronousSocketChannelStreamFactory(readSocketSettings, SslSettings.builder().build())
-        'NettyStream'           | new NettyStreamFactory(readSocketSettings, getSslSettings())
+    def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
+        given:
+        def connection = new InternalStreamConnectionFactory(
+                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener()
+        ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
+
+        when:
+        connection.open()
+
+        then:
+        thrown(MongoSocketOpenException)
+    }
+
+
+    def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
+        given:
+        def connection = new InternalStreamConnectionFactory(
+                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener()
+        ).create(new ServerId(new ClusterId(), getPrimary()))
+        connection.open()
+
+        getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
+        def countCommand = new BsonDocument('count', new BsonString(getCollectionName()))
+        countCommand.put('query', new BsonDocument('$where', new BsonString('sleep(5050); return true;')))
+
+        when:
+        executeCommand(getDatabaseName(), countCommand, connection)
+
+        then:
+        thrown(MongoSocketReadTimeoutException)
+
+        cleanup:
+        connection?.close()
     }
 
 }
