@@ -44,6 +44,8 @@ import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Sorts.descending;
+import static com.mongodb.client.model.Updates.inc;
+import static com.mongodb.client.model.Updates.set;
 
 /**
  * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
@@ -163,11 +165,10 @@ public class QuickTour {
         System.out.println(myDoc.toJson());
 
         // Update One
-        collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
+        collection.updateOne(eq("i", 10), set("i", 110));
 
         // Update Many
-        UpdateResult updateResult = collection.updateMany(lt("i", 100),
-                new Document("$inc", new Document("i", 100)));
+        UpdateResult updateResult = collection.updateMany(lt("i", 100), inc("i", 100));
         System.out.println(updateResult.getModifiedCount());
 
         // Delete One

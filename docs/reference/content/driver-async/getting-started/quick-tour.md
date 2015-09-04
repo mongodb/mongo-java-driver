@@ -293,7 +293,8 @@ will eventually print just one document:
 
 
 {{% note %}}
-Use the [Filters]({{< relref "builders/filters.md">}}), [Sorts]({{<relref "builders/sorts.md">}}) and [Projections]({{< relref "builders/projections.md">}})
+Use the [`Filters`]({{< relref "builders/filters.md">}}), [`Sorts`]({{< relref "builders/sorts.md">}}),
+[`Projections`]({{< relref "builders/projections.md">}}) and [`Updates`]({{< relref "builders/updates.md">}})
 helpers for simple and concise ways of building up queries.
 {{% /note %}}
 
@@ -341,10 +342,10 @@ There are numerous [update operators](http://docs.mongodb.org/manual/reference/o
 supported by MongoDB.
 
 To update at most a single document (may be 0 if none match the filter), use the [`updateOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
-method to specify the filter and the update document.  Here we update the first document that meets the filter `i` equals `10` and set the value of `i` to `110`:
+method to specify the filter and the update document. Here we use the [`Updates.set`]({{< relref "builders/updates.md#set">}}) helper to update the first document that meets the filter `i` equals `10` and set the value of `i` to `110`:
 
 ```java
-collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)),
+collection.updateOne(eq("i", 10), set("i", 110),
     new SingleResultCallback<UpdateResult>() {
         @Override
         public void onResult(final UpdateResult result, final Throwable t) {
@@ -354,11 +355,11 @@ collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)),
 ```
 
 To update all documents matching the filter use the [`updateMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
-method.  Here we increment the value of `i` by `100` where `i`
-is less than `100`.
+method. Here we use the [`Updates.inc`]({{< relref "builders/updates.md#increment">}}) helper to increment the value of `i` by `100` 
+where `i` is less than `100`.
 
 ```java
-collection.updateMany(lt("i", 100), new Document("$inc", new Document("i", 100)),
+collection.updateMany(lt("i", 100), inc("i", 100),
     new SingleResultCallback<UpdateResult>() {
         @Override
         public void onResult(final UpdateResult result, final Throwable t) {

@@ -46,6 +46,8 @@ import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Projections.excludeId;
 import static com.mongodb.client.model.Sorts.descending;
+import static com.mongodb.client.model.Updates.inc;
+import static com.mongodb.client.model.Updates.set;
 
 /**
  * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
@@ -166,7 +168,7 @@ public class QuickTour {
         collection.find().projection(excludeId()).first(printDocument);
 
         // Update One
-        collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)),
+        collection.updateOne(eq("i", 10), set("i", 110),
                 new SingleResultCallback<UpdateResult>() {
                     @Override
                     public void onResult(final UpdateResult result, final Throwable t) {
@@ -175,7 +177,7 @@ public class QuickTour {
                 });
 
         // Update Many
-        collection.updateMany(lt("i", 100), new Document("$inc", new Document("i", 100)),
+        collection.updateMany(lt("i", 100), inc("i", 100),
                 new SingleResultCallback<UpdateResult>() {
                     @Override
                     public void onResult(final UpdateResult result, final Throwable t) {
