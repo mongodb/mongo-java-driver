@@ -412,7 +412,9 @@ public class DBCursorTest extends DatabaseTestCase {
         // then
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
-        assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query")).get("$comment"));
+
+        assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query"))
+                                      .get(serverVersionAtLeast(asList(3, 1, 8)) ? "comment" : "$comment"));
 
         // finally
         database.command(new BasicDBObject("profile", 0));
