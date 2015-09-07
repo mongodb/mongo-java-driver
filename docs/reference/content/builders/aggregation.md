@@ -108,7 +108,7 @@ This example groups documents by the value of the `customerId` field, and for ea
 the `quantity` field into the `totalQuantity` and `averageQuantity` fields, respectively. 
 
 ```java
-group("$customerId", sum('totalQuantity', '$quantity'), avg('averageQuantity', '$quantity'))
+group("$customerId", sum("totalQuantity", "$quantity"), avg("averageQuantity", "$quantity"))
 ```   
 
 ### Unwind
@@ -139,8 +139,8 @@ The above pipeline operators are typically combined into a list and passed to th
 
 ```java
 collection.aggregate(Arrays.asList(match(eq("author", "Dave")),
-                                   group("$customerId", sum('totalQuantity', '$quantity'), 
-                                                        avg('averageQuantity', '$quantity'))
+                                   group("$customerId", sum("totalQuantity", "$quantity"),
+                                                        avg("averageQuantity", "$quantity"))
                                    out("authors")));
 ```
 
