@@ -1,4 +1,4 @@
-current = "3.0.1"
+current = "3.0.3"
 
 [[versions]]
   version = "3.1.0-SNAPSHOT"
@@ -6,13 +6,13 @@ current = "3.0.1"
   api = "http://api.mongodb.org/java/3.1"
 
 [[versions]]
-  version = "3.0.2"
+  version = "3.0.3"
   status = "current"
   docs = "./3.0"
   api = "http://api.mongodb.org/java/3.0"
 
 [[versions]]
-  version = "2.13.2"
+  version = "2.13.3"
   status = ""
   docs = "./2.13"
   api = "http://api.mongodb.org/java/2.13"
@@ -25,14 +25,14 @@ current = "3.0.1"
 [[drivers]]
   name = "mongo-java-driver"
   description = "An uber jar containing the bson library, the core library and the mongodb-driver.<br/>This artifact is a valid OSGi bundle."
-  versions = "3.1.0-SNAPSHOT,3.0.2,2.13.2"
+  versions = "3.1.0-SNAPSHOT,3.0.3,2.13.3"
 
 [[drivers]]
   name = "mongodb-driver-async"
   description = "The new asynchronous driver, new in 3.0"
-  versions = "3.1.0-SNAPSHOT,3.0.2"
+  versions = "3.1.0-SNAPSHOT,3.0.3"
 
 [[drivers]]
   name = "mongodb-driver-core"
   description = "The core library, new in 3.0"
-  versions = "3.1.0-SNAPSHOT,3.0.2"
+  versions = "3.1.0-SNAPSHOT,3.0.3"
