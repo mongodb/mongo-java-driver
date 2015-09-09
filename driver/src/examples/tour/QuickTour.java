@@ -33,7 +33,6 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.client.model.Accumulators.sum;
@@ -47,9 +46,7 @@ import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.lte;
-import static com.mongodb.client.model.Projections.computed;
 import static com.mongodb.client.model.Projections.excludeId;
-import static com.mongodb.client.model.Projections.include;
 import static com.mongodb.client.model.Sorts.descending;
 import static com.mongodb.client.model.Updates.inc;
 import static com.mongodb.client.model.Updates.set;
