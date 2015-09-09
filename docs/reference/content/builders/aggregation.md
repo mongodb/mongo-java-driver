@@ -100,7 +100,7 @@ expression and outputs to the next stage a document for each distinct grouping. 
 expression on which to group, and zero or more 
 [accumulators]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}) which are evaluated for each 
 grouping.  To simplify the expression of accumulators, the driver includes an 
-[`Accumulators`]({{< apiref "com/mongodb/client/model/Aggregates" >}}) class with static factory methods for each of the supported 
+[`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators" >}}) class with static factory methods for each of the supported 
 accumulators. In the example below, it's assumed that the `sum` and `avg` methods of the `Accumulators` class have been statically 
 imported. 
  

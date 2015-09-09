@@ -287,14 +287,46 @@ System.out.println(myDoc.toJson());
 ## Projecting fields
 
 Sometimes we don't need all the data contained in a document, the [`Projections`]({{< relref "builders/projections.md">}})
-helpers help build the projection parameter for the
-find operation.  Below we'll sort the collection, exclude the `_id` field and output the first
-matching document:
+helpers help build the projection parameter for the find operation.  Below we'll sort the collection, exclude the `_id` field by using the 
+[`Projections.excludeId`]({{< relref "builders/projections.md#exclusion">}}) and output the first matching document:
 
 ```java
 myDoc = collection.find().projection(excludeId()).first();
 System.out.println(myDoc.toJson());
 ```
+## Aggregations
+
+Sometimes we need to aggregate the data stored in MongoDB. The [`Aggregates`]({{< relref "builders/aggregation.md" >}}) helper provides 
+builders for each of type of aggregation stage. 
+ 
+Below we'll do a simple two step transformation that will calculate the value of `i * 10`. First we find all Documents 
+where `i > 0` by using the [`Aggregates.match`]({{< relref "builders/aggregation.md#match" >}}) 
+helper. Then we reshape the document by using [`Aggregates.project`]({{< relref "builders/aggregation.md#project" >}}) 
+in conjunction with the [`$multiply`]({{< docsref "reference/operator/aggregation/multiply/" >}}) operator to calculate the "`ITimes10`" 
+value:
+
+```java
+collection.aggregate(asList(
+        match(gt("i", 0)),
+        project(Document.parse("{ITimes10: {$multiply: ['$i', 10]}}")))
+).forEach(printBlock);
+```
+
+For [`$group`]({{< relref "builders/aggregation.md#group" >}}) operations use the 
+[`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators" >}}) helper for any 
+[accumulator operations]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}). Below we sum up all the values of 
+`i` by using the [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) helper in conjunction with the 
+[`Accumulators.sum`]({{< apiref "com/mongodb/client/model/Accumulators#sum-java.lang.String-TExpression-" >}}) helper:
+
+```java
+myDoc = collection.aggregate(singletonList(group(null, sum("total", "$i")))).first();
+System.out.println(myDoc.toJson());
+```
+
+{{% note %}}
+Currently, there are no helpers for [aggregation expressions]({{< docsref "meta/aggregation-quick-reference/#aggregation-expressions" >}}). 
+Use the [`Document.parse()`]({{< relref "bson/extended-json.md" >}}) helper to quickly build aggregation expressions from extended JSON.
+{{% /note %}}
 
 ## Updating documents
 
