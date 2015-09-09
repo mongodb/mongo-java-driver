@@ -24,6 +24,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
 /**
@@ -40,14 +41,17 @@ final class ReadTimeoutHandler extends ChannelInboundHandlerAdapter {
     }
 
     void scheduleTimeout(final ChannelHandlerContext ctx) {
-        timeout = ctx.executor().schedule(new ReadTimeoutTask(ctx), readTimeout, TimeUnit.MILLISECONDS);
+        isTrue("Handler called from the eventLoop", ctx.channel().eventLoop().inEventLoop());
+        if (timeout == null) {
+            timeout = ctx.executor().schedule(new ReadTimeoutTask(ctx), readTimeout, TimeUnit.MILLISECONDS);
+        }
     }
 
     void removeTimeout(final ChannelHandlerContext ctx) {
-        if (ctx.channel().eventLoop().inEventLoop()) {
-            if (timeout != null) {
-                timeout.cancel(false);
-            }
+        isTrue("Handler called from the eventLoop", ctx.channel().eventLoop().inEventLoop());
+        if (timeout != null) {
+            timeout.cancel(false);
+            timeout = null;
         }
     }
 
