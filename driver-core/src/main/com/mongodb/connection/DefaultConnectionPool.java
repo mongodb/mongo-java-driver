@@ -483,6 +483,8 @@ class DefaultConnectionPool implements ConnectionPool {
                 reason = "it is past its maximum allowed life time";
             } else if (pastMaxIdleTime(connection)) {
                 reason = "it is past its maximum allowed idle time";
+            } else if (connection.isClosed()) {
+                reason = "the underlying connection was closed";
             } else {
                 reason = "the pool has been closed";
             }
