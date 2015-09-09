@@ -28,6 +28,18 @@ For OSGi-based applications: due to the fact that there are classes from the `co
 jar (described below) instead. 
 {{% /note %}}
 
+Add repository to pom.xml:
+```xml
+	<repositories>
+		<repository>
+			<id>sonatype-releases</id>
+			<snapshots></snapshots>
+			<name>release</name>
+			<url>https://oss.sonatype.org/content/repositories/releases/</url>
+		</repository>
+	</repositories>
+```
+
 {{< install artifactId="mongodb-driver" version="3.0.2" dependencies="true">}}
 
 
