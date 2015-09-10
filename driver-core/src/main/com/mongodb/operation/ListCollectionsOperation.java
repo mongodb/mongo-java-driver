@@ -175,7 +175,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                 if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
                         return executeWrappedCommandProtocol(databaseName, getCommand(), createCommandDecoder(), connection,
-                                                             commandTransformer(source));
+                                binding.getReadPreference(), commandTransformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
                                 source.getServerDescription().getAddress(), batchSize));

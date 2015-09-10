@@ -187,7 +187,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
             public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
-                                                     connection, transformer(connectionSource, connection));
+                                                     connection, binding.getReadPreference(), transformer(connectionSource, connection));
             }
         });
     }
