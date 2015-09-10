@@ -212,7 +212,7 @@ final class CommandOperationHelper {
                                                           final Function<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
         binding.getReadConnectionSource(new CommandProtocolExecutingCallback<D, T>(database, command, new NoOpFieldNameValidator(),
-                                                                                   decoder, primary(), transformer,
+                                                                                   decoder, binding.getReadPreference(), transformer,
                                                                                    errorHandlingCallback(callback)));
     }
 
