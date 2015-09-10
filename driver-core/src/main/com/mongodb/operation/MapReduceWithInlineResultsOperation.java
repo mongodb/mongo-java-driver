@@ -308,7 +308,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
-                                                     connection, transformer(source, connection));
+                                                     connection, binding.getReadPreference(), transformer(source, connection));
             }
         });
     }

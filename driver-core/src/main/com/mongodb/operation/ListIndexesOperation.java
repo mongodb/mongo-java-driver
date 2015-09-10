@@ -139,7 +139,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                 if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
                         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(), connection,
-                                                             transformer(source));
+                                binding.getReadPreference(), transformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
                                                                                     source.getServerDescription().getAddress(), batchSize));
