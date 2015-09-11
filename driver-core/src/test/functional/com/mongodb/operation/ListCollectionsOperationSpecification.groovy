@@ -20,14 +20,30 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
+import com.mongodb.ServerCursor
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.QueryResult
+import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonDouble
+import org.bson.BsonInt64
 import org.bson.BsonRegularExpression
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
@@ -356,6 +372,88 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cleanup:
         disableMaxTimeFailPoint()
     }
+
+    def 'should use the ReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(Connection)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+            getReadPreference() >> readPreference
+        }
+        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.twoSixConnectionDescription
+        1 * connection.query(_, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >> helper.queryResult
+        1 * connection.release()
+
+        when: '3.0.0'
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
+        1 * connection.command(_, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(AsyncConnection)
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadPreference() >> readPreference
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.twoSixConnectionDescription
+        1 * connection.queryAsync(_, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
+            it[12].onResult(helper.queryResult, null) }
+
+        when: '3.0.0'
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.threeZeroConnectionDescription
+        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[6].onResult(helper.commandResult, _) }
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def helper = [
+        dbName: 'db',
+        decoder: Stub(Decoder),
+        twoSixConnectionDescription : Stub(ConnectionDescription) {
+            getServerVersion() >> new ServerVersion([2, 6, 0])
+        },
+        threeZeroConnectionDescription : Stub(ConnectionDescription) {
+            getServerVersion() >> new ServerVersion([3, 0, 0])
+        },
+        queryResult: Stub(QueryResult) {
+            getNamespace() >> new MongoNamespace('db', 'coll')
+            getResults() >> []
+            getCursor() >> new ServerCursor(1, Stub(ServerAddress))
+        },
+        commandResult: new BsonDocument('ok', new BsonDouble(1.0))
+            .append('cursor', new BsonDocument('id', new BsonInt64(1)).append('ns', new BsonString('db.coll'))
+            .append('firstBatch', new BsonArrayWrapper([])))
+    ]
 
     private void addSeveralIndexes() {
         getCollectionHelper().createIndex(['a': 1] as Document)

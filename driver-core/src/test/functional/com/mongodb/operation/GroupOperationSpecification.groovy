@@ -18,7 +18,17 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -137,4 +147,62 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         then:
         docList.iterator()*.getString('name') containsAll(['Pete', 'Sam'])
     }
+
+    def 'should use the ReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(Connection)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+            getReadPreference() >> readPreference
+        }
+        def operation = new GroupOperation(helper.namespace, new BsonJavaScript('function ( curr, result ) { }'), new BsonDocument(),
+                new DocumentCodec()).key(BsonDocument.parse('{name: 1}'))
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.connectionDescription
+        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(AsyncConnection)
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadPreference() >> readPreference
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new GroupOperation(helper.namespace, new BsonJavaScript('function ( curr, result ) { }'), new BsonDocument(),
+                new DocumentCodec()).key(BsonDocument.parse('{name: 1}'))
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.connectionDescription
+        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _)  >> {
+            it[5].onResult(helper.commmandResult, null) }
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def helper = [
+        dbName: 'db',
+        namespace: new MongoNamespace('db', 'coll'),
+        commandResult:  BsonDocument.parse('{ok: 1.0}').append('retval', new BsonArrayWrapper([])),
+        connectionDescription: Stub(ConnectionDescription)
+    ]
 }

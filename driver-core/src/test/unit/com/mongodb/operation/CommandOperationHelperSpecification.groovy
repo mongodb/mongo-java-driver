@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import com.mongodb.Function
 import com.mongodb.MongoCommandException
 import com.mongodb.ReadPreference
@@ -27,10 +28,8 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.binding.WriteBinding
 import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerId
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -108,118 +107,108 @@ class CommandOperationHelperSpecification extends Specification {
 
     def 'should set slaveOK to false when using WriteBinding'() {
         given:
-        def dbName = "db"
+        def dbName = 'db'
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
-        def writeBinding = Mock(WriteBinding)
-        def function = Mock(Function)
-        def connectionSource = Mock(ConnectionSource)
         def connection = Mock(Connection)
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
+        def function = Stub(Function)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+        def connectionDescription = Stub(ConnectionDescription)
 
         when:
         executeWrappedCommandProtocol(writeBinding, dbName, command, decoder, function)
 
         then:
-        1 * writeBinding.getWriteConnectionSource() >> connectionSource
-
-        then:
-        1 * connectionSource.getConnection() >> connection
         1 * connection.getDescription() >> connectionDescription
-
-        then:
         1 * connection.command(dbName, command, false, _, decoder)
-
-        then:
         1 * connection.release()
-        1 * function.apply(_)
-        1 * connectionSource.release()
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         given:
-        def dbName = "db"
+        def dbName = 'db'
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
-        def readBinding = Mock(ReadBinding)
-        def readPreference = Mock(ReadPreference)
-        def function = Mock(Function)
-        def connectionSource = Mock(ConnectionSource)
+        def function = Stub(Function)
         def connection = Mock(Connection)
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+            getReadPreference() >> readPreference
+        }
+        def connectionDescription = Stub(ConnectionDescription)
 
         when:
         executeWrappedCommandProtocol(readBinding, dbName, command, decoder, function)
 
         then:
-        1 * readBinding.getReadConnectionSource() >> connectionSource
-        1 * readBinding.getReadPreference() >> readPreference
-
-        then:
-        1 * connectionSource.getConnection() >> connection
         1 * connection.getDescription() >> connectionDescription
-
-        then:
-        1 * readPreference.slaveOk >> true
-        1 * connection.command(dbName, command, true, _, decoder)
-
-        then:
+        1 * connection.command(dbName, command, readPreference.isSlaveOk(), _, decoder)
         1 * connection.release()
-        1 * function.apply(_)
-        1 * connectionSource.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
     def 'should set slaveOK to false when using AsyncWriteBinding'() {
         given:
-        def dbName = "db"
+        def dbName = 'db'
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
-        def asyncWriteBinding = Mock(AsyncWriteBinding)
-        def function = Mock(Function)
         def callback = Stub(SingleResultCallback)
-        def connectionSource = Mock(AsyncConnectionSource)
+        def function = Stub(Function)
         def connection = Mock(AsyncConnection)
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def asyncWriteBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def connectionDescription = Stub(ConnectionDescription)
 
         when:
         executeWrappedCommandProtocolAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
 
         then:
-        1 * asyncWriteBinding.getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        1 * connectionSource.getConnection(_) >> { it[0].onResult(connection, null)}
         1 * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, false, _, decoder, _) >> { it[5].onResult(1, null)}
+        1 * connection.commandAsync(dbName, command, false, _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
-        1 * connectionSource.release()
     }
 
     def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
         given:
-        def dbName = "db"
+        def dbName = 'db'
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
-        def asyncReadBinding = Mock(AsyncReadBinding)
-        def readPreference = Mock(ReadPreference)
-        def function = Mock(Function)
         def callback = Stub(SingleResultCallback)
-        def connectionSource = Mock(AsyncConnectionSource)
+        def function = Stub(Function)
         def connection = Mock(AsyncConnection)
-        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def asyncReadBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_)  >> { it[0].onResult(connectionSource, null) }
+            getReadPreference() >> readPreference
+        }
+        def connectionDescription = Stub(ConnectionDescription)
 
         when:
         executeWrappedCommandProtocolAsync(asyncReadBinding, dbName, command, decoder, function, callback)
 
         then:
-        1 * asyncReadBinding.getReadPreference() >> readPreference
-
-        then:
-        1 * asyncReadBinding.getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        1 * connectionSource.getConnection(_) >> { it[0].onResult(connection, null)}
         1 * connection.getDescription() >> connectionDescription
-        1 * readPreference.slaveOk >> true
-        1 * connection.commandAsync(dbName, command, true, _, decoder, _) >> { it[5].onResult(1, null)}
+        1 * connection.commandAsync(dbName, command, readPreference.isSlaveOk(), _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
-        1 * connectionSource.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
     }
 
 }

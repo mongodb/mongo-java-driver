@@ -20,8 +20,18 @@ import category.Async
 import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -248,4 +258,58 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         result.getNumber('ok').intValue() == 1
     }
 
+    def 'should use the ReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(Connection)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+            getReadPreference() >> readPreference
+        }
+        def operation = new CountOperation(helper.namespace).filter(BsonDocument.parse('{a: 1}'))
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.connectionDescription
+        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(AsyncConnection)
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadPreference() >> readPreference
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new CountOperation(helper.namespace).filter(BsonDocument.parse('{a: 1}'))
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.connectionDescription
+        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def helper = [
+        dbName: 'db',
+        namespace: new MongoNamespace('db', 'coll'),
+        commandResult: BsonDocument.parse('{ok: 1.0, n: 10}'),
+        connectionDescription: Stub(ConnectionDescription)
+    ]
 }
