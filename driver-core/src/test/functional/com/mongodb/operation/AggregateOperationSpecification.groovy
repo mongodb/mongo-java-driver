@@ -20,8 +20,20 @@ import category.Async
 import com.mongodb.Block
 import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
 import org.bson.BsonDocument
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
@@ -240,6 +252,84 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         result.containsKey('stages')
     }
 
+    def 'should use the ReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(Connection)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+            getReadPreference() >> readPreference
+        }
+        def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.twoFourConnectionDescription
+        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.inlineResult
+        1 * connection.release()
+
+        when: '2.6.0'
+        operation.execute(readBinding)
+
+        then:
+        _ * connection.getDescription() >> helper.twoSixConnectionDescription
+        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.cursorResult
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+        given:
+        def connection = Mock(AsyncConnection)
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadPreference() >> readPreference
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.twoFourConnectionDescription
+        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.inlineResult, null) }
+        1 * connection.release()
+
+        when: '2.6.0'
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        _ * connection.getDescription() >> helper.twoSixConnectionDescription
+        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.cursorResult, null) }
+        1 * connection.release()
+
+        where:
+        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def helper = [
+            dbName: 'db',
+            namespace: new MongoNamespace('db', 'coll'),
+            twoFourConnectionDescription: Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([2, 4, 0])
+            },
+            twoSixConnectionDescription : Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([2, 6, 0])
+            },
+            inlineResult: BsonDocument.parse('{ok: 1.0}').append('result', new BsonArrayWrapper([])),
+            cursorResult: BsonDocument.parse('{ok: 1.0}')
+                    .append('cursor', new BsonDocument('id', new BsonInt64(0)).append('ns', new BsonString('db.coll'))
+                    .append('firstBatch', new BsonArrayWrapper([])))
+    ]
 
     private static List<Boolean> useCursorOptions() {
         [null, true, false]
