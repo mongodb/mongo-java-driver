@@ -171,16 +171,16 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
+        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                              CommandResultDocumentCodec.create(decoder, "value"),
-                                             binding, FindAndModifyHelper.<T>transformer());
+                                             FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getFindAndRemoveDocument(),
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                            CommandResultDocumentCodec.create(decoder, "value"),
-                                           binding, FindAndModifyHelper.<T>transformer(), callback);
+                                           FindAndModifyHelper.<T>transformer(), callback);
     }
 
     private BsonDocument getFindAndRemoveDocument() {

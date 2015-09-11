@@ -185,9 +185,9 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
-                                                     connection, binding.getReadPreference(), transformer(connectionSource, connection));
+                                                     connection, transformer(connectionSource, connection));
             }
         });
     }
@@ -200,10 +200,9 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                       CommandResultDocumentCodec.create(decoder, "retval"),
-                                                       connection, binding.getReadPreference(), asyncTransformer(connection),
-                                                       releasingCallback(errorHandlingCallback(callback), connection));
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                            CommandResultDocumentCodec.create(decoder, "retval"), connection, asyncTransformer(connection),
+                            releasingCallback(errorHandlingCallback(callback), connection));
                 }
             }
         });

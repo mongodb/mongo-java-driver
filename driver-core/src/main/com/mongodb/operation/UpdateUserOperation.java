@@ -88,7 +88,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    executeWrappedCommandProtocol(credential.getSource(), getCommand(), connection);
+                    executeWrappedCommandProtocol(binding, credential.getSource(), getCommand(), connection);
                 } else {
                     connection.update(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getUpdateRequest()));
                 }
@@ -107,7 +107,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
+                        executeWrappedCommandProtocolAsync(binding, credential.getSource(), getCommand(), connection,
                                                            new VoidTransformer<BsonDocument>(), wrappedCallback);
                     } else {
                         connection.updateAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getUpdateRequest()),

@@ -80,12 +80,12 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
 
     @Override
     public BsonDocument execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
+        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand());
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, callback);
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), callback);
     }
 
     private BsonDocument getCommand() {

@@ -52,11 +52,11 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, command, decoder, binding);
+        return executeWrappedCommandProtocol(binding, databaseName, command, decoder);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding, callback);
+        executeWrappedCommandProtocolAsync(binding, databaseName, command, decoder, callback);
     }
 }

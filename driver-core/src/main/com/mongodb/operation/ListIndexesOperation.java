@@ -138,8 +138,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
-                        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(), connection,
-                                binding.getReadPreference(), transformer(source));
+                        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
+                                connection, transformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(namespace, decoder,
                                                                                     source.getServerDescription().getAddress(), batchSize));
@@ -165,21 +165,21 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
-                                                           connection, binding.getReadPreference(), asyncTransformer(source),
-                                                           new SingleResultCallback<AsyncBatchCursor<T>>() {
-                                                               @Override
-                                                               public void onResult(final AsyncBatchCursor<T> result,
-                                                                                    final Throwable t) {
-                                                                   if (t != null && !isNamespaceError(t)) {
-                                                                       wrappedCallback.onResult(null, t);
-                                                                   } else {
-                                                                       wrappedCallback.onResult(result != null
-                                                                                                ? result : emptyAsyncCursor(source),
-                                                                                                null);
-                                                                   }
-                                                               }
-                                                           });
+                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
+                                connection, asyncTransformer(source),
+                                new SingleResultCallback<AsyncBatchCursor<T>>() {
+                                    @Override
+                                    public void onResult(final AsyncBatchCursor<T> result,
+                                                         final Throwable t) {
+                                        if (t != null && !isNamespaceError(t)) {
+                                            wrappedCallback.onResult(null, t);
+                                        } else {
+                                            wrappedCallback.onResult(result != null
+                                                                     ? result : emptyAsyncCursor(source),
+                                                                     null);
+                                        }
+                                    }
+                                });
                     } else {
                         connection.queryAsync(getIndexNamespace(),
                                 asQueryDocument(connection.getDescription(), binding.getReadPreference()), null, batchSize, 0,

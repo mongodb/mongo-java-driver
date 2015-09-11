@@ -174,8 +174,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                     try {
-                        return executeWrappedCommandProtocol(databaseName, getCommand(), createCommandDecoder(), connection,
-                                binding.getReadPreference(), commandTransformer(source));
+                        return executeWrappedCommandProtocol(binding, databaseName, getCommand(), createCommandDecoder(), connection,
+                                commandTransformer(source));
                     } catch (MongoCommandException e) {
                         return rethrowIfNotNamespaceError(e, createEmptyBatchCursor(createNamespace(), decoder,
                                 source.getServerDescription().getAddress(), batchSize));
@@ -201,8 +201,8 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                         source, connection);
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), createCommandDecoder(), connection,
-                                binding.getReadPreference(), asyncTransformer(source),
+                        executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(), createCommandDecoder(),
+                                connection, asyncTransformer(source),
                                 new SingleResultCallback<AsyncBatchCursor<T>>() {
                                     @Override
                                     public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {

@@ -66,7 +66,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     @Override
     public Void execute(final WriteBinding binding) {
         try {
-            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
+            executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand());
         } catch (MongoCommandException e) {
             CommandOperationHelper.rethrowIfNotNamespaceError(e);
         }
@@ -75,7 +75,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, new VoidTransformer<BsonDocument>(),
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new VoidTransformer<BsonDocument>(),
                                            new SingleResultCallback<Void>() {
                                                @Override
                                                public void onResult(final Void result, final Throwable t) {

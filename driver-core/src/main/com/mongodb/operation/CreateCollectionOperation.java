@@ -199,13 +199,13 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(databaseName, asDocument(), new BsonDocumentCodec(), binding);
+        executeWrappedCommandProtocol(binding, databaseName, asDocument(), new BsonDocumentCodec());
         return null;
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(databaseName, asDocument(), new BsonDocumentCodec(), binding,
+        executeWrappedCommandProtocolAsync(binding, databaseName, asDocument(), new BsonDocumentCodec(),
                                            new VoidTransformer<BsonDocument>(), callback);
     }
 

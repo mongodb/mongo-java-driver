@@ -118,9 +118,9 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         return withConnection(binding, new CallableWithConnectionAndSource<List<BatchCursor<T>>>() {
             @Override
             public List<BatchCursor<T>> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
-                                                     binding.getReadPreference(), transformer(source));
+                                                     transformer(source));
             }
         });
     }
@@ -133,10 +133,9 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                       CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
-                                                       binding.getReadPreference(), asyncTransformer(source),
-                                                       releasingCallback(errorHandlingCallback(callback), source, connection));
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                            CommandResultDocumentCodec.create(decoder, "firstBatch"), connection, asyncTransformer(source),
+                            releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
         });
