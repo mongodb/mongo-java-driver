@@ -86,7 +86,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    executeWrappedCommandProtocol(getCredential().getSource(), getCommand(), connection);
+                    executeWrappedCommandProtocol(binding, getCredential().getSource(), getCommand(), connection);
                 } else {
                     connection.insert(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getInsertRequest()));
                 }
@@ -105,7 +105,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
+                        executeWrappedCommandProtocolAsync(binding, credential.getSource(), getCommand(), connection,
                                                            new VoidTransformer<BsonDocument>(), wrappedCallback);
                     } else {
                         connection.insertAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,

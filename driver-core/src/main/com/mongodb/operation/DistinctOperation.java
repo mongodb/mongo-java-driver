@@ -126,8 +126,8 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
-                        connection, binding.getReadPreference(), transformer(source, connection));
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
+                        connection, transformer(source, connection));
             }
         });
     }
@@ -140,8 +140,8 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
-                            connection, binding.getReadPreference(), asyncTransformer(source, connection),
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
+                            connection, asyncTransformer(source, connection),
                             releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }

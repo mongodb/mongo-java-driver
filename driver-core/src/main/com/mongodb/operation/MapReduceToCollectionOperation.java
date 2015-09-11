@@ -396,12 +396,12 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
      */
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding, transformer());
+        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), transformer());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer(), callback);
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), transformer(), callback);
     }
 
     /**

@@ -82,12 +82,12 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<BsonDocument>());
+        return executeWrappedCommandProtocol(binding, "admin", getCommand(), new VoidTransformer<BsonDocument>());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<BsonDocument>(), callback);
+        executeWrappedCommandProtocolAsync(binding, "admin", getCommand(), new VoidTransformer<BsonDocument>(), callback);
     }
 
     private BsonDocument getCommand() {

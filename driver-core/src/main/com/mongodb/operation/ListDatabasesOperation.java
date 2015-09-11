@@ -100,8 +100,8 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol("admin", getCommand(), CommandResultDocumentCodec.create(decoder, "databases"),
-                        connection, binding.getReadPreference(), transformer(source, connection));
+                return executeWrappedCommandProtocol(binding, "admin", getCommand(),
+                        CommandResultDocumentCodec.create(decoder, "databases"), connection, transformer(source, connection));
             }
         });
     }
@@ -114,8 +114,8 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync("admin", getCommand(), CommandResultDocumentCodec.create(decoder, "databases"),
-                            connection, binding.getReadPreference(), asyncTransformer(source, connection),
+                    executeWrappedCommandProtocolAsync(binding,  "admin", getCommand(),
+                            CommandResultDocumentCodec.create(decoder, "databases"), connection, asyncTransformer(source, connection),
                             releasingCallback(errorHandlingCallback(callback), connection));
                 }
             }

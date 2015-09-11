@@ -113,7 +113,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     try {
-                        executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
+                        executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), connection);
                     } catch (MongoCommandException e) {
                         throw checkForDuplicateKeyError(e);
                     }
@@ -138,12 +138,13 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection,
-                                                           new SingleResultCallback<BsonDocument>() {
-                                                               @Override
-                                                               public void onResult(final BsonDocument result, final Throwable t) {
-                                                                   wrappedCallback.onResult(null, translateException(t));
-                                                               }});
+                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), connection,
+                                new SingleResultCallback<BsonDocument>() {
+                                    @Override
+                                    public void onResult(final BsonDocument result, final Throwable t) {
+                                        wrappedCallback.onResult(null, translateException(t));
+                                    }
+                                });
                     } else {
                         if (requests.size() > 1) {
                             wrappedCallback.onResult(null, new MongoInternalException("Creation of multiple indexes simultaneously not "

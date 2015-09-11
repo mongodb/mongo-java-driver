@@ -127,7 +127,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
+        executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
                                       new VoidTransformer<BsonDocument>());
 
         return null;
@@ -135,7 +135,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
                                            new VoidTransformer<BsonDocument>(), callback);
     }
 

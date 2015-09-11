@@ -48,11 +48,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>());
+        return executeWrappedCommandProtocol(binding, databaseName, DROP_DATABASE, new VoidTransformer<BsonDocument>());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>(), callback);
+        executeWrappedCommandProtocolAsync(binding, databaseName, DROP_DATABASE, new VoidTransformer<BsonDocument>(), callback);
     }
 }

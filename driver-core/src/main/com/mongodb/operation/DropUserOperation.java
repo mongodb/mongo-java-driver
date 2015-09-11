@@ -66,7 +66,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    executeWrappedCommandProtocol(databaseName, getCommand(), connection);
+                    executeWrappedCommandProtocol(binding, databaseName, getCommand(), connection);
                 } else {
                     connection.delete(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()));
                 }
@@ -86,8 +86,8 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
 
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>(),
-                                                           wrappedCallback);
+                        executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(), connection,
+                                new VoidTransformer<BsonDocument>(), wrappedCallback);
                     } else {
                         connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()),
                                                new SingleResultCallback<WriteConcernResult>() {

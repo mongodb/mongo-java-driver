@@ -52,11 +52,11 @@ public class CommandWriteOperation<T> implements AsyncWriteOperation<T>, WriteOp
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, command, decoder, binding);
+        return executeWrappedCommandProtocol(binding, databaseName, command, decoder);
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding, callback);
+        executeWrappedCommandProtocolAsync(binding, databaseName, command, decoder, callback);
     }
 }

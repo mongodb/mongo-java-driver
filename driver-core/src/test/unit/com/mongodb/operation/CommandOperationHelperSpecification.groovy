@@ -118,7 +118,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
 
         when:
-        executeWrappedCommandProtocol(dbName, command, decoder, writeBinding, function)
+        executeWrappedCommandProtocol(writeBinding, dbName, command, decoder, function)
 
         then:
         1 * writeBinding.getWriteConnectionSource() >> connectionSource
@@ -149,7 +149,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
 
         when:
-        executeWrappedCommandProtocol(dbName, command, decoder, readBinding, function)
+        executeWrappedCommandProtocol(readBinding, dbName, command, decoder, function)
 
         then:
         1 * readBinding.getReadConnectionSource() >> connectionSource
@@ -182,7 +182,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
 
         when:
-        executeWrappedCommandProtocolAsync(dbName, command, decoder, asyncWriteBinding, function, callback)
+        executeWrappedCommandProtocolAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
 
         then:
         1 * asyncWriteBinding.getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
@@ -207,7 +207,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId("cluster"), new ServerAddress("localhost")))
 
         when:
-        executeWrappedCommandProtocolAsync(dbName, command, decoder, asyncReadBinding, function, callback)
+        executeWrappedCommandProtocolAsync(asyncReadBinding, dbName, command, decoder, function, callback)
 
         then:
         1 * asyncReadBinding.getReadPreference() >> readPreference

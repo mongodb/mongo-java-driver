@@ -306,9 +306,9 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
-                                                     connection, binding.getReadPreference(), transformer(source, connection));
+                                                     connection, transformer(source, connection));
             }
         });
     }
@@ -321,10 +321,9 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                       CommandResultDocumentCodec.create(decoder, "results"),
-                                                       connection, binding.getReadPreference(), asyncTransformer(connection),
-                                                       releasingCallback(errorHandlingCallback(callback), connection));
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                            CommandResultDocumentCodec.create(decoder, "results"), connection, asyncTransformer(connection),
+                            releasingCallback(errorHandlingCallback(callback), connection));
                 }
             }
         });

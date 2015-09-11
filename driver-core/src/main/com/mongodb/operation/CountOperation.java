@@ -169,12 +169,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding, transformer());
+        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), transformer());
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding, transformer(),
+        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), transformer(),
                                            callback);
     }
 

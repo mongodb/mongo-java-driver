@@ -196,11 +196,9 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                                                     CommandResultDocumentCodec.create(decoder,
-                                                                                       getFieldNameWithResults(connection
-                                                                                                               .getDescription())),
-                                                     connection, binding.getReadPreference(), transformer(source, connection));
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
+                        CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
+                        connection, transformer(source, connection));
             }
         });
     }
@@ -213,12 +211,11 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                                                       CommandResultDocumentCodec.create(decoder,
-                                                                                         getFieldNameWithResults(connection
-                                                                                                                 .getDescription())),
-                                                       connection, binding.getReadPreference(), asyncTransformer(source, connection),
-                                                       releasingCallback(errorHandlingCallback(callback), source, connection));
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                            asCommandDocument(connection.getDescription()),
+                            CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
+                            connection, asyncTransformer(source, connection),
+                            releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
         });
