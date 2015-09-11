@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package com.mongodb
 
 import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterType
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -94,6 +91,7 @@ class MongoSpecification extends Specification {
         1 * db.command(~['fsync': 1, 'async': 1])
     }
 
+
     def 'should lock and unlock as server'() {
         given:
         DBCollection unlockCollection = Mock()
@@ -104,6 +102,8 @@ class MongoSpecification extends Specification {
         }
         mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
             getDB('admin') >> db
+            execute(_, _) >> new BsonDocument('fsyncLock', BsonBoolean.TRUE)
+            execute(_) >> new BsonDocument('ok', new BsonInt32(1))
         }
 
         when:
@@ -113,16 +113,15 @@ class MongoSpecification extends Specification {
         1 * db.command(~['fsync': 1, 'lock': 1])
 
         when:
-        mongo.isLocked()
+        def isLocked = mongo.isLocked()
 
         then:
-        1 * inprogCollection.findOne() >> new BasicDBObject('fsyncLock', 1)
+        isLocked
 
         when:
-        mongo.unlock()
+        def unlockDoc = mongo.unlock()
 
         then:
-        1 * unlockCollection.findOne()
+        unlockDoc == new BasicDBObject('ok', 1)
     }
-
 }

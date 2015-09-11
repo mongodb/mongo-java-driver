@@ -71,6 +71,11 @@ final class CommandOperationHelper {
         }
     }
 
+    static BsonDocument executeWrappedCommandProtocol(final ReadBinding binding, final String database, final BsonDocument command,
+                                               final Connection connection) {
+        return executeWrappedCommandProtocol(binding, database, command, connection, new IdentityTransformer<BsonDocument>());
+    }
+
     static <T> T executeWrappedCommandProtocol(final ReadBinding binding, final String database, final BsonDocument command,
                                                final Connection connection, final Function<BsonDocument, T> transformer) {
         return executeWrappedCommandProtocol(binding, database, command, new BsonDocumentCodec(), connection, transformer);

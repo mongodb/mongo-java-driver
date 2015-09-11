@@ -1,15 +1,37 @@
+/*
+ * Copyright 2008-2015 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
@@ -22,6 +44,8 @@ import java.util.concurrent.TimeUnit
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
@@ -116,7 +140,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
     def 'test limit exhaustion'() {
         given:
-        def firstBatch = executeQuery(2)
+        def firstBatch = executeQuery(5, 2)
         def connection = connectionSource.getConnection()
 
         when:
@@ -147,7 +171,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     def 'test tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, true);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
 
 
         when:
@@ -187,7 +211,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     def 'test try next with tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, true);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
 
 
         when:
@@ -212,7 +236,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
 
-        def firstBatch = executeQueryProtocol(new BsonDocument(), 2, true, true)
+        def firstBatch = executeQuery(new BsonDocument(), 0, 2, true, true)
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
@@ -301,7 +325,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         String bigString = new String(array)
 
         (11..1000).each { collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it).append('s', bigString)) }
-        def firstBatch = executeQuery()
+        def firstBatch = executeQuery(300, 0)
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 300, 0, new DocumentCodec(), connectionSource)
@@ -390,7 +414,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         def connection = connectionSource.getConnection()
-        connection.killCursor(asList(cursor.getServerCursor().id))
+        connection.killCursor(getNamespace(), asList(cursor.getServerCursor().id))
         connection.release()
         cursor.next()
 
@@ -401,24 +425,69 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
             assertEquals(cursor.getServerCursor().getId(), e.getCursorId())
             assertEquals(cursor.getServerCursor().getAddress(), e.getServerAddress())
         } catch (ignored) {
-            fail()
+            fail('Expected MongoCursorNotFoundException to be thrown but got ' + ignored.getClass())
         }
     }
+
+    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
+    def 'should get more from a secondary'() {
+        given:
+        connectionSource = getBinding(ReadPreference.secondary()).getReadConnectionSource()
+
+        def firstBatch = executeQuery(2, true)
+
+        when:
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor.next()
+
+        then:
+        cursor.next()
+    }
+
 
     private QueryResult<Document> executeQuery() {
         executeQuery(0)
     }
 
     private QueryResult<Document> executeQuery(int batchSize) {
-        executeQueryProtocol(new BsonDocument(), batchSize, false, false)
+        executeQuery(new BsonDocument(), 0, batchSize, false, false, false)
     }
 
-    private QueryResult<Document> executeQueryProtocol(BsonDocument query, int batchSize, boolean tailable, boolean awaitData) {
+    private QueryResult<Document> executeQuery(int batchSize, boolean slaveOk) {
+        executeQuery(new BsonDocument(), 0, batchSize, false, false, slaveOk)
+    }
+
+    private QueryResult<Document> executeQuery(int limit, int batchSize) {
+        executeQuery(new BsonDocument(), limit, batchSize, false, false, false)
+    }
+
+
+    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData) {
+        executeQuery(filter, limit, batchSize, tailable, awaitData, false)
+    }
+
+    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData,
+                                               boolean slaveOk) {
         def connection = connectionSource.getConnection()
         try {
-            connection.query(getNamespace(), query, null, 0, 0, batchSize,
-                             false, tailable, awaitData, false, false, false,
-                             new DocumentCodec());
+            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+                def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
+                        .append('filter', filter)
+                        .append('batchSize', new BsonInt32(batchSize))
+                        .append('tailable', BsonBoolean.valueOf(tailable))
+                        .append('awaitData', BsonBoolean.valueOf(awaitData))
+                if (limit > 0) {
+                    findCommand.append('limit', new BsonInt32(limit))
+                }
+                def response = connection.command(getDatabaseName(), findCommand,
+                                                  slaveOk, new NoOpFieldNameValidator(),
+                                                  CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'))
+                cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
+            } else {
+                connection.query(getNamespace(), filter, null, 0, limit, batchSize,
+                                 slaveOk, tailable, awaitData, false, false, false,
+                                 new DocumentCodec());
+            }
         } finally {
             connection.release();
         }

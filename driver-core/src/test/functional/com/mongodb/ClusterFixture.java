@@ -142,8 +142,16 @@ public final class ClusterFixture {
         return getBinding(getCluster());
     }
 
+    public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
+        return getBinding(getCluster(), readPreference);
+    }
+
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary());
+        return getBinding(cluster, ReadPreference.primary());
+    }
+
+    private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
+        return new ClusterBinding(cluster, readPreference);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
@@ -162,8 +170,16 @@ public final class ClusterFixture {
         return getAsyncBinding(getAsyncCluster());
     }
 
+    public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
+        return getAsyncBinding(getAsyncCluster(), readPreference);
+    }
+
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return new AsyncClusterBinding(cluster, ReadPreference.primary());
+        return getAsyncBinding(cluster, ReadPreference.primary());
+    }
+
+    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
+        return new AsyncClusterBinding(cluster, readPreference);
     }
 
     public static synchronized Cluster getCluster() {

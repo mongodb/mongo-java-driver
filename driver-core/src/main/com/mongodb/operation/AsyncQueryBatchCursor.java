@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.AsyncBatchCursor;
@@ -23,6 +24,11 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
@@ -31,6 +37,9 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
+import static com.mongodb.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.QueryHelper.translateCommandException;
 import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
@@ -116,6 +125,10 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         return closed;
     }
 
+    ServerCursor getServerCursor() {
+        return cursor;
+    }
+
     private boolean limitReached() {
         return limit != 0 && count >= limit;
     }
@@ -127,11 +140,33 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
-                                            decoder, new QueryResultSingleResultCallback(connection, callback));
+                    getMore(connection, callback);
                 }
             }
         });
+    }
+
+    private void getMore(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
+        if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(), true,
+                                    new NoOpFieldNameValidator(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
+                                    new CommandResultSingleResultCallback(connection, callback));
+
+        } else {
+            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
+                                    decoder, new QueryResultSingleResultCallback(connection, callback));
+        }
+    }
+
+    private BsonDocument asGetMoreCommandDocument() {
+        BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursor.getId()))
+                                .append("collection", new BsonString(namespace.getCollectionName()));
+
+        if (batchSize != 0) {
+            document.append("batchSize", new BsonInt32(Math.abs(batchSize)));
+        }
+
+        return document;
     }
 
     private void killCursor(final AsyncConnection connection) {
@@ -170,6 +205,51 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         });
     }
 
+    private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
+                                          final QueryResult<T> result) {
+        if (result.getResults().isEmpty() && result.getCursor() != null) {
+            getMore(connection, callback);
+        } else {
+            cursor = result.getCursor();
+            count += result.getResults().size();
+            if (limitReached()) {
+                killCursor(connection);
+            }
+            connection.release();
+            if (result.getResults().isEmpty()) {
+                callback.onResult(null, null);
+            } else {
+                callback.onResult(result.getResults(), null);
+            }
+        }
+    }
+
+    private class CommandResultSingleResultCallback implements SingleResultCallback<BsonDocument> {
+        private final AsyncConnection connection;
+        private final SingleResultCallback<List<T>> callback;
+
+        public CommandResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
+            this.connection = connection;
+            this.callback = errorHandlingCallback(callback);
+        }
+
+        @Override
+        public void onResult(final BsonDocument result, final Throwable t) {
+            if (t != null) {
+                Throwable translatedException = t instanceof MongoCommandException
+                                                ? translateCommandException((MongoCommandException) t, cursor)
+                                                : t;
+                connection.release();
+                close();
+                callback.onResult(null, translatedException);
+            } else {
+                QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(result.getDocument("cursor"),
+                                                                                connectionSource.getServerDescription().getAddress());
+                handleGetMoreQueryResult(connection, callback, queryResult);
+            }
+        }
+    }
+
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
         private final AsyncConnection connection;
         private final SingleResultCallback<List<T>> callback;
@@ -185,21 +265,8 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                 connection.release();
                 close();
                 callback.onResult(null, t);
-            } else if (result.getResults().isEmpty() && result.getCursor() != null) {
-                connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
-                                        decoder, this);
             } else {
-                cursor = result.getCursor();
-                count += result.getResults().size();
-                if (limitReached()) {
-                    killCursor(connection);
-                }
-                connection.release();
-                if (result.getResults().isEmpty()) {
-                    callback.onResult(null, null);
-                } else {
-                    callback.onResult(result.getResults(), null);
-                }
+                handleGetMoreQueryResult(connection, callback, result);
             }
         }
     }

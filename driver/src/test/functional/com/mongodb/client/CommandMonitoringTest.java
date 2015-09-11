@@ -16,12 +16,14 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
@@ -101,6 +103,15 @@ public class CommandMonitoringTest {
 
     @Before
     public void setUp() {
+
+        ServerVersion serverVersion = ClusterFixture.getServerVersion();
+        if (definition.containsKey("ignore_if_server_version_less_than")) {
+            assumeFalse(serverVersion.compareTo(getServerVersion("ignore_if_server_version_less_than")) < 0);
+        }
+        if (definition.containsKey("ignore_if_server_version_greater_than")) {
+            assumeFalse(serverVersion.compareTo(getServerVersion("ignore_if_server_version_greater_than")) > 0);
+        }
+
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
         for (BsonValue document : data) {
             documents.add(document.asDocument());
@@ -119,6 +130,11 @@ public class CommandMonitoringTest {
                                                                                         .getString("mode").getValue()));
         }
         helper = new JsonPoweredCrudTestHelper(description, collection);
+    }
+
+    private ServerVersion getServerVersion(final String fieldName) {
+        String[] versionStringArray = definition.getString(fieldName).getValue().split("\\.");
+        return new ServerVersion(Integer.parseInt(versionStringArray[0]), Integer.parseInt(versionStringArray[1]));
     }
 
     @Test

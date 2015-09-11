@@ -36,12 +36,15 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.management.JMXConnectionPoolListener;
+import com.mongodb.operation.CurrentOpOperation;
+import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
+import org.bson.BsonBoolean;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -569,7 +572,7 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
-        return getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.unlock").findOne();
+        return DBObjects.toDBObject(execute(new FsyncUnlockOperation()));
     }
 
     /**
@@ -580,9 +583,8 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
-        DBCollection inprogCollection = getDB(ADMIN_DATABASE_NAME).getCollection("$cmd.sys.inprog");
-        BasicDBObject result = (BasicDBObject) inprogCollection.findOne();
-        return result.containsField("fsyncLock") && result.getInt("fsyncLock") == 1;
+        return execute(new CurrentOpOperation(), ReadPreference.primary())
+               .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
     }
 
     @Override

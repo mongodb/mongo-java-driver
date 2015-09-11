@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,27 @@
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.ClusterFixture
+import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
 
@@ -36,9 +45,16 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
+import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.connection.ServerHelper.waitForRelease
+import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo
+import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.fail
 
 class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecification {
     AsyncConnectionSource connectionSource
@@ -72,7 +88,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     def 'should exhaust single batch with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1), 1, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, new DocumentCodec(), connectionSource, connection)
 
         expect:
         nextBatch().size() == 1
@@ -137,9 +153,10 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     @Category(Slow)
     def 'should block waiting for first batch on a tailable cursor'() {
+        given:
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(4, 0)))
-        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, false);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
 
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)
@@ -167,7 +184,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, false);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
 
 
         when:
@@ -201,13 +218,62 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     def 'should respect limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 6, 2, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(6, 3), 6, 2, new DocumentCodec(), connectionSource, connection)
 
         expect:
         nextBatch().size() == 3
         nextBatch().size() == 2
         nextBatch().size() == 1
         !nextBatch()
+    }
+    // 2.2 does not properly detect cursor not found, so ignoring
+    @SuppressWarnings('BracesForTryCatchFinally')
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    def 'should throw cursor not found exception'() {
+        given:
+        def firstBatch = executeQuery(2)
+
+        when:
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)
+
+        def latch = new CountDownLatch(1)
+        def connection = getConnection(connectionSource)
+        def serverCursor = cursor.serverCursor
+        connection.killCursorAsync(getNamespace(), asList(serverCursor.id), new SingleResultCallback<Void>() {
+            @Override
+            void onResult(final Void result, final Throwable t) {
+                latch.countDown()
+            }
+        })
+        latch.await()
+        connection.release()
+        nextBatch()
+
+        then:
+        try {
+            nextBatch()
+            fail('expected MongoCursorNotFoundException but no exception was thrown')
+        } catch (MongoCursorNotFoundException e) {
+            assertEquals(serverCursor.getId(), e.getCursorId())
+            assertEquals(serverCursor.getAddress(), e.getServerAddress())
+        } catch (ignored) {
+            fail('Expected MongoCursorNotFoundException to be thrown but got ' + ignored.getClass())
+        }
+    }
+
+    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
+    def 'should get more from a secondary'() {
+        given:
+        connectionSource = getReadConnectionSource(getAsyncBinding(ReadPreference.secondary()))
+
+        def firstBatch = executeQuery(2, true)
+
+        when:
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)
+        nextBatch()
+
+        then:
+        nextBatch()
     }
 
     List<Document> nextBatch() {
@@ -220,15 +286,51 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         executeQuery(0)
     }
 
-    private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQueryProtocol(new BsonDocument(), numToReturn, false, false)
+    private QueryResult<Document> executeQuery(int batchSize) {
+        executeQuery(0, batchSize)
     }
 
-    private QueryResult<Document> executeQueryProtocol(BsonDocument query, int numberToReturn, boolean tailable, boolean awaitData) {
-        def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
-        connection.queryAsync(getNamespace(), query, null, numberToReturn, 0,
-                              false, tailable, awaitData, false, false, false,
-                              new DocumentCodec(), futureResultCallback);
-        futureResultCallback.get(60, SECONDS);
+    private QueryResult<Document> executeQuery(int batchSize, boolean slaveOk) {
+        executeQuery(0, batchSize, slaveOk)
+    }
+
+    private QueryResult<Document> executeQuery(int limit, int batchSize) {
+        executeQuery(new BsonDocument(), limit, batchSize, false, false)
+    }
+
+    private QueryResult<Document> executeQuery(int limit, int batchSize, boolean slaveOk) {
+        executeQuery(new BsonDocument(), limit, batchSize, false, false, slaveOk)
+    }
+
+    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData) {
+        executeQuery(filter, limit, batchSize, tailable, awaitData, true)
+    }
+
+    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData,
+                                               boolean slaveOk) {
+        if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+            def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
+                    .append('filter', filter)
+                    .append('tailable', BsonBoolean.valueOf(tailable))
+                    .append('awaitData', BsonBoolean.valueOf(awaitData))
+            if (batchSize > 0) {
+                findCommand.append('batchSize', new BsonInt32(batchSize))
+            }
+            if (limit > 0) {
+                findCommand.append('limit', new BsonInt32(limit))
+            }
+            def futureResultCallback = new FutureResultCallback<BsonDocument>();
+            connection.commandAsync(getDatabaseName(), findCommand,
+                                    slaveOk, new NoOpFieldNameValidator(),
+                                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), futureResultCallback)
+            def response = futureResultCallback.get(60, SECONDS)
+            cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
+        } else {
+            def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
+            connection.queryAsync(getNamespace(), filter, null, 0, limit, batchSize,
+                                  slaveOk, tailable, awaitData, false, false, false,
+                                  new DocumentCodec(), futureResultCallback);
+            futureResultCallback.get(60, SECONDS);
+        }
     }
 }

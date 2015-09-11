@@ -35,6 +35,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -354,7 +355,7 @@ public class DBCursorTest extends DatabaseTestCase {
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
-                Assert.assertNotNull(next.toString(), next.get(fieldName));
+                assertNotNull(next.toString(), next.get(fieldName));
             }
         } finally {
             cursor.close();
@@ -364,7 +365,7 @@ public class DBCursorTest extends DatabaseTestCase {
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
-                Assert.assertNotNull(next.toString(), next.get(fieldName));
+                assertNotNull(next.toString(), next.get(fieldName));
             }
         } finally {
             cursor.close();
@@ -413,9 +414,12 @@ public class DBCursorTest extends DatabaseTestCase {
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
 
-        assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query"))
-                                      .get(serverVersionAtLeast(asList(3, 1, 8)) ? "comment" : "$comment"));
-
+        DBObject profileDocument = profileCollection.findOne();
+        if (serverVersionAtLeast(asList(3, 1, 7))) {
+            assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
+        } else {
+            assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("$comment"));
+        }
         // finally
         database.command(new BasicDBObject("profile", 0));
         profileCollection.drop();

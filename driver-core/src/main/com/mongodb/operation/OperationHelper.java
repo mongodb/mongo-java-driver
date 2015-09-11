@@ -26,6 +26,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
@@ -37,9 +38,12 @@ import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
 
 import java.util.Collections;
+import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 final class OperationHelper {
 
@@ -103,40 +107,51 @@ final class OperationHelper {
 
 
     static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
+        return cursorDocumentToQueryResult(cursorDocument, serverAddress, "firstBatch");
+    }
+
+    static <T> QueryResult<T> getMoreCursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
+        return cursorDocumentToQueryResult(cursorDocument, serverAddress, "nextBatch");
+    }
+
+    private static <T> QueryResult<T> cursorDocumentToQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress,
+                                                          final String fieldNameContainingBatch) {
         long cursorId = ((BsonInt64) cursorDocument.get("id")).getValue();
         MongoNamespace queryResultNamespace = new MongoNamespace(cursorDocument.getString("ns").getValue());
-        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(cursorDocument, "firstBatch"), cursorId,
-                serverAddress);
+        return new QueryResult<T>(queryResultNamespace, BsonDocumentWrapperHelper.<T>toList(cursorDocument, fieldNameContainingBatch),
+                                  cursorId, serverAddress);
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnection connection) {
-        return new ConnectionReleasingWrappedCallback<T>(wrapped, null, connection);
+        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, singletonList(connection));
     }
 
     static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
                                                          final AsyncConnection connection) {
-        return new ConnectionReleasingWrappedCallback<T>(wrapped, source, connection);
+        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, asList(connection, source));
     }
 
-    private static class ConnectionReleasingWrappedCallback<T> implements SingleResultCallback<T> {
-        private final SingleResultCallback<T> wrapped;
-        private final AsyncConnectionSource source;
-        private final AsyncConnection connection;
+    static <T> SingleResultCallback<T> releasingCallback(final SingleResultCallback<T> wrapped,
+                                                         final AsyncReadBinding readBinding,
+                                                         final AsyncConnectionSource source,
+                                                         final AsyncConnection connection) {
+        return new ReferenceCountedReleasingWrappedCallback<T>(wrapped, asList(readBinding, connection, source));
+    }
 
-        ConnectionReleasingWrappedCallback(final SingleResultCallback<T> wrapped, final AsyncConnectionSource source,
-                                           final AsyncConnection connection) {
+    private static class ReferenceCountedReleasingWrappedCallback<T> implements SingleResultCallback<T> {
+        private final SingleResultCallback<T> wrapped;
+        private final List<? extends ReferenceCounted> referenceCounted;
+
+        ReferenceCountedReleasingWrappedCallback(final SingleResultCallback<T> wrapped,
+                                                 final List<? extends ReferenceCounted> referenceCounted) {
             this.wrapped = wrapped;
-            this.source = source;
-            this.connection = connection;
+            this.referenceCounted = notNull("referenceCounted", referenceCounted);
         }
 
         @Override
         public void onResult(final T result, final Throwable t) {
-            if (connection != null) {
-                connection.release();
-            }
-            if (source != null) {
-                source.release();
+            for (ReferenceCounted cur : referenceCounted) {
+                cur.release();
             }
             wrapped.onResult(result, t);
         }
@@ -148,6 +163,10 @@ final class OperationHelper {
 
     static boolean serverIsAtLeastVersionThreeDotZero(final ConnectionDescription description) {
         return serverIsAtLeastVersion(description, new ServerVersion(asList(3, 0, 0)));
+    }
+
+    static boolean serverIsAtLeastVersionThreeDotTwo(final ConnectionDescription description) {
+        return serverIsAtLeastVersion(description, new ServerVersion(asList(3, 1, 7)));
     }
 
     static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {
