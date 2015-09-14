@@ -607,4 +607,21 @@ class GridFSBucketSpecification extends Specification {
         then:
         thrown(MongoGridFSException)
     }
+
+    def 'should be able to drop the bucket'() {
+        given:
+        def filesCollection = Mock(MongoCollection)
+        def chunksCollection = Mock(MongoCollection)
+        def gridFSBucket = new GridFSBucketImpl(Stub(MongoDatabase), 'fs', 255, Stub(CodecRegistry), Stub(ReadPreference),
+                Stub(WriteConcern), filesCollection, chunksCollection, true)
+
+        when:
+        gridFSBucket.drop()
+
+        then: 'drop the files collection first'
+        1 * filesCollection.drop()
+
+        then:
+        1 * chunksCollection.drop()
+    }
 }

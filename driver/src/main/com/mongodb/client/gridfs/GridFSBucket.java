@@ -256,4 +256,9 @@ public interface GridFSBucket {
      */
     void rename(ObjectId id, String newFilename);
 
+    /**
+     * Drops the data associated with this bucket from the database.
+     */
+    void drop();
+
 }

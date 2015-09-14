@@ -230,6 +230,12 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
+    @Override
+    public void drop() {
+        filesCollection.drop();
+        chunksCollection.drop();
+    }
+
     private CodecRegistry getCodecRegistry() {
         return fromRegistries(database.getCodecRegistry(), MongoClient.getDefaultCodecRegistry());
     }
