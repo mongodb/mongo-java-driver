@@ -34,7 +34,7 @@
     {{ with $.Site.Data.releases.versions }}
       <select class="releasePicker">
         {{ range . }}
-        <option value="{{$.Scratch.Get "qs.pos"}}"{{ if eq (in $firstDriver.versions .version) false }}disabled="disabled"{{else if eq .status "current"}}selected{{end}}>{{.version}}</option>
+        <option value="{{$.Scratch.Get "qs.pos"}}" {{ if eq (in $firstDriver.versions .version) false }}disabled="disabled"{{else if eq .status "current"}}selected{{end}}>{{.version}}</option>
         {{ $.Scratch.Add "qs.pos" 1 }}
         {{ end }}
       </select>
