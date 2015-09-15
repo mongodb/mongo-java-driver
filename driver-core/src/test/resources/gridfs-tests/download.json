@@ -435,41 +435,6 @@
       }
     },
     {
-      "description": "Download when there is an extra chunk",
-      "arrange": {
-        "data": [
-          {
-            "insert": "fs.chunks",
-            "documents": [
-              {
-                "_id": {
-                  "$oid": "000000000000000000000012"
-                },
-                "files_id": {
-                  "$oid": "000000000000000000000004"
-                },
-                "n": 2,
-                "data": {
-                  "$hex": "99"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "act": {
-        "operation": "download",
-        "arguments": {
-          "id": {
-            "$oid": "000000000000000000000004"
-          }
-        }
-      },
-      "assert": {
-        "error": "ExtraChunk"
-      }
-    },
-    {
       "description": "Download when an intermediate chunk is the wrong size",
       "arrange": {
         "data": [

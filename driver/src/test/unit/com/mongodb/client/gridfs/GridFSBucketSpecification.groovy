@@ -263,9 +263,6 @@ class GridFSBucketSpecification extends Specification {
         1 * mongoCursor.hasNext() >> true
         1 * mongoCursor.next() >> chunkDocument
 
-        then: 'extra chunk check'
-        1 * mongoCursor.hasNext() >> false
-
         then:
         outputStream.toByteArray() == tenBytes
     }
@@ -300,9 +297,6 @@ class GridFSBucketSpecification extends Specification {
         1 * findIterable.iterator() >> mongoCursor
         1 * mongoCursor.hasNext() >> true
         1 * mongoCursor.next() >> chunkDocument
-
-        then: 'extra chunk check'
-        1 * mongoCursor.hasNext() >> false
 
         then:
         outputStream.toByteArray() == tenBytes
@@ -343,9 +337,6 @@ class GridFSBucketSpecification extends Specification {
         1 * findIterable.iterator() >> mongoCursor
         1 * mongoCursor.hasNext() >> true
         1 * mongoCursor.next() >> chunkDocument
-
-        then: 'extra chunk check'
-        1 * mongoCursor.hasNext() >> false
 
         then:
         outputStream.toByteArray() == tenBytes

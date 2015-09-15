@@ -42,7 +42,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private long currentPosition;
     private byte[] buffer = null;
     private long markPosition;
-    private boolean eof;
 
     private final Object closeLock = new Object();
     private final Object cursorLock = new Object();
@@ -90,18 +89,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     public int read(final byte[] b, final int off, final int len) {
         checkClosed();
 
-        if (eof) {
-            return -1;
-        } else if (currentPosition == length) {
-            eof = true;
-            int chunkToCheck = chunkIndex;
-            if (buffer != null) {
-                chunkToCheck += 1;
-            }
-            Document chunk = getChunk(chunkToCheck);
-            if (chunk != null) {
-                getBufferFromChunk(chunk, chunkToCheck);
-            }
+        if (currentPosition == length) {
             return -1;
         } else if (buffer == null) {
             buffer = getBuffer(chunkIndex);
@@ -173,7 +161,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
             return;
         }
 
-        eof = false;
         bufferOffset = (int) markPosition % chunkSizeInBytes;
         currentPosition = markPosition;
         int markChunkIndex = (int) Math.floor((float) markPosition / chunkSizeInBytes);
