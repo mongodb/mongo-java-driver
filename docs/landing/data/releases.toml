@@ -6,7 +6,7 @@ current = "3.0.4"
   api = "http://api.mongodb.org/java/3.1"
 
 [[versions]]
-  version = "3.0.3"
+  version = "3.0.4"
   status = "current"
   docs = "./3.0"
   api = "http://api.mongodb.org/java/3.0"
