@@ -120,7 +120,7 @@ geo2d("points")
 
 #### geoHaystack
 
-To specify a [geoHaystack]({{< docsref "manual/core/geohaystack/" >}}) index key, use the `geoHaystack` method.
+To specify a [geoHaystack]({{< docsref "core/geohaystack/" >}}) index key, use the `geoHaystack` method.
 
 {{% note class="important"%}}
 For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering; 
