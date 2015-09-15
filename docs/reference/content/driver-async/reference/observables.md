@@ -22,7 +22,7 @@ These observable drivers follow similar patterns that split the logic into `onNe
 The MongoDB Async Driver provides a factory and interfaces that do the heavy lifting of converting callback based operations into an observable operations.  There are three interfaces [`Observable`]({{< apiref "com/mongodb/async/client/Observable" >}}), [`Subscription`]({{< apiref "com/mongodb/async/client/Subscription" >}}) and [`Observer`]({{< apiref "com/mongodb/async/client/Observer" >}}). The [`Observables`]({{< apiref "com/mongodb/async/client/Observables" >}}) helpers convert any callback based operations into observable operations.
 
 {{% note %}}
-The interfaces are the similar to `Publisher`, `Subscription` and `Subscriber` interfaces from the [reactive streams](http://www.reactive-streams.org/) JVM implementation.  However, we prefer the name `Observerable` to `Publisher` and `Observer` to `Subscriber` for readability purposes.
+The interfaces are similar to `Publisher`, `Subscription` and `Subscriber` interfaces from the [reactive streams](http://www.reactive-streams.org/) JVM implementation.  However, we prefer the name `Observerable` to `Publisher` and `Observer` to `Subscriber` for readability purposes.
 {{% /note %}}
 
 ## Observable
@@ -35,7 +35,7 @@ A [`Subscription`]({{< apiref "com/mongodb/async/client/Subscription" >}}) repre
 ## Observer
 
 An [`Observer`]({{< apiref "com/mongodb/async/client/Observer" >}}) provides the mechanism for receiving push-based notifications from the `Observable`.  Demand for these events is signalled by its `Subscription`. On subscription to an `Observable` the `Observer` will be passed the `Subscription` via the `onSubscribe(Subscription subscription)`.
-Demand for results is signaled via the `Subscription` and any results are passed to the `onNext(TResult result)` method.  If there is an error for any reason the `onError(Throwable e)` will be called and no more events passed to the `Observer`. Alternatively, when the `Observer` has consumed all the results from the `Observable` the `onComplete()` method is called.
+Demand for results is signaled via the `Subscription` and any results are passed to the `onNext(TResult result)` method.  If there is an error for any reason the `onError(Throwable e)` will be called and no more events passed to the `Observer`. Alternatively, when the `Observer` has consumed all the results from the `Observable` the `onComplete()` method will be called.
 
 ## Wrapping a MongoIterable
 
