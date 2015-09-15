@@ -139,7 +139,7 @@ As `SingleResponseCallback<T>` is a [functional interface](https://docs.oracle.c
 implemented as a lambda for users on Java 8:
 
 ```java
-collection.insertOne(doc, (Void result, final Throwable t) -> System.out.println('Inserted!'));
+collection.insertOne(doc, (Void result, final Throwable t) -> System.out.println("Inserted!"));
 ```
 
 Once the document has been inserted the `onResult` callback will be called and it will

@@ -192,14 +192,14 @@ Polygon polygon = new Polygon(Arrays.asList(new Position(0, 0),
                                             new Position(4, 4), 
                                             new Position(0, 4),
                                             new Position(0, 0)));
-geoWithin('geo', polygon))
+geoWithin("geo", polygon))
 ```
 
 Similarly, this example creates a filter that selects all documents where the `geo` field contains a GeoJSON Geometry object that 
 intersects the given Point:
 
 ```java
-geoIntersects('geo', new Point(new Position(4, 0)))
+geoIntersects("geo", new Point(new Position(4, 0)))
 ```
 
 

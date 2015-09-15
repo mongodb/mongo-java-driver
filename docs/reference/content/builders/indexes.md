@@ -89,12 +89,12 @@ hashed("timestamp")
 
 ### Geospatial Indexes
 
-There are also helpers for creating the index keys for the various [geospatial indexes]({{< docsref "manual/applications/geospatial-indexes" >}})
+There are also helpers for creating the index keys for the various [geospatial indexes]({{< docsref "applications/geospatial-indexes" >}})
 supported by mongodb.
 
 #### 2dsphere
 
-To specify a [2dsphere]({{< docsref "manual/core/2dsphere/" >}}) index key, use one of the `geo2dsphere` methods.
+To specify a [2dsphere]({{< docsref "core/2dsphere/" >}}) index key, use one of the `geo2dsphere` methods.
 
 
 This example specifies a 2dsphere index on the `location` field:
@@ -105,7 +105,7 @@ geo2dsphere("location")
 
 #### 2d
 
-To specify a [2d]({{< docsref "manual/core/2d/" >}}) index key, use the `geo2d` method.
+To specify a [2d]({{< docsref "core/2d/" >}}) index key, use the `geo2d` method.
 
 {{% note class="important"%}}
 A 2d index is for data stored as points on a two-dimensional plane and is intended for legacy coordinate pairs used in MongoDB 2.2 and earlier.
