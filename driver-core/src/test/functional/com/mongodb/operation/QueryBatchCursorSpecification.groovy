@@ -411,14 +411,14 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         executeQuery(0)
     }
 
-    private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQueryProtocol(new BsonDocument(), numToReturn, false, false)
+    private QueryResult<Document> executeQuery(int batchSize) {
+        executeQueryProtocol(new BsonDocument(), batchSize, false, false)
     }
 
-    private QueryResult<Document> executeQueryProtocol(BsonDocument query, int numberToReturn, boolean tailable, boolean awaitData) {
+    private QueryResult<Document> executeQueryProtocol(BsonDocument query, int batchSize, boolean tailable, boolean awaitData) {
         def connection = connectionSource.getConnection()
         try {
-            connection.query(getNamespace(), query, null, numberToReturn, 0,
+            connection.query(getNamespace(), query, null, 0, 0, batchSize,
                              false, tailable, awaitData, false, false, false,
                              new DocumentCodec());
         } finally {
