@@ -140,6 +140,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 
     /* Testing */
     tasks.withType(Test) {
+        maxHeapSize = "3g"
         maxParallelForks = 1
 
         systemProperties(
