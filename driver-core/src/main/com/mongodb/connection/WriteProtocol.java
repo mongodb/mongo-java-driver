@@ -125,7 +125,11 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                                                                                                      e),
                                                   connection.getDescription(), 0, commandListener);
                     }
-                    throw e;
+                    if (writeConcern.isAcknowledged()) {
+                        throw e;
+                    } else {
+                        break;
+                    }
                 } catch (RuntimeException e) {
                     if (commandListener != null) {
                         sendCommandFailedEvent(nextMessage, getCommandName(), connection.getDescription(), 0, e, commandListener);
