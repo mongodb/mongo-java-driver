@@ -7,6 +7,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
@@ -241,7 +242,6 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
     // 2.2 does not properly detect cursor not found, so ignoring
     @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
-    @Category(Slow)
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -249,10 +249,8 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
         cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, new DocumentCodec(), connectionSource, connection)
 
-        Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
-
         when:
-        makeAdditionalGetMoreCall(firstBatch.cursor)
+        makeAdditionalGetMoreCall(firstBatch.cursor, connection)
 
         then:
         thrown(MongoCursorNotFoundException)
@@ -429,9 +427,13 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         def connection = connectionSource.getConnection()
         try {
-            connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
+            makeAdditionalGetMoreCall(serverCursor, connection)
         } finally {
             connection.release()
         }
+    }
+
+    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
+        connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
     }
 }
