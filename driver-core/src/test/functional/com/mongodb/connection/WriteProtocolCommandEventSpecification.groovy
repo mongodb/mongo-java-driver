@@ -29,12 +29,14 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 
@@ -84,6 +86,10 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              [new BsonDocument('_id', new BsonInt32(1))]))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'insert',
                                                                        new BsonDocument('ok', new BsonInt32(1)), 0)])
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
     }
 
     @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
@@ -123,6 +129,10 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('documents', new BsonArray([documentFour]))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'insert',
                                                                        new BsonDocument('ok', new BsonInt32(1)), 0)])
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
     }
 
     def 'should deliver started and completed command events when there is a write error'() {
@@ -214,7 +224,11 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                                       .append('upsert', BsonBoolean.TRUE)]))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'update',
                                                                        new BsonDocument('ok', new BsonInt32(1)), 0)])
-    }
+
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)}
 
     def 'should deliver started and completed command events for a single unacknowleded delete'() {
         given:

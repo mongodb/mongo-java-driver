@@ -22,9 +22,12 @@ import com.mongodb.DuplicateKeyException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
@@ -66,9 +69,14 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
         then:
         getCollectionHelper().count() == 1
+
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
     }
 
-    def 'should report write errors on unacknowledged inserts'() {
+    def 'should report write errors on acknowledged inserts'() {
         given:
         def documentOne = new BsonDocument('_id', new BsonInt32(1))
         def documentTwo = new BsonDocument('_id', new BsonInt32(2))
@@ -108,6 +116,11 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
         then:
         getCollectionHelper().count() == 1
+
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
     }
 
     def 'should report write errors on split acknowledged inserts'() {
@@ -130,6 +143,5 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         then:
         thrown(DuplicateKeyException)
         getCollectionHelper().count() == 1
-
     }
 }
