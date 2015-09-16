@@ -79,14 +79,19 @@ public final class Fixture {
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
-            String mongoURIString = getMongoClientURIString();
-            MongoClientOptions.Builder builder = MongoClientOptions.builder();
-            if (System.getProperty("java.version").startsWith("1.6.")) {
-                builder.sslInvalidHostNameAllowed(true);
-            }
-
-            mongoClientURI = new MongoClientURI(mongoURIString, builder);
+            mongoClientURI = getMongoClientURI(MongoClientOptions.builder());
         }
+        return mongoClientURI;
+    }
+
+    public static synchronized MongoClientURI getMongoClientURI(final MongoClientOptions.Builder builder) {
+        MongoClientURI mongoClientURI = null;
+        String mongoURIString = getMongoClientURIString();
+        if (System.getProperty("java.version").startsWith("1.6.")) {
+            builder.sslInvalidHostNameAllowed(true);
+        }
+
+        mongoClientURI = new MongoClientURI(mongoURIString, builder);
         return mongoClientURI;
     }
 
