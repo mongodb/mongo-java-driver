@@ -35,11 +35,13 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
@@ -84,6 +86,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                        new BsonDocument('ok', new BsonInt32(1)), 0)])
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
     def 'should deliver started and completed command events for split unacknowleded inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
