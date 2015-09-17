@@ -37,9 +37,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 public class TestCommandListener implements CommandListener {
     private final List<CommandEvent> events = new ArrayList<CommandEvent>();
-    private int firstRequestId = RequestMessage.getCurrentGlobalId();
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
@@ -59,7 +62,6 @@ public class TestCommandListener implements CommandListener {
 
     public void reset() {
         events.clear();
-        firstRequestId = RequestMessage.getCurrentGlobalId();
     }
 
     public List<CommandEvent> getEvents() {
@@ -92,79 +94,54 @@ public class TestCommandListener implements CommandListener {
         events.add(event);
     }
 
-    public boolean eventsWereDelivered(final List<CommandEvent> expectedEvents) {
-        if (expectedEvents.size() != events.size()) {
-            return false;
-        }
-        int currentlyExpectedRequestId = firstRequestId;
+    public void eventsWereDelivered(final List<CommandEvent> expectedEvents) {
+        assertEquals(expectedEvents.size(), events.size());
+
+        int currentlyExpectedRequestId = 0;
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
             CommandEvent expected = expectedEvents.get(i);
-            if (!actual.getClass().equals(expected.getClass())) {
-                return false;
+
+            assertEquals(expected.getClass(), actual.getClass());
+
+            if (actual instanceof CommandStartedEvent) {
+                currentlyExpectedRequestId = actual.getRequestId();
+            } else {
+                assertEquals(currentlyExpectedRequestId, actual.getRequestId());
             }
 
-            if (actual.getRequestId() != currentlyExpectedRequestId) {
-                return false;
-            }
+            assertEquals(expected.getConnectionDescription(), actual.getConnectionDescription());
 
-            if (!(actual instanceof CommandStartedEvent)) {
-                currentlyExpectedRequestId++;
-            }
-
-            if (!actual.getConnectionDescription().equals(expected.getConnectionDescription())) {
-                return false;
-            }
-
-            if (!actual.getCommandName().equals(expected.getCommandName())) {
-                return false;
-            }
+            assertEquals(expected.getCommandName(), actual.getCommandName());
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
-                if (!isEquivalent((CommandStartedEvent) actual, (CommandStartedEvent) expected)) {
-                    return false;
-                }
+                assertEquivalence((CommandStartedEvent) actual, (CommandStartedEvent) expected);
             } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                if (!isEquivalent((CommandSucceededEvent) actual, (CommandSucceededEvent) expected)) {
-                    return false;
-                }
+                assertEquivalence((CommandSucceededEvent) actual, (CommandSucceededEvent) expected);
             } else if (actual.getClass().equals(CommandFailedEvent.class)) {
-                if (!isEquivalent((CommandFailedEvent) actual, (CommandFailedEvent) expected)) {
-                    return false;
-                }
+                assertEquivalence((CommandFailedEvent) actual, (CommandFailedEvent) expected);
             } else {
                 throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
             }
         }
-
-        return true;
     }
 
-    private boolean isEquivalent(final CommandFailedEvent actual, final CommandFailedEvent expected) {
-        if (!actual.getThrowable().equals(expected.getThrowable())) {
-            return false;
-        }
-        return true;
+    private void assertEquivalence(final CommandFailedEvent actual, final CommandFailedEvent expected) {
+        assertEquals(expected.getThrowable(), actual.getThrowable());
     }
 
-    private boolean isEquivalent(final CommandSucceededEvent actual, final CommandSucceededEvent expected) {
+    private void assertEquivalence(final CommandSucceededEvent actual, final CommandSucceededEvent expected) {
         if (actual.getResponse() == null) {
-            return expected.getResponse() == null;
+            assertNull(expected.getResponse());
+        } else {
+            // ignore extra elements in the actual response
+            assertTrue("Expected response contains elements not in the actual response",
+                       actual.getResponse().entrySet().containsAll(expected.getResponse().entrySet()));
         }
-        // ignore extra elements in the actual response
-        if (!actual.getResponse().entrySet().containsAll(expected.getResponse().entrySet())) {
-            return false;
-        }
-        return true;
     }
 
-    private boolean isEquivalent(final CommandStartedEvent actual, final CommandStartedEvent expected) {
-        if (!actual.getDatabaseName().equals(expected.getDatabaseName())) {
-            return false;
-        }
-        if (!actual.getCommand().equals(expected.getCommand())) {
-            return false;
-        }
-        return true;
+    private void assertEquivalence(final CommandStartedEvent actual, final CommandStartedEvent expected) {
+        assertEquals(expected.getDatabaseName(), actual.getDatabaseName());
+        assertEquals(expected.getCommand(), actual.getCommand());
     }
 }

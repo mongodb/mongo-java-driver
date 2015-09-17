@@ -110,31 +110,30 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
-        def expectedEvents = [
-                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                        new BsonDocument('insert', new BsonString(getCollectionName()))
-                                .append('ordered', BsonBoolean.TRUE)
-                                .append('writeConcern',
-                                new BsonDocument('w', new BsonInt32(0)))
-                                .append('documents',
-                                new BsonArray([documentOne, documentTwo,
-                                               documentThree]))),
-                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                        new BsonDocument('ok', new BsonInt32(1)), 0),
-                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                        new BsonDocument('insert', new BsonString(getCollectionName()))
-                                .append('ordered', BsonBoolean.TRUE)
-                                .append('writeConcern',
-                                new BsonDocument('w', new BsonInt32(0)))
-                                .append('documents', new BsonArray([documentFour]))),
-                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                        new BsonDocument('ok', new BsonInt32(1)), 0)]
-
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered(expectedEvents)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                                .append('ordered', BsonBoolean.TRUE)
+                                                .append('writeConcern',
+                                                        new BsonDocument('w', new BsonInt32(0)))
+                                                .append('documents',
+                                                        new BsonArray([documentOne, documentTwo,
+                                                                       documentThree]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                                          new BsonDocument('ok', new BsonInt32(1)), 0),
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                                .append('ordered', BsonBoolean.TRUE)
+                                                .append('writeConcern',
+                                                        new BsonDocument('w', new BsonInt32(0)))
+                                                .append('documents', new BsonArray([documentFour]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                                          new BsonDocument('ok', new BsonInt32(1)), 0)])
+
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
