@@ -53,7 +53,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
-public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>>, NamespacedOperation {
     private static final String VALUES = "values";
 
     private final MongoNamespace namespace;
@@ -73,6 +73,15 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     /**

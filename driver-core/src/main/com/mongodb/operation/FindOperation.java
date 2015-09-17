@@ -54,7 +54,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>>, NamespacedOperation {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument filter;

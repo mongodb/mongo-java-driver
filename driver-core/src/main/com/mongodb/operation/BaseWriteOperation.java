@@ -55,7 +55,8 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  *
  * @since 3.0
  */
-public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
+public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult>,
+        NamespacedOperation {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;

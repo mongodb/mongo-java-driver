@@ -83,6 +83,7 @@ public class MongoClientOptions {
     private final SocketSettings heartbeatSocketSettings;
     private final SslSettings sslSettings;
     private final List<CommandListener> commandListeners;
+    private final IMongoPerformanceMonitor performanceMonitor;
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
@@ -113,6 +114,7 @@ public class MongoClientOptions {
         socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
         commandListeners = builder.commandListeners;
+        performanceMonitor = builder.performanceMonitor;
 
         connectionPoolSettings = ConnectionPoolSettings.builder()
                                                        .minSize(getMinConnectionsPerHost())
@@ -456,6 +458,16 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the {@code IMongoPerformanceMonitor}. The default is null.
+     *
+     * @return the performance monitor
+     * @since 3.1
+     */
+    public IMongoPerformanceMonitor getPerformanceMonitor() {
+        return performanceMonitor;
+    }
+
+    /**
      * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
      *
      * @return the decoder factory
@@ -616,6 +628,10 @@ public class MongoClientOptions {
         if (!commandListeners.equals(that.commandListeners)) {
             return false;
         }
+        if (performanceMonitor != null ? !performanceMonitor.equals(that.performanceMonitor)
+                                       : that.performanceMonitor != null) {
+            return false;
+        }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
                                            : that.requiredReplicaSetName != null) {
             return false;
@@ -634,6 +650,7 @@ public class MongoClientOptions {
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + commandListeners.hashCode();
+        result = 31 * result + (performanceMonitor != null ? performanceMonitor.hashCode() : 0);
         result = 31 * result + minConnectionsPerHost;
         result = 31 * result + maxConnectionsPerHost;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
@@ -668,6 +685,7 @@ public class MongoClientOptions {
                + ", writeConcern=" + writeConcern
                + ", codecRegistry=" + codecRegistry
                + ", commandListeners=" + commandListeners
+               + ", performanceMonitor=" + performanceMonitor
                + ", minConnectionsPerHost=" + minConnectionsPerHost
                + ", maxConnectionsPerHost=" + maxConnectionsPerHost
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
@@ -737,6 +755,8 @@ public class MongoClientOptions {
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
 
+        private IMongoPerformanceMonitor performanceMonitor = null;
+
         /**
          * Creates a Builder for MongoClientOptions, getting the appropriate system properties for initialization.
          */
@@ -782,6 +802,7 @@ public class MongoClientOptions {
             socketFactory = options.getSocketFactory();
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
             commandListeners = options.commandListeners;
+            performanceMonitor = options.performanceMonitor;
         }
 
         /**
@@ -1011,6 +1032,19 @@ public class MongoClientOptions {
         public Builder addCommandListener(final CommandListener commandListener) {
             notNull("commandListener", commandListener);
             commandListeners.add(commandListener);
+            return this;
+        }
+
+        /**
+         * Sets the performance monitor.
+         *
+         * @param performanceMonitor the performance monitor
+         * @return {@code this}
+         * @see {@code IMongoPerformanceMonitor}
+         * @since 3.1
+         */
+        public Builder performanceMonitor(final IMongoPerformanceMonitor performanceMonitor) {
+            this.performanceMonitor = performanceMonitor;
             return this;
         }
 

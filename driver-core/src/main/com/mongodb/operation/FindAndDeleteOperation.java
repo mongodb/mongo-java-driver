@@ -40,7 +40,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T>, NamespacedOperation {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument filter;

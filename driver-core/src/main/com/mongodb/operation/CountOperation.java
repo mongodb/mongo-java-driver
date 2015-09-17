@@ -40,7 +40,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
  *
  * @since 3.0
  */
-public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long>, NamespacedOperation {
     private final MongoNamespace namespace;
     private BsonDocument filter;
     private BsonValue hint;
@@ -55,6 +55,15 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      */
     public CountOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     /**

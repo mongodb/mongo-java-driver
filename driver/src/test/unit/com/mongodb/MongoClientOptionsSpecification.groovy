@@ -66,6 +66,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .minHeartbeatFrequency(500, MILLISECONDS)
                                                 .build()
         options.sslSettings == SslSettings.builder().build();
+        options.performanceMonitor == null;
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -248,6 +249,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .cursorFinalizerEnabled(false)
                 .dbEncoderFactory(new MyDBEncoderFactory())
                 .addCommandListener(Mock(CommandListener))
+                .performanceMonitor(Mock(IMongoPerformanceMonitor))
                 .build()
 
         then:
@@ -313,6 +315,26 @@ class MongoClientOptionsSpecification extends Specification {
         options.commandListeners[2].is commandListenerThree
     }
 
+    def 'should set performance monitor'() {
+        given:
+        IMongoPerformanceMonitor performanceMonitor = Mock(IMongoPerformanceMonitor)
+
+        when:
+        def options = MongoClientOptions.builder()
+                                        .build()
+
+        then:
+        options.performanceMonitor == null
+
+        when:
+        options = MongoClientOptions.builder()
+                                    .performanceMonitor(performanceMonitor)
+                                    .build()
+
+        then:
+        options.performanceMonitor.is performanceMonitor
+    }
+
     def 'should copy all methods from the existing MongoClientOptions'() {
         given:
         def options = Mock(MongoClientOptions)
@@ -360,9 +382,10 @@ class MongoClientOptionsSpecification extends Specification {
         def expected = ['alwaysUseMBeans', 'codecRegistry', 'commandListeners', 'connectTimeout', 'cursorFinalizerEnabled',
                         'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
                         'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
-                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference',
-                        'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout',
-                        'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'performanceMonitor',
+                        'readPreference', 'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive',
+                        'socketTimeout', 'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier',
+                        'writeConcern']
 
         then:
         actual == expected

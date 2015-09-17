@@ -95,6 +95,8 @@ public class Mongo {
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
 
+    private final IMongoPerformanceMonitor performanceMonitor;
+
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
      *
@@ -296,6 +298,7 @@ public class Mongo {
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+        this.performanceMonitor = options.getPerformanceMonitor();
     }
 
     /**
@@ -756,8 +759,13 @@ public class Mongo {
 
     <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
         ReadBinding binding = getReadBinding(readPreference);
+        long startTime = System.nanoTime();
         try {
-            return operation.execute(binding);
+            T response = operation.execute(binding);
+            if (performanceMonitor != null) {
+                performanceMonitor.track(operation, startTime);
+            }
+            return response;
         } finally {
             binding.release();
         }
@@ -765,8 +773,13 @@ public class Mongo {
 
     <T> T execute(final WriteOperation<T> operation) {
         WriteBinding binding = getWriteBinding();
+        long startTime = System.nanoTime();
         try {
-            return operation.execute(binding);
+            T response = operation.execute(binding);
+            if (performanceMonitor != null) {
+                performanceMonitor.track(operation, startTime);
+            }
+            return response;
         } finally {
             binding.release();
         }
