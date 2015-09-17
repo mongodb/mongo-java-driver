@@ -68,7 +68,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         protocol.execute(connection)
 
         then:
-        getCollectionHelper().count() == 1
+        getCollectionHelper().find(new BsonDocumentCodec()) == [documentOne]
 
         cleanup:
         // force acknowledgement
