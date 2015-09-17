@@ -115,7 +115,7 @@
             {
               "insertOne": {
                 "document": {
-                  "_id": 4,
+                  "_id": 1000,
                   "x": 44
                 }
               }
@@ -134,7 +134,7 @@
               "insert": "test",
               "documents": [
                 {
-                  "_id": 4,
+                  "_id": 1000,
                   "x": 44
                 }
               ],
