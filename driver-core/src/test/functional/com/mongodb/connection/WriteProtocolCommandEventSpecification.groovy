@@ -73,19 +73,22 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('writeConcern',
+                                new BsonDocument('w', new BsonInt32(0)))
+                                .append('documents', new BsonArray(
+                                [new BsonDocument('_id', new BsonInt32(1))]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1)), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('writeConcern',
-                                                                                     new BsonDocument('w', new BsonInt32(0)))
-                                                                             .append('documents', new BsonArray(
-                                                                             [new BsonDocument('_id', new BsonInt32(1))]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                                                       new BsonDocument('ok', new BsonInt32(1)), 0)])
+        commandListener.eventsWereDelivered(expectedEvents)
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
@@ -107,28 +110,31 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('writeConcern',
+                                new BsonDocument('w', new BsonInt32(0)))
+                                .append('documents',
+                                new BsonArray([documentOne, documentTwo,
+                                               documentThree]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1)), 0),
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('writeConcern',
+                                new BsonDocument('w', new BsonInt32(0)))
+                                .append('documents', new BsonArray([documentFour]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1)), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('writeConcern',
-                                                                                     new BsonDocument('w', new BsonInt32(0)))
-                                                                             .append('documents',
-                                                                                     new BsonArray([documentOne, documentTwo,
-                                                                                                    documentThree]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                                                       new BsonDocument('ok', new BsonInt32(1)), 0),
-                                             new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('writeConcern',
-                                                                                     new BsonDocument('w', new BsonInt32(0)))
-                                                                             .append('documents', new BsonArray([documentFour]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                                                       new BsonDocument('ok', new BsonInt32(1)), 0)])
+        commandListener.eventsWereDelivered(expectedEvents)
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
@@ -151,23 +157,23 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         then:
         def e = thrown(DuplicateKeyException)
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('documents', new BsonArray(
-                                                                             [new BsonDocument('_id', new BsonInt32(1))]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                                                       new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('n', new BsonInt32(0))
-                                                                               .append('writeErrors',
-                                                                                       new BsonArray(
-                                                                                               [new BsonDocument()
-                                                                                                        .append('index',
-                                                                                                                new BsonInt32(0))
-                                                                                                        .append('code',
-                                                                                                                new BsonInt32(e.getCode()))
-                                                                                                        .append('errmsg', new BsonString(
-                                                                                                       e.getErrorMessage()))])), 0)])
+
+        and:
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('documents', new BsonArray(
+                                [new BsonDocument('_id', new BsonInt32(1))]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(0))
+                                .append('writeErrors', new BsonArray([
+                                new BsonDocument().append('index', new BsonInt32(0))
+                                        .append('code', new BsonInt32(e.getCode()))
+                                        .append('errmsg', new BsonString(e.getErrorMessage()))])), 0)]
+
+        then:
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
     def 'should deliver started and failed command events when there is a command failure'() {
@@ -189,12 +195,18 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         then:
         def e = thrown(MongoCommandException)
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('documents', new BsonArray(
-                                                                             [new BsonDocument('_id', new BsonInt32(1))]))),
-                                             new CommandFailedEvent(1, connection.getDescription(), 'insert', 0, e)])
+
+        and:
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('documents', new BsonArray(
+                                [new BsonDocument('_id', new BsonInt32(1))]))),
+                new CommandFailedEvent(1, connection.getDescription(), 'insert', 0, e)]
+
+        then:
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
 
@@ -238,20 +250,23 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'delete',
+                        new BsonDocument('delete', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('writeConcern',
+                                new BsonDocument('w', new BsonInt32(0)))
+                                .append('deletes', new BsonArray(
+                                [new BsonDocument('q', filter)
+                                         .append('limit', new BsonInt32(0))]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'delete',
+                        new BsonDocument('ok', new BsonInt32(1)), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'delete',
-                                                                     new BsonDocument('delete', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('writeConcern',
-                                                                                     new BsonDocument('w', new BsonInt32(0)))
-                                                                             .append('deletes', new BsonArray(
-                                                                             [new BsonDocument('q', filter)
-                                                                                      .append('limit', new BsonInt32(0))]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'delete',
-                                                                       new BsonDocument('ok', new BsonInt32(1)), 0)])
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
     def 'should deliver started and completed command events for a single acknowleded insert'() {
@@ -263,19 +278,21 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
+                        new BsonDocument('insert', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('documents', new BsonArray(
+                                [new BsonDocument('_id', new BsonInt32(1))]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1))
+                                .append('n', new BsonInt32(1)), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                                                     new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('documents', new BsonArray(
-                                                                             [new BsonDocument('_id', new BsonInt32(1))]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                                                       new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('n', new BsonInt32(1)),
-                                                                       0)])
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
     def 'should deliver started and completed command events for a single acknowleded delete'() {
@@ -291,20 +308,22 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'delete',
+                        new BsonDocument('delete', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('deletes', new BsonArray(
+                                [new BsonDocument('q', document)
+                                         .append('limit', new BsonInt32(0))]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'delete',
+                        new BsonDocument('ok', new BsonInt32(1))
+                                .append('n', new BsonInt32(1)), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'delete',
-                                                                     new BsonDocument('delete', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('deletes', new BsonArray(
-                                                                             [new BsonDocument('q', document)
-                                                                                      .append('limit', new BsonInt32(0))]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'delete',
-                                                                       new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('n', new BsonInt32(1)),
-                                                                       0)])
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
     def 'should deliver started and completed command events for a single acknowleded update'() {
@@ -316,27 +335,27 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
+        def expectedEvents = [
+                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'update',
+                        new BsonDocument('update', new BsonString(getCollectionName()))
+                                .append('ordered', BsonBoolean.TRUE)
+                                .append('updates', new BsonArray(
+                                [new BsonDocument('q', filter)
+                                         .append('u', update)
+                                         .append('multi', BsonBoolean.TRUE)
+                                         .append('upsert', BsonBoolean.TRUE)]))),
+                new CommandSucceededEvent(1, connection.getDescription(), 'update',
+                        new BsonDocument('ok', new BsonInt32(1))
+                                .append('n', new BsonInt32(1))
+                                .append('upserted',
+                                new BsonArray([new BsonDocument('index',
+                                        new BsonInt32(0)).append('_id', filter.get('_id'))])), 0)]
+
         when:
         protocol.execute(connection)
 
         then:
-        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'update',
-                                                                     new BsonDocument('update', new BsonString(getCollectionName()))
-                                                                             .append('ordered', BsonBoolean.TRUE)
-                                                                             .append('updates', new BsonArray(
-                                                                             [new BsonDocument('q', filter)
-                                                                                      .append('u', update)
-                                                                                      .append('multi', BsonBoolean.TRUE)
-                                                                                      .append('upsert', BsonBoolean.TRUE)]))),
-                                             new CommandSucceededEvent(1, connection.getDescription(), 'update',
-                                                                       new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('n', new BsonInt32(1))
-                                                                               .append('upserted',
-                                                                                       new BsonArray([new BsonDocument('index',
-                                                                                                                       new BsonInt32(0))
-                                                                                                              .append('_id',
-                                                                                                                      filter.get('_id'))])),
-                                                                       0)])
+        commandListener.eventsWereDelivered(expectedEvents)
     }
 
 }
