@@ -7,19 +7,20 @@ title = "What's New"
   pre = "<i class='fa fa-cog'></i>"
 +++
 
-# What's New in 3.0
+# What's New in 3.1
 
-Key features of the 3.0 driver include:
+Key new features of the 3.1 driver include:
 
-- A generic [`MongoCollection`]({{< apiref "com/mongodb/client/MongoCollection" >}}) interface that complies with a new cross-driver 
-[CRUD specification](https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst).
-- A new [asynchronous API](https://github.com/mongodb/mongo-java-driver/tree/master/driver-async) that can leverage either 
-[Netty](http://netty.io/) or Java 7's 
-[AsynchronousSocketChannel](http://docs.oracle .com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html)
-- A new [Codec]({{< ref "bson/codecs.md" >}}) infrastructure that you can use to build high-performance
- encoders and decoders without requiring an intermediate Map instance.
-- A new core driver on top of which you can build alternative or experimental driver APIs
+- Builder support for [updates]({{< ref "builders/updates.md" >}})
+- Builder support for [aggregation stages and accumulators]({{< ref "builders/aggregation.md" >}})
+- Builder support for [geospatial query filters]({{< ref "builders/filters.md#geospatial" >}})
+- Builder support for [index keys]({{< ref "builders/indexes.md" >}})
+- A new [GridFS API]({{< ref "driver/reference/gridfs/index.md" >}}) that is compatible with the CRUD API introduced in the 3.0 
+driver release 
+(not yet available in the async driver)
+- An [event-based API]({{< ref "driver/reference/management/monitoring.md#command-monitoring" >}}) for monitoring all commands that the 
+driver sends to a MongoDB server and all responses received (not yet available in the async driver)
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.0
+See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.1

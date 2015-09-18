@@ -15,7 +15,7 @@ The driver uses [JMX](http://docs.oracle.com/javase/8/docs/technotes/guides/jmx/
 application or end user to monitor various aspects of the driver.
 
 The driver creates MXBean instances of a single type:
-[ConnectionPoolStatisticsMBean](http://api.mongodb.org/java/3.0/com/mongodb/management/ConnectionPoolStatisticsMBean.html).
+[ConnectionPoolStatisticsMBean]({{< apiref "com/mongodb/management/ConnectionPoolStatisticsMBean" >}}).
  The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica 
  set, the driver creates an instance per each non-hidden member of the replica set.
 
