@@ -46,12 +46,26 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
 
     def 'should call onComplete after all data has been consumed'() {
         given:
-        def block = getBlock()
+        SingleResultCallback<Integer> singleResultCallback
         def observer = new TestObserver()
-        observe(block).subscribe(observer)
+        observe(new Block<SingleResultCallback<Integer>>() {
+            @Override
+            void apply(final SingleResultCallback<Integer> callback) {
+                singleResultCallback = callback
+            }
+        }).subscribe(observer)
 
         when:
-        observer.requestMore(10)
+        observer.requestMore(5)
+        observer.requestMore(5)
+
+        then:
+        observer.assertNoErrors()
+        observer.assertReceivedOnNext([])
+        observer.assertNoTerminalEvent()
+
+        when:
+        singleResultCallback.onResult(1, null)
 
         then:
         observer.assertNoErrors()

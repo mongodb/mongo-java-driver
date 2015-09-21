@@ -25,6 +25,10 @@ class FlatteningSingleResultCallbackSubscription<TResult> extends AbstractSubscr
 
     private final Block<SingleResultCallback<List<TResult>>> block;
 
+    /* protected by `this` */
+    private boolean completed;
+    /* protected by `this` */
+
     public FlatteningSingleResultCallbackSubscription(final Block<SingleResultCallback<List<TResult>>> block,
                                                       final Observer<? super TResult> observer) {
         super(observer);
@@ -40,9 +44,17 @@ class FlatteningSingleResultCallbackSubscription<TResult> extends AbstractSubscr
                 if (t != null) {
                     onError(t);
                 } else {
+                    synchronized (FlatteningSingleResultCallbackSubscription.this) {
+                        completed = true;
+                    }
                     addToQueue(result);
                 }
             }
         });
+    }
+
+    @Override
+    boolean checkCompleted() {
+        return completed;
     }
 }

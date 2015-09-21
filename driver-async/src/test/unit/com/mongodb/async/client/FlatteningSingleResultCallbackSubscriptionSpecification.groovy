@@ -43,15 +43,28 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
         1 * block.apply(_)
     }
 
-
     def 'should call onComplete after all data has been consumed'() {
         given:
-        def block = getBlock()
+        SingleResultCallback<List> listSingleResultCallback
         def observer = new TestObserver()
-        observeAndFlatten(block).subscribe(observer)
+        observeAndFlatten(new Block<SingleResultCallback<List>>() {
+            @Override
+            void apply(final SingleResultCallback<List> callback) {
+                listSingleResultCallback = callback
+            }
+        }).subscribe(observer)
 
         when:
-        observer.requestMore(10)
+        observer.requestMore(5)
+        observer.requestMore(5)
+
+        then:
+        observer.assertNoErrors()
+        observer.assertReceivedOnNext([])
+        observer.assertNoTerminalEvent()
+
+        when:
+        listSingleResultCallback.onResult([1, 2, 3, 4], null)
 
         then:
         observer.assertNoErrors()

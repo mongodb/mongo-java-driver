@@ -93,9 +93,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     void postTerminate() {
     }
 
-    boolean checkCompleted() {
-        return true;
-    }
+    abstract boolean checkCompleted();
 
     boolean isTerminated() {
         return isTerminated;

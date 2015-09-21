@@ -23,6 +23,10 @@ class SingleResultCallbackSubscription<TResult> extends AbstractSubscription<TRe
 
     private final Block<SingleResultCallback<TResult>> block;
 
+    /* protected by `this` */
+    private boolean completed;
+    /* protected by `this` */
+
     public SingleResultCallbackSubscription(final Block<SingleResultCallback<TResult>> block,
                                             final Observer<? super TResult> observer) {
         super(observer);
@@ -38,9 +42,17 @@ class SingleResultCallbackSubscription<TResult> extends AbstractSubscription<TRe
                 if (t != null) {
                     onError(t);
                 } else {
+                    synchronized (SingleResultCallbackSubscription.this) {
+                        completed = true;
+                    }
                     addToQueue(result);
                 }
             }
         });
+    }
+
+    @Override
+    boolean checkCompleted() {
+        return completed;
     }
 }
