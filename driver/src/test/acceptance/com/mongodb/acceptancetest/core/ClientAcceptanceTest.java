@@ -16,23 +16,21 @@
 
 package com.mongodb.acceptancetest.core;
 
-import com.mongodb.MongoClient;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Documents the basic functionality available for the MongoClient via the Java driver.
@@ -48,37 +46,10 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldListDatabasesFromDatabase() {
-        database.drop();
-
-        List<Document> databases = client.listDatabases().into(new ArrayList<Document>());
-        int size = databases.size();
-
-        database.createCollection(getCollectionName());
-        databases = client.listDatabases().into(new ArrayList<Document>());
-        assertThat(databases.size(), is(greaterThan(size)));
-    }
-
-
-    @Test
-    public void shouldListDatabasesNamesFromDatabase() {
-        database.drop();
-
-        List<String> databases = client.listDatabaseNames().into(new ArrayList<String>());
-        int size = databases.size();
-
-        database.createCollection(getCollectionName());
-        databases = client.listDatabaseNames().into(new ArrayList<String>());
-        assertThat(databases.size(), is(greaterThan(size)));
-        assertTrue(databases.contains(getDatabaseName()));
-    }
-
-    @Test
-    public void shouldBeAbleToListAllTheDatabasesAvailable() {
-        MongoClient mongoClient = getMongoClient();
-        MongoDatabase firstDatabase = mongoClient.getDatabase("FirstNewDatabase");
-        MongoDatabase secondDatabase = mongoClient.getDatabase("SecondNewDatabase");
-        MongoDatabase otherDatabase = mongoClient.getDatabase("DatabaseThatDoesNotExistYet");
+    public void shouldBeAbleToListAllTheDatabaseNamesAvailable() {
+        MongoDatabase firstDatabase = client.getDatabase("FirstNewDatabase");
+        MongoDatabase secondDatabase = client.getDatabase("SecondNewDatabase");
+        MongoDatabase otherDatabase = client.getDatabase("DatabaseThatDoesNotExistYet");
 
         try {
             // given
@@ -86,7 +57,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
             secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
 
             //when
-            List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
+            List<String> databaseNames = client.listDatabaseNames().into(new ArrayList<String>());
 
             //then
             assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));
@@ -95,6 +66,40 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
             //tear down
             firstDatabase.drop();
             secondDatabase.drop();
+        }
+    }
+
+    @Test
+    public void shouldListDatabase() {
+        List<Document> databases = client.listDatabases().into(new ArrayList<Document>());
+
+        database.createCollection(getCollectionName());
+        databases = client.listDatabases().into(new ArrayList<Document>());
+        assertThat(databases, new DatabaseNameMatcher(getDatabaseName()));
+    }
+
+    private static final class DatabaseNameMatcher extends BaseMatcher<List<Document>> {
+
+        private final String name;
+
+        DatabaseNameMatcher(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean matches(final Object item) {
+            List<Document> databases = (List<Document>) item;
+            for (Document cur : databases) {
+                if (cur.get("name").equals(name)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void describeTo(final Description description) {
+            description.appendText("Document containing a name of " + name);
         }
     }
 }
