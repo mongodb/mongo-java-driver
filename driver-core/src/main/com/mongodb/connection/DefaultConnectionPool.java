@@ -478,25 +478,30 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void close(final UsageTrackingInternalConnection connection) {
+            if (!closed) {
+                connectionPoolListener.connectionRemoved(new ConnectionEvent(getId(connection)));
+            }
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
+                                  getReasonForClosing(connection)));
+            }
+            connection.close();
+        }
+
+        private String getReasonForClosing(final UsageTrackingInternalConnection connection) {
             String reason;
-            if (fromPreviousGeneration(connection)) {
+            if (connection.isClosed()) {
+                reason = "there was a socket exception raised by this connection";
+            } else if (fromPreviousGeneration(connection)) {
                 reason = "there was a socket exception raised on another connection from this pool";
             } else if (pastMaxLifeTime(connection)) {
                 reason = "it is past its maximum allowed life time";
             } else if (pastMaxIdleTime(connection)) {
                 reason = "it is past its maximum allowed idle time";
-            } else if (connection.isClosed()) {
-                reason = "the underlying connection was closed";
             } else {
                 reason = "the pool has been closed";
             }
-            if (!closed) {
-                connectionPoolListener.connectionRemoved(new ConnectionEvent(getId(connection)));
-            }
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(), reason));
-            }
-            connection.close();
+            return reason;
         }
 
         @Override
