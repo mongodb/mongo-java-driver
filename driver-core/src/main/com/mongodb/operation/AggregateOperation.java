@@ -59,7 +59,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.server.release 2.2
  * @since 3.0
  */
-public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>>, NamespacedOperation {
     private static final String RESULT = "result";
     private static final String FIRST_BATCH = "firstBatch";
 
@@ -82,6 +82,15 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     /**

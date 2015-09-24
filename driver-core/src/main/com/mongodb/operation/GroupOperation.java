@@ -49,7 +49,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>>, NamespacedOperation {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BsonJavaScript reduceFunction;
@@ -74,6 +74,15 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
         this.initial = notNull("initial", initial);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     /**
