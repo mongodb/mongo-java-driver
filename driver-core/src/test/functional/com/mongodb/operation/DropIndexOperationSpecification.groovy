@@ -21,6 +21,7 @@ import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -28,7 +29,7 @@ import org.junit.experimental.categories.Category
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 
-class DropIndexesOperationSpecification extends OperationFunctionalSpecification {
+class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should not error when dropping non-existent index on non-existent collection'() {
         when:
@@ -84,8 +85,8 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
     def 'should drop existing index by keys'() {
-        def keys = new BsonDocument('theField', new BsonInt32(1))
         given:
+        def keys = new BsonDocument('theField', new BsonInt32(1))
         collectionHelper.createIndex(keys)
 
         when:
@@ -100,8 +101,40 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     @Category(Async)
     def 'should drop existing index asynchronously'() {
         given:
-        collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
-        def operation = new DropIndexOperation(getNamespace(), 'theField_1');
+        def keys = new BsonDocument('theField', new BsonInt32(1))
+        collectionHelper.createIndex(keys)
+        def operation = new DropIndexOperation(getNamespace(), keys);
+
+        when:
+        executeAsync(operation)
+        List<Document> indexes = getIndexes()
+
+        then:
+        indexes.size() == 1
+        indexes[0].name == '_id_'
+    }
+
+
+    def 'should drop existing index by key when using BsonInt64'() {
+        given:
+        def keys = new BsonDocument('theField', new BsonInt32(1))
+        collectionHelper.createIndex(keys)
+
+        when:
+        new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1))).execute(getBinding())
+        List<Document> indexes = getIndexes()
+
+        then:
+        indexes.size() == 1
+        indexes[0].name == '_id_'
+    }
+
+    @Category(Async)
+    def 'should drop existing index by key when using BsonInt64 asynchronously'() {
+        given:
+        def keys = new BsonDocument('theField', new BsonInt32(1))
+        collectionHelper.createIndex(keys)
+        def operation = new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1)));
 
         when:
         executeAsync(operation)

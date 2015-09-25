@@ -17,7 +17,7 @@
 package com.mongodb.operation;
 
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
+import org.bson.BsonNumber;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
@@ -36,8 +36,8 @@ final class IndexHelper {
             }
             indexName.append(keyNames).append('_');
             BsonValue ascOrDescValue = index.get(keyNames);
-            if (ascOrDescValue instanceof BsonInt32) {
-                indexName.append(((BsonInt32) ascOrDescValue).getValue());
+            if (ascOrDescValue instanceof BsonNumber) {
+                indexName.append(((BsonNumber) ascOrDescValue).intValue());
             } else if (ascOrDescValue instanceof BsonString) {
                 indexName.append(((BsonString) ascOrDescValue).getValue().replace(' ', '_'));
             }
