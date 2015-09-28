@@ -336,6 +336,25 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testGroupWithKeyFunction()
+            throws MongoException {
+
+        DBCollection c = collection;
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "a" ).get() );
+        c.save( BasicDBObjectBuilder.start().add( "x" , "b" ).get() );
+
+        GroupCommand groupCommand = new GroupCommand(collection, "function(doc){ return {x: doc.x} }", null,
+                new BasicDBObject("count", 0), "function(o , p){ p.count++; }",  null);
+
+        DBObject g = c.group(groupCommand);
+
+        List l = (List)g;
+        assertEquals( 2 , l.size() );
+    }
+
+    @Test
     public void testSet()
         throws MongoException {
 
@@ -470,7 +489,7 @@ public class JavaClientTest extends TestCase {
 
         MapReduceOutput out =
             c.mapReduce( "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }" ,
-                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" , 
+                         "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}" ,
                          null, MapReduceCommand.OutputType.INLINE, null, ReadPreference.primaryPreferred());
 
         Map<String,Integer> m = new HashMap<String,Integer>();
@@ -592,7 +611,7 @@ public class JavaClientTest extends TestCase {
         }
 
         DBCollection c = collection;
-        
+
         DBObject foo = new BasicDBObject( "name" , "foo" ) ;
         DBObject bar = new BasicDBObject( "name" , "bar" ) ;
         DBObject baz = new BasicDBObject( "name" , "foo" ) ;
@@ -602,31 +621,31 @@ public class JavaClientTest extends TestCase {
         c.insert( foo );
         c.insert( bar );
         c.insert( baz );
-        
+
         DBObject projFields = new BasicDBObject( "name", 1 );
         projFields.put("count", 1);
-        
+
         DBObject group = new BasicDBObject( );
         group.put("_id", "$name" );
         group.put( "docsPerName", new BasicDBObject( "$sum", 1 ));
         group.put( "countPerName", new BasicDBObject( "$sum", "$count" ));
-        
+
         AggregationOutput out = c.aggregate( new BasicDBObject( "$project", projFields ), new BasicDBObject( "$group", group) );
-        
+
         Map<String, DBObject> results = new HashMap<String, DBObject>();
         for(DBObject result : out.results())
             results.put((String)result.get("_id"), result);
-        
+
         DBObject fooResult = results.get("foo");
         assertNotNull(fooResult);
         assertEquals(2, fooResult.get("docsPerName"));
         assertEquals(12, fooResult.get("countPerName"));
-        
+
         DBObject barResult = results.get("bar");
         assertNotNull(barResult);
         assertEquals(1, barResult.get("docsPerName"));
         assertEquals(2, barResult.get("countPerName"));
-        
+
        DBObject aggregationCommand = out.getCommand();
        assertNotNull(aggregationCommand);
        assertEquals(c.getName(), aggregationCommand.get("aggregate"));
