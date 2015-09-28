@@ -387,6 +387,24 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
+    def 'should group using a key function in a GroupCommand'() {
+        given:
+        insertDataForGroupTests()
+        GroupCommand command = new GroupCommand(collection,
+                'function(doc){ return {x: doc.x} }',
+                null,
+                ~['count': 0],
+                'function(o , p){ p.count++; }',
+                null);
+
+        when:
+        DBObject result = collection.group(command);
+
+        then:
+        result.size() == 3
+        that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
+    }
+
     def 'should group and count only those documents that fulfull the given condition'() {
         given:
         insertDataForGroupTests()

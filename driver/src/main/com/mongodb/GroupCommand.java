@@ -20,6 +20,8 @@ import com.mongodb.operation.GroupOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * This class groups the argument for a group operation and can build the underlying command object
  *
@@ -28,6 +30,7 @@ import org.bson.BsonJavaScript;
 public class GroupCommand {
     private final String collectionName;
     private final DBObject keys;
+    private final String keyf;
     private final DBObject condition;
     private final DBObject initial;
     private final String reduce;
@@ -45,12 +48,38 @@ public class GroupCommand {
      */
     public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
                         final DBObject initial, final String reduce, final String finalize) {
+        notNull("collection", collection);
         this.collectionName = collection.getName();
         this.keys = keys;
         this.condition = condition;
         this.initial = initial;
         this.reduce = reduce;
         this.finalize = finalize;
+        this.keyf = null;
+    }
+
+    /**
+     * Creates a new group command.
+     *
+     * @param collection the collection from which to perform the group by operation.
+     * @param keyf       the function that creates a "key object" for use as the grouping key
+     * @param condition  optional - a filter to determine which documents in the collection to process.
+     * @param initial    the initial state of the aggregation result document.
+     * @param reduce     a JavaScript aggregation function that operates on the documents during the grouping operation.
+     * @param finalize   optional - a JavaScript function that runs each item in the result set before group returns the final value.
+     *
+     * @since 3.1
+     */
+    public GroupCommand(final DBCollection collection, final String keyf, final DBObject condition,
+                        final DBObject initial, final String reduce, final String finalize) {
+        notNull("collection", collection);
+        this.collectionName = collection.getName();
+        this.keyf = notNull("keyf", keyf);
+        this.condition = condition;
+        this.initial = initial;
+        this.reduce = reduce;
+        this.finalize = finalize;
+        this.keys = null;
     }
 
     /**
@@ -59,10 +88,18 @@ public class GroupCommand {
      * @return a DBObject containing the group command as a MongoDB document
      */
     public DBObject toDBObject() {
-        DBObject args = new BasicDBObject("ns", collectionName).append("key", keys)
-                                                               .append("cond", condition)
+        DBObject args = new BasicDBObject("ns", collectionName).append("cond", condition)
                                                                .append("$reduce", reduce)
                                                                .append("initial", initial);
+
+        if (keys != null) {
+            args.put("key", keys);
+        }
+
+        if (keyf != null) {
+            args.put("$keyf", keyf);
+        }
+
         if (finalize != null) {
             args.put("finalize", finalize);
         }
@@ -84,6 +121,10 @@ public class GroupCommand {
 
         if (keys != null) {
             operation.key(new BsonDocumentWrapper<DBObject>(keys, codec));
+        }
+
+        if (keyf != null) {
+            operation.keyFunction(new BsonJavaScript(keyf));
         }
 
         if (condition != null) {
