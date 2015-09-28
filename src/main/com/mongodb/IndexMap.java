@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
-public abstract class IndexMap {
+abstract class IndexMap {
 
     /**
      * Create an empty index map.
