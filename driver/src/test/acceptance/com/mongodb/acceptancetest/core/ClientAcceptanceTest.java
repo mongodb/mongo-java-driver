@@ -87,6 +87,7 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public boolean matches(final Object item) {
             List<Document> databases = (List<Document>) item;
             for (Document cur : databases) {
