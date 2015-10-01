@@ -16,8 +16,11 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.selector.ServerAddressSelector;
 
@@ -31,7 +34,7 @@ public final class ServerHelper {
         checkPool(address, getAsyncCluster());
     }
 
-    public static void waitForLastCheckin(final ServerAddress address, final Cluster cluster) {
+    public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
         DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address));
         DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
@@ -53,6 +56,19 @@ public final class ServerHelper {
         }
     }
 
+    public static void waitForRelease(final AsyncConnectionSource connectionSource, final int expectedCount) {
+        long startTime = System.currentTimeMillis();
+        while (connectionSource.getCount() > expectedCount) {
+            try {
+                sleep(10);
+                if (System.currentTimeMillis() > startTime + ClusterFixture.TIMEOUT * 1000) {
+                    throw new MongoTimeoutException("Timed out waiting for ConnectionSource count to drop to " + expectedCount);
+                }
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Interrupted", e);
+            }
+        }
+    }
 
     private ServerHelper() {
     }

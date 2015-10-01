@@ -202,7 +202,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                                                                                         source, connection);
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(), createCommandDecoder(),
-                                connection, asyncTransformer(source),
+                                connection, asyncTransformer(source, connection),
                                 new SingleResultCallback<AsyncBatchCursor<T>>() {
                                     @Override
                                     public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {
@@ -224,7 +224,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         } else {
                                             wrappedCallback.onResult(new ProjectingAsyncBatchCursor(
                                                     new AsyncQueryBatchCursor<BsonDocument>(result, 0,
-                                                            batchSize, new BsonDocumentCodec(), source)
+                                                            batchSize, new BsonDocumentCodec(), source, connection)
                                             ), null);
                                         }
                                     }
@@ -243,11 +243,12 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         return new MongoNamespace(databaseName, "$cmd.listCollections");
     }
 
-    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source) {
+    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
+                                                                         final AsyncConnection connection) {
         return new Function<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
-                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, source, batchSize);
+                return cursorDocumentToAsyncBatchCursor(result.getDocument("cursor"), decoder, source, connection, batchSize);
             }
         };
     }

@@ -47,11 +47,11 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder) {
-        this(firstBatch, limit, batchSize, decoder, null);
+        this(firstBatch, limit, batchSize, decoder, null, null);
     }
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource) {
+                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
         this.namespace = firstBatch.getNamespace();
         this.firstBatch = firstBatch;
         this.limit = limit;
@@ -60,6 +60,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         this.cursor = firstBatch.getCursor();
         if (this.cursor != null) {
             notNull("connectionSource", connectionSource);
+            notNull("connection", connection);
         }
         if (connectionSource != null) {
             this.connectionSource = connectionSource.retain();
@@ -68,7 +69,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         }
         this.count += firstBatch.getResults().size();
         if (limitReached()) {
-            killCursor();
+             killCursor(connection);
         }
     }
 
@@ -76,7 +77,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     public void close() {
         if (!closed) {
             closed = true;
-            killCursor();
+            killCursor(null);
         }
     }
 
@@ -133,30 +134,40 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         });
     }
 
-    private void killCursor() {
+    private void killCursor(final AsyncConnection connection) {
         if (cursor != null) {
             final ServerCursor localCursor = cursor;
             final AsyncConnectionSource localConnectionSource = connectionSource;
             cursor = null;
             connectionSource = null;
-            localConnectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
-                @Override
-                public void onResult(final AsyncConnection connection, final Throwable connectionException) {
-                    if (connection != null) {
-                        connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
-                            @Override
-                            public void onResult(final Void result, final Throwable t) {
-                                connection.release();
-                                localConnectionSource.release();
-                            }
-                        });
+            if (connection != null) {
+                connection.retain();
+                killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor, localConnectionSource);
+            } else {
+                localConnectionSource.getConnection(new SingleResultCallback<AsyncConnection>() {
+                    @Override
+                    public void onResult(final AsyncConnection connection, final Throwable connectionException) {
+                        if (connectionException == null) {
+                            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor, localConnectionSource);
+                        }
                     }
-                }
-            });
+                });
+            }
         } else if (connectionSource != null) {
             connectionSource.release();
             connectionSource = null;
         }
+    }
+
+    private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor,
+                                                                       final AsyncConnectionSource localConnectionSource) {
+        connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                connection.release();
+                localConnectionSource.release();
+            }
+        });
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
@@ -181,7 +192,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                 cursor = result.getCursor();
                 count += result.getResults().size();
                 if (limitReached()) {
-                    killCursor();
+                    killCursor(connection);
                 }
                 connection.release();
                 if (result.getResults().isEmpty()) {

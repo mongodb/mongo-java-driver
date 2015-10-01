@@ -141,7 +141,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
-                            connection, asyncTransformer(source, connection),
+                            connection, asyncTransformer(connection.getDescription()),
                             releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
@@ -167,13 +167,12 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         };
     }
 
-    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
-                                                                         final AsyncConnection connection) {
+    private Function<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final ConnectionDescription connectionDescription) {
         return new Function<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
-                QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncQueryBatchCursor<T>(queryResult, 0, 0, null, source);
+                QueryResult<T> queryResult = createQueryResult(result, connectionDescription);
+                return new AsyncQueryBatchCursor<T>(queryResult, 0, 0, null);
             }
         };
     }

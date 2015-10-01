@@ -136,7 +136,8 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         return new Function<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
-                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, source);
+                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder, source,
+                                                    connection);
             }
         };
     }

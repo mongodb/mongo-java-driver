@@ -431,7 +431,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize, decoder, source), null);
+                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize, decoder, source,
+                                                                                      connection),
+                                                         null);
                             }
                         }
                     });

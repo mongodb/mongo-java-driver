@@ -134,7 +134,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                            CommandResultDocumentCodec.create(decoder, "firstBatch"), connection, asyncTransformer(source),
+                            CommandResultDocumentCodec.create(decoder, "firstBatch"), connection, asyncTransformer(source, connection),
                             releasingCallback(errorHandlingCallback(callback), source, connection));
                 }
             }
@@ -156,7 +156,8 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         };
     }
 
-    private Function<BsonDocument, List<AsyncBatchCursor<T>>> asyncTransformer(final AsyncConnectionSource source) {
+    private Function<BsonDocument, List<AsyncBatchCursor<T>>> asyncTransformer(final AsyncConnectionSource source,
+                                                                               final AsyncConnection connection) {
         return new Function<BsonDocument, List<AsyncBatchCursor<T>>>() {
             @Override
             public List<AsyncBatchCursor<T>> apply(final BsonDocument result) {
@@ -164,8 +165,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new AsyncQueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           source.getServerDescription().getAddress()),
-                                                             0, getBatchSize(), decoder, source
-                    ));
+                                                             0, getBatchSize(), decoder, source, connection));
                 }
                 return cursors;
             }
