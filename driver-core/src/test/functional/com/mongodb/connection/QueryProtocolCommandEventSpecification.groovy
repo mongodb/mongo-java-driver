@@ -177,11 +177,11 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        def queryResult = protocol.execute(connection)
 
         then:
         def response = new BsonDocument('cursor',
-                                        new BsonDocument('id', new BsonInt64(0))
+                                        new BsonDocument('id', new BsonInt64(queryResult.cursor ? queryResult.cursor.id : 0L))
                                                 .append('ns', new BsonString(getNamespace().getFullName()))
                                                 .append('firstBatch', new BsonArray()))
                 .append('ok', new BsonDouble(1.0))
