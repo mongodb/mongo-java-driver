@@ -41,6 +41,7 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
 import static com.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
 import static com.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
+import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
@@ -136,6 +137,11 @@ final class DescriptionHelper {
         }
 
         if (isReplicaSetMember(isMasterResult)) {
+
+            if (isMasterResult.getBoolean("hidden", BsonBoolean.FALSE).getValue()) {
+                return REPLICA_SET_OTHER;
+            }
+
             if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_PRIMARY;
             }

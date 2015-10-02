@@ -263,8 +263,11 @@ class DescriptionHelperSpecification extends Specification {
     }
 
     def 'server description should reflect ismaster result from other'() {
+        given:
+        def serverAddressOfHidden = new ServerAddress('localhost', 27020)
+
         expect:
-        createServerDescription(serverAddress,
+        createServerDescription(serverAddressOfHidden,
                                 parse('{' +
                                       '"setName" : "replset",' +
                                       '"setVersion" : 1,' +
@@ -276,7 +279,7 @@ class DescriptionHelperSpecification extends Specification {
                                       '"localhost:27017"' +
                                       '],' +
                                       '"arbiters" : [' +
-                                      '"localhost:27020"' +
+                                      '"localhost:27021"' +
                                       '],' +
                                       '"primary" : "localhost:27017",' +
                                       '"arbiterOnly" : false,' +
@@ -291,7 +294,7 @@ class DescriptionHelperSpecification extends Specification {
                                       '}'), serverVersion, roundTripTime) ==
         ServerDescription.builder()
                          .ok(true)
-                         .address(serverAddress)
+                         .address(serverAddressOfHidden)
                          .state(ServerConnectionState.CONNECTED)
                          .version(serverVersion)
                          .maxWireVersion(3)
@@ -301,9 +304,57 @@ class DescriptionHelperSpecification extends Specification {
                          .primary('localhost:27017')
                          .canonicalAddress('localhost:27020')
                          .hosts(['localhost:27017', 'localhost:27018', 'localhost:27019'] as Set)
-                         .arbiters(['localhost:27020'] as Set)
+                         .arbiters(['localhost:27021'] as Set)
                          .build()
     }
+
+    def 'server description should reflect ismaster result from hidden'() {
+        given:
+        def serverAddressOfHidden = new ServerAddress('localhost', 27020)
+
+        expect:
+        createServerDescription(serverAddressOfHidden,
+                                parse('{' +
+                                      '"setName" : "replset",' +
+                                      '"setVersion" : 1,' +
+                                      '"ismaster" : false,' +
+                                      '"secondary" : true,' +
+                                      '"hidden" : true,' +
+                                      '"hosts" : [' +
+                                      '"localhost:27019",' +
+                                      '"localhost:27018",' +
+                                      '"localhost:27017"' +
+                                      '],' +
+                                      '"arbiters" : [' +
+                                      '"localhost:27021"' +
+                                      '],' +
+                                      '"primary" : "localhost:27017",' +
+                                      '"arbiterOnly" : false,' +
+                                      '"me" : "localhost:27020",' +
+                                      '"maxBsonObjectSize" : 16777216,' +
+                                      '"maxMessageSizeBytes" : 48000000,' +
+                                      '"maxWriteBatchSize" : 1000,' +
+                                      '"localTime" : ISODate("2015-03-04T23:27:55.568Z"),' +
+                                      '"maxWireVersion" : 3,' +
+                                      '"minWireVersion" : 0,' +
+                                      '"ok" : 1' +
+                                      '}'), serverVersion, roundTripTime) ==
+        ServerDescription.builder()
+                         .ok(true)
+                         .address(serverAddressOfHidden)
+                         .state(ServerConnectionState.CONNECTED)
+                         .version(serverVersion)
+                         .maxWireVersion(3)
+                         .maxDocumentSize(16777216)
+                         .type(ServerType.REPLICA_SET_OTHER)
+                         .setName('replset')
+                         .primary('localhost:27017')
+                         .canonicalAddress('localhost:27020')
+                         .hosts(['localhost:27017', 'localhost:27018', 'localhost:27019'] as Set)
+                         .arbiters(['localhost:27021'] as Set)
+                         .build()
+    }
+
 
     def 'server description should reflect ismaster result from ghost'() {
         expect:
