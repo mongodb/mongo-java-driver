@@ -21,14 +21,29 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'mongo-java-driver'
 
-task init() << {
-    new File("${project.rootDir}/${archivesBaseName}/build/classes/main").mkdirs()
+idea {
+    module {
+        sourceDirs = [] // Ignore in idea (prevents intellij crashing due to sources outside project dir)
+}
 }
 
-def getJar(name) {
-    project(name).jar.archivePath
+// dependencies copied from driver-core
+dependencies {
+    compile "io.netty:netty-buffer:$nettyVersion", optional
+    compile "io.netty:netty-transport:$nettyVersion", optional
+    compile "io.netty:netty-handler:$nettyVersion", optional
 }
 
+// srcDirs copied as well, so everything is compiled twice
+sourceSets {
+    main {
+        java {
+            srcDirs = ["$rootDir/driver/src/main", "$rootDir/driver-core/src/main", "$rootDir/bson/src/main"]
+        }
+    }
+}
+
+// copied from driver-core
 jar {
     manifest {
         instruction 'Import-Package',
@@ -44,16 +59,7 @@ jar {
                     'io.netty.*;resolution:=optional',
                     'org.slf4j;resolution:=optional'
     }
-    from(zipTree(getJar(":driver-core"))) {
-        exclude("META-INF")
     }
-    from(zipTree(getJar(":driver"))) {
-        exclude("META-INF")
-    }
-    from(zipTree(getJar(":bson"))) {
-        exclude("META-INF")
-    }
-}.dependsOn("init")
 
 modifyPom {
     project {
