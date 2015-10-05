@@ -273,6 +273,11 @@ class ServerMonitor {
 
     private static ServerType getServerType(final BasicDBObject isMasterResult) {
         if (isReplicaSetMember(isMasterResult)) {
+
+            if (isMasterResult.getBoolean("hidden", false)) {
+                return ServerType.ReplicaSetOther;
+            }
+
             if (isMasterResult.getBoolean("ismaster", false)) {
                 return ServerType.ReplicaSetPrimary;
             }

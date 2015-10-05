@@ -159,6 +159,25 @@ class ServerMonitorSpecification extends FunctionalSpecification {
                                           .build());
     }
 
+    def 'should report correct server type'() {
+        expect:
+        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
+                                            .append('hidden', true)
+                                            .append('secondary', true)) == ServerType.ReplicaSetOther
+        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
+                                            .append('ismaster', true)) == ServerType.ReplicaSetPrimary
+        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
+                                            .append('secondary', true)) == ServerType.ReplicaSetSecondary
+        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
+                                            .append('arbiterOnly', true)) == ServerType.ReplicaSetArbiter
+        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
+                                            .append('hosts', ['server1:27017'])) == ServerType.ReplicaSetOther
+        ServerMonitor.getServerType(new BasicDBObject('isreplicaset', true)) == ServerType.ReplicaSetGhost
+        ServerMonitor.getServerType(new BasicDBObject()) == ServerType.StandAlone
+        ServerMonitor.getServerType(new BasicDBObject('msg', 'isdbgrid')) == ServerType.ShardRouter
+        ServerMonitor.getServerType(new BasicDBObject('msg', 'whatever')) == ServerType.StandAlone
+    }
+
     def initializeServerMonitor(ServerAddress address) {
         def options = new MongoOptions()
         options.connectTimeout = 1000
