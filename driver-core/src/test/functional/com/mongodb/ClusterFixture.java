@@ -49,11 +49,13 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt32;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -104,6 +106,22 @@ public final class ClusterFixture {
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
         return getConnectedServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+    }
+
+    public static Document getBuildInfo() {
+        return new CommandWriteOperation<Document>("admin", new BsonDocument("buildInfo", new BsonInt32(1)), new DocumentCodec())
+                .execute(getBinding());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean isEnterpriseServer() {
+        Document buildInfo = getBuildInfo();
+        List<String> modules = Collections.emptyList();
+        if (buildInfo.containsKey("modules")) {
+            modules = (List<String>) buildInfo.get("modules");
+        }
+
+        return modules.contains("enterprise");
     }
 
     private static ServerVersion getConnectedServerVersion() {

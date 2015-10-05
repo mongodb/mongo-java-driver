@@ -29,6 +29,7 @@ import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Aggregates.limit
+import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Accumulators.max
 import static com.mongodb.client.model.Accumulators.min
@@ -70,6 +71,12 @@ class AggregatesSpecification extends Specification {
     def 'should render $limit'() {
         expect:
         toBson(limit(5)) == parse('{ $limit : 5 }')
+    }
+
+    def 'should render $lookup'() {
+        expect:
+        toBson(lookup('from', 'localField', 'foreignField', 'as')) == parse('''{ $lookup : { from: "from", localField: "localField",
+            foreignField: "foreignField", as: "as" } }''')
     }
 
     def 'should render $skip'() {

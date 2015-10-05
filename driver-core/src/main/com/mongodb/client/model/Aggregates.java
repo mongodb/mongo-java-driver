@@ -92,6 +92,27 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a $lookup pipeline stage for the specified filter
+     *
+     * <p>Note: Available in MongoDB Enterprise only.</p>
+     *
+     * @param from the name of the collection in the same database to perform the join with.
+     * @param localField specifies the field from the local collection to match values against.
+     * @param foreignField specifies the field in the from collection to match values against.
+     * @param as the name of the new array field to add to the input documents.
+     * @return the $lookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public static Bson lookup(final String from, final String localField, final String foreignField, final String as) {
+        return new BsonDocument("$lookup", new BsonDocument("from", new BsonString(from))
+                .append("localField", new BsonString(localField))
+                .append("foreignField", new BsonString(foreignField))
+                .append("as", new BsonString(as)));
+    }
+
+    /**
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression> the expression type

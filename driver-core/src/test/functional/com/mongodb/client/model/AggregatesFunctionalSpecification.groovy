@@ -20,6 +20,7 @@ import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.isEnterpriseServer
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
@@ -33,6 +34,7 @@ import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
+import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
@@ -170,4 +172,32 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         containsAny([a, b, c], aggregate([sample(1)]).first())
     }
 
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) || !isEnterpriseServer() })
+    def '$lookup'() {
+        given:
+        def fromCollectionName = 'lookupCollection'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+
+        getCollectionHelper().drop()
+        fromHelper.drop()
+
+        getCollectionHelper().insertDocuments(new Document('_id', 0).append('a', 1),
+                new Document('_id', 1).append('a', null), new Document('_id', 2))
+        fromHelper.insertDocuments(new Document('_id', 0).append('b', 1), new Document('_id', 1).append('b', null), new Document('_id', 2))
+        def lookupDoc = lookup(fromCollectionName, 'a', 'b', 'same')
+
+        when:
+        def results = aggregate([lookupDoc])
+
+        then:
+        results == [
+            Document.parse('{_id: 0, a: 1, "same": [{_id: 0, b: 1}]}'),
+            Document.parse('{_id: 1, a: null, "same": [{_id: 1, b: null}, {_id: 2}]}'),
+            Document.parse('{_id: 2, "same": [{_id: 1, b: null}, {_id: 2}]}')
+        ]
+
+        cleanup:
+        fromHelper?.drop()
+    }
 }
