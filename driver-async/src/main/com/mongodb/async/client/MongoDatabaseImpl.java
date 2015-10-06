@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -155,13 +156,20 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
                                  final SingleResultCallback<Void> callback) {
-        executor.execute(new CreateCollectionOperation(name, collectionName)
-                         .capped(createCollectionOptions.isCapped())
-                         .sizeInBytes(createCollectionOptions.getSizeInBytes())
-                         .autoIndex(createCollectionOptions.isAutoIndex())
-                         .maxDocuments(createCollectionOptions.getMaxDocuments())
-                         .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
-                         .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions())), callback);
+        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName)
+                .capped(createCollectionOptions.isCapped())
+                .sizeInBytes(createCollectionOptions.getSizeInBytes())
+                .autoIndex(createCollectionOptions.isAutoIndex())
+                .maxDocuments(createCollectionOptions.getMaxDocuments())
+                .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
+                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()));
+
+        IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
+        if (indexOptionDefaults.getStorageEngine() != null) {
+            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        }
+
+        executor.execute(operation, callback);
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

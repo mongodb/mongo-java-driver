@@ -21,6 +21,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
@@ -150,13 +151,19 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
-        executor.execute(new CreateCollectionOperation(name, collectionName)
+        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName)
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
                 .autoIndex(createCollectionOptions.isAutoIndex())
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
                 .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
-                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions())));
+                .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()));
+
+        IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
+        if (indexOptionDefaults.getStorageEngine() != null) {
+            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        }
+        executor.execute(operation);
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

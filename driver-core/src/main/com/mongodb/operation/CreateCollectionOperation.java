@@ -44,6 +44,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private long maxDocuments = 0;
     private Boolean usePowerOf2Sizes = null;
     private BsonDocument storageEngineOptions;
+    private BsonDocument indexOptionDefaults;
 
     /**
      * Construct a new instance.
@@ -188,12 +189,36 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     /**
      * Sets the storage engine options document for this collection.
      *
-     * @param storageEngineOptions the storate engine options
+     * @param storageEngineOptions the storage engine options
      * @return this
      * @mongodb.server.release 3.0
      */
     public CreateCollectionOperation storageEngineOptions(final BsonDocument storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
+        return this;
+    }
+
+    /**
+     * Gets the index option defaults for the collection.
+     *
+     * @return the index option defaults
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public BsonDocument getIndexOptionDefaults() {
+        return indexOptionDefaults;
+    }
+
+    /**
+     * Sets the index option defaults document for the collection.
+     *
+     * @param indexOptionDefaults the index option defaults
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public CreateCollectionOperation indexOptionDefaults(final BsonDocument indexOptionDefaults) {
+        this.indexOptionDefaults = indexOptionDefaults;
         return this;
     }
 
@@ -222,6 +247,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         }
         if (storageEngineOptions != null) {
             document.put("storageEngine", storageEngineOptions);
+        }
+        if (indexOptionDefaults != null) {
+            document.put("indexOptionDefaults", indexOptionDefaults);
         }
         return document;
     }

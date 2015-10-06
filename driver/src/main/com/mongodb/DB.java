@@ -271,6 +271,9 @@ public class DB {
         if (options.get("storageEngine") != null && !(options.get("storageEngine") instanceof DBObject)) {
             throw new IllegalArgumentException("storageEngine' should be DBObject");
         }
+        if (options.get("indexOptionDefaults") != null && !(options.get("indexOptionDefaults") instanceof DBObject)) {
+            throw new IllegalArgumentException("indexOptionDefaults' should be DBObject");
+        }
 
         boolean capped = false;
         boolean autoIndex = true;
@@ -278,6 +281,7 @@ public class DB {
         long maxDocuments = 0;
         Boolean usePowerOfTwoSizes = null;
         BsonDocument storageEngineOptions = null;
+        BsonDocument indexOptionDefaults = null;
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
@@ -296,6 +300,9 @@ public class DB {
         if (options.get("storageEngine") != null) {
             storageEngineOptions = wrap((DBObject) options.get("storageEngine"));
         }
+        if (options.get("indexOptionDefaults") != null) {
+            indexOptionDefaults = wrap((DBObject) options.get("indexOptionDefaults"));
+        }
 
         return new CreateCollectionOperation(getName(), collectionName)
                    .capped(capped)
@@ -303,7 +310,8 @@ public class DB {
                    .autoIndex(autoIndex)
                    .maxDocuments(maxDocuments)
                    .usePowerOf2Sizes(usePowerOfTwoSizes)
-                   .storageEngineOptions(storageEngineOptions);
+                   .storageEngineOptions(storageEngineOptions)
+                   .indexOptionDefaults(indexOptionDefaults);
     }
 
     /**

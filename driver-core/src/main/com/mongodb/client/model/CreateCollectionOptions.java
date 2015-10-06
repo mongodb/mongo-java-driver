@@ -31,6 +31,7 @@ public class CreateCollectionOptions {
     private long sizeInBytes;
     private Boolean usePowerOf2Sizes;
     private Bson storageEngineOptions;
+    private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
 
     /**
      * Gets if auto-index is enabled
@@ -136,8 +137,9 @@ public class CreateCollectionOptions {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
     }
+
     /**
-     * Gets the storage engine options document for this index.
+     * Gets the storage engine options document for the collection.
      *
      * @return the storage engine options
      * @mongodb.server.release 3.0
@@ -147,14 +149,38 @@ public class CreateCollectionOptions {
     }
 
     /**
-     * Sets the storage engine options document for this index.
+     * Sets the storage engine options document defaults for the collection
      *
-     * @param storageEngineOptions the storate engine options
+     * @param storageEngineOptions the storage engine options
      * @return this
      * @mongodb.server.release 3.0
      */
     public CreateCollectionOptions storageEngineOptions(final Bson storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
+        return this;
+    }
+
+    /**
+     * Gets the index option defaults for the collection.
+     *
+     * @return the index option defaults
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public IndexOptionDefaults getIndexOptionDefaults() {
+        return indexOptionDefaults;
+    }
+
+    /**
+     * Sets the index option defaults for the collection.
+     *
+     * @param indexOptionDefaults the index option defaults
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public CreateCollectionOptions indexOptionDefaults(final IndexOptionDefaults indexOptionDefaults) {
+        this.indexOptionDefaults = indexOptionDefaults;
         return this;
     }
 }

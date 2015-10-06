@@ -448,7 +448,7 @@ public class IndexRequest {
     /**
      * Sets the storage engine options document for this index.
      *
-     * @param storageEngineOptions the storate engine options
+     * @param storageEngineOptions the storage engine options
      * @return this
      * @mongodb.server.release 3.0
      */

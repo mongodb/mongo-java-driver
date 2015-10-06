@@ -17,6 +17,7 @@
 package com.mongodb
 
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
@@ -185,6 +186,7 @@ class MongoDatabaseSpecification extends Specification {
                 .maxDocuments(100)
                 .sizeInBytes(1000)
                 .storageEngineOptions(new Document('wiredTiger', new Document()))
+                .indexOptionDefaults(new IndexOptionDefaults().storageEngine(new Document('mmapv1', new Document())))
 
         database.createCollection(collectionName, createCollectionOptions)
         operation = executor.getWriteOperation() as CreateCollectionOperation
@@ -196,7 +198,8 @@ class MongoDatabaseSpecification extends Specification {
                 .usePowerOf2Sizes(true)
                 .maxDocuments(100)
                 .sizeInBytes(1000)
-                .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument())))
+                .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument()))
+                .indexOptionDefaults(new BsonDocument('storageEngine', new BsonDocument('mmapv1', new BsonDocument()))))
     }
 
     def 'should pass the correct options to getCollection'() {

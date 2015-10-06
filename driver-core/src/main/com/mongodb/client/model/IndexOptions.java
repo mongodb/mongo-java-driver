@@ -402,7 +402,7 @@ public class IndexOptions {
     /**
      * Sets the storage engine options document for this index.
      *
-     * @param storageEngine the storate engine options
+     * @param storageEngine the storage engine options
      * @return this
      * @mongodb.server.release 3.0
      */

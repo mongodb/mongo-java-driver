@@ -38,6 +38,7 @@ class DBSpecification extends Specification {
                 .append('capped', true)
                 .append('autoIndexId', true)
                 .append('storageEngine', new BasicDBObject('wiredTiger', new BasicDBObject()))
+                .append('indexOptionDefaults', new BasicDBObject('storageEngine', new BasicDBObject('mmapv1', new BasicDBObject())))
 
         when:
         db.createCollection('ctest', options)
@@ -50,7 +51,8 @@ class DBSpecification extends Specification {
                                               .maxDocuments(2000)
                                               .capped(true)
                                               .autoIndex(true)
-                                              .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument())))
+                                              .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument()))
+                                              .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}')))
     }
 
 
