@@ -137,6 +137,43 @@ public final class Accumulators {
         return accumulator("$addToSet", fieldName, expression);
     }
 
+    /**
+     * Gets a field name for a $group operation representing the sample standard deviation of the values of the given expression
+     * when applied to all members of the group.
+     *
+     * <p>Use if the values encompass the entire population of data you want to represent and do not wish to generalize about
+     * a larger population.</p>
+     *
+     * @param fieldName the field name
+     * @param expression the expression
+     * @param <TExpression> the expression type
+     * @return the field
+     * @mongodb.driver.manual reference/operator/aggregation/stdDevPop/ $stdDevPop
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public static <TExpression> BsonField stdDevPop(final String fieldName, final TExpression expression) {
+        return accumulator("$stdDevPop", fieldName, expression);
+    }
+
+    /**
+     * Gets a field name for a $group operation representing the sample standard deviation of the values of the given expression
+     * when applied to all members of the group.
+     *
+     * <p>Use if the values encompass a sample of a population of data from which to generalize about the population.</p>
+     *
+     * @param fieldName the field name
+     * @param expression the expression
+     * @param <TExpression> the expression type
+     * @return the field
+     * @mongodb.driver.manual reference/operator/aggregation/stdDevSamp/ $stdDevSamp
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public static <TExpression> BsonField stdDevSamp(final String fieldName, final TExpression expression) {
+        return accumulator("$stdDevSamp", fieldName, expression);
+    }
+
     private static <TExpression> BsonField accumulator(final String name, final String fieldName, final TExpression expression) {
         return new BsonField(fieldName, new SimpleExpression<TExpression>(name, expression));
     }

@@ -24,6 +24,8 @@ import spock.lang.Specification
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.stdDevPop
+import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Aggregates.limit
@@ -98,12 +100,14 @@ class AggregatesSpecification extends Specification {
                                       _id : null,
                                       sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
                                       avg: { $avg: "$quantity" },
-                                      min: { $min: "$quantity" }
-                                      max: { $max: "$quantity" }
-                                      first: { $first: "$quantity" }
-                                      last: { $last: "$quantity" }
-                                      all: { $push: "$quantity" }
-                                      unique: { $addToSet: "$quantity" }
+                                      min: { $min: "$quantity" },
+                                      max: { $max: "$quantity" },
+                                      first: { $first: "$quantity" },
+                                      last: { $last: "$quantity" },
+                                      all: { $push: "$quantity" },
+                                      unique: { $addToSet: "$quantity" },
+                                      stdDevPop: { $stdDevPop: "$quantity" },
+                                      stdDevSamp: { $stdDevSamp: "$quantity" }
                                      }
                                   }''')
         toBson(group(null,
@@ -114,17 +118,23 @@ class AggregatesSpecification extends Specification {
                      first('first', '$quantity'),
                      last('last', '$quantity'),
                      push('all', '$quantity'),
-                     addToSet('unique', '$quantity'))) == groupDocument
+                     addToSet('unique', '$quantity'),
+                     stdDevPop('stdDevPop', '$quantity'),
+                     stdDevSamp('stdDevSamp', '$quantity')
+        )) == groupDocument
 
-        toBson(group(null,
-                     [sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
-                      avg('avg', '$quantity'),
-                      min('min', '$quantity'),
-                      max('max', '$quantity'),
-                      first('first', '$quantity'),
-                      last('last', '$quantity'),
-                      push('all', '$quantity'),
-                      addToSet('unique', '$quantity')])) == groupDocument
+        toBson(group(null, [
+                sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
+                avg('avg', '$quantity'),
+                min('min', '$quantity'),
+                max('max', '$quantity'),
+                first('first', '$quantity'),
+                last('last', '$quantity'),
+                push('all', '$quantity'),
+                addToSet('unique', '$quantity'),
+                stdDevPop('stdDevPop', '$quantity'),
+                stdDevSamp('stdDevSamp', '$quantity')
+        ])) == groupDocument
     }
 
     def toBson(Bson bson) {

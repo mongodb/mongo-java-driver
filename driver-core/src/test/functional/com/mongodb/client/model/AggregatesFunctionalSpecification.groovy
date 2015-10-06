@@ -24,18 +24,20 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
-import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Accumulators.last
-import static com.mongodb.client.model.Aggregates.limit
-import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Accumulators.max
 import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.push
+import static com.mongodb.client.model.Accumulators.stdDevPop
+import static com.mongodb.client.model.Accumulators.stdDevSamp
+import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.group
+import static com.mongodb.client.model.Aggregates.limit
+import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
-import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
-import static com.mongodb.client.model.Accumulators.sum
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Projections.computed
@@ -146,6 +148,18 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def '$stdDev'() {
+        when:
+        def results = aggregate([group(null, stdDevPop('stdDevPop', '$x'), stdDevSamp('stdDevSamp', '$x'))]).first()
+
+        then:
+        results.keySet().containsAll(['_id', 'stdDevPop', 'stdDevSamp'])
+        results.get('_id') == null
+        results.getDouble('stdDevPop').round(10) == new Double(Math.sqrt(2 / 3)).round(10)
+        results.get('stdDevSamp') == 1.0
     }
 
 }
