@@ -165,6 +165,19 @@ public final class Aggregates {
         return new BsonDocument("$out", new BsonString(collectionName));
     }
 
+    /**
+     * Creates a $sample pipeline stage with the specified sample size
+     *
+     * @param size the sample size
+     * @return the $sample pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/sample/  $sample
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public static Bson sample(final int size) {
+        return new BsonDocument("$sample", new BsonDocument("size", new BsonInt32(size)));
+    }
+
     private static class SimplePipelineStage implements Bson {
         private final String name;
         private final Bson value;

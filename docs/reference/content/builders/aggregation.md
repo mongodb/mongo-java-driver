@@ -57,6 +57,14 @@ This example simply projects the `qty` field into a new field called `quantity`.
 project(computed("quantity", "$qty"))
 ```
 
+### Sample
+The [`$sample`]({{< docsref "reference/operator/aggregation/sample/" >}}) pipeline stage randomly select N documents from its input.
+This example creates a pipeline stage that randomly selects 5 documents from the collection:
+
+```java
+sample(5)
+```
+
 ### Sort
   
 The [`$sort`]({{< docsref "reference/operator/aggregation/sort/" >}}) pipeline stage passes all documents to the next stage, 

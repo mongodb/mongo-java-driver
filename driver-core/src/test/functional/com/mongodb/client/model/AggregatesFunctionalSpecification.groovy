@@ -36,6 +36,7 @@ import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
+import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.unwind
@@ -46,6 +47,7 @@ import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.descending
 import static java.util.Arrays.asList
+import static org.spockframework.util.CollectionUtil.containsAny
 
 class AggregatesFunctionalSpecification extends OperationFunctionalSpecification {
 
@@ -160,6 +162,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results.get('_id') == null
         results.getDouble('stdDevPop').round(10) == new Double(Math.sqrt(2 / 3)).round(10)
         results.get('stdDevSamp') == 1.0
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def '$sample'() {
+        expect:
+        containsAny([a, b, c], aggregate([sample(1)]).first())
     }
 
 }

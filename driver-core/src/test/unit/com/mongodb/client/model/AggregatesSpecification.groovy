@@ -35,6 +35,7 @@ import static com.mongodb.client.model.Accumulators.min
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Accumulators.push
+import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Accumulators.sum
@@ -135,6 +136,11 @@ class AggregatesSpecification extends Specification {
                 stdDevPop('stdDevPop', '$quantity'),
                 stdDevSamp('stdDevSamp', '$quantity')
         ])) == groupDocument
+    }
+
+    def 'should render $sample'() {
+        expect:
+        toBson(sample(5)) == parse('{ $sample : { size: 5} }')
     }
 
     def toBson(Bson bson) {
