@@ -25,6 +25,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.QueryResult
@@ -65,12 +66,20 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         for (int i = 0; i < 10; i++) {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
-        connectionSource = getReadConnectionSource(getAsyncBinding())
+        setUpConnectionAndSource(getAsyncBinding())
+    }
+
+    private void setUpConnectionAndSource(final AsyncReadBinding binding) {
+        connectionSource = getReadConnectionSource(binding)
         connection = getConnection(connectionSource)
     }
 
     def cleanup() {
         cursor?.close()
+        cleanupConnectionAndSource()
+    }
+
+    private void cleanupConnectionAndSource() {
         connection?.release()
         connectionSource.release();
         waitForLastRelease(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
@@ -264,7 +273,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should get more from a secondary'() {
         given:
+        cleanupConnectionAndSource()  // this test uses a different connection and connection source
         connectionSource = getReadConnectionSource(getAsyncBinding(ReadPreference.secondary()))
+        connection = getConnection(connectionSource)
 
         def firstBatch = executeQuery(2, true)
 
