@@ -332,6 +332,18 @@ public final class Filters {
     }
 
     /**
+     *  Creates a filter that matches all documents where the value of the field is of the specified BSON type.
+     *
+     * @param fieldName the field name
+     * @param type      the string representation of the BSON type
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/type $type
+     */
+    public static Bson type(final String fieldName, final String type) {
+        return new OperatorFilter<BsonString>("$type", fieldName, new BsonString(type));
+    }
+
+    /**
      * Creates a filter that matches all documents where the value of a field divided by a divisor has the specified remainder (i.e. perform
      * a modulo operation to select documents).
      *

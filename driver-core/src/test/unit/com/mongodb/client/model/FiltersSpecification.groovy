@@ -208,6 +208,7 @@ class FiltersSpecification extends Specification {
     def 'should render $type'() {
         expect:
         toBson(type('a', BsonType.ARRAY)) == parse('{a : {$type : 4} }')
+        toBson(type('a', 'number')) == parse('{a : {$type : "number"} }')
     }
 
     def 'should render $text'() {

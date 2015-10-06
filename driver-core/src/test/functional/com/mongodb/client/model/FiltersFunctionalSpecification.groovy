@@ -196,6 +196,13 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(type('x', BsonType.ARRAY)) == []
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([3, 1, 7]) })
+    def 'should render $type with a string type representation'() {
+        expect:
+        find(type('x', 'number')) == [a, b, c]
+        find(type('x', 'array')) == []
+    }
+
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should render $text'() {
         expect:

@@ -135,6 +135,18 @@ This example selects documents that have a `qty` field and its value does not eq
 and(exists("qty"), nin("qty", 5, 15))
 ```
 
+This example selects documents that have a `qty` field with the type of `BsonInt32`:
+
+```java
+type("qty", BsonType.INT32)
+```
+
+Available with MongoDB 3.2, this example selects any documents that have a `qty` field with any "number" bson type:
+
+```java
+type("qty", "number")
+```
+
 ### Evaluation
 
 The evaluation operator methods include:
