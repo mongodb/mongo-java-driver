@@ -1,5 +1,5 @@
 githubRepo = "mongo-java-driver"
-githubBranch = "2.13.x"
-currentVersion = "2.13"
+githubBranch = "2.x"
+currentVersion = "2.14"
 highlightTheme = "idea.css"
-apiUrl = "http://api.mongodb.org/java/2.13/"
+apiUrl = "http://api.mongodb.org/java/2.14/"
