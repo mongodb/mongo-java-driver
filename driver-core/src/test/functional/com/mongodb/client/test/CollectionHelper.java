@@ -120,11 +120,17 @@ public final class CollectionHelper<T> {
         insertDocuments(documents, getBinding());
     }
 
+
     @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents, final WriteBinding binding) {
+        insertDocuments(documents, WriteConcern.ACKNOWLEDGED, binding);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern, final WriteBinding binding) {
         for (BsonDocument document : documents) {
-            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                asList(new InsertRequest(document))).execute(binding);
+            new InsertOperation(namespace, true, writeConcern,
+                                singletonList(new InsertRequest(document))).execute(binding);
         }
     }
 

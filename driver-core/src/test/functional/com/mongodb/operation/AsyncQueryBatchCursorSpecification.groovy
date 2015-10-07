@@ -22,6 +22,7 @@ import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
@@ -44,8 +45,10 @@ import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
+import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerHelper.waitForLastRelease
@@ -63,9 +66,13 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
     AsyncConnection connection
 
     def setup() {
+        def documents = []
         for (int i = 0; i < 10; i++) {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
+            documents.add(new BsonDocument('_id', new BsonInt32(i)))
         }
+        collectionHelper.insertDocuments(documents,
+                                         isDiscoverableReplicaSet() ? WriteConcern.MAJORITY : WriteConcern.ACKNOWLEDGED,
+                                         getBinding())
         setUpConnectionAndSource(getAsyncBinding())
     }
 
@@ -81,7 +88,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     private void cleanupConnectionAndSource() {
         connection?.release()
-        connectionSource.release();
+        connectionSource?.release();
         waitForLastRelease(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
         waitForRelease(connectionSource, 0)
     }
@@ -278,6 +285,11 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         connection = getConnection(connectionSource)
 
         def firstBatch = executeQuery(2, true)
+
+        // wait for replication
+        while (firstBatch.cursor == null ) {
+            firstBatch = executeQuery(2, true)
+        }
 
         when:
         cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)

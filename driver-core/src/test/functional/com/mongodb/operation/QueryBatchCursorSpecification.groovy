@@ -17,12 +17,12 @@
 package com.mongodb.operation
 
 import category.Slow
-import com.mongodb.ClusterFixture
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
+import com.mongodb.WriteConcern
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
@@ -55,7 +56,13 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
     QueryBatchCursor<Document> cursor
 
     def setup() {
-        (0..9).each { collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it)) }
+        def documents = []
+        for (int i = 0; i < 10; i++) {
+            documents.add(new BsonDocument('_id', new BsonInt32(i)))
+        }
+        collectionHelper.insertDocuments(documents,
+                                         isDiscoverableReplicaSet() ? WriteConcern.MAJORITY : WriteConcern.ACKNOWLEDGED,
+                                         getBinding())
         connectionSource = getBinding().getReadConnectionSource()
     }
 
@@ -429,12 +436,17 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         }
     }
 
-    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should get more from a secondary'() {
         given:
         connectionSource = getBinding(ReadPreference.secondary()).getReadConnectionSource()
 
         def firstBatch = executeQuery(2, true)
+
+        // wait for replication
+        while (firstBatch.cursor == null ) {
+            firstBatch = executeQuery(2, true)
+        }
 
         when:
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
