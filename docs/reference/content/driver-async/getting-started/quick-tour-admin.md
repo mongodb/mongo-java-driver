@@ -175,7 +175,7 @@ long matchCount = collection.count(text("textual content -irrelevant"));
 System.out.println("Text search matches: " + matchCount);
 
 // Find using the $language operator
-Bson textSearch = text("textual content -irrelevant", "english");
+Bson textSearch = Filters.text("textual content -irrelevant", new TextSearchOptions().language("english"));
 matchCount = collection.count(textSearch);
 System.out.println("Text search matches (english): " + matchCount);
 

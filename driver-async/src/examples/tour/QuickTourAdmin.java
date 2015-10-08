@@ -24,6 +24,7 @@ import com.mongodb.async.client.MongoCollection;
 import com.mongodb.async.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.TextSearchOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -139,7 +140,7 @@ public class QuickTourAdmin {
 
 
         // Find using the $language operator
-        Bson textSearch = text("textual content -irrelevant", "english");
+        Bson textSearch = text("textual content -irrelevant", new TextSearchOptions().language("english"));
         collection.count(textSearch, new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long matchCount, final Throwable t) {

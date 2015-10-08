@@ -408,7 +408,7 @@ public final class Filters {
      */
     public static Bson text(final String search) {
         notNull("search", search);
-        return text(search, null);
+        return text(search, new TextSearchOptions());
     }
 
     /**
@@ -418,15 +418,38 @@ public final class Filters {
      * @param language the language to use for stop words
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/text $text
+     * @deprecated use {@link Filters#text(String, TextSearchOptions)}
      */
+    @Deprecated
     public static Bson text(final String search, final String language) {
         notNull("search", search);
+        return text(search, new TextSearchOptions().language(language));
+    }
+
+    /**
+     * Creates a filter that matches all documents matching the given the search term with the given text search options.
+     *
+     * @param search            the search term
+     * @param textSearchOptions the text search options to use
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/text $text
+     * @since 3.2
+     */
+    public static Bson text(final String search, final TextSearchOptions textSearchOptions) {
+        notNull("search", search);
+        notNull("textSearchOptions", textSearchOptions);
         return new Bson() {
             @Override
             public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
                 BsonDocument searchDocument = new BsonDocument("$search", new BsonString(search));
-                if (language != null) {
-                    searchDocument.put("$language", new BsonString(language));
+                if (textSearchOptions.getLanguage() != null) {
+                    searchDocument.put("$language", new BsonString(textSearchOptions.getLanguage()));
+                }
+                if (textSearchOptions.getCaseSensitive() != null) {
+                    searchDocument.put("$caseSensitive", BsonBoolean.valueOf(textSearchOptions.getCaseSensitive()));
+                }
+                if (textSearchOptions.getDiacriticSensitive() != null) {
+                    searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(textSearchOptions.getDiacriticSensitive()));
                 }
                 return new BsonDocument("$text", searchDocument);
             }

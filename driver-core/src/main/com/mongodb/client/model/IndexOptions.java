@@ -31,7 +31,7 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class IndexOptions {
-    private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2);
+    private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2, 3);
     private static final List<Integer> VALID_SPHERE_INDEX_VERSIONS = asList(1, 2);
     private boolean background;
     private boolean unique;
@@ -279,7 +279,7 @@ public class IndexOptions {
      */
     public IndexOptions textVersion(final Integer textVersion) {
         if (textVersion != null) {
-            isTrueArgument("textVersion must be 1 or 2", VALID_TEXT_INDEX_VERSIONS.contains(textVersion));
+            isTrueArgument("textVersion must be 1, 2 or 3", VALID_TEXT_INDEX_VERSIONS.contains(textVersion));
         }
         this.textVersion = textVersion;
         return this;

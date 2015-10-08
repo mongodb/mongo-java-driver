@@ -266,6 +266,10 @@ public final class CollectionHelper<T> {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)))).execute(getBinding());
     }
 
+    public void createIndex(final Document key, final String defaultLanguage) {
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage))).execute(getBinding());
+    }
+
     public void createIndex(final Bson key) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(key.toBsonDocument(Document.class, registry)))).execute(getBinding());
     }

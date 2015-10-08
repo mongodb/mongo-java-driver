@@ -22,6 +22,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.TextSearchOptions;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -95,7 +96,7 @@ public class QuickTourAdmin {
         System.out.println("Text search matches: " + matchCount);
 
         // Find using the $language operator
-        Bson textSearch = text("textual content -irrelevant", "english");
+        Bson textSearch = text("textual content -irrelevant", new TextSearchOptions().language("english"));
         matchCount = collection.count(textSearch);
         System.out.println("Text search matches (english): " + matchCount);
 

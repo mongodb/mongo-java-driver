@@ -162,7 +162,21 @@ This example assumes a collection that has a text index in the field `abstract`.
 containing the term `coffee`:
 
 ```java
-text("abstract", "coffee")
+text("coffee")
+```
+
+Available with MongoDB 3.2, a version 3 text index allows case-sensitive searches. This example selects documents that have an 
+`abstract` field containing the exact term `coffee`:
+
+```java
+text("coffee", new TextSearchOptions().caseSensitive(true))
+```
+
+Available with MongoDB 3.2, a version 3 text index allows diacritic-sensitive searches. This example selects documents that have an 
+`abstract` field containing the exact term `café`:
+
+```java
+text("café", new TextSearchOptions().diacriticSensitive(true))
 ```
 
 ### Geospatial

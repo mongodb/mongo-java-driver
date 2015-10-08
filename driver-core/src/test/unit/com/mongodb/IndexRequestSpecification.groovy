@@ -24,6 +24,7 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 class IndexRequestSpecification extends Specification {
+
     def 'should set its options correctly'() {
         when:
         def request = new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
@@ -94,6 +95,60 @@ class IndexRequestSpecification extends Specification {
         request2.getDropDups()
         request2.getStorageEngine() == storageEngine
         request2.getPartialFilterExpression() == partialFilterExpression
+    }
+
+
+    def 'should validate textIndexVersion'() {
+        given:
+        def options = new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
+
+        when:
+        options.textVersion(1)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.textVersion(2)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.textVersion(3)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.textVersion(4)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+
+    def 'should validate 2dsphereIndexVersion'() {
+        given:
+        def options = new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
+
+        when:
+        options.sphereVersion(1)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.sphereVersion(2)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.sphereVersion(3)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }

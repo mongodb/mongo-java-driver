@@ -106,6 +106,12 @@ class IndexOptionsSpecification extends Specification {
         new IndexOptions().textVersion(3)
 
         then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        new IndexOptions().textVersion(4)
+
+        then:
         thrown(IllegalArgumentException)
     }
 
