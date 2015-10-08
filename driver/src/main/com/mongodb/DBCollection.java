@@ -2071,6 +2071,9 @@ public class DBCollection {
         if (options.containsField("storageEngine")) {
             request.storageEngine(wrap(convertOptionsToType(options, "storageEngine", DBObject.class)));
         }
+        if (options.containsField("partialFilterExpression")) {
+            request.partialFilterExpression(wrap(convertOptionsToType(options, "partialFilterExpression", DBObject.class)));
+        }
 
         return new CreateIndexesOperation(getNamespace(), asList(request));
     }

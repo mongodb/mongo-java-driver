@@ -219,6 +219,9 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         if (request.getStorageEngine() != null) {
             index.append("storageEngine", request.getStorageEngine());
         }
+        if (request.getPartialFilterExpression() != null) {
+            index.append("partialFilterExpression", request.getPartialFilterExpression());
+        }
         return index;
     }
 

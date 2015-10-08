@@ -448,6 +448,22 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         getIndex('a_1').get('storageEngine') == storageEngineOptions
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should be able to create a partially filtered index'() {
+        given:
+        def partialFilterExpression = new Document('a', new Document('$gte', 10))
+        def createIndexOperation = new CreateIndexesOperation(getNamespace(),
+                [new IndexRequest(new BsonDocument('field', new BsonInt32(1)))
+                         .partialFilterExpression(new BsonDocumentWrapper(partialFilterExpression, new DocumentCodec()))])
+
+        when:
+        createIndexOperation.execute(getBinding())
+
+        then:
+        getUserCreatedIndexes('partialFilterExpression').head() == partialFilterExpression
+    }
+
+
     Document getIndex(final String indexName) {
         getIndexes().find {
             it -> it.getString('name') == indexName

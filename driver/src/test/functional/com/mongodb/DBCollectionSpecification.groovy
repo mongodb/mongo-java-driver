@@ -48,14 +48,16 @@ class DBCollectionSpecification extends Specification {
         expect request, isTheSameAs(new IndexRequest(new BsonDocument('a', new BsonInt32(1))))
 
         when:
+        def storageEngine = '{ wiredTiger: { configString: "block_compressor=zlib" }}'
+        def partialFilterExpression = '{ a: { $gte: 10 } }'
         collection.createIndex(keys, new BasicDBObject(['background': true, 'unique': true, 'sparse': true, 'name': 'aIndex',
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
                                                       'max'          : new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true,
-                                                      'storageEngine': new BasicDBObject('wiredTiger',
-                                                                                         new BasicDBObject('configString',
-                                                                                                           'block_compressor=zlib'))]))
+                                                      'storageEngine': BasicDBObject.parse(storageEngine),
+                                                      'partialFilterExpression':  BasicDBObject.parse(partialFilterExpression)]))
+
         request = (executor.getWriteOperation() as CreateIndexesOperation).requests[0]
 
         then:
@@ -76,9 +78,8 @@ class DBCollectionSpecification extends Specification {
                                             .max(180.0)
                                             .bucketSize(200.0)
                                             .dropDups(true)
-                                            .storageEngine(new BsonDocument('wiredTiger',
-                                                                            new BsonDocument('configString', new BsonString(
-                                                                                    'block_compressor=zlib')))))
+                                            .storageEngine(BsonDocument.parse(storageEngine))
+                                            .partialFilterExpression(BsonDocument.parse(partialFilterExpression)))
     }
 
     def 'should support boolean index options that are numbers'() {

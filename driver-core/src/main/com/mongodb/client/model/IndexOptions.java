@@ -49,6 +49,7 @@ public class IndexOptions {
     private Double max;
     private Double bucketSize;
     private Bson storageEngine;
+    private Bson partialFilterExpression;
 
     /**
      * Create the index in the background
@@ -408,6 +409,30 @@ public class IndexOptions {
      */
     public IndexOptions storageEngine(final Bson storageEngine) {
         this.storageEngine = storageEngine;
+        return this;
+    }
+
+    /**
+     * Get the filter expression for the documents to be included in the index or null if not set
+     *
+     * @return the filter expression for the documents to be included in the index or null if not set
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public Bson getPartialFilterExpression() {
+        return partialFilterExpression;
+    }
+
+    /**
+     * Sets the filter expression for the documents to be included in the index
+     *
+     * @param partialFilterExpression the filter expression for the documents to be included in the index
+     * @return this
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public IndexOptions partialFilterExpression(final Bson partialFilterExpression) {
+        this.partialFilterExpression = partialFilterExpression;
         return this;
     }
 }

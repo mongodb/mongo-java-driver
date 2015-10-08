@@ -17,8 +17,6 @@
 package com.mongodb.client.model
 
 import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.BsonString
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -46,8 +44,12 @@ class IndexOptionsSpecification extends Specification {
         options.getMax() == null
         options.getBucketSize() == null
         options.getStorageEngine() == null
+        options.getPartialFilterExpression() == null
 
         when:
+        def weights = BsonDocument.parse('{ a: 1000 }')
+        def storageEngine = BsonDocument.parse('{ wiredTiger : { configString : "block_compressor=zlib" }}')
+        def partialFilterExpression = BsonDocument.parse('{ a: { $gte: 10 } }')
         def options2 = new IndexOptions()
                 .background(true)
                 .unique(true)
@@ -55,7 +57,7 @@ class IndexOptionsSpecification extends Specification {
                 .name('aIndex')
                 .expireAfter(100, TimeUnit.SECONDS)
                 .version(1)
-                .weights(new BsonDocument('a', new BsonInt32(1000)))
+                .weights(weights)
                 .defaultLanguage('es')
                 .languageOverride('language')
                 .textVersion(1)
@@ -64,8 +66,8 @@ class IndexOptionsSpecification extends Specification {
                 .min(-180.0)
                 .max(180.0)
                 .bucketSize(200.0)
-                .storageEngine(new BsonDocument('wiredTiger',
-                                                new BsonDocument('configString', new BsonString('block_compressor=zlib'))))
+                .storageEngine(storageEngine)
+                .partialFilterExpression(partialFilterExpression)
 
         then:
         options2.isBackground()
@@ -74,7 +76,7 @@ class IndexOptionsSpecification extends Specification {
         options2.getName() == 'aIndex'
         options2.getExpireAfter(TimeUnit.SECONDS) == 100
         options2.getVersion() == 1
-        options2.getWeights() == new BsonDocument('a', new BsonInt32(1000))
+        options2.getWeights() == weights
         options2.getDefaultLanguage() == 'es'
         options2.getLanguageOverride() == 'language'
         options2.getTextVersion() == 1
@@ -83,6 +85,8 @@ class IndexOptionsSpecification extends Specification {
         options2.getMin() == -180.0
         options2.getMax() == 180.0
         options2.getBucketSize() == 200.0
+        options2.getStorageEngine() == storageEngine
+        options2.getPartialFilterExpression() == partialFilterExpression
     }
 
     def 'should validate textIndexVersion'() {

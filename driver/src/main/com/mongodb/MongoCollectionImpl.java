@@ -423,7 +423,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .min(model.getOptions().getMin())
                          .max(model.getOptions().getMax())
                          .bucketSize(model.getOptions().getBucketSize())
-                         .storageEngine(toBsonDocument(model.getOptions().getStorageEngine())));
+                         .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
+                         .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression())));
         }
         CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests);
         executor.execute(createIndexesOperation);
