@@ -78,12 +78,34 @@ public class WriteConcern implements Serializable {
     private final boolean j;
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
-     * raised for network issues, and server errors.
+     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning, using the
+     * default write concern configured on the server.
      *
      * @since 2.10.0
      */
-    public static final WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null);
+
+    /**
+     * Write operations that use this write concern will wait for acknowledgement from a single member.
+     *
+     * @since 3.2
+     */
+    public static final WriteConcern W1 = new WriteConcern(1);
+
+    /**
+     * Write operations that use this write concern will wait for acknowledgement from two members.
+     *
+     * @since 3.2
+     */
+    public static final WriteConcern W2 = new WriteConcern(2);
+
+    /**
+     * Write operations that use this write concern will wait for acknowledgement from three members.
+     *
+     * @since 3.2
+     */
+    public static final WriteConcern W3 = new WriteConcern(3);
+
 
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
@@ -279,10 +301,20 @@ public class WriteConcern implements Serializable {
         this.j = j;
     }
 
+    // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
+    // constructor that means something else.
+    private WriteConcern(Object w) {
+        isTrueArgument("w", w == null);
+        this.w = null;
+        this.wtimeout = 0;
+        this.fsync = false;
+        this.j = false;
+    }
+
     /**
      * Gets the w value (the write strategy)
      *
-     * @return w, either an instance of Integer or String
+     * @return w, either an instance of Integer or String or null
      */
     public Object getWObject() {
         return w;
@@ -351,7 +383,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
      */
     public boolean isServerDefault() {
-        return w.equals(1) && wtimeout == 0 && !fsync && !j;
+        return w == null;
     }
 
     /**
@@ -380,7 +412,7 @@ public class WriteConcern implements Serializable {
         if (w instanceof Integer) {
             return (Integer) w > 0;
         }
-        return w != null;
+        return true;
     }
 
     /**
@@ -413,12 +445,15 @@ public class WriteConcern implements Serializable {
         if (wtimeout != that.wtimeout) {
             return false;
         }
+        if (w == null) {
+            return that.w == null;
+        }
         return w.equals(that.w);
     }
 
     @Override
     public int hashCode() {
-        int result = w.hashCode();
+        int result = w == null ? 0 : w.hashCode();
         result = 31 * result + wtimeout;
         result = 31 * result + (fsync ? 1 : 0);
         result = 31 * result + (j ? 1 : 0);
@@ -463,8 +498,10 @@ public class WriteConcern implements Serializable {
     public WriteConcern withFsync(final boolean fsync) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), fsync, getJ());
-        } else {
+        } else if (getWObject() instanceof String) {
             return new WriteConcern(getWString(), getWtimeout(), fsync, getJ());
+        } else {
+            return new WriteConcern(1, 0, fsync, false);
         }
     }
 
@@ -475,15 +512,17 @@ public class WriteConcern implements Serializable {
     public WriteConcern withJ(final boolean j) {
         if (getWObject() instanceof Integer) {
             return new WriteConcern(getW(), getWtimeout(), getFsync(), j);
-        } else {
+        } else if (getWObject() instanceof String) {
             return new WriteConcern(getWString(), getWtimeout(), getFsync(), j);
+        } else {
+            return new WriteConcern(1, 0, false, j);
         }
     }
 
     private void addW(final BsonDocument document) {
         if (w instanceof String) {
             document.put("w", new BsonString((String) w));
-        } else {
+        } else if (w instanceof Integer){
             document.put("w", new BsonInt32((Integer) w));
         }
     }

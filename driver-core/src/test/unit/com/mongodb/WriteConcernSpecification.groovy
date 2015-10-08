@@ -28,20 +28,21 @@ class WriteConcernSpecification extends Specification {
     @Unroll
     def 'constructors should set up write concern #wc correctly'() {
         expect:
-        wc.getW() == w;
+        wc.getWObject() == w;
         wc.getWtimeout() == wTimeout;
         wc.getFsync() == fsync;
         wc.getJ() == j;
 
         where:
-        wc                                   | w | wTimeout | fsync | j
-        new WriteConcern()                   | 0 | 0        | false | false
-        new WriteConcern(1)                  | 1 | 0        | false | false
-        new WriteConcern(1, 10)              | 1 | 10       | false | false
-        new WriteConcern(true)               | 1 | 0        | true  | false
-        new WriteConcern(1, 10, true)        | 1 | 10       | true  | false
-        new WriteConcern(1, 10, false, true) | 1 | 10       | false | true
-        new WriteConcern(1, 10, false, true) | 1 | 10       | false | true
+        wc                                   | w    | wTimeout | fsync | j
+        new WriteConcern()                   | 0    | 0        | false | false
+        new WriteConcern(1)                  | 1    | 0        | false | false
+        new WriteConcern(1, 10)              | 1    | 10       | false | false
+        new WriteConcern((boolean)true)      | 1    | 0        | true  | false
+        new WriteConcern(1, 10, true)        | 1    | 10       | true  | false
+        new WriteConcern(1, 10, false, true) | 1    | 10       | false | true
+        new WriteConcern(1, 10, false, true) | 1    | 10       | false | true
+        new WriteConcern((Object) null)      | null | 0        | false | false
     }
 
     @Unroll
@@ -72,12 +73,14 @@ class WriteConcernSpecification extends Specification {
 
     def 'test with methods'() {
         expect:
-        WriteConcern.ACKNOWLEDGED == WriteConcern.UNACKNOWLEDGED.withW(1);
+        WriteConcern.W1 == WriteConcern.UNACKNOWLEDGED.withW(1);
         WriteConcern.FSYNCED == WriteConcern.ACKNOWLEDGED.withFsync(true);
         WriteConcern.JOURNALED == WriteConcern.ACKNOWLEDGED.withJ(true);
         new WriteConcern('dc1') == WriteConcern.UNACKNOWLEDGED.withW('dc1');
         new WriteConcern('dc1', 0, true, false) == new WriteConcern('dc1').withFsync(true);
         new WriteConcern('dc1', 0, false, true) == new WriteConcern('dc1').withJ(true);
+        new WriteConcern(2, 0, true, false) == new WriteConcern(2).withFsync(true);
+        new WriteConcern(2, 0, false, true) == new WriteConcern(2).withJ(true);
     }
 
     @Unroll
@@ -89,7 +92,7 @@ class WriteConcernSpecification extends Specification {
         where:
         wc                                | commandDocument
         WriteConcern.UNACKNOWLEDGED       | new BsonDocument('w', new BsonInt32(0))
-        WriteConcern.ACKNOWLEDGED         | new BsonDocument('w', new BsonInt32(1))
+        WriteConcern.ACKNOWLEDGED         | new BsonDocument()
         WriteConcern.REPLICA_ACKNOWLEDGED | new BsonDocument('w', new BsonInt32(2))
         WriteConcern.JOURNALED            | new BsonDocument('w', new BsonInt32(1)).append('j', BsonBoolean.TRUE)
         WriteConcern.FSYNCED              | new BsonDocument('w', new BsonInt32(1)).append('fsync', BsonBoolean.TRUE)
@@ -112,17 +115,52 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(1, 0)               | new WriteConcern(1, 1)              | false
     }
 
+    def 'test hashCode'() {
+        expect:
+        wc.hashCode() == hashCode
+
+        where:
+        wc                                   | hashCode
+        WriteConcern.ACKNOWLEDGED            | 0
+        WriteConcern.W1                      | 29791
+        WriteConcern.W2                      | 59582
+        WriteConcern.MAJORITY                | -1401337973
+        new WriteConcern(1, 0, false, false) | 29791
+        new WriteConcern(1, 0, true, true)   | 29823
+    }
+
     def 'test constants'() {
         expect:
         constructedWriteConcern == constantWriteConcern
 
         where:
         constructedWriteConcern             | constantWriteConcern
-        new WriteConcern(1)                 | WriteConcern.ACKNOWLEDGED
+        new WriteConcern((Object) null)     | WriteConcern.ACKNOWLEDGED
+        new WriteConcern(1)                 | WriteConcern.W1
+        new WriteConcern(2)                 | WriteConcern.W2
+        new WriteConcern(3)                 | WriteConcern.W3
         new WriteConcern(0)                 | WriteConcern.UNACKNOWLEDGED
         new WriteConcern(1, 0, true)        | WriteConcern.FSYNCED
+        new WriteConcern(1, 0, true)        | WriteConcern.FSYNC_SAFE
         new WriteConcern(1, 0, false, true) | WriteConcern.JOURNALED
         new WriteConcern(2)                 | WriteConcern.REPLICA_ACKNOWLEDGED
+        new WriteConcern(2)                 | WriteConcern.REPLICAS_SAFE
+        new WriteConcern('majority')        | WriteConcern.MAJORITY
+    }
+
+    def 'test isAcknowledged'() {
+        expect:
+        writeConcern.isAcknowledged() == acknowledged
+        writeConcern.callGetLastError() == acknowledged
+
+        where:
+        writeConcern                        | acknowledged
+        WriteConcern.ACKNOWLEDGED           | true
+        WriteConcern.W1                     | true
+        WriteConcern.W2                     | true
+        WriteConcern.W3                     | true
+        WriteConcern.MAJORITY               | true
+        WriteConcern.UNACKNOWLEDGED         | false
     }
 
     def 'test value of'() {
@@ -155,7 +193,7 @@ class WriteConcernSpecification extends Specification {
 
     def 'should throw when w is null'() {
         when:
-        new WriteConcern(null)
+        new WriteConcern((String) null)
 
         then:
         thrown(IllegalArgumentException)
