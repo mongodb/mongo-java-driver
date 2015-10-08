@@ -549,18 +549,21 @@ public ConnectionString(final String connectionString) {
         return null;
     }
 
+    @SuppressWarnings("deprecation")
     private WriteConcern buildWriteConcern(final Boolean safe, final String w,
                                            final int wTimeout, final boolean fsync, final boolean journal) {
         if (w != null || wTimeout != 0 || fsync || journal) {
+            WriteConcern writeConcernWithWValue;
             if (w == null) {
-                return new WriteConcern(1, wTimeout, fsync, journal);
+                writeConcernWithWValue = WriteConcern.ACKNOWLEDGED;
             } else {
                 try {
-                    return new WriteConcern(Integer.parseInt(w), wTimeout, fsync, journal);
+                    writeConcernWithWValue = new WriteConcern(Integer.parseInt(w));
                 } catch (NumberFormatException e) {
-                    return new WriteConcern(w, wTimeout, fsync, journal);
+                    writeConcernWithWValue = new WriteConcern(w);
                 }
             }
+            return writeConcernWithWValue.withWTimeout(wTimeout).withJ(journal).withFsync(fsync);
         } else if (safe != null) {
             if (safe) {
                 return WriteConcern.ACKNOWLEDGED;

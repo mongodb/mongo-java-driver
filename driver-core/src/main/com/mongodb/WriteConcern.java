@@ -83,7 +83,7 @@ public class WriteConcern implements Serializable {
      *
      * @since 2.10.0
      */
-    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern((Object) null, 0, false, false);
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from a single member.
@@ -117,7 +117,9 @@ public class WriteConcern implements Serializable {
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
+     * @deprecated Prefer WriteConcern#JOURNALED
      */
+    @Deprecated
     public static final WriteConcern FSYNCED = new WriteConcern(true);
 
     /**
@@ -128,7 +130,9 @@ public class WriteConcern implements Serializable {
 
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
+     * @deprecated Prefer WriteConcern#W2
      */
+    @Deprecated
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
@@ -138,7 +142,9 @@ public class WriteConcern implements Serializable {
      * <p>This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#UNACKNOWLEDGED
+     * @deprecated Prefer WriteConcern#UNACKNOWLEDGED
      */
+    @Deprecated
     public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
@@ -148,7 +154,9 @@ public class WriteConcern implements Serializable {
      * <p>This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#ACKNOWLEDGED
+     * @deprecated Prefer WriteConcern.ACKNOWLEDGED
      */
+    @Deprecated
     public static final WriteConcern SAFE = ACKNOWLEDGED;
 
     /**
@@ -163,7 +171,9 @@ public class WriteConcern implements Serializable {
      * <p>This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#FSYNCED
+     * @deprecated Prefer WriteConcern#JOURNALED
      */
+    @Deprecated
     public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
@@ -173,7 +183,9 @@ public class WriteConcern implements Serializable {
      * <p>This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#JOURNALED
+     * @deprecated Prefer WriteConcern#JOURNALED
      */
+    @Deprecated
     public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
@@ -182,7 +194,9 @@ public class WriteConcern implements Serializable {
      * <p>This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#REPLICA_ACKNOWLEDGED
+     * @deprecated Prefer WriteConcern#W2
      */
+    @Deprecated
     public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
 
     /**
@@ -190,7 +204,9 @@ public class WriteConcern implements Serializable {
      * WriteConcern.UNACKNOWLEDGED}, so writes may be lost without any errors being reported.
      *
      * @see WriteConcern#UNACKNOWLEDGED
+     * @deprecated Prefer WriteConcen#UNACKNOWLEDGED
      */
+    @Deprecated
     public WriteConcern() {
         this(0);
     }
@@ -227,7 +243,9 @@ public class WriteConcern implements Serializable {
      * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with w=1 and wtimeout=0
      *
      * @param fsync whether or not to fsync
+     * @deprecated prefer WriteConcern#JOURNALED or WriteConcern#withJ
      */
+    @Deprecated
     public WriteConcern(final boolean fsync) {
         this(1, 0, fsync);
     }
@@ -247,7 +265,9 @@ public class WriteConcern implements Serializable {
      * @param w        number of writes
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
+     * @deprecated Prefer WriteConcern#withW, WriteConcern#withWTimeout, WriteConcern#withJ
      */
+    @Deprecated
     public WriteConcern(final int w, final int wtimeout, final boolean fsync) {
         this(w, wtimeout, fsync, false);
     }
@@ -268,7 +288,9 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journaling group commit
+     * @deprecated Prefer WriteConcern#withW, WriteConcern#withWTimeout, WriteConcern#withJ
      */
+    @Deprecated
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
         isTrueArgument("w >= 0", w >= 0);
         this.w = w;
@@ -293,22 +315,25 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journaling group commit
+     * @deprecated Prefer WriteConcern#withW, WriteConcern#withWTimeout, WriteConcern#withJ
      */
+    @Deprecated
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
-        this.w = notNull("w", w);
-        this.wtimeout = wtimeout;
-        this.fsync = fsync;
-        this.j = j;
+        this((Object) notNull("w", w), wtimeout, fsync, j);
     }
 
     // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
     // constructor that means something else.
-    private WriteConcern(Object w) {
-        isTrueArgument("w", w == null);
-        this.w = null;
-        this.wtimeout = 0;
-        this.fsync = false;
-        this.j = false;
+    private WriteConcern(Object w, final int wtimeout, final boolean fsync, final boolean j) {
+        if (w == null) {
+            isTrueArgument("wtimeout == 0", wtimeout == 0);
+            isTrueArgument("fsync == false", !fsync);
+            isTrueArgument("j == false", !j);
+        }
+        this.w = w;
+        this.wtimeout = wtimeout;
+        this.fsync = fsync;
+        this.j = j;
     }
 
     /**
@@ -353,7 +378,9 @@ public class WriteConcern implements Serializable {
      * Gets the fsync flag (fsync to disk on the server)
      *
      * @return the fsync flag
+     * @deprecated Prefer #getJ
      */
+    @Deprecated
     public boolean getFsync() {
         return fsync();
     }
@@ -362,7 +389,9 @@ public class WriteConcern implements Serializable {
      * Gets the fsync flag (fsync to disk on the server)
      *
      * @return the fsync flag
+     * @deprecated Prefer #getJ
      */
+    @Deprecated
     public boolean fsync() {
         return fsync;
     }
@@ -371,7 +400,9 @@ public class WriteConcern implements Serializable {
      * Returns whether "getlasterror" should be called (w &gt; 0)
      *
      * @return whether this write concern will result in an an acknowledged write
+     * @deprecated Prefer #isAcknowledged
      */
+    @Deprecated
     public boolean callGetLastError() {
         return isAcknowledged();
     }
@@ -494,15 +525,11 @@ public class WriteConcern implements Serializable {
     /**
      * @param fsync true if the write concern needs to include fsync
      * @return the WriteConcern
+     * @deprecated Prefer WriteConcern#withJ
      */
+    @Deprecated
     public WriteConcern withFsync(final boolean fsync) {
-        if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), fsync, getJ());
-        } else if (getWObject() instanceof String) {
-            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ());
-        } else {
-            return new WriteConcern(1, 0, fsync, false);
-        }
+        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), getWtimeout(), fsync, getJ());
     }
 
     /**
@@ -510,13 +537,19 @@ public class WriteConcern implements Serializable {
      * @return the WriteConcern
      */
     public WriteConcern withJ(final boolean j) {
-        if (getWObject() instanceof Integer) {
-            return new WriteConcern(getW(), getWtimeout(), getFsync(), j);
-        } else if (getWObject() instanceof String) {
-            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j);
-        } else {
-            return new WriteConcern(1, 0, false, j);
-        }
+        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), getWtimeout(), getFsync(), j);
+    }
+
+    /**
+     * Constructs a new WriteConcern from the current one and the specified wTimeout.
+     *
+     * @param wtimeout the wtimeout
+     * @return the WriteConcern with the given wtimeout
+     * @since 3.2
+     */
+    public WriteConcern withWTimeout(final int wtimeout) {
+        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), wtimeout, getFsync(), getJ());
+
     }
 
     private void addW(final BsonDocument document) {
@@ -553,14 +586,18 @@ public class WriteConcern implements Serializable {
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journal group commit
      * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
+     * @deprecated Prefer WriteConcern#MAJORITY, WriteConcern#withWTimeout, WriteConcern#withJ
      */
+    @Deprecated
     public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);
     }
 
     /**
      * A write concern that blocks acknowledgement of a write operation until a majority of replica set members have applied it.
+     * @deprecated Prefer WriteConcern#MAJORITY, WriteConcern#withWTimeout, WriteConcern#withJ
      */
+    @Deprecated
     public static class Majority extends WriteConcern {
 
         private static final long serialVersionUID = -4128295115883875212L;
