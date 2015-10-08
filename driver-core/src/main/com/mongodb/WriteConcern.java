@@ -41,8 +41,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  *  <li> 0: Don't wait for acknowledgement from the server </li>
  *  <li> 1: Wait for acknowledgement, but don't wait for secondaries to replicate</li>
  *  <li> &gt;=2: Wait for one or more secondaries to also acknowledge </li>
+ *  <li> "majority": Wait for a majority of secondaries to also acknowledge </li>
+ *  <li> "&lt;tag set name&gt;": Wait for one or moresecondaries to also acknowledge based on a tag set name</li>
  * </ul>
- * <p>{@code wtimeout} - how long to wait for slaves before failing</p>
+ * <p>{@code wtimeout} - how long to wait for secondaries to acknowledge before failing</p>
  * <ul>
  *   <li>0: indefinite </li>
  *   <li>&gt;0: time to wait in milliseconds</li>
@@ -53,13 +55,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  *   <li>{@code j}: If true block until write operations have been committed to the journal. Cannot be used in combination with
  *   {@code fsync}. Prior to MongoDB 2.6 this option was ignored if the server was running without journaling.  Starting with MongoDB 2.6
  *   write operations will fail with an exception if this option is used when the server is running without journaling.</li>
- *   <li>{@code fsync}: If true and the server is running without journaling, blocks until the server has synced all data files to disk.
- *   If the server is running with journaling, this acts the same as the {@code j} option, blocking until write operations have been
- *   committed to the journal. Cannot be used in combination with {@code j}. In almost all cases the  {@code j} flag should be used in
- *   preference to this one.</li>
  * </ul>
  *
- * @mongodb.driver.manual core/write-concern/ Write Concern
+ * @mongodb.driver.manual reference/write-concern/ Write Concern
  */
 @Immutable
 public class WriteConcern implements Serializable {
@@ -193,7 +191,7 @@ public class WriteConcern implements Serializable {
      *
      * <p>This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
-     * @see WriteConcern#REPLICA_ACKNOWLEDGED
+     * @see WriteConcern#W2
      * @deprecated Prefer WriteConcern#W2
      */
     @Deprecated
@@ -212,25 +210,27 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with wtimeout=0 and fsync=false
+     * Construct an instance with the given integer-based value for w
      *
-     * @param w number of writes
+     * @param w number of servers to ensure write propagation to before acknowledgment, which must be {@code >= 0}
      */
     public WriteConcern(final int w) {
         this(w, 0, false);
     }
 
     /**
-     * Tag based Write Concern with wtimeout=0, fsync=false, and j=false
+     * Construct an instance with the given tag set-based value for w.
      *
-     * @param w Write Concern tag
+     * @param w tag set, or "majority", representing the servers to ensure write propagation to before acknowledgment.  Do not use string
+     *          representation of integer values for w
+     * @mongodb.driver.manual tutorial/configure-replica-set-tag-sets/#replica-set-configuration-tag-sets Tag Sets
      */
     public WriteConcern(final String w) {
         this(w, 0, false, false);
     }
 
     /**
-     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with fsync=false
+     * Calls {@link WriteConcern#WriteConcern(int, int, boolean)} with j=false
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -507,24 +507,33 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * @param w an int representation of the write concern
-     * @return the WriteConcern matching the given w value
+     * Constructs a new WriteConcern from the current one and the specified integer-based value for w
+     *
+     * @param w number of servers to ensure write propagation to before acknowledgment, which must be {@code >= 0}
+     * @return the new WriteConcern
      */
     public WriteConcern withW(final int w) {
         return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
     }
 
     /**
-     * @param w a String representation of the write concern
-     * @return the WriteConcern
+     * Constructs a new WriteConcern from the current one and the specified tag-set based value for w
+     *
+     * @param w tag set, or "majority", representing the servers to ensure write propagation to before acknowledgment.  Do not use string
+     *          representation of integer values for w
+     * @return the new WriteConcern
+     * @see #withW(int)
+     * @mongodb.driver.manual tutorial/configure-replica-set-tag-sets/#replica-set-configuration-tag-sets Tag Sets
      */
     public WriteConcern withW(final String w) {
         return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
     }
 
     /**
+     * Constructs a new WriteConcern from the current one and the specified fsync value
+     *
      * @param fsync true if the write concern needs to include fsync
-     * @return the WriteConcern
+     * @return the new WriteConcern
      * @deprecated Prefer WriteConcern#withJ
      */
     @Deprecated
@@ -533,15 +542,17 @@ public class WriteConcern implements Serializable {
     }
 
     /**
+     * Constructs a new WriteConcern from the current one and the specified j value
+     *
      * @param j true if journalling is required
-     * @return the WriteConcern
+     * @return the new WriteConcern
      */
     public WriteConcern withJ(final boolean j) {
         return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), getWtimeout(), getFsync(), j);
     }
 
     /**
-     * Constructs a new WriteConcern from the current one and the specified wTimeout.
+     * Constructs a new WriteConcern from the current one and the specified wtimeout
      *
      * @param wtimeout the wtimeout
      * @return the WriteConcern with the given wtimeout
