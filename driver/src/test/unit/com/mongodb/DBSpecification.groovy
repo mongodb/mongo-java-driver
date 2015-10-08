@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.ValidationAction
+import com.mongodb.client.model.ValidationLevel
 import com.mongodb.operation.CreateCollectionOperation
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -32,27 +34,40 @@ class DBSpecification extends Specification {
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
+
+        when:
+        db.createCollection('ctest', new BasicDBObject())
+
+        then:
+        def operation = executor.getWriteOperation() as CreateCollectionOperation
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest'))
+
+        when:
         def options = new BasicDBObject()
                 .append('size', 100000)
                 .append('max', 2000)
                 .append('capped', true)
                 .append('autoIndexId', true)
-                .append('storageEngine', new BasicDBObject('wiredTiger', new BasicDBObject()))
-                .append('indexOptionDefaults', new BasicDBObject('storageEngine', new BasicDBObject('mmapv1', new BasicDBObject())))
+                .append('storageEngine', BasicDBObject.parse('{ wiredTiger: {}}'))
+                .append('indexOptionDefaults', BasicDBObject.parse('{storageEngine: { mmapv1: {}}}'))
+                .append('validator', BasicDBObject.parse('{level : { $gte: 10 } }'))
+                .append('validationLevel', ValidationLevel.MODERATE.getValue())
+                .append('validationAction', ValidationAction.WARN.getValue())
 
-        when:
         db.createCollection('ctest', options)
+        operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        def operation = executor.getWriteOperation() as CreateCollectionOperation
-        operation.storageEngineOptions == new BsonDocument('wiredTiger', new BsonDocument())
         expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest')
                                               .sizeInBytes(100000)
                                               .maxDocuments(2000)
                                               .capped(true)
                                               .autoIndex(true)
-                                              .storageEngineOptions(new BsonDocument('wiredTiger', new BsonDocument()))
-                                              .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}')))
+                                              .storageEngineOptions(BsonDocument.parse('{ wiredTiger: {}}'))
+                                              .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}'))
+                                              .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
+                                              .validationLevel(ValidationLevel.MODERATE)
+                                              .validationAction(ValidationAction.WARN))
     }
 
 

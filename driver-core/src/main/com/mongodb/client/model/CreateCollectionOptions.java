@@ -18,6 +18,8 @@ package com.mongodb.client.model;
 
 import org.bson.conversions.Bson;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Options for creating a collection
  *
@@ -32,6 +34,7 @@ public class CreateCollectionOptions {
     private Boolean usePowerOf2Sizes;
     private Bson storageEngineOptions;
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
+    private ValidationOptions validationOptions = new ValidationOptions();
 
     /**
      * Gets if auto-index is enabled
@@ -181,6 +184,30 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions indexOptionDefaults(final IndexOptionDefaults indexOptionDefaults) {
         this.indexOptionDefaults = indexOptionDefaults;
+        return this;
+    }
+
+    /**
+     * Gets the validation options for documents being inserted or updated in a collection
+     *
+     * @return the validation options
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public ValidationOptions getValidationOptions() {
+        return validationOptions;
+    }
+
+    /**
+     * Sets the validation options for documents being inserted or updated in a collection
+     *
+     * @param validationOptions the validation options
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public CreateCollectionOptions validationOptions(final ValidationOptions validationOptions) {
+        this.validationOptions = notNull("validationOptions", validationOptions);
         return this;
     }
 }

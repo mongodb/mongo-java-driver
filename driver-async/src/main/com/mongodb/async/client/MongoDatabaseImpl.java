@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -168,7 +169,16 @@ class MongoDatabaseImpl implements MongoDatabase {
         if (indexOptionDefaults.getStorageEngine() != null) {
             operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
         }
-
+        ValidationOptions validationOptions = createCollectionOptions.getValidationOptions();
+        if (validationOptions.getValidator() != null) {
+            operation.validator(toBsonDocument(validationOptions.getValidator()));
+        }
+        if (validationOptions.getValidationLevel() != null) {
+            operation.validationLevel(validationOptions.getValidationLevel());
+        }
+        if (validationOptions.getValidationAction() != null) {
+            operation.validationAction(validationOptions.getValidationAction());
+        }
         executor.execute(operation, callback);
     }
 

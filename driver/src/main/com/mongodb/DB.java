@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.ValidationAction;
+import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
@@ -265,14 +267,23 @@ public class DB {
         if (options.get("capped") != null && !(options.get("capped") instanceof Boolean)) {
             throw new IllegalArgumentException("'capped' should be Boolean");
         }
-        if (options.get("autoIndexId") != null && !(options.get("capped") instanceof Boolean)) {
-            throw new IllegalArgumentException("'capped' should be Boolean");
+        if (options.get("autoIndexId") != null && !(options.get("autoIndexId") instanceof Boolean)) {
+            throw new IllegalArgumentException("'autoIndexId' should be Boolean");
         }
         if (options.get("storageEngine") != null && !(options.get("storageEngine") instanceof DBObject)) {
-            throw new IllegalArgumentException("storageEngine' should be DBObject");
+            throw new IllegalArgumentException("'storageEngine' should be DBObject");
         }
         if (options.get("indexOptionDefaults") != null && !(options.get("indexOptionDefaults") instanceof DBObject)) {
-            throw new IllegalArgumentException("indexOptionDefaults' should be DBObject");
+            throw new IllegalArgumentException("'indexOptionDefaults' should be DBObject");
+        }
+        if (options.get("validator") != null && !(options.get("validator") instanceof DBObject)) {
+            throw new IllegalArgumentException("'validator' should be DBObject");
+        }
+        if (options.get("validationLevel") != null && !(options.get("validationLevel") instanceof String)) {
+            throw new IllegalArgumentException("'validationLevel' should be String");
+        }
+        if (options.get("validationAction") != null && !(options.get("validationAction") instanceof String)) {
+            throw new IllegalArgumentException("'validationAction' should be String");
         }
 
         boolean capped = false;
@@ -282,6 +293,10 @@ public class DB {
         Boolean usePowerOfTwoSizes = null;
         BsonDocument storageEngineOptions = null;
         BsonDocument indexOptionDefaults = null;
+        BsonDocument validator = null;
+        ValidationLevel validationLevel = null;
+        ValidationAction validationAction = null;
+
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
@@ -303,6 +318,15 @@ public class DB {
         if (options.get("indexOptionDefaults") != null) {
             indexOptionDefaults = wrap((DBObject) options.get("indexOptionDefaults"));
         }
+        if (options.get("validator") != null) {
+            validator = wrap((DBObject) options.get("validator"));
+        }
+        if (options.get("validationLevel") != null) {
+            validationLevel = ValidationLevel.fromString((String) options.get("validationLevel"));
+        }
+        if (options.get("validationAction") != null) {
+            validationAction = ValidationAction.fromString((String) options.get("validationAction"));
+        }
 
         return new CreateCollectionOperation(getName(), collectionName)
                    .capped(capped)
@@ -311,7 +335,10 @@ public class DB {
                    .maxDocuments(maxDocuments)
                    .usePowerOf2Sizes(usePowerOfTwoSizes)
                    .storageEngineOptions(storageEngineOptions)
-                   .indexOptionDefaults(indexOptionDefaults);
+                   .indexOptionDefaults(indexOptionDefaults)
+                   .validator(validator)
+                   .validationLevel(validationLevel)
+                   .validationAction(validationAction);
     }
 
     /**
