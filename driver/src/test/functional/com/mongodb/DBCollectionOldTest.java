@@ -53,8 +53,8 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         DBCollection c = collection;
 
         DBObject obj = new BasicDBObject();
-        c.insert(obj, WriteConcern.SAFE);
-        c.insert(obj, WriteConcern.SAFE);
+        c.insert(obj, WriteConcern.ACKNOWLEDGED);
+        c.insert(obj, WriteConcern.ACKNOWLEDGED);
     }
 
     @Test

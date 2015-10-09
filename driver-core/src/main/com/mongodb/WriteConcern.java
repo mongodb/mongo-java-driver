@@ -324,7 +324,7 @@ public class WriteConcern implements Serializable {
 
     // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
     // constructor that means something else.
-    private WriteConcern(Object w, final int wtimeout, final boolean fsync, final boolean j) {
+    private WriteConcern(final Object w, final int wtimeout, final boolean fsync, final boolean j) {
         if (w == null) {
             isTrueArgument("wtimeout == 0", wtimeout == 0);
             isTrueArgument("fsync == false", !fsync);
@@ -538,7 +538,7 @@ public class WriteConcern implements Serializable {
      */
     @Deprecated
     public WriteConcern withFsync(final boolean fsync) {
-        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), getWtimeout(), fsync, getJ());
+        return new WriteConcern(getWObject() == null ? Integer.valueOf(1) : getWObject(), getWtimeout(), fsync, getJ());
     }
 
     /**
@@ -548,7 +548,7 @@ public class WriteConcern implements Serializable {
      * @return the new WriteConcern
      */
     public WriteConcern withJ(final boolean j) {
-        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), getWtimeout(), getFsync(), j);
+        return new WriteConcern(getWObject() == null ? Integer.valueOf(1) : getWObject(), getWtimeout(), getFsync(), j);
     }
 
     /**
@@ -559,7 +559,7 @@ public class WriteConcern implements Serializable {
      * @since 3.2
      */
     public WriteConcern withWTimeout(final int wtimeout) {
-        return new WriteConcern(getWObject() == null ? new Integer(1) : getWObject(), wtimeout, getFsync(), getJ());
+        return new WriteConcern(getWObject() == null ? Integer.valueOf(1) : getWObject(), wtimeout, getFsync(), getJ());
 
     }
 

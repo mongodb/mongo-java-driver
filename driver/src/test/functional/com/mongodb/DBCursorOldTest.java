@@ -118,7 +118,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
                         .addOption(Bytes.QUERYOPTION_TAILABLE);
-        c.save(firstDBObject, WriteConcern.SAFE);
+        c.save(firstDBObject, WriteConcern.ACKNOWLEDGED);
 
         assertEquals(firstDBObject, cur.tryNext());
         assertEquals(firstDBObject, cur.curr());
@@ -128,7 +128,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(firstDBObject, cur.curr());
         assertEquals(1, cur.numSeen());
 
-        c.save(secondDBObject, WriteConcern.SAFE);
+        c.save(secondDBObject, WriteConcern.ACKNOWLEDGED);
         assertEquals(secondDBObject, cur.tryNext());
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
@@ -144,7 +144,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         for (int i = 0; i < 10; i++) {
-            c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
+            c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
         final DBCursor cur = c.find()
@@ -177,7 +177,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         latch.await(5, SECONDS);
 
         // this doc should unblock thread
-        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
+        c.save(new BasicDBObject("x", 10), WriteConcern.ACKNOWLEDGED);
         assertEquals(10, (long) future.get(5, SECONDS));
     }
 
@@ -187,7 +187,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
         for (int i = 0; i < 10; i++) {
-            c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
+            c.save(new BasicDBObject("x", i), WriteConcern.ACKNOWLEDGED);
         }
 
         final DBCursor cur = c.find()
@@ -219,7 +219,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         latch.await(5, SECONDS);
 
         // this doc should unblock thread
-        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
+        c.save(new BasicDBObject("x", 10), WriteConcern.ACKNOWLEDGED);
         assertEquals(10, (long) future.get(5, SECONDS));
     }
 
@@ -229,7 +229,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
-        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
                         .addOption(Bytes.QUERYOPTION_TAILABLE);
@@ -247,7 +247,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
-        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
                         .addOption(Bytes.QUERYOPTION_TAILABLE)
@@ -266,7 +266,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
-        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
                         .addOption(Bytes.QUERYOPTION_AWAITDATA);
@@ -445,7 +445,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     //        c.drop();
     //
     //        for (int i = 0; i < 1000; i++) {
-    //            c.save(new BasicDBObject("_id", i), WriteConcern.SAFE);
+    //            c.save(new BasicDBObject("_id", i), WriteConcern.ACKNOWLEDGED);
     //        }
     //
     //        // finalizer is on by default so after calling hasNext should report that it has one

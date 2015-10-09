@@ -23,7 +23,7 @@ import org.bson.BsonString
 import spock.lang.Specification
 import spock.lang.Unroll
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings('deprecation')
 class WriteConcernSpecification extends Specification {
 
     @Unroll
@@ -39,7 +39,7 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern()                                | 0    | 0        | false | false
         new WriteConcern(1)                               | 1    | 0        | false | false
         new WriteConcern(1, 10)                           | 1    | 10       | false | false
-        new WriteConcern((boolean)true)                   | 1    | 0        | true  | false
+        new WriteConcern(true)                            | 1    | 0        | true  | false
         new WriteConcern(1, 10, true)                     | 1    | 10       | true  | false
         new WriteConcern(1, 10, false, true)              | 1    | 10       | false | true
         new WriteConcern(1, 10, false, true)              | 1    | 10       | false | true
