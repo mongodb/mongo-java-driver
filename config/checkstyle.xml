@@ -219,7 +219,7 @@
     </module>
     <module name="SuppressionCommentFilter"/>
     <module name="SuppressionFilter">
-        <property name="file" value="config/checkstyle-exclude.xml"/>
+        <property name="file" value="${checkstyleConfigDir}/checkstyle-exclude.xml"/>
     </module>
 
 </module>

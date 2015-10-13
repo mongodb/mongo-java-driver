@@ -210,13 +210,15 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     task testCoverage(dependsOn: test)
 
     /* Code quality */
+
     checkstyle {
         toolVersion = "6.2"
-        configFile = new File("$configDir/checkstyle.xml")
+        configFile = new File(configDir, 'checkstyle.xml')
+        configProperties.checkstyleConfigDir = configDir
     }
 
     findbugs {
-        excludeFilter = new File("$configDir/findbugs-exclude.xml")
+        excludeFilter = new File(configDir, 'findbugs-exclude.xml')
         sourceSets = [sourceSets.main]
         toolVersion = '3.0.1'
     }

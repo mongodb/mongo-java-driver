@@ -106,7 +106,7 @@ For binaries containing the asynchronous API, see the [driver-async README](driv
 
 ## Build
 
-To build the driver:
+To build and test the driver:
 
 ```
 $ git clone https://github.com/mongodb/mongo-java-driver.git
@@ -114,9 +114,12 @@ $ cd mongo-java-driver
 $ ./gradlew check
 ```
 
+The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands).
+
+
 ### Build status:
 
-[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver) | [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
+[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver) | [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
 
 ## Maintainers
 
