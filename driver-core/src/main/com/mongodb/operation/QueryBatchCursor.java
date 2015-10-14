@@ -205,7 +205,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                 try {
                     initFromCommandResult(connection.command(namespace.getDatabaseName(),
                                                              asGetMoreCommandDocument(),
-                                                             true,
+                                                             false,
                                                              new NoOpFieldNameValidator(),
                                                              CommandResultDocumentCodec.create(decoder, "nextBatch")));
                 } catch (MongoCommandException e) {

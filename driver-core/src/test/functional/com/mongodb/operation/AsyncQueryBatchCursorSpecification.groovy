@@ -17,11 +17,9 @@
 package com.mongodb.operation
 
 import category.Slow
-import com.mongodb.ClusterFixture
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
@@ -275,28 +273,6 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         } catch (ignored) {
             fail('Expected MongoCursorNotFoundException to be thrown but got ' + ignored.getClass())
         }
-    }
-
-    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
-    def 'should get more from a secondary'() {
-        given:
-        cleanupConnectionAndSource()  // this test uses a different connection and connection source
-        connectionSource = getReadConnectionSource(getAsyncBinding(ReadPreference.secondary()))
-        connection = getConnection(connectionSource)
-
-        def firstBatch = executeQuery(2, true)
-
-        // wait for replication
-        while (firstBatch.cursor == null ) {
-            firstBatch = executeQuery(2, true)
-        }
-
-        when:
-        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource, connection)
-        nextBatch()
-
-        then:
-        nextBatch()
     }
 
     List<Document> nextBatch() {

@@ -436,6 +436,9 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         }
     }
 
+    // More of an integration test to ensure proper server behavior, as there is no specific driver code in the cursor implementation to
+    // enable reading from a secondary.  But since the cursor, as per spec, does not set the slaveOk flag for the getMore command, this
+    // test ensures that the server does not require it.
     @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should get more from a secondary'() {
         given:

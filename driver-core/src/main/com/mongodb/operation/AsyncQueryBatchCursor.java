@@ -148,7 +148,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     private void getMore(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(), true,
+            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(), false,
                                     new NoOpFieldNameValidator(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
                                     new CommandResultSingleResultCallback(connection, callback));
 
