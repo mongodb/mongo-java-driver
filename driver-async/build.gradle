@@ -34,8 +34,8 @@ dependencies {
 
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongodb-driver-async:3.0.0'
-    failOnErrors = false
+    baseline 'org.mongodb:mongodb-driver-async:3.1.0'
+    failOnErrors = true
 }
 
 tasks.withType(Checkstyle) {
