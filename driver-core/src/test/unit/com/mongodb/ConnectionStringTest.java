@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -131,7 +132,7 @@ public class ConnectionStringTest extends TestCase {
                 assertEquals(expected, connectionString.getRequiredReplicaSetName());
             } else if (option.getKey().equals("wtimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
-                assertEquals(expected, connectionString.getWriteConcern().getWtimeout());
+                assertEquals(expected, connectionString.getWriteConcern().getWTimeout(TimeUnit.MILLISECONDS).intValue());
             } else {
                 assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
             }

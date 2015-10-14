@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import javax.net.SocketFactory;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoClientOptions.Builder;
 
@@ -274,15 +275,30 @@ public class MongoOptions {
      * @return a WriteConcern for the current MongoOptions.
      */
     public WriteConcern getWriteConcern() {
+        WriteConcern retVal;
+
         if (writeConcern != null) {
-            return writeConcern;
+            retVal = writeConcern;
         } else if (w != 0 || wtimeout != 0 || fsync | j) {
-            return new WriteConcern(w, wtimeout, fsync, j);
+            retVal = WriteConcern.ACKNOWLEDGED;
+            if (w != 0) {
+                retVal = retVal.withW(w);
+            }
+            if (wtimeout != 0) {
+                retVal = retVal.withWTimeout(wtimeout, TimeUnit.MILLISECONDS);
+            }
+            if (fsync) {
+                retVal = retVal.withFsync(fsync);
+            }
+            if (j) {
+                retVal = retVal.withJ(j);
+            }
         } else if (safe) {
-            return WriteConcern.ACKNOWLEDGED;
+            retVal = WriteConcern.ACKNOWLEDGED;
         } else {
-            return WriteConcern.UNACKNOWLEDGED;
+            retVal = WriteConcern.UNACKNOWLEDGED;
         }
+        return retVal;
     }
 
     /**

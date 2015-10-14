@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -140,15 +141,15 @@ public class MongoOptionsTest {
 
         options.reset();
         options.wtimeout = 3000;
-        assertEquals(new WriteConcern(0, 3000), options.getWriteConcern());
+        assertEquals(WriteConcern.ACKNOWLEDGED.withWTimeout(3000, TimeUnit.MILLISECONDS), options.getWriteConcern());
 
         options.reset();
         options.fsync = true;
-        assertEquals(new WriteConcern(0, 0, true), options.getWriteConcern());
+        assertEquals(WriteConcern.ACKNOWLEDGED.withFsync(true), options.getWriteConcern());
 
         options.reset();
         options.j = true;
-        assertEquals(new WriteConcern(0, 0, false, true), options.getWriteConcern());
+        assertEquals(WriteConcern.ACKNOWLEDGED.withJournal(true), options.getWriteConcern());
     }
 
     @Test
@@ -170,7 +171,7 @@ public class MongoOptionsTest {
 
         assertEquals(options.requiredReplicaSetName, clientOptions.getRequiredReplicaSetName());
         assertEquals(options.description, clientOptions.getDescription());
-        assertEquals(new WriteConcern(0, 0, true, false), clientOptions.getWriteConcern());
+        assertEquals(WriteConcern.ACKNOWLEDGED.withFsync(true), clientOptions.getWriteConcern());
         assertEquals(0, clientOptions.getMinConnectionsPerHost());
         assertEquals(10, clientOptions.getConnectionsPerHost());
         assertEquals(100, clientOptions.getConnectTimeout());

@@ -27,6 +27,7 @@ import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ConnectionStringSpecification extends Specification {
 
@@ -82,10 +83,11 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost')                                          | null
         new ConnectionString('mongodb://localhost/?safe=true')                               | WriteConcern.ACKNOWLEDGED
         new ConnectionString('mongodb://localhost/?safe=false')                              | WriteConcern.UNACKNOWLEDGED
-        new ConnectionString('mongodb://localhost/?wTimeout=5')                              | new WriteConcern(1, 5, false, false)
-        new ConnectionString('mongodb://localhost/?fsync=true')                              | new WriteConcern(1, 0, true, false)
-        new ConnectionString('mongodb://localhost/?j=true')                                  | new WriteConcern(1, 0, false, true)
-        new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
+        new ConnectionString('mongodb://localhost/?wTimeout=5')                              | WriteConcern.ACKNOWLEDGED
+                                                                                                           .withWTimeout(5, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/?fsync=true')                              | WriteConcern.ACKNOWLEDGED.withFsync(true)
+        new ConnectionString('mongodb://localhost/?journal=true')                            | WriteConcern.ACKNOWLEDGED.withJournal(true)
+        new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
         new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
     }
 

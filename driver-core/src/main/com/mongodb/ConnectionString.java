@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
@@ -363,9 +364,9 @@ public ConnectionString(final String connectionString) {
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
         Boolean safe = null;
         String w = null;
-        int wTimeout = 0;
-        boolean fsync = false;
-        boolean journal = false;
+        Integer wTimeout = null;
+        Boolean fsync = null;
+        Boolean journal = null;
 
         for (final String key : WRITE_CONCERN_KEYS) {
             String value = getLastValue(optionsMap, key);
@@ -551,27 +552,36 @@ public ConnectionString(final String connectionString) {
 
     @SuppressWarnings("deprecation")
     private WriteConcern buildWriteConcern(final Boolean safe, final String w,
-                                           final int wTimeout, final boolean fsync, final boolean journal) {
-        if (w != null || wTimeout != 0 || fsync || journal) {
-            WriteConcern writeConcernWithWValue;
+                                           final Integer wTimeout, final Boolean fsync, final Boolean journal) {
+        WriteConcern retVal = null;
+        if (w != null || wTimeout != null || fsync != null || journal != null) {
             if (w == null) {
-                writeConcernWithWValue = WriteConcern.ACKNOWLEDGED;
+                retVal = WriteConcern.ACKNOWLEDGED;
             } else {
                 try {
-                    writeConcernWithWValue = new WriteConcern(Integer.parseInt(w));
+                    retVal = new WriteConcern(Integer.parseInt(w));
                 } catch (NumberFormatException e) {
-                    writeConcernWithWValue = new WriteConcern(w);
+                    retVal = new WriteConcern(w);
                 }
             }
-            return writeConcernWithWValue.withWTimeout(wTimeout).withJ(journal).withFsync(fsync);
+            if (wTimeout != null) {
+                retVal = retVal.withWTimeout(wTimeout, TimeUnit.MILLISECONDS);
+            }
+            if (journal != null) {
+                retVal = retVal.withJournal(journal);
+            }
+            if (fsync != null) {
+                retVal = retVal.withFsync(fsync);
+            }
+            return retVal;
         } else if (safe != null) {
             if (safe) {
-                return WriteConcern.ACKNOWLEDGED;
+                retVal = WriteConcern.ACKNOWLEDGED;
             } else {
-                return WriteConcern.UNACKNOWLEDGED;
+                retVal = WriteConcern.UNACKNOWLEDGED;
             }
         }
-        return null;
+        return retVal;
     }
 
     private TagSet getTags(final String tagSetString) {

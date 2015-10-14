@@ -28,6 +28,7 @@ import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientURISpecification extends Specification {
 
@@ -99,10 +100,11 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://localhost')                                            | WriteConcern.ACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?safe=true')                                 | WriteConcern.ACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?safe=false')                                | WriteConcern.UNACKNOWLEDGED
-        new MongoClientURI('mongodb://localhost/?wtimeoutMS=5')                              | new WriteConcern(1, 5, false, false)
-        new MongoClientURI('mongodb://localhost/?fsync=true')                                | new WriteConcern(1, 0, true, false)
-        new MongoClientURI('mongodb://localhost/?j=true')                                    | new WriteConcern(1, 0, false, true)
-        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
+        new MongoClientURI('mongodb://localhost/?wTimeout=5')                                | WriteConcern.ACKNOWLEDGED
+                                                                                                           .withWTimeout(5, MILLISECONDS)
+        new MongoClientURI('mongodb://localhost/?fsync=true')                                | WriteConcern.ACKNOWLEDGED.withFsync(true)
+        new MongoClientURI('mongodb://localhost/?journal=true')                              | WriteConcern.ACKNOWLEDGED.withJournal(true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
         new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
     }
 
@@ -113,11 +115,12 @@ class MongoClientURISpecification extends Specification {
         where:
         uri                                                                                | writeConcern
         new MongoClientURI('mongodb://localhost')                                          | WriteConcern.ACKNOWLEDGED
-        new MongoClientURI('mongodb://localhost/?wTimeout=5')                              | new WriteConcern(1, 5, false, false)
+        new MongoClientURI('mongodb://localhost/?wTimeout=5')                              | WriteConcern.ACKNOWLEDGED
+                                                                                                         .withWTimeout(5, MILLISECONDS)
         new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
         new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
-        new MongoClientURI('mongodb://localhost/?wTimeout=1&wtimeoutMS=5')                 | new WriteConcern(1, 5, false, false)
-
+        new MongoClientURI('mongodb://localhost/?wTimeout=1&wtimeoutMS=5')                 | WriteConcern.ACKNOWLEDGED
+                                                                                                         .withWTimeout(5, MILLISECONDS)
     }
 
     @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
