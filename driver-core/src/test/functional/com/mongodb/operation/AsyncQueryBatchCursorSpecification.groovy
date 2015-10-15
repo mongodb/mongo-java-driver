@@ -109,6 +109,25 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         !nextBatch()
     }
 
+    def 'should exhaust multiple batches with limit'() {
+        given:
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, 2), limit, 2, new DocumentCodec(), connectionSource, connection)
+
+        when:
+        def next = nextBatch()
+        def total = 0
+        while (next) {
+            total +=next.size()
+            next = nextBatch()
+        }
+
+        then:
+        total == Math.abs(limit)
+
+        where:
+        limit << [5, -5]
+    }
+
     def 'should exhaust multiple batches'() {
         given:
         cursor = new AsyncQueryBatchCursor<Document>(executeQuery(3), 0, 2, new DocumentCodec(), connectionSource, connection)
@@ -311,11 +330,9 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
                     .append('filter', filter)
+                    .append('batchSize', new BsonInt32(batchSize))
                     .append('tailable', BsonBoolean.valueOf(tailable))
                     .append('awaitData', BsonBoolean.valueOf(awaitData))
-            if (batchSize > 0) {
-                findCommand.append('batchSize', new BsonInt32(batchSize))
-            }
             if (limit > 0) {
                 findCommand.append('limit', new BsonInt32(limit))
             }

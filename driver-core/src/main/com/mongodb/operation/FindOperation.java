@@ -728,7 +728,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public BatchCursor<T> apply(final BsonDocument result) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                                                                          connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, 0, batchSize, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source);
             }
         };
     }
@@ -740,7 +740,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public AsyncBatchCursor<T> apply(final BsonDocument result) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                                                                          connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize, decoder, source, connection);
+                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source, connection);
             }
         };
     }

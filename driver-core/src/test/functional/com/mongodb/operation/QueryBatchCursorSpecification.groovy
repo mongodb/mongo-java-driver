@@ -147,17 +147,20 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
 
     def 'test limit exhaustion'() {
         given:
-        def firstBatch = executeQuery(5, 2)
+        def firstBatch = executeQuery(limit, 2)
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 2, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, limit, 2, new DocumentCodec(), connectionSource, connection)
 
         then:
-        cursor.iterator().sum { it.size } == 5
+        cursor.iterator().sum { it.size } == Math.abs(limit)
 
         cleanup:
         connection?.release()
+
+        where:
+        limit << [5, -5]
     }
 
     def 'test remove'() {
@@ -488,12 +491,10 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
                         .append('filter', filter)
+                        .append('limit', new BsonInt32(Math.abs(limit)))
                         .append('batchSize', new BsonInt32(batchSize))
                         .append('tailable', BsonBoolean.valueOf(tailable))
                         .append('awaitData', BsonBoolean.valueOf(awaitData))
-                if (limit > 0) {
-                    findCommand.append('limit', new BsonInt32(limit))
-                }
                 def response = connection.command(getDatabaseName(), findCommand,
                                                   slaveOk, new NoOpFieldNameValidator(),
                                                   CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'))

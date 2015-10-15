@@ -130,7 +130,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private boolean limitReached() {
-        return limit != 0 && count >= limit;
+        return Math.abs(limit) != 0 && count >= Math.abs(limit);
     }
 
     private void getMore(final SingleResultCallback<List<T>> callback) {
@@ -162,8 +162,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName()));
 
-        if (batchSize != 0) {
-            document.append("batchSize", new BsonInt32(Math.abs(batchSize)));
+        int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count));
+        if (batchSizeForGetMoreCommand != 0) {
+            document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
         }
 
         return document;

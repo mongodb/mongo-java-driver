@@ -77,7 +77,6 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
         initFromQueryResult(firstQueryResult);
         if (limitReached()) {
-            notNull("connection", connection);
             killCursor(connection);
         }
     }
@@ -228,8 +227,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(serverCursor.getId()))
                                 .append("collection", new BsonString(namespace.getCollectionName()));
 
-        if (batchSize != 0) {
-            document.append("batchSize", new BsonInt32(Math.abs(batchSize)));
+        int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count));
+        if (batchSizeForGetMoreCommand != 0) {
+            document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
         }
 
         return document;
@@ -248,7 +248,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     }
 
     private boolean limitReached() {
-        return limit != 0 && count >= limit;
+        return Math.abs(limit) != 0 && count >= Math.abs(limit);
     }
 
     private void killCursor() {
@@ -264,6 +264,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     private void killCursor(final Connection connection) {
         if (serverCursor != null) {
+            notNull("connection", connection);
             connection.killCursor(namespace, singletonList(serverCursor.getId()));
             serverCursor = null;
         }
