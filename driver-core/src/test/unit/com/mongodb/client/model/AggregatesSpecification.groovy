@@ -87,6 +87,16 @@ class AggregatesSpecification extends Specification {
     def 'should render $unwind'() {
         expect:
         toBson(unwind('$sizes')) == parse('{ $unwind : "$sizes" }')
+        toBson(unwind('$sizes', new UnwindOptions().preserveNullAndEmptyArrays(null))) == parse('{ $unwind : { path : "$sizes" } }')
+        toBson(unwind('$sizes', new UnwindOptions().preserveNullAndEmptyArrays(false))) == parse('''
+            { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : false } }''')
+        toBson(unwind('$sizes', new UnwindOptions().preserveNullAndEmptyArrays(true))) == parse('''
+            { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true } }''')
+        toBson(unwind('$sizes', new UnwindOptions().includeArrayIndex(null))) == parse('{ $unwind : { path : "$sizes" } }')
+        toBson(unwind('$sizes', new UnwindOptions().includeArrayIndex('$a'))) == parse('''
+            { $unwind : { path : "$sizes", includeArrayIndex : "$a" } }''')
+        toBson(unwind('$sizes', new UnwindOptions().preserveNullAndEmptyArrays(true).includeArrayIndex('$a'))) == parse('''
+            { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true, includeArrayIndex : "$a" } }''')
     }
 
     def 'should render $out'() {

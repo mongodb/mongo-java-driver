@@ -142,6 +142,19 @@ This example outputs, for each document, a document for each element in the `siz
 unwind("$sizes")
 ```
 
+Available with MongoDB 3.2, this example also includes any documents that have missing or `null` values for the `$sizes` field or where 
+the `$sizes` list is empty:
+
+```java
+unwind("$sizes", new UnwindOptions().preserveNullAndEmptyArrays(true))
+```
+
+Available with MongoDB 3.2, this example unwinds the `sizes` array and also outputs the array index into the `$position` field:
+
+```java
+unwind("$sizes", new UnwindOptions().includeArrayIndex("$position"))
+```
+
 ### Out
 
 The [`$out`]({{< docsref "reference/operator/aggregation/out/" >}}) pipeline stage outputs all documents to the specified 
