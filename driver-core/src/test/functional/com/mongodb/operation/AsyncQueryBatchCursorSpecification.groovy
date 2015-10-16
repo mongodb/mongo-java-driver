@@ -143,6 +143,7 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
         when:
         cursor.close()
+        waitForRelease(connectionSource, 1)
 
         then:
         connectionSource.count == 1
