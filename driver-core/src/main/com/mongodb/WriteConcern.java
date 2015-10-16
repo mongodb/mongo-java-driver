@@ -243,8 +243,8 @@ public class WriteConcern implements Serializable {
     /**
      * Constructs an instance with the given integer-based value for w and the given value for wTimeoutMS.
      *
-     * @param w          the w value, which must be >= 0
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be >= 0
+     * @param w          the w value, which must be &gt;= 0
+     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
      * @mongodb.driver.manual reference/write-concern/#w-option w option
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
      */
@@ -266,8 +266,8 @@ public class WriteConcern implements Serializable {
     /**
      * Constructs an instance with the given integer-based w value, wTimeout in milliseconds, and fsync value.
      *
-     * @param w          the w value, which must be >= 0
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be >= 0
+     * @param w          the w value, which must be &gt;= 0
+     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
      * @param fsync      whether or not to fsync
      * @deprecated Prefer {@link #withW(int)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
      * @mongodb.driver.manual reference/write-concern/#w-option w option
@@ -281,8 +281,8 @@ public class WriteConcern implements Serializable {
     /**
      * Constructs an instance with the given integer-based w value, wTimeout in milliseconds, fsync value, and journal value.
      *
-     * @param w          the w value, which must be >= 0
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be >= 0
+     * @param w          the w value, which must be &gt;= 0
+     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
      * @param fsync      whether or not to fsync
      * @param journal    whether writes should wait for a journaling group commit
      * @deprecated Prefer {@link #withW(int)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
@@ -299,7 +299,7 @@ public class WriteConcern implements Serializable {
      * Constructs an instance with the given String-based w value, wTimeout in milliseconds, fsync value, and journal value.
      *
      * @param w          the w value, which must be non-null
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be >= 0
+     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
      * @param fsync      whether or not to fsync
      * @param journal    whether writes should wait for a journaling group commit
      * @deprecated Prefer {@link #withW(String)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
@@ -594,7 +594,7 @@ public class WriteConcern implements Serializable {
     /**
      * Constructs a new WriteConcern from the current one and the specified wTimeout in the given time unit.
      *
-     * @param wTimeout the wTimeout, which must be >= 0 and <= Integer.MAX_VALUE after conversion to milliseconds
+     * @param wTimeout the wTimeout, which must be &gt;= 0 and &lt;= Integer.MAX_VALUE after conversion to milliseconds
      * @param timeUnit the non-null time unit to apply to wTimeout
      * @return the WriteConcern with the given wTimeout
      * @since 3.2
