@@ -60,6 +60,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Construct an instance
@@ -99,6 +100,30 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
      */
     public boolean isOrdered() {
         return ordered;
+    }
+
+    /**
+     * Gets the the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public BaseWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
     }
 
     @Override

@@ -106,25 +106,51 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     @Override
     public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<InsertRequest> inserts) {
-        return executeProtocol(new InsertCommandProtocol(namespace, ordered, writeConcern, inserts));
+        return insertCommand(namespace, ordered, writeConcern, null, inserts);
+    }
+
+    @Override
+    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<InsertRequest> inserts) {
+        return executeProtocol(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts));
     }
 
     @Override
     public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final List<InsertRequest> inserts, final SingleResultCallback<BulkWriteResult> callback) {
-        executeProtocolAsync(new InsertCommandProtocol(namespace, ordered, writeConcern, inserts), callback);
+        insertCommandAsync(namespace, ordered, writeConcern, null, inserts, callback);
+    }
+
+    @Override
+    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeProtocolAsync(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts), callback);
     }
 
     @Override
     public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<UpdateRequest> updates) {
-        return executeProtocol(new UpdateCommandProtocol(namespace, ordered, writeConcern, updates));
+        return updateCommand(namespace, ordered, writeConcern, null, updates);
+    }
+
+    @Override
+    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
+        return executeProtocol(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates));
     }
 
     @Override
     public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final List<UpdateRequest> updates, final SingleResultCallback<BulkWriteResult> callback) {
-        executeProtocolAsync(new UpdateCommandProtocol(namespace, ordered, writeConcern, updates), callback);
+        updateCommandAsync(namespace, ordered, writeConcern, null, updates, callback);
+    }
+
+    @Override
+    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeProtocolAsync(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates), callback);
     }
 
     @Override

@@ -46,15 +46,17 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
     /**
      * Construct a new instance.
      *
-     * @param namespace         the namespace
-     * @param ordered           whether the inserts are ordered
-     * @param writeConcern      the write concern
-     * @param insertRequestList the list of inserts
-     * @param settings          the message settings
+     * @param namespace                 the namespace
+     * @param ordered                   whether the inserts are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypass documentation validation flag
+     * @param settings                  the message settings
+     * @param insertRequestList         the list of inserts
      */
     public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<InsertRequest> insertRequestList, final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, settings);
+                                final Boolean bypassDocumentValidation, final MessageSettings settings,
+                                final List<InsertRequest> insertRequestList) {
+        super(namespace, ordered, writeConcern, bypassDocumentValidation, settings);
         this.insertRequestList = notNull("insertRequestList", insertRequestList);
     }
 
@@ -99,9 +101,8 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
             getCodec(document).encode(writer, document, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new InsertCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(),
-                                                       insertRequestList.subList(i, insertRequestList.size()),
-                                                       getSettings());
+                nextMessage = new InsertCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(),
+                        getSettings(), insertRequestList.subList(i, insertRequestList.size()));
                 break;
             }
         }

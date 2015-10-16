@@ -37,8 +37,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               MessageSettings.builder().maxBatchCount(3).build());
+        def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
+                                               MessageSettings.builder().maxBatchCount(3).build(), inserts);
 
         when:
         def nextMessage = message.encode(buffer)
@@ -56,8 +56,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               MessageSettings.builder().maxDocumentSize(113).build());
+        def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
+                                               MessageSettings.builder().maxDocumentSize(113).build(), inserts);
 
         when:
         def nextMessage = message.encode(buffer)
@@ -75,8 +75,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
-                                               MessageSettings.builder().maxBatchCount(3).build());
+        def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED,
+                                               MessageSettings.builder().maxBatchCount(3).build(), deletes);
 
         when:
         def nextMessage = message.encode(buffer)
@@ -94,8 +94,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
-                                               MessageSettings.builder().maxDocumentSize(187).build());
+        def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED,
+                                               MessageSettings.builder().maxDocumentSize(187).build(), deletes);
 
         when:
         def nextMessage = message.encode(buffer)
@@ -113,8 +113,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                               MessageSettings.builder().maxBatchCount(3).build());
+        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
+                                               MessageSettings.builder().maxBatchCount(3).build(), replaces);
 
         when:
         def nextMessage = message.encode(buffer)
@@ -132,8 +132,8 @@ class WriteCommandLimitsSpecification extends Specification {
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                               MessageSettings.builder().maxDocumentSize(175).build());
+        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
+                                               MessageSettings.builder().maxDocumentSize(175).build(), replaces);
 
         when:
         def nextMessage = message.encode(buffer)

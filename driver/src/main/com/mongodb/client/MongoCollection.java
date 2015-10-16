@@ -29,6 +29,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
@@ -283,6 +284,19 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     void insertOne(TDocument document);
+
+    /**
+     * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
+     *
+     * @param document the document to insert
+     * @param options  the options to apply to the operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.2
+     */
+    void insertOne(TDocument document, InsertOneOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method

@@ -23,6 +23,7 @@ package com.mongodb.client.model;
  */
 public final class BulkWriteOptions {
     private boolean ordered = true;
+    private Boolean bypassDocumentValidation;
 
     /**
      * If true, then when a write fails, return without performing the remaining
@@ -45,6 +46,30 @@ public final class BulkWriteOptions {
      */
     public BulkWriteOptions ordered(final boolean ordered) {
         this.ordered = ordered;
+        return this;
+    }
+
+    /**
+     * Gets the the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public BulkWriteOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 }

@@ -74,6 +74,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private final List<? extends WriteRequest> writeRequests;
     private final boolean ordered;
     private final WriteConcern writeConcern;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Construct a new instance.
@@ -127,6 +128,30 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      */
     public List<? extends WriteRequest> getWriteRequests() {
         return writeRequests;
+    }
+
+    /**
+     * Gets the the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public MixedBulkWriteOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
     }
 
     /**
@@ -222,18 +247,19 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private Iterable<Run> getRunGenerator(final ConnectionDescription connectionDescription) {
         if (ordered) {
-            return new OrderedRunGenerator(connectionDescription);
+            return new OrderedRunGenerator(connectionDescription, bypassDocumentValidation);
         } else {
-            return new UnorderedRunGenerator(connectionDescription);
+            return new UnorderedRunGenerator(connectionDescription, bypassDocumentValidation);
         }
     }
 
     private class OrderedRunGenerator implements Iterable<Run> {
-
         private final int maxBatchCount;
+        private final Boolean bypassDocumentValidation;
 
-        public OrderedRunGenerator(final ConnectionDescription connectionDescription) {
+        public OrderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
             this.maxBatchCount = connectionDescription.getMaxBatchCount();
+            this.bypassDocumentValidation = bypassDocumentValidation;
         }
 
         @Override
@@ -248,7 +274,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 public Run next() {
-                    Run run = new Run(writeRequests.get(curIndex).getType(), true);
+                    Run run = new Run(writeRequests.get(curIndex).getType(), true, bypassDocumentValidation);
                     int nextIndex = getNextIndex();
                     for (int i = curIndex; i < nextIndex; i++) {
                         run.add(writeRequests.get(i), i);
@@ -278,9 +304,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private class UnorderedRunGenerator implements Iterable<Run> {
         private final int maxBatchCount;
+        private final Boolean bypassDocumentValidation;
 
-        public UnorderedRunGenerator(final ConnectionDescription connectionDescription) {
+        public UnorderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
             this.maxBatchCount = connectionDescription.getMaxBatchCount();
+            this.bypassDocumentValidation = bypassDocumentValidation;
         }
 
         @Override
@@ -300,7 +328,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         WriteRequest writeRequest = writeRequests.get(curIndex);
                         Run run = findRunOfType(writeRequest.getType());
                         if (run == null) {
-                            run = new Run(writeRequest.getType(), false);
+                            run = new Run(writeRequest.getType(), false, bypassDocumentValidation);
                             runs.add(run);
                         }
                         run.add(writeRequest, curIndex);
@@ -336,11 +364,13 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         private final List runWrites = new ArrayList();
         private final WriteRequest.Type type;
         private final boolean ordered;
+        private final Boolean bypassDocumentValidation;
         private IndexMap indexMap = IndexMap.create();
 
-        Run(final WriteRequest.Type type, final boolean ordered) {
+        Run(final WriteRequest.Type type, final boolean ordered, final Boolean bypassDocumentValidation) {
             this.type = type;
             this.ordered = ordered;
+            this.bypassDocumentValidation = bypassDocumentValidation;
         }
 
         @SuppressWarnings("unchecked")
@@ -358,9 +388,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             final BulkWriteResult nextWriteResult;
 
             if (type == UPDATE || type == REPLACE) {
-                nextWriteResult = getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).execute();
+                nextWriteResult = getUpdatesRunExecutor((List<UpdateRequest>) runWrites, bypassDocumentValidation, connection).execute();
             } else if (type == INSERT) {
-                nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).execute();
+                nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, bypassDocumentValidation, connection).execute();
             } else if (type == DELETE) {
                 nextWriteResult = getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).execute();
             } else {
@@ -372,9 +402,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         @SuppressWarnings("unchecked")
         void executeAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
             if (type == UPDATE || type == REPLACE) {
-                getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).executeAsync(callback);
+                getUpdatesRunExecutor((List<UpdateRequest>) runWrites, bypassDocumentValidation, connection).executeAsync(callback);
             } else if (type == INSERT) {
-                getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync(callback);
+                getInsertsRunExecutor((List<InsertRequest>) runWrites, bypassDocumentValidation, connection).executeAsync(callback);
             } else if (type == DELETE) {
                 getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).executeAsync(callback);
             } else {
@@ -403,7 +433,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         @SuppressWarnings("unchecked")
-        RunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Connection connection) {
+        RunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Boolean bypassDocumentValidation,
+                                          final Connection connection) {
             return new RunExecutor(connection) {
 
                 @Override
@@ -413,7 +444,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
-                    return connection.insertCommand(namespace, ordered, writeConcern, insertRequests);
+                    return connection.insertCommand(namespace, ordered, writeConcern, bypassDocumentValidation, insertRequests);
                 }
 
                 @Override
@@ -427,7 +458,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             };
         }
 
-        RunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final Connection connection) {
+        RunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final Boolean bypassDocumentValidation,
+                                          final Connection connection) {
             return new RunExecutor(connection) {
 
                 @Override
@@ -437,7 +469,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
-                    return connection.updateCommand(namespace, ordered, writeConcern, updates);
+                    return connection.updateCommand(namespace, ordered, writeConcern, bypassDocumentValidation, updates);
                 }
 
                 @Override
@@ -469,7 +501,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         @SuppressWarnings("unchecked")
-        AsyncRunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final AsyncConnection connection) {
+        AsyncRunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Boolean bypassDocumentValidation,
+                                               final AsyncConnection connection) {
             return new AsyncRunExecutor(connection) {
 
                 @Override
@@ -479,7 +512,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.insertCommandAsync(namespace, ordered, writeConcern, insertRequests, callback);
+                    connection.insertCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, insertRequests, callback);
                 }
 
                 @Override
@@ -493,7 +526,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             };
         }
 
-        AsyncRunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final AsyncConnection connection) {
+        AsyncRunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final Boolean bypassDocumentValidation,
+                                               final AsyncConnection connection) {
             return new AsyncRunExecutor(connection) {
 
                 @Override
@@ -503,7 +537,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.updateCommandAsync(namespace, ordered, writeConcern, updates, callback);
+                    connection.updateCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, updates, callback);
                 }
 
                 @Override

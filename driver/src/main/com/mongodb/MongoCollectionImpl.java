@@ -40,6 +40,7 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReturnDocument;
@@ -270,16 +271,22 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             writeRequests.add(writeRequest);
         }
 
-        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern));
+        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
     public void insertOne(final TDocument document) {
+        insertOne(document, new InsertOneOptions());
+    }
+
+    @Override
+    public void insertOne(final TDocument document, final InsertOneOptions options) {
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
             insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)));
+        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), options.getBypassDocumentValidation());
     }
 
     @Override
@@ -296,7 +303,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             }
             requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern));
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
@@ -317,7 +325,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
         return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
-                                                                          WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert())));
+                WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()), updateOptions.getBypassDocumentValidation()));
     }
 
     @Override
@@ -348,10 +356,10 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public TDocument findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, getCodec())
-                                .filter(toBsonDocument(filter))
-                                .projection(toBsonDocument(options.getProjection()))
-                                .sort(toBsonDocument(options.getSort()))
-                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS));
+                .filter(toBsonDocument(filter))
+                .projection(toBsonDocument(options.getProjection()))
+                .sort(toBsonDocument(options.getSort()))
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS));
     }
 
     @Override
@@ -367,7 +375,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                 .sort(toBsonDocument(options.getSort()))
                                 .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                                 .upsert(options.isUpsert())
-                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS));
+                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
@@ -383,7 +392,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                 .sort(toBsonDocument(options.getSort()))
                                 .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                                 .upsert(options.isUpsert())
-                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS));
+                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
@@ -468,7 +478,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private DeleteResult delete(final Bson filter, final boolean multi) {
-        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi));
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), null);
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
         } else {
@@ -478,14 +488,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private UpdateResult update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi) {
         return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
-                                                                          WriteRequest.Type.UPDATE)
-                                                        .upsert(updateOptions.isUpsert()).multi(multi)));
+                WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi), updateOptions.getBypassDocumentValidation()));
     }
 
 
-    private BulkWriteResult executeSingleWriteRequest(final WriteRequest request) {
+    private BulkWriteResult executeSingleWriteRequest(final WriteRequest request, final Boolean bypassDocumentValidation) {
         try {
-            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern));
+            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern)
+                    .bypassDocumentValidation(bypassDocumentValidation));
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {
                 throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());

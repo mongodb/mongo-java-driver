@@ -161,4 +161,17 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      */
     @Override
     MapReduceIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * <p>Note: This only applies when an $out stage is specified</p>.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.driver.manual reference/command/mapReduce mapReduce
+     * @mongodb.server.release 3.2
+     */
+    MapReduceIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation);
 }

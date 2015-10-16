@@ -61,7 +61,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, insertRequest)
         when:
         def result = protocol.execute(connection)
 
@@ -75,8 +75,8 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         def requests = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                         new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
         given:
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, requests
-        )
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, requests)
+
         when:
         protocol.execute(connection)
 
@@ -86,7 +86,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should throw exception'() {
         given:
-        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED,
+        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, false,
                                                  [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                                   new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
         )
@@ -130,7 +130,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         for (def cur : documents) {
             insertList.add(new InsertRequest(cur));
         }
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, insertList)
 
         when:
         def result = protocol.execute(connection)
@@ -158,10 +158,10 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         }
 
         // Force a duplicate key error in the second insert request
-        new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
+        new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
                 .execute(connection)
 
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, insertList)
 
         when:
         protocol.execute(connection)
@@ -187,7 +187,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         for (def cur : documents) {
             insertList.add(new InsertRequest(cur));
         }
-        new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList).execute(connection)
+        new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, null, insertList).execute(connection)
 
         // add a large byte array to each document to force a split after each
         for (def document : documents) {
@@ -195,7 +195,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         }
         documents[1].put('_id', new BsonInt32(5))  // Make the second document a new one
 
-        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList)
+        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, null, insertList)
 
         when:
         protocol.execute(connection)
@@ -211,7 +211,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should upsert items'() {
         given:
-        def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED,
+        def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null,
                                                  [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                     new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
                                                                     WriteRequest.Type.UPDATE)

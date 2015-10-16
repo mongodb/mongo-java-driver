@@ -73,12 +73,12 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), updates);
+        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
+        connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates, callback);
     }
 
     @Override

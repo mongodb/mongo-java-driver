@@ -66,7 +66,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, insertRequest)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -117,7 +117,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
         def updateRequest = [new UpdateRequest(filter, update, WriteRequest.Type.UPDATE)]
-        def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED, updateRequest)
+        def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, updateRequest)
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -145,7 +145,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         def document = new BsonDocument('_id', new BsonInt32(1))
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, null, insertRequest)
         protocol.execute(connection)  // insert here, to force a duplicate key error on the second time
 
         def commandListener = new TestCommandListener()

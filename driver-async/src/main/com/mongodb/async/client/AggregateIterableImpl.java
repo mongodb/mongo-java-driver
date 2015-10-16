@@ -54,6 +54,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private Integer batchSize;
     private long maxTimeMS;
     private Boolean useCursor;
+    private Boolean bypassDocumentValidation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final AsyncOperationExecutor executor,
@@ -131,6 +132,12 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         execute().batchCursor(callback);
     }
 
+    @Override
+    public AggregateIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList();
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
@@ -138,7 +145,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         if (outCollection != null) {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
                     .maxTime(maxTimeMS, MILLISECONDS)
-                    .allowDiskUse(allowDiskUse);
+                    .allowDiskUse(allowDiskUse)
+                    .bypassDocumentValidation(bypassDocumentValidation);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()),
                     documentClass, resultClass, codecRegistry, primary(), executor, new BsonDocument(),

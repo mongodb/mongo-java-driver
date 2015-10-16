@@ -42,6 +42,7 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReturnDocument;
@@ -275,21 +276,28 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             writeRequests.add(writeRequest);
         }
 
-        executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern), callback);
+        executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
     }
 
     @Override
     public void insertOne(final TDocument document, final SingleResultCallback<Void> callback) {
+        insertOne(document, new InsertOneOptions(), callback);
+    }
+
+    @Override
+    public void insertOne(final TDocument document, final InsertOneOptions options, final SingleResultCallback<Void> callback) {
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
         }
-        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), new SingleResultCallback<BulkWriteResult>() {
-            @Override
-            public void onResult(final BulkWriteResult result, final Throwable t) {
-                callback.onResult(null, t);
-            }
-        });
+        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), options.getBypassDocumentValidation(),
+                new SingleResultCallback<BulkWriteResult>() {
+                    @Override
+                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                        callback.onResult(null, t);
+                    }
+                });
     }
 
     @Override
@@ -307,13 +315,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             }
             requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern),
-                         errorHandlingCallback(new SingleResultCallback<BulkWriteResult>() {
-                             @Override
-                             public void onResult(final BulkWriteResult result, final Throwable t) {
-                                 callback.onResult(null, t);
-                             }
-                         }));
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()), errorHandlingCallback(
+                new SingleResultCallback<BulkWriteResult>() {
+                    @Override
+                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                        callback.onResult(null, t);
+                    }
+                }));
     }
 
     @Override
@@ -335,7 +344,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement), WriteRequest.Type.REPLACE)
-                                  .upsert(options.isUpsert()),
+                                  .upsert(options.isUpsert()), options.getBypassDocumentValidation(),
                                   new SingleResultCallback<BulkWriteResult>() {
                                       @Override
                                       public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -398,7 +407,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
-                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                         .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
     }
 
     @Override
@@ -415,7 +425,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .sort(toBsonDocument(options.getSort()))
                          .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
-                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                         .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
     }
 
     @Override
@@ -517,40 +528,44 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private void delete(final Bson filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
-        executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), new SingleResultCallback<BulkWriteResult>() {
-            @Override
-            public void onResult(final BulkWriteResult result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    if (result.wasAcknowledged()) {
-                        callback.onResult(DeleteResult.acknowledged(result.getDeletedCount()), null);
-                    } else {
-                        callback.onResult(DeleteResult.unacknowledged(), null);
-                    }
+        executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), null,
+                new SingleResultCallback<BulkWriteResult>() {
+                    @Override
+                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            if (result.wasAcknowledged()) {
+                                callback.onResult(DeleteResult.acknowledged(result.getDeletedCount()), null);
+                            } else {
+                                callback.onResult(DeleteResult.unacknowledged(), null);
+                            }
 
-                }
-            }
-        });
+                        }
+                    }
+                });
     }
 
     private void update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi,
                         final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update), WriteRequest.Type.UPDATE)
-                                  .upsert(updateOptions.isUpsert()).multi(multi), new SingleResultCallback<BulkWriteResult>() {
-            @Override
-            public void onResult(final BulkWriteResult result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(toUpdateResult(result), null);
-                }
-            }
-        });
+                        .upsert(updateOptions.isUpsert()).multi(multi), updateOptions.getBypassDocumentValidation(),
+                new SingleResultCallback<BulkWriteResult>() {
+                    @Override
+                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(toUpdateResult(result), null);
+                        }
+                    }
+                });
     }
 
-    private void executeSingleWriteRequest(final WriteRequest request, final SingleResultCallback<BulkWriteResult> callback) {
-        executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern),
+    private void executeSingleWriteRequest(final WriteRequest request, final Boolean bypassDocumentValidation,
+                                           final SingleResultCallback<BulkWriteResult> callback) {
+        executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern)
+                        .bypassDocumentValidation(bypassDocumentValidation),
                          new SingleResultCallback<BulkWriteResult>() {
                              @Override
                              public void onResult(final BulkWriteResult result, final Throwable t) {

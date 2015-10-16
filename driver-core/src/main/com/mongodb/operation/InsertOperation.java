@@ -73,12 +73,13 @@ public class InsertOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        return connection.insertCommand(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
+        return connection.insertCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        connection.insertCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, callback);
+        connection.insertCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests,
+                callback);
     }
 
     @Override

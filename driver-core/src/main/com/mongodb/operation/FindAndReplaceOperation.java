@@ -23,6 +23,7 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.FieldNameValidator;
@@ -56,6 +57,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private long maxTimeMS;
     private boolean returnOriginal = true;
     private boolean upsert;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Construct a new instance.
@@ -229,6 +231,32 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         return this;
     }
 
+    /**
+     * Gets the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * <p>Note: This only applies when an $out stage is specified</p>.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.2
+     */
+    public FindAndReplaceOperation<T> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
     @Override
     public T execute(final WriteBinding binding) {
         return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), getValidator(),
@@ -252,6 +280,9 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         putIfTrue(command, "upsert", isUpsert());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("update", getReplacement());
+        if (bypassDocumentValidation != null) {
+            command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
+        }
         return command;
     }
 

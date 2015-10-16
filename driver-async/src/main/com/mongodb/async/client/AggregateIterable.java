@@ -74,4 +74,17 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     AggregateIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * <p>Note: This only applies when an $out stage is specified</p>.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.2
+     */
+    AggregateIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
 }

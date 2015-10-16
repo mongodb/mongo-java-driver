@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoBulkWriteException
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
@@ -29,6 +30,8 @@ import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
+import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.ValidationOptions
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -47,10 +50,33 @@ import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.bulk.WriteRequest.Type.DELETE
+import static com.mongodb.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Filters.gte
+import static java.util.Arrays.asList
 
 class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {
+
+    def 'should have the expected passed values'() {
+        when:
+        def operation = new MixedBulkWriteOperation(getNamespace(), requests, ordered, writeConcern)
+                .bypassDocumentValidation(bypassValidation)
+
+        then:
+        operation.isOrdered() == ordered
+        operation.getNamespace() == getNamespace()
+        operation.getWriteRequests() == requests
+        operation.getWriteConcern() == writeConcern
+        operation.getBypassDocumentValidation() == bypassValidation
+
+        where:
+        ordered | writeConcern   | bypassValidation | requests
+        true    | ACKNOWLEDGED   | null             | [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        false   | UNACKNOWLEDGED | true             | [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        false   | UNACKNOWLEDGED | false            | [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))]
+    }
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
@@ -678,6 +704,68 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        ordered << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should honour the bypass validation flag for inserts'() {
+        given:
+        def namespace = new MongoNamespace(getDatabaseName(), 'collection')
+        def collectionHelper = getCollectionHelper(namespace)
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        def op = new MixedBulkWriteOperation(namespace, [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered,
+                ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoBulkWriteException)
+        ex.getWriteErrors().get(0).code == 121
+
+        when:
+        def result = op.bypassDocumentValidation(true).execute(getBinding())
+
+        then:
+        notThrown(MongoBulkWriteException)
+        result == BulkWriteResult.acknowledged(INSERT, 1, 0, [])
+
+        cleanup:
+        collectionHelper?.drop()
+
+        where:
+        ordered << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should honour the bypass validation flag for updates'() {
+        given:
+        def namespace = new MongoNamespace(getDatabaseName(), 'collection')
+        def collectionHelper = getCollectionHelper(namespace)
+        collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+
+        collectionHelper.insertDocuments(BsonDocument.parse('{ x: true, level: 10}'))
+        def op = new MixedBulkWriteOperation(namespace,
+                [new UpdateRequest(BsonDocument.parse ('{x: true}'), BsonDocument.parse ('{$inc: {level: -1}}'),  UPDATE).multi(false)],
+                ordered, ACKNOWLEDGED)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoBulkWriteException)
+        ex.getWriteErrors().get(0).code == 121
+
+        when:
+        def result = op.bypassDocumentValidation(true).execute(getBinding())
+
+        then:
+        result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
+        collectionHelper.count(eq('level', 9)) == 1
 
         where:
         ordered << [true, false]

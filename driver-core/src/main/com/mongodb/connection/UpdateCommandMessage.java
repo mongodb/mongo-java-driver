@@ -48,13 +48,12 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
      * @param namespace the namespace
      * @param ordered whether the writes are ordered
      * @param writeConcern the write concern
-     * @param updates the list of update requests
      * @param settings the message settings
+     * @param updates the list of update requests
      */
     public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<UpdateRequest> updates,
-                                final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, settings);
+                                final Boolean bypassDocumentValidation, final MessageSettings settings, final List<UpdateRequest> updates) {
+        super(namespace, ordered, writeConcern, bypassDocumentValidation, settings);
         this.updates = updates;
     }
 
@@ -97,11 +96,8 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             writer.writeEndDocument();
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new UpdateCommandMessage(getWriteNamespace(),
-                                                       isOrdered(),
-                                                       getWriteConcern(),
-                                                       updates.subList(i, updates.size()),
-                                                       getSettings());
+                nextMessage = new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(),
+                                                       getSettings(), updates.subList(i, updates.size()));
                 break;
             }
         }

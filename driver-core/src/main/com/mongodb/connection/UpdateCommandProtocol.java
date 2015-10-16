@@ -43,14 +43,15 @@ class UpdateCommandProtocol extends WriteCommandProtocol {
     /**
      * Construct an instance.
      *
-     * @param namespace    the namespace
-     * @param ordered      whether the inserts are ordered
-     * @param writeConcern the write concern
-     * @param updates      the list of updates
+     * @param namespace                 the namespace
+     * @param ordered                   whether the inserts are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypass documentation validation flag
+     * @param updates                   the list of updates
      */
     public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern);
+                                 final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
+        super(namespace, ordered, writeConcern, bypassDocumentValidation);
         this.updates = notNull("update", updates);
     }
 
@@ -95,7 +96,8 @@ class UpdateCommandProtocol extends WriteCommandProtocol {
 
     @Override
     protected UpdateCommandMessage createRequestMessage(final MessageSettings messageSettings) {
-        return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates, messageSettings);
+        return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), messageSettings,
+                updates);
     }
 
     @Override

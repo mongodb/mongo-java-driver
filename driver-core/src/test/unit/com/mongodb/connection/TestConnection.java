@@ -69,8 +69,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void insertAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<InsertRequest> inserts,
-                            final SingleResultCallback<WriteConcernResult> callback) {
+                            final List<InsertRequest> inserts, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedProtocolAsync(callback);
     }
 
@@ -82,8 +81,7 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void updateAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<UpdateRequest> updates,
-                            final SingleResultCallback<WriteConcernResult> callback) {
+                            final List<UpdateRequest> updates, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedProtocolAsync(callback);
     }
 
@@ -103,12 +101,24 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<InsertRequest> inserts) {
+        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
+    }
+
+    @Override
+    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<InsertRequest> inserts) {
         return executeEnqueuedProtocol();
     }
 
     @Override
     public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<InsertRequest> inserts,
+                                   final List<InsertRequest> inserts, final SingleResultCallback<BulkWriteResult> callback) {
+        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
+    }
+
+    @Override
+    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
                                    final SingleResultCallback<BulkWriteResult> callback) {
         executeEnqueuedProtocolAsync(callback);
     }
@@ -116,12 +126,24 @@ class TestConnection implements Connection, AsyncConnection {
     @Override
     public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<UpdateRequest> updates) {
+        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
+    }
+
+    @Override
+    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
         return executeEnqueuedProtocol();
     }
 
     @Override
     public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<UpdateRequest> updates,
+                                   final List<UpdateRequest> updates, final SingleResultCallback<BulkWriteResult> callback) {
+        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
+    }
+
+    @Override
+    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
                                    final SingleResultCallback<BulkWriteResult> callback) {
         executeEnqueuedProtocolAsync(callback);
     }

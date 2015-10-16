@@ -18,27 +18,18 @@ package com.mongodb.client.model
 
 import spock.lang.Specification
 
-class InsertManyOptionsSpecification extends Specification {
+class InsertOneOptionsSpecification extends Specification {
     def 'should have the expected defaults'() {
         when:
-        def options = new InsertManyOptions()
+        def options = new InsertOneOptions()
 
         then:
-        options.isOrdered()
         options.getBypassDocumentValidation() == null
-    }
-
-    def 'should set ordered'() {
-        expect:
-        new InsertManyOptions().ordered(ordered).isOrdered() == ordered
-
-        where:
-        ordered << [true, false]
     }
 
     def 'should set bypassDocumentValidation'() {
         expect:
-        new InsertManyOptions().bypassDocumentValidation(bypassValidation).getBypassDocumentValidation() == bypassValidation
+        new InsertOneOptions().bypassDocumentValidation(bypassValidation).getBypassDocumentValidation() == bypassValidation
 
         where:
         bypassValidation << [null, true, false]

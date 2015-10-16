@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2015 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,42 +17,19 @@
 package com.mongodb.client.model;
 
 /**
- * The options to apply to an operation that inserts multiple documents into a collection.
+ * The options to apply to an operation that inserts a single document into a collection.
  *
- * @since 3.0
+ * @since 3.2
+ * @mongodb.server.release 3.2
  * @mongodb.driver.manual tutorial/insert-documents/ Insert
  */
-public final class InsertManyOptions {
-    private boolean ordered = true;
+public final class InsertOneOptions {
     private Boolean bypassDocumentValidation;
-
-    /**
-     * Gets whether the documents should be inserted in the order provided, stopping on the first failed insertion. The default is true.
-     * If false, the server will attempt to insert all the documents regardless of an failures.
-     *
-     * @return whether the the documents should be inserted in order
-     */
-    public boolean isOrdered() {
-        return ordered;
-    }
-
-    /**
-     * Sets whether the server should insert the documents in the order provided.
-     *
-     * @param ordered true if documents should be inserted in order
-     * @return this
-     */
-    public InsertManyOptions ordered(final boolean ordered) {
-        this.ordered = ordered;
-        return this;
-    }
 
     /**
      * Gets the the bypass document level validation flag
      *
      * @return the bypass document level validation flag
-     * @since 3.2
-     * @mongodb.server.release 3.2
      */
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
@@ -63,10 +40,8 @@ public final class InsertManyOptions {
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
      */
-    public InsertManyOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public InsertOneOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }

@@ -17,9 +17,12 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
@@ -33,6 +36,7 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.client.model.Filters.gte
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -60,6 +64,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getAllowDiskUse() == null
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getPipeline() == pipeline
+        operation.getBypassDocumentValidation() == null
     }
 
     def 'should set optional values correctly'(){
@@ -70,10 +75,12 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
                 .allowDiskUse(true)
                 .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
 
         then:
         operation.getAllowDiskUse()
         operation.getMaxTime(MILLISECONDS) == 10
+        operation.getBypassDocumentValidation() == true
     }
 
     def 'should not accept an empty pipeline'() {
@@ -188,4 +195,66 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         disableMaxTimeFailPoint()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should support bypassDocumentValidation'() {
+        given:
+        def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
+        collectionOutHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
+
+        when:
+        def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')])
+        operation.execute(getBinding())
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        operation.bypassDocumentValidation(false).execute(getBinding())
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        operation.bypassDocumentValidation(true).execute(getBinding())
+
+        then:
+        notThrown(MongoCommandException)
+
+        cleanup:
+        collectionOutHelper?.drop()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should support bypassDocumentValidation asynchronously'() {
+        given:
+        def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
+        collectionOutHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
+
+        when:
+        def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')])
+        executeAsync(operation)
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        executeAsync(operation.bypassDocumentValidation(false))
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        executeAsync(operation.bypassDocumentValidation(true))
+
+        then:
+        notThrown(MongoCommandException)
+
+        cleanup:
+        collectionOutHelper?.drop()
+    }
 }

@@ -69,6 +69,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     private String databaseName;
     private boolean sharded;
     private boolean nonAtomic;
+    private Boolean bypassDocumentValidation;
     private static final List<String> VALID_ACTIONS = asList("replace", "merge", "reduce");
 
     /**
@@ -389,6 +390,32 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     /**
+     * Gets the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * <p>Note: This only applies when an $out stage is specified</p>.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public MapReduceToCollectionOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
+    /**
      * Executing this will return a cursor with your results in.
      *
      * @param binding the binding
@@ -460,6 +487,9 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());
+        if (bypassDocumentValidation != null) {
+            commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
+        }
         return commandDocument;
     }
 

@@ -49,6 +49,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private Integer batchSize;
     private long maxTimeMS;
     private Boolean useCursor;
+    private Boolean bypassDocumentValidation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
@@ -88,6 +89,12 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     }
 
     @Override
+    public AggregateIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
+    @Override
     public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
@@ -120,7 +127,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         if (outCollection != null) {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
                     .maxTime(maxTimeMS, MILLISECONDS)
-                    .allowDiskUse(allowDiskUse);
+                    .allowDiskUse(allowDiskUse)
+                    .bypassDocumentValidation(bypassDocumentValidation);
             executor.execute(operation);
             return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                outCollection.asString().getValue()),

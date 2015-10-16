@@ -42,12 +42,12 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
      * @param namespace the namespace
      * @param ordered whether the writes are ordered
      * @param writeConcern the write concern
-     * @param deletes the list of delete requests
      * @param settings the message settings
+     * @param deletes the list of delete requests
      */
     public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<DeleteRequest> deletes, final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, settings);
+                                final MessageSettings settings, final List<DeleteRequest> deletes) {
+        super(namespace, ordered, writeConcern, null, settings);
         this.deletes = deletes;
     }
 
@@ -92,9 +92,8 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeEndDocument();
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new DeleteCommandMessage(getWriteNamespace(),
-                                                       isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),
-                                                       getSettings());
+                nextMessage = new DeleteCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), getSettings(),
+                                                       deletes.subList(i, deletes.size()));
                 break;
             }
         }

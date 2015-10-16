@@ -48,6 +48,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private final List<BsonDocument> pipeline;
     private Boolean allowDiskUse;
     private long maxTimeMS;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Construct a new instance.
@@ -124,19 +125,43 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         return this;
     }
 
+    /**
+     * Gets the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * <p>Note: This only applies when an $out stage is specified</p>.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.2
+     */
+    public AggregateToCollectionOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                                      new VoidTransformer<BsonDocument>());
-
-        return null;
+        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
+                new VoidTransformer<BsonDocument>());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                                           new VoidTransformer<BsonDocument>(), callback);
+                new VoidTransformer<BsonDocument>(), callback);
     }
 
     private BsonDocument getCommand() {
@@ -147,6 +172,9 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         }
         if (allowDiskUse != null) {
             commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
+        }
+        if (bypassDocumentValidation != null) {
+            commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         return commandDocument;
     }

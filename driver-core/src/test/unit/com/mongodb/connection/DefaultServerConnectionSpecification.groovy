@@ -92,7 +92,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insertCommand(namespace, true, ACKNOWLEDGED, inserts)
 
         then:
-        1 * executor.execute({ compare(new InsertCommandProtocol(namespace, true, ACKNOWLEDGED, inserts), it) }, internalConnection)
+        1 * executor.execute({ compare(new InsertCommandProtocol(namespace, true, ACKNOWLEDGED, null, inserts), it) }, internalConnection)
     }
 
     def 'should execute update command protocol'() {
@@ -103,7 +103,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.updateCommand(namespace, true, ACKNOWLEDGED, updates)
 
         then:
-        1 * executor.execute({ compare(new UpdateCommandProtocol(namespace, true, ACKNOWLEDGED, updates), it) }, internalConnection)
+        1 * executor.execute({ compare(new UpdateCommandProtocol(namespace, true, ACKNOWLEDGED, null, updates), it) }, internalConnection)
     }
 
     def 'should execute delete command protocol'() {
@@ -275,7 +275,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insertCommandAsync(namespace, true, ACKNOWLEDGED, inserts, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new InsertCommandProtocol(namespace, true, ACKNOWLEDGED, inserts), it) },
+        1 * executor.executeAsync({ compare(new InsertCommandProtocol(namespace, true, ACKNOWLEDGED, null, inserts), it) },
                                   internalConnection, callback)
     }
 
@@ -287,7 +287,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.updateCommandAsync(namespace, true, ACKNOWLEDGED, updates, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new UpdateCommandProtocol(namespace, true, ACKNOWLEDGED, updates), it) },
+        1 * executor.executeAsync({ compare(new UpdateCommandProtocol(namespace, true, ACKNOWLEDGED, null, updates), it) },
                                   internalConnection, callback)
     }
 

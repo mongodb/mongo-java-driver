@@ -27,6 +27,8 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.IndexOptionDefaults;
+import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.BatchCursor;
@@ -99,12 +101,28 @@ public final class CollectionHelper<T> {
 
     public void create(final String collectionName, final CreateCollectionOptions options) {
         drop(namespace);
-        new CreateCollectionOperation(namespace.getDatabaseName(), collectionName)
-            .capped(options.isCapped())
-            .sizeInBytes(options.getSizeInBytes())
-            .autoIndex(options.isAutoIndex())
-            .maxDocuments(options.getMaxDocuments())
-            .usePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
+        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName)
+                .capped(options.isCapped())
+                .sizeInBytes(options.getSizeInBytes())
+                .autoIndex(options.isAutoIndex())
+                .maxDocuments(options.getMaxDocuments())
+                .usePowerOf2Sizes(options.isUsePowerOf2Sizes());
+
+        IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
+        if (indexOptionDefaults.getStorageEngine() != null) {
+            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        }
+        ValidationOptions validationOptions = options.getValidationOptions();
+        if (validationOptions.getValidator() != null) {
+            operation.validator(toBsonDocument(validationOptions.getValidator()));
+        }
+        if (validationOptions.getValidationLevel() != null) {
+            operation.validationLevel(validationOptions.getValidationLevel());
+        }
+        if (validationOptions.getValidationAction() != null) {
+            operation.validationAction(validationOptions.getValidationAction());
+        }
+        operation.execute(getBinding());
     }
 
     @SuppressWarnings("unchecked")
@@ -250,12 +268,16 @@ public final class CollectionHelper<T> {
         return executeAsync(new CountOperation(namespace), binding);
     }
 
-    public long count(final Document filter) {
-        return new CountOperation(namespace).filter(wrap(filter)).execute(getBinding());
+    public long count(final Bson filter) {
+        return new CountOperation(namespace).filter(toBsonDocument(filter)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {
         return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
+    }
+
+    public BsonDocument toBsonDocument(final Bson document) {
+        return document.toBsonDocument(BsonDocument.class, registry);
     }
 
     public void createIndex(final BsonDocument key) {

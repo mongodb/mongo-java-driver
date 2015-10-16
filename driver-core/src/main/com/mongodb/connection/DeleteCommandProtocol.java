@@ -51,7 +51,7 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
      */
     public DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                  final List<DeleteRequest> deletes) {
-        super(namespace, ordered, writeConcern);
+        super(namespace, ordered, writeConcern, null);
         this.deleteRequests = notNull("removes", deletes);
     }
 
@@ -96,7 +96,7 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
 
     @Override
     protected DeleteCommandMessage createRequestMessage(final MessageSettings messageSettings) {
-        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, messageSettings);
+        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), messageSettings, deleteRequests);
     }
 
     @Override

@@ -32,6 +32,7 @@ import com.mongodb.client.model.IndexModel
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
+import com.mongodb.client.model.InsertOneOptions
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
@@ -287,7 +288,7 @@ class MongoCollectionSpecification extends Specification {
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = { boolean ordered, WriteConcern wc ->
+        def expectedOperation = { boolean ordered, WriteConcern wc, Boolean bypassDocumentValidation ->
             new MixedBulkWriteOperation(namespace, [
                     new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                     new UpdateRequest(new BsonDocument('a', new BsonInt32(2)),
@@ -298,8 +299,7 @@ class MongoCollectionSpecification extends Specification {
                             new BsonDocument('$set', new BsonDocument('a', new BsonInt32(400))), UPDATE).multi(true).upsert(true),
                     new DeleteRequest(new BsonDocument('a', new BsonInt32(5))).multi(false),
                     new DeleteRequest(new BsonDocument('a', new BsonInt32(6))).multi(true)
-            ],
-                    ordered, wc)
+            ], ordered, wc).bypassDocumentValidation(bypassDocumentValidation)
         }
         def updateOptions = new UpdateOptions().upsert(true)
         def bulkOperations = [new InsertOneModel(new Document('_id', 1)),
@@ -315,23 +315,23 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         result.wasAcknowledged() == writeConcern.isAcknowledged()
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, null))
 
         when:
-        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(true))
+        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(true).bypassDocumentValidation(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
         result.wasAcknowledged() == writeConcern.isAcknowledged()
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, true))
 
         when:
-        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(false))
+        result = collection.bulkWrite(bulkOperations, new BulkWriteOptions().ordered(false).bypassDocumentValidation(false))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
         result.wasAcknowledged() == writeConcern.isAcknowledged()
-        expect operation, isTheSameAs(expectedOperation(false, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(false, writeConcern, false))
 
         where:
         writeConcern                | executor
@@ -357,52 +357,31 @@ class MongoCollectionSpecification extends Specification {
     def 'insertOne should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                true, writeConcern)
+        def expectedOperation = { WriteConcern wc, Boolean bypassDocumentValidation ->
+            new MixedBulkWriteOperation(namespace, [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
+                    true, wc).bypassDocumentValidation(bypassDocumentValidation)
+        }
 
         when:
         collection.insertOne(new Document('_id', 1))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation)
-
-        where:
-        writeConcern                | executor
-        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(INSERT, 1, [])])
-        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])
-    }
-
-    def 'insertMany should use MixedBulkWriteOperation correctly'() {
-        given:
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = { boolean ordered, WriteConcern wc ->
-            new MixedBulkWriteOperation(namespace,
-                    [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
-                     new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))],
-                    ordered, wc)
-        }
+        expect operation, isTheSameAs(expectedOperation(writeConcern, null))
 
         when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
-        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
-
-        then:
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
-
-        when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(true))
+        collection.insertOne(new Document('_id', 1), new InsertOneOptions().bypassDocumentValidation(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(writeConcern, true))
 
         when:
-        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false))
+        collection.insertOne(new Document('_id', 1), new InsertOneOptions().bypassDocumentValidation(false))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(false, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(writeConcern, false))
 
         where:
         writeConcern                | executor
@@ -412,7 +391,48 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
     }
 
-    def 'deleteOne should use MixedBulkWriteOperationperation correctly'() {
+    def 'insertMany should use MixedBulkWriteOperation correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
+        def expectedOperation = { boolean ordered, WriteConcern wc, Boolean bypassDocumentValidation ->
+            new MixedBulkWriteOperation(namespace,
+                    [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                     new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))],
+                    ordered, wc).bypassDocumentValidation(bypassDocumentValidation)
+        }
+
+        when:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)])
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, null))
+
+        when:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)],
+                new InsertManyOptions().ordered(true).bypassDocumentValidation(true))
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, true))
+
+        when:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)],
+                new InsertManyOptions().ordered(false).bypassDocumentValidation(false))
+        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation(false, writeConcern, false))
+
+        where:
+        writeConcern                | executor
+        WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, []),
+                                                                 acknowledged(INSERT, 0, [])])
+        WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
+    }
+
+    def 'deleteOne should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
@@ -456,22 +476,23 @@ class MongoCollectionSpecification extends Specification {
     }
 
     @SuppressWarnings('LineLength')
-    def 'replaceOne should use MixedBulkWriteOperationperation correctly'() {
+    def 'replaceOne should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
 
         when:
-        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10))
+        def result = collection.replaceOne(new Document('a', 1), new Document('a', 10),
+                new UpdateOptions().bypassDocumentValidation(bypassDocumentValidation))
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
         expect operation, isTheSameAs(new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                new BsonDocument('a', new BsonInt32(10)),
-                REPLACE)],
-                true, writeConcern))
+                new BsonDocument('a', new BsonInt32(10)), REPLACE)], true, writeConcern).bypassDocumentValidation(bypassDocumentValidation))
         result == expectedResult
 
         where:
+        bypassDocumentValidation << [null, true, false, null]
+
         writeConcern                | executor                                                        | expectedResult
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, null, [])]) | UpdateResult.acknowledged(1, null, null)
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1, [])])    | UpdateResult.acknowledged(1, 1, null)
@@ -483,11 +504,10 @@ class MongoCollectionSpecification extends Specification {
     def 'updateOne should use MixedBulkWriteOperationOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = { boolean upsert, WriteConcern wc ->
+        def expectedOperation = { boolean upsert, WriteConcern wc, Boolean bypassDocumentValidation ->
             new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                    new BsonDocument('a', new BsonInt32(10)),
-                    UPDATE).multi(false).upsert(upsert)],
-                    true, wc)
+                    new BsonDocument('a', new BsonInt32(10)), UPDATE).multi(false).upsert(upsert)],
+                    true, wc).bypassDocumentValidation(bypassDocumentValidation)
         }
 
         when:
@@ -495,15 +515,16 @@ class MongoCollectionSpecification extends Specification {
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(false, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(false, writeConcern, null))
         result == expectedResult
 
         when:
-        result = collection.updateOne(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateOne(new Document('a', 1), new Document('a', 10),
+                new UpdateOptions().upsert(true).bypassDocumentValidation(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, true))
         result == expectedResult
 
         where:
@@ -517,12 +538,10 @@ class MongoCollectionSpecification extends Specification {
     def 'updateMany should use MixedBulkWriteOperationOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = { boolean upsert, WriteConcern wc ->
+        def expectedOperation = { boolean upsert, WriteConcern wc, Boolean bypassDocumentValidation ->
             new MixedBulkWriteOperation(namespace, [new UpdateRequest(new BsonDocument('a', new BsonInt32(1)),
-                    new BsonDocument('a', new BsonInt32(10)),
-                    UPDATE)
-                                                            .multi(true).upsert(upsert)],
-                    true, wc)
+                    new BsonDocument('a', new BsonInt32(10)), UPDATE).multi(true).upsert(upsert)],
+                    true, wc).bypassDocumentValidation(bypassDocumentValidation)
         }
 
         when:
@@ -530,15 +549,16 @@ class MongoCollectionSpecification extends Specification {
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(false, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(false, writeConcern, null))
         result == expectedResult
 
         when:
-        result = collection.updateMany(new Document('a', 1), new Document('a', 10), new UpdateOptions().upsert(true))
+        result = collection.updateMany(new Document('a', 1), new Document('a', 10),
+                new UpdateOptions().upsert(true).bypassDocumentValidation(true))
         operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
-        expect operation, isTheSameAs(expectedOperation(true, writeConcern))
+        expect operation, isTheSameAs(expectedOperation(true, writeConcern, true))
         result == expectedResult
 
         where:
@@ -627,18 +647,31 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
-                new FindOneAndReplaceOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS))
+                new FindOneAndReplaceOptions().projection(new Document('projection', 1))
+                        .maxTime(100, MILLISECONDS).bypassDocumentValidation(false))
         operation = executor.getWriteOperation() as FindAndReplaceOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS))
+                .maxTime(100, MILLISECONDS).bypassDocumentValidation(false))
+
+        when:
+        collection.findOneAndReplace(new Document('a', 1), new Document('a', 10),
+                new FindOneAndReplaceOptions().projection(new Document('projection', 1))
+                        .maxTime(100, MILLISECONDS).bypassDocumentValidation(true))
+        operation = executor.getWriteOperation() as FindAndReplaceOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(100, MILLISECONDS).bypassDocumentValidation(true))
 
         where:
         writeConcern                | executor
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null),
                                                                  WriteConcernResult.acknowledged(1, true, null)])
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged(),
                                                                  WriteConcernResult.unacknowledged()])
     }
 
@@ -657,18 +690,31 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
-                new FindOneAndUpdateOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS))
+                new FindOneAndUpdateOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS)
+                        .bypassDocumentValidation(false))
         operation = executor.getWriteOperation() as FindAndUpdateOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
-                .maxTime(100, MILLISECONDS))
+                .maxTime(100, MILLISECONDS).bypassDocumentValidation(false))
+
+        when:
+        collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10),
+                new FindOneAndUpdateOptions().projection(new Document('projection', 1)).maxTime(100, MILLISECONDS)
+                        .bypassDocumentValidation(true))
+        operation = executor.getWriteOperation() as FindAndUpdateOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.projection(new BsonDocument('projection', new BsonInt32(1)))
+                .maxTime(100, MILLISECONDS).bypassDocumentValidation(true))
 
         where:
         writeConcern                | executor
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([WriteConcernResult.acknowledged(1, true, null),
+                                                                 WriteConcernResult.acknowledged(1, true, null),
                                                                  WriteConcernResult.acknowledged(1, true, null)])
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([WriteConcernResult.unacknowledged(),
+                                                                 WriteConcernResult.unacknowledged(),
                                                                  WriteConcernResult.unacknowledged()])
     }
 

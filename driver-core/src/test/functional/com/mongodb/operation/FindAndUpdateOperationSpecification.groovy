@@ -17,8 +17,12 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
@@ -28,13 +32,56 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.client.model.Filters.gte
+import static java.util.Arrays.asList
 
 class FindAndUpdateOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
+
+    def 'should have the correct defaults and passed values'() {
+        when:
+        def update = new BsonDocument('update', new BsonInt32(1))
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+
+        then:
+        operation.getNamespace() == getNamespace()
+        operation.getDecoder() == documentCodec
+        operation.getUpdate() == update
+        operation.getFilter() == null
+        operation.getSort() == null
+        operation.getProjection() == null
+        operation.getMaxTime(TimeUnit.SECONDS) == 0
+        operation.getBypassDocumentValidation() == null
+    }
+
+    def 'should set optional values correctly'(){
+        given:
+        def filter = new BsonDocument('filter', new BsonInt32(1))
+        def sort = new BsonDocument('sort', new BsonInt32(1))
+        def projection = new BsonDocument('projection', new BsonInt32(1))
+
+        when:
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, new BsonDocument('update', new BsonInt32(1)))
+                .filter(filter).sort(sort).projection(projection).bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true)
+                .returnOriginal(false)
+
+        then:
+        operation.getFilter() == filter
+        operation.getSort() == sort
+        operation.getProjection() == projection
+        operation.upsert == true
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.getBypassDocumentValidation()
+        !operation.isReturnOriginal()
+    }
 
     def 'should update single document'() {
 
@@ -201,6 +248,75 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         then:
         def ex = thrown(MongoException)
         ex.getCause() instanceof IllegalArgumentException
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should support bypassDocumentValidation'() {
+        given:
+        def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
+        def collectionHelper = getCollectionHelper(namespace)
+        collectionHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        collectionHelper.insertDocuments(BsonDocument.parse('{ level: 10 }'))
+
+        when:
+        def update = new BsonDocument('$inc', new BsonDocument('level', new BsonInt32(-1)))
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(namespace, documentCodec, update)
+        operation.execute(getBinding())
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        operation.bypassDocumentValidation(false).execute(getBinding())
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        Document returnedDocument = operation.bypassDocumentValidation(true).returnOriginal(false).execute(getBinding())
+
+        then:
+        notThrown(MongoCommandException)
+        returnedDocument.getInteger('level') == 9
+
+        cleanup:
+        collectionHelper?.drop()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should support bypassDocumentValidation asynchronously'() {
+        given:
+        def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
+        def collectionHelper = getCollectionHelper(namespace)
+        collectionHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
+                new ValidationOptions().validator(gte('level', 10))))
+        collectionHelper.insertDocuments(BsonDocument.parse('{ level: 10 }'))
+
+        when:
+        def update = new BsonDocument('$inc', new BsonDocument('level', new BsonInt32(-1)))
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(namespace, documentCodec, update)
+        executeAsync(operation)
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        executeAsync(operation.bypassDocumentValidation(false))
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        Document returnedDocument = executeAsync(operation.bypassDocumentValidation(true).returnOriginal(false))
+
+        then:
+        notThrown(MongoCommandException)
+        returnedDocument.getInteger('level') == 9
+
+        cleanup:
+        collectionHelper?.drop()
     }
 
 }

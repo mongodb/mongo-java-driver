@@ -25,6 +25,7 @@ package com.mongodb.client.model;
  */
 public class UpdateOptions {
     private boolean upsert;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -43,6 +44,30 @@ public class UpdateOptions {
      */
     public UpdateOptions upsert(final boolean upsert) {
         this.upsert = upsert;
+        return this;
+    }
+
+    /**
+     * Gets the the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public UpdateOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 }

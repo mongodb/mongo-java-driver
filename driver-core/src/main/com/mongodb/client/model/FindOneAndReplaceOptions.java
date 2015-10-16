@@ -35,6 +35,7 @@ public class FindOneAndReplaceOptions {
     private boolean upsert;
     private ReturnDocument returnDocument = ReturnDocument.BEFORE;
     private long maxTimeMS;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -142,6 +143,30 @@ public class FindOneAndReplaceOptions {
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
+    /**
+     * Gets the the bypass document level validation flag
+     *
+     * @return the bypass document level validation flag
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets the bypass document level validation flag.
+     *
+     * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
+     * @return this
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public FindOneAndReplaceOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
     }
 }
 

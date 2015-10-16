@@ -44,19 +44,23 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
+    private final Boolean bypassDocumentValidation;
     private CommandListener commandListener;
 
     /**
      * Construct an instance.
      *
-     * @param namespace    the namespace
-     * @param ordered      whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace                 the namespace
+     * @param ordered                   whether the inserts are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypass documentation validation flag
      */
-    public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
+    public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                final Boolean bypassDocumentValidation) {
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
+        this.bypassDocumentValidation = bypassDocumentValidation;
     }
 
     @Override
@@ -71,6 +75,15 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * Gets the bypass document validation flag
+     *
+     * @return the bypass document validation flag
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
     }
 
     @Override

@@ -97,8 +97,24 @@ public interface Connection extends ReferenceCounted {
      * @param writeConcern the write concern
      * @param inserts      the inserts
      * @return the bulk write result
+     * @deprecated Replaced by {@link Connection#insertCommand(MongoNamespace, boolean, WriteConcern, Boolean, List)}
      */
+    @Deprecated
     BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts);
+
+    /**
+     * Insert the documents using the insert command.
+     *
+     * @param namespace                 the namespace
+     * @param ordered                   whether the writes are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypassDocumentValidation flag
+     * @param inserts                   the inserts
+     * @return the bulk write result
+     * @since 3.2
+     */
+    BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
+                                  List<InsertRequest> inserts);
 
     /**
      * Update the documents using the update command.
@@ -108,8 +124,24 @@ public interface Connection extends ReferenceCounted {
      * @param writeConcern the write concern
      * @param updates      the updates
      * @return the bulk write result
+     * @deprecated Replaced by {@link Connection#updateCommand(MongoNamespace, boolean, WriteConcern, Boolean, List)}}
      */
+    @Deprecated
     BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates);
+
+    /**
+     * Update the documents using the update command.
+     *
+     * @param namespace                 the namespace
+     * @param ordered                   whether the writes are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypassDocumentValidation flag
+     * @param updates                   the updates
+     * @return the bulk write result
+     * @since 3.2
+     */
+    BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
+                                  List<UpdateRequest> updates);
 
     /**
      * Delete the documents using the delete command.

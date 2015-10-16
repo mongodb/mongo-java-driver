@@ -30,7 +30,6 @@ import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 /**
  * Abstract base class for write command message.  Supports splitting into multiple messages.
- *
  */
 abstract class BaseWriteCommandMessage extends RequestMessage {
     // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it
@@ -39,22 +38,25 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
     private final MongoNamespace writeNamespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
+    private final Boolean bypassDocumentValidation;
 
     /**
      * Construct an instance.
      *
-     * @param writeNamespace the namespace
-     * @param ordered        whether the writes are ordered
-     * @param writeConcern   the write concern
-     * @param settings       the message settings
+     * @param writeNamespace           the namespace
+     * @param ordered                  whether the writes are ordered
+     * @param writeConcern             the write concern
+     * @param bypassDocumentValidation the bypass documentation validation flag
+     * @param settings                 the message settings
      */
     public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final MessageSettings settings) {
+                                   final Boolean bypassDocumentValidation, final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OpCode.OP_QUERY, settings);
 
         this.writeNamespace = writeNamespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
+        this.bypassDocumentValidation = bypassDocumentValidation;
     }
 
     /**
@@ -84,6 +86,15 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         return ordered;
     }
 
+    /**
+     * Gets the bypass document validation flag
+     *
+     * @return the bypass document validation flag
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
     @Override
     public BaseWriteCommandMessage encode(final BsonOutput outputStream) {
         return (BaseWriteCommandMessage) super.encode(outputStream);
@@ -110,8 +121,8 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         int commandStartPosition = outputStream.getPosition();
         int firstDocumentStartPosition = outputStream.getPosition();
         BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
-                                                       new BsonBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
-                                                       outputStream, getFieldNameValidator());
+                new BsonBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
+                outputStream, getFieldNameValidator());
         try {
             writer.writeStartDocument();
             writeCommandPrologue(writer);
@@ -148,9 +159,9 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
     /**
      * Write the list of writes to the output after the write command prologue has been written.
      *
-     * @param bsonOutput the BSON output
+     * @param bsonOutput           the BSON output
      * @param commandStartPosition the position in the output where the command document starts
-     * @param writer the writer
+     * @param writer               the writer
      * @return the next message to encode, if this one overflowed.  This may be null, which indicates that we're done
      */
     protected abstract BaseWriteCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
@@ -178,6 +189,9 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
             writer.writeName("writeConcern");
             BsonDocument document = getWriteConcern().asDocument();
             getCodec(document).encode(writer, document, EncoderContext.builder().build());
+        }
+        if (getBypassDocumentValidation() != null) {
+            writer.writeBoolean("bypassDocumentValidation", getBypassDocumentValidation());
         }
     }
 }
