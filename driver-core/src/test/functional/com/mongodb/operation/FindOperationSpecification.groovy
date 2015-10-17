@@ -672,14 +672,14 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .append('noCursorTimeout', BsonBoolean.TRUE)
                 .append('oplogReplay', BsonBoolean.TRUE)
                 .append('snapshot', BsonBoolean.TRUE)
-        if (limit != 0) {
-            expectedCommand.append('limit', new BsonInt32(Math.abs(limit)))
+        if (commandLimit != null) {
+            expectedCommand.append('limit', new BsonInt32(commandLimit))
         }
-        if (batchSize != 0) {
-            expectedCommand.append('batchSize', new BsonInt32(Math.abs(batchSize)))
+        if (commandBatchSize != null) {
+            expectedCommand.append('batchSize', new BsonInt32(commandBatchSize))
         }
-        if (limit < 0 || batchSize < 0) {
-            expectedCommand.append('singleBatch', BsonBoolean.TRUE)
+        if (commandSingleBatch != null) {
+            expectedCommand.append('singleBatch', BsonBoolean.valueOf(commandSingleBatch))
         }
 
         when:
@@ -697,6 +697,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         limit << [100, -100, 100, 0, 100]
         batchSize << [10, 10, -10, 10, 0]
+        commandLimit << [100, 100, 10, null, 100]
+        commandBatchSize << [10, null, null, 10, null]
+        commandSingleBatch << [null, true, true, null, null]
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {

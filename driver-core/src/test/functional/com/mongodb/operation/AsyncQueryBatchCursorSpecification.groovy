@@ -111,21 +111,30 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
 
     def 'should exhaust multiple batches with limit'() {
         given:
-        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, 2), limit, 2, new DocumentCodec(), connectionSource, connection)
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(limit, batchSize), limit, batchSize, new DocumentCodec(),
+                                                     connectionSource, connection)
 
         when:
         def next = nextBatch()
         def total = 0
         while (next) {
-            total +=next.size()
+            total += next.size()
             next = nextBatch()
         }
 
         then:
-        total == Math.abs(limit)
+        total == expectedTotal
 
         where:
-        limit << [5, -5]
+        limit | batchSize | expectedTotal
+        5     | 2         | 5
+        5     | -2        | 2
+        -5    | 2         | 5
+        -5    | -2        | 5
+        2     | 5         | 2
+        2     | -5        | 2
+        -2    | 5         | 2
+        -2    | -5        | 2
     }
 
     def 'should exhaust multiple batches'() {
@@ -330,12 +339,19 @@ class AsyncQueryBatchCursorSpecification extends OperationFunctionalSpecificatio
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
                     .append('filter', filter)
-                    .append('batchSize', new BsonInt32(batchSize))
                     .append('tailable', BsonBoolean.valueOf(tailable))
                     .append('awaitData', BsonBoolean.valueOf(awaitData))
-            if (limit > 0) {
-                findCommand.append('limit', new BsonInt32(limit))
+
+            findCommand.append('limit', new BsonInt32(Math.abs(limit)))
+
+            if (limit >= 0) {
+                if (batchSize < 0 && Math.abs(batchSize) < limit) {
+                    findCommand.append('limit', new BsonInt32(Math.abs(batchSize)))
+                } else {
+                    findCommand.append('batchSize', new BsonInt32(Math.abs(batchSize)))
+                }
             }
+
             def futureResultCallback = new FutureResultCallback<BsonDocument>();
             connection.commandAsync(getDatabaseName(), findCommand,
                                     slaveOk, new NoOpFieldNameValidator(),

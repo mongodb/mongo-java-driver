@@ -679,8 +679,12 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             document.put("limit", new BsonInt32(Math.abs(limit)));
         }
 
-        if (batchSize != 0) {
-            document.put("batchSize", new BsonInt32(Math.abs(batchSize)));
+        if (limit >= 0) {
+            if (batchSize < 0 && Math.abs(batchSize) < limit) {
+                document.put("limit", new BsonInt32(Math.abs(batchSize)));
+            } else if (batchSize != 0) {
+                document.put("batchSize", new BsonInt32(Math.abs(batchSize)));
+            }
         }
 
         if (limit < 0 || batchSize < 0) {
