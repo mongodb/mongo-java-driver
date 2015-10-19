@@ -89,52 +89,6 @@ class IndexOptionsSpecification extends Specification {
         options2.getPartialFilterExpression() == partialFilterExpression
     }
 
-    def 'should validate textIndexVersion'() {
-        when:
-        new IndexOptions().textVersion(1)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        new IndexOptions().textVersion(2)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        new IndexOptions().textVersion(3)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        new IndexOptions().textVersion(4)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
-    def 'should validate 2dsphereIndexVersion'() {
-        when:
-        new IndexOptions().sphereVersion(1)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        new IndexOptions().sphereVersion(2)
-
-        then:
-        notThrown(IllegalArgumentException)
-
-        when:
-        new IndexOptions().sphereVersion(3)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'should convert expireAfter'() {
         when:
         def options = new IndexOptions()
