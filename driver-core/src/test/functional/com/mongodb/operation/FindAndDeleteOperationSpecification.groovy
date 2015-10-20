@@ -18,13 +18,29 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncWriteBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.WriteBinding
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
@@ -32,6 +48,43 @@ import static com.mongodb.ClusterFixture.getBinding
 class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
+
+
+    def 'should have the correct defaults'() {
+        when:
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+
+        then:
+        operation.getDecoder() == documentCodec
+        operation.getNamespace() == getNamespace()
+        operation.getFilter() == null
+        operation.getSort() == null
+        operation.getProjection() == null
+        operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
+        operation.getWriteConcern() == null
+    }
+
+    def 'should set optional values correctly'(){
+        given:
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+
+        when:
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+            .filter(filter)
+            .sort(sort)
+            .projection(projection)
+            .maxTime(10, TimeUnit.MILLISECONDS)
+            .writeConcern(WriteConcern.W1)
+
+        then:
+        operation.getFilter() == filter
+        operation.getSort() == sort
+        operation.getProjection() == projection
+        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
+        operation.getWriteConcern() == WriteConcern.W1
+    }
 
     def 'should remove single document'() {
 
@@ -105,6 +158,115 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().find().size() == 1;
         getWorkerCollectionHelper().find().first() == sam
         returnedDocument == pete
+    }
+
+    def 'should create the expected command'() {
+        given:
+        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+                .append('remove', BsonBoolean.TRUE)
+        when:
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
+        2 * connection.release()
+
+        when:
+        operation.filter(filter)
+                .sort(sort)
+                .projection(projection)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .writeConcern(WriteConcern.W1)
+
+        expectedCommand.append('query', filter)
+                .append('sort', sort)
+                .append('fields', projection)
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
+            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
+        }
+
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
+        2 * connection.release()
+
+        where:
+        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def writeBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+                .append('remove', BsonBoolean.TRUE)
+
+        when:
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
+        2 * connection.release()
+
+        when:
+        operation.filter(filter)
+                .sort(sort)
+                .projection(projection)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .writeConcern(WriteConcern.W1)
+
+        expectedCommand.append('query', filter)
+                .append('sort', sort)
+                .append('fields', projection)
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
+            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
+        }
+
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
+        2 * connection.release()
+
+        where:
+        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
     }
 
 }

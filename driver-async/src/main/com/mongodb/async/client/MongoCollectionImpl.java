@@ -390,7 +390,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .filter(toBsonDocument(filter))
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
-                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                         .writeConcern(writeConcern), callback);
     }
 
     @Override
@@ -408,7 +409,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                         .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
+                         .bypassDocumentValidation(options.getBypassDocumentValidation())
+                         .writeConcern(writeConcern), callback);
     }
 
     @Override
@@ -426,7 +428,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                         .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
+                         .bypassDocumentValidation(options.getBypassDocumentValidation())
+                         .writeConcern(writeConcern), callback);
     }
 
     @Override

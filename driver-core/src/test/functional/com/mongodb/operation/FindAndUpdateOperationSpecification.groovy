@@ -21,15 +21,29 @@ import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncWriteBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.WriteBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
@@ -60,6 +74,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation.getProjection() == null
         operation.getMaxTime(TimeUnit.SECONDS) == 0
         operation.getBypassDocumentValidation() == null
+        operation.getWriteConcern() == null
     }
 
     def 'should set optional values correctly'(){
@@ -71,7 +86,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, new BsonDocument('update', new BsonInt32(1)))
                 .filter(filter).sort(sort).projection(projection).bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true)
-                .returnOriginal(false)
+                .returnOriginal(false).writeConcern(WriteConcern.W1)
 
         then:
         operation.getFilter() == filter
@@ -80,6 +95,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation.upsert == true
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.getBypassDocumentValidation()
+        operation.getWriteConcern() == WriteConcern.W1
         !operation.isReturnOriginal()
     }
 
@@ -317,6 +333,121 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         cleanup:
         collectionHelper?.drop()
+    }
+
+    def 'should create the expected command'() {
+        given:
+        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
+        def update = BsonDocument.parse('{ update: 1}')
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+                .append('update', update)
+        when:
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
+        2 * connection.release()
+
+        when:
+        operation.filter(filter)
+                .sort(sort)
+                .projection(projection)
+                .bypassDocumentValidation(true)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .writeConcern(WriteConcern.W1)
+
+        expectedCommand.append('query', filter)
+                .append('sort', sort)
+                .append('fields', projection)
+                .append('bypassDocumentValidation', BsonBoolean.TRUE)
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
+            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
+        }
+
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
+        2 * connection.release()
+
+        where:
+        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
+        def update = BsonDocument.parse('{ update: 1}')
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def writeBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+                .append('update', update)
+
+        when:
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
+        2 * connection.release()
+
+        when:
+        operation.filter(filter)
+                .sort(sort)
+                .projection(projection)
+                .bypassDocumentValidation(true)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .writeConcern(WriteConcern.W1)
+
+        expectedCommand.append('query', filter)
+                .append('sort', sort)
+                .append('fields', projection)
+                .append('bypassDocumentValidation', BsonBoolean.TRUE)
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
+            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
+        }
+
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
+        2 * connection.release()
+
+        where:
+        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
     }
 
 }
