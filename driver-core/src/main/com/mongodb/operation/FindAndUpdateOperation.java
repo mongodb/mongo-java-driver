@@ -76,9 +76,26 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @param namespace the database and collection namespace for the operation.
      * @param decoder the decoder for the result documents.
      * @param update the document containing update operators.
+     * @deprecated use {@link #FindAndUpdateOperation(MongoNamespace, WriteConcern, Decoder, BsonDocument)} instead
      */
+    @Deprecated
     public FindAndUpdateOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument update) {
+        this(namespace, WriteConcern.ACKNOWLEDGED, decoder, update);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param writeConcern the writeConcern for the operation
+     * @param decoder the decoder for the result documents.
+     * @param update the document containing update operators.
+     * @since 3.2
+     */
+    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
+                                  final BsonDocument update) {
         this.namespace = notNull("namespace", namespace);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.decoder = notNull("decoder", decoder);
         this.update = notNull("decoder", update);
     }
@@ -90,6 +107,17 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      */
     public MongoNamespace getNamespace() {
         return namespace;
+    }
+
+    /**
+     * Get the write concern for this operation
+     *
+     * @return the {@link com.mongodb.WriteConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     /**
@@ -268,30 +296,6 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         return this;
     }
 
-    /**
-     * Get the write concern for this operation
-     *
-     * @return the {@link com.mongodb.WriteConcern}
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    /**
-     * Set the write concern for this operation
-     *
-     * @param writeConcern the write concern to use
-     * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public FindAndUpdateOperation<T> writeConcern(final WriteConcern writeConcern) {
-        this.writeConcern = writeConcern;
-        return this;
-    }
-
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
@@ -331,7 +335,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         if (bypassDocumentValidation != null) {
             command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
-        if (writeConcern != null & serverIsAtLeastVersionThreeDotTwo(description)) {
+        if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
             command.put("writeConcern", writeConcern.asDocument());
         }
         return command;

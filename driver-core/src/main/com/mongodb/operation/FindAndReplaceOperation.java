@@ -76,9 +76,26 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * @param namespace   the database and collection namespace for the operation.
      * @param decoder     the decoder for the result documents.
      * @param replacement the document that will replace the found document.
+     * @deprecated use {@link #FindAndReplaceOperation(MongoNamespace, WriteConcern, Decoder, BsonDocument)} instead
      */
+    @Deprecated
     public FindAndReplaceOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument replacement) {
+        this(namespace, WriteConcern.ACKNOWLEDGED, decoder, replacement);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace   the database and collection namespace for the operation.
+     * @param writeConcern the writeConcern for the operation
+     * @param decoder     the decoder for the result documents.
+     * @param replacement the document that will replace the found document.
+     * @since 3.2
+     */
+    public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder,
+                                   final BsonDocument replacement) {
         this.namespace = notNull("namespace", namespace);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.decoder = notNull("decoder", decoder);
         this.replacement = notNull("replacement", replacement);
     }
@@ -90,6 +107,17 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      */
     public MongoNamespace getNamespace() {
         return namespace;
+    }
+
+    /**
+     * Get the write concern for this operation
+     *
+     * @return the {@link com.mongodb.WriteConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     /**
@@ -153,7 +181,6 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         this.projection = projection;
         return this;
     }
-
 
     /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
@@ -268,30 +295,6 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         return this;
     }
 
-    /**
-     * Get the write concern for this operation
-     *
-     * @return the {@link com.mongodb.WriteConcern}
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    /**
-     * Set the write concern for this operation
-     *
-     * @param writeConcern the write concern to use
-     * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public FindAndReplaceOperation<T> writeConcern(final WriteConcern writeConcern) {
-        this.writeConcern = writeConcern;
-        return this;
-    }
-
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
@@ -331,7 +334,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         if (bypassDocumentValidation != null) {
             command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
-        if (writeConcern != null & serverIsAtLeastVersionThreeDotTwo(description)) {
+        if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
             command.put("writeConcern", writeConcern.asDocument());
         }
         return command;
@@ -340,7 +343,6 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private FieldNameValidator getValidator() {
         Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
         map.put("update", new CollectibleDocumentFieldNameValidator());
-
         return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 }

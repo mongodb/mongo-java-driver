@@ -48,20 +48,21 @@ import static com.mongodb.ClusterFixture.getBinding
 class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
+    def writeConcern = WriteConcern.ACKNOWLEDGED
 
 
     def 'should have the correct defaults'() {
         when:
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
 
         then:
-        operation.getDecoder() == documentCodec
         operation.getNamespace() == getNamespace()
+        operation.getWriteConcern() == writeConcern
+        operation.getDecoder() == documentCodec
         operation.getFilter() == null
         operation.getSort() == null
         operation.getProjection() == null
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
-        operation.getWriteConcern() == null
     }
 
     def 'should set optional values correctly'(){
@@ -71,19 +72,17 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def projection = BsonDocument.parse('{ projection : 1}')
 
         when:
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
             .filter(filter)
             .sort(sort)
             .projection(projection)
             .maxTime(10, TimeUnit.MILLISECONDS)
-            .writeConcern(WriteConcern.W1)
 
         then:
         operation.getFilter() == filter
         operation.getSort() == sort
         operation.getProjection() == projection
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
-        operation.getWriteConcern() == WriteConcern.W1
     }
 
     def 'should remove single document'() {
@@ -95,7 +94,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
@@ -115,7 +114,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = executeAsync(operation)
 
@@ -132,7 +131,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, workerCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
@@ -150,7 +149,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, workerCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
@@ -179,9 +178,14 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
         }
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
+
+        if (expectWriteConcern) {
+            expectedCommand.put('writeConcern', writeConcern.asDocument())
+        }
+
         when:
         operation.execute(writeBinding)
 
@@ -194,16 +198,11 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
                 .sort(sort)
                 .projection(projection)
                 .maxTime(10, TimeUnit.MILLISECONDS)
-                .writeConcern(WriteConcern.W1)
 
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
                 .append('maxTimeMS', new BsonInt64(10))
-
-        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
-            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
-        }
 
         operation.execute(writeBinding)
 
@@ -212,7 +211,13 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         2 * connection.release()
 
         where:
-        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+        serverVersion                | writeConcern                 | expectWriteConcern
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
     }
 
     def 'should create the expected command asynchronously'() {
@@ -232,9 +237,13 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
+
+        if (expectWriteConcern) {
+            expectedCommand.put('writeConcern', writeConcern.asDocument())
+        }
 
         when:
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
@@ -248,16 +257,10 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
                 .sort(sort)
                 .projection(projection)
                 .maxTime(10, TimeUnit.MILLISECONDS)
-                .writeConcern(WriteConcern.W1)
-
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
                 .append('maxTimeMS', new BsonInt64(10))
-
-        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
-            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
-        }
 
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
 
@@ -266,7 +269,13 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         2 * connection.release()
 
         where:
-        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+        serverVersion                | writeConcern                 | expectWriteConcern
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
     }
 
 }

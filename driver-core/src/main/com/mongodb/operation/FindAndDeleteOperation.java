@@ -64,9 +64,24 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @param namespace the database and collection namespace for the operation.
      * @param decoder the decoder for the result documents.
+     * @deprecated use {@link #FindAndDeleteOperation(MongoNamespace, WriteConcern, Decoder)} instead
      */
+    @Deprecated
     public FindAndDeleteOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+        this(namespace, WriteConcern.ACKNOWLEDGED, decoder);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param writeConcern the writeConcern for the operation
+     * @param decoder the decoder for the result documents.
+     * @since 3.2
+     */
+    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -77,6 +92,17 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
      */
     public MongoNamespace getNamespace() {
         return namespace;
+    }
+
+    /**
+     * Get the write concern for this operation
+     *
+     * @return the {@link com.mongodb.WriteConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     /**
@@ -180,30 +206,6 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
         return this;
     }
 
-    /**
-     * Get the write concern for this operation
-     *
-     * @return the {@link com.mongodb.WriteConcern}
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    /**
-     * Set the write concern for this operation
-     *
-     * @param writeConcern the write concern to use
-     * @return this
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public FindAndDeleteOperation<T> writeConcern(final WriteConcern writeConcern) {
-        this.writeConcern = writeConcern;
-        return this;
-    }
-
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
@@ -240,7 +242,7 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
         putIfNotNull(command, "sort", getSort());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("remove", BsonBoolean.TRUE);
-        if (writeConcern != null & serverIsAtLeastVersionThreeDotTwo(description)) {
+        if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
             command.put("writeConcern", writeConcern.asDocument());
         }
         return command;

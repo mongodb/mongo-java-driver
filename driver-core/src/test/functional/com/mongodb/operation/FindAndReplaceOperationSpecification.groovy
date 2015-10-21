@@ -59,15 +59,17 @@ import static java.util.Arrays.asList
 class FindAndReplaceOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
+    def writeConcern = WriteConcern.ACKNOWLEDGED
 
 
     def 'should have the correct defaults and passed values'() {
         when:
         def replacement = new BsonDocument('replace', new BsonInt32(1))
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
 
         then:
         operation.getNamespace() == getNamespace()
+        operation.getWriteConcern() == writeConcern
         operation.getDecoder() == documentCodec
         operation.getReplacement() == replacement
         operation.getFilter() == null
@@ -75,7 +77,6 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation.getProjection() == null
         operation.getMaxTime(TimeUnit.SECONDS) == 0
         operation.getBypassDocumentValidation() == null
-        operation.getWriteConcern() == null
     }
 
     def 'should set optional values correctly'(){
@@ -85,9 +86,9 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def projection = new BsonDocument('projection', new BsonInt32(1))
 
         when:
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, new BsonDocument('replace', new BsonInt32(1)))
-                .filter(filter).sort(sort).projection(projection).bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true)
-                .returnOriginal(false).writeConcern(WriteConcern.W1)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec,
+                new BsonDocument('replace', new BsonInt32(1))).filter(filter).sort(sort).projection(projection)
+                .bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true).returnOriginal(false)
 
         then:
         operation.getFilter() == filter
@@ -96,7 +97,6 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation.upsert == true
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.getBypassDocumentValidation()
-        operation.getWriteConcern() == WriteConcern.W1
         !operation.isReturnOriginal()
     }
 
@@ -110,7 +110,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
@@ -120,7 +120,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.find().get(0).getString('name') == 'Jordan'
 
         when:
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec,
+        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec,
                                                           new BsonDocumentWrapper<Document>(pete, documentCodec))
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
@@ -141,7 +141,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = executeAsync(operation)
 
@@ -151,7 +151,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.find().get(0).getString('name') == 'Jordan'
 
         when:
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec,
+        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec,
                                                           new BsonDocumentWrapper<Document>(pete, documentCodec))
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
@@ -172,8 +172,8 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec,
+                replacement).filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -182,7 +182,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         replacement = new BsonDocumentWrapper<Worker>(pete, workerCodec)
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
+        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
         returnedDocument = operation.execute(getBinding())
@@ -203,7 +203,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = executeAsync(operation)
 
@@ -213,7 +213,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         replacement = new BsonDocumentWrapper<Worker>(pete, workerCodec)
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
+        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
         returnedDocument = executeAsync(operation)
@@ -225,7 +225,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     def 'should return null if query fails to match'() {
         when:
         BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
@@ -237,7 +237,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     def 'should return null if query fails to match asynchronously'() {
         when:
         BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = executeAsync(operation)
 
@@ -248,7 +248,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw an exception if replacement contains update operators'() {
         when:
         def replacement = new BsonDocumentWrapper<Document>(['$inc': 1] as Document, documentCodec)
-        new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement).execute(getBinding())
+        new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement).execute(getBinding())
 
         then:
         thrown(IllegalArgumentException)
@@ -258,7 +258,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw an exception if replacement contains update operators asynchronously'() {
         when:
         def replacement = new BsonDocumentWrapper<Document>(['$inc': 1] as Document, documentCodec)
-        executeAsync(new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement))
+        executeAsync(new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement))
 
         then:
         def ex = thrown(MongoException)
@@ -276,7 +276,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         def replacement = new BsonDocument('level', new BsonInt32(9))
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(namespace, documentCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(namespace, writeConcern, documentCodec, replacement)
         operation.execute(getBinding())
 
         then:
@@ -311,7 +311,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         def replacement = new BsonDocument('level', new BsonInt32(9))
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(namespace, documentCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(namespace, writeConcern, documentCodec, replacement)
         executeAsync(operation)
 
         then:
@@ -355,9 +355,13 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
         }
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
+        if (expectWriteConcern) {
+            expectedCommand.put('writeConcern', writeConcern.asDocument())
+        }
+
         when:
         operation.execute(writeBinding)
 
@@ -371,17 +375,12 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                 .projection(projection)
                 .bypassDocumentValidation(true)
                 .maxTime(10, TimeUnit.MILLISECONDS)
-                .writeConcern(WriteConcern.W1)
 
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
                 .append('bypassDocumentValidation', BsonBoolean.TRUE)
                 .append('maxTimeMS', new BsonInt64(10))
-
-        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
-            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
-        }
 
         operation.execute(writeBinding)
 
@@ -390,7 +389,13 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         2 * connection.release()
 
         where:
-        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+        serverVersion                | writeConcern                 | expectWriteConcern
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
     }
 
     def 'should create the expected command asynchronously'() {
@@ -411,9 +416,12 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
         }
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, replacement)
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
+        if (expectWriteConcern) {
+            expectedCommand.put('writeConcern', writeConcern.asDocument())
+        }
 
         when:
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
@@ -428,17 +436,12 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                 .projection(projection)
                 .bypassDocumentValidation(true)
                 .maxTime(10, TimeUnit.MILLISECONDS)
-                .writeConcern(WriteConcern.W1)
 
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
                 .append('bypassDocumentValidation', BsonBoolean.TRUE)
                 .append('maxTimeMS', new BsonInt64(10))
-
-        if (serverVersion.compareTo(new ServerVersion([3, 2, 0])) >= 0) {
-            expectedCommand.put('writeConcern', WriteConcern.W1.asDocument())
-        }
 
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
 
@@ -447,6 +450,12 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         2 * connection.release()
 
         where:
-        serverVersion << [new ServerVersion([3, 0, 0]), new ServerVersion([3, 2, 0])]
+        serverVersion                | writeConcern                 | expectWriteConcern
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
     }
 }

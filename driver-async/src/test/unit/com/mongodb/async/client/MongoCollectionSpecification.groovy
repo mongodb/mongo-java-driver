@@ -697,9 +697,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindOneAndDeleteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec())
+        def expectedOperation = new FindAndDeleteOperation(namespace, writeConcern, new DocumentCodec())
                 .filter(new BsonDocument('a', new BsonInt32(1)))
-                .writeConcern(writeConcern)
         def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
@@ -732,9 +731,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindOneAndReplaceOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new FindAndReplaceOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .writeConcern(writeConcern)
+        def expectedOperation = new FindAndReplaceOperation(namespace, writeConcern, new DocumentCodec(),
+                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
         def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
@@ -782,9 +780,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindAndUpdateOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, executor)
-        def expectedOperation = new FindAndUpdateOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .writeConcern(writeConcern)
+        def expectedOperation = new FindAndUpdateOperation(namespace, writeConcern, new DocumentCodec(),
+                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
         def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
