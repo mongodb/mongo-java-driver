@@ -177,7 +177,7 @@ public class DBTest extends TestCase {
         // Then
         assertThat(commandResult.ok(), is(false));
         assertThat(commandResult.getErrorMessage(), containsString("no such"));
-        assertThat(commandResult.getErrorMessage(), containsString(": NotRealCommandName"));
+        assertThat(commandResult.getErrorMessage(), containsString("NotRealCommandName"));
     }
 
     @Test
