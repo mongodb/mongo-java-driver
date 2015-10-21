@@ -355,7 +355,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
-        return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, getCodec())
+        return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, writeConcern, getCodec())
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
@@ -369,14 +369,15 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndReplace(final Bson filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
-        return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, getCodec(), documentToBsonDocument(replacement))
-                                .filter(toBsonDocument(filter))
-                                .projection(toBsonDocument(options.getProjection()))
-                                .sort(toBsonDocument(options.getSort()))
-                                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                                .upsert(options.isUpsert())
-                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+        return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, writeConcern, getCodec(),
+                documentToBsonDocument(replacement))
+                .filter(toBsonDocument(filter))
+                .projection(toBsonDocument(options.getProjection()))
+                .sort(toBsonDocument(options.getSort()))
+                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
+                .upsert(options.isUpsert())
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
@@ -386,14 +387,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, getCodec(), toBsonDocument(update))
-                                .filter(toBsonDocument(filter))
-                                .projection(toBsonDocument(options.getProjection()))
-                                .sort(toBsonDocument(options.getSort()))
-                                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                                .upsert(options.isUpsert())
-                                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, getCodec(), toBsonDocument(update))
+                .filter(toBsonDocument(filter))
+                .projection(toBsonDocument(options.getProjection()))
+                .sort(toBsonDocument(options.getSort()))
+                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
+                .upsert(options.isUpsert())
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     @Override
