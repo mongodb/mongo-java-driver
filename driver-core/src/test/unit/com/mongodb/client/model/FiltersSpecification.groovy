@@ -36,6 +36,10 @@ import static Filters.and
 import static Filters.exists
 import static Filters.or
 import static com.mongodb.client.model.Filters.all
+import static com.mongodb.client.model.Filters.bitsAllClear
+import static com.mongodb.client.model.Filters.bitsAllSet
+import static com.mongodb.client.model.Filters.bitsAnyClear
+import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.geoIntersects
@@ -203,6 +207,26 @@ class FiltersSpecification extends Specification {
     def 'should render $size'() {
         expect:
         toBson(size('a', 13)) == parse('{a : {$size : 13} }')
+    }
+
+    def 'should render $bitsAllClear'() {
+        expect:
+        toBson(bitsAllClear('a', 13)) == parse('{a : {$bitsAllClear : { "$numberLong" : "13" }} }')
+    }
+
+    def 'should render $bitsAllSet'() {
+        expect:
+        toBson(bitsAllSet('a', 13)) == parse('{a : {$bitsAllSet : { "$numberLong" : "13" }} }')
+    }
+
+    def 'should render $bitsAnyClear'() {
+        expect:
+        toBson(bitsAnyClear('a', 13)) == parse('{a : {$bitsAnyClear : { "$numberLong" : "13" }} }')
+    }
+
+    def 'should render $bitsAnySet'() {
+        expect:
+        toBson(bitsAnySet('a', 13)) == parse('{a : {$bitsAnySet : { "$numberLong" : "13" }} }')
     }
 
     def 'should render $type'() {

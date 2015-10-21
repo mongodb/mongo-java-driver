@@ -179,6 +179,24 @@ Available with MongoDB 3.2, a version 3 text index allows diacritic-sensitive se
 text("café", new TextSearchOptions().diacriticSensitive(true))
 ```
 
+### Bitwise
+
+The bitwise query operators, available with MongoDB 3.2 include:
+
+- `bitsAllSet`: Selects documents where the all the specified bits of a field are set (i.e. 1).
+- `bitsAllClear`: Selects documents where the all the specified bits of a field are clear (i.e. 0).
+- `bitsAnySet`: Selects documents where at least one of the specified bits of a field are set (i.e. 1).
+- `bitsAnyClear`: Selects documents where at least one of the specified bits of a field are clear (i.e. 0)
+
+
+#### Examples
+
+The example selects documents that have a `bitField` field with bits set at positions of the corresponding bitmask `50` (i.e. `00110010`):
+
+```java
+bitsAllSet("bitField", 50)
+```
+
 ### Geospatial
 
 The geospatial operator methods include:

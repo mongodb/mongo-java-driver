@@ -525,6 +525,62 @@ public final class Filters {
     }
 
     /**
+     * Creates a filter that matches all documents where all of the bit positions are clear in the field.
+     *
+     * @param fieldName the field name
+     * @param bitmask   the bitmask
+     * @return the filter
+     * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/operator/query/bitsAllClear $bitsAllClear
+     * @since 3.2
+     */
+    public static Bson bitsAllClear(final String fieldName, final long bitmask) {
+        return new OperatorFilter<Long>("$bitsAllClear", fieldName, bitmask);
+    }
+
+    /**
+     * Creates a filter that matches all documents where all of the bit positions are set in the field.
+     *
+     * @param fieldName the field name
+     * @param bitmask   the bitmask
+     * @return the filter
+     * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/operator/query/bitsAllSet $bitsAllSet
+     * @since 3.2
+     */
+    public static Bson bitsAllSet(final String fieldName, final long bitmask) {
+        return new OperatorFilter<Long>("$bitsAllSet", fieldName, bitmask);
+    }
+
+    /**
+     * Creates a filter that matches all documents where any of the bit positions are clear in the field.
+     *
+     * @param fieldName the field name
+     * @param bitmask   the bitmask
+     * @return the filter
+     * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/operator/query/bitsAllClear $bitsAllClear
+     * @since 3.2
+     */
+    public static Bson bitsAnyClear(final String fieldName, final long bitmask) {
+        return new OperatorFilter<Long>("$bitsAnyClear", fieldName, bitmask);
+    }
+
+    /**
+     * Creates a filter that matches all documents where any of the bit positions are set in the field.
+     *
+     * @param fieldName the field name
+     * @param bitmask   the bitmask
+     * @return the filter
+     * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/operator/query/bitsAnySet $bitsAnySet
+     * @since 3.2
+     */
+    public static Bson bitsAnySet(final String fieldName, final long bitmask) {
+        return new OperatorFilter<Long>("$bitsAnySet", fieldName, bitmask);
+    }
+
+    /**
      * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name

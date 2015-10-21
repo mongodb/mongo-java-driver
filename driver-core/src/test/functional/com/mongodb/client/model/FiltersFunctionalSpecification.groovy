@@ -28,6 +28,10 @@ import java.util.regex.Pattern
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.and
+import static com.mongodb.client.model.Filters.bitsAllClear
+import static com.mongodb.client.model.Filters.bitsAllSet
+import static com.mongodb.client.model.Filters.bitsAnyClear
+import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
@@ -188,6 +192,50 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     def 'should render $size'() {
         expect:
         find(size('a', 4)) == [b]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    def 'should render $bitsAllClear'() {
+        when:
+        def bitDoc = Document.parse('{_id: 1, bits: 20}')
+        getCollectionHelper().drop()
+        getCollectionHelper().insertDocuments(bitDoc)
+
+        then:
+        find(bitsAllClear('bits', 35)) == [bitDoc]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    def 'should render $bitsAllSet'() {
+        when:
+        def bitDoc = Document.parse('{_id: 1, bits: 54}')
+        getCollectionHelper().drop()
+        getCollectionHelper().insertDocuments(bitDoc)
+
+        then:
+        find(bitsAllSet('bits', 50)) == [bitDoc]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    def 'should render $bitsAnyClear'() {
+        when:
+        def bitDoc = Document.parse('{_id: 1, bits: 50}')
+        getCollectionHelper().drop()
+        getCollectionHelper().insertDocuments(bitDoc)
+
+        then:
+        find(bitsAnyClear('bits', 20)) == [bitDoc]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    def 'should render $bitsAnySet'() {
+        when:
+        def bitDoc = Document.parse('{_id: 1, bits: 20}')
+        getCollectionHelper().drop()
+        getCollectionHelper().insertDocuments(bitDoc)
+
+        then:
+        find(bitsAnySet('bits', 50)) == [bitDoc]
     }
 
     def 'should render $type'() {
