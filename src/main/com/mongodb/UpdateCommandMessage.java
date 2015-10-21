@@ -24,10 +24,10 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
     private final List<ModifyRequest> updates;
     private final DBEncoder encoder;
 
-    public UpdateCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern,
+    public UpdateCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern, Boolean bypassDocumentValidation,
                                 final List<ModifyRequest> updates, final DBEncoder commandEncoder, final DBEncoder encoder,
                                 final MessageSettings settings) {
-        super(writeNamespace, writeConcern, commandEncoder, settings);
+        super(writeNamespace, writeConcern, bypassDocumentValidation, commandEncoder, settings);
         this.updates = updates;
         this.encoder = encoder;
     }
@@ -56,8 +56,8 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             writer.writeEndDocument();
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new UpdateCommandMessage(getWriteNamespace(), getWriteConcern(), updates.subList(i, updates.size()),
-                                                       getCommandEncoder(), encoder, getSettings());
+                nextMessage = new UpdateCommandMessage(getWriteNamespace(), getWriteConcern(), getBypassDocumentValidation(),
+                                                       updates.subList(i, updates.size()), getCommandEncoder(), encoder, getSettings());
                 break;
             }
         }

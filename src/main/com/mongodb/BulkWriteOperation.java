@@ -39,6 +39,7 @@ public class BulkWriteOperation {
     private final DBCollection collection;
     private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
     private boolean closed;
+    private Boolean bypassDocumentValidation;
 
     BulkWriteOperation(final boolean ordered, final DBCollection collection) {
         this.ordered = ordered;
@@ -54,6 +55,28 @@ public class BulkWriteOperation {
      */
     public boolean isOrdered() {
         return ordered;
+    }
+
+    /**
+     * Gets whether to bypass document validation, or null if unspecified.  The default is null.
+     *
+     * @return whether to bypass document validation, or null if unspecified.
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets whether to bypass document validation.
+     *
+     * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public void setBypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
     }
 
     /**
@@ -90,7 +113,7 @@ public class BulkWriteOperation {
         isTrue("already executed", !closed);
 
         closed = true;
-        return collection.executeBulkWriteOperation(ordered, requests);
+        return collection.executeBulkWriteOperation(ordered, bypassDocumentValidation, requests);
     }
 
     /**
@@ -106,7 +129,7 @@ public class BulkWriteOperation {
         isTrue("already executed", !closed);
 
         closed = true;
-        return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
+        return collection.executeBulkWriteOperation(ordered, bypassDocumentValidation, requests, writeConcern);
     }
 
     void addRequest(final WriteRequest request) {

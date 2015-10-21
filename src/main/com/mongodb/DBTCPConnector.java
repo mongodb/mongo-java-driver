@@ -415,6 +415,11 @@ public class DBTCPConnector implements DBConnector {
         return _myPort.get(true, ReadPreference.primary(), null);
     }
 
+    DBPort getPort(ReadPreference readPreference) {
+        isTrue("open", !_closed);
+        return _myPort.get(false, readPreference, null);
+    }
+
     void releasePort(final DBPort port) {
         _myPort.done(port);
     }

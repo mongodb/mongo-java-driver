@@ -289,6 +289,29 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets whether to bypass document validation, or null if unspecified.  The default is null.
+     *
+     * @return whether to bypass document validation, or null if unspecified.
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return _bypassDocumentValidation;
+    }
+
+    /**
+     * Sets whether to bypass document validation.
+     *
+     * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+     * @return this
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public void setBypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this._bypassDocumentValidation = bypassDocumentValidation;
+    }
+
+    /**
      * Turns this command into a DBObject representation of this map reduce command.
      *
      * @return a DBObject that contains the MongoDB document representation of this command.
@@ -346,6 +369,10 @@ public class MapReduceCommand {
 
         if (_maxTimeMS != 0) {
             cmd.put("maxTimeMS", _maxTimeMS);
+        }
+
+        if (_bypassDocumentValidation != null) {
+            cmd.put("bypassDocumentValidation", _bypassDocumentValidation);
         }
 
         return cmd;
@@ -408,4 +435,5 @@ public class MapReduceCommand {
     DBObject _extra;
     private long _maxTimeMS;
     Boolean _jsMode;
+    Boolean _bypassDocumentValidation;
 }

@@ -158,7 +158,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
     public WriteResult insert(List<DBObject> list, WriteConcern concern ){
-        return insert(list, concern, getDBEncoder() );
+        return insert(list, concern, getDBEncoder());
     }
 
     /**
@@ -172,7 +172,25 @@ public abstract class DBCollection {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
-    public abstract WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
+    public WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder) {
+        return insertImpl(list, concern, encoder, null);
+    }
+
+    /**
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
+     *
+     * @param list    a list of {@code DBObject}'s to be inserted
+     * @param concern {@code WriteConcern} to be used during operation
+     * @param encoder {@code DBEncoder} to use to serialise the documents
+     * @param bypassDocumentValidation whether to bypass document validation, or null if the server's default value should be used
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     * @since 2.14
+     * @mongodb.driver.manual tutorial/insert-documents/ Insert
+     */
+    protected abstract WriteResult insertImpl(List<DBObject> list, WriteConcern concern, DBEncoder encoder,
+                                              Boolean bypassDocumentValidation);
 
     /**
      * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
@@ -194,7 +212,7 @@ public abstract class DBCollection {
             writeConcern = writeConcern.continueOnError(true);
         }
         DBEncoder dbEncoder = insertOptions.getDbEncoder() != null ? insertOptions.getDbEncoder() : getDBEncoder();
-        return insert(documents, writeConcern, dbEncoder);
+        return insertImpl(documents, writeConcern, dbEncoder, insertOptions.getBypassDocumentValidation());
     }
 
     /**
@@ -211,7 +229,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      */
     public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern ){
-        return update( q, o, upsert, multi, concern, getDBEncoder());
+        return update(q, o, upsert, multi, concern, getDBEncoder());
     }
 
     /**
@@ -228,7 +246,49 @@ public abstract class DBCollection {
      * @throws MongoException
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      */
-    public abstract WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern, DBEncoder encoder );
+    public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern, DBEncoder encoder ) {
+        return updateImpl(q, o, upsert, multi, concern, null, encoder);
+    }
+
+    /**
+     * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
+     * the same query selectors, as used in {@link DBCollection#find(DBObject)}.
+     *
+     * @param q       the selection criteria for the update
+     * @param o       the modifications to apply
+     * @param upsert  when true, inserts a document if no document matches the update query criteria
+     * @param multi   when true, updates all documents in the collection that match the update query criteria, otherwise only updates one
+     * @param concern {@code WriteConcern} to be used during operation
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param encoder the DBEncoder to use
+     * @return the result of the operation
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/modify-documents/ Modify
+     * @since 2.14
+     */
+    public WriteResult update( DBObject q , DBObject o , boolean upsert , boolean multi , WriteConcern concern,
+                               boolean bypassDocumentValidation, DBEncoder encoder) {
+        return updateImpl(q, o, upsert, multi, concern, bypassDocumentValidation, encoder);
+    }
+
+    /**
+     * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
+     * the same query selectors, as used in {@link DBCollection#find(DBObject)}.
+     *
+     * @param q       the selection criteria for the update
+     * @param o       the modifications to apply
+     * @param upsert  when true, inserts a document if no document matches the update query criteria
+     * @param multi   when true, updates all documents in the collection that match the update query criteria, otherwise only updates one
+     * @param concern {@code WriteConcern} to be used during operation
+     * @param bypassDocumentValidation whether to bypass document validation, or null if the server's default should be used
+     * @param encoder the DBEncoder to use
+     * @return the result of the operation
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/modify-documents/ Modify
+     * @since 2.14
+     */
+    protected abstract WriteResult updateImpl(DBObject q, DBObject o, boolean upsert, boolean multi, WriteConcern concern,
+                                              Boolean bypassDocumentValidation, DBEncoder encoder);
 
     /**
      * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
@@ -424,6 +484,7 @@ public abstract class DBCollection {
         return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS);
     }
 
+
     /**
      * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
      * update.
@@ -447,6 +508,43 @@ public abstract class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
+          return findAndModifyHelper(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit);
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final boolean bypassDocumentValidation,
+                                  final long maxTime, final TimeUnit maxTimeUnit) {
+        return findAndModifyHelper(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit);
+    }
+
+    private DBObject findAndModifyHelper(final DBObject query, final DBObject fields, final DBObject sort,
+                                         final boolean remove, final DBObject update,
+                                         final boolean returnNew, final boolean upsert,
+                                         final Boolean bypassDocumentValidation,
+                                         final long maxTime, final TimeUnit maxTimeUnit) {
+
         BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
         if (query != null && !query.keySet().isEmpty())
             cmd.append( "query", query );
@@ -456,6 +554,9 @@ public abstract class DBCollection {
             cmd.append( "sort", sort );
         if (maxTime > 0) {
             cmd.append("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
+        }
+        if (bypassDocumentValidation != null) {
+            cmd.append("bypassDocumentValidation", bypassDocumentValidation);
         }
 
         if (remove)
@@ -1283,7 +1384,7 @@ public abstract class DBCollection {
     }
 
     CommandResult command(DBObject cmd, int options, ReadPreference readPrefs){
-    	return _db.command(cmd,getOptions(),readPrefs);
+    	return _db.command(cmd, getOptions(), readPrefs);
     }
 
     /**
@@ -1313,7 +1414,7 @@ public abstract class DBCollection {
                       .get() );
         ret.throwOnError();
         resetIndexCache();
-        return _db.getCollection( newName );
+        return _db.getCollection(newName);
     }
 
     /**
@@ -1330,7 +1431,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group( DBObject key , DBObject cond , DBObject initial , String reduce ){
-        return group( key , cond , initial , reduce , null );
+        return group(key, cond, initial, reduce, null);
     }
 
     /**
@@ -1627,7 +1728,7 @@ public abstract class DBCollection {
                 .outputMode(AggregationOptions.OutputMode.INLINE)
                 .build();
 
-        DBObject command = prepareCommand(pipeline, options);
+        DBObject command = prepareAggregationCommand(pipeline, options, null);
 
         CommandResult res = _db.command(command, getOptions(), readPreference);
         res.throwOnError();
@@ -1672,7 +1773,7 @@ public abstract class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        DBObject command = prepareCommand(pipeline, options);
+        DBObject command = prepareAggregationCommand(pipeline, options, null);
         command.put("explain", true);
         final CommandResult res = _db.command(command, getOptions(), getReadPreference());
         res.throwOnError();
@@ -1729,19 +1830,22 @@ public abstract class DBCollection {
         return new BulkWriteOperation(false, this);
     }
 
-    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests) {
-        return executeBulkWriteOperation(ordered, requests, getWriteConcern());
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                              final List<WriteRequest> requests) {
+        return executeBulkWriteOperation(ordered, bypassDocumentValidation, requests, getWriteConcern());
     }
 
-    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests, final WriteConcern writeConcern) {
-        return executeBulkWriteOperation(ordered, requests, writeConcern, getDBEncoder());
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                              final List<WriteRequest> requests, final WriteConcern writeConcern) {
+        return executeBulkWriteOperation(ordered, bypassDocumentValidation, requests, writeConcern, getDBEncoder());
     }
 
-    abstract BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> requests,
-                                                       final WriteConcern writeConcern, final DBEncoder encoder);
+    abstract BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                                       final List<WriteRequest> requests, final WriteConcern writeConcern,
+                                                       final DBEncoder encoder);
 
     @SuppressWarnings("unchecked")
-    DBObject prepareCommand(final List<DBObject> pipeline, final AggregationOptions options) {
+    DBObject prepareAggregationCommand(final List<DBObject> pipeline, final AggregationOptions options, final ServerVersion serverVersion) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }
@@ -1764,7 +1868,18 @@ public abstract class DBCollection {
             command.put("allowDiskUse", options.getAllowDiskUse());
         }
 
+        if (getBypassDocumentValidationForServerVersion(options.getBypassDocumentValidation(), serverVersion) != null) {
+            command.put("bypassDocumentValidation", options.getBypassDocumentValidation());
+        }
+
         return command;
+    }
+
+    Boolean getBypassDocumentValidationForServerVersion(final Boolean bypassDocumentValidation, final ServerVersion serverVersion) {
+        if (bypassDocumentValidation == null) {
+            return null;
+        }
+        return serverVersion.compareTo(new ServerVersion(3, 2)) >= 0 ? bypassDocumentValidation : null;
     }
 
     /**

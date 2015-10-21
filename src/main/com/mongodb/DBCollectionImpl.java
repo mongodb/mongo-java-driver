@@ -92,20 +92,31 @@ class DBCollectionImpl extends DBCollection {
         if(options == null) {
             throw new IllegalArgumentException("options can not be null");
         }
-        DBObject last = pipeline.get(pipeline.size() - 1);
+        final DBPort port = db.getConnector().getPort(readPreference);
+        try {
+            final DBObject command = prepareAggregationCommand(pipeline, options, port.getServerVersion());
+            CommandResult res = db.getConnector().doOperation(db, port, new DBPort.Operation<CommandResult>() {
+                @Override
+                public CommandResult execute() throws IOException {
+                    return port.runCommand(db, command);
+                }
+            });
 
-        DBObject command = prepareCommand(pipeline, options);
+            res.throwOnError();
 
-        final CommandResult res = _db.command(command, getOptions(), readPreference);
-        res.throwOnError();
+            DBObject last = pipeline.get(pipeline.size() - 1);
+            String outCollection = (String) last.get("$out");
+            if (outCollection != null) {
+                DBCollection collection = _db.getCollection(outCollection);
+                return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
+            } else {
+                Integer batchSize = options.getBatchSize();
+                return new QueryResultIterator(res, db.getMongo(), batchSize == null ? 0 : batchSize, getDecoder(),
+                                               res.getServerUsed());
+            }
 
-        String outCollection = (String) last.get("$out");
-        if (outCollection != null) {
-            DBCollection collection = _db.getCollection(outCollection);
-            return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
-        } else {
-            Integer batchSize = options.getBatchSize();
-            return new QueryResultIterator(res, db.getMongo(), batchSize == null ? 0 : batchSize, getDecoder(), res.getServerUsed());
+        } finally {
+            db.getConnector().releasePort(port);
         }
     }
 
@@ -127,7 +138,8 @@ class DBCollectionImpl extends DBCollection {
 
 
     @Override
-    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                              final List<WriteRequest> writeRequests,
                                               WriteConcern writeConcern, DBEncoder encoder) {
         isTrue("no operations", !writeRequests.isEmpty());
 
@@ -143,8 +155,9 @@ class DBCollectionImpl extends DBCollection {
 
         DBPort port = db.getConnector().getPrimaryPort();
         try {
+            throwIfBypassDocumentValidationNotSupported(writeConcern, bypassDocumentValidation, port);
             BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(port.getAddress(), writeConcern);
-            for (Run run : getRunGenerator(ordered, writeRequests, writeConcern, encoder, port)) {
+            for (Run run : getRunGenerator(ordered, bypassDocumentValidation, writeRequests, writeConcern, encoder, port)) {
                 try {
                     BulkWriteResult result = run.execute(port);
                     if (result.isAcknowledged()) {
@@ -163,11 +176,8 @@ class DBCollectionImpl extends DBCollection {
         }
     }
 
-    public WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder ){
-        return insert(list, true, concern, encoder);
-    }
-
-    protected WriteResult insert(List<DBObject> list, boolean shouldApply , WriteConcern concern, DBEncoder encoder ){
+    @Override
+    protected WriteResult insertImpl(List<DBObject> list, WriteConcern concern, DBEncoder encoder, Boolean bypassDocumentValidation) {
         if (concern == null) {
             throw new IllegalArgumentException("Write concern can not be null");
         }
@@ -183,16 +193,18 @@ class DBCollectionImpl extends DBCollection {
 
         DBPort port = db.getConnector().getPrimaryPort();
         try {
+            throwIfBypassDocumentValidationNotSupported(concern, bypassDocumentValidation, port);
             if (useWriteCommands(concern, port)) {
                 try {
-                    return translateBulkWriteResult(insertWithCommandProtocol(list, concern, encoder, port, shouldApply), INSERT, concern,
-                                                    port.getAddress());
+                    return translateBulkWriteResult(insertWithCommandProtocol(list, concern, encoder, port,
+                                                                              bypassDocumentValidation),
+                                                    INSERT, concern, port.getAddress());
                 } catch (BulkWriteException e) {
                     throw translateBulkWriteException(e, INSERT);
                 }
             }
             else {
-                return insertWithWriteProtocol(list, concern, encoder, port, shouldApply);
+                return insertWithWriteProtocol(list, concern, encoder, port, true);
             }
         } finally {
             db.getConnector().releasePort(port);
@@ -237,9 +249,8 @@ class DBCollectionImpl extends DBCollection {
     }
 
     @Override
-    public WriteResult update( DBObject query , DBObject o , boolean upsert , boolean multi , WriteConcern concern,
-                               DBEncoder encoder ) {
-
+    protected WriteResult updateImpl(DBObject query, DBObject o, boolean upsert, boolean multi, WriteConcern concern,
+                                     Boolean bypassDocumentValidation, DBEncoder encoder) {
         if (o == null) {
             throw new IllegalArgumentException("update can not be null");
         }
@@ -264,11 +275,12 @@ class DBCollectionImpl extends DBCollection {
 
         DBPort port = db.getConnector().getPrimaryPort();
         try {
+            throwIfBypassDocumentValidationNotSupported(concern, bypassDocumentValidation, port);
             if (useWriteCommands(concern, port)) {
                 try {
                     BulkWriteResult bulkWriteResult =
                     updateWithCommandProtocol(Arrays.<ModifyRequest>asList(new UpdateRequest(query, upsert, o, multi)),
-                                              concern, encoder, port);
+                                              concern, bypassDocumentValidation, encoder, port);
                     return translateBulkWriteResult(bulkWriteResult, UPDATE, concern, port.getAddress());
                 } catch (BulkWriteException e) {
                     throw translateBulkWriteException(e, UPDATE);
@@ -402,6 +414,7 @@ class DBCollectionImpl extends DBCollection {
                         throw new MongoException.DuplicateKey(commandResult);
                     } else { 
                         throw e;
+
                     }
                 }
             } else {
@@ -415,12 +428,14 @@ class DBCollectionImpl extends DBCollection {
 
     private BulkWriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern,
                                                       final DBEncoder encoder,
-                                                      final DBPort port, final boolean shouldApply) {
-        if ( shouldApply ){
-            applyRulesForInsert(list);
-        }
+                                                      final DBPort port,
+                                                      final Boolean bypassDocumentValidation) {
+        applyRulesForInsert(list);
 
-        BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern, list,
+        BaseWriteCommandMessage message = new InsertCommandMessage(getNamespace(), writeConcern,
+                                                                  getBypassDocumentValidationForServerVersion(bypassDocumentValidation,
+                                                                                                              port.getServerVersion()),
+                                                                   list,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
                                                                    getMessageSettings(port));
         return writeWithCommandProtocol(port, INSERT, message, writeConcern);
@@ -449,8 +464,12 @@ class DBCollectionImpl extends DBCollection {
     @SuppressWarnings("unchecked")
     private BulkWriteResult updateWithCommandProtocol(final List<ModifyRequest> updates,
                                                       final WriteConcern writeConcern,
+                                                      final Boolean bypassDocumentValidation,
                                                       final DBEncoder encoder, final DBPort port) {
-        BaseWriteCommandMessage message = new UpdateCommandMessage(getNamespace(), writeConcern, updates,
+        BaseWriteCommandMessage message = new UpdateCommandMessage(getNamespace(), writeConcern,
+                                                                   getBypassDocumentValidationForServerVersion(bypassDocumentValidation,
+                                                                                                               port.getServerVersion()),
+                                                                   updates,
                                                                    DefaultDBEncoder.FACTORY.create(), encoder,
                                                                    getMessageSettings(port));
         return writeWithCommandProtocol(port, UPDATE, message, writeConcern);
@@ -494,6 +513,15 @@ class DBCollectionImpl extends DBCollection {
     private boolean useWriteCommands(final WriteConcern concern, final DBPort port) {
         return concern.callGetLastError() &&
                port.getServerVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    }
+
+    private void throwIfBypassDocumentValidationNotSupported(final WriteConcern concern, final Boolean bypassDocumentValidation,
+                                                             final DBPort port) {
+        if (!concern.callGetLastError()
+            && port.getServerVersion().compareTo(new ServerVersion(3, 2)) >= 0
+            && bypassDocumentValidation != null) {
+            throw new MongoException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
+        }
     }
 
     private MessageSettings getMessageSettings(final DBPort port) {
@@ -569,12 +597,13 @@ class DBCollectionImpl extends DBCollection {
         return last;
     }
 
-    private Iterable<Run> getRunGenerator(final boolean ordered, final List<WriteRequest> writeRequests,
+    private Iterable<Run> getRunGenerator(final boolean ordered, final Boolean bypassDocumentValidation,
+                                          final List<WriteRequest> writeRequests,
                                           final WriteConcern writeConcern, final DBEncoder encoder, final DBPort port) {
         if (ordered) {
-            return new OrderedRunGenerator(writeRequests, writeConcern, encoder, port);
+            return new OrderedRunGenerator(writeRequests, bypassDocumentValidation,writeConcern, encoder, port);
         } else {
-            return new UnorderedRunGenerator(writeRequests, writeConcern, encoder, port);
+            return new UnorderedRunGenerator(writeRequests, bypassDocumentValidation, writeConcern, encoder, port);
         }
     }
 
@@ -595,13 +624,16 @@ class DBCollectionImpl extends DBCollection {
 
     private class OrderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
+        private final Boolean bypassDocumentValidation;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
         private final int maxBatchWriteSize;
 
-        public OrderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern, final DBEncoder encoder,
+        public OrderedRunGenerator(final List<WriteRequest> writeRequests, final Boolean bypassDocumentValidation,
+                                   final WriteConcern writeConcern, final DBEncoder encoder,
                                    final DBPort port) {
             this.writeRequests = writeRequests;
+            this.bypassDocumentValidation = bypassDocumentValidation;
             this.writeConcern = writeConcern.continueOnError(false);
             this.encoder = encoder;
             this.maxBatchWriteSize = getMaxWriteBatchSize(port);
@@ -619,7 +651,7 @@ class DBCollectionImpl extends DBCollection {
 
                 @Override
                 public Run next() {
-                    Run run = new Run(writeRequests.get(curIndex).getType(), writeConcern, encoder);
+                    Run run = new Run(writeRequests.get(curIndex).getType(), bypassDocumentValidation, writeConcern, encoder);
                     int startIndexOfNextRun = getStartIndexOfNextRun();
                     for (int i = curIndex; i < startIndexOfNextRun; i++) {
                         run.add(writeRequests.get(i), i);
@@ -649,13 +681,16 @@ class DBCollectionImpl extends DBCollection {
 
     private class UnorderedRunGenerator implements Iterable<Run> {
         private final List<WriteRequest> writeRequests;
+        private final Boolean bypassDocumentValidation;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
         private final int maxBatchWriteSize;
 
-        public UnorderedRunGenerator(final List<WriteRequest> writeRequests, final WriteConcern writeConcern,
+        public UnorderedRunGenerator(final List<WriteRequest> writeRequests, final Boolean bypassDocumentValidation,
+                                     final WriteConcern writeConcern,
                                      final DBEncoder encoder, final DBPort port) {
             this.writeRequests = writeRequests;
+            this.bypassDocumentValidation = bypassDocumentValidation;
             this.writeConcern = writeConcern.continueOnError(true);
             this.encoder = encoder;
             this.maxBatchWriteSize = getMaxWriteBatchSize(port);
@@ -684,7 +719,7 @@ class DBCollectionImpl extends DBCollection {
                         WriteRequest writeRequest = writeRequests.get(curIndex);
                         Run run = runs.get(writeRequest.getType());
                         if (run == null) {
-                            run = new Run(writeRequest.getType(), writeConcern, encoder);
+                            run = new Run(writeRequest.getType(), bypassDocumentValidation, writeConcern, encoder);
                             runs.put(run.type, run);
                         }
                         run.add(writeRequest, curIndex);
@@ -708,12 +743,14 @@ class DBCollectionImpl extends DBCollection {
     private class Run {
         private final List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
         private final WriteRequest.Type type;
+        private final Boolean bypassDocumentValidation;
         private final WriteConcern writeConcern;
         private final DBEncoder encoder;
         private IndexMap indexMap;
 
-        Run(final WriteRequest.Type type, final WriteConcern writeConcern, final DBEncoder encoder) {
+        Run(final WriteRequest.Type type, final Boolean bypassDocumentValidation, final WriteConcern writeConcern, final DBEncoder encoder) {
             this.type = type;
+            this.bypassDocumentValidation = bypassDocumentValidation;
             this.indexMap = IndexMap.create();
             this.writeConcern = writeConcern;
             this.encoder = encoder;
@@ -775,7 +812,7 @@ class DBCollectionImpl extends DBCollection {
             return new RunExecutor(port) {
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
-                    return updateWithCommandProtocol(updateRequests, writeConcern, encoder, port);
+                    return updateWithCommandProtocol(updateRequests, writeConcern, bypassDocumentValidation, encoder, port);
                 }
 
                 @Override
@@ -801,7 +838,7 @@ class DBCollectionImpl extends DBCollection {
             return new RunExecutor(port) {
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
-                    return updateWithCommandProtocol(replaceRequests, writeConcern, encoder, port);
+                    return updateWithCommandProtocol(replaceRequests, writeConcern, bypassDocumentValidation, encoder, port);
                 }
 
                 @Override
@@ -847,7 +884,7 @@ class DBCollectionImpl extends DBCollection {
                     for (InsertRequest cur : insertRequests) {
                         documents.add(cur.getDocument());
                     }
-                    return insertWithCommandProtocol(documents, writeConcern, encoder, port, true);
+                    return insertWithCommandProtocol(documents, writeConcern, encoder, port, bypassDocumentValidation);
                 }
 
                 @Override

@@ -26,7 +26,7 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
 
     public DeleteCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<RemoveRequest> deletes,
                                 final DBEncoder commandEncoder, final DBEncoder queryEncoder, final MessageSettings settings) {
-        super(namespace, writeConcern, commandEncoder, settings);
+        super(namespace, writeConcern, null, commandEncoder, settings);
         this.deletes = deletes;
         this.queryEncoder = queryEncoder;
     }

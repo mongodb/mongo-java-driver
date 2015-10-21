@@ -24,9 +24,10 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
     private final List<DBObject> documents;
     private final DBEncoder encoder;
 
-    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final List<DBObject> documents,
+    public InsertCommandMessage(final MongoNamespace namespace, final WriteConcern writeConcern, final Boolean bypassDocumentValidation,
+                                final List<DBObject> documents,
                                 final DBEncoder commandEncoder, final DBEncoder encoder, final MessageSettings settings) {
-        super(namespace, writeConcern, commandEncoder, settings);
+        super(namespace, writeConcern, bypassDocumentValidation, commandEncoder, settings);
         this.documents = documents;
         this.encoder = encoder;
     }
@@ -45,7 +46,8 @@ class InsertCommandMessage extends BaseWriteCommandMessage {
             writer.encodeDocument(encoder, documents.get(i));
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new InsertCommandMessage(getWriteNamespace(), getWriteConcern(), documents.subList(i, documents.size()),
+                nextMessage = new InsertCommandMessage(getWriteNamespace(), getWriteConcern(), getBypassDocumentValidation(),
+                                                       documents.subList(i, documents.size()),
                                                        getCommandEncoder(), encoder, getSettings());
                 break;
             }

@@ -26,14 +26,16 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
 
     private final MongoNamespace writeNamespace;
     private final WriteConcern writeConcern;
+    private final Boolean bypassDocumentValidation;
     private final DBEncoder commandEncoder;
 
     public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final WriteConcern writeConcern,
-                                   final DBEncoder commandEncoder, final MessageSettings settings) {
+                                   final Boolean bypassDocumentValidation, final DBEncoder commandEncoder, final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OpCode.OP_QUERY, settings);
 
         this.writeNamespace = writeNamespace;
         this.writeConcern = writeConcern;
+        this.bypassDocumentValidation = bypassDocumentValidation;
         this.commandEncoder = commandEncoder;
     }
 
@@ -84,6 +86,10 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
 
     protected abstract String getCommandName();
 
+    protected Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
     protected abstract BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
                                                               final BSONBinaryWriter writer);
 
@@ -110,6 +116,9 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         if (!getWriteConcern().useServerDefault()) {
             writer.writeName("writeConcern");
             writer.encodeDocument(getCommandEncoder(), getWriteConcern().asDBObject());
+        }
+        if (bypassDocumentValidation != null) {
+            writer.writeBoolean("bypassDocumentValidation", bypassDocumentValidation);
         }
     }
 }
