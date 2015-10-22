@@ -25,6 +25,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
@@ -69,6 +70,67 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.junit.Assert.assertEquals
 
 class FindOperationSpecification extends OperationFunctionalSpecification {
+
+    def 'should have the correct defaults'() {
+        given:
+        def decoder = new DocumentCodec()
+
+        when:
+        FindOperation operation = new FindOperation<Document>(getNamespace(), decoder)
+
+        then:
+        operation.getNamespace() == getNamespace()
+        operation.getDecoder() == decoder
+        operation.getFilter() == null
+        operation.getMaxTime(MILLISECONDS) == 0
+        operation.getLimit() == 0
+        operation.getSkip() == 0
+        operation.getBatchSize() == 0
+        operation.getModifiers() == null
+        operation.getProjection() == null
+        operation.getReadConcern() == ReadConcern.DEFAULT
+        !operation.isNoCursorTimeout()
+        !operation.isOplogReplay()
+        !operation.isPartial()
+        !operation.isSlaveOk()
+    }
+
+    def 'should set optional values correctly'(){
+        given:
+        def filter = new BsonDocument('filter', new BsonInt32(1))
+        def projection = new BsonDocument('projection', new BsonInt32(1))
+        def modifiers = new BsonDocument('modifiers', new BsonInt32(1))
+
+        when:
+        FindOperation operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .maxTime(10, MILLISECONDS)
+                .filter(filter)
+                .limit(20)
+                .skip(30)
+                .batchSize(40)
+                .projection(projection)
+                .modifiers(modifiers)
+                .cursorType(CursorType.Tailable)
+                .readConcern(ReadConcern.MAJORITY)
+                .partial(true)
+                .slaveOk(true)
+                .oplogReplay(true)
+                .noCursorTimeout(true)
+
+        then:
+        operation.getFilter() == filter
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getLimit() == 20
+        operation.getSkip() == 30
+        operation.getBatchSize() == 40
+        operation.getProjection() == projection
+        operation.getModifiers() == modifiers
+        operation.getReadConcern() == ReadConcern.MAJORITY
+        operation.isNoCursorTimeout()
+        operation.isOplogReplay()
+        operation.isPartial()
+        operation.isSlaveOk()
+    }
 
     def 'should query with default values'() {
         def document = new Document('_id', 1)
@@ -642,7 +704,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def readPreference = ReadPreference.secondary()
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                               serverVersion, STANDALONE, 1000, 16000000, 48000000)
-        def connection = Mock(Connection)
+        def connection = Mock(Connection) {
+            _ * getDescription() >> connectionDescription
+        }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
         }
@@ -650,8 +714,21 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             getReadPreference() >> readPreference
             getReadConnectionSource() >> connectionSource
         }
+        def cannedResult = new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(0))
+                .append('ns', new BsonString('db.coll'))
+                .append('firstBatch', new BsonArrayWrapper([])))
         def operation = new FindOperation<BsonDocument>(namespace, decoder)
-                .filter(new BsonDocument('a', BsonBoolean.TRUE))
+        def expectedCommand = new BsonDocument('find', new BsonString(collectionName))
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        1 * connection.command(namespace.getDatabaseName(), expectedCommand, readPreference.isSlaveOk(), _, _) >> cannedResult
+        1 * connection.release()
+
+        when:
+        operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .skip(2)
                 .limit(limit)
@@ -662,8 +739,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .partial(true)
                 .oplogReplay(true)
                 .modifiers(new BsonDocument('$snapshot', BsonBoolean.TRUE))
-        def expectedCommand = new BsonDocument('find', new BsonString(collectionName))
-                .append('filter', operation.getFilter())
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        expectedCommand.append('filter', operation.getFilter())
                 .append('projection', operation.getProjection())
                 .append('skip', new BsonInt32(operation.getSkip()))
                 .append('tailable', BsonBoolean.TRUE)
@@ -672,6 +751,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .append('noCursorTimeout', BsonBoolean.TRUE)
                 .append('oplogReplay', BsonBoolean.TRUE)
                 .append('snapshot', BsonBoolean.TRUE)
+                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
+                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
         if (commandLimit != null) {
             expectedCommand.append('limit', new BsonInt32(commandLimit))
         }
@@ -682,16 +764,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             expectedCommand.append('singleBatch', BsonBoolean.valueOf(commandSingleBatch))
         }
 
-        when:
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> connectionDescription
-
-        1 * connection.command(namespace.getDatabaseName(), expectedCommand, readPreference.isSlaveOk(), _, _) >>
-        new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(0))
-                .append('ns', new BsonString('db.coll'))
-                .append('firstBatch', new BsonArrayWrapper([])))
+        1 * connection.command(namespace.getDatabaseName(), expectedCommand, readPreference.isSlaveOk(), _, _) >> cannedResult
         1 * connection.release()
 
         where:
@@ -708,29 +784,31 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def collectionName = 'coll'
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
-        def readBinding = Mock(ReadBinding)
-        def readPreference = Mock(ReadPreference)
-        def connectionSource = Mock(ConnectionSource)
-        def connection = Mock(Connection)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                               new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
-        def queryResult = Mock(QueryResult)
+        def connection = Mock(Connection) {
+            _ * getDescription() >> connectionDescription
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> Stub(ConnectionSource) {
+                getConnection() >> connection
+            }
+            getReadPreference() >> Stub(ReadPreference) {
+                isSlaveOk() >> slaveOk
+            }
+        }
+        def queryResult = Mock(QueryResult) {
+            _ * getNamespace() >> namespace
+            _ * getResults() >> []
+        }
         def operation = new FindOperation<BsonDocument>(namespace, decoder)
 
         when:
         operation.execute(readBinding)
 
         then:
-        1 * readBinding.getReadConnectionSource() >> connectionSource
-        2 * readBinding.getReadPreference() >> readPreference
-        1 * connectionSource.getConnection() >> connection
-        2 * connection.getDescription() >> connectionDescription
-        1 * readPreference.slaveOk >> slaveOk
         1 * connection.query(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _) >> queryResult
-        1 * queryResult.getNamespace() >> namespace
-        2 * queryResult.getResults() >> []
         1 * connection.release()
-        1 * connectionSource.release()
 
         where:
         slaveOk << [true, false]
@@ -742,29 +820,33 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def collectionName = 'coll'
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
-        def readBinding = Mock(AsyncReadBinding)
-        def readPreference = Mock(ReadPreference)
-        def connectionSource = Mock(AsyncConnectionSource)
-        def connection = Mock(AsyncConnection)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                               new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
-        def queryResult = Mock(QueryResult)
+
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> connectionDescription
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_) >>  { it[0].onResult(connectionSource, null) }
+            getReadPreference() >> Stub(ReadPreference) {
+                isSlaveOk() >> slaveOk
+            }
+        }
+        def queryResult = Mock(QueryResult) {
+            _ * getNamespace() >> namespace
+            _ * getResults() >> []
+        }
         def operation = new FindOperation<BsonDocument>(namespace, decoder)
 
         when:
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        2 * readBinding.getReadPreference() >> readPreference
-        1 * readBinding.getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        1 * connectionSource.getConnection(_) >> { it[0].onResult(connection, null) }
-        2 * connection.getDescription() >> connectionDescription
-        1 * readPreference.slaveOk >> slaveOk
         1 * connection.queryAsync(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
-        1 * queryResult.getNamespace() >> namespace
-        1 * queryResult.getResults() >> []
         1 * connection.release()
-        1 * connectionSource.release()
 
         where:
         slaveOk << [true, false]

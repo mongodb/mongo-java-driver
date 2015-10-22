@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -42,6 +43,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -75,6 +77,30 @@ final class OperationHelper {
         public Void apply(final T t) {
             return null;
         }
+    }
+
+    static void checkValidReadConcern(final Connection connection, final ReadConcern readConcern) {
+        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+            throw new IllegalArgumentException(format("Unsupported ReadConcern : '%s'", readConcern.asDocument().toJson()));
+        }
+    }
+
+    static void checkValidReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
+                                      final AsyncCallableWithConnection callable) {
+        Throwable throwable = null;
+        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+            throwable = new IllegalArgumentException(format("Unsupported ReadConcern : '%s'", readConcern.asDocument().toJson()));
+        }
+        callable.call(connection, throwable);
+    }
+
+    static void checkValidReadConcern(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
+                                      final AsyncCallableWithConnectionAndSource callable) {
+        Throwable throwable = null;
+        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+            throwable = new IllegalArgumentException(format("Unsupported ReadConcern : '%s'", readConcern.asDocument().toJson()));
+        }
+        callable.call(source, connection, throwable);
     }
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,

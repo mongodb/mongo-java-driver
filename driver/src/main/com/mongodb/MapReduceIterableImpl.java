@@ -41,6 +41,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
+    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final String mapFunction;
@@ -64,13 +65,14 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private Boolean bypassDocumentValidation;
 
     MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-                          final String mapFunction, final String reduceFunction) {
+                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                          final OperationExecutor executor, final String mapFunction, final String reduceFunction) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
+        this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -206,7 +208,8 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
                             .jsMode(jsMode)
                             .scope(toBsonDocument(scope))
                             .sort(toBsonDocument(sort))
-                            .verbose(verbose);
+                            .verbose(verbose)
+                            .readConcern(readConcern);
             if (finalizeFunction != null) {
                 operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
             }
@@ -235,7 +238,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
             return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(dbName, collectionName), documentClass, resultClass,
-                                                            codecRegistry, primary(), executor, new BsonDocument(),
+                                                            codecRegistry, primary(), readConcern, executor, new BsonDocument(),
                                                             new FindOptions()).batchSize(batchSize);
         }
     }

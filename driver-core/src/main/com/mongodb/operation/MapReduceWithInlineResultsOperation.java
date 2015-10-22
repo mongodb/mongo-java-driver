@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -47,6 +48,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -76,6 +78,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private boolean jsMode;
     private boolean verbose;
     private long maxTimeMS;
+    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute.
@@ -295,6 +298,27 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     /**
+     * Gets the read concern
+     *
+     * @return the read concern
+     * @since 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
+     * Sets the read concern
+     * @param readConcern the read concern
+     * @return this
+     * @since 3.2
+     */
+    public MapReduceWithInlineResultsOperation<T> readConcern(final ReadConcern readConcern) {
+        this.readConcern = notNull("readConcern", readConcern);
+        return this;
+    }
+
+    /**
      * Executing this will return a cursor with your results and the statistics in.
      *
      * @param binding the binding
@@ -306,6 +330,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
+                checkValidReadConcern(connection, readConcern);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
                                                      connection, transformer(source, connection));
@@ -321,9 +346,20 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                            CommandResultDocumentCodec.create(decoder, "results"), connection, asyncTransformer(connection),
-                            releasingCallback(errorHandlingCallback(callback), connection));
+                    final SingleResultCallback<MapReduceAsyncBatchCursor<T>> wrappedCallback = releasingCallback(
+                            errorHandlingCallback(callback), connection);
+                    checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                        CommandResultDocumentCodec.create(decoder, "results"), connection, asyncTransformer(connection),
+                                        wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -388,6 +424,9 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());
+        if (!readConcern.isServerDefault()) {
+            commandDocument.put("readConcern", readConcern.asDocument());
+        }
         return commandDocument;
     }
 

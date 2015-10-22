@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
@@ -94,6 +95,15 @@ public interface MongoCollection<TDocument> {
     WriteConcern getWriteConcern();
 
     /**
+     * Get the read concern for the MongoCollection.
+     *
+     * @return the {@link com.mongodb.ReadConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    ReadConcern getReadConcern();
+
+    /**
      * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
      *
      * @param newDocumentClass the default class to cast any documents returned from the database into.
@@ -125,6 +135,16 @@ public interface MongoCollection<TDocument> {
      * @return a new MongoCollection instance with the different writeConcern
      */
     MongoCollection<TDocument> withWriteConcern(WriteConcern writeConcern);
+
+    /**
+     * Create a new MongoCollection instance with a different read concern.
+     *
+     * @param readConcern the new {@link ReadConcern} for the collection
+     * @return a new MongoCollection instance with the different ReadConcern
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
 
     /**
      * Counts the number of documents in the collection.

@@ -19,9 +19,14 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
+import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -30,10 +35,14 @@ import org.bson.codecs.BsonDocumentCodec;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that executes a count.
@@ -47,6 +56,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private long skip;
     private long limit;
     private long maxTimeMS;
+    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a new instance.
@@ -167,15 +177,62 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return this;
     }
 
+    /**
+     * Gets the read concern
+     *
+     * @return the read concern
+     * @since 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
+     * Sets the read concern
+     * @param readConcern the read concern
+     * @return this
+     * @since 3.2
+     */
+    public CountOperation readConcern(final ReadConcern readConcern) {
+        this.readConcern = notNull("readConcern", readConcern);
+        return this;
+    }
+
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), transformer());
+        return withConnection(binding, new CallableWithConnection<Long>() {
+            @Override
+            public Long call(final Connection connection) {
+                checkValidReadConcern(connection, readConcern);
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
+                        transformer());
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), transformer(),
-                                           callback);
+        withConnection(binding, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                if (t != null) {
+                    errorHandlingCallback(callback).onResult(null, t);
+                } else {
+                    final SingleResultCallback<Long> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
+                    checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                        new BsonDocumentCodec(), transformer(), wrappedCallback);
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     /**
@@ -220,6 +277,9 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         putIfNotZero(document, "skip", skip);
         putIfNotNull(document, "hint", hint);
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
+        if (!readConcern.isServerDefault()) {
+            document.put("readConcern", readConcern.asDocument());
+        }
         return document;
     }
 }

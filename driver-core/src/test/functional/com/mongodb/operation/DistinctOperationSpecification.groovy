@@ -21,6 +21,7 @@ import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
@@ -33,9 +34,13 @@ import com.mongodb.client.test.WorkerCodec
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.Decoder
@@ -52,6 +57,7 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
@@ -65,6 +71,32 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def stringDecoder = getCodec(String);
 
+    def 'should have the correct defaults'() {
+        when:
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+
+        then:
+        operation.getFilter() == null
+        operation.getMaxTime(MILLISECONDS) == 0
+        operation.getReadConcern() == ReadConcern.DEFAULT
+    }
+
+    def 'should set optional values correctly'(){
+        given:
+        def filter = new BsonDocument('filter', new BsonInt32(1))
+
+        when:
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+                .maxTime(10, MILLISECONDS)
+                .filter(filter)
+                .readConcern(ReadConcern.MAJORITY)
+
+        then:
+        operation.getFilter() == filter
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getReadConcern() == ReadConcern.MAJORITY
+    }
+
     def 'should be able to distinct by name'() {
         given:
         Document pete = new Document('name', 'Pete').append('age', 38)
@@ -73,8 +105,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        def result = op.execute(getBinding()).next();
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def result = operation.execute(getBinding()).next();
 
         then:
         result == ['Pete', 'Sam']
@@ -89,9 +121,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         def futureResult = new FutureResultCallback()
-        executeAsync(op).next(futureResult)
+        executeAsync(operation).next(futureResult)
         def result = futureResult.get(60, SECONDS)
 
         then:
@@ -106,9 +138,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        op.filter(new BsonDocument('age', new BsonInt32(25)))
-        def result = op.execute(getBinding());
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+                .filter(new BsonDocument('age', new BsonInt32(25)))
+        def result = operation.execute(getBinding());
 
         then:
         result.next() == ['Pete']
@@ -123,10 +155,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        op.filter(new BsonDocument('age', new BsonInt32(25)))
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+                .filter(new BsonDocument('age', new BsonInt32(25)))
         def futureResult = new FutureResultCallback()
-        executeAsync(op).next(futureResult)
+        executeAsync(operation).next(futureResult)
         def result = futureResult.get(60, SECONDS)
 
         then:
@@ -153,8 +185,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
-        def result = op.execute(getBinding()).next();
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        def result = operation.execute(getBinding()).next();
 
         then:
         result == [pete, sam]
@@ -181,9 +213,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument));
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
         def futureResult = new FutureResultCallback()
-        executeAsync(op).next(futureResult)
+        executeAsync(operation).next(futureResult)
         def result = futureResult.get(60, SECONDS)
 
         then:
@@ -198,8 +230,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        op.execute(getBinding()).next();
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        operation.execute(getBinding()).next();
 
         then:
         thrown(BsonInvalidOperationException)
@@ -214,9 +246,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
         def futureResult = new FutureResultCallback()
-        executeAsync(op).next(futureResult)
+        executeAsync(operation).next(futureResult)
         futureResult.get(5, SECONDS)
 
         then:
@@ -227,12 +259,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        op.maxTime(1, SECONDS)
+        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
-        op.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -245,12 +276,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def op = new DistinctOperation(getNamespace(), 'name', stringDecoder)
-        op.maxTime(1, SECONDS)
+        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
-        executeAsync(op)
+        executeAsync(operation)
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -261,12 +291,13 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         given:
-        def connection = Mock(Connection)
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+        def connection = Mock(Connection) {
+            _ * getDescription() >> helper.connectionDescription
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource() >> Stub(ConnectionSource) {
+                getConnection() >> connection
+            }
             getReadPreference() >> readPreference
         }
         def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
@@ -275,7 +306,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> helper.connectionDescription
         1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
         1 * connection.release()
 
@@ -285,7 +315,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
         given:
-        def connection = Mock(AsyncConnection)
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> helper.connectionDescription
+        }
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
         }
@@ -299,12 +331,140 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        _ * connection.getDescription() >> helper.connectionDescription
         1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.commandResult, null) }
         1 * connection.release()
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should create the expected command'() {
+        given:
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 2, 0])
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+        }
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def expectedCommand = new BsonDocument('distinct', new BsonString(helper.namespace.getCollectionName()))
+                .append('key', new BsonString('name'))
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> {  helper.commandResult }
+        1 * connection.release()
+
+        when:
+        operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        expectedCommand.append('filter', operation.getFilter())
+                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
+                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
+        operation.execute(readBinding)
+
+        then:
+        1 * connection.command(helper.dbName, _, _, _, _) >> { helper.commandResult }
+        1 * connection.release()
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 2, 0])
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def expectedCommand = new BsonDocument('distinct', new BsonString(helper.namespace.getCollectionName()))
+                .append('key', new BsonString('name'))
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.release()
+
+        when:
+        operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        expectedCommand.append('filter', operation.getFilter())
+                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
+                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(helper.dbName, _, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.release()
+    }
+
+    def 'should validate the ReadConcern'() {
+        given:
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> Stub(ConnectionSource) {
+                getConnection() >> Stub(Connection) {
+                    getDescription() >> Stub(ConnectionDescription) {
+                        getServerVersion() >> new ServerVersion([3, 0, 0])
+                    }
+                }
+            }
+        }
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder).readConcern(readConcern)
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
+    }
+
+    def 'should validate the ReadConcern asynchronously'() {
+        given:
+        def connection = Stub(AsyncConnection) {
+            getDescription() >>  Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 0, 0])
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder).readConcern(readConcern)
+        def callback = Mock(SingleResultCallback)
+
+        when:
+        operation.executeAsync(readBinding, callback)
+
+        then:
+        1 * callback.onResult(null, _ as IllegalArgumentException)
+
+        where:
+        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
     }
 
     def helper = [

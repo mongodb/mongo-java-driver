@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -46,6 +47,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
@@ -70,6 +72,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private Integer batchSize;
     private long maxTimeMS;
     private Boolean useCursor;
+    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a new instance.
@@ -191,11 +194,33 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return this;
     }
 
+    /**
+     * Gets the read concern
+     *
+     * @return the read concern
+     * @since 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
+     * Sets the read concern
+     * @param readConcern the read concern
+     * @return this
+     * @since 3.2
+     */
+    public AggregateOperation<T> readConcern(final ReadConcern readConcern) {
+        this.readConcern = notNull("readConcern", readConcern);
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
+                checkValidReadConcern(connection, readConcern);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
                         CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
                         connection, transformer(source, connection));
@@ -211,11 +236,21 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                            asCommandDocument(connection.getDescription()),
-                            CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
-                            connection, asyncTransformer(source, connection),
-                            releasingCallback(errorHandlingCallback(callback), source, connection));
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                            source, connection);
+                    checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
+                        @Override
+                        public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        asCommandDocument(connection.getDescription()),
+                                        CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
+                                        connection, asyncTransformer(source, connection), wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -265,6 +300,10 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         if (allowDiskUse != null) {
             commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
         }
+        if (!readConcern.isServerDefault()) {
+            commandDocument.put("readConcern", readConcern.asDocument());
+        }
+
         return commandDocument;
     }
 

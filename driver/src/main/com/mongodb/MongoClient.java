@@ -336,7 +336,7 @@ public class MongoClient extends Mongo implements Closeable {
     public MongoDatabase getDatabase(final String databaseName) {
         MongoClientOptions clientOptions = getMongoClientOptions();
         return new MongoDatabaseImpl(databaseName, clientOptions.getCodecRegistry(), clientOptions.getReadPreference(),
-                clientOptions.getWriteConcern(), createOperationExecutor());
+                clientOptions.getWriteConcern(), clientOptions.getReadConcern(), createOperationExecutor());
     }
 
     static DBObjectCodec getCommandCodec() {

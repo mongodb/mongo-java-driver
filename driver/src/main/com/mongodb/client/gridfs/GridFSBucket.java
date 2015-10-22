@@ -16,6 +16,7 @@
 
 package com.mongodb.client.gridfs;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
@@ -65,6 +66,15 @@ public interface GridFSBucket {
     ReadPreference getReadPreference();
 
     /**
+     * Get the read concern for the GridFSBucket.
+     *
+     * @return the {@link com.mongodb.ReadConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    ReadConcern getReadConcern();
+
+    /**
      *  Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -87,6 +97,16 @@ public interface GridFSBucket {
      * @return a new GridFSBucket instance with the different writeConcern
      */
     GridFSBucket withWriteConcern(WriteConcern writeConcern);
+
+    /**
+     * Create a new MongoDatabase instance with a different read concern.
+     *
+     * @param readConcern the new {@link ReadConcern} for the database
+     * @return a new GridFSBucket instance with the different ReadConcern
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    GridFSBucket withReadConcern(ReadConcern readConcern);
 
     /**
      * Opens a Stream that the application can write the contents of the file to.

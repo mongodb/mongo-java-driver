@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
@@ -46,6 +47,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class MongoClientSettings {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final ReadConcern readConcern;
     private final List<MongoCredential> credentialList;
     private final StreamFactoryFactory streamFactoryFactory;
 
@@ -85,6 +87,7 @@ public final class MongoClientSettings {
     public static final class Builder {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClients.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory = createDefaultStreamFactoryFactory();
 
@@ -110,6 +113,7 @@ public final class MongoClientSettings {
         private Builder(final MongoClientSettings settings) {
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
+            readConcern = settings.getReadConcern();
             credentialList = settings.getCredentialList();
             codecRegistry = settings.getCodecRegistry();
             streamFactoryFactory = settings.getStreamFactoryFactory();
@@ -220,6 +224,19 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the read concern.
+         *
+         * @param readConcern the read concern
+         * @return {@code this}
+         * @since 3.2
+         * @mongodb.server.release 3.2
+         */
+        public Builder readConcern(final ReadConcern readConcern) {
+            this.readConcern = notNull("readConcern", readConcern);
+            return this;
+        }
+
+        /**
          * Sets the credential list.
          *
          * @param credentialList the credential list
@@ -312,6 +329,17 @@ public final class MongoClientSettings {
     }
 
     /**
+     * The read concern to use.
+     *
+     * @return the read concern
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
      * The codec registry to use.  By default, a {@code MongoClient} will be able to encode and decode instances of {@code
      * Document}.
      *
@@ -400,6 +428,7 @@ public final class MongoClientSettings {
     private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        readConcern = builder.readConcern;
         credentialList = builder.credentialList;
         streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;

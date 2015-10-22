@@ -17,6 +17,7 @@
 package com.mongodb.client.gridfs
 
 import com.mongodb.MongoDatabaseImpl
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.operation.OperationExecutor
@@ -28,9 +29,12 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class GridFSBucketsSpecification extends Specification {
 
+    def readConcern = ReadConcern.DEFAULT
+
     def 'should create a GridFSBucket with default bucket name'() {
         given:
-        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), Stub(OperationExecutor))
+        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern,
+                Stub(OperationExecutor))
 
         when:
         def gridFSBucket = GridFSBuckets.create(database)
@@ -42,7 +46,8 @@ class GridFSBucketsSpecification extends Specification {
 
     def 'should create a GridFSBucket with custom bucket name'() {
         given:
-        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), Stub(OperationExecutor))
+        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern,
+                Stub(OperationExecutor))
         def customName = 'custom'
 
         when:

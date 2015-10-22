@@ -86,6 +86,7 @@ public class Mongo {
 
     private volatile WriteConcern writeConcern;
     private volatile ReadPreference readPreference;
+    private final ReadConcern readConcern;
 
     private final MongoClientOptions options;
     private final List<MongoCredential> credentialsList;
@@ -296,6 +297,7 @@ public class Mongo {
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
+        this.readConcern = options.getReadConcern() != null ? options.getReadConcern() : ReadConcern.DEFAULT;
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
@@ -312,12 +314,21 @@ public class Mongo {
     }
 
     /**
-     * Gets the default write concern
+     * Gets the write concern
      *
-     * @return the default write concern
+     * @return the write concern
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * Gets the read concern
+     *
+     * @return the read concern
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
     }
 
     /**

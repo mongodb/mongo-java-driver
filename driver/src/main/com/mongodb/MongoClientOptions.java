@@ -50,6 +50,7 @@ public class MongoClientOptions {
     private final String description;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
 
     private final int minConnectionsPerHost;
@@ -98,6 +99,7 @@ public class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
@@ -431,6 +433,17 @@ public class MongoClientOptions {
     }
 
     /**
+     * <p>The read concern to use.</p>
+     *
+     * @return the read concern
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
      * <p>The codec registry to use.  By default, a {@code MongoClient} will be able to encode and decode instances of {@code
      * Document}.</p>
      *
@@ -610,6 +623,12 @@ public class MongoClientOptions {
         if (!readPreference.equals(that.readPreference)) {
             return false;
         }
+        if (!writeConcern.equals(that.writeConcern)) {
+            return false;
+        }
+        if (!readConcern.equals(that.readConcern)) {
+            return false;
+        }
         if (!codecRegistry.equals(that.codecRegistry)) {
             return false;
         }
@@ -632,6 +651,7 @@ public class MongoClientOptions {
         int result = description != null ? description.hashCode() : 0;
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + commandListeners.hashCode();
         result = 31 * result + minConnectionsPerHost;
@@ -666,6 +686,7 @@ public class MongoClientOptions {
                + "description='" + description + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
+               + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
                + ", commandListeners=" + commandListeners
                + ", minConnectionsPerHost=" + minConnectionsPerHost
@@ -708,6 +729,7 @@ public class MongoClientOptions {
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
         private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
 
@@ -767,6 +789,7 @@ public class MongoClientOptions {
             socketKeepAlive = options.isSocketKeepAlive();
             readPreference = options.getReadPreference();
             writeConcern = options.getWriteConcern();
+            readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
@@ -982,6 +1005,21 @@ public class MongoClientOptions {
          */
         public Builder writeConcern(final WriteConcern writeConcern) {
             this.writeConcern = notNull("writeConcern", writeConcern);
+            return this;
+        }
+
+
+        /**
+         * Sets the read concern.
+         *
+         * @param readConcern the read concern.
+         * @return this
+         * @see MongoClientOptions#getReadConcern()
+         * @since 3.2
+         * @mongodb.server.release 3.2
+         */
+        public Builder readConcern(final ReadConcern readConcern) {
+            this.readConcern = notNull("readConcern", readConcern);
             return this;
         }
 

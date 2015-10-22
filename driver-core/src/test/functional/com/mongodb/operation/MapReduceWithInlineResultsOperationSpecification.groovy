@@ -20,6 +20,7 @@ import category.Async
 import com.mongodb.Block
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
@@ -30,8 +31,14 @@ import com.mongodb.client.test.CollectionHelper
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonJavaScript
+import org.bson.BsonNull
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
@@ -39,6 +46,7 @@ import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.loopCursor
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -59,6 +67,58 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         helper.insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
+    def 'should have the correct defaults'() {
+        when:
+        def mapF = new BsonJavaScript('function(){ }')
+        def reduceF = new BsonJavaScript('function(key, values){ }')
+        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, mapF, reduceF, helper.decoder)
+
+        then:
+        operation.getMapFunction() == mapF
+        operation.getReduceFunction() == reduceF
+        operation.getFilter() == null
+        operation.getFinalizeFunction() == null
+        operation.getScope() == null
+        operation.getSort() == null
+        operation.getMaxTime(MILLISECONDS) == 0
+        operation.getLimit() == 0
+        operation.getReadConcern() == ReadConcern.DEFAULT
+        !operation.isJsMode()
+        !operation.isVerbose()
+    }
+
+    def 'should set optional values correctly'(){
+        when:
+        def filter = new BsonDocument('filter', new BsonInt32(1))
+        def scope = new BsonDocument('scope', new BsonInt32(1))
+        def sort = new BsonDocument('sort', new BsonInt32(1))
+        def finalizeF = new BsonJavaScript('function(key, value){}')
+        def mapF = new BsonJavaScript('function(){ }')
+        def reduceF = new BsonJavaScript('function(key, values){ }')
+        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, mapF, reduceF, helper.decoder)
+                .filter(filter)
+                .finalizeFunction(finalizeF)
+                .scope(scope)
+                .sort(sort)
+                .jsMode(true)
+                .verbose(true)
+                .limit(20)
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        then:
+        operation.getMapFunction() == mapF
+        operation.getReduceFunction() == reduceF
+        operation.getFilter() == filter
+        operation.getFinalizeFunction() == finalizeF
+        operation.getScope() == scope
+        operation.getSort() == sort
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getLimit() == 20
+        operation.getReadConcern() == ReadConcern.MAJORITY
+        operation.isJsMode()
+        operation.isVerbose()
+    }
 
     def 'should return the correct results'() {
         when:
@@ -134,6 +194,175 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+    }
+
+    def 'should create the expected command'() {
+        given:
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 2, 0])
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> connectionSource
+        }
+        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), helper.decoder)
+        def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
+            .append('map', operation.getMapFunction())
+            .append('reduce', operation.getReduceFunction())
+            .append('out', new BsonDocument('inline', new BsonInt32(1)))
+            .append('query', new BsonNull())
+            .append('sort', new BsonNull())
+            .append('finalize', new BsonNull())
+            .append('scope', new BsonNull())
+            .append('verbose', BsonBoolean.FALSE)
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> { helper.commandResult }
+        1 * connection.release()
+
+        when:
+        operation.filter(new BsonDocument('filter', new BsonInt32(1)))
+                .scope(new BsonDocument('scope', new BsonInt32(1)))
+                .sort(new BsonDocument('sort', new BsonInt32(1)))
+                .finalizeFunction(new BsonJavaScript('function(key, value){}'))
+                .jsMode(true)
+                .verbose(true)
+                .limit(20)
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        expectedCommand.append('query', operation.getFilter())
+                .append('scope', operation.getScope())
+                .append('sort', operation.getSort())
+                .append('finalize', operation.getFinalizeFunction())
+                .append('jsMode', BsonBoolean.TRUE)
+                .append('verbose', BsonBoolean.TRUE)
+                .append('maxTimeMS', new BsonInt64(10))
+                .append('limit', new BsonInt32(20))
+                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
+        operation.execute(readBinding)
+
+        then:
+        1 * connection.command(helper.dbName, _, _, _, _) >> { helper.commandResult }
+        1 * connection.release()
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 2, 0])
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
+                new BsonJavaScript('function(key, values){ }'), helper.decoder)
+        def expectedCommand = new BsonDocument('mapreduce', new BsonString(helper.namespace.getCollectionName()))
+                .append('map', operation.getMapFunction())
+                .append('reduce', operation.getReduceFunction())
+                .append('out', new BsonDocument('inline', new BsonInt32(1)))
+                .append('query', new BsonNull())
+                .append('sort', new BsonNull())
+                .append('finalize', new BsonNull())
+                .append('scope', new BsonNull())
+                .append('verbose', BsonBoolean.FALSE)
+
+        when:
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.release()
+
+        when:
+        operation.filter(new BsonDocument('filter', new BsonInt32(1)))
+                .scope(new BsonDocument('scope', new BsonInt32(1)))
+                .sort(new BsonDocument('sort', new BsonInt32(1)))
+                .finalizeFunction(new BsonJavaScript('function(key, value){}'))
+                .jsMode(true)
+                .verbose(true)
+                .limit(20)
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+
+        expectedCommand.append('query', operation.getFilter())
+                .append('scope', operation.getScope())
+                .append('sort', operation.getSort())
+                .append('finalize', operation.getFinalizeFunction())
+                .append('jsMode', BsonBoolean.TRUE)
+                .append('verbose', BsonBoolean.TRUE)
+                .append('maxTimeMS', new BsonInt64(10))
+                .append('limit', new BsonInt32(20))
+                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
+        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.release()
+    }
+
+    def 'should validate the ReadConcern'() {
+        given:
+        def readBinding = Stub(ReadBinding) {
+            getReadConnectionSource() >> Stub(ConnectionSource) {
+                getConnection() >> Stub(Connection) {
+                    getDescription() >> Stub(ConnectionDescription) {
+                        getServerVersion() >> new ServerVersion([3, 0, 0])
+                    }
+                }
+            }
+        }
+        def operation = new CountOperation(helper.namespace).readConcern(readConcern)
+
+        when:
+        operation.execute(readBinding)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
+    }
+
+    def 'should validate the ReadConcern asynchronously'() {
+        given:
+        def connection = Stub(AsyncConnection) {
+            getDescription() >>  Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 0, 0])
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def readBinding = Stub(AsyncReadBinding) {
+            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def operation = new CountOperation(helper.namespace).readConcern(readConcern)
+        def callback = Mock(SingleResultCallback)
+
+        when:
+        operation.executeAsync(readBinding, callback)
+
+        then:
+        1 * callback.onResult(null, _ as IllegalArgumentException)
+
+        where:
+        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
     }
 
     def helper = [

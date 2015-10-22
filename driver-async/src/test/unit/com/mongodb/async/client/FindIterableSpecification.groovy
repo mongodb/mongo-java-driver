@@ -20,6 +20,7 @@ import com.mongodb.Block
 import com.mongodb.CursorType
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.FindOptions
@@ -44,6 +45,7 @@ class FindIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
+    def readConcern = ReadConcern.DEFAULT
 
     def 'should build the expected findOperation'() {
         given:
@@ -64,7 +66,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(false)
                 .noCursorTimeout(false)
                 .partial(false)
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
                                                 new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
@@ -132,7 +134,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
                                                 new Document('filter', 1), findOptions)
 
         when:
@@ -176,7 +178,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
-                                                 readPreference, executor, new Document(), findOptions)
+                                                 readPreference, readConcern, executor, new Document(), findOptions)
 
         when:
         def results = new FutureResultCallback()

@@ -178,6 +178,7 @@ public class ConnectionString {
 
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
+    private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
@@ -296,6 +297,7 @@ public ConnectionString(final String connectionString) {
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("ssl");
         GENERAL_OPTIONS_KEYS.add("replicaset");
+        GENERAL_OPTIONS_KEYS.add("readconcernlevel");
 
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
@@ -354,6 +356,8 @@ public ConnectionString(final String connectionString) {
                 sslEnabled = true;
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
+            } else if (key.equals("readconcernlevel")) {
+                readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
             }
         }
 
@@ -778,6 +782,14 @@ public ConnectionString(final String connectionString) {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
+    }
+
+    /**
+     * Gets the read concern specified in the connection string.
+     * @return the read concern
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
     }
 
     /**

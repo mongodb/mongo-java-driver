@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -46,6 +47,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
+    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
     private final AsyncOperationExecutor executor;
     private final List<? extends Bson> pipeline;
@@ -57,13 +59,14 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private Boolean bypassDocumentValidation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final AsyncOperationExecutor executor,
-                          final List<? extends Bson> pipeline) {
+                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                          final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
+        this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
     }
@@ -148,9 +151,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .allowDiskUse(allowDiskUse)
                     .bypassDocumentValidation(bypassDocumentValidation);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
-                    outCollection.asString().getValue()),
-                    documentClass, resultClass, codecRegistry, primary(), executor, new BsonDocument(),
-                    new FindOptions());
+                    outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, primary(), readConcern,
+                    executor, new BsonDocument(), new FindOptions());
             if (batchSize != null) {
                 delegated.batchSize(batchSize);
             }
@@ -160,7 +162,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
-                    .useCursor(useCursor),
+                    .useCursor(useCursor)
+                    .readConcern(readConcern),
                     readPreference,
                     executor);
         }

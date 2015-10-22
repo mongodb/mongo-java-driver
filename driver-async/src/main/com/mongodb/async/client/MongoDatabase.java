@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
@@ -64,6 +65,15 @@ public interface MongoDatabase {
     WriteConcern getWriteConcern();
 
     /**
+     * Get the read concern for the MongoCollection.
+     *
+     * @return the {@link com.mongodb.ReadConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    ReadConcern getReadConcern();
+
+    /**
      * Create a new MongoDatabase instance with a different codec registry.
      *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the collection
@@ -86,6 +96,16 @@ public interface MongoDatabase {
      * @return a new MongoDatabase instance with the different writeConcern
      */
     MongoDatabase withWriteConcern(WriteConcern writeConcern);
+
+    /**
+     * Create a new MongoCollection instance with a different read concern.
+     *
+     * @param readConcern the new {@link ReadConcern} for the collection
+     * @return a new MongoCollection instance with the different ReadConcern
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    MongoDatabase withReadConcern(ReadConcern readConcern);
 
     /**
      * Gets a collection.

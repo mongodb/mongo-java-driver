@@ -349,6 +349,7 @@ class MongoClientOptionsSpecification extends Specification {
         1 * options.isSslInvalidHostNameAllowed()
         1 * options.getThreadsAllowedToBlockForConnectionMultiplier()
         1 * options.getWriteConcern()
+        1 * options.getReadConcern()
 
         0 * options._ // Ensure no other interactions
     }
@@ -360,9 +361,10 @@ class MongoClientOptionsSpecification extends Specification {
         def expected = ['alwaysUseMBeans', 'codecRegistry', 'commandListeners', 'connectTimeout', 'cursorFinalizerEnabled',
                         'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
                         'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
-                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readPreference',
-                        'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout',
-                        'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',
+                        'readPreference', 'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive',
+                        'socketTimeout', 'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier',
+                        'writeConcern']
 
         then:
         actual == expected

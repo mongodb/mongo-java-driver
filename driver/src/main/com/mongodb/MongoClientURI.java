@@ -256,6 +256,9 @@ public class MongoClientURI {
         if (proxied.getReadPreference() != null) {
             builder.readPreference(proxied.getReadPreference());
         }
+        if (proxied.getReadConcern() != null) {
+            builder.readConcern(proxied.getReadConcern());
+        }
         if (proxied.getWriteConcern() != null) {
             builder.writeConcern(proxied.getWriteConcern());
         }

@@ -152,6 +152,7 @@ class ConnectionStringSpecification extends Specification {
         'invalid integer in options'                | 'mongodb://localhost/?wTimeout=five'
         'has incomplete options'                    | 'mongodb://localhost/?wTimeout'
         'has an unknown auth mechanism'             | 'mongodb://user:password@localhost/?authMechanism=postItNote'
+        'invalid readConcern'                       | 'mongodb://localhost:27017/?readConcernLevel=pickThree'
 
     }
 
@@ -166,6 +167,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getConnectTimeout() == null;
         connectionString.getSocketTimeout() == null;
         connectionString.getWriteConcern() == null;
+        connectionString.getReadConcern() == null;
         connectionString.getReadPreference() == null;
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
@@ -262,6 +264,18 @@ class ConnectionStringSpecification extends Specification {
                                                                                                                  new Tag('rack', '1'))),
                                                                                                new TagSet(asList(new Tag('dc', 'ny'))),
                                                                                                new TagSet()])
+    }
+
+    @Unroll
+    def 'should correct parse read concern for #readConcern'() {
+        expect:
+        uri.getReadConcern() == readConcern;
+
+        where:
+        uri                                                                     | readConcern
+        new ConnectionString('mongodb://localhost/')                            | null
+        new ConnectionString('mongodb://localhost/?readConcernLevel=local')     | ReadConcern.LOCAL
+        new ConnectionString('mongodb://localhost/?readConcernLevel=majority')  | ReadConcern.MAJORITY
     }
 
     def 'should be equal to another instance with the same string values'() {

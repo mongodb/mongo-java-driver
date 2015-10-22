@@ -39,6 +39,7 @@ class FindIterableSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(),  new DocumentCodecProvider(),
                                        new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
+    def readConcern = ReadConcern.DEFAULT
     def namespace = new MongoNamespace('db', 'coll')
 
     def 'should build the expected findOperation'() {
@@ -55,8 +56,8 @@ class FindIterableSpecification extends Specification {
                                            .oplogReplay(false)
                                            .noCursorTimeout(false)
                                            .partial(false)
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                                                new Document('filter', 1), findOptions)
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -118,8 +119,8 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                                                new Document('filter', 1), findOptions)
+        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -162,8 +163,8 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
-        def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
-                                                 new Document(), findOptions)
+        def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document(), findOptions)
 
         when:
         def results = mongoIterable.first()

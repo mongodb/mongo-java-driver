@@ -23,6 +23,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -58,6 +59,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -88,6 +90,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean partial;
+    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a new instance.
@@ -407,6 +410,27 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return this;
     }
 
+    /**
+     * Gets the read concern
+     *
+     * @return the read concern
+     * @since 3.2
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
+    }
+
+    /**
+     * Sets the read concern
+     * @param readConcern the read concern
+     * @return this
+     * @since 3.2
+     */
+    public FindOperation<T> readConcern(final ReadConcern readConcern) {
+        this.readConcern = notNull("readConcern", readConcern);
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
@@ -421,6 +445,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                         throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
                     }
                 } else {
+                    checkValidReadConcern(connection, readConcern);
                     QueryResult<T> queryResult = connection.query(namespace,
                                                                   asDocument(connection.getDescription(), binding.getReadPreference()),
                                                                   projection,
@@ -457,18 +482,26 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                             source, connection);
-                        connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()), projection,
-                                              skip, limit, batchSize, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
-                                              isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
-                                              decoder, new SingleResultCallback<QueryResult<T>>() {
+                        checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
                             @Override
-                            public void onResult(final QueryResult<T> result, final Throwable t) {
+                            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                                 if (t != null) {
                                     wrappedCallback.onResult(null, t);
                                 } else {
-                                    wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize, decoder, source,
-                                                                                          connection),
-                                                             null);
+                                    connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()),
+                                            projection, skip, limit, batchSize, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                            isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(), decoder,
+                                            new SingleResultCallback<QueryResult<T>>() {
+                                                @Override
+                                                public void onResult(final QueryResult<T> result, final Throwable t) {
+                                                    if (t != null) {
+                                                        wrappedCallback.onResult(null, t);
+                                                    } else {
+                                                        wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize,
+                                                                        decoder, source, connection), null);
+                                                    }
+                                                }
+                                            });
                                 }
                             }
                         });
@@ -713,6 +746,10 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
         if (partial) {
             document.put("allowPartialResults", BsonBoolean.TRUE);
+        }
+
+        if (!readConcern.isServerDefault()) {
+            document.put("readConcern", readConcern.asDocument());
         }
 
         return document;

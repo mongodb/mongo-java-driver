@@ -17,6 +17,7 @@
 package com.mongodb.async.client
 
 import com.mongodb.MongoCredential
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
@@ -41,6 +42,7 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
+        options.getReadConcern() == ReadConcern.DEFAULT
         options.getReadPreference() == ReadPreference.primary()
         options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         options.socketSettings == SocketSettings.builder().build()
@@ -127,7 +129,8 @@ class MongoClientSettingsSpecification extends Specification {
 
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
-                .writeConcern(WriteConcern.JOURNAL_SAFE)
+                .writeConcern(WriteConcern.JOURNALED)
+                .readConcern(ReadConcern.LOCAL)
                 .sslSettings(sslSettings)
                 .socketSettings(socketSettings)
                 .serverSettings(serverSettings)
@@ -141,7 +144,8 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         options.getReadPreference() == ReadPreference.secondary()
-        options.getWriteConcern() == WriteConcern.JOURNAL_SAFE
+        options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getReadConcern() == ReadConcern.LOCAL
         options.connectionPoolSettings == connectionPoolSettings
         options.socketSettings == socketSettings
         options.heartbeatSocketSettings == heartbeatSocketSettings
@@ -166,7 +170,8 @@ class MongoClientSettingsSpecification extends Specification {
 
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
-                .writeConcern(WriteConcern.JOURNAL_SAFE)
+                .writeConcern(WriteConcern.JOURNALED)
+                .readConcern(ReadConcern.LOCAL)
                 .sslSettings(sslSettings)
                 .socketSettings(socketSettings)
                 .serverSettings(serverSettings)
@@ -186,7 +191,8 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['clusterSettings', 'codecRegistry', 'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings',
-                        'readPreference', 'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
+                        'readConcern', 'readPreference', 'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory',
+                        'writeConcern']
 
         then:
         actual == expected

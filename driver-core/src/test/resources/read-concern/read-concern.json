@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "description": "Default",
+      "readConcern": {},
+      "uri": "mongodb://localhost/"
+    },
+    {
+      "description": "local specified",
+      "readConcern": {
+        "level": "local"
+      },
+      "uri": "mongodb://localhost/?readConcernLevel=local"
+    },
+    {
+      "description": "majority specified",
+      "readConcern": {
+        "level": "majority"
+      },
+      "uri": "mongodb://localhost/?readConcernLevel=majority"
+    }
+  ]
+}

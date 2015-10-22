@@ -20,6 +20,7 @@ import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.operation.DistinctOperation
@@ -44,6 +45,7 @@ class DistinctIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
+    def readConcern = ReadConcern.DEFAULT
 
     def 'should build the expected DistinctOperation'() {
         given:
@@ -53,8 +55,9 @@ class DistinctIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor, cursor]);
-        def distinctIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, 'field',
-                new BsonDocument())
+        def distinctIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, 'field', new BsonDocument())
+
         when: 'default input should be as expected'
         distinctIterable.into([]) { result, t -> }
 
@@ -80,8 +83,8 @@ class DistinctIterableSpecification extends Specification {
         given:
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
-        def distinctIterable = new DistinctIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, executor,
-                'field', new BsonDocument())
+        def distinctIterable = new DistinctIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
+                executor, 'field', new BsonDocument())
 
         def futureResultCallback = new FutureResultCallback()
 
@@ -121,8 +124,8 @@ class DistinctIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor, 'field',
-                new BsonDocument())
+        def mongoIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, 'field', new BsonDocument())
 
         when:
         def results = new FutureResultCallback()

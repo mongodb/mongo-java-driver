@@ -38,20 +38,21 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
+    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
     private Bson filter;
 
     FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                     final CodecRegistry codecRegistry,
-                     final ReadPreference readPreference, final OperationExecutor executor,
-                     final Bson filter, final FindOptions findOptions) {
+                     final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                     final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
+        this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
@@ -156,7 +157,7 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     }
 
     private MongoIterable<TResult> execute() {
-        return new FindOperationIterable(createQueryOperation(), this.readPreference, executor);
+        return new FindOperationIterable(createQueryOperation(), readPreference, executor);
     }
 
     private FindOperation<TResult> createQueryOperation() {
@@ -173,7 +174,8 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
                    .noCursorTimeout(findOptions.isNoCursorTimeout())
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
-                   .slaveOk(readPreference.isSlaveOk());
+                   .slaveOk(readPreference.isSlaveOk())
+                   .readConcern(readConcern);
     }
 
     private BsonDocument toBsonDocument(final Bson document) {
