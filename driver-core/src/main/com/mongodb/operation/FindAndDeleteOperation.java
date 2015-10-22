@@ -212,7 +212,7 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
             @Override
             public T call(final Connection connection) {
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                        CommandResultDocumentCodec.create(decoder, "value"),
+                        CommandResultDocumentCodec.create(decoder, "value"), connection,
                         FindAndModifyHelper.<T>transformer());
             }
         });
@@ -228,7 +228,7 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
                         } else {
                             executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
                                     asCommandDocument(connection.getDescription()),  CommandResultDocumentCodec.create(decoder, "value"),
-                                    FindAndModifyHelper.<T>transformer(),
+                                    connection, FindAndModifyHelper.<T>transformer(),
                                     releasingCallback(errorHandlingCallback(callback), connection));
                         }
                     }

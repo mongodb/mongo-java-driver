@@ -316,7 +316,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.getDescription() >> helper.connectionDescription
         1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
-        2 * connection.release()
+        1 * connection.release()
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -340,7 +340,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         then:
         _ * connection.getDescription() >> helper.connectionDescription
         1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        2 * connection.release()
+        1 * connection.release()
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -368,7 +368,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> { helper.commandResult }
-        2 * connection.release()
+        1 * connection.release()
 
         when:
         operation.filter(filter)
@@ -389,7 +389,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> { helper.commandResult }
-        2 * connection.release()
+        1 * connection.release()
     }
 
     def 'should create the expected command asynchronously'() {
@@ -415,7 +415,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        2 * connection.release()
+        1 * connection.release()
 
         when:
         operation.filter(filter)
@@ -436,7 +436,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        2 * connection.release()
+        1 * connection.release()
     }
 
     def 'should validate the ReadConcern'() {

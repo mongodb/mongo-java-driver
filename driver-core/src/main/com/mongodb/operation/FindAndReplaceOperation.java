@@ -301,7 +301,8 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
             @Override
             public T call(final Connection connection) {
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                        getValidator(), CommandResultDocumentCodec.create(decoder, "value"), FindAndModifyHelper.<T>transformer());
+                        getValidator(), CommandResultDocumentCodec.create(decoder, "value"), connection,
+                        FindAndModifyHelper.<T>transformer());
             }
         });
     }
@@ -315,8 +316,8 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
                     errorHandlingCallback(callback).onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                            getValidator(), CommandResultDocumentCodec.create(decoder, "value"), FindAndModifyHelper.<T>transformer(),
-                            releasingCallback(errorHandlingCallback(callback), connection));
+                            getValidator(), CommandResultDocumentCodec.create(decoder, "value"), connection,
+                            FindAndModifyHelper.<T>transformer(), releasingCallback(errorHandlingCallback(callback), connection));
                 }
             }
         });

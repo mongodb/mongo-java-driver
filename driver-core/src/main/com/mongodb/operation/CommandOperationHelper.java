@@ -108,6 +108,20 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocol(binding, database, command, new NoOpFieldNameValidator(), decoder, transformer);
     }
 
+    static <T> T executeWrappedCommandProtocol(final WriteBinding binding, final String database, final BsonDocument command,
+                                               final Decoder<BsonDocument> decoder, final Connection connection,
+                                               final Function<BsonDocument, T> transformer) {
+        notNull("binding", binding);
+        return executeWrappedCommandProtocol(database, command, decoder, connection, primary(), transformer);
+    }
+
+    static <T> T executeWrappedCommandProtocol(final WriteBinding binding, final String database, final BsonDocument command,
+                                               final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> decoder,
+                                               final Connection connection, final Function<BsonDocument, T> transformer) {
+        notNull("binding", binding);
+        return executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, connection, primary(), transformer);
+    }
+
     static <D, T> T executeWrappedCommandProtocol(final WriteBinding binding, final String database, final BsonDocument command,
                                                   final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
                                                   final Function<D, T> transformer) {
@@ -253,6 +267,29 @@ final class CommandOperationHelper {
         executeWrappedCommandProtocolAsync(binding, database, command, new NoOpFieldNameValidator(), decoder, transformer, callback);
     }
 
+    static <T> void executeWrappedCommandProtocolAsync(final AsyncWriteBinding binding,
+                                                       final String database,
+                                                       final BsonDocument command,
+                                                       final Decoder<BsonDocument> decoder,
+                                                       final AsyncConnection connection,
+                                                       final Function<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        notNull("binding", binding);
+        executeWrappedCommandProtocolAsync(database, command, decoder, connection, primary(), transformer, callback);
+    }
+
+    static <T> void executeWrappedCommandProtocolAsync(final AsyncWriteBinding binding,
+                                                       final String database,
+                                                       final BsonDocument command,
+                                                       final FieldNameValidator fieldNameValidator,
+                                                       final Decoder<BsonDocument> decoder,
+                                                       final AsyncConnection connection,
+                                                       final Function<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        notNull("binding", binding);
+        executeWrappedCommandProtocolAsync(database, command, fieldNameValidator, decoder, connection, primary(), transformer, callback);
+    }
+
     static <D, T> void executeWrappedCommandProtocolAsync(final AsyncWriteBinding binding,
                                                           final String database, final BsonDocument command,
                                                           final FieldNameValidator fieldNameValidator,
@@ -288,8 +325,18 @@ final class CommandOperationHelper {
                                                                   final ReadPreference readPreference,
                                                                   final Function<D, T> transformer,
                                                                   final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, connection, readPreference,
+                transformer, callback);
+    }
+
+    private static <D, T> void executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                  final FieldNameValidator fieldNameValidator,
+                                                                  final Decoder<D> decoder, final AsyncConnection connection,
+                                                                  final ReadPreference readPreference,
+                                                                  final Function<D, T> transformer,
+                                                                  final SingleResultCallback<T> callback) {
         connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
-                readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder, new SingleResultCallback<D>() {
+                readPreference.isSlaveOk(), fieldNameValidator, decoder, new SingleResultCallback<D>() {
                     @Override
                     public void onResult(final D result, final Throwable t) {
                         if (t != null) {
@@ -302,8 +349,8 @@ final class CommandOperationHelper {
                                 callback.onResult(null, e);
                             }
                         }
-            }
-        });
+                    }
+                });
     }
 
     /* Misc operation helpers */

@@ -205,7 +205,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
             public Long call(final Connection connection) {
                 checkValidReadConcern(connection, readConcern);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                        transformer());
+                        connection, transformer());
             }
         });
     }
@@ -226,7 +226,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                                 wrappedCallback.onResult(null, t);
                             } else {
                                 executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                                        new BsonDocumentCodec(), transformer(), wrappedCallback);
+                                        new BsonDocumentCodec(), connection, transformer(), wrappedCallback);
                             }
                         }
                     });

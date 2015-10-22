@@ -368,7 +368,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         1 * connection.command(getNamespace().getDatabaseName(), _, _, _, _) >> cannedResult
-        2 * connection.release()
+        1 * connection.release()
 
         when:
         operation.filter(filter)
@@ -387,7 +387,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
-        2 * connection.release()
+        1 * connection.release()
 
         where:
         serverVersion                | writeConcern                 | expectWriteConcern
@@ -429,7 +429,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        2 * connection.release()
+        1 * connection.release()
 
         when:
         operation.filter(filter)
@@ -447,7 +447,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        2 * connection.release()
+        1 * connection.release()
 
         where:
         serverVersion                | writeConcern                 | expectWriteConcern
