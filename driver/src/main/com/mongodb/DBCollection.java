@@ -1599,7 +1599,7 @@ public class DBCollection {
                                   final long maxTime, final TimeUnit maxTimeUnit) {
         WriteOperation<DBObject> operation;
         if (remove) {
-            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), objectCodec)
+            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec)
                             .filter(wrapAllowNull(query))
                             .projection(wrapAllowNull(fields))
                             .sort(wrapAllowNull(sort))
@@ -1609,7 +1609,7 @@ public class DBCollection {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec, wrapAllowNull(update))
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrapAllowNull(update))
                                 .filter(wrap(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
@@ -1617,7 +1617,7 @@ public class DBCollection {
                                 .upsert(upsert)
                                 .maxTime(maxTime, maxTimeUnit);
             } else {
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec, wrap(update))
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrap(update))
                                 .filter(wrapAllowNull(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))

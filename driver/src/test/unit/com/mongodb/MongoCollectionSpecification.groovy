@@ -617,7 +617,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindOneAndDeleteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new FindAndDeleteOperation(namespace, new DocumentCodec()).filter(new BsonDocument('a', new BsonInt32(1)))
+        def expectedOperation = new FindAndDeleteOperation(namespace, writeConcern, new DocumentCodec())
+                .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
         collection.findOneAndDelete(new Document('a', 1))
@@ -646,8 +647,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindOneAndReplaceOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new FindAndReplaceOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
-                .filter(new BsonDocument('a', new BsonInt32(1)))
+        def expectedOperation = new FindAndReplaceOperation(namespace, writeConcern, new DocumentCodec(),
+                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
         collection.findOneAndReplace(new Document('a', 1), new Document('a', 10))
@@ -689,8 +690,8 @@ class MongoCollectionSpecification extends Specification {
     def 'should use FindAndUpdateOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new FindAndUpdateOperation(namespace, new DocumentCodec(), new BsonDocument('a', new BsonInt32(10)))
-                .filter(new BsonDocument('a', new BsonInt32(1)))
+        def expectedOperation = new FindAndUpdateOperation(namespace, writeConcern, new DocumentCodec(),
+                new BsonDocument('a', new BsonInt32(10))).filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
         collection.findOneAndUpdate(new Document('a', 1), new Document('a', 10))
