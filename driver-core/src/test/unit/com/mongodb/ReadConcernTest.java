@@ -17,11 +17,7 @@
 package com.mongodb;
 
 import junit.framework.TestCase;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonNumber;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,7 +30,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 // See https://github.com/mongodb/specifications/tree/master/source/read-write-concern/tests/
 @RunWith(Parameterized.class)
