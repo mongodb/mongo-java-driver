@@ -22,6 +22,9 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
@@ -35,10 +38,14 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -423,12 +430,28 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
      */
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), transformer());
+        return withConnection(binding, new OperationHelper.CallableWithConnection<MapReduceStatistics>() {
+            @Override
+            public MapReduceStatistics call(final Connection connection) {
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                        connection, transformer());
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<MapReduceStatistics> callback) {
-        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), transformer(), callback);
+        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                if (t != null) {
+                    errorHandlingCallback(callback).onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                            connection, transformer(), releasingCallback(errorHandlingCallback(callback), connection));
+                }
+            }
+        });
     }
 
     /**
@@ -453,7 +476,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      ExplainHelper.asExplainCommand(getCommand(), explainVerbosity),
+                                                      ExplainHelper.asExplainCommand(getCommand(null), explainVerbosity),
                                                       new BsonDocumentCodec());
     }
 
@@ -467,7 +490,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         };
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument outputDocument = new BsonDocument(getAction(), new BsonString(getCollectionName()));
         outputDocument.append("sharded", BsonBoolean.valueOf(isSharded()));
         outputDocument.append("nonAtomic", BsonBoolean.valueOf(isNonAtomic()));
@@ -487,7 +510,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());
-        if (bypassDocumentValidation != null) {
+        if (bypassDocumentValidation != null && description != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         return commandDocument;

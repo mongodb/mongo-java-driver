@@ -333,7 +333,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         putIfTrue(command, "upsert", isUpsert());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("update", getUpdate());
-        if (bypassDocumentValidation != null) {
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {

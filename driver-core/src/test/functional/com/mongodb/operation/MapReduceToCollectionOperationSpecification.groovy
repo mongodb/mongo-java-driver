@@ -20,11 +20,25 @@ import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncWriteBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.WriteBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonJavaScript
+import org.bson.BsonNull
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -213,6 +227,174 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
         cleanup:
         collectionOutHelper?.drop()
+    }
+
+
+    def 'should create the expected command'() {
+        given:
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+
+        def cannedResults = BsonDocument.parse('''{result : "outCollection", timeMillis: 11,
+                                                   counts: {input: 3, emit: 3, reduce: 1, output: 2 }, ok: 1.0 }''')
+        def mapF = new BsonJavaScript('function(){ emit( "level" , 1 ); }')
+        def reduceF = new BsonJavaScript('function(key, values){ return values.length; }')
+        def finalizeF = new BsonJavaScript('function(key, value) { return value }')
+        def filter = BsonDocument.parse('{level: {$gte: 5}}')
+        def sort = BsonDocument.parse('{level: 1}')
+        def scope = BsonDocument.parse('{level: 1}')
+        def out = 'outCollection'
+        def action = 'merge'
+        def dbName = 'dbName'
+
+        def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
+                .append('map', mapF)
+                .append('reduce', reduceF)
+                .append('out', BsonDocument.parse('{replace: "outCollection", sharded: false, nonAtomic: false}'))
+                .append('query', BsonNull.VALUE)
+                .append('sort', BsonNull.VALUE)
+                .append('finalize', BsonNull.VALUE)
+                .append('scope', BsonNull.VALUE)
+                .append('verbose', BsonBoolean.FALSE)
+
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+
+        when:
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResults
+        1 * connection.release()
+
+        when:
+        operation.action(action)
+                .databaseName(dbName)
+                .finalizeFunction(finalizeF)
+                .filter(filter)
+                .limit(10)
+                .scope(scope)
+                .sort(sort)
+                .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
+                .verbose(true)
+
+        expectedCommand.append('out', BsonDocument.parse('{merge: "outCollection", sharded: false, nonAtomic: false, db: "dbName"}'))
+                .append('query', filter)
+                .append('sort', sort)
+                .append('finalize', finalizeF)
+                .append('scope', scope)
+                .append('verbose', BsonBoolean.TRUE)
+                .append('limit', new BsonInt32(10))
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
+
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResults
+        1 * connection.release()
+
+        where:
+        serverVersion                   | includeBypassValidation
+        new ServerVersion([3, 2, 0])    | true
+        new ServerVersion([3, 0, 0])    | false
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def writeBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def cannedResults = BsonDocument.parse('''{result : "outCollection", timeMillis: 11,
+                                                   counts: {input: 3, emit: 3, reduce: 1, output: 2 }, ok: 1.0 }''')
+        def mapF = new BsonJavaScript('function(){ emit( "level" , 1 ); }')
+        def reduceF = new BsonJavaScript('function(key, values){ return values.length; }')
+        def finalizeF = new BsonJavaScript('function(key, value) { return value }')
+        def filter = BsonDocument.parse('{level: {$gte: 5}}')
+        def sort = BsonDocument.parse('{level: 1}')
+        def scope = BsonDocument.parse('{level: 1}')
+        def out = 'outCollection'
+        def action = 'merge'
+        def dbName = 'dbName'
+
+        def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
+                .append('map', mapF)
+                .append('reduce', reduceF)
+                .append('out', BsonDocument.parse('{replace: "outCollection", sharded: false, nonAtomic: false}'))
+                .append('query', BsonNull.VALUE)
+                .append('sort', BsonNull.VALUE)
+                .append('finalize', BsonNull.VALUE)
+                .append('scope', BsonNull.VALUE)
+                .append('verbose', BsonBoolean.FALSE)
+
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+
+        when:
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> {
+            it[5].onResult(cannedResults, null)
+        }
+        1 * connection.release()
+
+        when:
+        operation.action(action)
+                .databaseName(dbName)
+                .finalizeFunction(finalizeF)
+                .filter(filter)
+                .limit(10)
+                .scope(scope)
+                .sort(sort)
+                .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
+                .verbose(true)
+
+        expectedCommand.append('out', BsonDocument.parse('{merge: "outCollection", sharded: false, nonAtomic: false, db: "dbName"}'))
+                .append('query', filter)
+                .append('sort', sort)
+                .append('finalize', finalizeF)
+                .append('scope', scope)
+                .append('verbose', BsonBoolean.TRUE)
+                .append('limit', new BsonInt32(10))
+                .append('maxTimeMS', new BsonInt64(10))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
+
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> {
+            it[5].onResult(cannedResults, null)
+        }
+        1 * connection.release()
+
+        where:
+        serverVersion                   | includeBypassValidation
+        new ServerVersion([3, 2, 0])    | true
+        new ServerVersion([3, 0, 0])    | false
     }
 
 }

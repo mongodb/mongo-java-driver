@@ -358,7 +358,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
-        if (expectWriteConcern) {
+        if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
@@ -379,8 +379,11 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
-                .append('bypassDocumentValidation', BsonBoolean.TRUE)
                 .append('maxTimeMS', new BsonInt64(10))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
 
         operation.execute(writeBinding)
 
@@ -389,13 +392,13 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         1 * connection.release()
 
         where:
-        serverVersion                | writeConcern                 | expectWriteConcern
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
+        serverVersion                | writeConcern                 | includeWriteConcern   | includeBypassValidation
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true                  | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | true
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false                 | false
     }
 
     def 'should create the expected command asynchronously'() {
@@ -419,7 +422,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
-        if (expectWriteConcern) {
+        if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
@@ -440,8 +443,11 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         expectedCommand.append('query', filter)
                 .append('sort', sort)
                 .append('fields', projection)
-                .append('bypassDocumentValidation', BsonBoolean.TRUE)
                 .append('maxTimeMS', new BsonInt64(10))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
 
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
 
@@ -450,12 +456,12 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         1 * connection.release()
 
         where:
-        serverVersion                | writeConcern                 | expectWriteConcern
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
+        serverVersion                | writeConcern                 | includeWriteConcern   | includeBypassValidation
+        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true                  | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | true
+        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | true
+        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | false
+        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false                 | false
     }
 }

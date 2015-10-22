@@ -182,7 +182,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
 
-        if (expectWriteConcern) {
+        if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
@@ -211,7 +211,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         1 * connection.release()
 
         where:
-        serverVersion                | writeConcern                 | expectWriteConcern
+        serverVersion                | writeConcern                 | includeWriteConcern
         new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
         new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
         new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
@@ -241,7 +241,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
 
-        if (expectWriteConcern) {
+        if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
@@ -269,7 +269,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         1 * connection.release()
 
         where:
-        serverVersion                | writeConcern                 | expectWriteConcern
+        serverVersion                | writeConcern                 | includeWriteConcern
         new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
         new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
         new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false

@@ -21,10 +21,22 @@ import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncWriteBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.WriteBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerVersion
+import org.bson.BsonArray
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
@@ -257,4 +269,103 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         cleanup:
         collectionOutHelper?.drop()
     }
+
+    def 'should create the expected command'() {
+        given:
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> connection
+        }
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+
+        def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+        def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
+                .append('pipeline', new BsonArray(pipeline))
+
+        when:
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _)
+        1 * connection.release()
+
+        when:
+        operation.allowDiskUse(true)
+                .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
+
+        expectedCommand.append('maxTimeMS', new BsonInt64(10))
+                .append('allowDiskUse', new BsonBoolean(true))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
+        operation.execute(writeBinding)
+
+        then:
+        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _)
+        1 * connection.release()
+
+        where:
+        serverVersion                    | includeBypassValidation
+        new ServerVersion([3, 2, 0])    | true
+        new ServerVersion([3, 0, 0])    | false
+    }
+
+    def 'should create the expected command asynchronously'() {
+        given:
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> serverVersion
+            }
+        }
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+        }
+        def writeBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+        def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+        def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
+                .append('pipeline', new BsonArray(pipeline))
+
+        when:
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(null, null) }
+        1 * connection.release()
+
+        when:
+        operation.allowDiskUse(true)
+                .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
+
+        expectedCommand.append('maxTimeMS', new BsonInt64(10))
+                .append('allowDiskUse', new BsonBoolean(true))
+
+        if (includeBypassValidation) {
+            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
+
+        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+
+        then:
+        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(null, null) }
+        1 * connection.release()
+
+        where:
+        serverVersion                   | includeBypassValidation
+        new ServerVersion([3, 2, 0])    | true
+        new ServerVersion([3, 0, 0])    | false
+    }
+
 }

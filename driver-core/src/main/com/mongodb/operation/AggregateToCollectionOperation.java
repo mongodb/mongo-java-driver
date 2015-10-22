@@ -20,21 +20,27 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -151,20 +157,34 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                new VoidTransformer<BsonDocument>());
+        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+            @Override
+            public Void call(final Connection connection) {
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                        connection, new VoidTransformer<BsonDocument>());
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                new VoidTransformer<BsonDocument>(), callback);
+        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                if (t != null) {
+                    errorHandlingCallback(callback).onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                            connection, new VoidTransformer<BsonDocument>(),
+                            releasingCallback(errorHandlingCallback(callback), connection));
+                }
+            }
+        });
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
         commandDocument.put("pipeline", new BsonArray(pipeline));
         if (maxTimeMS > 0) {
@@ -173,7 +193,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         if (allowDiskUse != null) {
             commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
         }
-        if (bypassDocumentValidation != null) {
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         return commandDocument;

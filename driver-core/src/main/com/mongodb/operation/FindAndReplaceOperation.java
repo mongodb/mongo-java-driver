@@ -332,7 +332,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         putIfTrue(command, "upsert", isUpsert());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("update", getReplacement());
-        if (bypassDocumentValidation != null) {
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
