@@ -348,7 +348,7 @@ public abstract class DB {
     // the encoder is not capable of encoding a BasicDBObject
     // Due to issues with compatibility between different versions of mongos, also wrap the command in a
     // $query field, so that the $readPreference is not rejected
-    private DBObject wrapCommand(DBObject cmd, final ReadPreference readPreference) {
+    DBObject wrapCommand(DBObject cmd, final ReadPreference readPreference) {
         if (getMongo().isMongosConnection() &&
                 !(ReadPreference.primary().equals(readPreference) || ReadPreference.secondaryPreferred().equals(readPreference)) &&
                 cmd instanceof BasicDBObject) {

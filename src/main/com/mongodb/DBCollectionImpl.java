@@ -92,9 +92,15 @@ class DBCollectionImpl extends DBCollection {
         if(options == null) {
             throw new IllegalArgumentException("options can not be null");
         }
-        final DBPort port = db.getConnector().getPort(readPreference);
+
+        DBObject last = pipeline.get(pipeline.size() - 1);
+        String outCollection = (String) last.get("$out");
+        ReadPreference appliedReadPreference = outCollection != null ? ReadPreference.primary() : readPreference;
+
+        final DBPort port = db.getConnector().getPort(appliedReadPreference);
         try {
-            final DBObject command = prepareAggregationCommand(pipeline, options, port.getServerVersion());
+            final DBObject command = db.wrapCommand(prepareAggregationCommand(pipeline, options, port.getServerVersion()),
+                                                    appliedReadPreference);
             CommandResult res = db.getConnector().doOperation(db, port, new DBPort.Operation<CommandResult>() {
                 @Override
                 public CommandResult execute() throws IOException {
@@ -104,8 +110,6 @@ class DBCollectionImpl extends DBCollection {
 
             res.throwOnError();
 
-            DBObject last = pipeline.get(pipeline.size() - 1);
-            String outCollection = (String) last.get("$out");
             if (outCollection != null) {
                 DBCollection collection = _db.getCollection(outCollection);
                 return new DBCursor(collection, new BasicDBObject(), null, ReadPreference.primary());
