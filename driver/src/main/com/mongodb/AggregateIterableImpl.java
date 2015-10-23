@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.FindOptions;
@@ -122,11 +123,15 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse);
             executor.execute(operation);
-            return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
+            FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                outCollection.asString().getValue()),
                                                             documentClass, resultClass, codecRegistry, readPreference, executor,
                                                             new BsonDocument(),
-                    new FindOptions()).batchSize(batchSize);
+                    new FindOptions());
+            if (batchSize != null) {
+                findOperation.batchSize(batchSize);
+            }
+            return findOperation;
         } else {
             return new OperationIterable<TResult>(new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(resultClass))
                     .maxTime(maxTimeMS, MILLISECONDS)

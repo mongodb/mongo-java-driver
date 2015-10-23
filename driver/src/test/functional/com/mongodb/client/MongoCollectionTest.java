@@ -29,14 +29,17 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 public class MongoCollectionTest extends DatabaseTestCase {
 
@@ -135,6 +138,26 @@ public class MongoCollectionTest extends DatabaseTestCase {
         // then
         assertEquals(new Name("Pete", 2), result.get(0));
         assertEquals(new Name("Sam", 1), result.get(1));
+    }
+
+    @Test
+    public void testAggregationToACollection() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+
+        // given
+        List<Document> documents = asList(new Document("_id", 1), new Document("_id", 2));
+
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+
+        MongoCollection<Document> collection = database
+                .getCollection(getCollectionName());
+
+        // when
+        List<Document> result = collection.aggregate(Collections.singletonList(new Document("$out", "outCollection")))
+                .into(new ArrayList<Document>());
+
+        // then
+        assertEquals(documents, result);
     }
 
     // This is really a test that the default registry created in MongoClient and passed down to MongoCollection has been constructed
