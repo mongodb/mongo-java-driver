@@ -206,19 +206,18 @@ public class DBPort implements Connection {
         return runCommand(db, concern.getCommand() );
     }
 
-    synchronized private Response findOne( DB db , String coll , DBObject q ) throws IOException {
-        OutMessage msg = OutMessage.query( db.getCollection(coll) , 0 , 0 , -1 , q , null, Bytes.MAX_OBJECT_SIZE );
+    synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
+        return runCommand(db, cmd, Bytes.MAX_OBJECT_SIZE);
+    }
+
+    synchronized CommandResult runCommand(final DB db, final DBObject cmd, final int maxBsonObjectSize) throws IOException {
+        isTrue("open", !closed);
+        OutMessage msg = OutMessage.query( db.getCollection("$cmd") , 0 , 0 , -1 , cmd , null, maxBsonObjectSize);
         try {
-            return call(msg, db.getCollection(coll), null);
+            return convertToCommandResult(cmd, call(msg, db.getCollection("$cmd"), null));
         } finally {
             msg.doneWithMessage();
         }
-    }
-
-    synchronized CommandResult runCommand( DB db , DBObject cmd ) throws IOException {
-        isTrue("open", !closed);
-        Response res = findOne(db, "$cmd", cmd);
-        return convertToCommandResult(cmd, res);
     }
 
     private CommandResult convertToCommandResult(DBObject cmd, Response res) {

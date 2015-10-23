@@ -508,7 +508,8 @@ public abstract class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-          return findAndModifyHelper(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit);
+          return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit,
+                                   getWriteConcern());
     }
 
     /**
@@ -536,55 +537,37 @@ public abstract class DBCollection {
                                   final boolean returnNew, final boolean upsert,
                                   final boolean bypassDocumentValidation,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-        return findAndModifyHelper(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit);
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit,
+                                 getWriteConcern());
     }
 
-    private DBObject findAndModifyHelper(final DBObject query, final DBObject fields, final DBObject sort,
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @param writeConcern the write concern to apply to the operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    protected abstract DBObject findAndModifyImpl(final DBObject query, final DBObject fields, final DBObject sort,
                                          final boolean remove, final DBObject update,
                                          final boolean returnNew, final boolean upsert,
                                          final Boolean bypassDocumentValidation,
-                                         final long maxTime, final TimeUnit maxTimeUnit) {
-
-        BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
-        if (query != null && !query.keySet().isEmpty())
-            cmd.append( "query", query );
-        if (fields != null && !fields.keySet().isEmpty())
-            cmd.append( "fields", fields );
-        if (sort != null && !sort.keySet().isEmpty())
-            cmd.append( "sort", sort );
-        if (maxTime > 0) {
-            cmd.append("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
-        }
-        if (bypassDocumentValidation != null) {
-            cmd.append("bypassDocumentValidation", bypassDocumentValidation);
-        }
-
-        if (remove)
-            cmd.append( "remove", remove );
-        else {
-            if (update != null && !update.keySet().isEmpty()) {
-                // if 1st key doesn't start with $, then object will be inserted as is, need to check it
-                String key = update.keySet().iterator().next();
-                if (key.charAt(0) != '$')
-                    _checkObject(update, false, false);
-                cmd.append( "update", update );
-            }
-            if (returnNew)
-                cmd.append( "new", returnNew );
-            if (upsert)
-                cmd.append( "upsert", upsert );
-        }
-
-        if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
-            throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
-
-        CommandResult res = this._db.command( cmd );
-        if (res.ok() || res.getErrorMessage().equals( "No matching object found" )) {
-            return replaceWithObjectClass((DBObject) res.get( "value" ));
-        }
-        res.throwOnError();
-        return null;
-    }
+                                         final long maxTime, final TimeUnit maxTimeUnit,
+                                         final WriteConcern writeConcern);
 
     /**
      * Doesn't yet handle internal classes properly, so this method only does something if object class is set but
@@ -593,7 +576,7 @@ public abstract class DBCollection {
      * @param oldObj  the original value from the command result
      * @return replaced object if necessary, or oldObj
      */
-    private DBObject replaceWithObjectClass(DBObject oldObj) {
+    DBObject replaceWithObjectClass(DBObject oldObj) {
         if (oldObj == null || getObjectClass() == null &  _internalClass.isEmpty()) {
             return oldObj;
         }

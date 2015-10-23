@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,6 +43,7 @@ import static com.mongodb.WriteRequest.Type.REPLACE;
 import static com.mongodb.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
 
 @SuppressWarnings("deprecation")
@@ -104,7 +106,7 @@ class DBCollectionImpl extends DBCollection {
             CommandResult res = db.getConnector().doOperation(db, port, new DBPort.Operation<CommandResult>() {
                 @Override
                 public CommandResult execute() throws IOException {
-                    return port.runCommand(db, command);
+                    return port.runCommand(db, command, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
                 }
             });
 
@@ -298,6 +300,75 @@ class DBCollectionImpl extends DBCollection {
     }
 
     @Override
+    protected DBObject findAndModifyImpl(final DBObject query, final DBObject fields, final DBObject sort,
+                                         final boolean remove, final DBObject update,
+                                         final boolean returnNew, final boolean upsert,
+                                         final Boolean bypassDocumentValidation,
+                                         final long maxTime, final TimeUnit maxTimeUnit,
+                                         final WriteConcern writeConcern) {
+
+        if (remove && !(update == null || update.keySet().isEmpty() || returnNew))
+            throw new MongoException("FindAndModify: Remove cannot be mixed with the Update, or returnNew params!");
+
+        final DBPort port = db.getConnector().getPrimaryPort();
+        try {
+            CommandResult res =  db.getConnector().doOperation(db, port, new DBPort.Operation<CommandResult>() {
+                @Override
+                public CommandResult execute() throws IOException {
+                    BasicDBObject cmd = prepareFindAndModifyCommand(query, fields, sort, remove, update, returnNew, upsert,
+                                                                    bypassDocumentValidation, maxTime, maxTimeUnit, writeConcern,
+                                                                    port.getServerVersion());
+                    return port.runCommand(db, cmd, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
+                }
+            });
+            if (res.ok() || res.getErrorMessage().equals("No matching object found")) {
+                return replaceWithObjectClass((DBObject) res.get("value"));
+            }
+            res.throwOnError();
+            return null;
+        } finally {
+            db.getConnector().releasePort(port);
+        }
+    }
+
+    private BasicDBObject prepareFindAndModifyCommand(final DBObject query, final DBObject fields, final DBObject sort,
+                                                      final boolean remove, final DBObject update, final boolean returnNew,
+                                                      final boolean upsert, final Boolean bypassDocumentValidation, final long maxTime,
+                                                      final TimeUnit maxTimeUnit, final WriteConcern writeConcern,
+                                                      final ServerVersion serverVersion) {
+        BasicDBObject cmd = new BasicDBObject( "findandmodify", _name);
+        if (query != null && !query.keySet().isEmpty())
+            cmd.append( "query", query );
+        if (fields != null && !fields.keySet().isEmpty())
+            cmd.append( "fields", fields );
+        if (sort != null && !sort.keySet().isEmpty())
+            cmd.append( "sort", sort );
+        if (maxTime > 0) {
+            cmd.append("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
+        }
+        if (bypassDocumentValidation != null) {
+            cmd.append("bypassDocumentValidation", bypassDocumentValidation);
+        }
+
+        if (remove)
+            cmd.append( "remove", remove );
+        else {
+            if (update != null && !update.keySet().isEmpty()) {
+                // if 1st key doesn't start with $, then object will be inserted as is, need to check it
+                String key = update.keySet().iterator().next();
+                if (key.charAt(0) != '$')
+                    _checkObject(update, false, false);
+                cmd.append( "update", update );
+            }
+            if (returnNew)
+                cmd.append( "new", returnNew );
+            if (upsert)
+                cmd.append( "upsert", upsert );
+        }
+        return cmd;
+    }
+
+    @Override
     public void drop(){
         db._collections.remove(getName());
         super.drop();
@@ -408,7 +479,7 @@ class DBCollectionImpl extends DBCollection {
                 CommandResult commandResult = connector.doOperation(db, port, new DBPort.Operation<CommandResult>() {
                     @Override
                     public CommandResult execute() throws IOException {
-                       return port.runCommand(db, createIndexes);
+                       return port.runCommand(db, createIndexes, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
                     }
                 });
                 try {
