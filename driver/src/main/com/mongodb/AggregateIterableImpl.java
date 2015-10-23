@@ -133,8 +133,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .allowDiskUse(allowDiskUse)
                     .bypassDocumentValidation(bypassDocumentValidation);
             executor.execute(operation);
-            FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace
-                    (namespace.getDatabaseName(),
+            FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, readPreference, readConcern, executor,
                     new BsonDocument(), new FindOptions());
             if (batchSize != null) {
