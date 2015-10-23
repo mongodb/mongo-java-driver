@@ -1086,6 +1086,8 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testBypassDocumentValidationForAggregateDollarOut() {
+        checkServerVersion(2.6);
+
         //given
         DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
         DBCollection cOut = getDatabase().createCollection(getClass().getName() + ".out", options);
