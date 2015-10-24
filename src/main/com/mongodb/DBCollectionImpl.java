@@ -321,6 +321,13 @@ class DBCollectionImpl extends DBCollection {
                     return port.runCommand(db, cmd, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
                 }
             });
+            if (res.containsField("writeConcernError")) {
+                DBObject writeConcernErrorDocument = (DBObject) res.get("writeConcernError");
+                CommandResult fakedCommandResultForWriteConcernError = new CommandResult(port.serverAddress());
+                fakedCommandResultForWriteConcernError.put("err", writeConcernErrorDocument.get("errmsg"));
+                fakedCommandResultForWriteConcernError.put("code", writeConcernErrorDocument.get("code"));
+                throw new WriteConcernException(fakedCommandResultForWriteConcernError);
+            }
             if (res.ok() || res.getErrorMessage().equals("No matching object found")) {
                 return replaceWithObjectClass((DBObject) res.get("value"));
             }
@@ -364,6 +371,10 @@ class DBCollectionImpl extends DBCollection {
                 cmd.append( "new", returnNew );
             if (upsert)
                 cmd.append( "upsert", upsert );
+        }
+
+        if (writeConcern.callGetLastError() && !writeConcern.useServerDefault() && serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
+            cmd.append("writeConcern", writeConcern.asDBObject());
         }
         return cmd;
     }

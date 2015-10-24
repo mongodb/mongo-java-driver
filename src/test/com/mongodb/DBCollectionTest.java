@@ -646,41 +646,52 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
+            WriteResult writeResult = collection.insert(new BasicDBObject(), new WriteConcern(5, 1));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
             assertNotNull(e.getServerAddress());
             assertNotNull(e.getErrorMessage());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(0, e.getCommandResult().get("n"));
-        } finally {
-            mongoClient.close();
         }
     }
 
     @Test
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         ObjectId id = new ObjectId();
         try {
-            DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
-            WriteResult writeResult = localCollection.update(new BasicDBObject("_id", id),
-                                                             new BasicDBObject("$set", new BasicDBObject("x", 1)),
-                                                             true, false,
-                                                             new WriteConcern(5, 1, false, false));
+            WriteResult writeResult = collection.update(new BasicDBObject("_id", id),
+                                                        new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                                        true, false,
+                                                        new WriteConcern(5, 1));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
+        } catch (WriteConcernException e) {
+            assertNotNull(e.getErrorMessage());
+            assertTrue(e.getCode() > 0);
+            assertEquals(1, e.getCommandResult().get("n"));
+            assertEquals(id, e.getCommandResult().get("upserted"));
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnFindAndModify() throws UnknownHostException {
+        checkServerVersion(3.2);
+        assumeTrue(isReplicaSet(getMongoClient()));
+        ObjectId id = new ObjectId();
+        collection.setWriteConcern(new WriteConcern(5, 1));
+        try {
+            collection.findAndModify(new BasicDBObject("_id", id), null, null, false,
+                                     new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                     true, true);
+            fail("Expected findAndModify to error");
         } catch (WriteConcernException e) {
             assertNotNull(e.getServerAddress());
             assertNotNull(e.getErrorMessage());
-            assertNotNull(e.getCommandResult().get("err"));
-            assertEquals(1, e.getCommandResult().get("n"));
-            assertEquals(id, e.getCommandResult().get("upserted"));
+            assertTrue(e.getCode() > 0);
         } finally {
-            mongoClient.close();
+            collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
         }
     }
 
