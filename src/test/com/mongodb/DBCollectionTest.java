@@ -680,18 +680,15 @@ public class DBCollectionTest extends TestCase {
         checkServerVersion(3.2);
         assumeTrue(isReplicaSet(getMongoClient()));
         ObjectId id = new ObjectId();
-        collection.setWriteConcern(new WriteConcern(5, 1));
         try {
             collection.findAndModify(new BasicDBObject("_id", id), null, null, false,
                                      new BasicDBObject("$set", new BasicDBObject("x", 1)),
-                                     true, true);
+                                     true, true, new WriteConcern(5, 1));
             fail("Expected findAndModify to error");
         } catch (WriteConcernException e) {
             assertNotNull(e.getServerAddress());
             assertNotNull(e.getErrorMessage());
             assertTrue(e.getCode() > 0);
-        } finally {
-            collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
         }
     }
 

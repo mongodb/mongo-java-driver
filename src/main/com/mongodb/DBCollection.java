@@ -481,7 +481,29 @@ public abstract class DBCollection {
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert){
-        return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS);
+        return findAndModify(query, fields, sort, remove, update, returnNew, upsert, getWriteConcern());
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query     specifies the selection criteria for the modification
+     * @param fields    a subset of fields to return
+     * @param sort      determines which document the operation will modify if the query selects multiple documents
+     * @param remove    when true, removes the selected document
+     * @param returnNew when true, returns the modified document rather than the original
+     * @param update    the modifications to apply
+     * @param upsert    when true, operation creates a new document if the query returns no documents
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @throws MongoException
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     */
+    public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew,
+                                  boolean upsert, WriteConcern writeConcern){
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, 0L, MILLISECONDS, writeConcern);
     }
 
 
@@ -508,8 +530,35 @@ public abstract class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-          return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit,
-                                   getWriteConcern());
+          return findAndModify(query, fields, sort, remove, update, returnNew, upsert, maxTime, maxTimeUnit, getWriteConcern());
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.12.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final long maxTime, final TimeUnit maxTimeUnit,
+                                  final WriteConcern writeConcern) {
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit, writeConcern);
     }
 
     /**
@@ -537,8 +586,39 @@ public abstract class DBCollection {
                                   final boolean returnNew, final boolean upsert,
                                   final boolean bypassDocumentValidation,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
+        return findAndModify(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit,
+                             getWriteConcern());
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final boolean bypassDocumentValidation,
+                                  final long maxTime, final TimeUnit maxTimeUnit,
+                                  final WriteConcern writeConcern) {
         return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit,
-                                 getWriteConcern());
+                                 writeConcern);
     }
 
     /**
