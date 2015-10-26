@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.DuplicateKeyException;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -32,6 +33,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -46,6 +48,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -132,6 +135,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             @Override
             public WriteConcernResult call(final Connection connection) {
                 try {
+                    if (bypassDocumentValidationNotSupported(connection.getDescription())) {
+                        throw getBypassDocumentValidationException();
+                    }
                     if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         return translateBulkWriteResult(executeCommandProtocol(connection));
                     } else {
@@ -151,6 +157,8 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     errorHandlingCallback(callback).onResult(null, t);
+                } else if (bypassDocumentValidationNotSupported(connection.getDescription())) {
+                    releasingCallback(errorHandlingCallback(callback), connection).onResult(null, getBypassDocumentValidationException());
                 } else {
                     final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
                                                                                                        connection);
@@ -211,6 +219,15 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
      * @param callback   the callback to be passed the BulkWriteResult
      */
     protected abstract void executeCommandProtocolAsync(AsyncConnection connection, SingleResultCallback<BulkWriteResult> callback);
+
+    private boolean bypassDocumentValidationNotSupported(final ConnectionDescription description) {
+        return bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description) && !writeConcern.isAcknowledged();
+    }
+
+    private MongoClientException getBypassDocumentValidationException() {
+        return new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern "
+                                        + "is not supported");
+    }
 
     private MongoException translateException(final Throwable t) {
         MongoException checkedError = MongoException.fromThrowable(t);

@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
@@ -58,6 +59,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -166,6 +168,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
+                if (bypassDocumentValidationNotSupported(connection.getDescription())) {
+                    throw getBypassDocumentValidationException();
+                }
+
                 BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
                                                                                            ordered, writeConcern);
                 for (Run run : getRunGenerator(connection.getDescription())) {
@@ -194,6 +200,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     wrappedCallback.onResult(null, t);
+                } else if (bypassDocumentValidationNotSupported(connection.getDescription())) {
+                    releasingCallback(wrappedCallback, connection).onResult(null, getBypassDocumentValidationException());
                 } else {
                     Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
                     executeRunsAsync(runs, connection, new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
@@ -201,6 +209,15 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 }
             }
         });
+    }
+
+    private boolean bypassDocumentValidationNotSupported(final ConnectionDescription description) {
+        return bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description) && !writeConcern.isAcknowledged();
+    }
+
+    private MongoClientException getBypassDocumentValidationException() {
+        return new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern "
+                                        + "is not supported");
     }
 
     private void executeRunsAsync(final Iterator<Run> runs, final AsyncConnection connection,

@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.DuplicateKeyException
+import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.InsertRequest
@@ -28,11 +29,13 @@ import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getSingleConnectionBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -298,5 +301,27 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
+    def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
+        given:
+        def op = new InsertOperation(getNamespace(), true,  UNACKNOWLEDGED, [new InsertRequest(new BsonDocument())])
+                .bypassDocumentValidation(bypassDocumentValidation)
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(MongoClientException)
+
+        when:
+        executeAsync(op)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        bypassDocumentValidation << [true, false]
     }
 }

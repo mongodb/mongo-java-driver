@@ -20,6 +20,7 @@ import category.Async
 import category.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoBulkWriteException
+import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -707,6 +708,22 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
 
         where:
         ordered << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
+    def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
+        given:
+        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, UNACKNOWLEDGED)
+                .bypassDocumentValidation(bypassDocumentValidation)
+
+        when:
+        executeAsync(op)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        bypassDocumentValidation << [true, false]
     }
 
     private static List<WriteRequest> getTestWrites() {
