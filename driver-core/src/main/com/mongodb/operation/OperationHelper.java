@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
@@ -65,20 +64,6 @@ final class OperationHelper {
 
     interface AsyncCallableWithConnectionAndSource {
         void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
-    }
-
-    static class IdentityTransformer<T> implements Function<T, T> {
-        @Override
-        public T apply(final T t) {
-            return t;
-        }
-    }
-
-    static class VoidTransformer<T> implements Function<T, Void> {
-        @Override
-        public Void apply(final T t) {
-            return null;
-        }
     }
 
     static void checkValidReadConcern(final Connection connection, final ReadConcern readConcern) {

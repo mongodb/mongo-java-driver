@@ -17,14 +17,15 @@
 package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
@@ -480,11 +481,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
                                                       new BsonDocumentCodec());
     }
 
-    private Function<BsonDocument, MapReduceStatistics> transformer() {
-        return new Function<BsonDocument, MapReduceStatistics>() {
+    private CommandTransformer<BsonDocument, MapReduceStatistics> transformer() {
+        return new CommandTransformer<BsonDocument, MapReduceStatistics>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceStatistics apply(final BsonDocument result) {
+            public MapReduceStatistics apply(final BsonDocument result, final ServerAddress serverAddress) {
                 return MapReduceHelper.createStatistics(result);
             }
         };

@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.async.SingleResultCallback
@@ -24,6 +25,7 @@ import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncWriteBinding
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.WriteBinding
+import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
 import com.mongodb.connection.AsyncConnection
@@ -39,11 +41,15 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 
 class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
@@ -157,6 +163,48 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().find().size() == 1;
         getWorkerCollectionHelper().find().first() == sam
         returnedDocument == pete
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        helper.insertDocuments(new DocumentCodec(), pete)
+
+        when:
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+        operation.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        !ex.writeConcernError.message.isEmpty()
+        ex.writeResult.count == 1
+        !ex.writeResult.updateOfExisting
+        ex.writeResult.upsertedId == null
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error asynchronously'() {
+        given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        helper.insertDocuments(new DocumentCodec(), pete)
+
+        when:
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+        executeAsync(operation)
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        !ex.writeConcernError.message.isEmpty()
+        ex.writeResult.count == 1
+        !ex.writeResult.updateOfExisting
+        ex.writeResult.upsertedId == null
     }
 
     def 'should create the expected command'() {

@@ -516,10 +516,29 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                     .bypassDocumentValidation(bypassDocumentValidation));
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {
-                throw new MongoWriteConcernException(e.getWriteConcernError(), e.getServerAddress());
+                throw new MongoWriteConcernException(e.getWriteConcernError(),
+                                                     translateBulkWriteResult(request, e.getWriteResult()),
+                                                     e.getServerAddress());
             } else {
                 throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
             }
+        }
+    }
+
+    private WriteConcernResult translateBulkWriteResult(final WriteRequest request, final BulkWriteResult writeResult) {
+        switch (request.getType()) {
+            case INSERT:
+                return WriteConcernResult.acknowledged(writeResult.getInsertedCount(), false, null);
+            case DELETE:
+                return WriteConcernResult.acknowledged(writeResult.getDeletedCount(), false, null);
+            case UPDATE:
+            case REPLACE:
+                return WriteConcernResult.acknowledged(writeResult.getMatchedCount() + writeResult.getUpserts().size(),
+                                                       writeResult.getMatchedCount() > 0,
+                                                       writeResult.getUpserts().isEmpty()
+                                                       ? null : writeResult.getUpserts().get(0).getId());
+            default:
+                throw new MongoInternalException("Unhandled write request type: " + request.getType());
         }
     }
 

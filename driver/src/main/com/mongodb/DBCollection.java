@@ -51,6 +51,7 @@ import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt32;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -1610,6 +1611,30 @@ public class DBCollection {
      * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
      * update.
      *
+     * @param query     specifies the selection criteria for the modification
+     * @param fields    a subset of fields to return
+     * @param sort      determines which document the operation will modify if the query selects multiple documents
+     * @param remove    when true, removes the selected document
+     * @param returnNew when true, returns the modified document rather than the original
+     * @param update    the modifications to apply
+     * @param upsert    when true, operation creates a new document if the query returns no documents
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @throws MongoException
+     * @since 2.14
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort, final boolean remove,
+                                  final DBObject update, final boolean returnNew,
+                                  final boolean upsert, final WriteConcern writeConcern){
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, 0L, MILLISECONDS, writeConcern);
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
      * @param query       specifies the selection criteria for the modification
      * @param fields      a subset of fields to return
      * @param sort        determines which document the operation will modify if the query selects multiple documents
@@ -1629,8 +1654,36 @@ public class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit);
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit, getWriteConcern());
 
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final long maxTime, final TimeUnit maxTimeUnit,
+                                  final WriteConcern writeConcern) {
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit, writeConcern);
     }
 
     /**
@@ -1658,17 +1711,50 @@ public class DBCollection {
                                   final boolean returnNew, final boolean upsert,
                                   final boolean bypassDocumentValidation,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit);
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit,
+                                 getWriteConcern());
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @param writeConcern the write concern to apply to this operation
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final boolean bypassDocumentValidation,
+                                  final long maxTime, final TimeUnit maxTimeUnit,
+                                  final WriteConcern writeConcern) {
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit,
+                                 writeConcern);
     }
 
     private DBObject findAndModifyImpl(final DBObject query, final DBObject fields, final DBObject sort,
                                        final boolean remove, final DBObject update,
                                        final boolean returnNew, final boolean upsert,
                                        final Boolean bypassDocumentValidation,
-                                       final long maxTime, final TimeUnit maxTimeUnit) {
+                                       final long maxTime, final TimeUnit maxTimeUnit,
+                                       final WriteConcern writeConcern) {
         WriteOperation<DBObject> operation;
         if (remove) {
-            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec)
+            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), writeConcern, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(fields))
                         .sort(wrapAllowNull(sort))
@@ -1678,7 +1764,7 @@ public class DBCollection {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrapAllowNull(update))
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), writeConcern, objectCodec, wrapAllowNull(update))
                             .filter(wrap(query))
                             .projection(wrapAllowNull(fields))
                             .sort(wrapAllowNull(sort))
@@ -1687,7 +1773,7 @@ public class DBCollection {
                             .maxTime(maxTime, maxTimeUnit)
                             .bypassDocumentValidation(bypassDocumentValidation);
             } else {
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrap(update))
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, objectCodec, wrap(update))
                             .filter(wrapAllowNull(query))
                             .projection(wrapAllowNull(fields))
                             .sort(wrapAllowNull(sort))
@@ -1698,7 +1784,14 @@ public class DBCollection {
             }
         }
 
-        return executor.execute(operation);
+        try {
+            return executor.execute(operation);
+        } catch (MongoWriteConcernException e) {
+            throw new WriteConcernException(new BsonDocument("code", new BsonInt32(e.getWriteConcernError().getCode()))
+                                           .append("errmsg", new BsonString(e.getWriteConcernError().getMessage())),
+                                            e.getServerAddress(),
+                                            e.getWriteResult());
+        }
     }
 
     /**

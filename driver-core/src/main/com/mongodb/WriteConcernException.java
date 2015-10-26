@@ -84,6 +84,8 @@ public class WriteConcernException extends MongoServerException {
     public static String extractErrorMessage(final BsonDocument response) {
         if (response.isString("err")) {
             return response.getString("err").getValue();
+        } else if (response.isString("errmsg")) {
+            return response.getString("errmsg").getValue();
         } else {
             return null;
         }

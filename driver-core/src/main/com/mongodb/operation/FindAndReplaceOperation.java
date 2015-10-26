@@ -61,6 +61,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BsonDocument replacement;
+    private final WriteConcern writeConcern;
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
@@ -68,7 +69,6 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private boolean returnOriginal = true;
     private boolean upsert;
     private Boolean bypassDocumentValidation;
-    private WriteConcern writeConcern;
 
     /**
      * Construct a new instance.

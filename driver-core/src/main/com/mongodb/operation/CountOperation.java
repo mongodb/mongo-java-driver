@@ -17,14 +17,15 @@
 package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
@@ -261,10 +262,10 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                                                       new BsonDocumentCodec());
     }
 
-    private Function<BsonDocument, Long> transformer() {
-        return new Function<BsonDocument, Long>() {
+    private CommandTransformer<BsonDocument, Long> transformer() {
+        return new CommandTransformer<BsonDocument, Long>() {
             @Override
-            public Long apply(final BsonDocument result) {
+            public Long apply(final BsonDocument result, final ServerAddress serverAddress) {
                 return (result.getNumber("n")).longValue();
             }
         };

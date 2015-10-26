@@ -465,6 +465,28 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])            | DeleteResult.unacknowledged()
     }
 
+    def 'deleteOne should translate BulkWriteException correctly'() {
+        given:
+        def bulkWriteException = new MongoBulkWriteException(acknowledged(0, 0, 1, null, []), [],
+                                                             new com.mongodb.bulk.WriteConcernError(100, '', new BsonDocument()),
+                                                             new ServerAddress());
+
+        def executor = new TestOperationExecutor([bulkWriteException])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, WriteConcern.ACKNOWLEDGED,
+                                                 readConcern, executor)
+
+        when:
+        collection.deleteOne(new Document('_id', 1))
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError == bulkWriteException.writeConcernError
+        ex.writeResult.wasAcknowledged()
+        ex.writeResult.count == 1
+        !ex.writeResult.updateOfExisting
+        ex.writeResult.upsertedId == null
+    }
+
     def 'deleteMany should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
@@ -510,6 +532,35 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED   | new TestOperationExecutor([acknowledged(REPLACE, 1, 1,
                 [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32(42))])])                       | UpdateResult.acknowledged(1, 1, new BsonInt32(42))
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged()])                   | UpdateResult.unacknowledged()
+    }
+
+    def 'replaceOne should translate BulkWriteException correctly'() {
+        given:
+        def bulkWriteException = new MongoBulkWriteException(bulkWriteResult, [],
+                                                             new com.mongodb.bulk.WriteConcernError(100, '', new BsonDocument()),
+                                                             new ServerAddress());
+
+        def executor = new TestOperationExecutor([bulkWriteException])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, WriteConcern.ACKNOWLEDGED,
+                                                 readConcern, executor)
+
+        when:
+        collection.replaceOne(new Document('_id', 1), new Document('_id', 1))
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError == bulkWriteException.writeConcernError
+        ex.writeResult.wasAcknowledged() == writeResult.wasAcknowledged()
+        ex.writeResult.count == writeResult.count
+        ex.writeResult.updateOfExisting == writeResult.updateOfExisting
+        ex.writeResult.upsertedId == writeResult.upsertedId
+
+        where:
+        bulkWriteResult                                                           | writeResult
+        acknowledged(0, 1, 0, 1, [])                                              | WriteConcernResult.acknowledged(1, true, null)
+        acknowledged(0, 0, 0, 0,
+                     [new com.mongodb.bulk.BulkWriteUpsert(0, new BsonInt32(1))]) | WriteConcernResult.acknowledged(1, false,
+                                                                                                                    new BsonInt32(1))
     }
 
     def 'updateOne should use MixedBulkWriteOperationOperation correctly'() {

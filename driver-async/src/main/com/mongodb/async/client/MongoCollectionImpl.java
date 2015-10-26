@@ -17,12 +17,14 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
@@ -590,8 +592,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                  if (t instanceof MongoBulkWriteException) {
                                      MongoBulkWriteException e = (MongoBulkWriteException) t;
                                      if (e.getWriteErrors().isEmpty()) {
-                                         callback.onResult(null, new MongoWriteConcernException(e.getWriteConcernError(),
-                                                                                                e.getServerAddress()));
+                                         callback.onResult(null,
+                                                           new MongoWriteConcernException(e.getWriteConcernError(),
+                                                                                          translateBulkWriteResult(request,
+                                                                                                                   e.getWriteResult()),
+                                                                                          e.getServerAddress()));
                                      } else {
                                          callback.onResult(null, new MongoWriteException(new WriteError(e.getWriteErrors().get(0)),
                                                                                          e.getServerAddress()));
@@ -601,6 +606,23 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                  }
                              }
                          });
+    }
+
+    private WriteConcernResult translateBulkWriteResult(final WriteRequest request, final BulkWriteResult writeResult) {
+        switch (request.getType()) {
+            case INSERT:
+                return WriteConcernResult.acknowledged(writeResult.getInsertedCount(), false, null);
+            case DELETE:
+                return WriteConcernResult.acknowledged(writeResult.getDeletedCount(), false, null);
+            case UPDATE:
+            case REPLACE:
+                return WriteConcernResult.acknowledged(writeResult.getMatchedCount() + writeResult.getUpserts().size(),
+                                                       writeResult.getMatchedCount() > 0,
+                                                       writeResult.getUpserts().isEmpty()
+                                                       ? null : writeResult.getUpserts().get(0).getId());
+            default:
+                throw new MongoInternalException("Unhandled write request type: " + request.getType());
+        }
     }
 
     private UpdateResult toUpdateResult(final com.mongodb.bulk.BulkWriteResult result) {

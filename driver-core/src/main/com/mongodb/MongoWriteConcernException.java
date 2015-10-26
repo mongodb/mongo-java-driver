@@ -18,6 +18,8 @@ package com.mongodb;
 
 import com.mongodb.bulk.WriteConcernError;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * An exception indicating a failure to apply the write concern to the requested write operation
  *
@@ -29,23 +31,50 @@ public class MongoWriteConcernException extends MongoServerException {
     private static final long serialVersionUID = 4577579466973523211L;
 
     private final WriteConcernError writeConcernError;
+    private final WriteConcernResult writeConcernResult;
 
     /**
      * Construct an instance.
      *
-     * @param writeConcernError the write concern error
-     * @param serverAddress the server address
+     * @param writeConcernError the non-null write concern error
+     * @param serverAddress the non-null server address
      */
     public MongoWriteConcernException(final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
-        super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
-        this.writeConcernError = writeConcernError;
+        this(writeConcernError, null, serverAddress);
     }
 
     /**
+     * Construct an instance.
      *
-     * @return the write concern error
+     * @param writeConcernError the non-null write concern error
+     * @param writeConcernResult the write result
+     * @param serverAddress     the non-null server address
+     * @since 3.2
+     */
+    public MongoWriteConcernException(final WriteConcernError writeConcernError, final WriteConcernResult writeConcernResult,
+                                      final ServerAddress serverAddress) {
+        super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
+        this.writeConcernResult = writeConcernResult;
+        this.writeConcernError = notNull("writeConcernError", writeConcernError);
+    }
+
+    /**
+     * Gets the write concern error.
+     *
+     * @return the write concern error, which may not be null
      */
     public WriteConcernError getWriteConcernError() {
         return writeConcernError;
+    }
+
+    /**
+     * Gets the write result.
+     *
+     * @return the write result
+     *
+     * @since 3.2
+     */
+    public WriteConcernResult getWriteResult() {
+        return writeConcernResult;
     }
 }

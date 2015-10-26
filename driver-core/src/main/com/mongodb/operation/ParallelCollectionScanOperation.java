@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
@@ -29,6 +28,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -177,10 +177,10 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         });
     }
 
-    private Function<BsonDocument, List<BatchCursor<T>>> transformer(final ConnectionSource source) {
-        return new Function<BsonDocument, List<BatchCursor<T>>>() {
+    private CommandTransformer<BsonDocument, List<BatchCursor<T>>> transformer(final ConnectionSource source) {
+        return new CommandTransformer<BsonDocument, List<BatchCursor<T>>>() {
             @Override
-            public List<BatchCursor<T>> apply(final BsonDocument result) {
+            public List<BatchCursor<T>> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 List<BatchCursor<T>> cursors = new ArrayList<BatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new QueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),
@@ -192,11 +192,11 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         };
     }
 
-    private Function<BsonDocument, List<AsyncBatchCursor<T>>> asyncTransformer(final AsyncConnectionSource source,
+    private CommandTransformer<BsonDocument, List<AsyncBatchCursor<T>>> asyncTransformer(final AsyncConnectionSource source,
                                                                                final AsyncConnection connection) {
-        return new Function<BsonDocument, List<AsyncBatchCursor<T>>>() {
+        return new CommandTransformer<BsonDocument, List<AsyncBatchCursor<T>>>() {
             @Override
-            public List<AsyncBatchCursor<T>> apply(final BsonDocument result) {
+            public List<AsyncBatchCursor<T>> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 List<AsyncBatchCursor<T>> cursors = new ArrayList<AsyncBatchCursor<T>>();
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new AsyncQueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),

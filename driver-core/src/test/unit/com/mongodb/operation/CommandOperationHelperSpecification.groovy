@@ -16,7 +16,6 @@
 
 package com.mongodb.operation
 
-import com.mongodb.Function
 import com.mongodb.MongoCommandException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
@@ -111,7 +110,7 @@ class CommandOperationHelperSpecification extends Specification {
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
         def connection = Mock(Connection)
-        def function = Stub(Function)
+        def function = Stub(CommandOperationHelper.CommandTransformer)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
         }
@@ -124,7 +123,7 @@ class CommandOperationHelperSpecification extends Specification {
         executeWrappedCommandProtocol(writeBinding, dbName, command, decoder, function)
 
         then:
-        1 * connection.getDescription() >> connectionDescription
+        _ * connection.getDescription() >> connectionDescription
         1 * connection.command(dbName, command, false, _, decoder)
         1 * connection.release()
     }
@@ -134,7 +133,7 @@ class CommandOperationHelperSpecification extends Specification {
         def dbName = 'db'
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
-        def function = Stub(Function)
+        def function = Stub(CommandOperationHelper.CommandTransformer)
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
@@ -149,7 +148,7 @@ class CommandOperationHelperSpecification extends Specification {
         executeWrappedCommandProtocol(readBinding, dbName, command, decoder, function)
 
         then:
-        1 * connection.getDescription() >> connectionDescription
+        _ * connection.getDescription() >> connectionDescription
         1 * connection.command(dbName, command, readPreference.isSlaveOk(), _, decoder)
         1 * connection.release()
 
@@ -163,7 +162,7 @@ class CommandOperationHelperSpecification extends Specification {
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
-        def function = Stub(Function)
+        def function = Stub(CommandOperationHelper.CommandTransformer)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
@@ -177,7 +176,7 @@ class CommandOperationHelperSpecification extends Specification {
         executeWrappedCommandProtocolAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
 
         then:
-        1 * connection.getDescription() >> connectionDescription
+        _ * connection.getDescription() >> connectionDescription
         1 * connection.commandAsync(dbName, command, false, _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
     }
@@ -188,7 +187,7 @@ class CommandOperationHelperSpecification extends Specification {
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
-        def function = Stub(Function)
+        def function = Stub(CommandOperationHelper.CommandTransformer)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
@@ -203,7 +202,7 @@ class CommandOperationHelperSpecification extends Specification {
         executeWrappedCommandProtocolAsync(asyncReadBinding, dbName, command, decoder, function, callback)
 
         then:
-        1 * connection.getDescription() >> connectionDescription
+        _ * connection.getDescription() >> connectionDescription
         1 * connection.commandAsync(dbName, command, readPreference.isSlaveOk(), _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
 

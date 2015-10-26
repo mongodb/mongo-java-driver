@@ -16,14 +16,15 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
@@ -70,7 +71,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                                                                          new BsonDocument("user", new BsonString(userName)), null, 0, 1, 0,
                                                                          binding.getReadPreference().isSlaveOk(), false,
                                                                          false, false, false, false,
-                                                                         new BsonDocumentCodec()));
+                                                                         new BsonDocumentCodec()),
+                                                        connection.getDescription().getServerAddress());
                 }
             }
         });
@@ -101,7 +103,10 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                                      wrappedCallback.onResult(null, t);
                                  } else {
                                      try {
-                                         wrappedCallback.onResult(transformQueryResult().apply(result), null);
+                                         wrappedCallback.onResult(transformQueryResult().apply(result,
+                                                                                               connection.getDescription()
+                                                                                               .getServerAddress()),
+                                                                  null);
                                      } catch (Throwable tr) {
                                          wrappedCallback.onResult(null, tr);
                                      }
@@ -114,19 +119,19 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         });
     }
 
-    private Function<BsonDocument, Boolean> transformer() {
-        return new Function<BsonDocument, Boolean>() {
+    private CommandTransformer<BsonDocument, Boolean> transformer() {
+        return new CommandTransformer<BsonDocument, Boolean>() {
             @Override
-            public Boolean apply(final BsonDocument result) {
+            public Boolean apply(final BsonDocument result, final ServerAddress serverAddress) {
                 return result.get("users").isArray() && !result.getArray("users").isEmpty();
             }
         };
     }
 
-    private Function<QueryResult<BsonDocument>, Boolean> transformQueryResult() {
-        return new Function<QueryResult<BsonDocument>, Boolean>() {
+    private CommandTransformer<QueryResult<BsonDocument>, Boolean> transformQueryResult() {
+        return new CommandTransformer<QueryResult<BsonDocument>, Boolean>() {
             @Override
-            public Boolean apply(final QueryResult<BsonDocument> queryResult) {
+            public Boolean apply(final QueryResult<BsonDocument> queryResult, final ServerAddress serverAddress) {
                 return !queryResult.getResults().isEmpty();
             }
         };
