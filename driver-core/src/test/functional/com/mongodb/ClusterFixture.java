@@ -61,6 +61,7 @@ import java.util.List;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
+import static com.mongodb.connection.ClusterType.STANDALONE;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -268,6 +269,10 @@ public final class ClusterFixture {
 
     public static boolean isSharded() {
         return getCluster().getDescription().getType() == SHARDED;
+    }
+
+    public static boolean isStandalone() {
+        return getCluster().getDescription().getType() == STANDALONE;
     }
 
     public static boolean isAuthenticated() {

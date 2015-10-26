@@ -399,6 +399,7 @@
     {
       "description": "A successful find event with a getmore and the server kills the cursor",
       "ignore_if_server_version_less_than": "3.1",
+      "ignore_if_topology_type" : ["sharded"],
       "operation": {
         "name": "find",
         "arguments": {
