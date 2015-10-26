@@ -4,3 +4,7 @@ differenceTypes:
 classes:
 
 members:
+  com.mongodb.DBCollection:
+  - findAndModifyImpl(com.mongodb.DBObject,com.mongodb.DBObject,com.mongodb.DBObject,boolean,com.mongodb.DBObject,boolean,boolean,java.lang.Boolean,long,java.util.concurrent.TimeUnit,com.mongodb.WriteConcern)
+  - insertImpl(java.util.List,com.mongodb.WriteConcern,com.mongodb.DBEncoder,java.lang.Boolean)
+  - updateImpl(com.mongodb.DBObject,com.mongodb.DBObject,boolean,boolean,com.mongodb.WriteConcern,java.lang.Boolean,com.mongodb.DBEncoder)
