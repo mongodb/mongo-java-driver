@@ -26,6 +26,7 @@ public final class InsertOptions {
     private WriteConcern writeConcern;
     private boolean continueOnError;
     private DBEncoder dbEncoder;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Set the write concern to use for the insert.
@@ -86,5 +87,30 @@ public final class InsertOptions {
      */
     public DBEncoder getDbEncoder() {
         return dbEncoder;
+    }
+
+
+    /**
+     * Gets whether to bypass document validation, or null if unspecified.  The default is null.
+     *
+     * @return whether to bypass document validation, or null if unspecified.
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets whether to bypass document validation.
+     *
+     * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+     * @return this
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public InsertOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
     }
 }

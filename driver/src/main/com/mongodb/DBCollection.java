@@ -314,7 +314,7 @@ public class DBCollection {
             }
             insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<DBObject>(cur, encoder)));
         }
-        return insert(insertRequestList, writeConcern, insertOptions.isContinueOnError());
+        return insert(insertRequestList, writeConcern, insertOptions.isContinueOnError(), insertOptions.getBypassDocumentValidation());
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
@@ -322,8 +322,9 @@ public class DBCollection {
     }
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
-                               final boolean continueOnError) {
-        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList));
+                               final boolean continueOnError, final Boolean bypassDocumentValidation) {
+        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList)
+                                     .bypassDocumentValidation(bypassDocumentValidation));
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation) {
@@ -438,7 +439,7 @@ public class DBCollection {
      * @param upsert        when true, inserts a document if no document matches the update query criteria
      * @param multi         when true, updates all documents in the collection that match the update query criteria, otherwise only updates
      *                      one
-     * @param aWriteConcern {@code WriteConcern} to be used during operation
+     * @param concern       {@code WriteConcern} to be used during operation
      * @param encoder       {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
@@ -448,7 +449,33 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
-                              final WriteConcern aWriteConcern, final DBEncoder encoder) {
+                              final WriteConcern concern, final DBEncoder encoder) {
+        return updateImpl(query, update, upsert, multi, concern, null, encoder);
+    }
+
+    /**
+     * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
+     * the same query selectors, as used in {@link DBCollection#find(DBObject)}.
+     *
+     * @param query       the selection criteria for the update
+     * @param update       the modifications to apply
+     * @param upsert  when true, inserts a document if no document matches the update query criteria
+     * @param multi   when true, updates all documents in the collection that match the update query criteria, otherwise only updates one
+     * @param concern {@code WriteConcern} to be used during operation
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param encoder the DBEncoder to use
+     * @return the result of the operation
+     * @throws MongoException
+     * @mongodb.driver.manual tutorial/modify-documents/ Modify
+     * @since 2.14
+     */
+    public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
+                              final WriteConcern concern, final boolean bypassDocumentValidation, final DBEncoder encoder) {
+        return updateImpl(query, update, upsert, multi, concern, bypassDocumentValidation, encoder);
+    }
+
+    private WriteResult updateImpl(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
+                                   final WriteConcern concern, final Boolean bypassDocumentValidation, final DBEncoder encoder) {
         if (update == null) {
             throw new IllegalArgumentException("update can not be null");
         }
@@ -461,14 +488,17 @@ public class DBCollection {
             UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
                                                             com.mongodb.bulk.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
 
-            return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
+            return executeWriteOperation(new UpdateOperation(getNamespace(), false, concern, asList(updateRequest))
+                                         .bypassDocumentValidation(bypassDocumentValidation));
         } else {
             UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
                                                              com.mongodb.bulk.WriteRequest.Type.REPLACE)
                                            .upsert(upsert);
-            return executeWriteOperation(new UpdateOperation(getNamespace(), true, aWriteConcern, asList(replaceRequest)));
+            return executeWriteOperation(new UpdateOperation(getNamespace(), true, concern, asList(replaceRequest))
+                                         .bypassDocumentValidation(bypassDocumentValidation));
         }
     }
+
 
     /**
      * Modify an existing document or documents in collection. The query parameter employs the same query selectors, as used in {@code
@@ -1197,7 +1227,8 @@ public class DBCollection {
                     .sort(wrapAllowNull(command.getSort()))
                     .verbose(command.isVerbose())
                     .action(action)
-                    .databaseName(command.getOutputDB());
+                    .databaseName(command.getOutputDB())
+                    .bypassDocumentValidation(command.getBypassDocumentValidation());
 
             if (command.getScope() != null) {
                 operation.scope(wrap(new BasicDBObject(command.getScope())));
@@ -1315,8 +1346,9 @@ public class DBCollection {
 
         if (outCollection != null) {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages)
-                                                           .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                           .allowDiskUse(options.getAllowDiskUse());
+                                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                       .allowDiskUse(options.getAllowDiskUse())
+                                                       .bypassDocumentValidation(options.getBypassDocumentValidation());
             executor.execute(operation);
             if (returnCursorForOutCollection) {
                 return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
@@ -1597,33 +1629,72 @@ public class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, null, maxTime, maxTimeUnit);
+
+    }
+
+    /**
+     * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
+     * update.
+     *
+     * @param query       specifies the selection criteria for the modification
+     * @param fields      a subset of fields to return
+     * @param sort        determines which document the operation will modify if the query selects multiple documents
+     * @param remove      when {@code true}, removes the selected document
+     * @param returnNew   when true, returns the modified document rather than the original
+     * @param update      performs an update of the selected document
+     * @param upsert      when true, operation creates a new document if the query returns no documents
+     * @param bypassDocumentValidation whether to bypass document validation.
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
+     *                    a server version &gt;= 2.6
+     * @param maxTimeUnit the unit that maxTime is specified in
+     * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
+     * after the changes were made
+     * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
+     * @since 2.14.0
+     */
+    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
+                                  final boolean remove, final DBObject update,
+                                  final boolean returnNew, final boolean upsert,
+                                  final boolean bypassDocumentValidation,
+                                  final long maxTime, final TimeUnit maxTimeUnit) {
+        return findAndModifyImpl(query, fields, sort, remove, update, returnNew, upsert, bypassDocumentValidation, maxTime, maxTimeUnit);
+    }
+
+    private DBObject findAndModifyImpl(final DBObject query, final DBObject fields, final DBObject sort,
+                                       final boolean remove, final DBObject update,
+                                       final boolean returnNew, final boolean upsert,
+                                       final Boolean bypassDocumentValidation,
+                                       final long maxTime, final TimeUnit maxTimeUnit) {
         WriteOperation<DBObject> operation;
         if (remove) {
             operation = new FindAndDeleteOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec)
-                            .filter(wrapAllowNull(query))
-                            .projection(wrapAllowNull(fields))
-                            .sort(wrapAllowNull(sort))
-                            .maxTime(maxTime, maxTimeUnit);
+                        .filter(wrapAllowNull(query))
+                        .projection(wrapAllowNull(fields))
+                        .sort(wrapAllowNull(sort))
+                        .maxTime(maxTime, maxTimeUnit);
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrapAllowNull(update))
-                                .filter(wrap(query))
-                                .projection(wrapAllowNull(fields))
-                                .sort(wrapAllowNull(sort))
-                                .returnOriginal(!returnNew)
-                                .upsert(upsert)
-                                .maxTime(maxTime, maxTimeUnit);
+                            .filter(wrap(query))
+                            .projection(wrapAllowNull(fields))
+                            .sort(wrapAllowNull(sort))
+                            .returnOriginal(!returnNew)
+                            .upsert(upsert)
+                            .maxTime(maxTime, maxTimeUnit)
+                            .bypassDocumentValidation(bypassDocumentValidation);
             } else {
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), getWriteConcern(), objectCodec, wrap(update))
-                                .filter(wrapAllowNull(query))
-                                .projection(wrapAllowNull(fields))
-                                .sort(wrapAllowNull(sort))
-                                .returnOriginal(!returnNew)
-                                .upsert(upsert)
-                                .maxTime(maxTime, maxTimeUnit);
+                            .filter(wrapAllowNull(query))
+                            .projection(wrapAllowNull(fields))
+                            .sort(wrapAllowNull(sort))
+                            .returnOriginal(!returnNew)
+                            .upsert(upsert)
+                            .maxTime(maxTime, maxTimeUnit)
+                            .bypassDocumentValidation(bypassDocumentValidation);
             }
         }
 
@@ -1961,17 +2032,20 @@ public class DBCollection {
         return new BulkWriteOperation(false, this);
     }
 
-    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests) {
-        return executeBulkWriteOperation(ordered, writeRequests, getWriteConcern());
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                              final List<WriteRequest> writeRequests) {
+        return executeBulkWriteOperation(ordered, bypassDocumentValidation, writeRequests, getWriteConcern());
     }
 
-    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
+    BulkWriteResult executeBulkWriteOperation(final boolean ordered, final Boolean bypassDocumentValidation,
+                                              final List<WriteRequest> writeRequests,
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(getNamespace(),
                                                                                          translateWriteRequestsToNew(writeRequests,
                                                                                                                      getObjectCodec()),
-                                                                                         ordered, writeConcern)),
+                                                                                         ordered, writeConcern)
+                                                             .bypassDocumentValidation(bypassDocumentValidation)),
                                             getObjectCodec());
         } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));

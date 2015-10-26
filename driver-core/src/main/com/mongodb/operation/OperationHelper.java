@@ -17,9 +17,11 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -102,6 +104,17 @@ final class OperationHelper {
         }
         callable.call(source, connection, throwable);
     }
+
+    static boolean bypassDocumentValidationNotSupported(final Boolean bypassDocumentValidation, final WriteConcern writeConcern,
+                                                        final ConnectionDescription description) {
+        return bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description) && !writeConcern.isAcknowledged();
+    }
+
+    static MongoClientException getBypassDocumentValidationException() {
+        return new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern "
+                                        + "is not supported");
+    }
+
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress, final int batchSize) {

@@ -43,6 +43,7 @@ public class MapReduceCommand {
     private Map<String, Object> scope;
     private Boolean jsMode;
     private Boolean verbose;
+    private Boolean bypassDocumentValidation;
 
     /**
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
@@ -275,6 +276,28 @@ public class MapReduceCommand {
      */
     public void setOutputDB(final String outputDB) {
         this.outputDB = outputDB;
+    }
+
+    /**
+     * Gets whether to bypass document validation, or null if unspecified.  The default is null.
+     *
+     * @return whether to bypass document validation, or null if unspecified.
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
+    /**
+     * Sets whether to bypass document validation.
+     *
+     * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public void setBypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
     }
 
     /**

@@ -36,6 +36,7 @@ import org.junit.experimental.categories.Category;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -922,6 +923,463 @@ public class DBCollectionTest extends DatabaseTestCase {
 
         assertTrue(ids.isEmpty());
     }
+
+
+    @Test
+    public void testBypassDocumentValidationForInserts() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+
+
+        try {
+            c.insert(Collections.<DBObject>singletonList(new BasicDBObject("level", 9)));
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.insert(Collections.<DBObject>singletonList(new BasicDBObject("level", 9)),
+                     new InsertOptions().bypassDocumentValidation(false));
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.insert(Collections.<DBObject>singletonList(new BasicDBObject("level", 9)),
+                     new InsertOptions().bypassDocumentValidation(true));
+        } catch (MongoException e) {
+            fail();
+        }
+
+        // should fail if write concern is unacknowledged
+        try {
+            c.insert(Collections.<DBObject>singletonList(new BasicDBObject("level", 9)),
+                     new InsertOptions()
+                     .bypassDocumentValidation(true)
+                     .writeConcern(WriteConcern.UNACKNOWLEDGED));
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForUpdates() {
+
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+
+        try {
+            c.update(new BasicDBObject("_id", 1), new BasicDBObject("_id", 1).append("level", 9), true, false, WriteConcern.ACKNOWLEDGED,
+                     null);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.update(new BasicDBObject("_id", 1), new BasicDBObject("_id", 1).append("level", 9), true, false, WriteConcern.ACKNOWLEDGED,
+                     false, null);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.update(new BasicDBObject("_id", 1), new BasicDBObject("_id", 1).append("level", 9), true, false, WriteConcern.ACKNOWLEDGED,
+                     true, null);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            c.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("level", 9)), true, false,
+                     WriteConcern.ACKNOWLEDGED, true, null);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        // should fail if write concern is unacknowledged
+        try {
+            c.update(new BasicDBObject("_id", 1), new BasicDBObject("_id", 1).append("level", 9), true, false,
+                     WriteConcern.UNACKNOWLEDGED,
+                     true, null);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForFindAndModify() {
+
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+        c.insert(new BasicDBObject("_id", 1).append("level", 11));
+
+        try {
+            c.findAndModify(new BasicDBObject("_id", 1), new BasicDBObject("_id", 1).append("level", 9));
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("_id", 1).append("level", 9), false, false,
+                            false, 0, TimeUnit.SECONDS);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("_id", 1).append("level", 9), false, false,
+                            true, 0, TimeUnit.SECONDS);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            c.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("$set", new BasicDBObject("level", 9)),
+                            false, false, true, 0, TimeUnit.SECONDS);
+        } catch (MongoException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForBulkInsert() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(false);
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute();
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        // should fail if write concern is unacknowledged
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.insert(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.UNACKNOWLEDGED);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForBulkUpdate() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(false);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute();
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        // should fail if write concern is unacknowledged
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().update(new BasicDBObject("$set", new BasicDBObject("level", 9)));
+            bulk.execute(WriteConcern.UNACKNOWLEDGED);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForBulkReplace() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection c = database.createCollection(collectionName, options);
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(false);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute();
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute();
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeOrderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.ACKNOWLEDGED);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        // should fail if write concern is unacknowledged
+        try {
+            BulkWriteOperation bulk = c.initializeUnorderedBulkOperation();
+            bulk.setBypassDocumentValidation(true);
+            bulk.find(new BasicDBObject("_id", 1)).upsert().replaceOne(new BasicDBObject("level", 9));
+            bulk.execute(WriteConcern.UNACKNOWLEDGED);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForAggregateDollarOut() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection cOut = database.createCollection(collectionName + ".out", options);
+        DBCollection c = collection;
+
+        c.insert(new BasicDBObject("level", 9));
+
+        try {
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())));
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())),
+                        AggregationOptions.builder()
+                        .bypassDocumentValidation(false)
+                        .build());
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())),
+                        AggregationOptions.builder()
+                        .bypassDocumentValidation(true)
+                        .build());
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$match", new BasicDBObject("_id", 1))),
+                        AggregationOptions.builder()
+                        .bypassDocumentValidation(true)
+                        .build());
+        } catch (MongoException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testBypassDocumentValidationForNonInlineMapReduce() {
+        //given
+        DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
+        DBCollection cOut = database.createCollection(collectionName + ".out", options);
+        DBCollection c = collection;
+
+        c.insert(new BasicDBObject("level", 9));
+
+        String map = "function() { emit(this.level, this._id); }";
+        String reduce = "function(level, _id) { return 1; }";
+        try {
+            MapReduceCommand mapReduceCommand = new MapReduceCommand(c, map, reduce, cOut.getName(), MapReduceCommand.OutputType.REPLACE,
+                                                                     new BasicDBObject());
+            c.mapReduce(mapReduceCommand);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            MapReduceCommand mapReduceCommand = new MapReduceCommand(c, map, reduce, cOut.getName(), MapReduceCommand.OutputType.REPLACE,
+                                                                     new BasicDBObject());
+            mapReduceCommand.setBypassDocumentValidation(false);
+            c.mapReduce(mapReduceCommand);
+            if (serverVersionAtLeast(asList(3, 2, 0))) {
+                fail();
+            }
+        } catch (MongoException e) {
+            // success
+        }
+
+        try {
+            MapReduceCommand mapReduceCommand = new MapReduceCommand(c, map, reduce, cOut.getName(), MapReduceCommand.OutputType.REPLACE,
+                                                                     new BasicDBObject());
+            mapReduceCommand.setBypassDocumentValidation(true);
+            c.mapReduce(mapReduceCommand);
+        } catch (MongoException e) {
+            fail();
+        }
+
+        try {
+            MapReduceCommand mapReduceCommand = new MapReduceCommand(c, map, reduce, null, MapReduceCommand.OutputType.INLINE,
+                                                                     new BasicDBObject());
+            mapReduceCommand.setBypassDocumentValidation(true);
+            c.mapReduce(mapReduceCommand);
+        } catch (MongoException e) {
+            fail();
+        }
+    }
+
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;

@@ -35,6 +35,7 @@ public class AggregationOptions {
     private final Boolean allowDiskUse;
     private final OutputMode outputMode;
     private final long maxTimeMS;
+    private final Boolean bypassDocumentValidation;
 
     /**
      * Enumeration to define where the results of the aggregation will be output.
@@ -58,6 +59,7 @@ public class AggregationOptions {
         allowDiskUse = builder.allowDiskUse;
         outputMode = builder.outputMode;
         maxTimeMS = builder.maxTimeMS;
+        bypassDocumentValidation = builder.bypassDocumentValidation;
     }
 
     /**
@@ -103,6 +105,17 @@ public class AggregationOptions {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
+    /**
+     * Gets whether to bypass document validation, or null if unspecified.  The default is null.
+     *
+     * @return whether to bypass document validation, or null if unspecified.
+     * @since 2.14
+     * @mongodb.server.release 3.2
+     */
+    public Boolean getBypassDocumentValidation() {
+        return bypassDocumentValidation;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("AggregationOptions{");
@@ -114,6 +127,8 @@ public class AggregationOptions {
           .append(outputMode);
         sb.append(", maxTimeMS=")
           .append(maxTimeMS);
+        sb.append(", bypassDocumentValidation=")
+        .append(bypassDocumentValidation);
         sb.append('}');
         return sb.toString();
     }
@@ -139,6 +154,7 @@ public class AggregationOptions {
         private Boolean allowDiskUse;
         private OutputMode outputMode = OutputMode.INLINE;
         private long maxTimeMS;
+        private Boolean bypassDocumentValidation;
 
         private Builder() {
         }
@@ -190,6 +206,19 @@ public class AggregationOptions {
          */
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {
             maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+            return this;
+        }
+
+        /**
+         * Sets whether to bypass document validation.
+         *
+         * @param bypassDocumentValidation whether to bypass document validation, or null if unspecified
+         * @return this
+         * @since 2.14
+         * @mongodb.server.release 3.2
+         */
+        public Builder bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+            this.bypassDocumentValidation = bypassDocumentValidation;
             return this;
         }
 
