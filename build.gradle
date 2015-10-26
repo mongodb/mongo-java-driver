@@ -17,7 +17,7 @@
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
-apply plugin: 'org.kordamp.gradle.clirr'
+apply plugin: 'clirr'
 apply plugin: 'codenarc'
 apply plugin: 'eclipse'
 
@@ -29,11 +29,10 @@ def configDir = new File(rootDir, 'config')
 buildscript {
     repositories {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-        jcenter()
         mavenCentral()
     }
     dependencies {
-        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.2'
+        classpath 'me.trnl:clirr-gradle-plugin:0.4'
     }
 }
 
@@ -65,7 +64,6 @@ dependencies {
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
     baseline 'org.mongodb:mongo-java-driver:2.13.0'
-    failOnErrors = false
 }
 
 codenarc {
@@ -118,6 +116,6 @@ gradle.taskGraph.whenReady { taskGraph ->
 task testCoverage(dependsOn: test)
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '1.9'
 }
 
