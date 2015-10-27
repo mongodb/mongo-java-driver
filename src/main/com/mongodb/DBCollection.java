@@ -499,6 +499,7 @@ public abstract class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws MongoException
+     * @since 2.14
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew,
@@ -550,8 +551,8 @@ public abstract class DBCollection {
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @since 2.14.0
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
-     * @since 2.12.0
      */
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
                                   final boolean remove, final DBObject update,

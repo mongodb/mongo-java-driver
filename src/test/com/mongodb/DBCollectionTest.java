@@ -1088,6 +1088,7 @@ public class DBCollectionTest extends TestCase {
                 fail();
             }
         } catch (MongoException e) {
+            e.printStackTrace();
             // success
         }
     }
