@@ -668,8 +668,8 @@ public class DBCollectionTest extends TestCase {
                                                         new WriteConcern(5, 1));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
+            assertNotNull(e.getServerAddress());
             assertNotNull(e.getErrorMessage());
-            assertTrue(e.getCode() > 0);
             assertEquals(1, e.getCommandResult().get("n"));
             assertEquals(id, e.getCommandResult().get("upserted"));
         }
