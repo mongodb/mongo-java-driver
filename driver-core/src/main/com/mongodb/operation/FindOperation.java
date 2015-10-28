@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -84,6 +85,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private BsonDocument modifiers;
     private BsonDocument projection;
     private long maxTimeMS;
+    private long maxAwaitTimeMS;
     private int skip;
     private BsonDocument sort;
     private CursorType cursorType = CursorType.NonTailable;
@@ -252,10 +254,49 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      */
     public FindOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
+        isTrueArgument("maxTime >= 0", maxTime >= 0);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
+    /**
+     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
+     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
+     * this option is ignored.
+     *
+     * On servers >= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
+     * is no value: no "maxTimeMS" is sent to the server with the getMore command.
+     *
+     * On servers < 3.2, this option is ignored, and indicates that the driver should respect the server's default value
+     *
+     * A zero value will be ignored.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum await execution time in the given time unit
+     * @since 3.2
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     */
+    public long getMaxAwaitTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum await execution time on the server for this operation.
+     *
+     * @param maxAwaitTime  the max await time.  A zero value will be ignored, and indicates that the driver should respect the server's
+     *                      default value
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     * @since 3.2
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     */
+    public FindOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        isTrueArgument("maxAwaitTime >= 0", maxAwaitTime >= 0);
+        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        return this;
+    }
     /**
      * Gets the number of documents to skip.  The default is 0.
      *
@@ -460,7 +501,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                                   isPartial(),
                                                                   isOplogReplay(),
                                                                   decoder);
-                    return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source, connection);
+                    return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
                 }
             }
         });
@@ -499,6 +540,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                         wrappedCallback.onResult(null, t);
                                                     } else {
                                                         wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize,
+                                                                        getMaxTimeForCursor(),
                                                                         decoder, source, connection), null);
                                                     }
                                                 }
@@ -771,9 +813,13 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public BatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                                                                          connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
             }
         };
+    }
+
+    private long getMaxTimeForCursor() {
+        return cursorType == CursorType.TailableAwait ? maxAwaitTimeMS : 0;
     }
 
     private CommandTransformer<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
@@ -783,7 +829,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 QueryResult<T> queryResult = cursorDocumentToQueryResult(result.getDocument("cursor"),
                                                                          connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, decoder, source, connection);
+                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
             }
         };
     }

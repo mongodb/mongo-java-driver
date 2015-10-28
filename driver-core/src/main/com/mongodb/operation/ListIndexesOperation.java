@@ -191,7 +191,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
                                         if (t != null) {
                                             wrappedCallback.onResult(null, t);
                                         } else {
-                                            wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, decoder, source,
+                                            wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, 0, batchSize, 0, decoder, source,
                                                                                                   connection),
                                                     null);
                                         }

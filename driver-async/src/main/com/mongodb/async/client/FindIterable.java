@@ -66,6 +66,26 @@ public interface FindIterable<T> extends MongoIterable<T> {
     FindIterable<T> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
+     * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
+     * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
+     * this option is ignored.
+     *
+     * On servers >= 3.2, this option will be specified on the getMore command as "maxTimeMS". The default
+     * is no value: no "maxTimeMS" is sent to the server with the getMore command.
+     *
+     * On servers < 3.2, this option is ignored, and indicates that the driver should respect the server's default value
+     *
+     * A zero value will be ignored.
+     *
+     * @param maxAwaitTime  the max await time
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum await execution time in the given time unit
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @since 3.2
+     */
+    FindIterable<T> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
+
+    /**
      * Sets the query modifiers to apply to this operation.
      *
      * @param modifiers the query modifiers to apply, which may be null.

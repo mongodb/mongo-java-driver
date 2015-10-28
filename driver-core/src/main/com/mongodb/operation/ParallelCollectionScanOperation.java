@@ -201,7 +201,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new AsyncQueryBatchCursor<T>(createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           source.getServerDescription().getAddress()),
-                                                             0, getBatchSize(), decoder, source, connection));
+                                                             0, getBatchSize(), 0, decoder, source, connection));
                 }
                 return cursors;
             }

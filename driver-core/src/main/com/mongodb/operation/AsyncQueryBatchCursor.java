@@ -34,6 +34,7 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
@@ -47,6 +48,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
+    private final long maxTimeMS;
     private volatile AsyncConnectionSource connectionSource;
     private volatile QueryResult<T> firstBatch;
     private volatile int batchSize;
@@ -56,11 +58,13 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder) {
-        this(firstBatch, limit, batchSize, decoder, null, null);
+        this(firstBatch, limit, batchSize, 0, decoder, null, null);
     }
 
-    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize,
+    AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
+        isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
+        this.maxTimeMS = maxTimeMS;
         this.namespace = firstBatch.getNamespace();
         this.firstBatch = firstBatch;
         this.limit = limit;
@@ -166,7 +170,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         if (batchSizeForGetMoreCommand != 0) {
             document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
         }
-
+        if (maxTimeMS != 0) {
+            document.append("maxTimeMS", new BsonInt64(maxTimeMS));
+        }
         return document;
     }
 

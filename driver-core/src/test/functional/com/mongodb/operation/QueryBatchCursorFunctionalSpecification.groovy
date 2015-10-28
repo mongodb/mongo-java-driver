@@ -51,7 +51,7 @@ import static java.util.Arrays.asList
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
-class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
+class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecification {
     ConnectionSource connectionSource
     QueryBatchCursor<Document> cursor
 
@@ -151,7 +151,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         def connection = connectionSource.getConnection()
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, limit, batchSize, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, limit, batchSize, 0, new DocumentCodec(), connectionSource, connection)
 
         then:
         cursor.iterator().sum { it.size } == expectedTotal
@@ -248,6 +248,30 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         nextBatch.iterator().next().get('_id') == 2
     }
 
+    @Category(Slow)
+    def 'test maxTimeMS'() {
+        collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
+
+        def connection = connectionSource.getConnection()
+        def maxTimeMS = 10
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
+        cursor.tryNext()
+        long startTime = System.currentTimeMillis()
+
+        when:
+        def result = cursor.tryNext()
+
+        then:
+        result == null
+        // RACY TEST: no guarante assertion will fire within the given timeframe
+        System.currentTimeMillis() - startTime < (maxTimeMS + 200)
+
+        cleanup:
+        connection?.release()
+   }
+
     @SuppressWarnings('EmptyCatchBlock')
     @Category(Slow)
     def 'test tailable interrupt'() throws InterruptedException {
@@ -289,7 +313,7 @@ class QueryBatchCursorSpecification extends OperationFunctionalSpecification {
         def firstBatch = executeQuery(5)
         def connection = connectionSource.getConnection()
 
-        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, new DocumentCodec(), connectionSource, connection)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
 
         when:
         makeAdditionalGetMoreCall(firstBatch.cursor, connection)

@@ -84,6 +84,13 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     }
 
     @Override
+    public FindIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        findOptions.maxAwaitTime(maxAwaitTime, timeUnit);
+        return this;
+    }
+
+    @Override
     public FindIterable<TResult> batchSize(final int batchSize) {
         findOptions.batchSize(batchSize);
         return this;
@@ -167,6 +174,7 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
                    .skip(findOptions.getSkip())
                    .limit(findOptions.getLimit())
                    .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
                    .modifiers(toBsonDocument(findOptions.getModifiers()))
                    .projection(toBsonDocument(findOptions.getProjection()))
                    .sort(toBsonDocument(findOptions.getSort()))

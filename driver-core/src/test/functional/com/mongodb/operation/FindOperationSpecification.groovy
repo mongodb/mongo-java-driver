@@ -20,7 +20,6 @@ import category.Async
 import category.Slow
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
-import com.mongodb.CursorType
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoQueryException
@@ -63,10 +62,14 @@ import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.CursorType.NonTailable
+import static com.mongodb.CursorType.Tailable
+import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 
 class FindOperationSpecification extends OperationFunctionalSpecification {
@@ -83,6 +86,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getDecoder() == decoder
         operation.getFilter() == null
         operation.getMaxTime(MILLISECONDS) == 0
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
         operation.getLimit() == 0
         operation.getSkip() == 0
         operation.getBatchSize() == 0
@@ -103,14 +107,15 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         FindOperation operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .maxTime(10, MILLISECONDS)
+                .maxTime(10, SECONDS)
+                .maxAwaitTime(20, SECONDS)
                 .filter(filter)
                 .limit(20)
                 .skip(30)
                 .batchSize(40)
                 .projection(projection)
                 .modifiers(modifiers)
-                .cursorType(CursorType.Tailable)
+                .cursorType(Tailable)
                 .readConcern(ReadConcern.MAJORITY)
                 .partial(true)
                 .slaveOk(true)
@@ -119,7 +124,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         operation.getFilter() == filter
-        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getMaxTime(MILLISECONDS) == 10000
+        operation.getMaxAwaitTime(MILLISECONDS) == 20000
         operation.getLimit() == 20
         operation.getSkip() == 30
         operation.getBatchSize() == 40
@@ -620,13 +626,53 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
-                .cursorType(CursorType.TailableAwait)
+                .cursorType(TailableAwait)
 
         when:
         operation.execute(getBinding())
 
         then:
         true
+    }
+
+    def 'should apply maxAwaitTime'() {
+        given:
+        collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+                .cursorType(cursorType)
+                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
+
+        when:
+        def cursor = operation.execute(getBinding()) as QueryBatchCursor
+
+        then:
+        cursor.maxTimeMS == maxTimeMSForCursor
+
+        where:
+        cursorType    |  maxAwaitTimeMS  | maxTimeMSForCursor
+        NonTailable   |  100             | 0
+        Tailable      |  100             | 0
+        TailableAwait |  100             | 100
+    }
+
+    def 'should apply maxAwaitTime asynchronously'() {
+        given:
+        collectionHelper.create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+                .cursorType(cursorType)
+                .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
+
+        when:
+        def cursor = executeAsync(operation) as AsyncQueryBatchCursor
+
+        then:
+        cursor.maxTimeMS == maxTimeMSForCursor
+
+        where:
+        cursorType    |  maxAwaitTimeMS  | maxTimeMSForCursor
+        NonTailable   |  100             | 0
+        Tailable      |  100             | 0
+        TailableAwait |  100             | 100
     }
 
     // sanity check that the server accepts the miscallaneous flags
@@ -670,7 +716,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .skip(2)
                 .limit(100)
                 .batchSize(10)
-                .cursorType(CursorType.TailableAwait)
+                .cursorType(TailableAwait)
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
@@ -733,7 +779,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .skip(2)
                 .limit(limit)
                 .batchSize(batchSize)
-                .cursorType(CursorType.TailableAwait)
+                .cursorType(TailableAwait)
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)

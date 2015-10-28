@@ -338,7 +338,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, decoder, source, connection);
+                return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, 0, decoder, source, connection);
             }
         };
     }

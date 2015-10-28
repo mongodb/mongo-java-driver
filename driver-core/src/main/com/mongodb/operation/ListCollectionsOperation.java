@@ -224,7 +224,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
                                         } else {
                                             wrappedCallback.onResult(new ProjectingAsyncBatchCursor(
                                                     new AsyncQueryBatchCursor<BsonDocument>(result, 0,
-                                                            batchSize, new BsonDocumentCodec(), source, connection)
+                                                            batchSize, 0, new BsonDocumentCodec(), source, connection)
                                             ), null);
                                         }
                                     }
