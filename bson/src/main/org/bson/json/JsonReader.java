@@ -728,16 +728,20 @@ public class JsonReader extends AbstractBsonReader {
 
     private long visitISODateTimeConstructor() {
         verifyToken("(");
-        JsonToken valueToken = popToken();
-        if (valueToken.getType() != JsonTokenType.STRING) {
-            throw new JsonParseException("JSON reader expected a string but found '%s'.", valueToken.getValue());
+
+        JsonToken token = popToken();
+        if (token.getType() == JsonTokenType.RIGHT_PAREN) {
+            return new Date().getTime();
+        } else if (token.getType() != JsonTokenType.STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", token.getValue());
         }
+
         verifyToken(")");
         String[] patterns = {"yyyy-MM-dd", "yyyy-MM-dd'T'HH:mm:ssz", "yyyy-MM-dd'T'HH:mm:ss.SSSz"};
 
         SimpleDateFormat format = new SimpleDateFormat(patterns[0], Locale.ENGLISH);
         ParsePosition pos = new ParsePosition(0);
-        String s = valueToken.getValue(String.class);
+        String s = token.getValue(String.class);
 
         if (s.endsWith("Z")) {
             s = s.substring(0, s.length() - 1) + "GMT-00:00";
