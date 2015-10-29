@@ -181,8 +181,8 @@ public class JsonReader extends AbstractBsonReader {
                     setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitBinDataConstructor();
                 } else if ("Date".equals(value)) {
-                    setCurrentBsonType(BsonType.DATE_TIME);
-                    currentValue = visitDateTimeConstructor(); // withNew = false
+                    currentValue = visitDateTimeConstructorWithOutNew();
+                    setCurrentBsonType(BsonType.STRING);
                 } else if ("HexData".equals(value)) {
                     setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitHexDataConstructor();
@@ -845,6 +845,25 @@ public class JsonReader extends AbstractBsonReader {
         }
     }
 
+    private String visitDateTimeConstructorWithOutNew() {
+        verifyToken("(");
+        JsonToken token = popToken();
+        if (token.getType() != JsonTokenType.RIGHT_PAREN) {
+            while (token.getType() != JsonTokenType.END_OF_FILE) {
+                token = popToken();
+                if (token.getType() == JsonTokenType.RIGHT_PAREN) {
+                    break;
+                }
+            }
+            if (token.getType() != JsonTokenType.RIGHT_PAREN) {
+                throw new JsonParseException("JSON reader expected a ')' but found '%s'.", token.getValue());
+            }
+        }
+
+        DateFormat df = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss z", Locale.ENGLISH);
+        return df.format(new Date());
+    }
+
     private BsonBinary visitBinDataExtendedJson() {
         verifyToken(":");
         JsonToken bytesToken = popToken();
@@ -883,7 +902,7 @@ public class JsonReader extends AbstractBsonReader {
             try {
                 return DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
             } catch (IllegalArgumentException e) {
-                throw new JsonParseException("JSON reader expected an ISO-8601 date time string but found.", dateTimeString);
+                throw new JsonParseException("JSON reader expected an ISO-8601 date time string but found '%s'.", dateTimeString);
             }
         } else {
             throw new JsonParseException("JSON reader expected an integer or string but found '%s'.", valueToken.getValue());
