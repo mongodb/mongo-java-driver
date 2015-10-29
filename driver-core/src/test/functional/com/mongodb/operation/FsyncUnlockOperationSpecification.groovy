@@ -25,10 +25,10 @@ import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-
+import static com.mongodb.ClusterFixture.supportsFsync
 
 class FsyncUnlockOperationSpecification extends Specification {
-    @IgnoreIf({ isSharded() })
+    @IgnoreIf({ isSharded() || !supportsFsync() })
     def 'should unlock server'() {
         given:
         new CommandWriteOperation('admin', new BsonDocument('fsync', new BsonInt32(1)).append('lock', new BsonInt32(1)),

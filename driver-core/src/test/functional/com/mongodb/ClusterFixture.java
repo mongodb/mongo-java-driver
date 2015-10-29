@@ -114,6 +114,11 @@ public final class ClusterFixture {
                 .execute(getBinding());
     }
 
+    public static Document getServerStatus() {
+        return new CommandWriteOperation<Document>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
+               .execute(getBinding());
+    }
+
     @SuppressWarnings("unchecked")
     public static boolean isEnterpriseServer() {
         Document buildInfo = getBuildInfo();
@@ -123,6 +128,13 @@ public final class ClusterFixture {
         }
 
         return modules.contains("enterprise");
+    }
+
+    public static boolean supportsFsync() {
+        Document serverStatus = getServerStatus();
+        Document storageEngine = (Document) serverStatus.get("storageEngine");
+
+        return !storageEngine.get("name").equals("inMemory");
     }
 
     private static ServerVersion getConnectedServerVersion() {
