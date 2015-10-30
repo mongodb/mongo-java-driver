@@ -861,7 +861,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testWriteConcernExceptionOnFindAndModify() throws UnknownHostException {
-        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
+        assumeThat(serverVersionAtLeast(asList(3, 2, 0)), is(true));
         assumeThat(isDiscoverableReplicaSet(), is(true));
 
         ObjectId id = new ObjectId();
