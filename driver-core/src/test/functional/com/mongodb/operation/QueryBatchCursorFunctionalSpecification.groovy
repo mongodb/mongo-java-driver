@@ -248,7 +248,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         nextBatch.iterator().next().get('_id') == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 2, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast([3, 2, 0]) || isSharded() })
     @Category(Slow)
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -266,7 +266,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         then:
         result == null
-        // RACY TEST: no guarante assertion will fire within the given timeframe
+        // RACY TEST: no guarantee assertion will fire within the given timeframe
         System.currentTimeMillis() - startTime < (maxTimeMS + 200)
 
         cleanup:
