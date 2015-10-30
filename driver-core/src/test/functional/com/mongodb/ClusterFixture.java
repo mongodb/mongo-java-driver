@@ -134,7 +134,7 @@ public final class ClusterFixture {
         Document serverStatus = getServerStatus();
         Document storageEngine = (Document) serverStatus.get("storageEngine");
 
-        return !storageEngine.get("name").equals("inMemory");
+        return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
     private static ServerVersion getConnectedServerVersion() {
