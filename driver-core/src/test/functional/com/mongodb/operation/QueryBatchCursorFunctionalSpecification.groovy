@@ -248,6 +248,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         nextBatch.iterator().next().get('_id') == 2
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([3, 2, 0]) })
     @Category(Slow)
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
