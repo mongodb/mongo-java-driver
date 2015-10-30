@@ -466,7 +466,9 @@ public class DBCollection {
      * @param bypassDocumentValidation whether to bypass document validation.
      * @param encoder the DBEncoder to use
      * @return the result of the operation
-     * @throws MongoException
+     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
+     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      * @since 2.14
      */
@@ -1556,6 +1558,8 @@ public class DBCollection {
      * @param sort   determines which document the operation will modify if the query selects multiple documents
      * @param update the modifications to apply
      * @return pre-modification document
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndModify(final DBObject query, final DBObject sort, final DBObject update) {
@@ -1569,6 +1573,8 @@ public class DBCollection {
      * @param query  specifies the selection criteria for the modification
      * @param update the modifications to apply
      * @return the document as it was before the modifications
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndModify(final DBObject query, final DBObject update) {
@@ -1580,6 +1586,8 @@ public class DBCollection {
      *
      * @param query specifies the selection criteria for the modification
      * @return the document as it was before the modifications
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndRemove(final DBObject query) {
@@ -1599,6 +1607,8 @@ public class DBCollection {
      * @param upsert    when true, operation creates a new document if the query returns no documents
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
@@ -1621,7 +1631,8 @@ public class DBCollection {
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
-     * @throws MongoException
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @since 2.14
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1647,6 +1658,8 @@ public class DBCollection {
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.12.0
      */
@@ -1675,6 +1688,8 @@ public class DBCollection {
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
@@ -1703,6 +1718,8 @@ public class DBCollection {
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
@@ -1733,6 +1750,8 @@ public class DBCollection {
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
+     * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
