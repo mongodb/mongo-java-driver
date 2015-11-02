@@ -293,7 +293,7 @@ public class DBPort implements Connection {
                 successfullyConnected = true;
             }
             catch ( IOException e ){
-                close();
+                reset();
 
                 if (!_options.autoConnectRetry || (provider != null && !provider.hasWorked()))
                     throw e;
@@ -388,8 +388,12 @@ public class DBPort implements Connection {
     @Override
     public void close(){
         closed = true;
+        reset();
+    }
+
+    private void reset() {
         authenticatedDatabases.clear();
-                
+
         if ( _socket != null ){
             try {
                 _socket.close();
@@ -398,7 +402,7 @@ public class DBPort implements Connection {
                 // don't care
             }
         }
-        
+
         _in = null;
         _out = null;
         _socket = null;
