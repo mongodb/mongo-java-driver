@@ -251,7 +251,9 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        executor.execute(getCreateCollectionOperation(collectionName, options));
+        if (options != null) {
+            executor.execute(getCreateCollectionOperation(collectionName, options));
+        }
         return getCollection(collectionName);
     }
 
