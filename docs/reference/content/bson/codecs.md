@@ -44,7 +44,7 @@ The `encode` method takes a `BsonWriter` and an `Integer` and calls the `writeIn
 `Integer`, while the `decode` method takes a `BsonReader` and calls the `readInt32` method on the `BsonReader`, returning the value as an
 `Integer`.
 
-A `Codec` implementation than encodes to and decodes from a BSON document or array is more complicated, and would typically 
+A `Codec` implementation that encodes to and decodes from a BSON document or array is more complicated, and would typically 
 rely on a set of simpler `Codec` implementations for the basic BSON value types.  For this, it can rely on a `CodecRegistry`.
 
 ### CodecRegistry
@@ -88,7 +88,7 @@ public class DocumentCodecProvider implements CodecProvider {
             return (Codec<T>) new DocumentCodec(registry);           
         }                                                                                              
                                                                                                        
-        // CodecProvider returns null if it's not a provider for the requresed Class 
+        // CodecProvider returns null if it's not a provider for the requested Class 
         return null;                                          
     }                                                                                                  
 }
@@ -118,7 +118,7 @@ BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(replacements);
 
 This will replace the default mapping of BSON DateTime to `Date` to one from BSON DateTime to `Instant`.
 
-Putting it all together, we can added a BsonTypeClassMap to the DocumentCodecProvider shown above:
+Putting it all together, we can add a BsonTypeClassMap to the DocumentCodecProvider shown above:
  
 ```java
 public class DocumentCodecProvider implements CodecProvider {
