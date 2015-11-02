@@ -118,6 +118,13 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
+    public void shouldDeferCollectionCreationIfOptionsIsNull() {
+        collection.drop();
+        database.createCollection(collectionName, null);
+        assertFalse(database.getCollectionNames().contains(collectionName));
+    }
+
+    @Test
     public void shouldCreateCappedCollection() {
         collection.drop();
         database.createCollection(collectionName, new BasicDBObject("capped", true)
