@@ -181,7 +181,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
                 excludeCategories 'category.ReplicaSet'
             }
             if (project.buildingWith('quicktest')) {
-                excludeCategories 'category.Slow'
+                excludeCategories 'category.SlowUnit'
             }
         }
 
@@ -199,6 +199,12 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         }
 
         testLogging { exceptionFormat = 'full' }
+    }
+
+    task testSlowUnit(type: Test) {
+        useJUnit {
+            includeCategories 'category.SlowUnit'
+        }
     }
 
     gradle.taskGraph.whenReady { taskGraph ->

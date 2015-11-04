@@ -16,7 +16,7 @@
 
 package com.mongodb.connection
 
-import category.Slow
+import category.SlowUnit
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -35,7 +35,7 @@ import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.CommandHelper.executeCommand
 
-@Category(Slow)
+@Category(SlowUnit)
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build();
