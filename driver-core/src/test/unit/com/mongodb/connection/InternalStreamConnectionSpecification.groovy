@@ -577,6 +577,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
     }
 
+    @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
     @Category(SlowUnit)
     def 'should have threadsafe connection pipelining'() {
         given:
@@ -613,7 +614,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category([Async, SlowUnit])
-    @IgnoreIf({ javaVersion < 1.7 })
+    @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' || javaVersion < 1.7 })
     def 'should have threadsafe connection pipelining asynchronously'() {
         given:
         int threads = 10

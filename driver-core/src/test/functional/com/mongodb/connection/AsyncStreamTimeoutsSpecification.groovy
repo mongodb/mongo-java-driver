@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.connection.CommandHelper.executeCommand
 
+@IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
 @Category(SlowUnit)
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
