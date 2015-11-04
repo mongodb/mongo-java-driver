@@ -290,6 +290,10 @@ public class MongoClientURI {
             builder.sslEnabled(proxied.getSslEnabled());
         }
 
+        if (proxied.getSslInvalidHostNamesAllowed() != null) {
+            builder.sslInvalidHostNameAllowed(proxied.getSslInvalidHostNamesAllowed());
+        }
+
         return builder.build();
     }
 

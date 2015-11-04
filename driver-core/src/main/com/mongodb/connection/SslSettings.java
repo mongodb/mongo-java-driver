@@ -81,6 +81,9 @@ public class SslSettings {
             if (connectionString.getSslEnabled() != null) {
                 this.enabled = connectionString.getSslEnabled();
             }
+            if (connectionString.getSslInvalidHostNamesAllowed() != null) {
+                this.invalidHostNameAllowed = connectionString.getSslInvalidHostNamesAllowed();
+            }
             return this;
         }
 

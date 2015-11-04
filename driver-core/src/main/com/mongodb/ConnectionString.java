@@ -187,6 +187,7 @@ public class ConnectionString {
     private Integer connectTimeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
+    private Boolean sslInvalidHostNamesAllowed;
     private String requiredReplicaSetName;
 
     /**
@@ -294,6 +295,7 @@ public ConnectionString(final String connectionString) {
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("ssl");
+        GENERAL_OPTIONS_KEYS.add("sslinvalidhostnamesallowed");
         GENERAL_OPTIONS_KEYS.add("replicaset");
 
         READ_PREFERENCE_KEYS.add("readpreference");
@@ -351,6 +353,8 @@ public ConnectionString(final String connectionString) {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
             } else if (key.equals("ssl") && parseBoolean(value, "ssl")) {
                 sslEnabled = true;
+            } else if (key.equals("sslinvalidhostnamesallowed") && parseBoolean(value, "sslinvalidhostnamesallowed")) {
+                sslInvalidHostNamesAllowed = true;
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
             }
@@ -848,6 +852,14 @@ public ConnectionString(final String connectionString) {
     }
 
     /**
+     * Gets the SSL invalid host names allowed value specified in the connection string.
+     * @return the SSL enabled value
+     */
+    public Boolean getSslInvalidHostNamesAllowed() {
+        return sslInvalidHostNamesAllowed;
+    }
+
+    /**
      * Gets the required replica set name specified in the connection string.
      * @return the required replica set name
      */
@@ -918,6 +930,9 @@ public ConnectionString(final String connectionString) {
         if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
             return false;
         }
+        if (sslInvalidHostNamesAllowed != null ? !sslInvalidHostNamesAllowed.equals(that.sslInvalidHostNamesAllowed) : that.sslInvalidHostNamesAllowed != null) {
+            return false;
+        }
         if (threadsAllowedToBlockForConnectionMultiplier != null
             ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
             : that.threadsAllowedToBlockForConnectionMultiplier != null) {
@@ -949,6 +964,7 @@ public ConnectionString(final String connectionString) {
         result = 31 * result + (connectTimeout != null ? connectTimeout.hashCode() : 0);
         result = 31 * result + (socketTimeout != null ? socketTimeout.hashCode() : 0);
         result = 31 * result + (sslEnabled != null ? sslEnabled.hashCode() : 0);
+        result = 31 * result + (sslInvalidHostNamesAllowed != null ? sslInvalidHostNamesAllowed.hashCode() : 0);
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
