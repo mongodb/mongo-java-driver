@@ -333,7 +333,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(Slow.class)
     public void testUpdateWithDBEncoder() {
         DBObject document = new BasicDBObject("_id", 1).append("x", 1);
         collection.insert(document);
@@ -963,11 +962,14 @@ public class DBCollectionTest extends DatabaseTestCase {
         assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
 
         Set<Integer> ids = new HashSet<Integer>();
+        List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);
 
         for (int i = 0; i < 2000; i++) {
             ids.add(i);
-            collection.insert(new BasicDBObject("_id", i));
+            documents.add(new BasicDBObject("_id", i));
         }
+
+        collection.insert(documents);
 
         List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
         assertTrue(cursors.size() <= 3);

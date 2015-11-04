@@ -64,7 +64,6 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     }
 
-    @Category(Slow)
     def 'should execute write command'() {
         when:
         def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,

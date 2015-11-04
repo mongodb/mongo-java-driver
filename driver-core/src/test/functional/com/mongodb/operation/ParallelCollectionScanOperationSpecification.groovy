@@ -60,8 +60,9 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
     def 'setup'() {
         (1..2000).each {
             ids.put(it, true)
-            getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
+
+        getCollectionHelper().insertDocuments(new DocumentCodec(), (1..2000).collect( { new Document('_id', it) } ))
     }
 
 

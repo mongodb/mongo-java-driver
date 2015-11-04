@@ -520,9 +520,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
         given:
-        (1..500).each {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
-        }
+        collectionHelper.insertDocuments(new DocumentCodec(), (1..500).collect { new Document('_id', it) })
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
