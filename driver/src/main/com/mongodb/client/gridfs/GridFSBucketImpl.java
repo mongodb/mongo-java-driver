@@ -67,7 +67,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     GridFSBucketImpl(final MongoDatabase database, final String bucketName) {
         this.database = notNull("database", database);
         this.bucketName = notNull("bucketName", bucketName);
-        this.chunkSizeBytes = 255;
+        this.chunkSizeBytes = 255 * 1024;
         this.writeConcern = database.getWriteConcern();
         this.readConcern = database.getReadConcern();
         this.readPreference = database.getReadPreference();

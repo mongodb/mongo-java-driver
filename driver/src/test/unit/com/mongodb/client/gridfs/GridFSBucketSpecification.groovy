@@ -129,7 +129,7 @@ class GridFSBucketSpecification extends Specification {
 
     def 'should get defaults from MongoDatabase'() {
         given:
-        def defaultChunkSize = 255
+        def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
                 readConcern, new TestOperationExecutor([]))
 
@@ -137,7 +137,7 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl(database)
 
         then:
-        gridFSBucket.getChunkSizeBytes() == defaultChunkSize
+        gridFSBucket.getChunkSizeBytes() == defaultChunkSizeBytes
         gridFSBucket.getReadPreference() == database.getReadPreference()
         gridFSBucket.getWriteConcern() == database.getWriteConcern()
         gridFSBucket.getReadConcern() == database.getReadConcern()

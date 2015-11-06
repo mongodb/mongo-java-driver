@@ -36,6 +36,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoCollection<Document> filesCollection;
     protected MongoCollection<Document> chunksCollection;
     protected GridFSBucket gridFSBucket;
+    def singleChunkString = 'GridFS'
+    def multiChunkString = singleChunkString.padLeft(1024 * 255 * 5)
 
     def setup() {
         mongoDatabase = getMongoClient().getDatabase(getDefaultDatabaseName())
@@ -56,6 +58,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     @Unroll
     def 'should round trip a #description'() {
         given:
+        def content = multiChunk ? multiChunkString : singleChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
         def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
@@ -100,16 +103,16 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         gridFSContentBytes == contentBytes
 
         where:
-        description              | content          | chunkCount | direct
-        'a small file directly'  | 'Hello GridFS'   | 1          | true
-        'a small file to stream' | 'Hello GridFS'   | 1          | false
-        'a large file directly'  | 'qwerty' * 1024  | 25         | true
-        'a large file to stream' | 'qwerty' * 1024  | 25         | false
+        description              | multiChunk | chunkCount | direct
+        'a small file directly'  | false      | 1          | true
+        'a small file to stream' | false      | 1          | false
+        'a large file directly'  | true       | 5          | true
+        'a large file to stream' | true       | 5          | false
     }
 
     def 'should round trip with a batchSize of 1'() {
         given:
-        def content = 'qwerty' * 1024
+        def content = multiChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
         def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
@@ -121,7 +124,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         filesCollection.count() == 1
-        chunksCollection.count() == 25
+        chunksCollection.count() == 5
 
         when:
         def file = filesCollection.find().first()
