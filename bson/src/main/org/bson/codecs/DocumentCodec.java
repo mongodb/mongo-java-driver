@@ -84,7 +84,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this.registry = Assertions.notNull("registry", registry);
         this.bsonTypeClassMap = Assertions.notNull("bsonTypeClassMap", bsonTypeClassMap);
-        this.idGenerator = Assertions.notNull("idGenerator", new ObjectIdGenerator());
+        this.idGenerator = new ObjectIdGenerator();
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
             @Override
             public Object transform(final Object value) {
