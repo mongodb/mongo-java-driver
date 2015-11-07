@@ -166,9 +166,9 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final Object value) {
         if (value == null) {
             writer.writeNull();
-        } else if (Iterable.class.isAssignableFrom(value.getClass())) {
+        } else if (value instanceof Iterable) {
             writeIterable(writer, (Iterable<Object>) value, encoderContext.getChildContext());
-        } else if (Map.class.isAssignableFrom(value.getClass())) {
+        } else if (value instanceof Map) {
             writeMap(writer, (Map<String, Object>) value, encoderContext.getChildContext());
         } else {
             Codec codec = registry.get(value.getClass());
