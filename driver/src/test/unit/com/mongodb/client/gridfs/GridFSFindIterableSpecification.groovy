@@ -21,6 +21,7 @@ import com.mongodb.CursorType
 import com.mongodb.FindIterableImpl
 import com.mongodb.Function
 import com.mongodb.MongoClient
+import com.mongodb.MongoGridFSException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.TestOperationExecutor
@@ -152,8 +153,8 @@ class GridFSFindIterableSpecification extends Specification {
             firstResult.getId() == new BsonInt32(expectedResult.getInteger('_id'));
         }
         firstResult.getFilename() == expectedResult.getString('filename')
-        firstResult.getLength() == expectedResult.getLong('length')
-        firstResult.getChunkSize() == expectedResult.getInteger('chunkSize')
+        firstResult.getLength() == expectedResult.get('length')
+        firstResult.getChunkSize() == expectedResult.get('chunkSize')
         firstResult.getMD5() == expectedResult.getString('md5')
         firstResult.getUploadDate() == expectedResult.getDate('uploadDate')
 
@@ -210,6 +211,66 @@ class GridFSFindIterableSpecification extends Specification {
         cannedResults << [toSpecCannedResults, legacyCannedResults]
     }
 
+    def 'should handle alternative data for the GridFS file'() {
+        given:
+        def expectedLength = 123
+        def expectedChunkSize = 255
+
+        def cursor = {
+            Stub(BatchCursor) {
+                def count = 0
+                def getResult = {
+                    count++
+                    count == 1 ? [cannedResults] : null
+                }
+                next() >> { getResult() }
+                hasNext() >> { count == 0 }
+            }
+        }
+        def executor = new TestOperationExecutor([cursor()]);
+        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+                new Document(), new FindOptions())
+        def mongoIterable = new GridFSFindIterableImpl(underlying)
+
+        when:
+        def results = mongoIterable.first()
+
+        then:
+        results.getLength() == expectedLength
+        results.getChunkSize() == expectedChunkSize
+
+        where:
+        cannedResults << alternativeImplCannedResults
+    }
+
+    def 'should throw if has a value with a decimal'() {
+        given:
+        def cursor = {
+            Stub(BatchCursor) {
+                def count = 0
+                def getResult = {
+                    count++
+                    count == 1 ? [cannedResults] : null
+                }
+                next() >> { getResult() }
+                hasNext() >> { count == 0 }
+            }
+        }
+        def executor = new TestOperationExecutor([cursor()]);
+        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+                new Document(), new FindOptions())
+        def mongoIterable = new GridFSFindIterableImpl(underlying)
+
+        when:
+        mongoIterable.first()
+
+        then:
+        thrown(MongoGridFSException)
+
+        where:
+        cannedResults << invalidFloatCannedResults
+    }
+
     @Shared
     def toSpecCannedResults = [
             Document.parse('''{ '_id' : { '$oid' : '000000000000000000000001' }, 'filename' : 'File 1',
@@ -234,6 +295,24 @@ class GridFSFindIterableSpecification extends Specification {
             Document.parse('''{ '_id' : { '$oid' : '000000000000000000000002' }, 'filename' : 'File 3',
                                     'length' : { '$numberLong' : '1' },  'chunkSize' : 255, 'uploadDate' : { '$date' : 1438679434090 },
                                     'md5' : 'd41d8cd98f00b204e9800998ecf8427e', 'aliases' : ['File Three', 'Third File'] }''')
+    ]
+
+    @Shared
+    def alternativeImplCannedResults = [
+            Document.parse('''{ '_id' : 1, 'filename' : 'File 1', 'length' : 123,  'chunkSize' : { '$numberLong' : '255' },
+                                'uploadDate' : { '$date' : 1438679434041 }, 'md5' : 'd41d8cd98f00b204e9800998ecf8427e' }'''),
+            Document.parse('''{ '_id' : { '$oid' : '000000000000000000000001' }, 'filename' : 'File 2', 'length' : 123.0,
+                                'chunkSize' : 255.0, 'uploadDate' : { '$date' : 1438679434050 },
+                                'md5' : 'd41d8cd98f00b204e9800998ecf8427e'}''')
+    ]
+
+    @Shared
+    def invalidFloatCannedResults = [
+            Document.parse('''{ '_id' : 1, 'filename' : 'File 1', 'length' : 123.4,  'chunkSize' : 255,
+                                'uploadDate' : { '$date' : 1438679434041 }, 'md5' : 'd41d8cd98f00b204e9800998ecf8427e' }'''),
+            Document.parse('''{ '_id' : { '$oid' : '000000000000000000000001' }, 'filename' : 'File 2', 'length' : 123,
+                                'chunkSize' : 255.5, 'uploadDate' : { '$date' : 1438679434050 },
+                                'md5' : 'd41d8cd98f00b204e9800998ecf8427e'}''')
     ]
 
     @Shared
