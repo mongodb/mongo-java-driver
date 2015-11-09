@@ -19,6 +19,7 @@ package com.mongodb.client.gridfs;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoGridFSException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
+import static java.lang.String.format;
 
 class GridFSFindIterableImpl implements GridFSFindIterable {
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY = MongoClient.getDefaultCodecRegistry();
@@ -122,11 +124,11 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
             public GridFSFile apply(final Document document) {
                 BsonValue id = getId(document);
                 String filename = document.getString("filename");
-                long length = document.getLong("length");
-                int chunkSize = document.getInteger("chunkSize");
+                long length = getAndValidateNumber("length", document).longValue();
+                int chunkSize = getAndValidateNumber("chunkSize", document).intValue();
                 Date uploadDate = document.getDate("uploadDate");
-                String md5 = document.getString("md5");
 
+                String md5 = document.getString("md5");
                 Document metadata = document.get("metadata", Document.class);
                 Set<String> extraElementKeys = new HashSet<String>(document.keySet());
                 extraElementKeys.removeAll(VALID_FIELDS);
@@ -142,6 +144,14 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
                 }
             }
         });
+    }
+
+    private Number getAndValidateNumber(final String fieldName, final Document document) {
+        Number value = document.get(fieldName, Number.class);
+        if ((value.floatValue() % 1) != 0){
+            throw new MongoGridFSException(format("Invalid number format for %s", fieldName));
+        }
+        return value;
     }
 
     private BsonValue getId(final Document document) {
