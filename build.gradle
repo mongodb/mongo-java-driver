@@ -184,7 +184,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
                 excludeCategories 'category.SlowUnit'
             }
             if (project.buildingWith('travistest')) {
-                excludeCategories 'category.SlowUnit', 'category.SlowUnit'
+                excludeCategories 'category.SlowUnit', 'category.Slow'
             }
         }
 
