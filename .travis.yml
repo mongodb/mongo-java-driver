@@ -45,4 +45,4 @@ before_script:
 
 script:
   - ./gradlew -q assemble
-  - ./gradlew check -i -S -Pquicktest=true
+  - ./gradlew check -i -S -Ptravistest=true

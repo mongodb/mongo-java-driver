@@ -183,6 +183,9 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
             if (project.buildingWith('quicktest')) {
                 excludeCategories 'category.SlowUnit'
             }
+            if (project.buildingWith('travistest')) {
+                excludeCategories 'category.SlowUnit', 'category.SlowUnit'
+            }
         }
 
         jacoco { enabled = false }
