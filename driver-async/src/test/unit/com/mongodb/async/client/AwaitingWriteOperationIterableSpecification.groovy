@@ -1,8 +1,11 @@
 package com.mongodb.async.client
 
+import com.mongodb.Block
 import com.mongodb.MongoException
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.AsyncWriteOperation
 import org.bson.Document
 import spock.lang.Specification
@@ -285,6 +288,51 @@ class AwaitingWriteOperationIterableSpecification extends Specification {
 
         then:
         thrown(MongoException)
+    }
+
+    def 'should check variables using notNull'() {
+        given:
+        def mongoIterable = new AwaitingWriteOperationIterable(Stub(AsyncWriteOperation), Stub(AsyncOperationExecutor),
+                Stub(MongoIterable))
+        def callback = Stub(SingleResultCallback)
+        def block = Stub(Block)
+        def target = Stub(List)
+
+        when:
+        mongoIterable.first(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(target, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(block, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.map()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }
