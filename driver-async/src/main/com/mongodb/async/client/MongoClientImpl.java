@@ -94,6 +94,9 @@ class MongoClientImpl implements MongoClient {
             @Override
             public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
                                     final SingleResultCallback<T> callback) {
+                notNull("operation", operation);
+                notNull("readPreference", readPreference);
+                notNull("callback", callback);
                 final SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
                 final AsyncReadBinding binding = getReadWriteBinding(readPreference, cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
@@ -110,6 +113,8 @@ class MongoClientImpl implements MongoClient {
 
             @Override
             public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
+                notNull("operation", operation);
+                notNull("callback", callback);
                 final AsyncWriteBinding binding = getReadWriteBinding(ReadPreference.primary(), cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override

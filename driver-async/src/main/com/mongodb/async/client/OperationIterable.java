@@ -27,21 +27,24 @@ import com.mongodb.operation.AsyncReadOperation;
 import java.util.Collection;
 import java.util.List;
 
-class OperationIterable<T> implements MongoIterable<T> {
+import static org.bson.assertions.Assertions.notNull;
 
+class OperationIterable<T> implements MongoIterable<T> {
     private final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation;
     private final ReadPreference readPreference;
     private final AsyncOperationExecutor executor;
 
     OperationIterable(final AsyncReadOperation<? extends AsyncBatchCursor<T>> operation, final ReadPreference readPreference,
                       final AsyncOperationExecutor executor) {
-        this.operation = operation;
-        this.readPreference = readPreference;
-        this.executor = executor;
+        this.operation = notNull("operation", operation);
+        this.readPreference = notNull("readPreference", readPreference);
+        this.executor = notNull("executor", executor);
     }
 
     @Override
     public void forEach(final Block<? super T> block, final SingleResultCallback<Void> callback) {
+        notNull("block", block);
+        notNull("callback", callback);
         batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
@@ -56,6 +59,8 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public <A extends Collection<? super T>> void into(final A target, final SingleResultCallback<A> callback) {
+        notNull("target", target);
+        notNull("callback", callback);
         batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
@@ -84,6 +89,7 @@ class OperationIterable<T> implements MongoIterable<T> {
 
     @Override
     public void first(final SingleResultCallback<T> callback) {
+        notNull("callback", callback);
         batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {
@@ -122,6 +128,7 @@ class OperationIterable<T> implements MongoIterable<T> {
     @SuppressWarnings("unchecked")
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        notNull("callback", callback);
         executor.execute((AsyncReadOperation<AsyncBatchCursor<T>>) operation, readPreference, callback);
     }
 

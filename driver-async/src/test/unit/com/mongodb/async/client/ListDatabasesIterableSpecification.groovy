@@ -20,6 +20,8 @@ import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.ListDatabasesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -149,4 +151,48 @@ class ListDatabasesIterableSpecification extends Specification {
         batchCursor.isClosed()
     }
 
+    def 'should check variables using notNull'() {
+        given:
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(Document, codecRegistry, readPreference,
+                Stub(AsyncOperationExecutor))
+        def callback = Stub(SingleResultCallback)
+        def block = Stub(Block)
+        def target = Stub(List)
+
+        when:
+        mongoIterable.first(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(target, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(block, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.map()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 }

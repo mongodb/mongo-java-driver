@@ -112,16 +112,21 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
 
     @Override
     public void first(final SingleResultCallback<TResult> callback) {
+        notNull("callback", callback);
         execute().first(callback);
     }
 
     @Override
     public void forEach(final Block<? super TResult> block, final SingleResultCallback<Void> callback) {
+        notNull("block", block);
+        notNull("callback", callback);
         execute().forEach(block, callback);
     }
 
     @Override
     public <A extends Collection<? super TResult>> void into(final A target, final SingleResultCallback<A> callback) {
+        notNull("target", target);
+        notNull("callback", callback);
         execute().into(target, callback);
     }
 
@@ -132,6 +137,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
 
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+        notNull("callback", callback);
         execute().batchCursor(callback);
     }
 

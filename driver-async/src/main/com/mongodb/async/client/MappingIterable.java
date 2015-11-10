@@ -23,17 +23,20 @@ import com.mongodb.async.AsyncBatchCursor;
 
 import java.util.Collection;
 
+import static org.bson.assertions.Assertions.notNull;
+
 class MappingIterable<T, U> implements MongoIterable<U> {
     private final MongoIterable<T> iterable;
     private final Function<T, U> mapper;
 
     public MappingIterable(final MongoIterable<T> iterable, final Function<T, U> mapper) {
-        this.iterable = iterable;
-        this.mapper = mapper;
+        this.iterable = notNull("iterable", iterable);
+        this.mapper = notNull("mapper", mapper);
     }
 
     @Override
     public void first(final SingleResultCallback<U> callback) {
+        notNull("callback", callback);
         iterable.first(new SingleResultCallback<T>() {
             @Override
             public void onResult(final T result, final Throwable t) {
@@ -48,6 +51,8 @@ class MappingIterable<T, U> implements MongoIterable<U> {
 
     @Override
     public void forEach(final Block<? super U> block, final SingleResultCallback<Void> callback) {
+        notNull("block", block);
+        notNull("callback", callback);
         iterable.forEach(new Block<T>() {
             @Override
             public void apply(final T t) {
@@ -67,6 +72,8 @@ class MappingIterable<T, U> implements MongoIterable<U> {
 
     @Override
     public <A extends Collection<? super U>> void into(final A target, final SingleResultCallback<A> callback) {
+        notNull("target", target);
+        notNull("callback", callback);
         iterable.forEach(new Block<T>() {
             @Override
             public void apply(final T t) {
@@ -97,6 +104,7 @@ class MappingIterable<T, U> implements MongoIterable<U> {
 
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<U>> callback) {
+        notNull("callback", callback);
         iterable.batchCursor(new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
             public void onResult(final AsyncBatchCursor<T> batchCursor, final Throwable t) {

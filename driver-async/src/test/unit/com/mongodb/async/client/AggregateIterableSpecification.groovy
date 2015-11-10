@@ -23,8 +23,10 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -246,6 +248,51 @@ class AggregateIterableSpecification extends Specification {
         then:
         results.get() == cannedResults
         batchCursor.isClosed()
+    }
+
+    def 'should check variables using notNull'() {
+        given:
+        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
+        def callback = Stub(SingleResultCallback)
+        def block = Stub(Block)
+        def target = Stub(List)
+
+        when:
+        mongoIterable.first(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(target, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(block, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.map()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }

@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
     private final MongoIterable<T> delegated;
     private final List<SingleResultCallback<Void>> callbacks = new ArrayList<SingleResultCallback<Void>>();
@@ -52,6 +54,7 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
 
     @Override
     public void first(final SingleResultCallback<T> callback) {
+        notNull("callback", callback);
         boolean localWriteCompleted;
 
         synchronized (this) {
@@ -80,6 +83,8 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
 
     @Override
     public void forEach(final Block<? super T> block, final SingleResultCallback<Void> callback) {
+        notNull("block", block);
+        notNull("callback", callback);
         boolean localWriteCompleted;
 
         synchronized (this) {
@@ -109,6 +114,8 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
 
     @Override
     public <A extends Collection<? super T>> void into(final A target, final SingleResultCallback<A> callback) {
+        notNull("target", target);
+        notNull("callback", callback);
         boolean localWriteCompleted;
 
         synchronized (this) {
@@ -148,6 +155,7 @@ class AwaitingWriteOperationIterable<T, W> implements MongoIterable<T> {
 
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        notNull("callback", callback);
         boolean localWriteCompleted;
 
         synchronized (this) {
