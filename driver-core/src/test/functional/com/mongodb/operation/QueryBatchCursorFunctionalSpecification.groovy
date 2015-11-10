@@ -186,14 +186,15 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
     @SuppressWarnings('EmptyCatchBlock')
     @Category(Slow)
-    def 'test tailable'() {
+    def 'should block waiting for next batch on a tailable cursor'() {
+        given:
+        def connection = connectionSource.getConnection()
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
-
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
 
         when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, maxTimeMS, new DocumentCodec(), connectionSource, connection)
 
         then:
         cursor.hasNext()
@@ -203,7 +204,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def latch = new CountDownLatch(1)
         Thread.start {
             try {
-                sleep(1000)
+                sleep(500)
                 collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
             } catch (interrupt) {
                 //pass
@@ -223,6 +224,13 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         if (!cleanedUp) {
             throw new MongoTimeoutException('Timed out waiting for documents to be inserted')
         }
+        connection?.release()
+
+        where:
+        awaitData | maxTimeMS
+        true      | 0
+        true      | 100
+        false     | 0
     }
 
     @Category(Slow)
