@@ -226,7 +226,7 @@ class GridFSFindIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor()]);
-        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
                 new Document(), new FindOptions())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
@@ -255,7 +255,7 @@ class GridFSFindIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor()]);
-        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+        def underlying = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, executor,
                 new Document(), new FindOptions())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
