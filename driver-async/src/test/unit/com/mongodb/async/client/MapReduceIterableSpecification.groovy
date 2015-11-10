@@ -22,7 +22,9 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.MapReduceAction
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
@@ -273,6 +275,57 @@ class MapReduceIterableSpecification extends Specification {
         then:
         results.get() == cannedResults
         batchCursor.isClosed()
+    }
+
+    def 'should check variables using notNull'() {
+        given:
+        def mongoIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                Stub(AsyncOperationExecutor), 'map', 'reduce')
+        def callback = Stub(SingleResultCallback)
+        def block = Stub(Block)
+        def target = Stub(List)
+
+        when:
+        mongoIterable.first(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.into(target, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.forEach(block, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.map()
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        mongoIterable.toCollection(null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }

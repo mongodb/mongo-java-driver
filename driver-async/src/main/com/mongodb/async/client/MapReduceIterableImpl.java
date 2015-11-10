@@ -167,6 +167,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
     @Override
     public void toCollection(final SingleResultCallback<Void> callback) {
+        notNull("callback", callback);
         if (inline) {
             throw new IllegalArgumentException("The options must specify a non-inline result");
         }
@@ -181,16 +182,21 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
     @Override
     public void first(final SingleResultCallback<TResult> callback) {
+        notNull("callback", callback);
         execute().first(callback);
     }
 
     @Override
     public void forEach(final Block<? super TResult> block, final SingleResultCallback<Void> callback) {
+        notNull("block", block);
+        notNull("callback", callback);
         execute().forEach(block, callback);
     }
 
     @Override
     public <A extends Collection<? super TResult>> void into(final A target, final SingleResultCallback<A> callback) {
+        notNull("target", target);
+        notNull("callback", callback);
         execute().into(target, callback);
     }
 
@@ -201,6 +207,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+        notNull("callback", callback);
         execute().batchCursor(callback);
     }
 
