@@ -227,7 +227,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, false);
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
 
 
         when:
@@ -259,7 +259,10 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         }
 
         where:
-        maxTimeMS << [0, 100]
+        awaitData | maxTimeMS
+        true      | 0
+        true      | 100
+        false     | 0
     }
 
     def 'should respect limit'() {
