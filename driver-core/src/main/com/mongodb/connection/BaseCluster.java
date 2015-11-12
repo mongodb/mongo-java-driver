@@ -429,8 +429,6 @@ abstract class BaseCluster implements Cluster {
                 waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
                 waitQueueHandler.setDaemon(true);
                 waitQueueHandler.start();
-            } else {
-                waitQueueHandler.interrupt();
             }
         }
     }
@@ -466,9 +464,7 @@ abstract class BaseCluster implements Cluster {
                 try {
                     currentPhase.await(waitTimeNanos, NANOSECONDS);
                 } catch (InterruptedException e) {
-                    // Either we were interrupted because the wait queue has been added to, or because the cluster has been
-                    // closed.  If the latter, the while loop will exit.  If the former, we check all waiters, since we don't know which
-                    // one was added
+                    // The cluster has been closed and the while loop will exit.
                 }
             }
             // Notify all remaining waiters that a shutdown is in progress
