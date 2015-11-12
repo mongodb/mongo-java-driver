@@ -124,6 +124,9 @@ class DefaultConnectionPool implements ConnectionPool {
             connection = getPooledConnection(0, MILLISECONDS);
         } catch (MongoTimeoutException e) {
             // fall through
+        } catch (Throwable t) {
+            callback.onResult(null, t);
+            return;
         }
 
         if (connection != null) {
