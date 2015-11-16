@@ -11,7 +11,7 @@ title = "Reference"
 ## Reference
 
 The reference documentation for the Java driver focuses on high-level documentation and use-cases. The Javadoc-generated API reference is
-[here](http://api.mongodb.org/java/3.1/).    
+[here](http://api.mongodb.org/java/3.2/).    
 
 - [Connecting]({{< relref "driver/reference/connecting/index.md" >}}): Documentation of the driver's support for connecting to MongoDB servers
 - [CRUD]({{< relref "driver/reference/crud/index.md" >}}): Documentation of the driver's support for CRUD operations

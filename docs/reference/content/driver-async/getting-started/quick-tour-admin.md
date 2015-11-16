@@ -223,7 +223,7 @@ For more information about text search see the [text index]({{< docsref "/core/i
 ## Running a command
 
 While not all commands have a specific helper, however you can run any [command]({{< docsref "/reference/command">}})
-by using the [`runCommand()`](http://api.mongodb.org/java/3.1/?com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-) 
+by using the [`runCommand()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-">}})
 method.  Here we call the [buildInfo]({{ docsref "reference/command/buildInfo" }}) command:
 
 ```java

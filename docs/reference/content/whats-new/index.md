@@ -7,20 +7,18 @@ title = "What's New"
   pre = "<i class='fa fa-cog'></i>"
 +++
 
-# What's New in 3.1
+# What's New in 3.2
 
-Key new features of the 3.1 driver include:
+Key new features of the 3.2 driver include:
 
-- Builder support for [updates]({{< ref "builders/updates.md" >}})
-- Builder support for [aggregation stages and accumulators]({{< ref "builders/aggregation.md" >}})
-- Builder support for [geospatial query filters]({{< ref "builders/filters.md#geospatial" >}})
-- Builder support for [index keys]({{< ref "builders/indexes.md" >}})
-- A new [GridFS API]({{< ref "driver/reference/gridfs/index.md" >}}) that is compatible with the CRUD API introduced in the 3.0 
-driver release 
-(not yet available in the async driver)
-- An [event-based API]({{< ref "driver/reference/management/monitoring.md#command-monitoring" >}}) for monitoring all commands that the 
-driver sends to a MongoDB server and all responses received (not yet available in the async driver)
+- Support for bypassing [document validation]({{< docsref "release-notes/3.2/#document-validation" >}}) on collections where document 
+validation has been enabled. 
+- Builder support for new [aggregation stages]({{< docsref "release-notes/3.2/#new-aggregation-stages" >}}) 
+and [accumulators]({{< docsref "release-notes/3.2/#new-accumulators-for-group-stage" >}}) for the $group stage.
+- Support for [read concern]({{< docsref "release-notes/3.2/#readconcern" >}}).
+- Support for [version 3 text indexes]({{< docsref "release-notes/3.2/#text-index-version-3" >}})
+- Support for write concern on all DBCollection helpers for the findandmodify command
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.1
+See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.2.
