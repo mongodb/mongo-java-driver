@@ -128,6 +128,7 @@ class MapReduceIterableSpecification extends Specification {
                 .action(MapReduceAction.MERGE)
                 .sharded(true)
                 .jsMode(true)
+                .bypassDocumentValidation(true)
         mapReduceIterable.into([]) { result, t -> }
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
@@ -145,6 +146,7 @@ class MapReduceIterableSpecification extends Specification {
                 .action(MapReduceAction.MERGE.getValue())
                 .jsMode(true)
                 .sharded(true)
+                .bypassDocumentValidation(true)
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(expectedOperation)
