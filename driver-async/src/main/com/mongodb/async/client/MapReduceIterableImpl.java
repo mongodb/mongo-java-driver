@@ -67,6 +67,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private boolean sharded;
     private boolean nonAtomic;
     private int batchSize;
+    private Boolean bypassDocumentValidation;
 
     MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
@@ -168,6 +169,13 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
         return this;
     }
 
+
+    @Override
+    public MapReduceIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+        this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
     @Override
     public void toCollection(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
@@ -257,7 +265,8 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
                 .action(action.getValue())
                 .nonAtomic(nonAtomic)
                 .sharded(sharded)
-                .databaseName(databaseName);
+                .databaseName(databaseName)
+                .bypassDocumentValidation(bypassDocumentValidation);
 
         if (finalizeFunction != null) {
             operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
