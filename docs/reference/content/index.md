@@ -6,7 +6,7 @@ type = "index"
 
 ## MongoDB Java Driver Documentation
 
-Welcome to the MongoDB Java driver documentation hub for the 2.13 driver release.
+Welcome to the MongoDB Java driver documentation hub for the 2.14 driver release.
 
 ### Getting Started
 
@@ -15,4 +15,4 @@ and a simple tutorial to get up  and running quickly.
 
 ### API Documentation
 
-For more detailed API documentation, see the [Java Docs](http://api.mongodb.org/java/2.13/).
+For more detailed API documentation, see the [Java Docs](http://api.mongodb.org/java/2.14/).

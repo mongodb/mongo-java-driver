@@ -97,7 +97,7 @@ for more information.
 
 To get a collection to use, just specify the name of the collection to
 the [getCollection(String
-collectionName)](http://api.mongodb.org/java/2.13/com/mongodb/DB.html#getCollection%28java.lang.String%29)
+collectionName)](http://api.mongodb.org/java/2.14/com/mongodb/DB.html#getCollection%28java.lang.String%29)
 method:
 
 ```java
@@ -110,7 +110,7 @@ data, query for data, etc
 ## Setting Write Concern
 
 As of version 2.10.0, the default write concern is
-[WriteConcern.ACKNOWLEDGED](http://api.mongodb.org/java/2.13/com/mongodb/WriteConcern.html#ACKNOWLEDGED),
+[WriteConcern.ACKNOWLEDGED](http://api.mongodb.org/java/2.14/com/mongodb/WriteConcern.html#ACKNOWLEDGED),
 but it can be easily changed:
 
 ```java
@@ -120,7 +120,7 @@ mongoClient.setWriteConcern(WriteConcern.JOURNALED);
 There are many options for write concern. Additionally, the default
 write concern can be overridden on the database, collection, and
 individual update operations. Please consult the [API
-Documentation](http://api.mongodb.org/java/2.13/index.html) for
+Documentation](http://api.mongodb.org/java/2.14/index.html) for
 details.
 
 ## Inserting a Document
@@ -143,7 +143,7 @@ be represented as
 
 Notice that the above has an "inner" document embedded within it. To do
 this, we can use the
-[BasicDBObject](http://api.mongodb.org/java/2.13/com/mongodb/BasicDBObject.html)
+[BasicDBObject](http://api.mongodb.org/java/2.14/com/mongodb/BasicDBObject.html)
 class to create the document (including the inner document), and then
 just simply insert it into the collection using the `insert()` method.
 
@@ -159,10 +159,10 @@ coll.insert(doc);
 
 To show that the document we inserted in the previous step is there, we
 can do a simple
-[findOne()](http://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#findOne%28java.lang.Object%29)
+[findOne()](http://api.mongodb.org/java/2.14/com/mongodb/DBCollection.html#findOne%28java.lang.Object%29)
 operation to get the first document in the collection. This method
-returns a single document (rather than the [DBCursor](http://api.mongodb.org/java/2.13/com/mongodb/DBCursor.html)
-that the [find()](http://api.mongodb.org/java/2.13/com/mongodb/DBCollection.html#find()')
+returns a single document (rather than the [DBCursor](http://api.mongodb.org/java/2.14/com/mongodb/DBCursor.html)
+that the [find()](http://api.mongodb.org/java/2.14/com/mongodb/DBCollection.html#find()')
 operation returns), and it's useful for things where there only is one
 document, or you are only interested in the first. You don't have to
 deal with the cursor.
