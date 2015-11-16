@@ -10,7 +10,7 @@ title = "Installation Guide"
 
 # Installation
 
-There are two Maven artifacts available in the 3.1 release. The preferred artifact for new applications is `mongodb-driver` 
+There are two Maven artifacts available in the 3.2 release. The preferred artifact for new applications is `mongodb-driver` 
 however, we still publish the legacy `mongo-java-driver` uber-jar.
 The recommended way to get started using one of the drivers in your project is with a dependency management system.
 
@@ -28,7 +28,7 @@ For OSGi-based applications: due to the fact that there are classes from the `co
 jar (described below) instead. 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver" version="3.1.0-rc0" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.2.0-rc0" dependencies="true">}}
 
 
 ## Uber MongoDB Java Driver
@@ -38,4 +38,4 @@ An uber jar that contains everything you need; the BSON library, the core librar
 For OSGi-based applications: this artifact is a valid OSGi bundle. 
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.1.0-rc0">}}
+{{< install artifactId="mongo-java-driver" version="3.2.0-rc0">}}
