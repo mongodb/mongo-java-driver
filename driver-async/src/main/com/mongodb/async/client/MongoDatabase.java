@@ -98,7 +98,7 @@ public interface MongoDatabase {
     MongoDatabase withWriteConcern(WriteConcern writeConcern);
 
     /**
-     * Create a new MongoCollection instance with a different read concern.
+     * Create a new MongoDatabase instance with a different read concern.
      *
      * @param readConcern the new {@link ReadConcern} for the collection
      * @return a new MongoDatabase instance with the different ReadConcern
