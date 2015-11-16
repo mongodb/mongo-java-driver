@@ -101,7 +101,7 @@ public interface MongoDatabase {
      * Create a new MongoCollection instance with a different read concern.
      *
      * @param readConcern the new {@link ReadConcern} for the collection
-     * @return a new MongoCollection instance with the different ReadConcern
+     * @return a new MongoDatabase instance with the different ReadConcern
      * @since 3.2
      * @mongodb.server.release 3.2
      */
