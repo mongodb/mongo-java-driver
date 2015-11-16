@@ -1,20 +1,18 @@
 +++
 date = "2015-03-19T12:53:39-04:00"
-title = "Upgrading to 3.1"
+title = "Upgrading to 3.2"
 [menu.main]
   parent = "Whats New"
-  identifier = "Upgrading to 3.1"
+  identifier = "Upgrading to 3.2"
   weight = 40
   pre = "<i class='fa fa-wrench'></i>"
 +++
 
-# Upgrading from 3.0.x
+# Upgrading from 3.1.x
 
-The 3.1 release is binary and source compatible with the 3.0 release, with the following exceptions:
+The 3.2 release is binary and source compatible with the 3.1 release, except for methods that have been added to interfaces that have 
+been marked as unstable.
  
-- Other than BsonDocument, subclasses of BsonValue no longer implement Serializable
-- BsonDocumentWrapper and RawBsonDocument are now final
-
 # Upgrading from 2.x
 
 Please see the Upgrading guide in the 3.0 driver reference documentation.
