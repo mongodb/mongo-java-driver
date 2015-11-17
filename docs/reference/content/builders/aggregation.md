@@ -103,7 +103,7 @@ limit(10)
 
 ### Lookup
 
-Starting in 3.2, MongoDB Enterprise provides a new [`$lookup`]({{< docsref "reference/operator/aggregation/lookup/" >}}) pipeline stage 
+Starting in 3.2, MongoDB provides a new [`$lookup`]({{< docsref "reference/operator/aggregation/lookup/" >}}) pipeline stage 
 that performs a left outer join with another collection to filter in documents from the joined collection for processing.
 
 This example performs a left outer join on the `fromCollection` collection, joining the `local` field to the `from` field and outputted in 
