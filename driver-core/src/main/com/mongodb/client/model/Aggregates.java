@@ -97,8 +97,6 @@ public final class Aggregates {
     /**
      * Creates a $lookup pipeline stage for the specified filter
      *
-     * <p>Note: Available in MongoDB Enterprise only.</p>
-     *
      * @param from the name of the collection in the same database to perform the join with.
      * @param localField specifies the field from the local collection to match values against.
      * @param foreignField specifies the field in the from collection to match values against.
