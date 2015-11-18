@@ -22,6 +22,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.gridfs.GridFS;
+import com.mongodb.async.client.gridfs.GridFSImpl;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
@@ -57,6 +59,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public GridFS gridFS(final String bucketName, final Integer chunkSize) {
+        return new GridFSImpl(this, bucketName, chunkSize);
     }
 
     @Override
