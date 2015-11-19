@@ -22,6 +22,11 @@ current = "3.1.1"
   docs = "./2.13"
   api = "http://api.mongodb.org/java/2.13"
 
+[[versions]]
+  version = "2.14.0-rc0"
+  docs = "./2.14"
+  api = "http://api.mongodb.org/java/2.14"
+
 [[drivers]]
   name = "mongodb-driver"
   description = "The synchronous driver, new in 3.0.<br/>For older versions of the driver or for OSGi-based applications please use the `mongo-java-driver`."
