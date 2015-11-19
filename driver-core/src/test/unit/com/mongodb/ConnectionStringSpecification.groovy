@@ -25,6 +25,7 @@ import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
+import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -103,7 +104,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getConnectTimeout() == 2500;
         connectionString.getSocketTimeout() == 5500;
         connectionString.getWriteConcern() == new WriteConcern(1, 2500, true);
-        connectionString.getReadPreference() == ReadPreference.primary() ;
+        connectionString.getReadPreference() == primary() ;
         connectionString.getRequiredReplicaSetName() == 'test'
         connectionString.getSslEnabled()
 
@@ -256,6 +257,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
+        new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +

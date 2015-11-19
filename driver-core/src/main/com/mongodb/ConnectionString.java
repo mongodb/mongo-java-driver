@@ -527,7 +527,9 @@ public ConnectionString(final String connectionString) {
         }
         // handle legacy slaveok settings
         if (optionsMap.containsKey("slaveok") && !optionsMap.containsKey("readpreference")) {
-            optionsMap.put("readpreference", singletonList("secondaryPreferred"));
+            String readPreference = parseBoolean(getLastValue(optionsMap, "slaveok"), "slaveok")
+                                    ? "secondaryPreferred" : "primary";
+            optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
                 LOGGER.warn("Uri option 'slaveok' has been deprecated, use 'readpreference' instead.");
             }
