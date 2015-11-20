@@ -284,13 +284,21 @@ class DefaultConnectionPool implements ConnectionPool {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
                         }
-                        pool.prune();
+                        try {
+                            pool.prune();
+                        } catch (Exception e) {
+                            LOGGER.warn("Exception thrown while pruning connection pool", e);
+                        }
                     }
                     if (shouldEnsureMinSize()) {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
                         }
-                        pool.ensureMinSize(settings.getMinSize());
+                        try {
+                            pool.ensureMinSize(settings.getMinSize(), true);
+                        } catch (Exception e) {
+                            LOGGER.warn("Exception thrown while ensuring minimum pool size", e);
+                        }
                     }
                 }
             };
@@ -472,9 +480,12 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public UsageTrackingInternalConnection create() {
+        public UsageTrackingInternalConnection create(final boolean initialize) {
             UsageTrackingInternalConnection internalConnection =
             new UsageTrackingInternalConnection(internalConnectionFactory.create(serverId), generation.get());
+            if (initialize) {
+                internalConnection.open();
+            }
             connectionPoolListener.connectionAdded(new ConnectionEvent(getId(internalConnection)));
             return internalConnection;
         }

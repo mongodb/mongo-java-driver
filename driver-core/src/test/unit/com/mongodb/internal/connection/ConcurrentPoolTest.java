@@ -16,8 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -32,46 +32,10 @@ import static org.junit.Assert.fail;
 public class ConcurrentPoolTest {
     private ConcurrentPool<TestCloseable> pool;
 
-    static class TestCloseable implements Closeable {
-        private boolean closed;
-        private boolean shouldPrune;
-
-        @Override
-        public void close() {
-            closed = true;
-        }
-
-        boolean isClosed() {
-            return closed;
-        }
-
-        public boolean shouldPrune() {
-            return shouldPrune;
-        }
-    }
-
-    @Before
-    public void setUp() {
-        pool = new ConcurrentPool<TestCloseable>(3, new ConcurrentPool.ItemFactory<TestCloseable>() {
-            @Override
-            public TestCloseable create() {
-                return new TestCloseable();
-            }
-
-            @Override
-            public void close(final TestCloseable closeable) {
-                closeable.close();
-            }
-
-            @Override
-            public boolean shouldPrune(final TestCloseable testCloseable) {
-                return testCloseable.shouldPrune();
-            }
-        });
-    }
-
     @Test
     public void testThatGetDecreasesAvailability() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         pool.get();
         pool.get();
         pool.get();
@@ -85,6 +49,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testThatReleaseIncreasesAvailability() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         pool.get();
         pool.get();
         pool.release(pool.get());
@@ -92,7 +58,23 @@ public class ConcurrentPoolTest {
     }
 
     @Test
+    public void testThatGetReleasesPermitIfCreateFails() {
+        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+
+        try {
+            pool.get();
+            fail();
+        } catch (MongoException e) {
+            // expected
+        }
+
+        assertTrue(pool.acquirePermit(-1, MILLISECONDS));
+    }
+
+    @Test
     public void testInUseCount() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         assertEquals(0, pool.getInUseCount());
         TestCloseable closeable = pool.get();
         assertEquals(1, pool.getInUseCount());
@@ -102,6 +84,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAvailableCount() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         assertEquals(0, pool.getAvailableCount());
         TestCloseable closeable = pool.get();
         assertEquals(0, pool.getAvailableCount());
@@ -114,6 +98,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testAddItemToPoolOnRelease() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         TestCloseable closeable = pool.get();
         pool.release(closeable, false);
         assertFalse(closeable.isClosed());
@@ -121,6 +107,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseWithDiscard() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         TestCloseable closeable = pool.get();
         pool.release(closeable, true);
         assertTrue(closeable.isClosed());
@@ -128,6 +116,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseAllItemsAfterPoolClosed() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         TestCloseable c1 = pool.get();
         TestCloseable c2 = pool.get();
         pool.release(c1);
@@ -139,6 +129,8 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testCloseItemOnReleaseAfterPoolClosed() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         TestCloseable c1 = pool.get();
         pool.close();
         pool.release(c1);
@@ -147,25 +139,59 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testEnsureMinSize() {
-        pool.ensureMinSize(0);
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
+        pool.ensureMinSize(0, false);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(1);
+        pool.ensureMinSize(1, false);
         assertEquals(1, pool.getAvailableCount());
 
-        pool.ensureMinSize(1);
+        pool.ensureMinSize(1, false);
         assertEquals(1, pool.getAvailableCount());
 
         pool.get();
-        pool.ensureMinSize(1);
+        pool.ensureMinSize(1, false);
         assertEquals(0, pool.getAvailableCount());
 
-        pool.ensureMinSize(4);
+        pool.ensureMinSize(4, false);
         assertEquals(3, pool.getAvailableCount());
     }
 
     @Test
+    public void whenEnsuringMinSizeShouldNotInitializePooledItemIfNotRequested() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
+        pool.ensureMinSize(1, false);
+        assertFalse(pool.get().isInitialized());
+    }
+
+    @Test
+    public void whenEnsuringMinSizeShouldInitializePooledItemIfRequested() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
+        pool.ensureMinSize(1, true);
+        assertTrue(pool.get().isInitialized());
+    }
+
+    @Test
+    public void testThatEnsuringMinSizeReleasesPermitIfCreateFails() {
+        pool = new ConcurrentPool<TestCloseable>(1, new TestItemFactory(true));
+
+        try {
+            pool.ensureMinSize(1, true);
+            fail();
+        } catch (MongoException e) {
+            // expected
+        }
+
+        assertTrue(pool.acquirePermit(-1, MILLISECONDS));
+    }
+
+    @Test
     public void testPrune() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
         TestCloseable t1 = pool.get();
         TestCloseable t2 = pool.get();
         t1.shouldPrune = true;
@@ -179,5 +205,62 @@ public class ConcurrentPoolTest {
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
         assertTrue(t2.isClosed());
+    }
+
+    class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
+        private final boolean shouldThrowOnCreate;
+
+        TestItemFactory() {
+            this(false);
+        }
+
+        TestItemFactory(final boolean shouldThrowOnCreate) {
+            this.shouldThrowOnCreate = shouldThrowOnCreate;
+        }
+
+        @Override
+        public TestCloseable create(final boolean initialize) {
+            if (shouldThrowOnCreate) {
+                throw new MongoException("This is a journey");
+            }
+            return new TestCloseable(initialize);
+        }
+
+        @Override
+        public void close(final TestCloseable closeable) {
+            closeable.close();
+        }
+
+        @Override
+        public boolean shouldPrune(final TestCloseable testCloseable) {
+            return testCloseable.shouldPrune();
+        }
+    }
+
+    static class TestCloseable implements Closeable {
+        private boolean closed;
+        private boolean shouldPrune;
+        private final boolean initialized;
+
+        public TestCloseable(final boolean initialize) {
+            this.initialized = initialize;
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+        }
+
+        boolean isClosed() {
+            return closed;
+        }
+
+        public boolean isInitialized() {
+            return initialized;
+        }
+
+        public boolean shouldPrune() {
+            return shouldPrune;
+        }
     }
 }

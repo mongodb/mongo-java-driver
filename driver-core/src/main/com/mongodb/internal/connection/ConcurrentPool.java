@@ -45,7 +45,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param <T>
      */
     public interface ItemFactory<T> {
-        T create();
+        T create(final boolean initialize);
 
         void close(T t);
 
@@ -129,7 +129,7 @@ public class ConcurrentPool<T> implements Pool<T> {
 
         T t = available.pollLast();
         if (t == null) {
-            t = createNewAndReleasePermitIfFailure();
+            t = createNewAndReleasePermitIfFailure(false);
         }
 
         return t;
@@ -150,18 +150,18 @@ public class ConcurrentPool<T> implements Pool<T> {
         }
     }
 
-    public void ensureMinSize(final int minSize) {
+    public void ensureMinSize(final int minSize, final boolean initialize) {
         while (getCount() < minSize) {
             if (!acquirePermit(10, TimeUnit.MILLISECONDS)) {
                 break;
             }
-            release(createNewAndReleasePermitIfFailure());
+            release(createNewAndReleasePermitIfFailure(initialize));
         }
     }
 
-    private T createNewAndReleasePermitIfFailure() {
+    private T createNewAndReleasePermitIfFailure(final boolean initialize) {
         try {
-            T newMember = itemFactory.create();
+            T newMember = itemFactory.create(initialize);
             if (newMember == null) {
                 throw new MongoInternalException("The factory for the pool created a null item");
             }

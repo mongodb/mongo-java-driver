@@ -35,37 +35,37 @@ import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
 
-class DefaultPooledConnectionProviderSpecification extends Specification {
+class DefaultConnectionPoolSpecification extends Specification {
     private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
 
     private final TestInternalConnectionFactory connectionFactory = Spy(TestInternalConnectionFactory)
 
     @Subject
-    private DefaultConnectionPool provider
+    private DefaultConnectionPool pool
 
     def cleanup() {
-        provider.close()
+        pool.close()
     }
 
     def 'should get non null connection'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                         new NoOpConnectionPoolListener())
 
         expect:
-        provider.get() != null
+        pool.get() != null
     }
 
     def 'should reuse released connection'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                         new NoOpConnectionPoolListener())
 
         when:
-        provider.get().close()
-        provider.get()
+        pool.get().close()
+        pool.get()
 
         then:
         1 * connectionFactory.create(SERVER_ID)
@@ -73,12 +73,12 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should release a connection back into the pool on close, not close the underlying connection'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(),
+                                         new NoOpConnectionPoolListener())
 
         when:
-        provider.get().close()
+        pool.get().close()
 
         then:
         !connectionFactory.getCreatedConnections().get(0).isClosed()
@@ -86,18 +86,18 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(1, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(1, MILLISECONDS).build(),
+                                         new NoOpConnectionPoolListener())
 
         when:
-        def first = provider.get()
+        def first = pool.get()
 
         then:
         first != null
 
         when:
-        provider.get()
+        pool.get()
 
         then:
         thrown(MongoTimeoutException)
@@ -105,13 +105,13 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should throw on timeout'() throws InterruptedException {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(50, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener())
-        provider.get()
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(50, MILLISECONDS).build(),
+                                         new NoOpConnectionPoolListener())
+        pool.get()
 
         when:
-        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider)
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(pool)
         new Thread(connectionGetter).start()
 
         connectionGetter.latch.await()
@@ -136,11 +136,11 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
             }
         }
 
-        provider = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory, builder().maxSize(2).maxWaitQueueSize(1).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory, builder().maxSize(2).maxWaitQueueSize(1).build(),
+                                         new NoOpConnectionPoolListener())
         when:
-        def c1 = provider.get()
-        def c2 = provider.get()
+        def c1 = pool.get()
+        def c2 = pool.get()
 
         and:
         c2.sendMessage(Collections.<ByteBuf> emptyList(), 1)
@@ -151,14 +151,14 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         and:
         c1.close()
         c2.close()
-        provider.get().close()
+        pool.get().close()
 
         then:
         numberOfConnectionsCreated == 3
 
         when:
-        c1 = provider.get()
-        c2 = provider.get()
+        c1 = pool.get()
+        c2 = pool.get()
 
         and:
         c2.receiveMessage(1)
@@ -169,13 +169,13 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         and:
         c1.close()
         c2.close()
-        provider.get().close()
+        pool.get().close()
 
         then:
         numberOfConnectionsCreated == 5
     }
 
-    def 'should expire all connection after exception asynchronously'()  {
+    def 'should expire all connection after exception asynchronously'() {
         given:
         int numberOfConnectionsCreated = 0
 
@@ -195,17 +195,18 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
             }
         }
 
-        provider = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory,
-                                             builder().maxSize(2).maxWaitQueueSize(1).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory,
+                                         builder().maxSize(2).maxWaitQueueSize(1).build(),
+                                         new NoOpConnectionPoolListener())
         when:
-        def c1 = provider.get()
-        def c2 = provider.get()
+        def c1 = pool.get()
+        def c2 = pool.get()
 
         and:
         def e;
         c2.sendMessageAsync(Collections.<ByteBuf> emptyList(), 1) {
-            result, t -> e = t }
+            result, t -> e = t
+        }
 
         then:
         e instanceof MongoSocketWriteException
@@ -213,14 +214,14 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         and:
         c1.close()
         c2.close()
-        provider.get().close()
+        pool.get().close()
 
         then:
         numberOfConnectionsCreated == 3
 
         when:
-        c1 = provider.get()
-        c2 = provider.get()
+        c1 = pool.get()
+        c2 = pool.get()
 
         and:
         c2.receiveMessageAsync(1) {
@@ -233,7 +234,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         and:
         c1.close()
         c2.close()
-        provider.get().close()
+        pool.get().close()
 
         then:
         numberOfConnectionsCreated == 5
@@ -241,12 +242,12 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should have size of 0 with default settings'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(10).maintenanceInitialDelay(5, MINUTES).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(10).maintenanceInitialDelay(5, MINUTES).build(),
+                                         new NoOpConnectionPoolListener())
 
         when:
-        provider.doMaintenance()
+        pool.doMaintenance()
 
         then:
         connectionFactory.createdConnections.size() == 0
@@ -255,17 +256,18 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
     @Category(Slow)
     def 'should ensure min pool size after maintenance task runs'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(10).minSize(5).maintenanceInitialDelay(5, MINUTES).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(10).minSize(5).maintenanceInitialDelay(5, MINUTES).build(),
+                                         new NoOpConnectionPoolListener())
 
         when:
-        provider.doMaintenance()
+        pool.doMaintenance()
         //not cool - but we have no way of being notified that the maintenance task has finished
         Thread.sleep(500)
 
         then:
         connectionFactory.createdConnections.size() == 5
+        connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
     }
 
     def 'should invoke connection pool opened event'() {
@@ -274,7 +276,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         def settings = builder().maxSize(10).minSize(5).build()
 
         when:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, settings, listener)
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, settings, listener)
 
         then:
         1 * listener.connectionPoolOpened { it.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId && it.settings == settings }
@@ -284,9 +286,9 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         given:
         def listener = Mock(ConnectionPoolListener)
         def settings = builder().maxSize(10).minSize(5).build()
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, settings, listener)
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, settings, listener)
         when:
-        provider.close()
+        pool.close()
 
         then:
         1 * listener.connectionPoolClosed { it.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
@@ -295,10 +297,10 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
     def 'should fire connection added to pool event'() {
         given:
         def listener = Mock(ConnectionPoolListener)
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(10).maxWaitQueueSize(1).build(), listener)
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(10).maxWaitQueueSize(1).build(), listener)
 
         when:
-        provider.get()
+        pool.get()
 
         then:
         1 * listener.connectionAdded { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
@@ -307,12 +309,12 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
     def 'should fire connection removed from pool event'() {
         given:
         def listener = Mock(ConnectionPoolListener)
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(10).maxWaitQueueSize(1).build(), listener)
-        def connection = provider.get()
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(10).maxWaitQueueSize(1).build(), listener)
+        def connection = pool.get()
         connection.close()
 
         when:
-        provider.close()
+        pool.close()
 
         then:
         1 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
@@ -321,12 +323,12 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
     def 'should fire connection pool events on check out and check in'() {
         given:
         def listener = Mock(ConnectionPoolListener)
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1).maxWaitQueueSize(1).build(), listener)
-        def connection = provider.get()
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1).maxWaitQueueSize(1).build(), listener)
+        def connection = pool.get()
         connection.close()
 
         when:
-        connection = provider.get()
+        connection = pool.get()
 
         then:
         1 * listener.waitQueueEntered { it.serverId == SERVER_ID && it.threadId == Thread.currentThread().getId() }
@@ -342,9 +344,9 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should not fire any more events after pool is closed'() {
         def listener = Mock(ConnectionPoolListener)
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1).maxWaitQueueSize(1).build(), listener)
-        def connection = provider.get()
-        provider.close()
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1).maxWaitQueueSize(1).build(), listener)
+        def connection = pool.get()
+        pool.close()
 
         when:
         connection.close()
@@ -356,21 +358,21 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'should select connection asynchronously if one is immediately available'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
 
         expect:
-        selectConnectionAsyncAndGet(provider).opened()
+        selectConnectionAsyncAndGet(pool).opened()
     }
 
     def 'should select connection asynchronously if one is not immediately available'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
 
         when:
-        def connection = provider.get()
-        def connectionLatch = selectConnectionAsync(provider)
+        def connection = pool.get()
+        def connectionLatch = selectConnectionAsync(pool)
         connection.close()
 
         then:
@@ -379,13 +381,13 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'when getting a connection asynchronously should send MongoTimeoutException to callback after timeout period'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(2).maxWaitTime(5, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(2).maxWaitTime(5, MILLISECONDS).build(),
+                                         new NoOpConnectionPoolListener())
 
-        provider.get()
-        def firstConnectionLatch = selectConnectionAsync(provider)
-        def secondConnectionLatch = selectConnectionAsync(provider)
+        pool.get()
+        def firstConnectionLatch = selectConnectionAsync(pool)
+        def secondConnectionLatch = selectConnectionAsync(pool)
 
         when:
         firstConnectionLatch.get()
@@ -402,13 +404,13 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
     def 'when getting a connection asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
         given:
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                                             builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                                         builder().maxSize(1).maxWaitQueueSize(1).build(), new NoOpConnectionPoolListener())
 
         when:
-        provider.get()
-        selectConnectionAsync(provider)
-        selectConnectionAsyncAndGet(provider)
+        pool.get()
+        selectConnectionAsync(pool)
+        selectConnectionAsyncAndGet(pool)
 
         then:
         thrown(MongoWaitQueueFullException)
