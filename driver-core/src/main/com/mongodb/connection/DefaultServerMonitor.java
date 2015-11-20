@@ -120,6 +120,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 while (!monitorIsClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
                     Throwable previousException = currentException;
+                    currentException = null;
                     try {
                         if (connection == null) {
                             connection = internalConnectionFactory.create(serverId);
