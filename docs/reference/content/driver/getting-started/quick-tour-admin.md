@@ -84,7 +84,7 @@ for (String name : database.listCollectionNames()) {
 You can drop a collection by using the drop() method:
 
 ```java
-collection.dropCollection();
+collection.drop();
 ```
 
 ## Create An Index
