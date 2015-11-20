@@ -83,6 +83,7 @@ class ServerMonitor {
                 while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
                     Throwable previousException = currentException;
+                    currentException = null;
                     try {
                         if (connection == null) {
                             connection = new DBPort(serverAddress, mongo, getOptions());
