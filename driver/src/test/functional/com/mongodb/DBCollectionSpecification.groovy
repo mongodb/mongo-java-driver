@@ -17,12 +17,22 @@
 package com.mongodb
 
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.operation.AggregateOperation
+import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
+import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
+import com.mongodb.operation.DistinctOperation
+import com.mongodb.operation.FindOperation
+import com.mongodb.operation.MapReduceBatchCursor
+import com.mongodb.operation.MapReduceWithInlineResultsOperation
+import com.mongodb.operation.ParallelCollectionScanOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonJavaScript
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.BsonValueCodec
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -32,6 +42,28 @@ import static com.mongodb.Fixture.getMongoClient
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
+
+    def 'should get and set read concern'() {
+        when:
+        def db = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([]))
+        db.setReadConcern(ReadConcern.MAJORITY)
+        def collection = db.getCollection('test')
+
+        then:
+        collection.readConcern == ReadConcern.MAJORITY
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+
+        then:
+        collection.readConcern == ReadConcern.LOCAL
+
+        when:
+        collection.setReadConcern(null)
+
+        then:
+        collection.readConcern == ReadConcern.MAJORITY
+    }
 
     def 'should use CreateIndexOperation properly'() {
 
@@ -170,4 +202,154 @@ class DBCollectionSpecification extends Specification {
                                                                 new BsonDocumentCodec()))
         executor.getReadPreference() == collection.getReadPreference()
     }
+
+    def 'findOne should create the correct FindOperation'() {
+        given:
+        def dbObject = new BasicDBObject('_id', 1)
+        def executor = new TestOperationExecutor([Stub(BatchCursor) {
+            next() >> {
+                [dbObject]
+            }
+            hasNext() >> {
+                true
+            }
+        }]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def one = collection.findOne()
+
+        then:
+        one == dbObject
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                                                                .readConcern(ReadConcern.MAJORITY)
+                                                                .filter(new BsonDocument())
+                                                                .limit(-1))
+    }
+
+    def 'count should create the correct CountOperation'() {
+        given:
+        def executor = new TestOperationExecutor([42L]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def count = collection.count
+
+        then:
+        count == 42L
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+                                                                .readConcern(ReadConcern.MAJORITY)
+                                                                .filter(new BsonDocument())
+        )
+    }
+
+    def 'distinct should create the correct DistinctOperation'() {
+        given:
+        def executor = new TestOperationExecutor([Stub(BatchCursor) {
+            def count = 0
+            next() >> {
+                count++
+                [new BsonInt32(1), new BsonInt32(2)]
+            }
+            hasNext() >> {
+                count == 0
+            }
+        }]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def distinctFieldValues = collection.distinct('field1')
+
+        then:
+        distinctFieldValues == [1, 2]
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
+                                                                .readConcern(ReadConcern.MAJORITY)
+                                                                .filter(new BsonDocument())
+        )
+    }
+
+    def 'mapReduce should create the correct MapReduceOperation'() {
+        given:
+        def dbObject = new BasicDBObject('_id', 1)
+        def executor = new TestOperationExecutor([Stub(MapReduceBatchCursor) {
+            def count = 0
+            next() >> {
+                count++
+                [dbObject]
+            }
+            hasNext() >> {
+                count == 0
+            }
+        }])
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def mapReduceOutput = collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+
+        then:
+        mapReduceOutput.results() == [dbObject]
+        expect executor.getReadOperation(), isTheSameAs(new MapReduceWithInlineResultsOperation(collection.getNamespace(),
+                                                                                                new BsonJavaScript('map'),
+                                                                                                new BsonJavaScript('reduce'),
+                                                                                                collection.getDefaultDBObjectCodec())
+                                                                .readConcern(ReadConcern.MAJORITY)
+                                                                .verbose(true)
+                                                                .filter(new BsonDocument())
+        )
+    }
+
+    def 'aggregate should create the correct AggregateOperation'() {
+        given:
+        def dbObject = new BasicDBObject('_id', 1)
+        def executor = new TestOperationExecutor([Stub(BatchCursor) {
+            def count = 0
+            next() >> {
+                count++
+                [dbObject]
+            }
+            hasNext() >> {
+                count == 0
+            }
+        }])
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def aggregationOutput = collection.aggregate([new BasicDBObject('$match', new BasicDBObject())])
+
+        then:
+        aggregationOutput.results() == [dbObject]
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(),
+                                                                               [new BsonDocument('$match', new BsonDocument())],
+                                                                               collection.getObjectCodec())
+                                                                .readConcern(ReadConcern.MAJORITY)
+                                                                .useCursor(false)
+        )
+    }
+
+    def 'parallel should create the correct ParallelCollectionScanOperation'() {
+        given:
+        def executor = new TestOperationExecutor([[Stub(BatchCursor) {
+            hasNext() >> {
+                false
+            }
+        }]])
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        collection.setReadConcern(ReadConcern.MAJORITY)
+
+        when:
+        def cursors = collection.parallelScan(ParallelScanOptions.builder().build())
+
+        then:
+        cursors.size() == 1
+        expect executor.getReadOperation(), isTheSameAs(new ParallelCollectionScanOperation(collection.getNamespace(), 1,
+                                                                                            collection.getObjectCodec())
+                                                                .readConcern(ReadConcern.MAJORITY)
+        )
+    }
+
 }

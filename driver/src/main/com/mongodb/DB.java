@@ -72,6 +72,7 @@ public class DB {
     private final Codec<DBObject> commandCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
+    private volatile ReadConcern readConcern;
 
     DB(final Mongo mongo, final String name, final OperationExecutor executor) {
         if (!isValidName(name)) {
@@ -144,6 +145,28 @@ public class DB {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
+    }
+
+    /**
+     * Sets the read concern for this database.
+     *
+     * @param readConcern the read concern to use for this collection
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    void setReadConcern(final ReadConcern readConcern) {
+        this.readConcern = readConcern;
+    }
+
+    /**
+     * Get the read concern for this database.
+     *
+     * @return the {@link com.mongodb.ReadConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    ReadConcern getReadConcern() {
+        return readConcern != null ? readConcern : mongo.getReadConcern();
     }
 
     /**
