@@ -68,6 +68,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private final FindOptions findOptions;
     private int options;
     private ReadPreference readPreference;
+    private ReadConcern readConcern;
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
     private IteratorOrArray iteratorOrArray;
@@ -489,6 +490,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private FindOperation<DBObject> getQueryOperation(final FindOptions options, final Decoder<DBObject> decoder) {
         FindOperation<DBObject> operation = new FindOperation<DBObject>(collection.getNamespace(), decoder)
+                                                .readConcern(getReadConcern())
                                                 .filter(collection.wrapAllowNull(filter))
                                                 .batchSize(options.getBatchSize())
                                                 .skip(options.getSkip())
@@ -665,7 +667,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see DBCursor#size
      */
     public int count() {
-        return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreferenceForCursor(),
+        return (int) collection.getCount(getQuery(), 0, 0, getReadPreferenceForCursor(), getReadConcern(),
                                          findOptions.getMaxTime(MILLISECONDS), MILLISECONDS,
                                          collection.wrap(modifiers).get("$hint"));
     }
@@ -678,7 +680,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBObject one() {
         return collection.findOne(getQuery(), getKeysWanted(), sort,
-                                  getReadPreferenceForCursor(), findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                  getReadPreferenceForCursor(), getReadConcern(), findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -720,8 +722,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see #count()
      */
     public int size() {
-        return (int) collection.getCount(getQuery(), getKeysWanted(), findOptions.getLimit(),
-                                         findOptions.getSkip(), getReadPreference(),
+        return (int) collection.getCount(getQuery(), findOptions.getLimit(),
+                                         findOptions.getSkip(), getReadPreference(), getReadConcern(),
                                          findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
@@ -779,6 +781,33 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
+    }
+
+
+    /**
+     * Sets the read concern for this collection.
+     *
+     * @param readConcern the read concern to use for this collection
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    DBCursor setReadConcern(final ReadConcern readConcern) {
+        this.readConcern = readConcern;
+        return this;
+    }
+
+    /**
+     * Get the read concern for this collection.
+     *
+     * @return the {@link com.mongodb.ReadConcern}
+     * @since 3.2
+     * @mongodb.server.release 3.2
+     */
+    ReadConcern getReadConcern() {
+        if (readConcern != null) {
+            return readConcern;
+        }
+        return collection.getReadConcern();
     }
 
     /**

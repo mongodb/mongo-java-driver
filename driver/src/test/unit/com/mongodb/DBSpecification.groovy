@@ -24,9 +24,30 @@ import org.bson.BsonDouble
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.Fixture.getMongoClient
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
+
+    def 'should get and set read concern'() {
+        when:
+        def db = new DB(getMongoClient(), 'test', new TestOperationExecutor([]))
+
+        then:
+        db.readConcern == ReadConcern.DEFAULT
+
+        when:
+        db.setReadConcern(ReadConcern.MAJORITY)
+
+        then:
+        db.readConcern == ReadConcern.MAJORITY
+
+        when:
+        db.setReadConcern(null)
+
+        then:
+        db.readConcern == ReadConcern.DEFAULT
+    }
 
     def 'should execute CreateCollectionOperation'() {
         given:
