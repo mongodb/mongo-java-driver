@@ -29,6 +29,28 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCursorSpecification extends Specification {
 
+    def 'should get and set read preference'() {
+        when:
+        def collection = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([])).getCollection('test')
+        collection.setReadPreference(ReadPreference.nearest())
+        def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.nearest())
+
+        then:
+        cursor.readPreference == ReadPreference.nearest()
+
+        when:
+        cursor.setReadPreference(ReadPreference.secondary())
+
+        then:
+        cursor.readPreference == ReadPreference.secondary()
+
+        when:
+        cursor.setReadPreference(null)
+
+        then:
+        cursor.readPreference == ReadPreference.nearest()
+    }
+
     def 'should get and set read concern'() {
         when:
         def collection = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([])).getCollection('test')

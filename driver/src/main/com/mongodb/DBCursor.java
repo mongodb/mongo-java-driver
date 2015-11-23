@@ -780,7 +780,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the readPreference used by this cursor
      */
     public ReadPreference getReadPreference() {
-        return readPreference;
+        if (readPreference != null) {
+            return readPreference;
+        }
+        return collection.getReadPreference();
     }
 
 
