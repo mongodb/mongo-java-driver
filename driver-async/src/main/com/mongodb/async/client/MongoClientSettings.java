@@ -230,6 +230,7 @@ public final class MongoClientSettings {
          * @return {@code this}
          * @since 3.2
          * @mongodb.server.release 3.2
+         * @mongodb.driver.manual reference/readConcern/ Read Concern
          */
         public Builder readConcern(final ReadConcern readConcern) {
             this.readConcern = notNull("readConcern", readConcern);
@@ -334,6 +335,7 @@ public final class MongoClientSettings {
      * @return the read concern
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;

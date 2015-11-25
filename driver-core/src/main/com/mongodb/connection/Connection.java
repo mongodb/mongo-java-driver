@@ -112,6 +112,7 @@ public interface Connection extends ReferenceCounted {
      * @param inserts                   the inserts
      * @return the bulk write result
      * @since 3.2
+     * @mongodb.driver.manual reference/command/insert/ Insert
      */
     BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                                   List<InsertRequest> inserts);
@@ -139,6 +140,7 @@ public interface Connection extends ReferenceCounted {
      * @param updates                   the updates
      * @return the bulk write result
      * @since 3.2
+     * @mongodb.driver.manual reference/command/update/ Update
      */
     BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                                   List<UpdateRequest> updates);

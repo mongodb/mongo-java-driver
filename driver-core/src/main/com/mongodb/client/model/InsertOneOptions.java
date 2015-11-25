@@ -21,7 +21,8 @@ package com.mongodb.client.model;
  *
  * @since 3.2
  * @mongodb.server.release 3.2
- * @mongodb.driver.manual tutorial/insert-documents/ Insert
+ * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
+ * @mongodb.driver.manual reference/command/insert/ Insert Command
  */
 public final class InsertOneOptions {
     private Boolean bypassDocumentValidation;

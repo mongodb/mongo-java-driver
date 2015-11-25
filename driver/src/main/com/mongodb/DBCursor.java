@@ -793,6 +793,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param readConcern the read concern to use for this collection
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     DBCursor setReadConcern(final ReadConcern readConcern) {
         this.readConcern = readConcern;
@@ -805,6 +806,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the {@link com.mongodb.ReadConcern}
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     ReadConcern getReadConcern() {
         if (readConcern != null) {

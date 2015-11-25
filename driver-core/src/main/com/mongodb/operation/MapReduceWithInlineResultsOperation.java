@@ -303,6 +303,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
      *
      * @return the read concern
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;
@@ -313,6 +314,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
      * @param readConcern the read concern
      * @return this
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public MapReduceWithInlineResultsOperation<T> readConcern(final ReadConcern readConcern) {
         this.readConcern = notNull("readConcern", readConcern);

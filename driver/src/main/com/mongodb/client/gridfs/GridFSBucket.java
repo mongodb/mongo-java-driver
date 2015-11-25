@@ -71,6 +71,7 @@ public interface GridFSBucket {
      * @return the {@link com.mongodb.ReadConcern}
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     ReadConcern getReadConcern();
 
@@ -105,6 +106,7 @@ public interface GridFSBucket {
      * @return a new GridFSBucket instance with the different ReadConcern
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
 

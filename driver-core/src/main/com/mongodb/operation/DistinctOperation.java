@@ -132,6 +132,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
      *
      * @return the read concern
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;
@@ -142,6 +143,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
      * @param readConcern the read concern
      * @return this
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public DistinctOperation<T> readConcern(final ReadConcern readConcern) {
         this.readConcern = notNull("readConcern", readConcern);

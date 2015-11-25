@@ -153,6 +153,7 @@ public class DB {
      * @param readConcern the read concern to use for this collection
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     void setReadConcern(final ReadConcern readConcern) {
         this.readConcern = readConcern;
@@ -164,6 +165,7 @@ public class DB {
      * @return the {@link com.mongodb.ReadConcern}
      * @since 3.2
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     ReadConcern getReadConcern() {
         return readConcern != null ? readConcern : mongo.getReadConcern();

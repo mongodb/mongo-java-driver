@@ -121,6 +121,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
      *
      * @return the read concern
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;
@@ -131,6 +132,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
      * @param readConcern the read concern
      * @return this
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ParallelCollectionScanOperation<T> readConcern(final ReadConcern readConcern) {
         this.readConcern = notNull("readConcern", readConcern);

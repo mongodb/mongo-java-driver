@@ -25,6 +25,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The readConcern option allows clients to choose a level of isolation for their reads.
  *
  * @mongodb.server.release 3.2
+ * @mongodb.driver.manual reference/readConcern/ Read Concern
  * @since 3.2
  */
 public final class ReadConcern {
