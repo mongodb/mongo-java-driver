@@ -325,7 +325,7 @@ class DBCollectionSpecification extends Specification {
         aggregationOutput.results() == [dbObject]
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(),
                                                                                [new BsonDocument('$match', new BsonDocument())],
-                                                                               collection.getObjectCodec())
+                                                                               collection.getDefaultDBObjectCodec())
                                                                 .readConcern(ReadConcern.MAJORITY)
                                                                 .useCursor(false)
         )
