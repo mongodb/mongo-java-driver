@@ -227,8 +227,7 @@ abstract class BaseCluster implements Cluster {
         }
 
         description = newDescription;
-        CountDownLatch current = phase.getAndSet(new CountDownLatch(1));
-        current.countDown();
+        phase.getAndSet(new CountDownLatch(1)).countDown();
     }
 
     protected void fireChangeEvent() {
