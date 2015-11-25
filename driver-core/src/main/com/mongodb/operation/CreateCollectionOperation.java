@@ -36,6 +36,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
  * An operation to create a collection
  *
  * @since 3.0
+ * @mongodb.driver.manual reference/method/db.createCollection Create Collection
  */
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;

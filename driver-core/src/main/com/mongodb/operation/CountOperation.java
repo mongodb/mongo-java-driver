@@ -183,6 +183,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      *
      * @return the read concern
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;
@@ -193,6 +194,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * @param readConcern the read concern
      * @return this
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public CountOperation readConcern(final ReadConcern readConcern) {
         this.readConcern = notNull("readConcern", readConcern);

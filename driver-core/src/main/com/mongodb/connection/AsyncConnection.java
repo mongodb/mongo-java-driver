@@ -115,6 +115,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param inserts                  the inserts
      * @param callback                 the callback to be passed the bulk write result
      * @since 3.2
+     * @mongodb.driver.manual reference/command/insert/ Insert
      */
     void insertCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                             List<InsertRequest> inserts, SingleResultCallback<BulkWriteResult> callback);
@@ -144,6 +145,7 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param updates                  the updates
      * @param callback                 the callback to be passed the BulkWriteResult
      * @since 3.2
+     * @mongodb.driver.manual reference/command/update/ Update
      */
     void updateCommandAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                             List<UpdateRequest> updates, SingleResultCallback<BulkWriteResult> callback);

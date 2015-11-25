@@ -32,6 +32,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * An operation that determines the current operation on a MongoDB server.
  *
  * @since 3.2
+ * @mongodb.driver.manual reference/method/db.currentOp/ Current Op
  */
 public class CurrentOpOperation implements ReadOperation<BsonDocument> {
     @Override

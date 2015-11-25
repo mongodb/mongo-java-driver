@@ -49,6 +49,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *
  * @param <T> the operations result type.
  * @since 3.0
+ * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
  */
 public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;

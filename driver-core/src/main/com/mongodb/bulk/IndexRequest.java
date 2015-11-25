@@ -464,6 +464,7 @@ public class IndexRequest {
      *
      * @return the filter expression for the documents to be included in the index or null if not set
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual /core/index-partial/ Partial Indexes
      * @since 3.2
      */
     public BsonDocument getPartialFilterExpression() {
@@ -476,6 +477,7 @@ public class IndexRequest {
      * @param partialFilterExpression the filter expression for the documents to be included in the index
      * @return this
      * @mongodb.server.release 3.2
+     * @mongodb.driver.manual /core/index-partial/ Partial Indexes
      * @since 3.2
      */
     public IndexRequest partialFilterExpression(final BsonDocument partialFilterExpression) {

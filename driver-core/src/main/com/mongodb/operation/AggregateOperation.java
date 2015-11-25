@@ -200,6 +200,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      *
      * @return the read concern
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public ReadConcern getReadConcern() {
         return readConcern;
@@ -210,6 +211,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @param readConcern the read concern
      * @return this
      * @since 3.2
+     * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     public AggregateOperation<T> readConcern(final ReadConcern readConcern) {
         this.readConcern = notNull("readConcern", readConcern);

@@ -26,6 +26,7 @@ import static java.lang.String.format;
  * level of isolation for their reads.
  *
  * @mongodb.server.release 3.2
+ * @mongodb.driver.manual reference/readConcern/ Read Concern
  * @since 3.2
  */
 public enum ReadConcernLevel {

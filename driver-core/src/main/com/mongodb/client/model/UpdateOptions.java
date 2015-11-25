@@ -22,6 +22,7 @@ package com.mongodb.client.model;
  * @since 3.0
  * @mongodb.driver.manual tutorial/modify-documents/ Updates
  * @mongodb.driver.manual reference/operator/update/ Update Operators
+ * @mongodb.driver.manual reference/command/update/ Update Command
  */
 public class UpdateOptions {
     private boolean upsert;
