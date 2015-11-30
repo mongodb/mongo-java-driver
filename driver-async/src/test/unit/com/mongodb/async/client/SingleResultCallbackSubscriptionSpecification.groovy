@@ -43,7 +43,6 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         1 * block.apply(_)
     }
 
-
     def 'should call onComplete after all data has been consumed'() {
         given:
         SingleResultCallback<Integer> singleResultCallback
@@ -238,6 +237,24 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         then:
         observer.assertNoErrors()
         observer.assertReceivedOnNext([])
+        observer.assertTerminalEvent()
+    }
+
+    def 'should call onError if the passed block errors'() {
+        given:
+        def observer = new TestObserver()
+        observe(new Block<SingleResultCallback<Integer>>() {
+            @Override
+            void apply(final SingleResultCallback<Integer> callback) {
+                throw new MongoException('failed');
+            }
+        }).subscribe(observer)
+
+        when:
+        observer.requestMore(1)
+
+        then:
+        observer.assertErrored()
         observer.assertTerminalEvent()
     }
 

@@ -242,6 +242,24 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
         observer.assertTerminalEvent()
     }
 
+    def 'should call onError if the passed block errors'() {
+        given:
+        def observer = new TestObserver()
+        observeAndFlatten(new Block<SingleResultCallback<List<Integer>>>() {
+            @Override
+            void apply(final SingleResultCallback<List<Integer>> callback) {
+                throw new MongoException('failed');
+            }
+        }).subscribe(observer)
+
+        when:
+        observer.requestMore(1)
+
+        then:
+        observer.assertErrored()
+        observer.assertTerminalEvent()
+    }
+
     def getBlock() {
         new Block<SingleResultCallback<List<Integer>>>() {
 

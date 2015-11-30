@@ -372,6 +372,23 @@ class MongoIterableSubscriptionSpecification extends Specification {
 
         then:
         observer.assertTerminalEvent()
+        observer.assertErrored()
+    }
+
+    def 'should call onError if MongoIterable errors'() {
+        given:
+        def observer = new TestObserver()
+        observe(getMongoIterable(getFailingCursor(failImmediately))).subscribe(observer)
+
+        when:
+        observer.requestMore(3)
+
+        then:
+        observer.assertTerminalEvent()
+        observer.assertErrored()
+
+        where:
+        failImmediately << [true, false]
     }
 
     def getMongoIterable() {
@@ -389,6 +406,23 @@ class MongoIterableSubscriptionSpecification extends Specification {
     def getCursor() {
         Mock(AsyncBatchCursor) {
             def cursorResults = [[1, 2], [3, 4]]
+            next(_) >> {
+                it[0].onResult(cursorResults.isEmpty() ? null : cursorResults.remove(0), null)
+            }
+        }
+    }
+
+    def getFailingCursor(boolean failImmediately) {
+        Mock(AsyncBatchCursor) {
+            def cursorResults = [[1, 2]]
+            def hasSetBatchSize = failImmediately
+            setBatchSize(_) >> {
+                if (!hasSetBatchSize) {
+                    hasSetBatchSize = true
+                } else {
+                    throw new MongoException("Failure")
+                }
+            }
             next(_) >> {
                 it[0].onResult(cursorResults.isEmpty() ? null : cursorResults.remove(0), null)
             }
