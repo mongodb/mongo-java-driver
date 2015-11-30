@@ -79,9 +79,9 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
 
         if (requestData) {
-            requestInitialData();
+            tryRequestInitialData();
         } else {
-            processResultsQueue();
+            tryProcessResultsQueue();
         }
     }
 
@@ -107,14 +107,14 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (result != null) {
             resultsQueue.add(result);
         }
-        processResultsQueue();
+        tryProcessResultsQueue();
     }
 
     void addToQueue(final List<TResult> results) {
         if (results != null) {
             resultsQueue.addAll(results);
         }
-        processResultsQueue();
+        tryProcessResultsQueue();
     }
 
     void onError(final Throwable t) {
@@ -143,6 +143,22 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (terminalAction()) {
             postTerminate();
             observer.onComplete();
+        }
+    }
+
+    private void tryRequestInitialData() {
+        try {
+            requestInitialData();
+        } catch (Throwable t) {
+            onError(t);
+        }
+    }
+
+    private void tryProcessResultsQueue() {
+        try {
+            processResultsQueue();
+        } catch (Throwable t) {
+            onError(t);
         }
     }
 
