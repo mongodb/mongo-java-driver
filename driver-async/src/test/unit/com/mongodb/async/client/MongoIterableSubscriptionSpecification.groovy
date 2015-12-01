@@ -417,10 +417,10 @@ class MongoIterableSubscriptionSpecification extends Specification {
             def cursorResults = [[1, 2]]
             def hasSetBatchSize = failImmediately
             setBatchSize(_) >> {
-                if (!hasSetBatchSize) {
-                    hasSetBatchSize = true
+                if (hasSetBatchSize) {
+                    throw new MongoException('Failure')
                 } else {
-                    throw new MongoException("Failure")
+                    hasSetBatchSize = true
                 }
             }
             next(_) >> {
