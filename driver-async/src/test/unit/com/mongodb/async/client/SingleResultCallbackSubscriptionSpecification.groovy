@@ -157,12 +157,31 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
     def 'should not call onComplete after unsubscribe is called'() {
         given:
         def block = getBlock()
-        def observer = new TestObserver()
+        def observer = new TestObserver(new Observer() {
+            private Subscription subscription
+
+            @Override
+            void onSubscribe(final Subscription subscription) {
+                this.subscription = subscription
+            }
+
+            @Override
+            void onNext(final Object result) {
+                subscription.unsubscribe()
+            }
+
+            @Override
+            void onError(final Throwable e) {
+            }
+
+            @Override
+            void onComplete() {
+            }
+        })
         observe(block).subscribe(observer)
 
         when:
         observer.requestMore(1)
-        observer.getSubscription().unsubscribe()
 
         then:
         observer.assertUnsubscribed()
@@ -174,12 +193,16 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         given:
         def block = getBlock()
         def observer = new TestObserver(new Observer() {
+            private Subscription subscription
+
             @Override
             void onSubscribe(final Subscription subscription) {
+                this.subscription = subscription
             }
 
             @Override
             void onNext(final Object result) {
+                subscription.unsubscribe()
                 throw new MongoException('Failure')
             }
 
@@ -195,13 +218,11 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
 
         when:
         observer.requestMore(1)
-        observer.getSubscription().unsubscribe()
 
         then:
-        observer.assertUnsubscribed()
         observer.assertReceivedOnNext([1])
-        observer.assertErrored()
-        observer.assertTerminalEvent()
+        observer.assertUnsubscribed()
+        observer.assertNoTerminalEvent()
     }
 
 
