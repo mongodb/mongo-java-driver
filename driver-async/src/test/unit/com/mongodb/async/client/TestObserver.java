@@ -62,6 +62,7 @@ public class TestObserver<T> implements Observer<T> {
     @Override
     public void onSubscribe(final Subscription subscription) {
         this.subscription = subscription;
+        delegate.onSubscribe(subscription);
     }
 
     /**
@@ -209,7 +210,7 @@ public class TestObserver<T> implements Observer<T> {
      * @throws AssertionError if a terminal event notification was received
      */
     public void assertNoTerminalEvent() {
-        if (onCompleteEvents.size() != 0 && onErrorEvents.size() != 0) {
+        if (onCompleteEvents.size() > 0 || onErrorEvents.size() > 0) {
             throw new AssertionError("Terminal events received.");
         }
     }
