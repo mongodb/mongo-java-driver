@@ -22,7 +22,10 @@ import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
+import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.UuidRepresentation
+import org.bson.codecs.UuidCodec
 import org.bson.types.ObjectId
 import spock.lang.Unroll
 
@@ -30,6 +33,8 @@ import java.security.MessageDigest
 
 import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClient
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
@@ -475,5 +480,26 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def collectionNames = mongoDatabase.listCollectionNames().into([])
         !collectionNames.contains(filesCollection.getNamespace().collectionName)
         !collectionNames.contains(chunksCollection.getNamespace().collectionName)
+    }
+
+    def 'should use the user provided codec registries for encoding / decoding data'() {
+        given:
+        def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), MongoClient.getDefaultCodecRegistry())
+        def database = getMongoClient().getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
+        def uuid = UUID.randomUUID()
+        def fileMeta = new Document('uuid', uuid)
+        def gridFSBucket = GridFSBuckets.create(database)
+
+        when:
+        def fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(multiChunkString as byte[]),
+                new GridFSUploadOptions().metadata(fileMeta));
+
+        def file = gridFSBucket.find(new Document('_id', fileId)).first()
+
+        then:
+        file.getMetadata() == fileMeta
+
+        then:
+        filesCollection.find(BsonDocument).first().getDocument('metadata').getBinary('uuid').getType() == 4 as byte
     }
 }
