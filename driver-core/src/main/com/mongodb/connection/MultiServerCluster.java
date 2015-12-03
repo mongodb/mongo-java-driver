@@ -129,8 +129,18 @@ final class MultiServerCluster extends BaseCluster {
         boolean shouldUpdateDescription = true;
         synchronized (this) {
             ServerDescription newDescription = event.getNewValue();
+
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Handling description changed event for server %s with description %s",
+                                    newDescription.getAddress(), newDescription));
+            }
+
             ServerTuple serverTuple = addressToServerTupleMap.get(newDescription.getAddress());
             if (serverTuple == null) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Ignoring description changed event for removed server %s",
+                                        newDescription.getAddress()));
+                }
                 return;
             }
 
@@ -197,6 +207,10 @@ final class MultiServerCluster extends BaseCluster {
         ensureServers(newDescription);
 
         if (newDescription.getCanonicalAddress() != null && !newDescription.getAddress().sameHost(newDescription.getCanonicalAddress())) {
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
+                                   newDescription.getCanonicalAddress(), newDescription.getAddress()));
+            }
             removeServer(newDescription.getAddress());
             return true;
         }
@@ -204,10 +218,18 @@ final class MultiServerCluster extends BaseCluster {
         if (newDescription.isPrimary()) {
             if (newDescription.getElectionId() != null) {
                 if (maxElectionId != null && maxElectionId.compareTo(newDescription.getElectionId()) > 0) {
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Invalidating potential primary %s whose election id %s is less than the max election id seen "
+                                           + "so far %s", newDescription.getAddress(), newDescription.getElectionId(), maxElectionId));
+                    }
                     addressToServerTupleMap.get(newDescription.getAddress()).server.invalidate();
                     return false;
                 }
 
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info(format("Setting max election id to %s from replica set primary %s", newDescription.getElectionId(),
+                                       newDescription.getAddress()));
+                }
                 maxElectionId = newDescription.getElectionId();
             }
 
