@@ -44,6 +44,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
 class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalSpecification {
@@ -72,7 +73,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
@@ -84,6 +85,9 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
                                                                        new BsonDocument('ok', new BsonInt32(1))
                                                                                .append('n', new BsonInt32(1)),
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed delete command events'() {
@@ -97,7 +101,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'delete',
@@ -110,6 +114,9 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
                                                                        new BsonDocument('ok', new BsonInt32(1))
                                                                                .append('n', new BsonInt32(0)),
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed update command events'() {
@@ -123,7 +130,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'update',
@@ -138,6 +145,9 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
                                                                                .append('nModified', new BsonInt32(0))
                                                                                .append('n', new BsonInt32(0)),
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed command events when there is a write error'() {
@@ -152,7 +162,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoBulkWriteException)
@@ -170,6 +180,9 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
                                                                                .append('n', new BsonInt32(0))
                                                                                .append('writeErrors', new BsonArray([writeErrorDocument])),
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and failed command events'() {
@@ -186,7 +199,7 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoCommandException)
@@ -198,5 +211,8 @@ class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalS
                                                                                       .append('limit', new BsonInt32(0))]))),
                                              new CommandFailedEvent(1, connection.getDescription(),
                                                                     'delete', 0, e)])
+
+        where:
+        async << [false, true]
     }
 }

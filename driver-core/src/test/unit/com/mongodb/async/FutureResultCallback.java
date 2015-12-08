@@ -74,7 +74,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
             throw new MongoTimeoutException("Callback timed out");
         }
         if (result.hasError()) {
-            throw MongoException.fromThrowable(result.getError());
+            throw (RuntimeException) result.getError();
         } else {
             return result.getResult();
         }

@@ -80,7 +80,7 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
                                     new DeleteProtocol(namespace, true, UNACKNOWLEDGED,
                                             [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])],
                                   ],
-                                  [false]].combinations()
+                                  [false, true]].combinations()
     }
 
     def 'should publish failed command event when receiveMessage throws exception'() {
@@ -114,6 +114,6 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
                                     new DeleteProtocol(namespace, true, ACKNOWLEDGED,
                                             [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])],
                                   ],
-                                  [false]].combinations()
+                                  [false, true]].combinations()
     }
 }

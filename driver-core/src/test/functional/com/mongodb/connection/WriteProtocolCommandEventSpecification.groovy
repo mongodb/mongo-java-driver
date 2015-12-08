@@ -48,6 +48,7 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
@@ -85,14 +86,18 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                         new BsonDocument('ok', new BsonInt32(1)), 0)]
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        where:
+        async << [false, true]
     }
 
     @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
@@ -111,7 +116,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([
@@ -138,6 +143,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver started and completed command events when there is a write error'() {
@@ -152,7 +160,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(DuplicateKeyException)
@@ -173,6 +181,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver started and failed command events when there is a command failure'() {
@@ -190,7 +201,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoCommandException)
@@ -206,6 +217,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
 
@@ -220,7 +234,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'update',
@@ -239,7 +253,11 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)}
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        where:
+        async << [false, true]
+    }
 
     def 'should deliver started and completed command events for a single unacknowleded delete'() {
         given:
@@ -262,10 +280,13 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                         new BsonDocument('ok', new BsonInt32(1)), 0)]
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver started and completed command events for a single acknowleded insert'() {
@@ -288,10 +309,13 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                 .append('n', new BsonInt32(1)), 0)]
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver started and completed command events for a single acknowleded delete'() {
@@ -319,10 +343,13 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                 .append('n', new BsonInt32(1)), 0)]
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver started and completed command events for a single acknowleded update'() {
@@ -351,10 +378,32 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                         new BsonInt32(0)).append('_id', filter.get('_id'))])), 0)]
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
     }
 
+    def 'should not deliver any events if encoding fails'() {
+        given:
+        def insertRequest = [new InsertRequest(new BsonDocument('$set', new BsonInt32(1)))]
+        def protocol = new InsertProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
+        def commandListener = new TestCommandListener()
+        protocol.commandListener = commandListener
+
+        def expectedEvents = []
+
+        when:
+        execute(protocol, connection, async)
+
+        then:
+        thrown(IllegalArgumentException)
+        commandListener.eventsWereDelivered(expectedEvents)
+
+        where:
+        async << [false, true]
+    }
 }

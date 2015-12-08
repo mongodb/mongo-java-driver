@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.connection.ProtocolHelper.encodeMessage;
+import static com.mongodb.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.connection.ProtocolHelper.getQueryFailureException;
 import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
@@ -274,21 +274,13 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         }
         long startTimeNanos = System.nanoTime();
         QueryMessage message = null;
-        boolean isExplain = false;
         try {
+            boolean isExplain = false;
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             try {
                 message = createQueryMessage(connection.getDescription());
                 RequestMessage.EncodingMetadata metadata = message.encodeWithMetadata(bsonOutput);
-                if (commandListener != null) {
-                    BsonDocument command = asFindCommandDocument(bsonOutput, metadata.getFirstDocumentPosition());
-                    isExplain = command.keySet().iterator().next().equals(EXPLAIN_COMMAND_NAME);
-                    sendCommandStartedEvent(message, namespace.getDatabaseName(),
-                                            isExplain ? EXPLAIN_COMMAND_NAME : FIND_COMMAND_NAME,
-                                            command,
-                                            connection.getDescription(), commandListener);
-                }
-
+                isExplain = sendQueryStartedEvent(connection, message, bsonOutput, metadata);
                 connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } finally {
                 bsonOutput.close();
@@ -306,15 +298,10 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
                 QueryResult<T> queryResult = new QueryResult<T>(namespace, replyMessage, connection.getDescription().getServerAddress());
 
+                sendQuerySucceededEvent(connection.getDescription(), startTimeNanos, message, isExplain, responseBuffers, queryResult);
+
                 LOGGER.debug("Query completed");
 
-                if (commandListener != null) {
-                    BsonDocument response = asFindCommandResponseDocument(responseBuffers, queryResult, isExplain);
-                    sendCommandSucceededEvent(message,
-                                              isExplain ? EXPLAIN_COMMAND_NAME : FIND_COMMAND_NAME,
-                                              response, connection.getDescription(),
-                                              startTimeNanos, commandListener);
-                }
                 return queryResult;
             } finally {
                 responseBuffers.close();
@@ -330,25 +317,59 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<QueryResult<T>> callback) {
+        long startTimeNanos = System.nanoTime();
+        QueryMessage message = createQueryMessage(connection.getDescription());
+        boolean sentStartedEvent = true;
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace,
                                     connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
             }
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-            QueryMessage message = createQueryMessage(connection.getDescription());
-            encodeMessage(message, bsonOutput);
-            SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback<T>(namespace,
-                                                                                               callback,
-                                                                                               resultDecoder,
-                                                                                               message.getId(),
-                                                                                               connection.getDescription()
-                                                                                                         .getServerAddress());
+            RequestMessage.EncodingMetadata metadata = encodeMessageWithMetadata(message, bsonOutput);
+            boolean isExplainEvent = sendQueryStartedEvent(connection, message, bsonOutput, metadata);
+            sentStartedEvent = true;
+
+            SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback(callback, message.getId(),
+                    startTimeNanos, message, isExplainEvent, connection.getDescription());
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
-                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), callback,
-                                                                                receiveCallback));
+                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message,
+                                                getCommandName(isExplainEvent), startTimeNanos, commandListener, callback,
+                                                receiveCallback));
         } catch (Throwable t) {
+            if (commandListener != null && sentStartedEvent) {
+                sendCommandFailedEvent(message, FIND_COMMAND_NAME, connection.getDescription(), startTimeNanos, t, commandListener);
+            }
             callback.onResult(null, t);
+        }
+    }
+
+    private boolean sendQueryStartedEvent(final InternalConnection connection, final QueryMessage message,
+                                          final ByteBufferBsonOutput bsonOutput, final RequestMessage.EncodingMetadata metadata) {
+        boolean isExplainEvent = false;
+        if (commandListener != null) {
+            BsonDocument command = asFindCommandDocument(bsonOutput, metadata.getFirstDocumentPosition());
+            isExplainEvent = command.keySet().iterator().next().equals(EXPLAIN_COMMAND_NAME);
+            sendCommandStartedEvent(message, namespace.getDatabaseName(),
+                    getCommandName(isExplainEvent),
+                    command,
+                    connection.getDescription(), commandListener);
+        }
+        return isExplainEvent;
+    }
+
+    private String getCommandName(final boolean isExplainEvent) {
+        return isExplainEvent ? EXPLAIN_COMMAND_NAME : FIND_COMMAND_NAME;
+    }
+
+    private void sendQuerySucceededEvent(final ConnectionDescription connectionDescription, final long startTimeNanos,
+                                         final QueryMessage message,
+                                         final boolean isExplainEvent, final ResponseBuffers responseBuffers,
+                                         final QueryResult<T> queryResult) {
+        if (commandListener != null) {
+            BsonDocument response = asFindCommandResponseDocument(responseBuffers, queryResult, isExplainEvent);
+            sendCommandSucceededEvent(message, getCommandName(isExplainEvent), response, connectionDescription,
+                                      startTimeNanos, commandListener);
         }
     }
 
@@ -479,6 +500,64 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
             return new BsonDocument("cursor", cursorDocument)
                    .append("ok", new BsonDouble(1));
+        }
+    }
+
+    class QueryResultCallback extends ResponseCallback {
+        private final SingleResultCallback<QueryResult<T>> callback;
+        private final ConnectionDescription connectionDescription;
+        private final long startTimeNanos;
+        private final QueryMessage message;
+        private final boolean isExplainEvent;
+
+        public QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final int requestId, final long startTimeNanos,
+                                   final QueryMessage message, final boolean isExplainEvent,
+                                   final ConnectionDescription connectionDescription) {
+            super(requestId, connectionDescription.getServerAddress());
+            this.callback = callback;
+            this.startTimeNanos = startTimeNanos;
+            this.message = message;
+            this.isExplainEvent = isExplainEvent;
+            this.connectionDescription = connectionDescription;
+        }
+
+        @Override
+        protected void callCallback(final ResponseBuffers responseBuffers, final Throwable throwableFromCallback) {
+            try {
+                if (throwableFromCallback != null) {
+                    throw throwableFromCallback;
+                } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                    BsonDocument errorDocument = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                                                                                getRequestId()).getDocuments().get(0);
+                    throw getQueryFailureException(errorDocument, getServerAddress());
+                } else {
+                    QueryResult<T> result = new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, resultDecoder,
+                                                               getRequestId()), getServerAddress());
+
+                    sendQuerySucceededEvent(connectionDescription, startTimeNanos, message, isExplainEvent, responseBuffers, result);
+
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(format("Query results received %s documents with cursor %s",
+                                            result.getResults().size(),
+                                            result.getCursor()));
+                    }
+                    callback.onResult(result, null);
+                }
+            } catch (Throwable t) {
+                if (commandListener != null) {
+                    sendCommandFailedEvent(message, FIND_COMMAND_NAME, connectionDescription, startTimeNanos, t,
+                            commandListener);
+                }
+                callback.onResult(null, t);
+            } finally {
+                try {
+                    if (responseBuffers != null) {
+                        responseBuffers.close();
+                    }
+                } catch (Throwable t1) {
+                    LOGGER.debug("GetMore ResponseBuffer close exception", t1);
+                }
+            }
         }
     }
 }

@@ -120,26 +120,38 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<QueryResult<T>> callback) {
+        long startTimeNanos = System.nanoTime();
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
+        boolean sentStartedEvent = false;
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server "
                                     + "%s", namespace, cursorId, connection.getDescription().getConnectionId(),
                                     connection.getDescription().getServerAddress()));
             }
+
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
+
+            if (commandListener != null) {
+                sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asGetMoreCommandDocument(),
+                        connection.getDescription(), commandListener);
+                sentStartedEvent = true;
+            }
+
             ProtocolHelper.encodeMessage(message, bsonOutput);
-            SingleResultCallback<ResponseBuffers> receiveCallback = new GetMoreResultCallback<T>(namespace,
-                                                                                                 callback,
-                                                                                                 resultDecoder,
-                                                                                                 cursorId,
-                                                                                                 message.getId(),
-                                                                                                 connection.getDescription()
-                                                                                                           .getServerAddress());
+            SingleResultCallback<ResponseBuffers> receiveCallback = new GetMoreResultCallback(callback,
+                                                                                              cursorId,
+                                                                                              message,
+                                                                                              connection.getDescription(),
+                                                                                              commandListener, startTimeNanos);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(),
-                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), callback,
-                                                                                receiveCallback));
+                                        new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message, COMMAND_NAME,
+                                                startTimeNanos, commandListener, callback, receiveCallback));
         } catch (Throwable t) {
+            if (sentStartedEvent) {
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t,
+                        commandListener);
+            }
             callback.onResult(null, t);
         }
     }
@@ -187,4 +199,65 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                .append("ok", new BsonDouble(1));
     }
 
+    class GetMoreResultCallback extends ResponseCallback {
+        private final SingleResultCallback<QueryResult<T>> callback;
+        private final long cursorId;
+        private final GetMoreMessage message;
+        private final ConnectionDescription connectionDescription;
+        private final CommandListener commandListener;
+        private final long startTimeNanos;
+
+        public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback,
+                                     final long cursorId, final GetMoreMessage message, final ConnectionDescription connectionDescription,
+                                     final CommandListener commandListener, final long startTimeNanos) {
+            super(message.getId(), connectionDescription.getServerAddress());
+            this.callback = callback;
+            this.cursorId = cursorId;
+            this.message = message;
+            this.connectionDescription = connectionDescription;
+            this.commandListener = commandListener;
+            this.startTimeNanos = startTimeNanos;
+        }
+
+        @Override
+        protected void callCallback(final ResponseBuffers responseBuffers, final Throwable throwableFromCallback) {
+            try {
+                if (throwableFromCallback != null) {
+                    throw throwableFromCallback;
+                } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
+                    throw new MongoCursorNotFoundException(cursorId, getServerAddress());
+                } else {
+                    QueryResult<T> result = new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, resultDecoder,
+                                                               getRequestId()), getServerAddress());
+
+                    if (commandListener != null) {
+                        sendCommandSucceededEvent(message, COMMAND_NAME,
+                                asGetMoreCommandResponseDocument(result, responseBuffers), connectionDescription,
+                                startTimeNanos, commandListener);
+                    }
+
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug(format("GetMore results received %s documents with cursor %s",
+                                            result.getResults().size(),
+                                            result.getCursor()));
+                    }
+                    callback.onResult(result, null);
+                }
+            } catch (Throwable t) {
+                if (commandListener != null) {
+                    sendCommandFailedEvent(message, COMMAND_NAME, connectionDescription, startTimeNanos, t,
+                            commandListener);
+                }
+                callback.onResult(null, t);
+            } finally {
+                try {
+                    if (responseBuffers != null) {
+                        responseBuffers.close();
+                    }
+                } catch (Throwable t1) {
+                    LOGGER.debug("GetMore ResponseBuffer close exception", t1);
+                }
+            }
+        }
+    }
 }

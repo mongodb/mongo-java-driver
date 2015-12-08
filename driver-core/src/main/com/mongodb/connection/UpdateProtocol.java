@@ -102,12 +102,7 @@ class UpdateProtocol extends WriteProtocol {
         if (updates.get(0).isUpsert()) {
             updateDocument.append("upsert", BsonBoolean.TRUE);
         }
-        return getBaseCommandDocument().append("updates", new BsonArray(singletonList(updateDocument)));
-    }
-
-    @Override
-    protected String getCommandName() {
-        return "update";
+        return getBaseCommandDocument("update").append("updates", new BsonArray(singletonList(updateDocument)));
     }
 
 

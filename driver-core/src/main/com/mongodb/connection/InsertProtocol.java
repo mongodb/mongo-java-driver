@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
@@ -83,7 +82,7 @@ class InsertProtocol extends WriteProtocol {
                 @Override
                 public void onResult(final WriteConcernResult result, final Throwable t) {
                     if (t != null) {
-                        callback.onResult(null, MongoException.fromThrowable(t));
+                        callback.onResult(null, t);
                     } else {
                         LOGGER.debug("Asynchronous insert completed");
                         callback.onResult(result, null);
@@ -97,14 +96,9 @@ class InsertProtocol extends WriteProtocol {
 
     @Override
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
-        return getBaseCommandDocument()
+        return getBaseCommandDocument("insert")
                .append("documents", new BsonArray(ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition)));
 
-    }
-
-    @Override
-    protected String getCommandName() {
-        return "insert";
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {

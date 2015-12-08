@@ -21,7 +21,6 @@ import category.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
-import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -273,8 +272,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof IllegalArgumentException
+        thrown(IllegalArgumentException)
 
         where:
         ordered << [true, false]
@@ -291,8 +289,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof IllegalArgumentException
+        thrown(IllegalArgumentException)
 
         where:
         ordered << [true, false]
@@ -313,8 +310,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         executeAsync(op)
 
         then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof IllegalArgumentException
+        thrown(IllegalArgumentException)
 
         where:
         ordered << [true, false]

@@ -37,6 +37,7 @@ import spock.lang.Shared
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
@@ -68,7 +69,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
         protocol.commandListener = commandListener
 
         when:
-        def getMoreResult = protocol.execute(connection)
+        def getMoreResult = execute(protocol, connection, async)
 
         then:
         def response = new BsonDocument('cursor',
@@ -84,6 +85,9 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
                                              new CommandSucceededEvent(1, connection.getDescription(), 'getMore',
                                                                        response,
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and failed command events'() {
@@ -98,7 +102,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoQueryException)
@@ -108,5 +112,8 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
                                                                              .append('batchSize', new BsonInt32(2))),
                                              new CommandFailedEvent(1, connection.getDescription(), 'getMore', 0, e)
         ])
+
+        where:
+        async << [false, true]
     }
 }

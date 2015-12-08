@@ -17,7 +17,6 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -252,8 +251,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         futureResult.get(5, SECONDS)
 
         then:
-        MongoException ex = thrown()
-        ex.cause instanceof BsonInvalidOperationException
+        thrown(BsonInvalidOperationException)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
