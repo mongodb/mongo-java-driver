@@ -18,7 +18,6 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoCommandException
-import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
@@ -266,8 +265,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         executeAsync(new FindAndUpdateOperation<Document>(getNamespace(), writeConcern, documentCodec, update))
 
         then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof IllegalArgumentException
+        thrown(IllegalArgumentException)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })

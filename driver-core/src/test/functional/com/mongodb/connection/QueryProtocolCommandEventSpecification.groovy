@@ -41,6 +41,7 @@ import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
 class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecification {
@@ -76,7 +77,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def result = protocol.execute(connection)
+        def result = execute(protocol, connection, async)
 
         then:
         def response = new BsonDocument('cursor',
@@ -90,6 +91,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('projection', projection)
                                                                              .append('skip', new BsonInt32(skip))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed command events with limit and batchSize'() {
@@ -112,7 +116,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def result = protocol.execute(connection)
+        def result = execute(protocol, connection, async)
 
         then:
         def response = new BsonDocument('cursor',
@@ -128,6 +132,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('limit', new BsonInt32(limit))
                                                                              .append('batchSize', new BsonInt32(batchSize))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed command events when there is no projection'() {
@@ -143,7 +150,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def queryResult = protocol.execute(connection)
+        def queryResult = execute(protocol, connection, async)
 
         then:
         def response = new BsonDocument('cursor',
@@ -155,6 +162,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                      new BsonDocument('find', new BsonString(getCollectionName()))
                                                                              .append('filter', filter)),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed command events when there are boolean options'() {
@@ -177,7 +187,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def queryResult = protocol.execute(connection)
+        def queryResult = execute(protocol, connection, async)
 
         then:
         def response = new BsonDocument('cursor',
@@ -194,6 +204,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('awaitData', BsonBoolean.TRUE)
                                                                              .append('allowPartialResults', BsonBoolean.TRUE)),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+
+        where:
+        async << [false, true]
     }
 
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
@@ -238,7 +251,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def result = protocol.execute(connection)
+        def result = execute(protocol, connection, async)
         def cursorId = result.cursor ? new BsonInt64(result.cursor.id) : new BsonInt64(0)
 
         then:
@@ -265,6 +278,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('limit', new BsonInt32(limit))
                                                                              .append('batchSize', new BsonInt32(batchSize))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and completed command events for an explain command when there is a $explain meta operator'() {
@@ -281,7 +297,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        def response = protocol.execute(connection)
+        def response = execute(protocol, connection, async)
         def expectedResponse = new BsonDocument('ok', new BsonDouble(1));
         expectedResponse.putAll(response.results[0]);
 
@@ -295,6 +311,9 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                                               .append('limit', new BsonInt32(limit))
                                                                                               .append('projection', projection))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'explain', expectedResponse, 0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should deliver start and failed command events'() {
@@ -308,7 +327,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoQueryException)
@@ -318,5 +337,8 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                              .append('projection', projection)
                                                                              .append('skip', new BsonInt32(skip))),
                                              new CommandFailedEvent(1, connection.getDescription(), 'find', 0, e)])
+
+        where:
+        async << [false, true]
     }
 }

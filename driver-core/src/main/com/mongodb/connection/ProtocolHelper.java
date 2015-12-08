@@ -122,6 +122,18 @@ final class ProtocolHelper {
         }
     }
 
+    static RequestMessage.EncodingMetadata encodeMessageWithMetadata(final RequestMessage message, final BsonOutput bsonOutput) {
+        try {
+            return message.encodeWithMetadata(bsonOutput);
+        } catch (RuntimeException e) {
+            bsonOutput.close();
+            throw e;
+        } catch (Error e) {
+            bsonOutput.close();
+            throw e;
+        }
+    }
+
     private static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
                                                          final String errorMessageFieldName) {
         if (ErrorCategory.fromErrorCode(getErrorCode(response)) == ErrorCategory.EXECUTION_TIMEOUT) {

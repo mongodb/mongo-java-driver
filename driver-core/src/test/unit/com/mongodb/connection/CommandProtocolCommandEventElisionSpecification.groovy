@@ -29,6 +29,7 @@ import spock.lang.Specification
 
 import static com.mongodb.connection.MessageHelper.buildFailedReply
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 // Testing security-senstive command elision with a unit test to avoid having to actually execute the commands without error, which can
 // get complicated
@@ -48,7 +49,7 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         connection.enqueueReply(buildSuccessfulReply('{ok: 1}'));
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), 'admin', securitySensitiveCommandName,
@@ -56,16 +57,17 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
                                              new CommandSucceededEvent(1, connection.getDescription(), securitySensitiveCommandName,
                                                                        new BsonDocument(), 1)])
         where:
-        securitySensitiveCommand << [new BsonDocument('authenticate', new BsonInt32(1)),
-                                     new BsonDocument('saslStart', new BsonInt32(1)),
-                                     new BsonDocument('saslContinue', new BsonInt32(1)),
-                                     new BsonDocument('getnonce', new BsonInt32(1)),
-                                     new BsonDocument('createUser', new BsonInt32(1)),
-                                     new BsonDocument('updateUser', new BsonInt32(1)),
-                                     new BsonDocument('copydbgetnonce', new BsonInt32(1)),
-                                     new BsonDocument('copydbsaslstart', new BsonInt32(1)),
-                                     new BsonDocument('copydb', new BsonInt32(1))
-        ]
+        [securitySensitiveCommand, async] << [[new BsonDocument('authenticate', new BsonInt32(1)),
+                                               new BsonDocument('saslStart', new BsonInt32(1)),
+                                               new BsonDocument('saslContinue', new BsonInt32(1)),
+                                               new BsonDocument('getnonce', new BsonInt32(1)),
+                                               new BsonDocument('createUser', new BsonInt32(1)),
+                                               new BsonDocument('updateUser', new BsonInt32(1)),
+                                               new BsonDocument('copydbgetnonce', new BsonInt32(1)),
+                                               new BsonDocument('copydbsaslstart', new BsonInt32(1)),
+                                               new BsonDocument('copydb', new BsonInt32(1))
+                                              ],
+                                              [false, true]].combinations()
     }
 
     def 'should elide response in MongoCommandException in failed security-sensitive commands'() {
@@ -76,7 +78,7 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         connection.enqueueReply(buildFailedReply('{ok: 0}'));
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         thrown(MongoCommandException)
@@ -87,16 +89,17 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         commandException.response == new BsonDocument()
 
         where:
-        securitySensitiveCommand << [new BsonDocument('authenticate', new BsonInt32(1)),
-                                     new BsonDocument('saslStart', new BsonInt32(1)),
-                                     new BsonDocument('saslContinue', new BsonInt32(1)),
-                                     new BsonDocument('getnonce', new BsonInt32(1)),
-                                     new BsonDocument('createUser', new BsonInt32(1)),
-                                     new BsonDocument('updateUser', new BsonInt32(1)),
-                                     new BsonDocument('copydbgetnonce', new BsonInt32(1)),
-                                     new BsonDocument('copydbsaslstart', new BsonInt32(1)),
-                                     new BsonDocument('copydb', new BsonInt32(1))
-        ]
+        [securitySensitiveCommand, async] << [[new BsonDocument('authenticate', new BsonInt32(1)),
+                                               new BsonDocument('saslStart', new BsonInt32(1)),
+                                               new BsonDocument('saslContinue', new BsonInt32(1)),
+                                               new BsonDocument('getnonce', new BsonInt32(1)),
+                                               new BsonDocument('createUser', new BsonInt32(1)),
+                                               new BsonDocument('updateUser', new BsonInt32(1)),
+                                               new BsonDocument('copydbgetnonce', new BsonInt32(1)),
+                                               new BsonDocument('copydbsaslstart', new BsonInt32(1)),
+                                               new BsonDocument('copydb', new BsonInt32(1))
+                                              ],
+                                              [false, true]].combinations()
     }
 
     def 'should not elide command or response in successful normal commands'() {
@@ -108,7 +111,7 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         connection.enqueueReply(buildSuccessfulReply('{ok: 1}'));
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), 'admin', commandName,
@@ -116,9 +119,10 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
                                              new CommandSucceededEvent(1, connection.getDescription(), commandName,
                                                                        new BsonDocument('ok', new BsonInt32(1)), 1)])
         where:
-        command << [new BsonDocument('isMaster', new BsonInt32(1)),
-                    new BsonDocument('ping', new BsonInt32(1))
-        ]
+        [command, async] << [[new BsonDocument('isMaster', new BsonInt32(1)),
+                              new BsonDocument('ping', new BsonInt32(1))
+                             ],
+                             [false, true]].combinations()
     }
 
     def 'should not elide response in MongoCommandException in failed normal commands'() {
@@ -129,7 +133,7 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         connection.enqueueReply(buildFailedReply('{ok: 0}'));
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         def e = thrown(MongoCommandException)
@@ -138,8 +142,9 @@ class CommandProtocolCommandEventElisionSpecification extends Specification {
         commandFailedEvent.throwable == e
 
         where:
-        command << [new BsonDocument('isMaster', new BsonInt32(1)),
-                    new BsonDocument('ping', new BsonInt32(1))
-        ]
+        [command, async] << [[new BsonDocument('isMaster', new BsonInt32(1)),
+                              new BsonDocument('ping', new BsonInt32(1))
+                             ],
+                             [false, true]].combinations()
     }
 }

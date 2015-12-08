@@ -95,12 +95,7 @@ class DeleteProtocol extends WriteProtocol {
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
         BsonDocument deleteDocument = new BsonDocument("q", createOne(bsonOutput, firstDocumentPosition))
                                       .append("limit", deletes.get(0).isMulti() ? new BsonInt32(0) : new BsonInt32(1));
-        return getBaseCommandDocument().append("deletes", new BsonArray(singletonList(deleteDocument)));
-    }
-
-    @Override
-    protected String getCommandName() {
-        return "delete";
+        return getBaseCommandDocument("delete").append("deletes", new BsonArray(singletonList(deleteDocument)));
     }
 
     @Override

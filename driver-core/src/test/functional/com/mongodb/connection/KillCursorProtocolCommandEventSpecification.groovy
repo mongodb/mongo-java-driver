@@ -34,6 +34,7 @@ import spock.lang.Shared
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
@@ -61,7 +62,7 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'killCursors',
@@ -74,6 +75,9 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
                                                                                .append('cursorsUnknown',
                                                                                        new BsonArray([new BsonInt64(result.cursor.id)])),
                                                                        0)])
+
+        where:
+        async << [false, true]
     }
 
     def 'should not deliver start and completed command events if no namespace is provided'() {
@@ -87,9 +91,12 @@ class KillCursorProtocolCommandEventSpecification extends OperationFunctionalSpe
         protocol.commandListener = commandListener
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         commandListener.eventsWereDelivered([])
+
+        where:
+        async << [false, true]
     }
 }

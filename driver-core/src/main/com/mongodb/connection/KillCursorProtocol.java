@@ -95,22 +95,44 @@ class KillCursorProtocol implements Protocol<Void> {
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<Void> callback) {
+        final long startTimeNanos = System.nanoTime();
+        final KillCursorsMessage message = new KillCursorsMessage(cursors);
+        boolean startEventSent = false;
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Asynchronously killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(),
                                     connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
             }
             final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-            KillCursorsMessage message = new KillCursorsMessage(cursors);
+
+            if (commandListener != null && namespace != null) {
+                sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asCommandDocument(),
+                        connection.getDescription(), commandListener);
+                startEventSent = true;
+            }
+
             message.encode(bsonOutput);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
+                    if (commandListener != null && namespace != null) {
+                        if (t != null) {
+                            sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t, commandListener);
+                        } else {
+                            sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
+                                    connection.getDescription(),
+                                    startTimeNanos, commandListener);
+                        }
+                    }
+
                     bsonOutput.close();
                     callback.onResult(result, t);
                 }
             });
         } catch (Throwable t) {
+            if (startEventSent) {
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t, commandListener);
+            }
             callback.onResult(null, t);
         }
     }

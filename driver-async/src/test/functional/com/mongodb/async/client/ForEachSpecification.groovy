@@ -17,7 +17,6 @@
 package com.mongodb.async.client
 
 import com.mongodb.Block
-import com.mongodb.MongoException
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
 import org.bson.Document
@@ -79,7 +78,6 @@ class ForEachSpecification extends FunctionalSpecification {
         futureResultCallback.get(60, SECONDS)
 
         then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof IllegalArgumentException
+        thrown(IllegalArgumentException)
     }
 }

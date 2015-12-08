@@ -116,10 +116,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                 } else {
                     bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
                 }
-                if (commandListener != null) {
-                    sendCommandSucceededEvent(message, message.getCommandName(), result, connection.getDescription(),
-                                              startTimeNanos, commandListener);
-                }
+
+                sendSucceededEvent(connection, message, startTimeNanos, result);
+
                 currentRangeStartIndex += itemCount;
                 message = nextMessage;
             } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
@@ -128,10 +127,7 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
         } catch (MongoBulkWriteException e) {
             throw e;
         } catch (RuntimeException e) {
-            if (commandListener != null) {
-                sendCommandFailedEvent(message, message.getCommandName(), connection.getDescription(), startTimeNanos,
-                                       e, commandListener);
-            }
+            sendFailedEvent(connection, message, startTimeNanos, e);
             throw e;
         }
     }
@@ -146,11 +142,18 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private void executeBatchesAsync(final InternalConnection connection, final BaseWriteCommandMessage message,
                                      final BulkWriteBatchCombiner bulkWriteBatchCombiner, final int batchNum,
                                      final int currentRangeStartIndex, final SingleResultCallback<BulkWriteResult> callback) {
+        final long startTimeNanos = System.nanoTime();
+        boolean sentStartedEvent = false;
         try {
             if (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
-
                 final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-                final BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
+                RequestMessage.EncodingMetadata metadata = message.encodeWithMetadata(bsonOutput);
+
+                sendStartedEvent(connection, message, bsonOutput, metadata);
+                sentStartedEvent = true;
+
+                final BaseWriteCommandMessage nextMessage = (BaseWriteCommandMessage) metadata.getNextMessage();
+
                 final int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
                 final IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
                 final int nextBatchNum = batchNum + 1;
@@ -162,13 +165,15 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                     }
                 }
 
-                sendMessageAsync(connection, message.getId(), bsonOutput, new SingleResultCallback<BsonDocument>() {
+                sendMessageAsync(connection, bsonOutput, message, startTimeNanos, callback, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument result, final Throwable t) {
                         bsonOutput.close();
                         if (t != null) {
+                            sendFailedEvent(connection, message, startTimeNanos, t);
                             callback.onResult(null, t);
                         } else {
+                            sendSucceededEvent(connection, message, startTimeNanos, result);
 
                             if (nextBatchNum > 1) {
                                 if (getLogger().isDebugEnabled()) {
@@ -178,14 +183,14 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
 
                             if (WriteCommandResultHelper.hasError(result)) {
                                 bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
-                                                                                            connection.getDescription().getServerAddress()),
-                                                                      indexMap);
+                                        connection.getDescription().getServerAddress()),
+                                        indexMap);
                             } else {
                                 bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
                             }
 
                             executeBatchesAsync(connection, nextMessage, bulkWriteBatchCombiner, nextBatchNum, nextRangeStartIndex,
-                                                callback);
+                                    callback);
                         }
                     }
                 });
@@ -197,6 +202,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                 }
             }
         } catch (Throwable t) {
+            if (sentStartedEvent) {
+                sendFailedEvent(connection, message, startTimeNanos, t);
+            }
             callback.onResult(null, t);
         }
     }
@@ -212,11 +220,7 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             RequestMessage.EncodingMetadata encodingMetadata = message.encodeWithMetadata(bsonOutput);
             BaseWriteCommandMessage nextMessage = (BaseWriteCommandMessage) encodingMetadata.getNextMessage();
 
-            if (commandListener != null) {
-                sendCommandStartedEvent(message, namespace.getDatabaseName(), message.getCommandName(),
-                                        createOne(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
-                                        connection.getDescription(), commandListener);
-            }
+            sendStartedEvent(connection, message, bsonOutput, encodingMetadata);
 
             if (nextMessage != null || batchNum > 1) {
                 if (getLogger().isDebugEnabled()) {
@@ -227,6 +231,30 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             return nextMessage;
         } finally {
             bsonOutput.close();
+        }
+    }
+
+    private void sendStartedEvent(final InternalConnection connection, final BaseWriteCommandMessage message,
+                                  final ByteBufferBsonOutput bsonOutput, final RequestMessage.EncodingMetadata encodingMetadata) {
+        if (commandListener != null) {
+            sendCommandStartedEvent(message, namespace.getDatabaseName(), message.getCommandName(),
+                                    createOne(bsonOutput, encodingMetadata.getFirstDocumentPosition()),
+                                    connection.getDescription(), commandListener);
+        }
+    }
+
+    private void sendSucceededEvent(final InternalConnection connection, final BaseWriteCommandMessage message, final long startTimeNanos,
+                                    final BsonDocument result) {
+        if (commandListener != null) {
+            sendCommandSucceededEvent(message, message.getCommandName(), result, connection.getDescription(),
+                    startTimeNanos, commandListener);
+        }
+    }
+
+    private void sendFailedEvent(final InternalConnection connection, final BaseWriteCommandMessage message, final long startTimeNanos,
+                                 final Throwable t) {
+        if (commandListener != null) {
+            sendCommandFailedEvent(message, message.getCommandName(), connection.getDescription(), startTimeNanos, t, commandListener);
         }
     }
 
@@ -247,16 +275,18 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
         }
     }
 
-    private void sendMessageAsync(final InternalConnection connection, final int messageId, final ByteBufferBsonOutput buffer,
+    private void sendMessageAsync(final InternalConnection connection, final ByteBufferBsonOutput buffer,
+                                  final BaseWriteCommandMessage message, final long startTimeNanos,
+                                  final SingleResultCallback<BulkWriteResult> clientCallback,
                                   final SingleResultCallback<BsonDocument> callback) {
         SingleResultCallback<ResponseBuffers> receiveCallback = new CommandResultCallback<BsonDocument>(callback,
                                                                                                         new BsonDocumentCodec(),
-                                                                                                        messageId,
+                                                                                                        message.getId(),
                                                                                                         connection.getDescription()
                                                                                                                   .getServerAddress());
-        connection.sendMessageAsync(buffer.getByteBuffers(), messageId,
-                                    new SendMessageCallback<BsonDocument>(connection, buffer, messageId, callback,
-                                                                          receiveCallback));
+        connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(),
+                                    new SendMessageCallback<BulkWriteResult>(connection, buffer, message, message.getCommandName(),
+                                            startTimeNanos, commandListener, clientCallback, receiveCallback));
     }
 
     /**
