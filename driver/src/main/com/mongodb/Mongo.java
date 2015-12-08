@@ -35,6 +35,7 @@ import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
@@ -56,8 +57,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -895,24 +894,6 @@ public class Mongo {
 
         private String toKey(final MongoClientURI uri) {
             return uri.toString();
-        }
-    }
-
-    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
-    // applications that neglect to close MongoClient will not exit.
-    static class DaemonThreadFactory implements ThreadFactory {
-        private static final AtomicInteger poolNumber = new AtomicInteger(1);
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String namePrefix;
-
-        DaemonThreadFactory() {
-            namePrefix = "pool-" + poolNumber.getAndIncrement() + "-thread-";
-        }
-
-        public Thread newThread(final Runnable runnable) {
-            Thread t = new Thread(runnable, namePrefix + threadNumber.getAndIncrement());
-            t.setDaemon(true);
-            return t;
         }
     }
 }

@@ -31,6 +31,7 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
+import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 
 import java.util.List;
@@ -49,6 +50,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
+    private static final DaemonThreadFactory THREAD_FACTORY = new DaemonThreadFactory();
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -207,7 +209,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private synchronized ExecutorService getAsyncGetter() {
         if (asyncGetter == null) {
-            asyncGetter = Executors.newSingleThreadExecutor();
+            asyncGetter = Executors.newSingleThreadExecutor(THREAD_FACTORY);
         }
         return asyncGetter;
     }
@@ -310,7 +312,7 @@ class DefaultConnectionPool implements ConnectionPool {
         if (maintenanceTask == null) {
             return null;
         } else {
-            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor();
+            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
             newTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
                                          settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
             return newTimer;
