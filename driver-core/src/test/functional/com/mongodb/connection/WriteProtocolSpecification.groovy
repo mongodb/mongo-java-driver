@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
+import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class WriteProtocolSpecification extends OperationFunctionalSpecification {
     @Shared
@@ -65,7 +66,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(documentOne)
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         getCollectionHelper().find(new BsonDocumentCodec()) == [documentOne]
@@ -74,6 +75,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        where:
+        async << [false, true]
     }
 
     def 'should report write errors on acknowledged inserts'() {
@@ -90,13 +94,62 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(documentOne)
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         thrown(DuplicateKeyException)
         getCollectionHelper().count() == 1
+
+        where:
+        async << [false, true]
     }
 
+    def 'should execute split unacknowledged inserts'() {
+        given:
+        def binary = new BsonBinary(new byte[15000000])
+        def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
+        def documentTwo = new BsonDocument('_id', new BsonInt32(2)).append('b', binary)
+        def documentThree = new BsonDocument('_id', new BsonInt32(3)).append('b', binary)
+        def documentFour = new BsonDocument('_id', new BsonInt32(4)).append('b', binary)
+
+        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
+                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
+        def protocol = new InsertProtocol(getNamespace(), true, UNACKNOWLEDGED, insertRequest)
+
+        when:
+        execute(protocol, connection, async)
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
+                new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        then:
+        getCollectionHelper().count() == 4
+
+        where:
+        async << [false, true]
+    }
+
+    def 'should execute split acknowledged inserts'() {
+        given:
+        def binary = new BsonBinary(new byte[15000000])
+        def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
+        def documentTwo = new BsonDocument('_id', new BsonInt32(2)).append('b', binary)
+        def documentThree = new BsonDocument('_id', new BsonInt32(3)).append('b', binary)
+        def documentFour = new BsonDocument('_id', new BsonInt32(4)).append('b', binary)
+
+        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
+                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
+        def protocol = new InsertProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
+
+        when:
+        execute(protocol, connection, async)
+
+        then:
+        getCollectionHelper().count() == 4
+
+        where:
+        async << [false, true]
+    }
     def 'should ignore write errors on split unacknowledged inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
@@ -112,7 +165,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(documentOne)
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         getCollectionHelper().count() == 1
@@ -121,6 +174,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+
+        where:
+        async << [false, true]
     }
 
     def 'should report write errors on split acknowledged inserts'() {
@@ -138,10 +194,13 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(documentOne)
 
         when:
-        protocol.execute(connection)
+        execute(protocol, connection, async)
 
         then:
         thrown(DuplicateKeyException)
         getCollectionHelper().count() == 1
+
+        where:
+        async << [false, true]
     }
 }
