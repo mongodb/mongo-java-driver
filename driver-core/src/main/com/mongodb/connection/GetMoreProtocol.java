@@ -80,10 +80,10 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                                 connection.getDescription().getServerAddress()));
         }
         long startTimeNanos = System.nanoTime();
-        GetMoreMessage message = null;
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
         QueryResult<T> queryResult = null;
         try {
-            message = sendMessage(connection);
+            sendMessage(message, connection);
             ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
             try {
                 if (responseBuffers.getReplyHeader().isCursorNotFound()) {
@@ -149,17 +149,15 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         this.commandListener = commandListener;
     }
 
-    private GetMoreMessage sendMessage(final InternalConnection connection) {
+    private void sendMessage(final GetMoreMessage message, final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
             if (commandListener != null) {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asGetMoreCommandDocument(),
                                         connection.getDescription(), commandListener);
             }
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            return message;
         } finally {
             bsonOutput.close();
         }

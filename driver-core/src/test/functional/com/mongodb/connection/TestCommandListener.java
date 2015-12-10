@@ -102,27 +102,36 @@ public class TestCommandListener implements CommandListener {
             CommandEvent actual = events.get(i);
             CommandEvent expected = expectedEvents.get(i);
 
-            assertEquals(expected.getClass(), actual.getClass());
-
             if (actual instanceof CommandStartedEvent) {
                 currentlyExpectedRequestId = actual.getRequestId();
             } else {
                 assertEquals(currentlyExpectedRequestId, actual.getRequestId());
             }
 
-            assertEquals(expected.getConnectionDescription(), actual.getConnectionDescription());
+            assertEventEquivalence(actual, expected);
+        }
+    }
 
-            assertEquals(expected.getCommandName(), actual.getCommandName());
+    public void eventWasDelivered(final CommandEvent expectedEvent, final int index) {
+        assertTrue(events.size() > index);
+        assertEventEquivalence(events.get(index), expectedEvent);
+    }
 
-            if (actual.getClass().equals(CommandStartedEvent.class)) {
-                assertEquivalence((CommandStartedEvent) actual, (CommandStartedEvent) expected);
-            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                assertEquivalence((CommandSucceededEvent) actual, (CommandSucceededEvent) expected);
-            } else if (actual.getClass().equals(CommandFailedEvent.class)) {
-                assertEquivalence((CommandFailedEvent) actual, (CommandFailedEvent) expected);
-            } else {
-                throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
-            }
+     private void assertEventEquivalence(final CommandEvent actual, final CommandEvent expected) {
+        assertEquals(expected.getClass(), actual.getClass());
+
+        assertEquals(expected.getConnectionDescription(), actual.getConnectionDescription());
+
+        assertEquals(expected.getCommandName(), actual.getCommandName());
+
+        if (actual.getClass().equals(CommandStartedEvent.class)) {
+            assertEquivalence((CommandStartedEvent) actual, (CommandStartedEvent) expected);
+        } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
+            assertEquivalence((CommandSucceededEvent) actual, (CommandSucceededEvent) expected);
+        } else if (actual.getClass().equals(CommandFailedEvent.class)) {
+            assertEquivalence((CommandFailedEvent) actual, (CommandFailedEvent) expected);
+        } else {
+            throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
         }
     }
 

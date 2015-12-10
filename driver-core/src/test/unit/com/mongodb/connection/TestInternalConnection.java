@@ -30,9 +30,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 class TestInternalConnection implements InternalConnection {
+
+    private static class Interaction {
+        private ResponseBuffers responseBuffers;
+        private RuntimeException receiveException;
+        private RuntimeException sendException;
+    }
+
     private final ConnectionDescription description;
     private final BufferProvider bufferProvider;
-    private final Deque<ResponseBuffers> replies;
+    private final Deque<Interaction> replies;
     private final List<BsonInput> sent;
     private boolean opened;
     private boolean closed;
@@ -41,12 +48,26 @@ class TestInternalConnection implements InternalConnection {
         this.description = new ConnectionDescription(serverId);
         this.bufferProvider = new SimpleBufferProvider();
 
-        this.replies = new LinkedList<ResponseBuffers>();
+        this.replies = new LinkedList<Interaction>();
         this.sent = new LinkedList<BsonInput>();
     }
 
-    public void enqueueReply(final ResponseBuffers buffers) {
-        this.replies.add(buffers);
+    public void enqueueReply(final ResponseBuffers responseBuffers) {
+        Interaction interaction = new Interaction();
+        interaction.responseBuffers = responseBuffers;
+        replies.add(interaction);
+    }
+
+    public void enqueueSendMessageException(final RuntimeException e) {
+        Interaction interaction = new Interaction();
+        interaction.sendException = e;
+        replies.add(interaction);
+    }
+
+    public void enqueueReceiveMessageException(final RuntimeException e) {
+        Interaction interaction = new Interaction();
+        interaction.receiveException = e;
+        replies.add(interaction);
     }
 
     public List<BsonInput> getSent() {
@@ -98,11 +119,16 @@ class TestInternalConnection implements InternalConnection {
 
         combined.flip();
 
-        ResponseBuffers nextToReceive = replies.removeFirst();
-        ReplyHeader header = replaceResponseTo(nextToReceive.getReplyHeader(), lastRequestId);
-        replies.addFirst(new ResponseBuffers(header, nextToReceive.getBodyByteBuffer()));
+        Interaction interaction = replies.getFirst();
+        if (interaction.responseBuffers != null) {
+            ReplyHeader header = replaceResponseTo(interaction.responseBuffers.getReplyHeader(), lastRequestId);
+            interaction.responseBuffers = (new ResponseBuffers(header, interaction.responseBuffers.getBodyByteBuffer()));
 
-        sent.add(new ByteBufferBsonInput(new ByteBufNIO(combined)));
+            sent.add(new ByteBufferBsonInput(new ByteBufNIO(combined)));
+        } else if (interaction.sendException != null) {
+            replies.removeFirst();
+            throw interaction.sendException;
+        }
     }
 
     private ReplyHeader replaceResponseTo(final ReplyHeader header, final int responseTo) {
@@ -128,13 +154,22 @@ class TestInternalConnection implements InternalConnection {
             throw new MongoException("Test was not setup properly as too many calls to receiveMessage occured.");
         }
 
-        return this.replies.remove();
+        Interaction interaction = replies.removeFirst();
+        if (interaction.responseBuffers != null) {
+            return interaction.responseBuffers;
+        } else {
+            throw interaction.receiveException;
+        }
     }
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        sendMessage(byteBuffers, lastRequestId);
-        callback.onResult(null, null);
+        try {
+            sendMessage(byteBuffers, lastRequestId);
+            callback.onResult(null, null);
+        } catch (RuntimeException e) {
+            callback.onResult(null, e);
+        }
     }
 
     @Override

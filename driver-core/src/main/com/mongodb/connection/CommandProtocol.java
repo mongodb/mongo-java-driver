@@ -103,9 +103,10 @@ class CommandProtocol<T> implements Protocol<T> {
                                 connection.getDescription().getServerAddress()));
         }
         long startTimeNanos = System.nanoTime();
-        CommandMessage commandMessage = null;
+        CommandMessage commandMessage = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
+                ProtocolHelper.getMessageSettings(connection.getDescription()));
         try {
-            commandMessage = sendMessage(connection);
+            sendMessage(commandMessage, connection);
             ResponseBuffers responseBuffers = connection.receiveMessage(commandMessage.getId());
             ReplyMessage<BsonDocument> replyMessage;
             try {
@@ -176,11 +177,9 @@ class CommandProtocol<T> implements Protocol<T> {
         return commandName != null ? commandName : command.keySet().iterator().next();
     }
 
-    private CommandMessage sendMessage(final InternalConnection connection) {
+    private void sendMessage(final CommandMessage message, final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
-                                                        ProtocolHelper.getMessageSettings(connection.getDescription()));
             int documentPosition = message.encodeWithMetadata(bsonOutput).getFirstDocumentPosition();
             if (commandListener != null) {
                 ByteBufBsonDocument byteBufBsonDocument = createOne(bsonOutput, documentPosition);
@@ -199,7 +198,6 @@ class CommandProtocol<T> implements Protocol<T> {
             }
 
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            return message;
         } finally {
             bsonOutput.close();
         }
