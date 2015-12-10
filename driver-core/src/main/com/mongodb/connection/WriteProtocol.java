@@ -111,8 +111,9 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
             }
 
             if (shouldAcknowledge(encodingMetadata)) {
-                ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
+                ResponseBuffers responseBuffers = null;
                 try {
+                    responseBuffers = connection.receiveMessage(messageId);
                     ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                              messageId);
                     writeConcernResult = ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0),
@@ -136,7 +137,9 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                     }
                     throw e;
                 } finally {
-                    responseBuffers.close();
+                    if (responseBuffers != null) {
+                        responseBuffers.close();
+                    }
                 }
             }
 
