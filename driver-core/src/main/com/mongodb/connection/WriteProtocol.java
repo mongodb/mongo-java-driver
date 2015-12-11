@@ -91,7 +91,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                     sentCommandStartedEvent = true;
                 }
                 messageId = nextMessage.getId();
-                if (shouldAcknowledge(encodingMetadata)) {
+                if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
                     CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                                COMMAND_COLLECTION_NAME).getFullName(),
                                                                             createGetLastErrorCommandDocument(), false,
@@ -110,7 +110,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 bsonOutput.close();
             }
 
-            if (shouldAcknowledge(encodingMetadata)) {
+            if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
                 ResponseBuffers responseBuffers = null;
                 try {
                     responseBuffers = connection.receiveMessage(messageId);
@@ -128,7 +128,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                     }
                     if (writeConcern.isAcknowledged()) {
                         throw e;
-                    } else {
+                    } else if (ordered) {
                         break;
                     }
                 } catch (RuntimeException e) {
@@ -184,7 +184,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             RequestMessage requestMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
             RequestMessage nextMessage = encodeMessage(requestMessage, bsonOutput);
-            if (writeConcern.isAcknowledged()) {
+            if (shouldAcknowledge(nextMessage)) {
                 CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                            COMMAND_COLLECTION_NAME).getFullName(),
                                                                         createGetLastErrorCommandDocument(), false,
@@ -233,8 +233,8 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     protected abstract String getCommandName();
 
 
-    private boolean shouldAcknowledge(final RequestMessage.EncodingMetadata encodingMetadata) {
-        return writeConcern.isAcknowledged() || (isOrdered() && encodingMetadata.getNextMessage() != null);
+    private boolean shouldAcknowledge(final RequestMessage nextMessage) {
+        return writeConcern.isAcknowledged() || (isOrdered() && nextMessage != null);
     }
 
     private BsonDocument createGetLastErrorCommandDocument() {

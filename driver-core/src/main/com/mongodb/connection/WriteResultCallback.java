@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
@@ -52,9 +53,19 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
             callback.onResult(null, t);
         } else {
             try {
-                WriteConcernResult writeConcernResult = ProtocolHelper.getWriteResult(result,
-                                                                                      connection.getDescription().getServerAddress());
-                if (nextMessage != null) {
+                WriteConcernResult writeConcernResult = null;
+                boolean shouldWriteNextMessage = true;
+                try {
+                    writeConcernResult = ProtocolHelper.getWriteResult(result, connection.getDescription().getServerAddress());
+                } catch (WriteConcernException e) {
+                    if (writeConcern.isAcknowledged()) {
+                        throw e;
+                    }
+                    if (ordered) {
+                        shouldWriteNextMessage = false;
+                    }
+                }
+                if (shouldWriteNextMessage && nextMessage != null) {
                     new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern).executeAsync(connection, callback);
                 } else {
                     callback.onResult(writeConcernResult, null);
