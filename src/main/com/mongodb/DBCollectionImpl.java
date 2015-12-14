@@ -904,8 +904,8 @@ class DBCollectionImpl extends DBCollection {
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
                     ModifyRequest update = updateRequests.get(i);
-                    WriteResult writeResult = update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(),
-                            update.isMulti(), writeConcern, encoder);
+                    WriteResult writeResult = db.getConnector().say(_db, OutMessage.update(DBCollectionImpl.this, encoder,
+                            update.isUpsert(), update.isMulti(), update.getQuery(), update.getUpdateDocument()), writeConcern, port);
                     return addMissingUpserted(update, writeResult);
                 }
 
@@ -930,8 +930,8 @@ class DBCollectionImpl extends DBCollection {
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
                     ModifyRequest update = replaceRequests.get(i);
-                    WriteResult writeResult = update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(),
-                            update.isMulti(), writeConcern, encoder);
+                    WriteResult writeResult = db.getConnector().say(_db, OutMessage.update(DBCollectionImpl.this, encoder,
+                            update.isUpsert(), update.isMulti(), update.getQuery(), update.getUpdateDocument()), writeConcern, port);
                     return addMissingUpserted(update, writeResult);
                 }
 
@@ -952,7 +952,8 @@ class DBCollectionImpl extends DBCollection {
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
                     RemoveRequest removeRequest = removeRequests.get(i);
-                    return remove(removeRequest.getQuery(), removeRequest.isMulti(), writeConcern, encoder);
+                    return db.getConnector().say(_db, OutMessage.remove(DBCollectionImpl.this, encoder, removeRequest.getQuery(),
+                            removeRequest.isMulti()), writeConcern, port);
                 }
 
                 @Override
@@ -975,7 +976,7 @@ class DBCollectionImpl extends DBCollection {
 
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
-                    return insert(asList(insertRequests.get(i).getDocument()), writeConcern, encoder);
+                    return insertWithWriteProtocol(asList(insertRequests.get(i).getDocument()), writeConcern, encoder, port, true);
                 }
 
                 @Override
