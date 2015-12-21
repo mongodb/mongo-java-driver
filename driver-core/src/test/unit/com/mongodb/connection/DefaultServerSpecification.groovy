@@ -29,7 +29,10 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.event.CommandListener
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -184,7 +187,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoNotPrimaryException(new ServerAddress())))
+        testConnection.enqueueProtocol(new TestProtocol(new MongoNotPrimaryException(new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -232,7 +235,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
+        testConnection.enqueueProtocol(new TestProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -259,7 +262,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoSocketException('socket error', new ServerAddress())))
+        testConnection.enqueueProtocol(new TestProtocol(new MongoSocketException('socket error', new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -296,7 +299,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new ThrowingProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
+        testConnection.enqueueProtocol(new TestProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
                                                                                                 new IOException())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
@@ -318,16 +321,63 @@ class DefaultServerSpecification extends Specification {
         0 * serverMonitor.invalidate()
     }
 
-    class ThrowingProtocol implements Protocol {
-        private final MongoException mongoException
+    def 'should enable command listener'() {
+        given:
+        def protocol = new TestProtocol()
+        def commandListener = Stub(CommandListener)
+        def connectionPool = Mock(ConnectionPool)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        def internalConnection = Mock(InternalConnection)
+        connectionPool.get() >> { internalConnection }
+        serverMonitorFactory.create(_) >> { serverMonitor }
 
-        ThrowingProtocol(MongoException mongoException) {
+        TestConnectionFactory connectionFactory = new TestConnectionFactory()
+
+        def server = new DefaultServer(new ServerAddress(), SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                commandListener)
+        def testConnection = (TestConnection) server.getConnection()
+
+        testConnection.enqueueProtocol(protocol)
+
+        when:
+        if (async) {
+            CountDownLatch latch = new CountDownLatch(1)
+            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
+                    new BsonDocumentCodec()) {
+                BsonDocument result, Throwable t -> latch.countDown()
+            }
+            latch.await()
+
+        } else {
+            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
+                    new BsonDocumentCodec())
+        }
+
+        then:
+        protocol.commandListener == commandListener
+
+        where:
+        async << [false, true]
+    }
+
+    class TestProtocol implements Protocol {
+        private MongoException mongoException
+        private CommandListener commandListener
+
+        TestProtocol() {
+            this(null)
+        }
+
+        TestProtocol(MongoException mongoException) {
             this.mongoException = mongoException
         }
 
         @Override
         Object execute(final InternalConnection connection) {
-            throw mongoException;
+            if (mongoException != null) {
+                throw mongoException;
+            }
         }
 
         @Override
@@ -336,7 +386,8 @@ class DefaultServerSpecification extends Specification {
         }
 
         @Override
-        void setCommandListener(final CommandListener operationListener) {
+        void setCommandListener(final CommandListener commandListener) {
+            this.commandListener = commandListener
         }
     }
 }

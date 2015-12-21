@@ -166,6 +166,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final Protocol<T> protocol, final InternalConnection connection,
                                      final SingleResultCallback<T> callback) {
+            protocol.setCommandListener(commandListener);
             protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
