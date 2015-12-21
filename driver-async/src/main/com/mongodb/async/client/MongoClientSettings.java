@@ -30,8 +30,10 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.event.CommandListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,6 +52,7 @@ public final class MongoClientSettings {
     private final ReadConcern readConcern;
     private final List<MongoCredential> credentialList;
     private final StreamFactoryFactory streamFactoryFactory;
+    private final List<CommandListener> commandListeners;
 
     private final CodecRegistry codecRegistry;
 
@@ -90,6 +93,7 @@ public final class MongoClientSettings {
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClients.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory = createDefaultStreamFactoryFactory();
+        private final List<CommandListener> commandListeners = new ArrayList<CommandListener>();
 
         private ClusterSettings clusterSettings;
         private SocketSettings socketSettings = SocketSettings.builder().build();
@@ -117,6 +121,7 @@ public final class MongoClientSettings {
             credentialList = settings.getCredentialList();
             codecRegistry = settings.getCodecRegistry();
             streamFactoryFactory = settings.getStreamFactoryFactory();
+            commandListeners.addAll(settings.commandListeners);
 
             clusterSettings = settings.getClusterSettings();
             serverSettings = settings.getServerSettings();
@@ -275,6 +280,19 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Adds the given command listener.
+         *
+         * @param commandListener the command listener
+         * @return this
+         * @since 3.3
+         */
+        public Builder addCommandListener(final CommandListener commandListener) {
+            notNull("commandListener", commandListener);
+            commandListeners.add(commandListener);
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -364,6 +382,16 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the list of added {@code CommandListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of command listeners
+     * @since 3.3
+     */
+    public List<CommandListener> getCommandListeners() {
+        return Collections.unmodifiableList(commandListeners);
+    }
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -434,6 +462,7 @@ public final class MongoClientSettings {
         credentialList = builder.credentialList;
         streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;
+        commandListeners = builder.commandListeners;
         clusterSettings = builder.clusterSettings;
         serverSettings = builder.serverSettings;
         socketSettings = builder.socketSettings;
