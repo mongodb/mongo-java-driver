@@ -26,11 +26,15 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -125,7 +129,8 @@ public final class MongoClients {
         return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
                                                   settings.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
-                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null);
+                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
+                                                  createCommandListener(settings.getCommandListeners()));
     }
 
     private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {
@@ -134,6 +139,17 @@ public final class MongoClients {
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
         return settings.getStreamFactoryFactory().create(settings.getSocketSettings(), settings.getSslSettings());
+    }
+
+    private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {
+        switch (commandListeners.size()) {
+            case 0:
+                return null;
+            case 1:
+                return commandListeners.get(0);
+            default:
+                return new CommandListenerMulticaster(commandListeners);
+        }
     }
 
     private MongoClients() {
