@@ -136,7 +136,7 @@ class MongoClientOptionsSpecification extends Specification {
         def options = MongoClientOptions.builder()
                                         .description('test')
                                         .readPreference(ReadPreference.secondary())
-                                        .writeConcern(WriteConcern.JOURNAL_SAFE)
+                                        .writeConcern(WriteConcern.JOURNALED)
                                         .minConnectionsPerHost(30)
                                         .connectionsPerHost(500)
                                         .connectTimeout(100)
@@ -163,7 +163,7 @@ class MongoClientOptionsSpecification extends Specification {
         expect:
         options.getDescription() == 'test'
         options.getReadPreference() == ReadPreference.secondary()
-        options.getWriteConcern() == WriteConcern.JOURNAL_SAFE
+        options.getWriteConcern() == WriteConcern.JOURNALED
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
@@ -225,7 +225,7 @@ class MongoClientOptionsSpecification extends Specification {
         def options = MongoClientOptions.builder()
                 .description('test')
                 .readPreference(ReadPreference.secondary())
-                .writeConcern(WriteConcern.JOURNAL_SAFE)
+                .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
                 .connectTimeout(100)
