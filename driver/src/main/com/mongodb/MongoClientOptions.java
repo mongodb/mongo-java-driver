@@ -732,7 +732,7 @@ public class MongoClientOptions {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
-        private List<CommandListener> commandListeners = new ArrayList<CommandListener>();
+        private final List<CommandListener> commandListeners = new ArrayList<CommandListener>();
 
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
@@ -805,7 +805,7 @@ public class MongoClientOptions {
             dbEncoderFactory = options.getDbEncoderFactory();
             socketFactory = options.getSocketFactory();
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
-            commandListeners = options.commandListeners;
+            commandListeners.addAll(options.getCommandListeners());
         }
 
         /**

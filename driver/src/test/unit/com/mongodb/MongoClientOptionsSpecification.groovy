@@ -304,16 +304,20 @@ class MongoClientOptionsSpecification extends Specification {
         options.commandListeners[1].is commandListenerTwo
 
         when:
-        options = MongoClientOptions.builder(options).addCommandListener(commandListenerThree).build()
+        def copiedOptions = MongoClientOptions.builder(options).addCommandListener(commandListenerThree).build()
 
         then:
-        options.commandListeners.size() == 3
+        copiedOptions.commandListeners.size() == 3
+        copiedOptions.commandListeners[0].is commandListenerOne
+        copiedOptions.commandListeners[1].is commandListenerTwo
+        copiedOptions.commandListeners[2].is commandListenerThree
+        options.commandListeners.size() == 2
         options.commandListeners[0].is commandListenerOne
         options.commandListeners[1].is commandListenerTwo
-        options.commandListeners[2].is commandListenerThree
+
     }
 
-    def 'should copy all methods from the existing MongoClientOptions'() {
+    def 'builder should copy all values from the existing MongoClientOptions'() {
         given:
         def options = Mock(MongoClientOptions)
 
@@ -350,6 +354,7 @@ class MongoClientOptionsSpecification extends Specification {
         1 * options.getThreadsAllowedToBlockForConnectionMultiplier()
         1 * options.getWriteConcern()
         1 * options.getReadConcern()
+        1 * options.getCommandListeners() >> Collections.unmodifiableList(Collections.emptyList())
 
         0 * options._ // Ensure no other interactions
     }
