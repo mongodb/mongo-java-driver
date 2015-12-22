@@ -56,7 +56,7 @@ final class MessageHelper {
         return buildReply(responseTo, json, 2);
     }
 
-    private static ResponseBuffers buildReply(final int responseTo, final String json, final int responseFlags) {
+    public static ResponseBuffers buildReply(final int responseTo, final String json, final int responseFlags) {
         ByteBuf body = encodeJson(json);
         body.flip();
 
