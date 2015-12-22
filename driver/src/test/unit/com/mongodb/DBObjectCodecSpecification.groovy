@@ -32,6 +32,8 @@ import org.bson.types.Binary
 import org.bson.types.Symbol
 import spock.lang.Specification
 
+import java.sql.Timestamp
+
 import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -134,5 +136,35 @@ class DBObjectCodecSpecification extends Specification {
 
         then:
         decodedSymbol.get('symbol') == symbol.toString()
+    }
+
+    def 'should encode java.sql.Date as date'() {
+        given:
+        def sqlDate = new java.sql.Date(System.currentTimeMillis())
+        def doc = new BasicDBObject('d', sqlDate)
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc, EncoderContext.builder().build())
+
+        then:
+        def decodededDoc = dbObjectCodec.decode(new BsonDocumentReader(bsonDoc), DecoderContext.builder().build())
+
+        then:
+        ((Date) decodededDoc.get('d')).getTime() == sqlDate.getTime()
+    }
+
+    def 'should encode java.sql.Timestamp as date'() {
+        given:
+        def sqlTimestamp = new Timestamp(System.currentTimeMillis())
+        def doc = new BasicDBObject('d', sqlTimestamp)
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc, EncoderContext.builder().build())
+
+        then:
+        def decodededDoc = dbObjectCodec.decode(new BsonDocumentReader(bsonDoc), DecoderContext.builder().build())
+
+        then:
+        ((Date) decodededDoc.get('d')).getTime() == sqlTimestamp.getTime()
     }
 }
