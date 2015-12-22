@@ -18,9 +18,12 @@ package com.mongodb;
 
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DateCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
+
+import java.util.Date;
 
 /**
  * A provider for a DBObjectCodec.
@@ -57,6 +60,10 @@ public class DBObjectCodecProvider implements CodecProvider {
 
         if (DBObject.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new DBObjectCodec(registry, bsonTypeClassMap);
+        }
+
+        if (Date.class.isAssignableFrom(clazz)) {
+            return (Codec<T>) new DateCodec();
         }
 
         return null;
