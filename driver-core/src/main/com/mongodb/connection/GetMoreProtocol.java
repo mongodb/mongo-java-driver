@@ -226,6 +226,10 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                     throw throwableFromCallback;
                 } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
                     throw new MongoCursorNotFoundException(cursorId, getServerAddress());
+                } else if (responseBuffers.getReplyHeader().isQueryFailure()) {
+                    BsonDocument errorDocument = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                            message.getId()).getDocuments().get(0);
+                    throw getQueryFailureException(errorDocument, connectionDescription.getServerAddress());
                 } else {
                     QueryResult<T> result = new QueryResult<T>(namespace, new ReplyMessage<T>(responseBuffers, resultDecoder,
                                                                getRequestId()), getServerAddress());
