@@ -79,7 +79,7 @@ final class MessageHelper {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer);
+        return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
     }
 
     public static String decodeCommandAsJson(final BsonInput bsonInput) {

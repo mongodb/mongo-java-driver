@@ -145,7 +145,7 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer);
+        return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
     }
 
     @Override

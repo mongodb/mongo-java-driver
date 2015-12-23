@@ -492,7 +492,7 @@ class InternalStreamConnection implements InternalConnection {
         ReplyHeader replyHeader;
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(headerByteBuffer);
         try {
-            replyHeader = new ReplyHeader(headerInputBuffer);
+            replyHeader = new ReplyHeader(headerInputBuffer, description.getMaxMessageSize());
         } finally {
             headerInputBuffer.close();
         }
@@ -519,23 +519,27 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         @Override
-        public void onResult(final ByteBuf result, final Throwable t) {
-            if (t != null) {
-                callback.onResult(null, t);
+        public void onResult(final ByteBuf result, final Throwable throwableFromCallback) {
+            if (throwableFromCallback != null) {
+                callback.onResult(null, throwableFromCallback);
             } else {
-                ReplyHeader replyHeader;
-                ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(result);
                 try {
-                    replyHeader = new ReplyHeader(headerInputBuffer);
-                } finally {
-                    headerInputBuffer.close();
-                }
+                    ReplyHeader replyHeader;
+                    ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(result);
+                    try {
+                        replyHeader = new ReplyHeader(headerInputBuffer, description.getMaxMessageSize());
+                    } finally {
+                        headerInputBuffer.close();
+                    }
 
-                if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
-                    onSuccess(new ResponseBuffers(replyHeader, null));
-                } else {
-                    readAsync(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
-                              new ResponseBodyCallback(replyHeader));
+                    if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
+                        onSuccess(new ResponseBuffers(replyHeader, null));
+                    } else {
+                        readAsync(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
+                                  new ResponseBodyCallback(replyHeader));
+                    }
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
                 }
             }
         }

@@ -44,7 +44,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
         new ReplyMessage<Document>(replyHeader, expectedResponseTo);
     }
 
@@ -65,7 +65,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
         new ReplyMessage<Document>(replyHeader, 5);
     }
 }
