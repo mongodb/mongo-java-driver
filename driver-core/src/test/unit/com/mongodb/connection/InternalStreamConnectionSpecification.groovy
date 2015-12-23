@@ -188,7 +188,6 @@ class InternalStreamConnectionSpecification extends Specification {
                 latch.countDown();
             }
         })
-        latch.countDown();
         latch.await()
 
         then:
@@ -425,6 +424,38 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         thrown MongoSocketClosedException
+    }
+
+    def 'should throw MongoInternalException when reply header message length > max message length'() {
+        given:
+        stream.read(36) >> { helper.headerWithMessageSizeGreaterThanMax(1) }
+
+        def connection = getOpenedConnection()
+
+        when:
+        connection.receiveMessage(1)
+
+        then:
+        thrown(MongoInternalException)
+        connection.isClosed()
+    }
+
+    def 'should throw MongoInternalException when reply header message length > max message length asynchronously'() {
+        given:
+        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+            handler.completed(helper.headerWithMessageSizeGreaterThanMax(1))
+        }
+
+        def connection = getOpenedConnection()
+        def callback = new FutureResultCallback()
+
+        when:
+        connection.receiveMessageAsync(1, callback)
+        callback.get()
+
+        then:
+        thrown(MongoInternalException)
+        connection.isClosed()
     }
 
     @Category(Async)
@@ -705,6 +736,22 @@ class InternalStreamConnectionSpecification extends Specification {
             ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
                 order(ByteOrder.LITTLE_ENDIAN);
                 putInt(110);           // messageLength
+                putInt(4);             // requestId
+                putInt(messageId);     // responseTo
+                putInt(1);             // opCode
+                putInt(0);             // responseFlags
+                putLong(0);            // cursorId
+                putInt(0);             // starting from
+                putInt(1);             // number returned
+            }
+            headerByteBuffer.flip()
+            new ByteBufNIO(headerByteBuffer)
+        }
+
+        def headerWithMessageSizeGreaterThanMax(messageId) {
+            ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
+                order(ByteOrder.LITTLE_ENDIAN);
+                putInt(connectionDescription.maxMessageSize + 1);   // messageLength
                 putInt(4);             // requestId
                 putInt(messageId);     // responseTo
                 putInt(1);             // opCode
