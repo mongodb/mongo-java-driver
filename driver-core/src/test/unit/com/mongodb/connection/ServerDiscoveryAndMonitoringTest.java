@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 MongoDB, Inc.
+ * Copyright 2014-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
@@ -96,9 +97,26 @@ public class ServerDiscoveryAndMonitoringTest {
         assertNotNull(serverDescription);
         assertEquals(getServerType(expectedServerDescriptionDocument.getString("type").getValue()), serverDescription.getType());
 
+        if (expectedServerDescriptionDocument.isObjectId("electionId")) {
+            assertNotNull(serverDescription.getElectionId());
+            assertEquals(expectedServerDescriptionDocument.getObjectId("electionId").getValue(), serverDescription.getElectionId());
+        } else {
+            assertNull(serverDescription.getElectionId());
+        }
+
+        if (expectedServerDescriptionDocument.isNumber("setVersion")) {
+            assertNotNull(serverDescription.getSetVersion());
+            assertEquals(expectedServerDescriptionDocument.getNumber("setVersion").intValue(),
+                    serverDescription.getSetVersion().intValue());
+        } else {
+            assertNull(serverDescription.getSetVersion());
+        }
+
         if (expectedServerDescriptionDocument.isString("setName")) {
             assertNotNull(serverDescription.getSetName());
-            assertEquals(serverDescription.getSetName(), expectedServerDescriptionDocument.getString("setName").getValue());
+            assertEquals(expectedServerDescriptionDocument.getString("setName").getValue(), serverDescription.getSetName());
+        } else {
+            assertNull(serverDescription.getSetName());
         }
     }
 

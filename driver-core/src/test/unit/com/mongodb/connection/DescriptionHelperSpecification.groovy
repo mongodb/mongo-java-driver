@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,6 @@ class DescriptionHelperSpecification extends Specification {
         createServerDescription(new ServerAddress('localhost', 27018),
                                 parse('{' +
                                       '"setName" : "replset",' +
-                                      '"setVersion" : 1,' +
                                       '"ismaster" : false,' +
                                       '"secondary" : true,' +
                                       '"hosts" : [' +
@@ -198,6 +197,7 @@ class DescriptionHelperSpecification extends Specification {
                                       '"maxWireVersion" : 3,' +
                                       '"minWireVersion" : 0,' +
                                       '"electionId" : {$oid : "' + electionId.toHexString() + '" },' +
+                                      '"setVersion" : 2,' +
                                       'tags : { "dc" : "east", "use" : "production" }' +
                                       '"ok" : 1' +
                                       '}'), serverVersion, roundTripTime) ==
@@ -209,6 +209,7 @@ class DescriptionHelperSpecification extends Specification {
                          .maxWireVersion(3)
                          .maxDocumentSize(16777216)
                          .electionId(electionId)
+                         .setVersion(2)
                          .type(ServerType.REPLICA_SET_PRIMARY)
                          .setName('replset')
                          .primary('localhost:27017')
@@ -224,7 +225,6 @@ class DescriptionHelperSpecification extends Specification {
         createServerDescription(serverAddress,
                                 parse('{' +
                                       '"setName" : "replset",' +
-                                      '"setVersion" : 1,' +
                                       '"ismaster" : false,' +
                                       '"secondary" : false,' +
                                       '"hosts" : [' +
@@ -270,7 +270,6 @@ class DescriptionHelperSpecification extends Specification {
         createServerDescription(serverAddressOfHidden,
                                 parse('{' +
                                       '"setName" : "replset",' +
-                                      '"setVersion" : 1,' +
                                       '"ismaster" : false,' +
                                       '"secondary" : false,' +
                                       '"hosts" : [' +
@@ -316,7 +315,6 @@ class DescriptionHelperSpecification extends Specification {
         createServerDescription(serverAddressOfHidden,
                                 parse('{' +
                                       '"setName" : "replset",' +
-                                      '"setVersion" : 1,' +
                                       '"ismaster" : false,' +
                                       '"secondary" : true,' +
                                       '"hidden" : true,' +
@@ -361,7 +359,6 @@ class DescriptionHelperSpecification extends Specification {
         createServerDescription(serverAddress,
                                 parse('{' +
                                       '"setName" : "replset",' +
-                                      '"setVersion" : 1,' +
                                       '"ismaster" : false,' +
                                       '"secondary" : false,' +
                                       '"arbiterOnly" : false,' +
