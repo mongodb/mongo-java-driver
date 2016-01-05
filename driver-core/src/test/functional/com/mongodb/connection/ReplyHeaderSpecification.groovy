@@ -78,7 +78,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == "The reply message opCode 2 does not match the expected opCode 1"
+        ex.getMessage() == 'The reply message opCode 2 does not match the expected opCode 1'
     }
 
     def 'should throw MongoInternalException on message size < 36'() {
@@ -100,7 +100,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == "The reply message length 35 is less than the mimimum message length 36"
+        ex.getMessage() == 'The reply message length 35 is less than the mimimum message length 36'
     }
 
     def 'should throw MongoInternalException on message size > max message size'() {
@@ -122,7 +122,7 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == "The reply message length 400 is less than the maximum message length 399"
+        ex.getMessage() == 'The reply message length 400 is less than the maximum message length 399'
     }
 
     def 'should throw MongoInternalException on num documents < 0'() {
@@ -144,6 +144,6 @@ class ReplyHeaderSpecification extends Specification {
 
         then:
         def ex = thrown(MongoInternalException)
-        ex.getMessage() == "The reply message number of returned documents, -1, is less than 0"
+        ex.getMessage() == 'The reply message number of returned documents, -1, is less than 0'
     }
 }
