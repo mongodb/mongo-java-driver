@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ final class MultiServerCluster extends BaseCluster {
     private ClusterType clusterType;
     private String replicaSetName;
     private ObjectId maxElectionId;
+    private Integer maxSetVersion;
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
@@ -216,21 +217,35 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.isPrimary()) {
-            if (newDescription.getElectionId() != null) {
-                if (maxElectionId != null && maxElectionId.compareTo(newDescription.getElectionId()) > 0) {
+            if (newDescription.getSetVersion() != null && newDescription.getElectionId() != null) {
+                if (isStalePrimary(newDescription)) {
                     if (LOGGER.isInfoEnabled()) {
-                        LOGGER.info(format("Invalidating potential primary %s whose election id %s is less than the max election id seen "
-                                           + "so far %s", newDescription.getAddress(), newDescription.getElectionId(), maxElectionId));
+                        LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
+                                + "is less than one already seen of (%d, %s)",
+                                newDescription.getAddress(),
+                                newDescription.getSetVersion(), newDescription.getElectionId(),
+                                maxSetVersion, maxElectionId));
                     }
                     addressToServerTupleMap.get(newDescription.getAddress()).server.invalidate();
                     return false;
                 }
 
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info(format("Setting max election id to %s from replica set primary %s", newDescription.getElectionId(),
-                                       newDescription.getAddress()));
+                if (!newDescription.getElectionId().equals(maxElectionId)) {
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Setting max election id to %s from replica set primary %s", newDescription.getElectionId(),
+                                newDescription.getAddress()));
+                    }
+                    maxElectionId = newDescription.getElectionId();
                 }
-                maxElectionId = newDescription.getElectionId();
+            }
+
+            if (newDescription.getSetVersion() != null
+                    && (maxSetVersion == null || newDescription.getSetVersion().compareTo(maxSetVersion) > 0)) {
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info(format("Setting max set version to %d from replica set primary %s", newDescription.getSetVersion(),
+                            newDescription.getAddress()));
+                }
+                maxSetVersion = newDescription.getSetVersion();
             }
 
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
@@ -239,6 +254,15 @@ final class MultiServerCluster extends BaseCluster {
             invalidateOldPrimaries(newDescription.getAddress());
         }
         return true;
+    }
+
+    private boolean isStalePrimary(final ServerDescription newDescription) {
+        if (maxSetVersion == null || maxElectionId == null) {
+            return false;
+        }
+
+        return (maxSetVersion.compareTo(newDescription.getSetVersion()) > 0
+                || (maxSetVersion.equals(newDescription.getSetVersion()) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {

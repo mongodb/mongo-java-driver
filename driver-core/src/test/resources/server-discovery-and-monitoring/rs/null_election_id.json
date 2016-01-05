@@ -7,6 +7,7 @@
                     "a:27017": {
                         "electionId": null, 
                         "setName": "rs", 
+                        "setVersion": 1, 
                         "type": "RSPrimary"
                     }, 
                     "b:27017": {
@@ -34,7 +35,8 @@
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
-                        "setName": "rs"
+                        "setName": "rs", 
+                        "setVersion": 1
                     }
                 ]
             ]
@@ -52,6 +54,7 @@
                             "$oid": "000000000000000000000002"
                         }, 
                         "setName": "rs", 
+                        "setVersion": 1, 
                         "type": "RSPrimary"
                     }, 
                     "c:27017": {
@@ -77,7 +80,8 @@
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
-                        "setName": "rs"
+                        "setName": "rs", 
+                        "setVersion": 1
                     }
                 ]
             ]
@@ -88,6 +92,7 @@
                     "a:27017": {
                         "electionId": null, 
                         "setName": "rs", 
+                        "setVersion": 1, 
                         "type": "RSPrimary"
                     }, 
                     "b:27017": {
@@ -115,7 +120,8 @@
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
-                        "setName": "rs"
+                        "setName": "rs", 
+                        "setVersion": 1
                     }
                 ]
             ]
@@ -125,7 +131,8 @@
                 "servers": {
                     "a:27017": {
                         "electionId": null, 
-                        "setName": "rs", 
+                        "setName": "rs",
+                        "setVersion": 1,
                         "type": "RSPrimary"
                     }, 
                     "b:27017": {
@@ -156,7 +163,8 @@
                         ], 
                         "ismaster": true, 
                         "ok": 1, 
-                        "setName": "rs"
+                        "setName": "rs", 
+                        "setVersion": 1
                     }
                 ]
             ]

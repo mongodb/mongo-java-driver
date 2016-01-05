@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .hosts(hostsSet)
                                 .passives(passivesSet)
                                 .setName(setName)
-                                .electionId(electionId);
+                                .electionId(electionId)
+                                .setVersion(1);
     }
 }

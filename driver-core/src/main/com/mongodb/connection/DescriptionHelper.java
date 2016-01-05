@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,12 +81,17 @@ final class DescriptionHelper {
                                 .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
                                                                         new BsonInt32(getDefaultMaxWireVersion())).getValue())
                                 .electionId(getElectionId(isMasterResult))
+                                .setVersion(getSetVersion(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
     }
 
     private static ObjectId getElectionId(final BsonDocument isMasterResult) {
         return isMasterResult.containsKey("electionId") ? isMasterResult.getObjectId("electionId").getValue() : null;
+    }
+
+    private static Integer getSetVersion(final BsonDocument isMasterResult) {
+        return isMasterResult.containsKey("setVersion") ? isMasterResult.getNumber("setVersion").intValue() : null;
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
