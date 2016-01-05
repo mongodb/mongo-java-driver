@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ public class ServerDescriptionTest {
         assertEquals(0, serverDescription.getMinWireVersion());
         assertEquals(0, serverDescription.getMaxWireVersion());
         assertNull(serverDescription.getElectionId());
+        assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getException());
     }
 
@@ -116,6 +117,7 @@ public class ServerDescriptionTest {
                                               .minWireVersion(1)
                                               .maxWireVersion(2)
                                               .electionId(new ObjectId("123412341234123412341234"))
+                                              .setVersion(new Integer(2))
                                               .exception(exception)
                                               .build();
 
@@ -148,6 +150,7 @@ public class ServerDescriptionTest {
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
         assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
+        assertEquals(new Integer(2), serverDescription.getSetVersion());
         assertEquals(exception, serverDescription.getException());
     }
 
@@ -170,7 +173,8 @@ public class ServerDescriptionTest {
                                                                      .version(new ServerVersion(asList(2, 4, 1)))
                                                                      .minWireVersion(1)
                                                              .maxWireVersion(2)
-                                                             .electionId(new ObjectId());
+                                                             .electionId(new ObjectId())
+                                                             .setVersion(new Integer(2));
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());
         assertTrue(builder.build().toString().startsWith("ServerDescription"));
