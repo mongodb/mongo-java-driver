@@ -50,31 +50,34 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            SslSettings.Builder sslSettingsBuilder = SslSettings.builder().applyConnectionString(getConnectionString());
-            if (System.getProperty("java.version").startsWith("1.6.")) {
-                sslSettingsBuilder.invalidHostNameAllowed(true);
-            }
-            ClusterSettings clusterSettings = ClusterSettings.builder()
-                                                             .applyConnectionString(getConnectionString())
-                                                             .build();
-            ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder()
-                                                                                  .applyConnectionString(getConnectionString())
-                                                                                  .build();
-            SocketSettings socketSettings = SocketSettings.builder()
-                                                          .applyConnectionString(getConnectionString())
-                                                          .build();
-            MongoClientSettings settings = MongoClientSettings.builder()
-                                                           .clusterSettings(clusterSettings)
-                                                           .connectionPoolSettings(connectionPoolSettings)
-                                                           .serverSettings(ServerSettings.builder().build())
-                                                           .credentialList(getConnectionString().getCredentialList())
-                                                           .sslSettings(sslSettingsBuilder.build())
-                                                           .socketSettings(socketSettings)
-                                                           .build();
-            mongoClient = (MongoClientImpl) MongoClients.create(settings);
+            MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
+            mongoClient = (MongoClientImpl) MongoClients.create(builder.build());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
+    }
+
+    public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
+        SslSettings.Builder sslSettingsBuilder = SslSettings.builder().applyConnectionString(getConnectionString());
+        if (System.getProperty("java.version").startsWith("1.6.")) {
+            sslSettingsBuilder.invalidHostNameAllowed(true);
+        }
+        ClusterSettings clusterSettings = ClusterSettings.builder()
+                                                         .applyConnectionString(getConnectionString())
+                                                         .build();
+        ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder()
+                                                                              .applyConnectionString(getConnectionString())
+                                                                              .build();
+        SocketSettings socketSettings = SocketSettings.builder()
+                                                      .applyConnectionString(getConnectionString())
+                                                      .build();
+        return MongoClientSettings.builder()
+                .clusterSettings(clusterSettings)
+                .connectionPoolSettings(connectionPoolSettings)
+                .serverSettings(ServerSettings.builder().build())
+                .credentialList(getConnectionString().getCredentialList())
+                .sslSettings(sslSettingsBuilder.build())
+                .socketSettings(socketSettings);
     }
 
     public static synchronized ConnectionString getConnectionString() {
