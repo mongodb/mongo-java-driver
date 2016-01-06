@@ -17,7 +17,6 @@
 package com.mongodb.async.client
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.connection.ClusterSettings
 import com.mongodb.event.CommandListener
 import org.bson.Document
 
@@ -28,11 +27,9 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
     def 'should register single command listener'() {
         given:
         def first = Mock(CommandListener)
-        def client = MongoClients.create(
-                MongoClientSettings.builder().clusterSettings(ClusterSettings.builder().applyConnectionString(Fixture.connectionString)
-                        .build())
-                        .addCommandListener(first)
-                        .build());
+        def client = MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
+                .addCommandListener(first)
+                .build());
 
         when:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
@@ -46,11 +43,10 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         given:
         def first = Mock(CommandListener)
         def second = Mock(CommandListener)
-        def client = MongoClients.create(
-                MongoClientSettings.builder().clusterSettings(ClusterSettings.builder().applyConnectionString(Fixture.connectionString)
-                        .build())
-                        .addCommandListener(first)
-                        .addCommandListener(second).build());
+        def client = MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
+                .addCommandListener(first)
+                .addCommandListener(second)
+                .build());
 
         when:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
@@ -68,4 +64,5 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         operation.call(*opArgs + futureResultCallback)
         futureResultCallback.get(60, SECONDS)
     }
+
 }
