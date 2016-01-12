@@ -34,6 +34,14 @@ public class ServerAddressTest {
     }
 
     @Test
+    public void testLowerCaseHostName() throws UnknownHostException {
+        final String capitalizedHostName = "SOMEWHERE";
+        ServerAddress subject = new ServerAddress(capitalizedHostName);
+
+        assertEquals(capitalizedHostName.toLowerCase(), subject.getHost());
+    }
+
+    @Test
     public void testParseIPV4WithoutPort() throws UnknownHostException {
         ServerAddress subject = new ServerAddress("10.0.0.1");
 
@@ -69,7 +77,7 @@ public class ServerAddressTest {
     public void testParseIPV6WithoutPort() throws UnknownHostException {
         ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]");
 
-        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals("2010:836b:4179::836b:4179", subject.getHost());
         assertEquals(ServerAddress.defaultPort(), subject.getPort());
     }
 
@@ -77,7 +85,7 @@ public class ServerAddressTest {
     public void testParseIPV6WithPort() throws UnknownHostException {
         ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]:1000");
 
-        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals("2010:836b:4179::836b:4179", subject.getHost());
         assertEquals(1000, subject.getPort());
     }
 
@@ -85,7 +93,7 @@ public class ServerAddressTest {
     public void testIPV6WithPort() throws UnknownHostException {
         ServerAddress subject = new ServerAddress("[2010:836B:4179::836B:4179]", 1000);
 
-        assertEquals("2010:836B:4179::836B:4179", subject.getHost());
+        assertEquals("2010:836b:4179::836b:4179", subject.getHost());
         assertEquals(1000, subject.getPort());
     }
 
