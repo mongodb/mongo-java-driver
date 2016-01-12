@@ -74,6 +74,7 @@ class ServerDescription {
     private final int maxWireVersion;
 
     private final ObjectId electionId;
+    private final Integer setVersion;
 
     private final Throwable exception;
 
@@ -97,6 +98,7 @@ class ServerDescription {
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
         private ObjectId electionId;
+        private Integer setVersion;
         private Throwable exception;
 
         // CHECKSTYLE:OFF
@@ -199,6 +201,17 @@ class ServerDescription {
          */
         public Builder electionId(final ObjectId electionId) {
             this.electionId = electionId;
+            return this;
+        }
+
+        /**
+         * Sets the setVersion reported by this server.
+         *
+         * @param setVersion the set version
+         * @return this
+         */
+        public Builder setVersion(final Integer setVersion) {
+            this.setVersion = setVersion;
             return this;
         }
 
@@ -344,6 +357,15 @@ class ServerDescription {
     }
 
     /**
+     * The replica set setVersion reported by this MongoDB server.
+     *
+     * @return the setVersion, which may be null
+     */
+    public Integer getSetVersion() {
+        return setVersion;
+    }
+
+    /**
      * Returns true if the server has the given tags.  A server of either type {@code ServerType.StandAlone} or
      * {@code ServerType.ShardRouter} is considered to have all tags, so this method will always return true for instances of either of
      * those types.
@@ -467,7 +489,9 @@ class ServerDescription {
         if (electionId != null ? !electionId.equals(that.electionId) : that.electionId != null) {
             return false;
         }
-
+        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
+            return false;
+        }
         // Compare class equality and message as exceptions rarely override equals
         Class thisExceptionClass = exception != null ? exception.getClass() : null;
         Class thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -505,6 +529,7 @@ class ServerDescription {
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
         result = 31 * result + (electionId != null ? electionId.hashCode() : 0);
+        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
         result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
         result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
@@ -524,6 +549,7 @@ class ServerDescription {
                + ", maxMessageSize=" + maxMessageSize
                + ", maxWriteBatchSize=" + maxWriteBatchSize
                + ", electionId=" + electionId
+               + ", setVersion=" + setVersion
                + ", tagSet=" + tagSet
                + ", setName='" + setName + '\''
                + ", averageLatencyNanos=" + averageLatencyNanos
@@ -587,6 +613,7 @@ class ServerDescription {
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
         electionId = builder.electionId;
+        setVersion = builder.setVersion;
         exception = builder.exception;
     }
 }

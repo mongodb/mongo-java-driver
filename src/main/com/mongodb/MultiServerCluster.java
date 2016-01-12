@@ -45,6 +45,7 @@ final class MultiServerCluster extends BaseCluster {
     private ClusterType clusterType;
     private String replicaSetName;
     private ObjectId maxElectionId;
+    private Integer maxSetVersion;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
@@ -201,10 +202,13 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.isPrimary()) {
-            if (newDescription.getElectionId() != null) {
-                if (maxElectionId != null && maxElectionId.compareTo(newDescription.getElectionId()) > 0) {
-                    LOGGER.info(format("Invalidating potential primary %s whose election id %s is less than the max election id seen so "
-                            + "far %s", newDescription.getAddress(), newDescription.getElectionId(), maxElectionId));
+            if (newDescription.getSetVersion() != null && newDescription.getElectionId() != null) {
+                if (isStalePrimary(newDescription)) {
+                    LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
+                                    + "is less than one already seen of (%d, %s)",
+                            newDescription.getAddress(),
+                            newDescription.getSetVersion(), newDescription.getElectionId(),
+                            maxSetVersion, maxElectionId));
                     addressToServerTupleMap.get(newDescription.getAddress()).server.invalidate();
                     return false;
                 }
@@ -216,12 +220,28 @@ final class MultiServerCluster extends BaseCluster {
                 }
             }
 
+            if (newDescription.getSetVersion() != null
+                    && (maxSetVersion == null || newDescription.getSetVersion().compareTo(maxSetVersion) > 0)) {
+                LOGGER.info(format("Setting max set version to %d from replica set primary %s", newDescription.getSetVersion(),
+                        newDescription.getAddress()));
+                maxSetVersion = newDescription.getSetVersion();
+            }
+
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
                 LOGGER.info(format("Discovered replica set primary %s", newDescription.getAddress()));
             }
             invalidateOldPrimaries(newDescription.getAddress());
         }
         return true;
+    }
+
+    private boolean isStalePrimary(final ServerDescription newDescription) {
+        if (maxSetVersion == null || maxElectionId == null) {
+            return false;
+        }
+
+        return (maxSetVersion.compareTo(newDescription.getSetVersion()) > 0
+                || (maxSetVersion.equals(newDescription.getSetVersion()) && maxElectionId.compareTo(newDescription.getElectionId()) > 0));
     }
 
     private boolean isNotAlreadyPrimary(final ServerAddress address) {

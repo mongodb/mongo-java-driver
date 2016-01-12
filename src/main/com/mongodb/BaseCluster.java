@@ -197,6 +197,10 @@ abstract class BaseCluster implements Cluster {
         clusterListener.clusterDescriptionChanged(new ClusterDescriptionChangedEvent(clusterId, description));
     }
 
+    ClusterDescription getCurrentDescription() {
+        return description;
+    }
+
     // gets a random server that still exists in the cluster.  Returns null if there are none.
     private ClusterableServer getRandomServer(final List<ServerDescription> serverDescriptions) {
         while (!serverDescriptions.isEmpty()) {

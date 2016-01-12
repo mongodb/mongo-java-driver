@@ -88,6 +88,7 @@ public class ServerDescriptionTest {
         assertEquals(0, serverDescription.getMinWireVersion());
         assertEquals(0, serverDescription.getMaxWireVersion());
         assertNull(serverDescription.getElectionId());
+        assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getException());
     }
 
@@ -117,6 +118,7 @@ public class ServerDescriptionTest {
                                               .minWireVersion(1)
                                               .maxWireVersion(2)
                                               .electionId(new ObjectId("123412341234123412341234"))
+                                              .setVersion(2)
                                               .exception(exception)
                                               .build();
 
@@ -151,6 +153,7 @@ public class ServerDescriptionTest {
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
         assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
+        assertEquals(new Integer(2), serverDescription.getSetVersion());
         assertEquals(exception, serverDescription.getException());
     }
 
@@ -176,6 +179,7 @@ public class ServerDescriptionTest {
                                             .minWireVersion(1)
                                             .maxWireVersion(2)
                                             .electionId(new ObjectId())
+                                            .setVersion(2)
                                             .exception(new IllegalArgumentException("This is illegal"));
         assertEquals(builder.build(), builder.build());
         assertEquals(builder.build().hashCode(), builder.build().hashCode());

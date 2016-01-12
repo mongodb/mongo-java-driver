@@ -510,23 +510,24 @@ class MultiServerClusterSpecification extends Specification {
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName,
                          ServerAddress trueAddress) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, setName, null, trueAddress)
-                                                                  .build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, setName, null, null,
+                trueAddress).build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives,
                          String setName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName, null, null)
-                                                                  .build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName, null, null,
+                null).build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, ObjectId electionId) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, 'test', electionId, null)
-                                                                  .build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], true, 'test', 2, electionId,
+                null).build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null, null, null).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null, null, null, null)
+                .build())
     }
 
     def getClusterDescription(MultiServerCluster cluster) {
@@ -542,7 +543,7 @@ class MultiServerClusterSpecification extends Specification {
     }
 
     def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives, boolean ok,
-                   String setName, ObjectId electionId, ServerAddress trueAddress) {
+                   String setName, Integer setVersion, ObjectId electionId, ServerAddress trueAddress) {
         ServerDescription.builder()
                          .address(serverAddress)
                          .type(serverType)
@@ -553,5 +554,6 @@ class MultiServerClusterSpecification extends Specification {
                          .passives(passives*.toString() as Set)
                          .setName(setName)
                          .electionId(electionId)
+                         .setVersion(setVersion)
     }
 }
