@@ -72,6 +72,19 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         newDescription.electionId == expected
     }
 
+    def 'should set setVersion'() {
+        given:
+        initializeServerMonitor(new ServerAddress())
+        CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
+        def expected = commandResult.get('setVersion')
+
+        when:
+        latch.await()
+
+        then:
+        newDescription.setVersion == expected
+    }
+
     @IgnoreIf( { serverIsAtLeastVersion(2.6) } )
     def 'should set default max wire batch size when not provided by server'() {
         given:

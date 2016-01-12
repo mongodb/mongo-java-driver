@@ -239,8 +239,8 @@ class ServerMonitor {
     }
 
     @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final CommandResult commandResult, final ServerVersion serverVersion,
-                                                final long averageLatencyNanos) {
+    ServerDescription createDescription(final CommandResult commandResult, final ServerVersion serverVersion,
+                                        final long averageLatencyNanos) {
         return ServerDescription.builder()
                                 .state(ServerConnectionState.Connected)
                                 .version(serverVersion)
@@ -260,6 +260,7 @@ class ServerMonitor {
                                 .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
                                 .electionId(commandResult.containsKey("electionId") ? commandResult.getObjectId("electionId") : null)
+                                .setVersion(commandResult.containsKey("setVersion") ? commandResult.getInt("setVersion") : null)
                                 .averageLatency(averageLatencyNanos, TimeUnit.NANOSECONDS)
                                 .ok(commandResult.ok()).build();
     }
