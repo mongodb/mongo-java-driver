@@ -239,7 +239,7 @@ class ServerMonitor {
     }
 
     @SuppressWarnings("unchecked")
-    ServerDescription createDescription(final CommandResult commandResult, final ServerVersion serverVersion,
+    static ServerDescription createDescription(final CommandResult commandResult, final ServerVersion serverVersion,
                                         final long averageLatencyNanos) {
         return ServerDescription.builder()
                                 .state(ServerConnectionState.Connected)
@@ -265,7 +265,7 @@ class ServerMonitor {
                                 .ok(commandResult.ok()).build();
     }
 
-    private Set<String> listToSet(final List<String> list) {
+    private static Set<String> listToSet(final List<String> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptySet();
         } else {
