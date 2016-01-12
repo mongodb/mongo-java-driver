@@ -272,7 +272,11 @@ class ServerMonitor {
         }
     }
 
-    private static ServerType getServerType(final BasicDBObject isMasterResult) {
+    static ServerType getServerType(final CommandResult isMasterResult) {
+        if (!isMasterResult.ok()) {
+            return ServerType.Unknown;
+        }
+
         if (isReplicaSetMember(isMasterResult)) {
 
             if (isMasterResult.getBoolean("hidden", false)) {
