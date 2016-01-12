@@ -98,7 +98,7 @@ public class ServerAddress {
             }
         }
 
-        _host = host;
+        _host = host.toLowerCase();
         _port = port;
     }
 
