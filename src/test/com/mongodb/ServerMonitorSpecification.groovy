@@ -160,22 +160,52 @@ class ServerMonitorSpecification extends FunctionalSpecification {
     }
 
     def 'should report correct server type'() {
+        given:
+        CommandResult isMasterCommandResult = new CommandResult(new ServerAddress())
+        isMasterCommandResult.putAll(response)
+
         expect:
-        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
-                                            .append('hidden', true)
-                                            .append('secondary', true)) == ServerType.ReplicaSetOther
-        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
-                                            .append('ismaster', true)) == ServerType.ReplicaSetPrimary
-        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
-                                            .append('secondary', true)) == ServerType.ReplicaSetSecondary
-        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
-                                            .append('arbiterOnly', true)) == ServerType.ReplicaSetArbiter
-        ServerMonitor.getServerType(new BasicDBObject('setName', 'test')
-                                            .append('hosts', ['server1:27017'])) == ServerType.ReplicaSetOther
-        ServerMonitor.getServerType(new BasicDBObject('isreplicaset', true)) == ServerType.ReplicaSetGhost
-        ServerMonitor.getServerType(new BasicDBObject()) == ServerType.StandAlone
-        ServerMonitor.getServerType(new BasicDBObject('msg', 'isdbgrid')) == ServerType.ShardRouter
-        ServerMonitor.getServerType(new BasicDBObject('msg', 'whatever')) == ServerType.StandAlone
+        ServerMonitor.getServerType(isMasterCommandResult) == serverType
+
+        where:
+        response << [
+                new BasicDBObject('ok', 0),
+                new BasicDBObject('ok', 1)
+                        .append('setName', 'test')
+                        .append('hidden', true)
+                        .append('secondary', true),
+                new BasicDBObject('ok', 1)
+                        .append('setName', 'test')
+                        .append('ismaster', true),
+                new BasicDBObject('ok', 1)
+                        .append('setName', 'test')
+                        .append('secondary', true),
+                new BasicDBObject('ok', 1)
+                        .append('setName', 'test')
+                        .append('arbiterOnly', true),
+                new BasicDBObject('ok', 1)
+                        .append('setName', 'test')
+                        .append('hosts', ['server1:27017']),
+                new BasicDBObject('ok', 1)
+                        .append('isreplicaset', true),
+                new BasicDBObject('ok', 1),
+                new BasicDBObject('ok', 1)
+                        .append('msg', 'isdbgrid'),
+                new BasicDBObject('ok', 1)
+                        .append('msg', 'whatever')
+        ]
+        serverType << [
+                ServerType.Unknown,
+                ServerType.ReplicaSetOther,
+                ServerType.ReplicaSetPrimary,
+                ServerType.ReplicaSetSecondary,
+                ServerType.ReplicaSetArbiter,
+                ServerType.ReplicaSetOther,
+                ServerType.ReplicaSetGhost,
+                ServerType.StandAlone,
+                ServerType.ShardRouter,
+                ServerType.StandAlone
+        ]
     }
 
     def initializeServerMonitor(ServerAddress address) {
