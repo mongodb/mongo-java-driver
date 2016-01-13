@@ -284,6 +284,10 @@
             <classpath refid="test.classpath"/>
             <compilerarg value="-Xlint:all,-rawtypes,-deprecation"/>
         </javac>
+
+        <copy todir="${build.test.dir}">
+            <fileset dir="src/test-resources"/>
+        </copy>
     </target>
 
     <target name="test" depends="test-compile, test-nodeps"/>
