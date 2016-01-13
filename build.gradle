@@ -66,7 +66,7 @@ dependencies {
 
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongo-java-driver:2.13.0'
+    baseline 'org.mongodb:mongo-java-driver:2.14.0'
 }
 
 codenarc {
