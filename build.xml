@@ -30,7 +30,7 @@
     <property name="build.util.dir" location="${build.dir}/util"/>
     <property name="build.instrumented.dir" location="${build.dir}/instrumented"/>
     <property name="build.logs.dir" location="${basedir}/logs"/>
-    <property name="build.docs.dir" location="${basedir}/docs"/>
+    <property name="build.docs.dir" location="${basedir}/javadoc"/>
     <property name="artifact.name" value="mongo.jar"/>
     <property name="target.dir" location="${basedir}/target"/>
     <property name="test.dir" location="${target.dir}/test"/>
