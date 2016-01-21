@@ -90,7 +90,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
         byte bsonTypeByte = bsonInput.readByte();
         BsonType bsonType = BsonType.findByValue(bsonTypeByte);
         if (bsonType == null) {
-            throw new BsonSerializationException(format("Expecting a valid BSON type but found %d", bsonTypeByte));
+            String name = bsonInput.readCString();
+            throw new BsonSerializationException(format("Detected unknown BSON type \"\\x%x\" for fieldname \"%s\". "
+                    + "Are you using the latest driver version?",
+                    bsonTypeByte, name));
         }
         setCurrentBsonType(bsonType);
 
