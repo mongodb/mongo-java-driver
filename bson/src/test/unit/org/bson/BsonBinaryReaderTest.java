@@ -23,7 +23,9 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class BsonBinaryReaderTest {
 
@@ -39,6 +41,34 @@ public class BsonBinaryReaderTest {
         assertThat(dbPointer.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
         reader.readEndDocument();
         reader.close();
+    }
+
+    @Test
+    public void testInvalidBsonType() {
+        BsonBinaryReader reader = createReaderForBytes(new byte[]{26, 0, 0, 0, 22, 97, 0, 2, 0, 0, 0, 98, 0, 82, 9, 41, 108,
+                -42, -60, -29, -116, -7, 111, -1, -36, 0});
+
+        reader.readStartDocument();
+        try {
+            reader.readBsonType();
+            fail("Should have thrown BsonSerializationException");
+        } catch (BsonSerializationException e) {
+            assertEquals("Detected unknown BSON type \"\\x16\" for fieldname \"a\". Are you using the latest driver version?",
+                    e.getMessage());
+        }
+    }
+
+    @Test
+    public void testInvalidBsonTypeFollowedByInvalidCString() {
+        BsonBinaryReader reader = createReaderForBytes(new byte[]{26, 0, 0, 0, 22, 97, 98});
+
+        reader.readStartDocument();
+        try {
+            reader.readBsonType();
+            fail("Should have thrown BsonSerializationException");
+        } catch (BsonSerializationException e) {
+            assertEquals("While decoding a BSON document 1 bytes were required, but only 0 remain", e.getMessage());
+        }
     }
 
     private BsonBinaryReader createReaderForBytes(final byte[] bytes) {
