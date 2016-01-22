@@ -62,7 +62,7 @@ public abstract class BsonValue {
     /**
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonString
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonString asString() {
@@ -73,7 +73,7 @@ public abstract class BsonValue {
     /**
      * Gets this value as a BsonNumber if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonNumber
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonNumber asNumber() {
@@ -85,9 +85,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a BsonString if it is one, otherwise throws exception
+     * Gets this value as a BsonInt32 if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonInt32
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonInt32 asInt32() {
@@ -96,9 +96,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a BsonString if it is one, otherwise throws exception
+     * Gets this value as a BsonInt64 if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonInt64
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonInt64 asInt64() {
@@ -107,9 +107,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a BsonString if it is one, otherwise throws exception
+     * Gets this value as a BsonDouble if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonDouble
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonDouble asDouble() {
@@ -118,9 +118,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a BsonString if it is one, otherwise throws exception
+     * Gets this value as a BsonBoolean if it is one, otherwise throws exception
      *
-     * @return a BsonArray
+     * @return a BsonBoolean
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonBoolean asBoolean() {
@@ -140,9 +140,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a DBPointer if it is one, otherwise throws exception
+     * Gets this value as a BsonDbPointer if it is one, otherwise throws exception
      *
-     * @return an DBPointer
+     * @return an BsonDbPointer
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonDbPointer asDBPointer() {
@@ -151,9 +151,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a Timestamp if it is one, otherwise throws exception
+     * Gets this value as a BsonTimestamp if it is one, otherwise throws exception
      *
-     * @return an Timestamp
+     * @return an BsonTimestamp
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonTimestamp asTimestamp() {
@@ -162,9 +162,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a Binary if it is one, otherwise throws exception
+     * Gets this value as a BsonBinary if it is one, otherwise throws exception
      *
-     * @return an Binary
+     * @return an BsonBinary
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonBinary asBinary() {
@@ -184,9 +184,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a Symbol if it is one, otherwise throws exception
+     * Gets this value as a BsonSymbol if it is one, otherwise throws exception
      *
-     * @return an Symbol
+     * @return an BsonSymbol
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonSymbol asSymbol() {
@@ -195,9 +195,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a RegularExpression if it is one, otherwise throws exception
+     * Gets this value as a BsonRegularExpression if it is one, otherwise throws exception
      *
-     * @return an ObjectId
+     * @return an BsonRegularExpression
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonRegularExpression asRegularExpression() {
@@ -208,7 +208,7 @@ public abstract class BsonValue {
     /**
      * Gets this value as a {@code BsonJavaScript} if it is one, otherwise throws exception
      *
-     * @return a Code
+     * @return a BsonJavaScript
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonJavaScript asJavaScript() {
@@ -217,9 +217,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as a CodeWithScope if it is one, otherwise throws exception
+     * Gets this value as a BsonJavaScriptWithScope if it is one, otherwise throws exception
      *
-     * @return a CodeWithScope
+     * @return a BsonJavaScriptWithScope
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonJavaScriptWithScope asJavaScriptWithScope() {
@@ -302,9 +302,9 @@ public abstract class BsonValue {
     }
 
     /**
-     * Returns true if this is a , false otherwise.
+     * Returns true if this is a BsonBoolean, false otherwise.
      *
-     * @return true if this is a , false otherwise
+     * @return true if this is a BsonBoolean, false otherwise
      */
     public boolean isBoolean() {
         return this instanceof BsonBoolean;
@@ -312,36 +312,36 @@ public abstract class BsonValue {
     }
 
     /**
-     * Returns true if this is an ObjectId, false otherwise.
+     * Returns true if this is an BsonObjectId, false otherwise.
      *
-     * @return true if this is an ObjectId, false otherwise
+     * @return true if this is an BsonObjectId, false otherwise
      */
     public boolean isObjectId() {
         return this instanceof BsonObjectId;
     }
 
     /**
-     * Returns true if this is a DBPointer, false otherwise.
+     * Returns true if this is a BsonDbPointer, false otherwise.
      *
-     * @return true if this is a DBPointer, false otherwise
+     * @return true if this is a BsonDbPointer, false otherwise
      */
     public boolean isDBPointer() {
         return this instanceof BsonDbPointer;
     }
 
     /**
-     * Returns true if this is a Timestamp, false otherwise.
+     * Returns true if this is a BsonTimestamp, false otherwise.
      *
-     * @return true if this is a Timestamp, false otherwise
+     * @return true if this is a BsonTimestamp, false otherwise
      */
     public boolean isTimestamp() {
         return this instanceof BsonTimestamp;
     }
 
     /**
-     * Returns true if this is a Binary, false otherwise.
+     * Returns true if this is a BsonBinary, false otherwise.
      *
-     * @return true if this is a Binary, false otherwise
+     * @return true if this is a BsonBinary, false otherwise
      */
     public boolean isBinary() {
         return this instanceof BsonBinary;
@@ -357,36 +357,36 @@ public abstract class BsonValue {
     }
 
     /**
-     * Returns true if this is a Symbol, false otherwise.
+     * Returns true if this is a BsonSymbol, false otherwise.
      *
-     * @return true if this is a Symbol, false otherwise
+     * @return true if this is a BsonSymbol, false otherwise
      */
     public boolean isSymbol() {
         return this instanceof BsonSymbol;
     }
 
     /**
-     * Returns true if this is a RegularExpression, false otherwise.
+     * Returns true if this is a BsonRegularExpression, false otherwise.
      *
-     * @return true if this is a RegularExpression, false otherwise
+     * @return true if this is a BsonRegularExpression, false otherwise
      */
     public boolean isRegularExpression() {
         return this instanceof BsonRegularExpression;
     }
 
     /**
-     * Returns true if this is a Code, false otherwise.
+     * Returns true if this is a BsonJavaScript, false otherwise.
      *
-     * @return true if this is a Code, false otherwise
+     * @return true if this is a BsonJavaScript, false otherwise
      */
     public boolean isJavaScript() {
         return this instanceof BsonJavaScript;
     }
 
     /**
-     * Returns true if this is a CodeWithScope, false otherwise.
+     * Returns true if this is a BsonJavaScriptWithScope, false otherwise.
      *
-     * @return true if this is a CodeWithScope, false otherwise
+     * @return true if this is a BsonJavaScriptWithScope, false otherwise
      */
     public boolean isJavaScriptWithScope() {
         return this instanceof BsonJavaScriptWithScope;
