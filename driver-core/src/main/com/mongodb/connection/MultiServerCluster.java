@@ -93,8 +93,8 @@ final class MultiServerCluster extends BaseCluster {
 
     @Override
     public void close() {
-        if (!isClosed()) {
-            synchronized (this) {
+        synchronized (this) {
+            if (!isClosed()) {
                 for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
                     serverTuple.server.close();
                 }
@@ -123,12 +123,12 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void onChange(final ChangeEvent<ServerDescription> event) {
-        if (isClosed()) {
-            return;
-        }
-
         boolean shouldUpdateDescription = true;
         synchronized (this) {
+            if (isClosed()) {
+                return;
+            }
+
             ServerDescription newDescription = event.getNewValue();
 
             if (LOGGER.isTraceEnabled()) {
