@@ -35,7 +35,7 @@ an application uses instances of the `Document` class:
 MongoCollection<Document> collection = database.getCollection("mycoll");
 
 // insert a document
-Document document = new Document("x", 1)
+Document document = new Document("x", 1);
 collection.insertOne(document);
 document.append("x", 2).append("y", 3);
 
