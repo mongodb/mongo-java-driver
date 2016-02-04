@@ -65,7 +65,7 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
 class UserOperationsSpecification extends OperationFunctionalSpecification {
-    def credential = createCredential('newUser', databaseName, '123'.toCharArray())
+    def credential = createCredential('\u53f0\u5317', databaseName, 'Ta\u0301ibe\u030Ci'.toCharArray())
 
     def 'an added user should be found'() {
         given:

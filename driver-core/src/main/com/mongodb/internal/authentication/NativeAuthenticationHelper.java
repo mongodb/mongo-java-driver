@@ -50,12 +50,7 @@ public final class NativeAuthenticationHelper {
         try {
             bout.write(userName.getBytes(UTF_8_CHARSET));
             bout.write(":mongo:".getBytes(UTF_8_CHARSET));
-            for (final char ch : password) {
-                if (ch >= 128) {
-                    throw new IllegalArgumentException("can't handle non-ascii passwords yet");
-                }
-                bout.write((byte) ch);
-            }
+            bout.write(new String(password).getBytes(UTF_8_CHARSET));
         } catch (IOException ioe) {
             throw new RuntimeException("impossible", ioe);
         }
