@@ -41,7 +41,7 @@ public class NativeAuthenticatorUnitTest {
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
-        credential = MongoCredential.createMongoCRCredential("user", "database", "pencil".toCharArray());
+        credential = MongoCredential.createMongoCRCredential("\u53f0\u5317", "database", "Ta\u0301ibe\u030Ci".toCharArray());
         subject = new NativeAuthenticator(this.credential);
     }
 
@@ -114,8 +114,8 @@ public class NativeAuthenticatorUnitTest {
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
 
         assertEquals("{ \"getnonce\" : 1 }", firstCommand);
-        assertEquals("{ \"authenticate\" : 1, \"user\" : \"user\", "
+        assertEquals("{ \"authenticate\" : 1, \"user\" : \"\u53f0\u5317\", "
                      + "\"nonce\" : \"2375531c32080ae8\", "
-                     + "\"key\" : \"21742f26431831d5cfca035a08c5bdf6\" }", secondCommand);
+                     + "\"key\" : \"4fb55df196e38eea50d2b8b200acfa8b\" }", secondCommand);
     }
 }
