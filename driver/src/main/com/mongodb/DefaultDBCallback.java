@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
+import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -64,11 +65,12 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     public Object objectDone() {
         String name = curName();
         BSONObject document = (BSONObject) super.objectDone();
-        Iterator<String> iterator = document.keySet().iterator();
-        if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
-            _put(name, new DBRef((String) document.get("$ref"), document.get("$id")));
+        if (!(document instanceof BasicBSONList)) {
+            Iterator<String> iterator = document.keySet().iterator();
+            if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
+                _put(name, new DBRef((String) document.get("$ref"), document.get("$id")));
+            }
         }
-
         return document;
     }
 
