@@ -151,7 +151,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
 
         then:
-        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
+        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == (serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1)
         collection.find().hint('a_1').count() == 2
     }
 
@@ -189,7 +189,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         def countWithHint = collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', 'x_1').count()
 
         then:
-        countWithHint == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
+        countWithHint == (serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1)
     }
 
     @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
