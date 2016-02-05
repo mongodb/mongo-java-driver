@@ -57,7 +57,13 @@ public class WriteConcernException extends MongoException {
      * @return the error message
      */
     public String getErrorMessage() {
-        return commandResult.getString("err");
+        if (commandResult.containsField("err")) {
+            return commandResult.getString("err");
+        } else if (commandResult.containsField("errmsg")) {
+            return commandResult.getString("errmsg");
+        } else {
+            return null;
+        }
     }
 
     /**
