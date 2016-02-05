@@ -456,7 +456,7 @@ public class DBCollectionTest extends TestCase {
         collection.ensureIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
     }
 
-    @Test(expected = DuplicateKeyException.class)
+    @Test
     public void testCreateIndexExceptions(){
         collection.insert(new BasicDBObject("x", 1));
         collection.insert(new BasicDBObject("x", 1));
@@ -468,7 +468,12 @@ public class DBCollectionTest extends TestCase {
             fail("Trying to create an existing index should not fail.");
         }
 
-        collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+        try {
+            collection.createIndex(new BasicDBObject("x", 1), new BasicDBObject("unique", true));
+            fail("Should throw an exception creating unique index when there are duplicate keys");
+        } catch (DuplicateKeyException e) {
+            assertNotNull("missing error message", e.getErrorMessage());
+        }
     }
 
     @Test
