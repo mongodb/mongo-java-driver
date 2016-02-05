@@ -213,7 +213,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         when:
         dbCursor = collection.find().hint(new BasicDBObject('a', 1))
         dbCursor.addSpecial('$explain', 1)
-        def explainPlan = dbCursor.explain()
+        def explainPlan = dbCursor.next()
 
         then:
         getKeyPattern(explainPlan) == cursorMap
