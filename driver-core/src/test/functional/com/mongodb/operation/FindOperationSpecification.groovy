@@ -599,24 +599,67 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should explain'() {
         given:
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(modifiers)
 
         when:
         BsonDocument result = findOperation.asExplainableOperation(QUERY_PLANNER).execute(getBinding())
 
         then:
         result
+
+        where:
+        modifiers << [null, new BsonDocument('$explain', BsonBoolean.TRUE), new BsonDocument('$explain', BsonBoolean.FALSE)]
     }
 
     @Category(Async)
     def 'should explain asynchronously'() {
         given:
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(modifiers)
 
         when:
         BsonDocument result = executeAsync(findOperation.asExplainableOperationAsync(QUERY_PLANNER))
 
         then:
         result
+
+        where:
+        modifiers << [null, new BsonDocument('$explain', BsonBoolean.TRUE), new BsonDocument('$explain', BsonBoolean.FALSE)]
+    }
+
+    def 'should explain with $explain modifier'() {
+        given:
+        def findOperation = new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
+                .modifiers(new BsonDocument('$explain', BsonBoolean.TRUE))
+
+        when:
+        def explainResult = findOperation.execute(getBinding()).next().get(0)
+
+        then:
+        sanitizeExplainResult(explainResult) ==
+                sanitizeExplainResult(new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
+                        .asExplainableOperation(QUERY_PLANNER).execute(getBinding()))
+    }
+
+    @Category(Async)
+    def 'should explain asynchronously with $explain modifier'() {
+        given:
+        def findOperation = new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
+                .modifiers(new BsonDocument('$explain', BsonBoolean.TRUE))
+
+        when:
+        def explainResult
+        loopCursor(findOperation, new Block<BsonDocument>() {
+            @Override
+            void apply(final BsonDocument document) {
+                explainResult = document
+            }
+        })
+
+        then:
+        sanitizeExplainResult(explainResult) ==
+                sanitizeExplainResult(new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
+                        .asExplainableOperation(QUERY_PLANNER).execute(getBinding()))
     }
 
     //  sanity check that the server accepts tailable and await data flags
@@ -901,6 +944,12 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         queryResult: Stub(QueryResult),
         connectionDescription: Stub(ConnectionDescription)
     ]
+
+    static BsonDocument sanitizeExplainResult(BsonDocument document) {
+        document.remove('ok')
+        document.remove('millis')
+        document
+    }
 
     static BsonDocument getKeyPattern(BsonDocument explainPlan) {
         def winningPlan = explainPlan.getDocument('queryPlanner').getDocument('winningPlan')
