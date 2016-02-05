@@ -380,8 +380,8 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     protected class Mark extends AbstractBsonReader.Mark {
-        private int startPosition;
-        private int size;
+        private final int startPosition;
+        private final int size;
 
         protected Mark() {
             super();
