@@ -36,14 +36,22 @@ import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonReader;
 import org.bson.BsonString;
+import org.bson.BsonType;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
 
 import static java.lang.String.format;
+import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
+    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
         if (!isCommandOk(result)) {
@@ -67,6 +75,27 @@ final class ProtocolHelper {
 
     static boolean isCommandOk(final BsonDocument response) {
         BsonValue okValue = response.get("ok");
+        return isCommandOk(okValue);
+    }
+
+    static boolean isCommandOk(final BsonReader bsonReader) {
+        return isCommandOk(getField(bsonReader, "ok"));
+    }
+
+    private static BsonValue getField(final BsonReader bsonReader, final String fieldName) {
+        bsonReader.readStartDocument();
+        while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+            if (bsonReader.readName().equals(fieldName)) {
+                return REGISTRY.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader,
+                        DecoderContext.builder().build());
+            }
+            bsonReader.skipValue();
+        }
+        bsonReader.readEndDocument();
+        return null;
+    }
+
+    private static boolean isCommandOk(final BsonValue okValue) {
         if (okValue == null) {
             return false;
         } else if (okValue.isBoolean()) {
