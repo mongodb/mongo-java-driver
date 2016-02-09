@@ -55,6 +55,10 @@ class ResponseBuffers implements Closeable {
         return bodyByteBuffer.asReadOnly();
     }
 
+    public void reset() {
+        bodyByteBuffer.position(0);
+    }
+
     @Override
     public void close() {
         if (!isClosed) {

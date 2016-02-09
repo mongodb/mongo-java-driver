@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.DecoderContext;
+import org.bson.codecs.RawBsonDocumentCodec;
+import org.bson.io.ByteBufferBsonInput;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -105,25 +106,21 @@ class CommandProtocol<T> implements Protocol<T> {
         long startTimeNanos = System.nanoTime();
         CommandMessage commandMessage = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
                 ProtocolHelper.getMessageSettings(connection.getDescription()));
+        ResponseBuffers responseBuffers = null;
         try {
             sendMessage(commandMessage, connection);
-            ResponseBuffers responseBuffers = connection.receiveMessage(commandMessage.getId());
-            ReplyMessage<BsonDocument> replyMessage;
-            try {
-                 replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), commandMessage.getId());
-            } finally {
-                responseBuffers.close();
+            responseBuffers = connection.receiveMessage(commandMessage.getId());
+            if (!ProtocolHelper.isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())))) {
+                throw getCommandFailureException(getResponseDocument(responseBuffers, commandMessage, new BsonDocumentCodec()),
+                        connection.getDescription().getServerAddress());
             }
 
-            BsonDocument response = replyMessage.getDocuments().get(0);
-            if (!ProtocolHelper.isCommandOk(response)) {
-                throw getCommandFailureException(response, connection.getDescription().getServerAddress());
-            }
+            T retval = getResponseDocument(responseBuffers, commandMessage, commandResultDecoder);
 
-            T retval = commandResultDecoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build());
             if (commandListener != null) {
                 BsonDocument responseDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(getCommandName()))
-                                                        ? new BsonDocument() : response;
+                        ? new BsonDocument()
+                        : getResponseDocument(responseBuffers, commandMessage, new RawBsonDocumentCodec());
                 sendCommandSucceededEvent(commandMessage, getCommandName(), responseDocumentForEvent, connection.getDescription(),
                                           startTimeNanos, commandListener);
             }
@@ -139,7 +136,19 @@ class CommandProtocol<T> implements Protocol<T> {
                                        commandListener);
             }
             throw e;
+        } finally {
+            if (responseBuffers != null) {
+                responseBuffers.close();
+            }
         }
+    }
+
+    private static <D> D getResponseDocument(final ResponseBuffers responseBuffers, final CommandMessage commandMessage,
+                                             final Decoder<D> decoder) {
+        responseBuffers.reset();
+        ReplyMessage<D> replyMessage = new ReplyMessage<D>(responseBuffers, decoder, commandMessage.getId());
+
+        return replyMessage.getDocuments().get(0);
     }
 
     @Override
