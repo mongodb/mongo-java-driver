@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,21 @@ import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -69,6 +77,19 @@ import static org.junit.Assume.assumeFalse;
 // See https://github.com/mongodb/specifications/tree/master/source/command-monitoring/tests
 @RunWith(Parameterized.class)
 public class CommandMonitoringTest {
+    private static final CodecRegistry CODEC_REGISTRY_HACK = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
+            new CodecProvider() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+                    // Use BsonDocumentCodec even for a private sub-class of BsonDocument
+                    if (BsonDocument.class.isAssignableFrom(clazz)) {
+                        return (Codec<T>) new BsonDocumentCodec(registry);
+                    }
+                    return null;
+                }
+            });
+
     private static MongoClient mongoClient;
     private static TestCommandListener commandListener;
     private final String filename;
@@ -210,34 +231,37 @@ public class CommandMonitoringTest {
     }
 
     private CommandSucceededEvent massageActualCommandSucceededEvent(final CommandSucceededEvent actual) {
+        BsonDocument response = getWritableCloneOfCommand(actual.getResponse());
+
         // massage numbers that are the wrong BSON type
-        actual.getResponse().put("ok", new BsonDouble(actual.getResponse().getNumber("ok").doubleValue()));
-        if (actual.getResponse().containsKey("n")) {
-            actual.getResponse().put("n", new BsonInt32(actual.getResponse().getNumber("n").intValue()));
+        response.put("ok", new BsonDouble(response.getNumber("ok").doubleValue()));
+        if (response.containsKey("n")) {
+            response.put("n", new BsonInt32(response.getNumber("n").intValue()));
         }
 
         if (actual.getCommandName().equals("find") || actual.getCommandName().equals("getMore")) {
-            if (actual.getResponse().containsKey("cursor")) {
-                if (actual.getResponse().getDocument("cursor").containsKey("id")
-                    && !actual.getResponse().getDocument("cursor").getInt64("id").equals(new BsonInt64(0))) {
-                    actual.getResponse().getDocument("cursor").put("id", new BsonInt64(42));
+            if (response.containsKey("cursor")) {
+                if (response.getDocument("cursor").containsKey("id")
+                    && !response.getDocument("cursor").getInt64("id").equals(new BsonInt64(0))) {
+                    response.getDocument("cursor").put("id", new BsonInt64(42));
                 }
             }
         } else if (actual.getCommandName().equals("killCursors")) {
-            actual.getResponse().getArray("cursorsUnknown").set(0, new BsonInt64(42));
+            response.getArray("cursorsUnknown").set(0, new BsonInt64(42));
         } else if (isWriteCommand(actual.getCommandName())) {
-            if (actual.getResponse().containsKey("writeErrors")) {
-                for (Iterator<BsonValue> iter = actual.getResponse().getArray("writeErrors").iterator(); iter.hasNext();) {
+            if (response.containsKey("writeErrors")) {
+                for (Iterator<BsonValue> iter = response.getArray("writeErrors").iterator(); iter.hasNext();) {
                     BsonDocument cur = iter.next().asDocument();
                     cur.put("code", new BsonInt32(42));
                     cur.put("errmsg", new BsonString(""));
                 }
             }
             if (actual.getCommandName().equals("update")) {
-                actual.getResponse().remove("nModified");
+                response.remove("nModified");
             }
         }
-        return actual;
+        return new CommandSucceededEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getCommandName(), response,
+                actual.getElapsedTime(TimeUnit.NANOSECONDS));
     }
 
     private boolean isWriteCommand(final String commandName) {
@@ -245,8 +269,10 @@ public class CommandMonitoringTest {
     }
 
     private CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent actual) {
+        BsonDocument command = getWritableCloneOfCommand(actual.getCommand());
+
         if (actual.getCommandName().equals("update")) {
-            for (Iterator<BsonValue> iter = actual.getCommand().getArray("updates").iterator(); iter.hasNext();) {
+            for (Iterator<BsonValue> iter = command.getArray("updates").iterator(); iter.hasNext();) {
                 BsonDocument curUpdate = iter.next().asDocument();
                 if (!curUpdate.containsKey("multi")) {
                     curUpdate.put("multi", BsonBoolean.FALSE);
@@ -256,12 +282,13 @@ public class CommandMonitoringTest {
                 }
             }
         } else if (actual.getCommandName().equals("getMore")) {
-            actual.getCommand().put("getMore", new BsonInt64(42));
+            command.put("getMore", new BsonInt64(42));
         } else if (actual.getCommandName().equals("killCursors")) {
-            actual.getCommand().getArray("cursors").set(0, new BsonInt64(42));
+            command.getArray("cursors").set(0, new BsonInt64(42));
         }
 
-        return actual;
+        return new CommandStartedEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getDatabaseName(),
+                actual.getCommandName(), command);
     }
 
     private void executeOperation() {
@@ -297,6 +324,15 @@ public class CommandMonitoringTest {
         }
         return expectedEvents;
     }
+
+
+    private BsonDocument getWritableCloneOfCommand(final BsonDocument original) {
+        BsonDocument clone = new BsonDocument();
+        BsonDocumentWriter writer = new BsonDocumentWriter(clone);
+        new BsonDocumentCodec(CODEC_REGISTRY_HACK).encode(writer, original, EncoderContext.builder().build());
+        return clone;
+    }
+
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
