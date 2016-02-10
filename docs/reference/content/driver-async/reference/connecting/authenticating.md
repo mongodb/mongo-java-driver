@@ -128,10 +128,10 @@ String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREA
 MongoCredential credential = MongoCredential.createGSSAPICredential(user);
 ```
 
-or with a connection string:
+Or via a connection string:
 
 ```java
-ConnectionString uri = new ConnectionString("mongodb://username%40REALM.com@host1/?authMechanism=GSSAPI");
+ConnectionString uri = new ConnectionString("mongodb://username%40MYREALM.com@host1/?authMechanism=GSSAPI");
 ```
 
 {{% note %}}
@@ -144,6 +144,63 @@ Java libraries can acquire a Kerberos ticket:
 
     java.security.krb5.realm=MYREALM.ME
     java.security.krb5.kdc=mykdc.myrealm.me
+
+Depending on the Kerberos setup, it may be required to specify additional properties, either via code or, in some cases,
+the connection string.
+
+- **[`SERVICE_NAME`]({{< apiref "com/mongodb/MongoCredential.html#SERVICE_NAME_KEY" >}})**
+
+	This property is used when the service's name is different that the default of `mongodb`.
+
+	```java
+	credential = credential.withMechanismProperty(MongoCredential.SERVICE_NAME_KEY, "othername");
+	```
+
+	Or via the connection string:
+
+	```
+	mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:othername
+	```
+
+- **[`CANONICALIZE_HOST_NAME`]({{< apiref "com/mongodb/MongoCredential.html#CANONICALIZE_HOST_NAME_KEY" >}})**
+
+	This property is used when the fully qualified domain name (FQDN) of the host is required to properly authenticate.
+
+	```java
+	credential = credential.withMechanismProperty(MongoCredential.CANONICALIZE_HOST_NAME_KEY, true);
+	```
+
+	Or via the connection string:
+
+	```
+	mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=CANONICALIZE_HOST_NAME:true
+	```
+
+- **[`JAVA_SUBJECT`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SUBJECT_KEY" >}})**
+
+    This property is used for overriding the [Subject](http://docs.oracle.com/javase/8/docs/api/javax/security/auth/Subject.html)
+    under which GSSAPI authentication executes.
+
+	```java
+	LoginContext loginContext;
+	// ...
+    loginContext.login();
+    Subject subject = loginContext.getSubject()
+
+	credential = credential.withMechanismProperty(MongoCredential.JAVA_SUBJECT_KEY, subject);
+	```
+
+- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SASL_CLIENT_PROPERTIES_KEY" >}})**
+
+    While rarely needed, this property is used to replace the
+    [SasClient](http://docs.oracle.com/javase/8/docs/api/javax/security/sasl/SaslClient.html) properties.
+
+    ```java
+    Map<String, Object> saslClientProperties;
+	// ...
+
+	credential = credential.withMechanismProperty(MongoCredential.JAVA_SASL_CLIENT_PROPERTIES_KEY, saslClientProperties);
+	```
 
 {{% note %}}
 The `GSSAPI` authentication mechanism is supported only in the following environments:
