@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,32 +25,154 @@ class StringRangeSetSpecification extends Specification {
         def stringSet = new StringRangeSet(0)
 
         then:
-        stringSet.getSet().size() == 0
-        stringSet.getSet().isEmpty()
+        stringSet.size() == 0
+        stringSet.isEmpty()
     }
 
-    def 'should produce the string values of the numbers between zero and size'() {
+    def 'should contain all strings between zero and size'() {
         when:
         def stringSet = new StringRangeSet(5)
 
         then:
-        stringSet.getSet().size() == 5
-        stringSet.getSet().containsAll(['0', '1', '2', '3', '4'])
+        stringSet.size() == 5
+        !stringSet.contains('-1')
+        stringSet.contains('0')
+        stringSet.contains('1')
+        stringSet.contains('2')
+        stringSet.contains('3')
+        stringSet.contains('4')
+        !stringSet.contains('5')
+        stringSet.containsAll(['0', '1', '2', '3', '4'])
+        !stringSet.containsAll(['0', '1', '2', '3', '4', '5'])
     }
 
-    def 'set should be ordered'() {
+    def 'should not contain integers'() {
         when:
-        def counter = 0
         def stringSet = new StringRangeSet(5)
 
         then:
-        def iter = stringSet.getSet().iterator() // work around for codenarc bug
+        !stringSet.contains(0)
+        !stringSet.containsAll([0, 1, 2])
+    }
+
+    def 'set should be ordered string representations of the range'() {
+        given:
+        def size = 2000;
+        def expectedKeys = []
+        for (def i : (0..<size)) {
+            expectedKeys.add(i.toString())
+        }
+
+        when:
+        def stringSet = new StringRangeSet(size)
+
+        then:
+        def keys = []
+        def iter = stringSet.iterator()
         while (iter.hasNext()) {
-            iter.next() == counter.toString()
-            counter++
+            keys.add(iter.next())
         }
 
         then:
-        counter == 5
+        keys == expectedKeys
+
+        when:
+        iter.next()
+
+        then:
+        thrown(NoSuchElementException)
+    }
+
+    def 'should convert to Object array'() {
+        given:
+        def stringSet = new StringRangeSet(5)
+
+        when:
+        def array = stringSet.toArray()
+
+        then:
+        array == ['0', '1', '2', '3', '4'] as Object[]
+    }
+
+    def 'should modify String array that is large enough'() {
+        given:
+        def stringSet = new StringRangeSet(5)
+        def stringArray = ['6', '5', '4', '3', '2', '1', '0'] as String[]
+
+        when:
+        def array = stringSet.toArray(stringArray)
+
+        then:
+        array == ['0', '1', '2', '3', '4', null, '0'] as String[]
+    }
+
+    def 'should allocate String array when specified one is too small'() {
+        given:
+        def stringSet = new StringRangeSet(5)
+        def stringArray = ['3', '2', '1', '0'] as String[]
+
+        when:
+        def array = stringSet.toArray(stringArray)
+
+        then:
+        array == ['0', '1', '2', '3', '4'] as String[]
+    }
+
+    def 'should throw ArrayStoreException if array is of wrong type'() {
+        given:
+        def stringSet = new StringRangeSet(5)
+
+        when:
+        stringSet.toArray(new Integer[5])
+
+        then:
+        thrown(ArrayStoreException)
+    }
+
+    def 'modifying operations should throw UnsupportedOperationException'() {
+        given:
+        def stringSet = new StringRangeSet(5)
+
+        when:
+        stringSet.iterator().remove()
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.add('1')
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.addAll(['1', '2'])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.clear()
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.remove('1')
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.removeAll(['0', '1'])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        stringSet.retainAll(['0', '1'])
+
+        then:
+        thrown(UnsupportedOperationException)
     }
 }
