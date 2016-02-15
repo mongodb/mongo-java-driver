@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,142 @@
 
 package org.bson.types;
 
-import java.util.Comparator;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeSet;
 
-class StringRangeSet {
-    private final Set<String> numbersAsStrings;
+import static com.mongodb.assertions.Assertions.isTrue;
+
+class StringRangeSet implements Set<String> {
+
+    private static final String[] STRINGS = new String[1024];
+
+    static {
+        for (int i = 0; i < STRINGS.length; ++i) {
+            STRINGS[i] = String.valueOf(i);
+        }
+    }
+
+    private final int size;
 
     StringRangeSet(final int size) {
-        numbersAsStrings = new TreeSet<String>(new NumberStringComparator());
-        for (int i = 0; i < size; i++) {
-            numbersAsStrings.add(String.valueOf(i));
-        }
+        isTrue("size >= 0", size >= 0);
+        this.size = size;
     }
 
-    public Set<String> getSet() {
-        return numbersAsStrings;
+    @Override
+    public int size() {
+        return size;
     }
 
-    private static class NumberStringComparator implements Comparator<String> {
-        @Override
-        public int compare(final String o1, final String o2) {
-            return Integer.valueOf(o1).compareTo(Integer.valueOf(o2));
+    @Override
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
+    @Override
+    public boolean contains(final Object o) {
+        if (!(o instanceof String)) {
+            return false;
         }
+        int i = Integer.parseInt((String) o);
+        return i >= 0 && i < size();
+    }
+
+    @Override
+    public Iterator<String> iterator() {
+        return new Iterator<String>() {
+            private int cur = 0;
+
+            @Override
+            public boolean hasNext() {
+                return cur < size;
+            }
+
+            @Override
+            public String next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return intToString(cur++);
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
+    @Override
+    public Object[] toArray() {
+        Object[] retVal = new Object[size()];
+        for (int i = 0; i < size(); i++) {
+            retVal[i] = intToString(i);
+        }
+        return retVal;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T[] toArray(final T[] a) {
+        T[] retVal = a.length >= size()
+                ? a
+                : (T[]) java.lang.reflect.Array
+                .newInstance(a.getClass().getComponentType(), size);
+        for (int i = 0; i < size(); i++) {
+            retVal[i] = (T) (intToString(i));
+        }
+        if (a.length > size()) {
+            a[size] = null;
+        }
+        return retVal;
+    }
+
+    @Override
+    public boolean add(final String integer) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(final Object o) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containsAll(final Collection<?> c) {
+        for (Object e : c) {
+            if (!contains(e)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean addAll(final Collection<? extends String> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean retainAll(final Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean removeAll(final Collection<?> c) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+
+    private String intToString(final int i) {
+        return i < STRINGS.length
+                ? STRINGS[i]
+                : Integer.toString(i);
     }
 }

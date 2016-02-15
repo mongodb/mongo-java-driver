@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 
     @Override
     public Set<String> keySet() {
-        return new StringRangeSet(size()).getSet();
+        return new StringRangeSet(size());
     }
 
     @Override
