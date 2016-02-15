@@ -28,7 +28,7 @@ For OSGi-based applications: due to the fact that there are classes from the `co
 jar (described below) instead. 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver" version="3.2.1" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.2.2" dependencies="true">}}
 
 
 ## Uber MongoDB Java Driver
@@ -38,4 +38,4 @@ An uber jar that contains everything you need; the BSON library, the core librar
 For OSGi-based applications: this artifact is a valid OSGi bundle. 
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.2.1">}}
+{{< install artifactId="mongo-java-driver" version="3.2.2">}}
