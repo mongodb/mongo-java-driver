@@ -25,7 +25,6 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.Transformer;
-import org.bson.assertions.Assertions;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
+import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -50,7 +50,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
             new DocumentCodecProvider()));
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
-    private final BsonTypeClassMap bsonTypeClassMap;
+    private final BsonTypeCodecMap bsonTypeCodecMap;
     private final CodecRegistry registry;
     private final IdGenerator idGenerator;
     private final Transformer valueTransformer;
@@ -82,8 +82,8 @@ public class DocumentCodec implements CollectibleCodec<Document> {
      * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the document
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
-        this.registry = Assertions.notNull("registry", registry);
-        this.bsonTypeClassMap = Assertions.notNull("bsonTypeClassMap", bsonTypeClassMap);
+        this.registry = notNull("registry", registry);
+        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry);
         this.idGenerator = new ObjectIdGenerator();
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
             @Override
@@ -212,7 +212,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
                 return registry.get(UUID.class).decode(reader, decoderContext);
             }
         }
-        return valueTransformer.transform(registry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext));
+        return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }
 
     private List<Object> readList(final BsonReader reader, final DecoderContext decoderContext) {

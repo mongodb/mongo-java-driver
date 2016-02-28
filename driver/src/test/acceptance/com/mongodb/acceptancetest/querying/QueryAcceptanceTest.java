@@ -23,6 +23,7 @@ import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
@@ -72,7 +73,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
         CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
-                new PersonCodecProvider()));
+                new BsonValueCodecProvider(), new PersonCodecProvider()));
         MongoCollection<Person> collection = database
                 .getCollection(getCollectionName(), Person.class)
                 .withCodecRegistry(codecRegistry);

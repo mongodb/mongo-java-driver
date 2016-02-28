@@ -33,7 +33,6 @@ import org.bson.types.Symbol;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -103,7 +102,6 @@ public class BsonTypeClassMap {
     }
 
     private void addDefaults() {
-        map.put(BsonType.ARRAY, List.class);
         map.put(BsonType.BINARY, Binary.class);
         map.put(BsonType.BOOLEAN, Boolean.class);
         map.put(BsonType.DATE_TIME, Date.class);
