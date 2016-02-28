@@ -43,7 +43,6 @@ import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +52,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class BsonValueCodecProvider implements CodecProvider {
-    private static final Map<BsonType, Class<? extends BsonValue>> DEFAULT_BSON_TYPE_CLASS_MAP;
+    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP;
 
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
 
@@ -69,8 +68,19 @@ public class BsonValueCodecProvider implements CodecProvider {
      * @param bsonType the BsonType
      * @return the class associated with the given type
      */
+    @SuppressWarnings("unchecked")
     public static Class<? extends BsonValue> getClassForBsonType(final BsonType bsonType) {
-        return DEFAULT_BSON_TYPE_CLASS_MAP.get(bsonType);
+        return (Class<? extends BsonValue>) DEFAULT_BSON_TYPE_CLASS_MAP.get(bsonType);
+    }
+
+    /**
+     * Gets the BsonTypeClassMap used by this provider.
+     *
+     * @return the non-null BsonTypeClassMap
+     * @since 3.3
+     */
+    public static BsonTypeClassMap getBsonTypeClassMap() {
+        return DEFAULT_BSON_TYPE_CLASS_MAP;
     }
 
     @Override
@@ -132,7 +142,7 @@ public class BsonValueCodecProvider implements CodecProvider {
     }
 
     static {
-        Map<BsonType, Class<? extends BsonValue>> map = new HashMap<BsonType, Class<? extends BsonValue>>();
+        Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
 
         map.put(BsonType.NULL, BsonNull.class);
         map.put(BsonType.ARRAY, BsonArray.class);
@@ -155,6 +165,6 @@ public class BsonValueCodecProvider implements CodecProvider {
         map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
         map.put(BsonType.UNDEFINED, BsonUndefined.class);
 
-        DEFAULT_BSON_TYPE_CLASS_MAP = Collections.unmodifiableMap(map);
+        DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap(map);
     }
 }
