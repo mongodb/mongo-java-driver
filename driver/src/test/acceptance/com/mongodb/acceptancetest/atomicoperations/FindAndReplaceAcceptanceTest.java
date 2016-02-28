@@ -23,6 +23,7 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -65,7 +66,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     public void shouldReplaceAndReturnOriginalItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 0);
         CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
-                new WorkerCodecProvider()));
+                new BsonValueCodecProvider(), new WorkerCodecProvider()));
         MongoCollection<Worker> collection = database
                 .getCollection(getCollectionName(), Worker.class)
                 .withCodecRegistry(codecRegistry);
@@ -85,7 +86,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     public void shouldReplaceAndReturnNewItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 3);
         CodecRegistry codecRegistry = fromProviders(asList(new ValueCodecProvider(), new DocumentCodecProvider(),
-                new WorkerCodecProvider()));
+                new BsonValueCodecProvider(), new WorkerCodecProvider()));
         MongoCollection<Worker> collection = database
                 .getCollection(getCollectionName(), Worker.class)
                 .withCodecRegistry(codecRegistry);

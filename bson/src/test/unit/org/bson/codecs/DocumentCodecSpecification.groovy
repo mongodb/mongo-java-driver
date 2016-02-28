@@ -169,7 +169,7 @@ class DocumentCodecSpecification extends Specification {
 
     def 'should apply transformer to decoded values'() {
         given:
-        def codec = new DocumentCodec(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider()]),
+        def codec = new DocumentCodec(fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]),
                                       new BsonTypeClassMap(),
                                       { Object value -> 5 })
         when:

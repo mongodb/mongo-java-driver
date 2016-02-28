@@ -74,6 +74,8 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         replacements.put(BsonType.REGULAR_EXPRESSION, Pattern.class);
         replacements.put(BsonType.SYMBOL, String.class);
         replacements.put(BsonType.TIMESTAMP, BSONTimestamp.class);
+        replacements.put(BsonType.JAVASCRIPT_WITH_SCOPE, null);
+        replacements.put(BsonType.DOCUMENT, null);
 
         return new BsonTypeClassMap(replacements);
     }

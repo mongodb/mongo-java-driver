@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.codecs.BsonTypeClassMap;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
@@ -48,7 +49,7 @@ public class DocumentTest {
 
     private final Document customDocument = new Document("database", new Name("MongoDB"));
     private final CodecRegistry customRegistry = fromRegistries(fromCodecs(new NameCodec()),
-            fromProviders(new DocumentCodecProvider(), new ValueCodecProvider()));
+            fromProviders(new DocumentCodecProvider(), new ValueCodecProvider(), new BsonValueCodecProvider()));
     private final DocumentCodec customDocumentCodec = new DocumentCodec(customRegistry, new BsonTypeClassMap());
 
     @Test
