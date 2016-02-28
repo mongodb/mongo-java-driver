@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>A map from a BSON types to the Class to which it should be decoded.  This class is useful if, for example,
@@ -87,6 +88,9 @@ public class BsonTypeClassMap {
         this(Collections.<BsonType, Class<?>>emptyMap());
     }
 
+    Set<BsonType> keys() {
+        return map.keySet();
+    }
 
     /**
      * Gets the Class that is mapped to the given BSON type.
