@@ -25,6 +25,7 @@ import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.LazyBSONCallback;
 import org.bson.Transformer;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.junit.Test;
@@ -86,7 +87,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldNotGenerateIdIfPresent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
         DBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
         document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -96,7 +98,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldGenerateIdIfAbsent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
         DBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
         document = dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -106,7 +109,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldRespectEncodeIdFirstPropertyInEncoderContext() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
         // given
         DBObject doc = new BasicDBObject("x", 2).append("_id", 2);
 
@@ -131,7 +135,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldEncodeNull() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
 
         DBObject doc = new BasicDBObject("null", null);
 
@@ -153,7 +158,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         zeroOneDBList.putAll(zeroOneMap);
         List<Integer> zeroOneList = asList(0, 1);
 
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
 
         DBObject doc = new BasicDBObject()
                        .append("map", zeroOneMap)
@@ -184,7 +190,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         IterableMap iterableMap = new IterableMap();
         iterableMap.put("first", 1);
 
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider())));
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(fromProviders(asList(new ValueCodecProvider(), new DBObjectCodecProvider(),
+                new BsonValueCodecProvider())));
 
         DBObject doc = new BasicDBObject("map", iterableMap);
 
