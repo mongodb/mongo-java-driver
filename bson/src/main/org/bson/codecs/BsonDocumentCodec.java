@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.bson.codecs.BsonValueCodecProvider.getBsonTypeClassMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -42,12 +43,13 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final CodecRegistry codecRegistry;
+    private final BsonTypeCodecMap bsonTypeCodecMap;
 
     /**
      * Creates a new instance with a default codec registry that uses the {@link BsonValueCodecProvider}.
      */
     public BsonDocumentCodec() {
-        codecRegistry = DEFAULT_REGISTRY;
+        this(DEFAULT_REGISTRY);
     }
 
     /**
@@ -60,6 +62,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
             throw new IllegalArgumentException("Codec registry can not be null");
         }
         this.codecRegistry = codecRegistry;
+        this.bsonTypeCodecMap = new BsonTypeCodecMap(getBsonTypeClassMap(), codecRegistry);
     }
 
     /**
@@ -95,7 +98,7 @@ public class BsonDocumentCodec implements CollectibleCodec<BsonDocument> {
      * @return the non-null value read from the reader
      */
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader, decoderContext);
+        return (BsonValue) bsonTypeCodecMap.get(reader.getCurrentBsonType()).decode(reader, decoderContext);
     }
 
     @Override
