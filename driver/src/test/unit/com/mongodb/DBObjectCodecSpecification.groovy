@@ -24,6 +24,7 @@ import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.BsonSymbol
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.UuidCodec
@@ -42,7 +43,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 class DBObjectCodecSpecification extends Specification {
 
     def bsonDoc = new BsonDocument()
-    def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider()])
+    def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def dbObjectCodec = new DBObjectCodec(codecRegistry)
 
     def 'should encode and decode UUID as Binary'() {

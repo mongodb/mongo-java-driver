@@ -27,6 +27,7 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonTypeClassMap;
+import org.bson.codecs.BsonTypeCodecMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
@@ -65,7 +66,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final String ID_FIELD_NAME = "_id";
 
     private final CodecRegistry codecRegistry;
-    private final BsonTypeClassMap bsonTypeClassMap;
+    private final BsonTypeCodecMap bsonTypeCodecMap;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
 
@@ -113,7 +114,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
         this.objectFactory = notNull("objectFactory", objectFactory);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
+        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry);
     }
 
     @Override
@@ -305,7 +306,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
                 initialRetVal = null;
                 break;
             default:
-                initialRetVal = codecRegistry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
+                initialRetVal = bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext);
         }
 
         if (bsonType.isContainer() && fieldName != null) {
