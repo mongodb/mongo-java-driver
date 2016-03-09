@@ -948,6 +948,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     static BsonDocument sanitizeExplainResult(BsonDocument document) {
         document.remove('ok')
         document.remove('millis')
+        document.remove('executionStats')
+        document.remove('serverInfo')
         document
     }
 
