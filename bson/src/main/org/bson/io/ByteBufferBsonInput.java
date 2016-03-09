@@ -33,6 +33,14 @@ import static java.lang.String.format;
 public class ByteBufferBsonInput implements BsonInput {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
+    private static final String[] ONE_BYTE_ASCII_STRINGS = new String[Byte.MAX_VALUE + 1];
+
+    static {
+        for (int b = 0; b < ONE_BYTE_ASCII_STRINGS.length; b++) {
+            ONE_BYTE_ASCII_STRINGS[b] = String.valueOf((char) b);
+        }
+    }
+
     private ByteBuf buffer;
     private int mark = -1;
 
@@ -100,6 +108,14 @@ public class ByteBufferBsonInput implements BsonInput {
     }
 
     @Override
+    public ObjectId readObjectId() {
+        ensureOpen();
+        byte[] bytes = new byte[12];
+        readBytes(bytes);
+        return new ObjectId(bytes);
+    }
+
+    @Override
     public String readString() {
         ensureOpen();
         int size = readInt32();
@@ -107,20 +123,7 @@ public class ByteBufferBsonInput implements BsonInput {
             throw new BsonSerializationException(format("While decoding a BSON string found a size that is not a positive number: %d",
                                                         size));
         }
-        byte[] bytes = new byte[size];
-        readBytes(bytes);
-        if (bytes[size - 1] != 0) {
-            throw new BsonSerializationException("Found a BSON string that is not null-terminated");
-        }
-        return new String(bytes, 0, size - 1, UTF8_CHARSET);
-    }
-
-    @Override
-    public ObjectId readObjectId() {
-        ensureOpen();
-        byte[] bytes = new byte[12];
-        readBytes(bytes);
-        return new ObjectId(bytes);
+        return readString(size);
     }
 
     @Override
@@ -130,14 +133,29 @@ public class ByteBufferBsonInput implements BsonInput {
         // TODO: potentially optimize this
         int mark = buffer.position();
         readUntilNullByte();
-        int size = buffer.position() - mark - 1;
+        int size = buffer.position() - mark;
         buffer.position(mark);
 
-        byte[] bytes = new byte[size];
-        readBytes(bytes);
-        readByte();  // read the trailing null byte
+        return readString(size);
+    }
 
-        return new String(bytes, UTF8_CHARSET);
+    private String readString(final int size) {
+        if (size == 2) {
+            byte asciiByte = readByte();               // if only one byte in the string, it must be ascii.
+            readByte();                                // read null terminator
+            if (asciiByte < 0) {
+                return UTF8_CHARSET.newDecoder().replacement();
+            }
+            return ONE_BYTE_ASCII_STRINGS[asciiByte];  // this will throw if asciiByte is negative
+        } else {
+            byte[] bytes = new byte[size - 1];
+            readBytes(bytes);
+            byte nullByte = readByte();
+            if (nullByte != 0) {
+                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+            }
+            return new String(bytes, UTF8_CHARSET);
+        }
     }
 
     private void readUntilNullByte() {
