@@ -303,11 +303,18 @@ public class Mongo {
     }
 
     /**
-     * Sets the write concern for this database. Will be used as default for writes to any collection in any database. See the documentation
-     * for {@link WriteConcern} for more information.
+     * Sets the default write concern to use for write operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
+     *
+     * <p>
+     *     Note that changes to the default write concern made via this method will NOT affect the write concern of
+     *     {@link com.mongodb.client.MongoDatabase} instances created via {@link MongoClient#getDatabase(String)}
+     * </p>
      *
      * @param writeConcern write concern to use
+     * @deprecated Set the default write concern with either {@link MongoClientURI} or {@link MongoClientOptions}
      */
+    @Deprecated
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
@@ -331,11 +338,18 @@ public class Mongo {
     }
 
     /**
-     * Sets the read preference for this database. Will be used as default for reads from any collection in any database. See the
-     * documentation for {@link ReadPreference} for more information.
+     * Sets the default read preference to use for reads operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
      *
+     * <p>
+     *     Note that changes to the default read preference made via this method will NOT affect the read preference of
+     *     {@link com.mongodb.client.MongoDatabase} instances created via {@link MongoClient#getDatabase(String)}
+     * </p>
+
      * @param readPreference Read Preference to use
+     * @deprecated Set the default read preference with either {@link MongoClientURI} or {@link MongoClientOptions}
      */
+    @Deprecated
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
@@ -509,35 +523,58 @@ public class Mongo {
     }
 
     /**
-     * Set the default query options.
+     * Set the default query options for reads operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
+     *
+     * <p>
+     *     Note that changes to query options made via this method will NOT affect
+     *     {@link com.mongodb.client.MongoDatabase} instances created via {@link MongoClient#getDatabase(String)}
+     * </p>
      *
      * @param options value to be set
+     * @deprecated Set options on instances of {@link DBCursor}
      */
+    @Deprecated
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
 
     /**
-     * Reset the default query options.
+     * Reset the default query options for reads operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
+     *
+     * @deprecated Reset options instead on instances of {@link DBCursor}
      */
+    @Deprecated
     public void resetOptions() {
         optionHolder.reset();
     }
 
     /**
-     * Add the default query option.
+     * Add the default query option for reads operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
+     *
+     * <p>
+     *     Note that changes to query options made via this method will NOT affect
+     *     {@link com.mongodb.client.MongoDatabase} instances created via {@link MongoClient#getDatabase(String)}
+     * </p>
      *
      * @param option value to be added to current options
+     * @deprecated Add options instead on instances of {@link DBCursor}
      */
+    @Deprecated
     public void addOption(final int option) {
         optionHolder.add(option);
     }
 
     /**
-     * Gets the default query options
+     * Gets the default query options for reads operations executed on any {@link DBCollection} created indirectly from this
+     * instance, via a {@link DB} instance created from {@link #getDB(String)}.
      *
      * @return an int representing the options to be used by queries
+     * @deprecated Get options instead from instances of {@link DBCursor}
      */
+    @Deprecated
     public int getOptions() {
         return optionHolder.get();
     }
