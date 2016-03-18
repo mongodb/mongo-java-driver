@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoTimeoutException;
@@ -282,25 +283,23 @@ class DefaultConnectionPool implements ConnectionPool {
             newMaintenanceTask = new Runnable() {
                 @Override
                 public synchronized void run() {
-                    if (shouldPrune()) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
-                        }
-                        try {
+                    try {
+                        if (shouldPrune()) {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
+                            }
                             pool.prune();
-                        } catch (Exception e) {
-                            LOGGER.warn("Exception thrown while pruning connection pool", e);
                         }
-                    }
-                    if (shouldEnsureMinSize()) {
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
-                        }
-                        try {
+                        if (shouldEnsureMinSize()) {
+                            if (LOGGER.isDebugEnabled()) {
+                                LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
+                            }
                             pool.ensureMinSize(settings.getMinSize(), true);
-                        } catch (Exception e) {
-                            LOGGER.warn("Exception thrown while ensuring minimum pool size", e);
                         }
+                    } catch (MongoInterruptedException e) {
+                        // don't log interruptions due to the shutdownNow call on the ExecutorService
+                    } catch (Exception e) {
+                        LOGGER.warn("Exception thrown during connection pool background maintenance task", e);
                     }
                 }
             };
