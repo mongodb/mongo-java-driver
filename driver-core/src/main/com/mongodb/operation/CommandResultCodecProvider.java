@@ -24,6 +24,7 @@ import org.bson.codecs.BsonBinaryCodec;
 import org.bson.codecs.BsonBooleanCodec;
 import org.bson.codecs.BsonDBPointerCodec;
 import org.bson.codecs.BsonDateTimeCodec;
+import org.bson.codecs.BsonDecimal128Codec;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonDoubleCodec;
 import org.bson.codecs.BsonInt32Codec;
@@ -91,6 +92,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
         addCodec(new BsonDoubleCodec());
         addCodec(new BsonInt32Codec());
         addCodec(new BsonInt64Codec());
+        addCodec(new BsonDecimal128Codec());
         addCodec(new BsonMinKeyCodec());
         addCodec(new BsonMaxKeyCodec());
         addCodec(new BsonJavaScriptCodec());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
@@ -325,6 +326,42 @@ public class JsonWriterTest {
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
             String expected = "{ \"l\" : { \"$numberLong\" : \"" + cur.expected + "\" } }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
+    @Test
+    public void testDecimal128SShell() {
+        List<TestData<Decimal128>> tests = asList(
+                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+
+
+        for (final TestData<Decimal128> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
+            writer.writeStartDocument();
+            writer.writeDecimal128("d", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"d\" : NumberDecimal(\"" + cur.expected + "\") }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
+    @Test
+    public void testDecimal128Strict() {
+        List<TestData<Decimal128>> tests = asList(
+                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+
+
+        for (final TestData<Decimal128> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));
+            writer.writeStartDocument();
+            writer.writeDecimal128("d", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"d\" : { \"$numberDecimal\" : \"" + cur.expected + "\" } }";
             assertEquals(expected, stringWriter.toString());
         }
     }

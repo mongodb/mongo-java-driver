@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson
 
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -27,6 +28,7 @@ class BsonValueSpecification extends Specification {
         new BsonInt32(42).isNumber()
         new BsonInt64(52L).isInt64()
         new BsonInt64(52L).isNumber()
+        new BsonDecimal128(Decimal128.parse('1')).isDecimal128()
         new BsonDouble(62.0).isDouble()
         new BsonDouble(62.0).isNumber()
         new BsonBoolean(true).isBoolean()
@@ -50,6 +52,7 @@ class BsonValueSpecification extends Specification {
         !new BsonNull().isInt32()
         !new BsonNull().isNumber()
         !new BsonNull().isInt64()
+        !new BsonNull().isDecimal128()
         !new BsonNull().isNumber()
         !new BsonNull().isDouble()
         !new BsonNull().isNumber()
@@ -101,6 +104,12 @@ class BsonValueSpecification extends Specification {
 
         when:
         new BsonNull().asNumber()
+
+        then:
+        thrown(BsonInvalidOperationException)
+
+        when:
+        new BsonNull().asDecimal128()
 
         then:
         thrown(BsonInvalidOperationException)

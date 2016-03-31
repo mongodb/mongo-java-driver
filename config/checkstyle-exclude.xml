@@ -61,6 +61,7 @@
     <suppress checks="ConstantName" files="JSONCallback"/>
     <suppress checks="ConstantName" files="Mongo"/>
     <suppress checks="ConstantName" files="ReflectionDBObject"/>
+    <suppress checks="ConstantName" files="Decimal128"/>  <!-- For NaN -->
 
     <suppress checks="JavadocMethod" files="BasicDBObject"/>
 

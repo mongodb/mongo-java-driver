@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,18 @@ public abstract class BsonValue {
     public BsonInt64 asInt64() {
         throwIfInvalidType(BsonType.INT64);
         return (BsonInt64) this;
+    }
+
+    /**
+     * Gets this value as a BsonDecimal128 if it is one, otherwise throws exception
+     *
+     * @return a BsonDecimal128
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
+     * @since 3.4
+     */
+    public BsonDecimal128 asDecimal128() {
+        throwIfInvalidType(BsonType.DECIMAL128);
+        return (BsonDecimal128) this;
     }
 
     /**
@@ -289,6 +301,16 @@ public abstract class BsonValue {
      */
     public boolean isInt64() {
         return this instanceof BsonInt64;
+    }
+
+    /**
+     * Returns true if this is a BsonDecimal128, false otherwise.
+     *
+     * @return true if this is a BsonDecimal128, false otherwise
+     * @since 3.4
+     */
+    public boolean isDecimal128() {
+        return this instanceof BsonDecimal128;
     }
 
     /**

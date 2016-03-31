@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.io.Closeable;
@@ -184,6 +185,14 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      * @param value the {@code long} value to write
      */
     protected abstract void doWriteInt64(long value);
+
+    /**
+     * Handles the logic of writing a Decimal128 value
+     *
+     * @param value the {@code Decimal128} value to write
+     * @since 3.4
+     */
+    protected abstract void doWriteDecimal128(final Decimal128 value);
 
     /**
      * Handles the logic of writing a JavaScript function
@@ -428,6 +437,19 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         checkPreconditions("writeInt64", State.VALUE);
         doWriteInt64(value);
         setState(getNextState());
+    }
+
+    @Override
+    public void writeDecimal128(final Decimal128 value) {
+        checkPreconditions("writeInt64", State.VALUE);
+        doWriteDecimal128(value);
+        setState(getNextState());
+    }
+
+    @Override
+    public void writeDecimal128(final String name, final Decimal128 value) {
+        writeName(name);
+        writeDecimal128(value);
     }
 
     @Override

@@ -20,6 +20,7 @@ import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
 import org.bson.BsonDbPointer
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonDouble
@@ -55,6 +56,7 @@ class BsonValueCodecProviderSpecification extends Specification {
         provider.get(BsonDouble, codecRegistry).class == BsonDoubleCodec
         provider.get(BsonString, codecRegistry).class == BsonStringCodec
         provider.get(BsonBoolean, codecRegistry).class == BsonBooleanCodec
+        provider.get(BsonDecimal128, codecRegistry).class == BsonDecimal128Codec
 
         provider.get(BsonNull, codecRegistry).class == BsonNullCodec
         provider.get(BsonDateTime, codecRegistry).class == BsonDateTimeCodec

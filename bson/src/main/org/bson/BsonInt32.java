@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
+
 /**
  * A representation of the BSON Int32 type.
  *
@@ -61,6 +63,11 @@ public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>
     @Override
     public long longValue() {
         return value;
+    }
+
+    @Override
+    public Decimal128 decimal128Value() {
+        return new Decimal128(value);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.io.Closeable;
@@ -163,6 +164,15 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      * @return the long value
      */
     protected abstract long doReadInt64();
+
+
+    /**
+     * Handles the logic to read Decimal128
+     *
+     * @return the Decimal128 value
+     * @since 3.4
+     */
+    protected abstract Decimal128 doReadDecimal128();
 
     /**
      * Handles the logic to read Javascript functions
@@ -354,6 +364,13 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
+    public Decimal128 readDecimal128() {
+        checkPreconditions("readDecimal", BsonType.DECIMAL128);
+        setState(getNextState());
+        return doReadDecimal128();
+    }
+
+    @Override
     public String readJavaScript() {
         checkPreconditions("readJavaScript", BsonType.JAVASCRIPT);
         setState(getNextState());
@@ -511,6 +528,12 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     public long readInt64(final String name) {
         verifyName(name);
         return readInt64();
+    }
+
+    @Override
+    public Decimal128 readDecimal128(final String name) {
+        verifyName(name);
+        return readDecimal128();
     }
 
     @Override

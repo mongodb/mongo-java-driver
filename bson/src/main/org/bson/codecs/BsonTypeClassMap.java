@@ -25,6 +25,7 @@ import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWithScope;
+import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -50,6 +51,7 @@ import java.util.Set;
  *     <li><em>DOUBLE</em>: {@code java.lang.Double.class} </li>
  *     <li><em>INT32</em>: {@code java.lang.Integer.class} </li>
  *     <li><em>INT64</em>: {@code java.lang.Long.class} </li>
+ *     <li><em>DECIMAL128</em>: {@code org.bson.types.Decimal128.class} </li>
  *     <li><em>STRING</em>: {@code java.lang.String.class} </li>
  *     <li><em>BINARY</em>: {@code org.bson.types.Binary.class} </li>
  *     <li><em>OBJECT_ID</em>: {@code org.bson.types.ObjectId.class} </li>
@@ -110,6 +112,7 @@ public class BsonTypeClassMap {
         map.put(BsonType.DOUBLE, Double.class);
         map.put(BsonType.INT32, Integer.class);
         map.put(BsonType.INT64, Long.class);
+        map.put(BsonType.DECIMAL128, Decimal128.class);
         map.put(BsonType.MAX_KEY, MaxKey.class);
         map.put(BsonType.MIN_KEY, MinKey.class);
         map.put(BsonType.JAVASCRIPT, Code.class);

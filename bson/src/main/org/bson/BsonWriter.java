@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 /**
@@ -143,6 +144,23 @@ public interface BsonWriter {
      * @param value The Int64 value.
      */
     void writeInt64(String name, long value);
+
+    /**
+     * Writes a BSON Decimal128 to the writer.
+     *
+     * @param value The Decimal128 value.
+     * @since 3.4
+     */
+    void writeDecimal128(final Decimal128 value);
+
+    /**
+     * Writes a BSON Decimal128 element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The Decimal128 value.
+     * @since 3.4
+     */
+    void writeDecimal128(String name, Decimal128 value);
 
     /**
      * Writes a BSON JavaScript to the writer.

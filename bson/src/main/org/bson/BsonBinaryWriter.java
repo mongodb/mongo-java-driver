@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BsonInput;
 import org.bson.io.BsonOutput;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.util.Stack;
@@ -204,6 +205,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         bsonOutput.writeByte(BsonType.INT64.getValue());
         writeCurrentName();
         bsonOutput.writeInt64(value);
+    }
+
+    @Override
+    protected void doWriteDecimal128(final Decimal128 value) {
+        bsonOutput.writeByte(BsonType.DECIMAL128.getValue());
+        writeCurrentName();
+        bsonOutput.writeInt64(value.getLow());
+        bsonOutput.writeInt64(value.getHigh());
     }
 
     @Override

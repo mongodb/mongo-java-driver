@@ -186,6 +186,19 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
     }
 
     /**
+     * Gets the value of the key if it is a BsonDecimal128, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a BsonDecimal128
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @since 3.4
+     */
+    public BsonDecimal128 getDecimal128(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asDecimal128();
+    }
+
+    /**
      * Gets the value of the key if it is a BsonDouble, or throws if not.
      *
      * @param key the key
@@ -358,6 +371,21 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         }
         return get(key).isInt64();
     }
+
+    /**
+     * Returns true if the value of the key is a BsonDecimal128, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonDecimal128, returns false if the document does not contain the key.
+     * @since 3.4
+     */
+    public boolean isDecimal128(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isDecimal128();
+    }
+
 
     /**
      * Returns true if the value of the key is a BsonDouble, returns false if the document does not contain the key.
@@ -540,6 +568,23 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
             return defaultValue;
         }
         return get(key).asInt64();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * BsonDecimal128.
+     *
+     * @param key the key
+     * @param defaultValue the default value
+     * @return the value of the key as a BsonDecimal128
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @since 3.4
+     */
+    public BsonDecimal128 getDecimal128(final Object key, final BsonDecimal128 defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asDecimal128();
     }
 
     /**

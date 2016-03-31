@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson
 
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -27,6 +28,7 @@ class BsonDocumentSpecification extends Specification {
         def bsonNull = new BsonNull()
         def bsonInt32 = new BsonInt32(42)
         def bsonInt64 = new BsonInt64(52L)
+        def bsonDecimal128 = new BsonDecimal128(Decimal128.parse('1.0'))
         def bsonBoolean = new BsonBoolean(true)
         def bsonDateTime = new BsonDateTime(new Date().getTime())
         def bsonDouble = new BsonDouble(62.0)
@@ -51,6 +53,7 @@ class BsonDocumentSpecification extends Specification {
                         new BsonElement('null', bsonNull),
                         new BsonElement('int32', bsonInt32),
                         new BsonElement('int64', bsonInt64),
+                        new BsonElement('decimal128', bsonDecimal128),
                         new BsonElement('boolean', bsonBoolean),
                         new BsonElement('date', bsonDateTime),
                         new BsonElement('double', bsonDouble),
@@ -73,6 +76,7 @@ class BsonDocumentSpecification extends Specification {
         root.isNull('null')
         root.getInt32('int32').is(bsonInt32)
         root.getInt64('int64').is(bsonInt64)
+        root.getDecimal128('decimal128').is(bsonDecimal128)
         root.getBoolean('boolean').is(bsonBoolean)
         root.getDateTime('date').is(bsonDateTime)
         root.getDouble('double').is(bsonDouble)
@@ -89,6 +93,7 @@ class BsonDocumentSpecification extends Specification {
 
         root.getInt32('int32', new BsonInt32(2)).is(bsonInt32)
         root.getInt64('int64', new BsonInt64(4)).is(bsonInt64)
+        root.getDecimal128('decimal128', new BsonDecimal128(Decimal128.parse('4.0'))).is(bsonDecimal128)
         root.getDouble('double', new BsonDouble(343.0)).is(bsonDouble)
         root.getBoolean('boolean', new BsonBoolean(false)).is(bsonBoolean)
         root.getDateTime('date', new BsonDateTime(3453)).is(bsonDateTime)
@@ -105,6 +110,7 @@ class BsonDocumentSpecification extends Specification {
 
         root.get('int32').asInt32().is(bsonInt32)
         root.get('int64').asInt64().is(bsonInt64)
+        root.get('decimal128').asDecimal128().is(bsonDecimal128)
         root.get('boolean').asBoolean().is(bsonBoolean)
         root.get('date').asDateTime().is(bsonDateTime)
         root.get('double').asDouble().is(bsonDouble)
@@ -118,6 +124,7 @@ class BsonDocumentSpecification extends Specification {
         root.isInt32('int32')
         root.isNumber('int32')
         root.isInt64('int64')
+        root.isDecimal128('decimal128')
         root.isNumber('int64')
         root.isBoolean('boolean')
         root.isDateTime('date')
@@ -140,6 +147,7 @@ class BsonDocumentSpecification extends Specification {
             !root.isNumber('number')
             !root.isInt32('int32')
             !root.isInt64('int64')
+            !root.isDecimal128('decimal128')
             !root.isBoolean('boolean')
             !root.isDateTime('date')
             !root.isDouble('double')
@@ -156,6 +164,7 @@ class BsonDocumentSpecification extends Specification {
         def bsonNull = new BsonNull()
         def bsonInt32 = new BsonInt32(42)
         def bsonInt64 = new BsonInt64(52L)
+        def bsonDecimal128 = new BsonDecimal128(Decimal128.parse('1.0'))
         def bsonBoolean = new BsonBoolean(true)
         def bsonDateTime = new BsonDateTime(new Date().getTime())
         def bsonDouble = new BsonDouble(62.0)
@@ -165,6 +174,7 @@ class BsonDocumentSpecification extends Specification {
         def timestamp = new BsonTimestamp(0x12345678, 5)
         def binary = new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])
         def bsonArray = new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
+                                       new BsonDecimal128(Decimal128.parse('4.0')),
                                        new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
                                        new BsonDocument('a', new BsonInt64(2L))])
         def bsonDocument = new BsonDocument('a', new BsonInt32(1))
@@ -179,6 +189,7 @@ class BsonDocumentSpecification extends Specification {
         root.getDouble('m', bsonDouble).is(bsonDouble)
         root.getInt32('m', bsonInt32).is(bsonInt32)
         root.getInt64('m', bsonInt64).is(bsonInt64)
+        root.getDecimal128('m', bsonDecimal128).is(bsonDecimal128)
         root.getString('m', bsonString).is(bsonString)
         root.getObjectId('m', objectId).is(objectId)
         root.getString('m', bsonString).is(bsonString)
@@ -236,6 +247,12 @@ class BsonDocumentSpecification extends Specification {
 
         when:
         root.getInt64('int64')
+
+        then:
+        thrown(BsonInvalidOperationException)
+
+        when:
+        root.getDecimal128('decimal128')
 
         then:
         thrown(BsonInvalidOperationException)
@@ -311,6 +328,7 @@ class BsonDocumentSpecification extends Specification {
         given:
         def document = new BsonDocument('d', new BsonDocument().append('i2', new BsonInt32(1)))
                 .append('i', new BsonInt32(2))
+                .append('d', new BsonDecimal128(Decimal128.parse('1.0')))
                 .append('a', new BsonArray([new BsonInt32(3),
                                             new BsonArray([new BsonInt32(11)]),
                                             new BsonDocument('i3', new BsonInt32(6)),

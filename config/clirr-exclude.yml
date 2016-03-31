@@ -4,3 +4,17 @@ differenceTypes: []
 packages:
 - io.netty.*
 - org.slf4j.*
+
+members:
+  org.bson.AbstractBsonReader:
+  - doReadDecimal128()
+  org.bson.AbstractBsonWriter:
+  - doWriteDecimal128(org.bson.types.Decimal128)
+  org.bson.BsonNumber:
+  - decimal128Value()
+  org.bson.BsonReader:
+  - readDecimal128()
+  - readDecimal128(java.lang.String)
+  org.bson.BsonWriter:
+  - writeDecimal128(org.bson.types.Decimal128)
+  - writeDecimal128(java.lang.String,org.bson.types.Decimal128)

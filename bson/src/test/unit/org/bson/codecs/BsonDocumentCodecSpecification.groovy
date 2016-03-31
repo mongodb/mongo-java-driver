@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
+import org.bson.BsonDecimal128
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWriter
 import org.bson.BsonDouble
@@ -43,6 +44,7 @@ import org.bson.ByteBufNIO
 import org.bson.RawBsonDocument
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -58,6 +60,7 @@ class BsonDocumentCodecSpecification extends Specification {
                         new BsonElement('null', new BsonNull()),
                         new BsonElement('int32', new BsonInt32(42)),
                         new BsonElement('int64', new BsonInt64(52L)),
+                        new BsonElement('decimal128', new BsonDecimal128(Decimal128.parse('1.0'))),
                         new BsonElement('boolean', new BsonBoolean(true)),
                         new BsonElement('date', new BsonDateTime(new Date().getTime())),
                         new BsonElement('double', new BsonDouble(62.0)),
@@ -93,6 +96,7 @@ class BsonDocumentCodecSpecification extends Specification {
         decodedDoc.get('null') == doc.get('null')
         decodedDoc.get('int32') == doc.get('int32')
         decodedDoc.get('int64') == doc.get('int64')
+        decodedDoc.get('decimal128') == doc.get('decimal128')
         decodedDoc.get('boolean') == doc.get('boolean')
         decodedDoc.get('date') == doc.get('date')
 //        decodedDoc.get('dbPointer') == doc.get('dbPointer')

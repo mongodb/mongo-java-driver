@@ -20,6 +20,7 @@ import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.types.Binary
 import org.bson.types.Code
+import org.bson.types.Decimal128
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -44,6 +45,7 @@ class ValueCodecProviderSpecification extends Specification {
         provider.get(Boolean, registry) instanceof BooleanCodec
         provider.get(Integer, registry) instanceof IntegerCodec
         provider.get(Long, registry) instanceof LongCodec
+        provider.get(Decimal128, registry) instanceof Decimal128Codec
         provider.get(Double, registry) instanceof DoubleCodec
         provider.get(Character, registry) instanceof CharacterCodec
         provider.get(String, registry) instanceof StringCodec
