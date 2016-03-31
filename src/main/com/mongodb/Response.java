@@ -77,12 +77,14 @@ class Response {
         else
             _objects = new ArrayList<DBObject>( _num );
 
+        // always use the default decoder to decode the error document
+        DBDecoder actualDecoder = (_flags & Bytes.RESULTFLAG_ERRSET) > 0 ? DefaultDBDecoder.FACTORY.create() : decoder;
         for ( int i=0; i < _num; i++ ){
             if ( user._toGo < 5 )
                 throw new IOException( "should have more objects, but only " + user._toGo + " bytes left" );
             // TODO: By moving to generics, you can remove these casts (and requirement to impl DBOBject).
 
-            _objects.add( decoder.decode( user, collection ) );
+            _objects.add( actualDecoder.decode( user, collection ) );
         }
 
         if ( user._toGo != 0 )

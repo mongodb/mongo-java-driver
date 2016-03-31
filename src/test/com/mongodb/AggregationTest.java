@@ -79,7 +79,7 @@ public class AggregationTest extends TestCase {
                 .build());
         assertTrue(out.keySet().iterator().hasNext());
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testNullOptions() {
         collection.aggregate(new ArrayList<DBObject>(), (AggregationOptions) null);
@@ -232,6 +232,23 @@ public class AggregationTest extends TestCase {
         checkServerVersion(2.6);
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");
+        try {
+            collection.aggregate(prepareData(), AggregationOptions.builder().maxTime(1, SECONDS).build());
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testMaxTimeWithCustomDecoderThatSwallowsAllFields() {
+        assumeFalse(isSharded(getMongoClient()));
+        checkServerVersion(2.6);
+        enableMaxTimeFailPoint();
+        DBCollection collection = database.getCollection("testMaxTime");
+        collection.setDBDecoderFactory(new SubsitutingDBDecoderFactory(new BasicDBObject()));
         try {
             collection.aggregate(prepareData(), AggregationOptions.builder().maxTime(1, SECONDS).build());
             fail("Show have thrown");
