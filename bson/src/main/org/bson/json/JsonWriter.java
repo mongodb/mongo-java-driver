@@ -192,6 +192,10 @@ public class JsonWriter extends AbstractBsonWriter {
                         writer.write(format("new Date(%d)", value));
                     }
                     break;
+                case SIMPLE_TYPE:
+                	writeNameHelper(getName());
+                	writer.write(Long.toString(value));
+                    break;
                 default:
                     throw new BSONException("Unexpected JSONMode.");
             }
@@ -247,6 +251,10 @@ public class JsonWriter extends AbstractBsonWriter {
                         writer.write(format("NumberLong(\"%d\")", value));
                     }
                     break;
+                case SIMPLE_TYPE:
+                	writeNameHelper(getName());
+                	writer.write(format("\"%d\"", value));
+                    break;
                 default:
                     writeNameHelper(getName());
                     writer.write(Long.toString(value));
@@ -300,6 +308,7 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
+                case SIMPLE_TYPE:
                     writeStartDocument();
                     writeString("$oid", objectId.toString());
                     writeEndDocument();
@@ -327,6 +336,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeEndDocument();
                     break;
                 case SHELL:
+                case SIMPLE_TYPE:
                     writeNameHelper(getName());
                     writer.write("/");
                     String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression.getPattern()
@@ -365,6 +375,7 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
+                case SIMPLE_TYPE:
                     writeStartDocument();
                     writeStartDocument("$timestamp");
                     writeInt32("t", value.getTime());
@@ -394,6 +405,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeEndDocument();
                     break;
                 case SHELL:
+                case SIMPLE_TYPE:
                     writeNameHelper(getName());
                     writer.write("undefined");
                     break;

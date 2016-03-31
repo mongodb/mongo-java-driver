@@ -34,5 +34,9 @@ public enum JsonMode {
      * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually
      * produces when showing query results.
      */
-    SHELL
+    SHELL,
+    /**
+     * Simple mode loose the bson type information and export as simple json type conform to the <a href="http://www.json.org">JSON RFC spec</a>.
+     */
+    SIMPLE_TYPE,
 }
