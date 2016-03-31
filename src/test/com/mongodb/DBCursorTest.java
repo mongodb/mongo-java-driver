@@ -798,6 +798,24 @@ public class DBCursorTest extends TestCase {
         }
     }
 
+    @Test
+    public void testMaxTimeWithCustomDecoderThatSwallowsAllFields() {
+        assumeFalse(isSharded(getMongoClient()));
+        checkServerVersion(2.5);
+        enableMaxTimeFailPoint();
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.setDecoderFactory(new SubsitutingDBDecoderFactory(new BasicDBObject()));
+        cursor.maxTime(1, SECONDS);
+        try {
+            cursor.next();
+            fail("Show have thrown");
+        } catch (MongoExecutionTimeoutException e) {
+            assertEquals(50, e.getCode());
+        } finally {
+            disableMaxTimeFailPoint();
+        }
+    }
+
     private void insertData() {
         for (int i = 0; i < 10; i++) {
             collection.insert(new BasicDBObject("_id", i).append("x", i));
