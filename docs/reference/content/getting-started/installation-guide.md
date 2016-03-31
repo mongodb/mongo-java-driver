@@ -17,7 +17,7 @@ The recommended way to get started using one of the drivers in your project is w
 
 This jar that contains everything you need including the BSON library.
 
-{{< install artifactId="mongo-java-driver" version="2.14.1" >}}
+{{< install artifactId="mongo-java-driver" version="2.14.2" >}}
 
 ## BSON
 
@@ -25,4 +25,4 @@ This library comprehensively supports [BSON](http://www.bsonspec.org),
 the data storage and network transfer format that MongoDB uses for "documents".
 BSON is short for Binary [JSON](http://json.org/), is a binary-encoded serialization of JSON-like documents.
 
-{{< install artifactId="bson" version="2.14.1" >}}
+{{< install artifactId="bson" version="2.14.2" >}}
