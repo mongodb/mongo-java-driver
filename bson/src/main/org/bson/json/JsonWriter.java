@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.bson.BsonContextType;
 import org.bson.BsonDbPointer;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
@@ -147,7 +148,7 @@ public class JsonWriter extends AbstractBsonWriter {
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write(format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
-                                        printBase64Binary(binary.getData())));
+                            printBase64Binary(binary.getData())));
 
                     break;
                 default:
@@ -258,6 +259,26 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
+    protected void doWriteDecimal128(final Decimal128 value) {
+        try {
+            switch (settings.getOutputMode()) {
+                case SHELL:
+                    writeNameHelper(getName());
+                    writer.write(format("NumberDecimal(\"%s\")", value.toString()));
+                    break;
+                case STRICT:
+                default:
+                    writeStartDocument();
+                    writeNameHelper("$numberDecimal");
+                    writer.write(format("\"%s\"", value.toString()));
+                    writeEndDocument();
+            }
+        } catch (IOException e) {
+            throwBSONException(e);
+        }
+    }
+
+    @Override
     protected void doWriteJavaScript(final String code) {
         writeStartDocument();
         writeString("$code", code);
@@ -330,7 +351,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeNameHelper(getName());
                     writer.write("/");
                     String escaped = (regularExpression.getPattern().equals("")) ? "(?:)" : regularExpression.getPattern()
-                                                                                                             .replace("/", "\\/");
+                            .replace("/", "\\/");
                     writer.write(escaped);
                     writer.write("/");
                     writer.write(regularExpression.getOptions());
@@ -511,29 +532,29 @@ public class JsonWriter extends AbstractBsonWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
+/**
+ * The context for the writer, inheriting all the values from {@link org.bson.AbstractBsonWriter.Context}, and additionally providing
+ * settings for the indentation level and whether there are any child elements at this level.
+ */
+public class Context extends AbstractBsonWriter.Context {
+    private final String indentation;
+    private boolean hasElements;
+
     /**
-     * The context for the writer, inheriting all the values from {@link org.bson.AbstractBsonWriter.Context}, and additionally providing
-     * settings for the indentation level and whether there are any child elements at this level.
+     * Creates a new context.
+     *
+     * @param parentContext the parent context that can be used for going back up to the parent level
+     * @param contextType   the type of this context
+     * @param indentChars   the String to use for indentation at this level.
      */
-    public class Context extends AbstractBsonWriter.Context {
-        private final String indentation;
-        private boolean hasElements;
-
-        /**
-         * Creates a new context.
-         *
-         * @param parentContext the parent context that can be used for going back up to the parent level
-         * @param contextType   the type of this context
-         * @param indentChars   the String to use for indentation at this level.
-         */
-        public Context(final Context parentContext, final BsonContextType contextType, final String indentChars) {
-            super(parentContext, contextType);
-            this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
-        }
-
-        @Override
-        public Context getParentContext() {
-            return (Context) super.getParentContext();
-        }
+    public Context(final Context parentContext, final BsonContextType contextType, final String indentChars) {
+        super(parentContext, contextType);
+        this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
     }
+
+    @Override
+    public Context getParentContext() {
+        return (Context) super.getParentContext();
+    }
+}
 }

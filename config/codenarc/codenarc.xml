@@ -56,6 +56,7 @@
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
+        <exclude name="ExplicitCallToEqualsMethod"/>
         <exclude name="ExplicitCallToAndMethod"/>
         <exclude name="ExplicitCallToEqualsMethod"/>
         <exclude name="ExplicitCallToCompareToMethod"/>
@@ -86,6 +87,7 @@
         <exclude name='UnnecessarySemicolon'/>
         <!-- dangerous rule because if you use "with in a then clause of a Spock test, the assertions are not run -->
         <exclude name="UnnecessaryObjectReferences"/>
+        <exclude name="UnnecessaryBigDecimalInstantiation"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unused.xml'>
         <rule-config name='UnusedObject'>

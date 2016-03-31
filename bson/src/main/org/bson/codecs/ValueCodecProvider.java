@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import java.util.Map;
  *     <li>{@link org.bson.codecs.DoubleCodec}</li>
  *     <li>{@link org.bson.codecs.IntegerCodec}</li>
  *     <li>{@link org.bson.codecs.LongCodec}</li>
+ *     <li>{@link org.bson.codecs.Decimal128Codec}</li>
  *     <li>{@link org.bson.codecs.MinKeyCodec}</li>
  *     <li>{@link org.bson.codecs.MaxKeyCodec}</li>
  *     <li>{@link org.bson.codecs.CodeCodec}</li>
@@ -78,6 +79,7 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new MinKeyCodec());
         addCodec(new MaxKeyCodec());
         addCodec(new CodeCodec());
+        addCodec(new Decimal128Codec());
         addCodec(new ObjectIdCodec());
         addCodec(new CharacterCodec());
         addCodec(new StringCodec());

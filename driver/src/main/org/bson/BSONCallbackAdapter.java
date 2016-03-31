@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import static org.bson.io.Bits.readLong;
@@ -120,6 +121,11 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
     @Override
     protected void doWriteInt64(final long value) {
         bsonCallback.gotLong(getName(), value);
+    }
+
+    @Override
+    protected void doWriteDecimal128(final Decimal128 value) {
+        throw new UnsupportedOperationException("Decimal128 not support for legacy API");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DecoderContext
+import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import spock.lang.Shared
 import spock.lang.Specification
@@ -40,6 +41,7 @@ class BsonDocumentReaderSpecification extends Specification {
                         new BsonElement('null', new BsonNull()),
                         new BsonElement('int32', new BsonInt32(42)),
                         new BsonElement('int64', new BsonInt64(52L)),
+                        new BsonElement('decimal128', new BsonDecimal128(Decimal128.parse('1.0'))),
                         new BsonElement('boolean', new BsonBoolean(true)),
                         new BsonElement('date', new BsonDateTime(new Date().getTime())),
                         new BsonElement('double', new BsonDouble(62.0)),

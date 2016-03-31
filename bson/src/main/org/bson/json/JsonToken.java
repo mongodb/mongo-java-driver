@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 
 package org.bson.json;
+
+import org.bson.BsonDouble;
+import org.bson.types.Decimal128;
 
 /**
  * A JSON token.
@@ -39,6 +42,16 @@ class JsonToken {
                 return clazz.cast(((Integer) value).longValue());
             } else if (value instanceof String) {
                 return clazz.cast(Long.valueOf((String) value));
+            }
+        } else if (Decimal128.class == clazz) {
+            if (value instanceof Integer) {
+                return clazz.cast(new Decimal128((Integer) value));
+            } else if (value instanceof Long) {
+                return clazz.cast(new Decimal128((Long) value));
+            } else if (value instanceof Double) {
+                return clazz.cast(new BsonDouble((Double) value).decimal128Value());
+            } else if (value instanceof String) {
+                return clazz.cast(Decimal128.parse((String) value));
             }
         }
 

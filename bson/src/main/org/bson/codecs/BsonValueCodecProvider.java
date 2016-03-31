@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
 import org.bson.BsonDbPointer;
+import org.bson.BsonDecimal128;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonDouble;
@@ -126,6 +127,7 @@ public class BsonValueCodecProvider implements CodecProvider {
         addCodec(new BsonDoubleCodec());
         addCodec(new BsonInt32Codec());
         addCodec(new BsonInt64Codec());
+        addCodec(new BsonDecimal128Codec());
         addCodec(new BsonMinKeyCodec());
         addCodec(new BsonMaxKeyCodec());
         addCodec(new BsonJavaScriptCodec());
@@ -154,6 +156,7 @@ public class BsonValueCodecProvider implements CodecProvider {
         map.put(BsonType.DOUBLE, BsonDouble.class);
         map.put(BsonType.INT32, BsonInt32.class);
         map.put(BsonType.INT64, BsonInt64.class);
+        map.put(BsonType.DECIMAL128, BsonDecimal128.class);
         map.put(BsonType.MAX_KEY, BsonMaxKey.class);
         map.put(BsonType.MIN_KEY, BsonMinKey.class);
         map.put(BsonType.JAVASCRIPT, BsonJavaScript.class);

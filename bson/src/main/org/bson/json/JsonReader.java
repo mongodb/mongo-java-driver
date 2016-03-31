@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
+import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -192,6 +193,9 @@ public class JsonReader extends AbstractBsonReader {
                 } else if ("NumberLong".equals(value)) {
                     setCurrentBsonType(BsonType.INT64);
                     currentValue = visitNumberLongConstructor();
+                } else if ("NumberDecimal".equals(value)) {
+                    setCurrentBsonType(BsonType.DECIMAL128);
+                    currentValue = visitNumberDecimalConstructor();
                 } else if ("ObjectId".equals(value)) {
                     setCurrentBsonType(BsonType.OBJECT_ID);
                     currentValue = visitObjectIdConstructor();
@@ -250,6 +254,11 @@ public class JsonReader extends AbstractBsonReader {
         return getCurrentBsonType();
     }
     //CHECKSTYLE:ON
+
+    @Override
+    public Decimal128 doReadDecimal128() {
+        return (Decimal128) currentValue;
+    }
 
     @Override
     protected long doReadDateTime() {
@@ -530,6 +539,9 @@ public class JsonReader extends AbstractBsonReader {
         } else if ("NumberLong".equals(value)) {
             currentValue = visitNumberLongConstructor();
             setCurrentBsonType(BsonType.INT64);
+        } else if ("NumberDecimal".equals(value)) {
+            currentValue = visitNumberDecimalConstructor();
+            setCurrentBsonType(BsonType.DECIMAL128);
         } else if ("ObjectId".equals(value)) {
             currentValue = visitObjectIdConstructor();
             setCurrentBsonType(BsonType.OBJECT_ID);
@@ -602,6 +614,10 @@ public class JsonReader extends AbstractBsonReader {
             } else if ("$numberLong".equals(value)) {
                 currentValue = visitNumberLongExtendedJson();
                 setCurrentBsonType(BsonType.INT64);
+                return;
+            } else if ("$numberDecimal".equals(value)) {
+                currentValue = visitNumberDecimalExtendedJson();
+                setCurrentBsonType(BsonType.DECIMAL128);
                 return;
             }
         }
@@ -721,6 +737,22 @@ public class JsonReader extends AbstractBsonReader {
             value = Long.parseLong(valueToken.getValue(String.class));
         } else {
             throw new JsonParseException("JSON reader expected an integer or a string but found '%s'.", valueToken.getValue());
+        }
+        verifyToken(")");
+        return value;
+    }
+
+    private Decimal128 visitNumberDecimalConstructor() {
+        verifyToken("(");
+        JsonToken valueToken = popToken();
+        Decimal128 value;
+        if (valueToken.getType() == JsonTokenType.INT32 || valueToken.getType() == JsonTokenType.INT64
+                    || valueToken.getType() == JsonTokenType.DOUBLE) {
+            value = valueToken.getValue(Decimal128.class);
+        } else if (valueToken.getType() == JsonTokenType.STRING) {
+            value = Decimal128.parse(valueToken.getValue(String.class));
+        } else {
+            throw new JsonParseException("JSON reader expected a number or a string but found '%s'.", valueToken.getValue());
         }
         verifyToken(")");
         return value;
@@ -1039,6 +1071,16 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken("}");
         return nameToken.getValue(Long.class);
+    }
+
+    private Decimal128 visitNumberDecimalExtendedJson() {
+        verifyToken(":");
+        JsonToken nameToken = popToken();
+        if (nameToken.getType() != JsonTokenType.STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
+        }
+        verifyToken("}");
+        return nameToken.getValue(Decimal128.class);
     }
 
     @Override
