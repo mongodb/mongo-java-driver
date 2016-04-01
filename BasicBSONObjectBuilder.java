@@ -16,18 +16,22 @@ import org.bson.types.ObjectId;
     # BasicBSONObjectBuilder.getInstance().add(key,value).add(key,mapValue).build()    
     # BasicBSONObject  bObject =  BasicBSONObjectBuilder.createObject(map)
 */
-
+@SuppressWarnings("rawtypes")
 public class BasicBSONObjectBuilder {
     
     private final BasicBSONObject _basicBSONObject;
+    /**
+     * Creates a builder intialized with an empty document.
+     * @return The new empty builder
+     */
     public static BasicBSONObjectBuilder getInstance() {
         return new BasicBSONObjectBuilder();
-    }            
+    } 
+    
     /**
      * Creates a builder initialized with an empty document.
      */
-    private BasicBSONObjectBuilder()
-    {
+    private BasicBSONObjectBuilder(){
        _basicBSONObject = new BasicBSONObject(); 
     }
         
@@ -35,8 +39,7 @@ public class BasicBSONObjectBuilder {
      *  add default _id field with value document.
      * @return BasicBSONObjectBuilder
      */
-    public BasicBSONObjectBuilder addId()
-    {
+    public BasicBSONObjectBuilder addId(){
         _basicBSONObject.append("_id", new ObjectId());
         return this;
     }
@@ -48,8 +51,7 @@ public class BasicBSONObjectBuilder {
      * @param value
      * @return the new BasicBSONObjectBuilder
      */
-    public BasicBSONObjectBuilder add(final String key, final Object value)
-    {
+    public BasicBSONObjectBuilder add(final String key, final Object value){
         validateKeyField(key);        
         _basicBSONObject.append(key, value);
         return this;
@@ -61,8 +63,7 @@ public class BasicBSONObjectBuilder {
      * @param key The field name
      * @return the new BasicBSONObjectBuilder
      */
-    public BasicBSONObjectBuilder addNull(final String key)
-    {
+    public BasicBSONObjectBuilder addNull(final String key){
         validateKeyField(key);        
         _basicBSONObject.append(key, null);
         return this;
@@ -75,8 +76,7 @@ public class BasicBSONObjectBuilder {
      * @return BasicBSONObjectBuilder
      */
     
-    public BasicBSONObjectBuilder addObjectId(final String key,final String value)
-    {
+    public BasicBSONObjectBuilder addObjectId(final String key, final String value){
        validateKeyField(key);
         _basicBSONObject.append(key, new ObjectId(value));
         return this;        
@@ -89,22 +89,19 @@ public class BasicBSONObjectBuilder {
      * @return the active BasicBSONObject document
      */
     
-    public  BasicBSONObjectBuilder addMap(Map documentAsMap)
-    {
+    public  BasicBSONObjectBuilder addMap(final Map documentAsMap){
       validateMapDocument(documentAsMap);   
       _basicBSONObject.putAll(documentAsMap);
-      
       return this;
     }
-      /**
-       * add a basicBSONObject Type field/element 
-       * @param field
-       * @param key
-       * @param val
-       * @return BasicBSONObjectBuilder
-       */  
-    public BasicBSONObjectBuilder addObject(final String field,final String key, final Object val)
-    {
+    /**
+     * add a basicBSONObject Type field/element 
+     * @param field
+     * @param key
+     * @param val
+     * @return BasicBSONObjectBuilder
+     */  
+    public BasicBSONObjectBuilder addObject(final String field, final String key, final Object val){
         validateKeyField(field);
         validateKeyField(key);
         _basicBSONObject.append(field, BasicBSONObjectBuilder.createObject(key, val));
@@ -116,10 +113,8 @@ public class BasicBSONObjectBuilder {
      * @param key
      * @param val
      * @return BasicBSONObject
-     */
-    
-    public  static BasicBSONObject createObject(final String key,final Object val)
-    {
+     */    
+    public  static BasicBSONObject createObject(final String key, final Object val){
         validateKeyField(key);
         return new BasicBSONObject(key,val);       
     }
@@ -129,9 +124,7 @@ public class BasicBSONObjectBuilder {
      * @param documentAsMap a document in Map form.
      * @return the new BasicBSONObject
      */
-
-    public  static BasicBSONObject createObject(Map documentAsMap)
-    {
+    public  static BasicBSONObject createObject(final Map documentAsMap){
       validateMapDocument(documentAsMap);      
       return new BasicBSONObject(documentAsMap);       
     }
@@ -141,9 +134,7 @@ public class BasicBSONObjectBuilder {
      * @param mapList : List<Map<String, Object>>
      * @return BasicBSONList
      */
-    public static BasicBSONList createNestedList(List<Map<String, Object>> mapList)
-    {
-     
+    public static BasicBSONList createNestedList(List<Map<String, Object>> mapList){
        BasicBSONList bsonList = new BasicBSONList();
        for (Map<String, Object> map : mapList) {
               bsonList.add(createObject(map));
@@ -155,8 +146,7 @@ public class BasicBSONObjectBuilder {
      * @param stringList
      * @return BasicBSONList
      */
-    public static BasicBSONList createList(List<String> stringList)
-    {
+    public static BasicBSONList createList(List<String> stringList){
         validateStringList(stringList);
         BasicBSONList bsonList = new BasicBSONList();
         int index = 0;
@@ -173,8 +163,7 @@ public class BasicBSONObjectBuilder {
      * Gets the top level document.
      * @return BasicBSONObject : The base object
      */    
-    public BasicBSONObject build()
-    {        
+    public BasicBSONObject build(){        
         return _basicBSONObject;   
     }
     /**
@@ -183,38 +172,35 @@ public class BasicBSONObjectBuilder {
      * @param value
      * @return BasicBSONObject
      */
-    public static BasicBSONObject single(final String key, Object value) 
-    {       
+    public static BasicBSONObject single(final String key, Object value){       
         validateKeyField(key);
         return getInstance().add(key, value).build();
     }
     
-    private static void validateMapDocument(Map aMap)
-    {
+    private static void validateMapDocument(Map aMap){
       if(aMap == null)
         throw new NullPointerException("documentAsMap value is null.");  
 
       if(aMap.isEmpty())
         throw new InvalidParameterException("documentAsMap value is empty.");  
             
-      for(Object key: aMap.keySet())
-      {
+      for(Object key: aMap.keySet()){
         if(key ==null || key.toString().isEmpty())throw new NullPointerException("one of the map's key value is empty .");
       }
     }
-    private static void validateKeyField(final String key)
-    {
+    private static void validateKeyField(final String key){
         if(key == null )throw new NullPointerException("key parameter value is null.");
         if( key.isEmpty())throw new InvalidParameterException("key parameter value is empty.");
     }
-    private static void validateStringList(List<String> stringList)
-    {
+    private static void validateStringList(List<String> stringList){
         if(stringList == null)throw new NullPointerException("the list in null!");
         if(stringList.isEmpty())throw new InvalidParameterException("the list is empty!");
     }
-    
-    public int size()
-    {
+    /**
+     * 
+     * @return int size of the top level document.
+     */
+    public int size(){
         return _basicBSONObject.size();
     }
      /**
@@ -222,10 +208,7 @@ public class BasicBSONObjectBuilder {
      *
      * @return true if empty
      */
-    public boolean isNullOrEmpty()
-    {
+    public boolean isNullOrEmpty(){
         return ( _basicBSONObject == null || _basicBSONObject.isEmpty());
-    }
-   
-    
+    }       
 }
