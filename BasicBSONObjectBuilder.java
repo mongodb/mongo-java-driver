@@ -217,7 +217,11 @@ public class BasicBSONObjectBuilder {
     {
         return _basicBSONObject.size();
     }
-    
+     /**
+     * Returns true if no key/value was inserted into the top level document.
+     *
+     * @return true if empty
+     */
     public boolean isNullOrEmpty()
     {
         return ( _basicBSONObject == null || _basicBSONObject.isEmpty());
