@@ -93,6 +93,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void shouldSaveDefaultReadPreference() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
@@ -104,6 +105,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void shouldSaveDefaultWriteConcern() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
