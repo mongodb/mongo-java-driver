@@ -31,6 +31,7 @@ import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -122,6 +123,7 @@ public final class MongoClients {
             fromProviders(asList(new ValueCodecProvider(),
                     new DocumentCodecProvider(),
                     new BsonValueCodecProvider(),
+                    new IterableCodecProvider(),
                     new GeoJsonCodecProvider()));
 
     private static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {

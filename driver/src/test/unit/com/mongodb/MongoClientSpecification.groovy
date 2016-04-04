@@ -31,5 +31,6 @@ class MongoClientSpecification extends Specification {
         codecRegistry.get(Document)
         codecRegistry.get(Integer)
         codecRegistry.get(MultiPolygon)
+        codecRegistry.get(Iterable)
     }
 }

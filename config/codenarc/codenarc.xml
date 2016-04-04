@@ -14,7 +14,9 @@
         </rule-config>
     </ruleset-ref>
 
-    <ruleset-ref path='rulesets/basic.xml'/>
+    <ruleset-ref path='rulesets/basic.xml'>
+        <exclude name="ComparisonWithSelf"/>
+    </ruleset-ref>
     <ruleset-ref path='rulesets/braces.xml'/>
     <ruleset-ref path='rulesets/concurrency.xml'/>
     <ruleset-ref path='rulesets/convention.xml'>
@@ -55,6 +57,7 @@
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
         <exclude name="ExplicitCallToAndMethod"/>
+        <exclude name="ExplicitCallToEqualsMethod"/>
         <exclude name="ExplicitCallToCompareToMethod"/>
         <exclude name='GetterMethodCouldBeProperty'/>
      </ruleset-ref>

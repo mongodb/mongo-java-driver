@@ -25,7 +25,10 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonType
+import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.IterableCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.conversions.Bson
 import spock.lang.Specification
@@ -67,7 +70,9 @@ import static org.bson.BsonDocument.parse
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class FiltersSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider(), new GeoJsonCodecProvider()])
+    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider(), new GeoJsonCodecProvider(),
+                                  new DocumentCodecProvider(),
+                                  new IterableCodecProvider()])
 
     def 'eq should render without $eq'() {
         expect:
@@ -181,10 +186,10 @@ class FiltersSpecification extends Specification {
     def 'should render $elemMatch'() {
         expect:
         toBson(elemMatch('results', new BsonDocument('$gte', new BsonInt32(80)).append('$lt', new BsonInt32(85)))) ==
-        parse('{results : {$elemMatch : {$gte: 80, $lt: 85}}}')
+                parse('{results : {$elemMatch : {$gte: 80, $lt: 85}}}')
 
         toBson(elemMatch('results', and(eq('product', 'xyz'), gt('score', 8)))) ==
-        parse('{ results : {$elemMatch : {product : "xyz", score : {$gt : 8}}}}')
+                parse('{ results : {$elemMatch : {product : "xyz", score : {$gt : 8}}}}')
     }
 
     def 'should render $in'() {
@@ -605,6 +610,17 @@ class FiltersSpecification extends Specification {
                                                                                          }
                                                                                       }
                                                                                     }''')
+    }
+
+    def 'should render with iterable value'() {
+        expect:
+        toBson(eq('x', new Document())) == parse('''{
+                                                  x : {}
+                                               }''')
+
+        toBson(eq('x', [1, 2, 3])) == parse('''{
+                                                  x : [1, 2, 3]
+                                               }''')
     }
 
     def toBson(Bson bson) {
