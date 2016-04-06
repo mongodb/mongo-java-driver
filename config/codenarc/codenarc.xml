@@ -9,6 +9,9 @@
         <rule-config name='MisorderedStaticImports'>
             <property name='comesBefore' value='false'/>
         </rule-config>
+        <rule-config name='NoWildcardImports'>
+            <property name='doNotApplyToFilesMatching' value='AsynchronousChannelHelperSmokeTestSpecification.groovy'/>
+        </rule-config>
     </ruleset-ref>
 
     <ruleset-ref path='rulesets/basic.xml'/>
