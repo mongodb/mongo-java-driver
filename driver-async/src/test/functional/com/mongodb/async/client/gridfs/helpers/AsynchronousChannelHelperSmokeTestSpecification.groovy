@@ -26,12 +26,8 @@ import org.bson.Document
 import spock.lang.Requires
 
 import java.nio.ByteBuffer
-import java.nio.channels.AsynchronousFileChannel
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+import java.nio.channels.*  // Wildcard import to work around Java 1.6
+import java.nio.file.*      // Wildcard import to work around Java 1.6
 
 import static GridFSTestHelper.TestAsynchronousByteChannel
 import static GridFSTestHelper.run
@@ -89,7 +85,7 @@ class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecific
         if (outputPath) {
             try {
                 Files.delete(outputPath)
-            } catch (NoSuchFileException e) {
+            } catch (IOException e) {
                 println(e.getMessage())
             }
         }
