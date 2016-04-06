@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.gridfs;
+package com.mongodb.async.client.gridfs;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoClient;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.FindIterable;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -32,8 +33,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.gridfs.GridFSFileHelper.documentToGridFSFileMapper;
 
-class GridFSFindIterableImpl implements GridFSFindIterable {
-    private static final CodecRegistry DEFAULT_CODEC_REGISTRY = MongoClient.getDefaultCodecRegistry();
+final class GridFSFindIterableImpl implements GridFSFindIterable {
+    private static final CodecRegistry DEFAULT_CODEC_REGISTRY = MongoClients.getDefaultCodecRegistry();
     private final FindIterable<Document> underlying;
 
     public GridFSFindIterableImpl(final FindIterable<Document> underlying) {
@@ -71,44 +72,43 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public GridFSFindIterable batchSize(final int batchSize) {
-        underlying.batchSize(batchSize);
-        return this;
-    }
-
-    @Override
     public GridFSFindIterable noCursorTimeout(final boolean noCursorTimeout) {
         underlying.noCursorTimeout(noCursorTimeout);
         return this;
     }
 
     @Override
-    public MongoCursor<GridFSFile> iterator() {
-        return toGridFSFileIterable().iterator();
+    public void first(final SingleResultCallback<GridFSFile> callback) {
+        toMongoIterable().first(callback);
     }
 
     @Override
-    public GridFSFile first() {
-        return toGridFSFileIterable().first();
+    public void forEach(final Block<? super GridFSFile> block, final SingleResultCallback<Void> callback) {
+        toMongoIterable().forEach(block, callback);
+    }
+
+    @Override
+    public <A extends Collection<? super GridFSFile>> void into(final A target, final SingleResultCallback<A> callback) {
+        toMongoIterable().into(target, callback);
     }
 
     @Override
     public <U> MongoIterable<U> map(final Function<GridFSFile, U> mapper) {
-        return toGridFSFileIterable().map(mapper);
+        return toMongoIterable().map(mapper);
     }
 
     @Override
-    public void forEach(final Block<? super GridFSFile> block) {
-        toGridFSFileIterable().forEach(block);
+    public GridFSFindIterable batchSize(final int batchSize) {
+        underlying.batchSize(batchSize);
+        return this;
     }
 
     @Override
-    public <A extends Collection<? super GridFSFile>> A into(final A target) {
-        return toGridFSFileIterable().into(target);
+    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<GridFSFile>> callback) {
+        toMongoIterable().batchCursor(callback);
     }
 
-    private MongoIterable<GridFSFile> toGridFSFileIterable() {
+    private MongoIterable<GridFSFile> toMongoIterable() {
         return underlying.map(documentToGridFSFileMapper(DEFAULT_CODEC_REGISTRY));
     }
-
 }

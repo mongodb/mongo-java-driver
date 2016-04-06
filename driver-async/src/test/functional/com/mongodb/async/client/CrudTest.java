@@ -17,7 +17,6 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -46,9 +45,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -60,7 +56,7 @@ import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
-public class CrudTest {
+public class CrudTest extends DatabaseTestCase {
     private final String filename;
     private final String description;
     private final BsonArray data;
@@ -75,12 +71,14 @@ public class CrudTest {
     }
 
     @Before
-    public void setUp() throws InterruptedException, ExecutionException, TimeoutException {
+    @Override
+    public void setUp() {
+        super.setUp();
         collection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), getClass().getName()))
                 .withDocumentClass(BsonDocument.class);
         new MongoOperation<Void>() {
             @Override
-            void execute() {
+            public void execute() {
                 List<BsonDocument> documents = new ArrayList<BsonDocument>();
                 for (BsonValue document : data) {
                     documents.add(document.asDocument());
@@ -131,7 +129,7 @@ public class CrudTest {
     private void assertCollectionEquals(final BsonDocument expectedCollection) {
         BsonArray actual = new MongoOperation<BsonArray>() {
             @Override
-            void execute() {
+            public void execute() {
                 MongoCollection<BsonDocument> collectionToCompare = collection;
                 if (expectedCollection.containsKey("name")) {
                     collectionToCompare = getDefaultDatabase().getCollection(expectedCollection.getString("name").getValue(),
@@ -193,7 +191,7 @@ public class CrudTest {
     private BsonDocument toResult(final DistinctIterable<BsonInt32> results) {
         return toResult(new MongoOperation<BsonArray>() {
             @Override
-            void execute() {
+            public void execute() {
                 results.into(new BsonArray(), getCallback());
             }
         }.get());
@@ -202,7 +200,7 @@ public class CrudTest {
     private BsonDocument toResult(final MongoIterable<BsonDocument> results) {
         return toResult(new MongoOperation<BsonArray>() {
             @Override
-            void execute() {
+            public void execute() {
                 results.into(new BsonArray(), getCallback());
             }
         }.get());
@@ -244,7 +242,7 @@ public class CrudTest {
     private MongoOperationLong getCountMongoOperation(final BsonDocument arguments) {
         return new MongoOperationLong() {
             @Override
-            void execute() {
+            public void execute() {
                 CountOptions options = new CountOptions();
                 if (arguments.containsKey("skip")) {
                     options.skip(arguments.getNumber("skip").intValue());
@@ -278,7 +276,7 @@ public class CrudTest {
     private MongoOperationDeleteResult getDeleteManyMongoOperation(final BsonDocument arguments) {
         return new MongoOperationDeleteResult() {
             @Override
-            void execute() {
+            public void execute() {
                 collection.deleteMany(arguments.getDocument("filter"), getCallback());
             }
         };
@@ -287,7 +285,7 @@ public class CrudTest {
     private MongoOperationDeleteResult getDeleteOneMongoOperation(final BsonDocument arguments) {
         return new MongoOperationDeleteResult() {
             @Override
-            void execute() {
+            public void execute() {
                 collection.deleteOne(arguments.getDocument("filter"), getCallback());
             }
         };
@@ -296,7 +294,7 @@ public class CrudTest {
     private MongoOperationBsonDocument getFindOneAndDeleteMongoOperation(final BsonDocument arguments) {
         return new MongoOperationBsonDocument() {
             @Override
-            void execute() {
+            public void execute() {
                 FindOneAndDeleteOptions options = new FindOneAndDeleteOptions();
                 if (arguments.containsKey("projection")) {
                     options.projection(arguments.getDocument("projection"));
@@ -314,7 +312,7 @@ public class CrudTest {
 
         return new MongoOperationBsonDocument() {
             @Override
-            void execute() {
+            public void execute() {
                 FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
                 if (arguments.containsKey("projection")) {
                     options.projection(arguments.getDocument("projection"));
@@ -337,7 +335,7 @@ public class CrudTest {
     private MongoOperationBsonDocument getFindOneAndUpdateMongoOperation(final BsonDocument arguments) {
         return new MongoOperationBsonDocument() {
             @Override
-            void execute() {
+            public void execute() {
 
                 FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
                 if (arguments.containsKey("projection")) {
@@ -361,7 +359,7 @@ public class CrudTest {
     private MongoOperationVoid getInsertOneMongoOperation(final BsonDocument arguments) {
         return new MongoOperationVoid() {
             @Override
-            void execute() {
+            public void execute() {
                 collection.insertOne(arguments.getDocument("document"), getCallback());
             }
         };
@@ -370,7 +368,7 @@ public class CrudTest {
     private MongoOperationVoid getInsertManyMongoOperation(final BsonDocument arguments) {
         return new MongoOperationVoid() {
             @Override
-            void execute() {
+            public void execute() {
                 List<BsonDocument> documents = new ArrayList<BsonDocument>();
                 for (BsonValue document : arguments.getArray("documents")) {
                     documents.add(document.asDocument());
@@ -383,7 +381,7 @@ public class CrudTest {
     private MongoOperationUpdateResult getReplaceOneMongoOperation(final BsonDocument arguments) {
         return new MongoOperationUpdateResult() {
             @Override
-            void execute() {
+            public void execute() {
                 UpdateOptions options = new UpdateOptions();
                 if (arguments.containsKey("upsert")) {
                     options.upsert(arguments.getBoolean("upsert").getValue());
@@ -396,7 +394,7 @@ public class CrudTest {
     private MongoOperationUpdateResult getUpdateManyMongoOperation(final BsonDocument arguments) {
         return new MongoOperationUpdateResult() {
             @Override
-            void execute() {
+            public void execute() {
                 UpdateOptions options = new UpdateOptions();
                 if (arguments.containsKey("upsert")) {
                     options.upsert(arguments.getBoolean("upsert").getValue());
@@ -409,7 +407,7 @@ public class CrudTest {
     private MongoOperationUpdateResult getUpdateOneMongoOperation(final BsonDocument arguments) {
         return new MongoOperationUpdateResult() {
             @Override
-            void execute() {
+            public void execute() {
                 UpdateOptions options = new UpdateOptions();
                 if (arguments.containsKey("upsert")) {
                     options.upsert(arguments.getBoolean("upsert").getValue());
@@ -433,25 +431,6 @@ public class CrudTest {
     }
 
     abstract class MongoOperationVoid extends MongoOperation<Void> {
-    }
-
-    private abstract class MongoOperation<TResult> {
-        private FutureResultCallback<TResult> callback = new FutureResultCallback<TResult>();
-
-        public FutureResultCallback<TResult> getCallback() {
-            return callback;
-        }
-
-        public TResult get() {
-            execute();
-            try {
-                return callback.get(60, TimeUnit.SECONDS);
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
-        }
-
-        abstract void execute();
     }
 
 }
