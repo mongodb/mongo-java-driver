@@ -37,6 +37,7 @@
 
     <!--Do not check The GridFSTour -->
     <suppress checks="Regexp" files="GridFSTour"/>
+    <suppress checks="MethodLength" files="GridFSTour"/>
 
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>

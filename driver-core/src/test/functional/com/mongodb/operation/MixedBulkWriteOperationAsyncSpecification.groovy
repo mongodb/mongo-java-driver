@@ -743,6 +743,8 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
     }
 
     private static Document[] getTestInserts() {
+
+
         [new Document('_id', 1),
          new Document('_id', 2),
          new Document('_id', 3),
