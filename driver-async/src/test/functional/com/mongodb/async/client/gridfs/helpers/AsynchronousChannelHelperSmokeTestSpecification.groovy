@@ -23,7 +23,7 @@ import com.mongodb.async.client.gridfs.GridFSBucket
 import com.mongodb.async.client.gridfs.GridFSBucketImpl
 import com.mongodb.async.client.gridfs.GridFSTestHelper
 import org.bson.Document
-import spock.lang.IgnoreIf
+import spock.lang.Requires
 
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousFileChannel
@@ -33,14 +33,14 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
-import static GridFSTestHelper.run
 import static GridFSTestHelper.TestAsynchronousByteChannel
+import static GridFSTestHelper.run
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.async.client.Fixture.getMongoClient
 import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToInputStream
 import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream
 
-@IgnoreIf({ !jvm.isJava7Compatible() })
+@Requires({ javaVersion >= 1.7 })
 class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
     protected MongoCollection<Document> filesCollection;
