@@ -93,7 +93,7 @@ public class ConcurrentPool<T> implements Pool<T> {
         if (prune) {
             close(t);
         } else {
-            available.addLast(t);
+            available.addFirst(t);
         }
 
         releasePermit();
