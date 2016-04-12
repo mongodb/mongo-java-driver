@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,40 @@
 
 package com.mongodb.connection;
 
-class TestServerMonitorFactory implements ServerMonitorFactory {
+import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.connection.ServerType.UNKNOWN;
+
+class TestServerMonitor implements ServerMonitor {
+    private ServerDescription currentDescription;
+    private ChangeListener<ServerDescription> serverStateListener;
+
+    public TestServerMonitor(final ServerId serverId) {
+        currentDescription = ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).build();
+    }
 
     @Override
-    public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
-        return new ServerMonitor(){
-            @Override
-            public void start() {
-            }
+    public void start() {
+    }
 
-            @Override
-            public void connect() {
-            }
+    @Override
+    public void connect() {
+    }
 
-            @Override
-            public void invalidate() {
-            }
+    @Override
+    public void invalidate() {
+    }
 
-            @Override
-            public void close() {
-            }
-        };
+    @Override
+    public void close() {
+    }
+
+    public void setServerStateListener(final ChangeListener<ServerDescription> serverStateListener) {
+        this.serverStateListener = serverStateListener;
+    }
+
+
+    public void sendNotification(final ServerDescription serverDescription) {
+        serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentDescription, serverDescription));
+        currentDescription = serverDescription;
     }
 }

@@ -49,9 +49,9 @@ public class SingleServerClusterTest {
                                                                               streamFactory,
                                                                               streamFactory,
                                                                               getCredentialList(),
-                                                                              new NoOpConnectionListener(),
-                                                                              new NoOpConnectionPoolListener(), null),
-                                          new NoOpClusterListener());
+                                                                                     new NoOpConnectionListener(),
+                                                                              new NoOpConnectionPoolListener(), null)
+        );
     }
 
     @After

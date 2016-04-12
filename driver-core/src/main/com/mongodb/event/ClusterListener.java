@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,27 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
-
 import java.util.EventListener;
 
 /**
  * A listener for cluster-related events.
+ *
+ * @since 3.3
  */
-@Beta
 public interface ClusterListener extends EventListener {
     /**
      * Invoked when a cluster is opened.
      *
      * @param event the event
      */
-    void clusterOpened(ClusterEvent event);
+    void clusterOpening(ClusterOpeningEvent event);
 
     /**
      * Invoked when a cluster is closed.
      *
      * @param event the event
      */
-    void clusterClosed(ClusterEvent event);
+    void clusterClosed(ClusterClosedEvent event);
 
     /**
      * Invoked when a cluster description changes.

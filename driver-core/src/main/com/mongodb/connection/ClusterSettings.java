@@ -20,6 +20,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public final class ClusterSettings {
     private final String description;
     private final long serverSelectionTimeoutMS;
     private final int maxWaitQueueSize;
+    private final List<ClusterListener> clusterListeners;
 
     /**
      * Get a builder for this class.
@@ -71,6 +73,7 @@ public final class ClusterSettings {
         private String description;
         private long serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private int maxWaitQueueSize = 500;
+        private final List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
         private Builder() {
         }
@@ -176,6 +179,19 @@ public final class ClusterSettings {
          */
         public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
             this.maxWaitQueueSize = maxWaitQueueSize;
+            return this;
+        }
+
+        /**
+         * Adds a cluster listener.
+         *
+         * @param clusterListener the non-null cluster listener
+         * @return this
+         * @since 3.3
+         */
+        public Builder addClusterListener(final ClusterListener clusterListener) {
+            notNull("clusterListener", clusterListener);
+            clusterListeners.add(clusterListener);
             return this;
         }
 
@@ -297,6 +313,16 @@ public final class ClusterSettings {
         return maxWaitQueueSize;
     }
 
+    /**
+     * Gets the cluster listeners.  The default value is an empty list.
+     *
+     * @return the cluster listeners
+     * @since 3.3
+     */
+    public List<ClusterListener> getClusterListeners() {
+        return Collections.unmodifiableList(clusterListeners);
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -327,10 +353,13 @@ public final class ClusterSettings {
             return false;
         }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
-                                           : that.requiredReplicaSetName != null) {
+                    : that.requiredReplicaSetName != null) {
             return false;
         }
         if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
+            return false;
+        }
+        if (!clusterListeners.equals(that.clusterListeners)) {
             return false;
         }
 
@@ -347,6 +376,7 @@ public final class ClusterSettings {
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
         result = 31 * result + maxWaitQueueSize;
+        result = 31 * result + clusterListeners.hashCode();
         return result;
     }
 
@@ -358,6 +388,7 @@ public final class ClusterSettings {
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", serverSelector='" + serverSelector + '\''
+               + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", maxWaitQueueSize=" + maxWaitQueueSize
                + ", description='" + description + '\''
@@ -410,5 +441,6 @@ public final class ClusterSettings {
         serverSelector = builder.serverSelector;
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
         maxWaitQueueSize = builder.maxWaitQueueSize;
+        clusterListeners = builder.clusterListeners;
     }
 }

@@ -150,18 +150,18 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def initializeServerMonitor(ServerAddress address) {
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
-                                          new ChangeListener<ServerDescription>() {
-                                              @Override
-                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                  newDescription = event.newValue
-                                                  latch.countDown()
-                                              }
-                                          },
-                                          new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                                                                                                      getSslSettings()),
-                                                                              getCredentialList(),
-                                                                              new NoOpConnectionListener()),
-                                          new TestConnectionPool())
+                new ChangeListener<ServerDescription>() {
+                    @Override
+                    void stateChanged(final ChangeEvent<ServerDescription> event) {
+                        newDescription = event.newValue
+                        latch.countDown()
+                    }
+                },
+                new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
+                        getSslSettings()),
+                        getCredentialList(),
+                        new NoOpConnectionListener()),
+                new TestConnectionPool())
         serverMonitor.start()
         serverMonitor
     }

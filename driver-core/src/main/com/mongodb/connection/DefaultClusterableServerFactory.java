@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.CommandListener;
+import com.mongodb.event.ServerListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -56,7 +58,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress) {
+    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                                                                   new InternalStreamConnectionFactory(streamFactory,
                                                                                                       credentialList,
@@ -68,8 +70,13 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                                 credentialList,
                                                                                 connectionListener),
                                             connectionPool);
-        return new DefaultServer(serverAddress, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(),
-                                 serverMonitorFactory, commandListener);
+        List<ServerListener> serverListeners = new ArrayList<ServerListener>();
+        if (serverListener != null) {
+            serverListeners.add(serverListener);
+        }
+        serverListeners.addAll(settings.getServerListeners());
+        return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
+                new DefaultConnectionFactory(), serverMonitorFactory, serverListeners, commandListener);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,36 +12,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
- * A connection-related event.
+ * An event for the start of a server heartbeat.
+ *
+ * @since 3.3
  */
-@Beta
-public class ConnectionEvent extends ClusterEvent {
+public final class ServerHeartbeatStartedEvent {
     private final ConnectionId connectionId;
 
     /**
-     * Constructs a new instance of the event.
+     * Construct an instance.
      *
-     * @param connectionId the connection id
+     * @param connectionId the non-null connnectionId
      */
-    public ConnectionEvent(final ConnectionId connectionId) {
-        super(connectionId.getServerId().getClusterId());
-        this.connectionId = connectionId;
+    public ServerHeartbeatStartedEvent(final ConnectionId connectionId) {
+        this.connectionId = notNull("connectionId", connectionId);
     }
 
     /**
-     * Gets the identifier for this connection.
+     * Gets the connectionId.
      *
-     * @return the connection id
+     * @return the connectionId
      */
     public ConnectionId getConnectionId() {
         return connectionId;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerHeartbeatStartedEvent{"
+                + "connectionId=" + connectionId
+                + "} " + super.toString();
     }
 }

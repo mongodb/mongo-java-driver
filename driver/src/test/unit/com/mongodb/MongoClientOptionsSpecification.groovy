@@ -20,7 +20,10 @@ import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.event.ClusterListener
 import com.mongodb.event.CommandListener
+import com.mongodb.event.ServerListener
+import com.mongodb.event.ServerMonitorListener
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -58,6 +61,11 @@ class MongoClientOptionsSpecification extends Specification {
         options.getHeartbeatFrequency() == 10000
         options.getMinHeartbeatFrequency() == 500
         options.getServerSelectionTimeout() == 30000
+
+        options.getCommandListeners() == []
+        options.getClusterListeners() == []
+        options.getServerListeners() == []
+        options.getServerMonitorListeners() == []
 
         options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         options.socketSettings == SocketSettings.builder().build()
@@ -248,6 +256,9 @@ class MongoClientOptionsSpecification extends Specification {
                 .cursorFinalizerEnabled(false)
                 .dbEncoderFactory(new MyDBEncoderFactory())
                 .addCommandListener(Mock(CommandListener))
+                .addClusterListener(Mock(ClusterListener))
+                .addServerListener(Mock(ServerListener))
+                .addServerMonitorListener(Mock(ServerMonitorListener))
                 .build()
 
         then:
@@ -314,7 +325,144 @@ class MongoClientOptionsSpecification extends Specification {
         options.commandListeners.size() == 2
         options.commandListeners[0].is commandListenerOne
         options.commandListeners[1].is commandListenerTwo
+    }
 
+    def 'should add cluster listeners'() {
+        given:
+        ClusterListener clusterListenerOne = Mock(ClusterListener)
+        ClusterListener clusterListenerTwo = Mock(ClusterListener)
+        ClusterListener clusterListenerThree = Mock(ClusterListener)
+
+        when:
+        def options = MongoClientOptions.builder()
+                .build()
+
+        then:
+        options.clusterListeners.size() == 0
+
+        when:
+        options = MongoClientOptions.builder()
+                .addClusterListener(clusterListenerOne)
+                .build()
+
+        then:
+        options.clusterListeners.size() == 1
+        options.clusterListeners[0].is clusterListenerOne
+
+        when:
+        options = MongoClientOptions.builder()
+                .addClusterListener(clusterListenerOne)
+                .addClusterListener(clusterListenerTwo)
+                .build()
+
+        then:
+        options.clusterListeners.size() == 2
+        options.clusterListeners[0].is clusterListenerOne
+        options.clusterListeners[1].is clusterListenerTwo
+
+        when:
+        def copiedOptions = MongoClientOptions.builder(options).addClusterListener(clusterListenerThree).build()
+
+        then:
+        copiedOptions.clusterListeners.size() == 3
+        copiedOptions.clusterListeners[0].is clusterListenerOne
+        copiedOptions.clusterListeners[1].is clusterListenerTwo
+        copiedOptions.clusterListeners[2].is clusterListenerThree
+        options.clusterListeners.size() == 2
+        options.clusterListeners[0].is clusterListenerOne
+        options.clusterListeners[1].is clusterListenerTwo
+    }
+
+    def 'should add server listeners'() {
+        given:
+        ServerListener serverListenerOne = Mock(ServerListener)
+        ServerListener serverListenerTwo = Mock(ServerListener)
+        ServerListener serverListenerThree = Mock(ServerListener)
+
+        when:
+        def options = MongoClientOptions.builder()
+                .build()
+
+        then:
+        options.serverListeners.size() == 0
+
+        when:
+        options = MongoClientOptions.builder()
+                .addServerListener(serverListenerOne)
+                .build()
+
+        then:
+        options.serverListeners.size() == 1
+        options.serverListeners[0].is serverListenerOne
+
+        when:
+        options = MongoClientOptions.builder()
+                .addServerListener(serverListenerOne)
+                .addServerListener(serverListenerTwo)
+                .build()
+
+        then:
+        options.serverListeners.size() == 2
+        options.serverListeners[0].is serverListenerOne
+        options.serverListeners[1].is serverListenerTwo
+
+        when:
+        def copiedOptions = MongoClientOptions.builder(options).addServerListener(serverListenerThree).build()
+
+        then:
+        copiedOptions.serverListeners.size() == 3
+        copiedOptions.serverListeners[0].is serverListenerOne
+        copiedOptions.serverListeners[1].is serverListenerTwo
+        copiedOptions.serverListeners[2].is serverListenerThree
+        options.serverListeners.size() == 2
+        options.serverListeners[0].is serverListenerOne
+        options.serverListeners[1].is serverListenerTwo
+    }
+
+    def 'should add server monitor listeners'() {
+        given:
+        ServerMonitorListener serverMonitorListenerOne = Mock(ServerMonitorListener)
+        ServerMonitorListener serverMonitorListenerTwo = Mock(ServerMonitorListener)
+        ServerMonitorListener serverMonitorListenerThree = Mock(ServerMonitorListener)
+
+        when:
+        def options = MongoClientOptions.builder()
+                .build()
+
+        then:
+        options.serverMonitorListeners.size() == 0
+
+        when:
+        options = MongoClientOptions.builder()
+                .addServerMonitorListener(serverMonitorListenerOne)
+                .build()
+
+        then:
+        options.serverMonitorListeners.size() == 1
+        options.serverMonitorListeners[0].is serverMonitorListenerOne
+
+        when:
+        options = MongoClientOptions.builder()
+                .addServerMonitorListener(serverMonitorListenerOne)
+                .addServerMonitorListener(serverMonitorListenerTwo)
+                .build()
+
+        then:
+        options.serverMonitorListeners.size() == 2
+        options.serverMonitorListeners[0].is serverMonitorListenerOne
+        options.serverMonitorListeners[1].is serverMonitorListenerTwo
+
+        when:
+        def copiedOptions = MongoClientOptions.builder(options).addServerMonitorListener(serverMonitorListenerThree).build()
+
+        then:
+        copiedOptions.serverMonitorListeners.size() == 3
+        copiedOptions.serverMonitorListeners[0].is serverMonitorListenerOne
+        copiedOptions.serverMonitorListeners[1].is serverMonitorListenerTwo
+        copiedOptions.serverMonitorListeners[2].is serverMonitorListenerThree
+        options.serverMonitorListeners.size() == 2
+        options.serverMonitorListeners[0].is serverMonitorListenerOne
+        options.serverMonitorListeners[1].is serverMonitorListenerTwo
     }
 
     def 'builder should copy all values from the existing MongoClientOptions'() {
@@ -355,6 +503,9 @@ class MongoClientOptionsSpecification extends Specification {
         1 * options.getWriteConcern()
         1 * options.getReadConcern()
         1 * options.getCommandListeners() >> Collections.unmodifiableList(Collections.emptyList())
+        1 * options.getClusterListeners() >> Collections.unmodifiableList(Collections.emptyList())
+        1 * options.getServerListeners() >> Collections.unmodifiableList(Collections.emptyList())
+        1 * options.getServerMonitorListeners() >> Collections.unmodifiableList(Collections.emptyList())
 
         0 * options._ // Ensure no other interactions
     }
@@ -363,13 +514,13 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'codecRegistry', 'commandListeners', 'connectTimeout', 'cursorFinalizerEnabled',
-                        'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
-                        'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
+        def expected = ['alwaysUseMBeans', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
+                        'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout',
+                        'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
                         'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',
-                        'readPreference', 'requiredReplicaSetName', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive',
-                        'socketTimeout', 'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier',
-                        'writeConcern']
+                        'readPreference', 'requiredReplicaSetName', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout',
+                        'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:
         actual == expected

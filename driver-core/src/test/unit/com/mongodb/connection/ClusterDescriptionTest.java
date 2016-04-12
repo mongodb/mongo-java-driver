@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
@@ -113,6 +114,23 @@ public class ClusterDescriptionTest {
         assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
         assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new TagSet(asList(new Tag("foo", "1"),
                                                                                                     new Tag("bar", "2")))));
+    }
+
+    @Test
+    public void testHasReadableServer() {
+        assertTrue(cluster.hasReadableServer(ReadPreference.primary()));
+        assertFalse(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(secondary, otherSecondary))
+                            .hasReadableServer(ReadPreference.primary()));
+        assertTrue(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(secondary, otherSecondary))
+                            .hasReadableServer(ReadPreference.secondary()));
+
+    }
+
+    @Test
+    public void testHasWritableServer() {
+        assertTrue(cluster.hasWritableServer());
+        assertFalse(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(secondary, otherSecondary))
+                            .hasWritableServer());
     }
 
     @Test

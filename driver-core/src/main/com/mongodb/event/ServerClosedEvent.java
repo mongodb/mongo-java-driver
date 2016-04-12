@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,37 +12,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
- * A connection pool-related event.
+ * A server opening event.
+ *
+ * @since 3.3
  */
-@Beta
-public class ConnectionPoolEvent extends ClusterEvent {
+public final class ServerClosedEvent {
     private final ServerId serverId;
 
     /**
-     * Constructs a new instance of the event.
+     * Construct an instance.
      *
-     * @param serverId the server id
+     * @param serverId the non-null serverId
      */
-
-    public ConnectionPoolEvent(final ServerId serverId) {
-        super(serverId.getClusterId());
-        this.serverId = serverId;
+    public ServerClosedEvent(final ServerId serverId) {
+        this.serverId = notNull("serverId", serverId);
     }
 
     /**
-     * Gets the server address associated with this connection pool
+     * Gets the serverId.
      *
-     * @return the server address
+     * @return the serverId
      */
     public ServerId getServerId() {
         return serverId;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerClosedEvent{"
+                       + "serverId=" + serverId
+                       + '}';
     }
 }
