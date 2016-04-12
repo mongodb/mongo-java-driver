@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.event.ServerListener;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -32,8 +33,8 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress) {
-        addressToServerMap.put(serverAddress, new TestServer(serverAddress));
+    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
+        addressToServerMap.put(serverAddress, new TestServer(serverAddress, serverListener));
         return addressToServerMap.get(serverAddress);
     }
 

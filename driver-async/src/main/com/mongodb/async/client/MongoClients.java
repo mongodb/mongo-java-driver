@@ -26,8 +26,8 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
-import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
@@ -150,7 +150,7 @@ public final class MongoClients {
             case 1:
                 return commandListeners.get(0);
             default:
-                return new CommandListenerMulticaster(commandListeners);
+                return new CommandEventMulticaster(commandListeners);
         }
     }
 

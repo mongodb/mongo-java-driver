@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,38 +12,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
- * An event related to the connection pool's wait queue..
+ * A server opening event.
+ *
+ * @since 3.3
  */
-@Beta
-public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
-    private final long threadId;
+public final class ServerOpeningEvent {
+    private final ServerId serverId;
 
     /**
-     * Constructs a new instance of the event.
+     * Construct an instance.
      *
-     * @param serverId the server id
-     * @param threadId the identifier of the waiting thread
+     * @param serverId the non-null serverId
      */
-    public ConnectionPoolWaitQueueEvent(final ServerId serverId, final long threadId) {
-        super(serverId);
-        this.threadId = threadId;
+    public ServerOpeningEvent(final ServerId serverId) {
+        this.serverId = notNull("serverId", serverId);
     }
 
     /**
-     * Gets the identifier of the waiting thread.
+     * Gets the serverId.
      *
-     * @return the thread id
+     * @return the serverId
      */
-    public long getThreadId() {
-        return threadId;
+    public ServerId getServerId() {
+        return serverId;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerOpeningEvent{"
+                       + "serverId=" + serverId
+                       + '}';
     }
 }
-

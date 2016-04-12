@@ -19,10 +19,12 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterListener;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,9 +64,8 @@ final class MultiServerCluster extends BaseCluster {
         }
     }
 
-    public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
-                              final ClusterListener clusterListener) {
-        super(clusterId, settings, serverFactory, clusterListener);
+    public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+        super(clusterId, settings, serverFactory);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
@@ -73,15 +74,18 @@ final class MultiServerCluster extends BaseCluster {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
 
+        ClusterDescription newDescription;
+
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
             for (final ServerAddress serverAddress : settings.getHosts()) {
                 addServer(serverAddress);
             }
-            updateDescription();
+            newDescription = updateDescription();
         }
-        fireChangeEvent();
+        fireChangeEvent(new ClusterDescriptionChangedEvent(clusterId, newDescription,
+                new ClusterDescription(settings.getMode(), settings.getRequiredClusterType(), Collections.<ServerDescription>emptyList())));
     }
 
     @Override
@@ -115,21 +119,23 @@ final class MultiServerCluster extends BaseCluster {
     }
 
 
-    private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
+    private final class DefaultServerStateListener extends NoOpServerListener {
         @Override
-        public void stateChanged(final ChangeEvent<ServerDescription> event) {
+        public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             onChange(event);
         }
     }
 
-    private void onChange(final ChangeEvent<ServerDescription> event) {
+    private void onChange(final ServerDescriptionChangedEvent event) {
+        ClusterDescription oldClusterDescription = null;
+        ClusterDescription newClusterDescription = null;
         boolean shouldUpdateDescription = true;
         synchronized (this) {
             if (isClosed()) {
                 return;
             }
 
-            ServerDescription newDescription = event.getNewValue();
+            ServerDescription newDescription = event.getNewDescription();
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace(format("Handling description changed event for server %s with description %s",
@@ -145,7 +151,7 @@ final class MultiServerCluster extends BaseCluster {
                 return;
             }
 
-            if (event.getNewValue().isOk()) {
+            if (event.getNewDescription().isOk()) {
                 if (clusterType == UNKNOWN && newDescription.getType() != REPLICA_SET_GHOST) {
                     clusterType = newDescription.getClusterType();
                     if (LOGGER.isInfoEnabled()) {
@@ -170,11 +176,12 @@ final class MultiServerCluster extends BaseCluster {
 
             if (shouldUpdateDescription) {
                 serverTuple.description = newDescription;
-                updateDescription();
+                oldClusterDescription = getCurrentDescription();
+                newClusterDescription = updateDescription();
             }
         }
         if (shouldUpdateDescription) {
-            fireChangeEvent();
+            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
         }
     }
 
@@ -321,9 +328,10 @@ final class MultiServerCluster extends BaseCluster {
         return ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
     }
 
-    private void updateDescription() {
-        List<ServerDescription> newServerDescriptionList = getNewServerDescriptionList();
-        updateDescription(new ClusterDescription(MULTIPLE, clusterType, newServerDescriptionList));
+    private ClusterDescription updateDescription() {
+        ClusterDescription newDescription = new ClusterDescription(MULTIPLE, clusterType, getNewServerDescriptionList());
+        updateDescription(newDescription);
+        return newDescription;
     }
 
     private List<ServerDescription> getNewServerDescriptionList() {

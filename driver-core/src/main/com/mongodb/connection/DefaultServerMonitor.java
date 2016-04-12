@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.ServerMonitorEventMulticaster;
+import com.mongodb.event.ServerMonitorListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -42,6 +47,7 @@ class DefaultServerMonitor implements ServerMonitor {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final ServerId serverId;
+    private final ServerMonitorListener serverMonitorListener;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
@@ -57,6 +63,9 @@ class DefaultServerMonitor implements ServerMonitor {
                          final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
         this.settings = settings;
         this.serverId = serverId;
+        this.serverMonitorListener = settings.getServerMonitorListeners().isEmpty()
+                                             ? new NoOpServerMonitorListener()
+                                             : new ServerMonitorEventMulticaster(settings.getServerMonitorListeners());
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
@@ -183,12 +192,24 @@ class DefaultServerMonitor implements ServerMonitor {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
             }
-            long start = System.nanoTime();
-            BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
-            averageRoundTripTime.addSample(System.nanoTime() - start);
+            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
 
-            return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
-                                           averageRoundTripTime.getAverage());
+            long start = System.nanoTime();
+            try {
+                BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+                long elapsedTimeNanos = System.nanoTime() - start;
+                averageRoundTripTime.addSample(elapsedTimeNanos);
+
+                serverMonitorListener.serverHeartbeatSucceeded(
+                        new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult, elapsedTimeNanos));
+
+                return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
+                                               averageRoundTripTime.getAverage());
+            } catch (RuntimeException e) {
+                serverMonitorListener.serverHeartbeatFailed(
+                        new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start, e));
+                throw e;
+            }
         }
 
         private void sendStateChangedEvent(final ServerDescription previousServerDescription,

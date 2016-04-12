@@ -26,11 +26,11 @@ import com.mongodb.annotations.Beta;
 @Beta
 public abstract class ConnectionListenerAdapter implements ConnectionListener {
     @Override
-    public void connectionOpened(final ConnectionEvent event) {
+    public void connectionOpened(final ConnectionOpenedEvent event) {
     }
 
     @Override
-    public void connectionClosed(final ConnectionEvent event) {
+    public void connectionClosed(final ConnectionClosedEvent event) {
     }
 
     @Override

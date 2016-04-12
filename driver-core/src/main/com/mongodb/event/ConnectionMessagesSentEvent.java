@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,14 @@ package com.mongodb.event;
 import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * An event signifying that a message has been sent on a connection.
  */
 @Beta
-public class ConnectionMessagesSentEvent extends ConnectionEvent {
+public final class ConnectionMessagesSentEvent {
+    private final ConnectionId connectionId;
     private final int requestId;
     private final int size;
 
@@ -36,9 +39,18 @@ public class ConnectionMessagesSentEvent extends ConnectionEvent {
      */
     public ConnectionMessagesSentEvent(final ConnectionId connectionId,
                                        final int requestId, final int size) {
-        super(connectionId);
+        this.connectionId = notNull("connectionId", connectionId);
         this.requestId = requestId;
         this.size = size;
+    }
+
+    /**
+     * Gets the identifier for this connection.
+     *
+     * @return the connection id
+     */
+    public ConnectionId getConnectionId() {
+        return connectionId;
     }
 
     /**
@@ -57,5 +69,14 @@ public class ConnectionMessagesSentEvent extends ConnectionEvent {
      */
     public int getSize() {
         return size;
+    }
+
+    @Override
+    public String toString() {
+        return "ConnectionMessagesSentEvent{"
+                       + "requestId=" + requestId
+                       + ", size=" + size
+                       + ", connectionId=" + connectionId
+                       + '}';
     }
 }

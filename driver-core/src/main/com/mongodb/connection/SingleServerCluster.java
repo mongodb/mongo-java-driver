@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,11 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ClusterListener;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ServerClosedEvent;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerOpeningEvent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,9 +39,8 @@ final class SingleServerCluster extends BaseCluster {
 
     private final ClusterableServer server;
 
-    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
-                               final ClusterListener clusterListener) {
-        super(clusterId, settings, serverFactory, clusterListener);
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+        super(clusterId, settings, serverFactory);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);
         isTrue("connection mode is single", settings.getMode() == ClusterConnectionMode.SINGLE);
 
@@ -48,17 +51,25 @@ final class SingleServerCluster extends BaseCluster {
         // synchronized in the constructor because the change listener is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            this.server = createServer(settings.getHosts().get(0), new ChangeListener<ServerDescription>() {
+            this.server = createServer(settings.getHosts().get(0), new ServerListener() {
                 @Override
-                public void stateChanged(final ChangeEvent<ServerDescription> event) {
-                    ServerDescription descriptionToPublish = event.getNewValue();
-                    if (event.getNewValue().isOk()) {
+                public void serverOpening(final ServerOpeningEvent event) {
+                }
+
+                @Override
+                public void serverClosed(final ServerClosedEvent event) {
+                }
+
+                @Override
+                public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
+                    ServerDescription descriptionToPublish = event.getNewDescription();
+                    if (event.getNewDescription().isOk()) {
                         if (getSettings().getRequiredClusterType() != ClusterType.UNKNOWN
-                            && getSettings().getRequiredClusterType() != event.getNewValue().getClusterType()) {
+                            && getSettings().getRequiredClusterType() != event.getNewDescription().getClusterType()) {
                             descriptionToPublish = null;
                         } else if (getSettings().getRequiredClusterType() == ClusterType.REPLICA_SET
                                    && getSettings().getRequiredReplicaSetName() != null) {
-                            if (!getSettings().getRequiredReplicaSetName().equals(event.getNewValue().getSetName())) {
+                            if (!getSettings().getRequiredReplicaSetName().equals(event.getNewDescription().getSetName())) {
                                 descriptionToPublish = null;
                             }
                         }
@@ -81,12 +92,19 @@ final class SingleServerCluster extends BaseCluster {
         if (clusterType == ClusterType.UNKNOWN && serverDescription != null) {
             clusterType = serverDescription.getClusterType();
         }
+        ClusterDescription oldDescription = getCurrentDescription();
         ClusterDescription description = new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType,
                                                                 serverDescription == null ? Collections.<ServerDescription>emptyList()
                                                                                           : Arrays.asList(serverDescription));
 
         updateDescription(description);
-        fireChangeEvent();
+        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), description,
+                oldDescription == null ? getInitialDescription() : oldDescription));
+    }
+
+    private ClusterDescription getInitialDescription() {
+        return new ClusterDescription(getSettings().getMode(), getSettings().getRequiredClusterType(),
+                Collections.<ServerDescription>emptyList());
     }
 
     @Override

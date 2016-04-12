@@ -21,13 +21,6 @@ package com.mongodb.connection;
  */
 interface ClusterableServer extends Server {
     /**
-     * Adds a change listener to this server.
-     *
-     * @param changeListener the listener for change events to the description of this server
-     */
-    void addChangeListener(ChangeListener<ServerDescription> changeListener);
-
-    /**
      * Invalidate the description of this server.  Implementation of this method should not block, but rather trigger an asynchronous
      * attempt to connect with the server in order to determine its current status.
      */

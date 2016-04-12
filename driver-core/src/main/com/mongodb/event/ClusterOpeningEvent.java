@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ClusterId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
- * A cluster-related event.
+ * A cluster opening event.
+ *
+ * @since 3.3
  */
-@Beta
-public class ClusterEvent {
+public final class ClusterOpeningEvent {
+
     private final ClusterId clusterId;
 
     /**
@@ -31,17 +34,25 @@ public class ClusterEvent {
      *
      * @param clusterId the cluster id
      */
-    public ClusterEvent(final ClusterId clusterId) {
-        this.clusterId = clusterId;
+    public ClusterOpeningEvent(final ClusterId clusterId) {
+        this.clusterId = notNull("clusterId", clusterId);
     }
 
-    /**
-     * Gets the cluster id associated with this event.
+
+    /***
+     * Gets the cluster id.
      *
      * @return the cluster id
      */
     public ClusterId getClusterId() {
         return clusterId;
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterOpeningEvent{"
+                       + "clusterId=" + clusterId
+                       + '}';
     }
 }
 

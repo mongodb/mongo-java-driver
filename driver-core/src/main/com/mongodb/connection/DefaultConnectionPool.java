@@ -26,11 +26,15 @@ import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ConnectionEvent;
-import com.mongodb.event.ConnectionPoolEvent;
+import com.mongodb.event.ConnectionAddedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueEvent;
+import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
+import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
+import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
@@ -90,7 +94,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw createWaitQueueFullException();
             }
             try {
-                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
                 PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
                 if (!pooledConnection.opened()) {
                     try {
@@ -107,7 +111,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
                 return pooledConnection;
             } finally {
-                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
             }
         } finally {
             waitQueueSize.decrementAndGet();
@@ -147,7 +151,7 @@ class DefaultConnectionPool implements ConnectionPool {
             callback.onResult(null, createWaitQueueFullException());
         } else {
             final long startTimeMillis = System.currentTimeMillis();
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
             getAsyncGetter().submit(new Runnable() {
                 @Override
                 public void run() {
@@ -162,7 +166,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         wrappedCallback.onResult(null, t);
                     } finally {
                         waitQueueSize.decrementAndGet();
-                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
                     }
                 }
 
@@ -236,7 +240,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             shutdownAsyncGetter();
             closed = true;
-            connectionPoolListener.connectionPoolClosed(new ConnectionPoolEvent(serverId));
+            connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         }
     }
 
@@ -255,7 +259,7 @@ class DefaultConnectionPool implements ConnectionPool {
             pool.release(internalConnection, true);
             internalConnection = pool.get(timeout, timeUnit);
         }
-        connectionPoolListener.connectionCheckedOut(new ConnectionEvent(internalConnection.getDescription().getConnectionId()));
+        connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(internalConnection.getDescription().getConnectionId()));
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
         }
@@ -390,7 +394,7 @@ class DefaultConnectionPool implements ConnectionPool {
         public void close() {
             if (wrapped != null) {
                 if (!closed) {
-                    connectionPoolListener.connectionCheckedIn(new ConnectionEvent(getId(wrapped)));
+                    connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                     }
@@ -487,14 +491,14 @@ class DefaultConnectionPool implements ConnectionPool {
             if (initialize) {
                 internalConnection.open();
             }
-            connectionPoolListener.connectionAdded(new ConnectionEvent(getId(internalConnection)));
+            connectionPoolListener.connectionAdded(new ConnectionAddedEvent(getId(internalConnection)));
             return internalConnection;
         }
 
         @Override
         public void close(final UsageTrackingInternalConnection connection) {
             if (!closed) {
-                connectionPoolListener.connectionRemoved(new ConnectionEvent(getId(connection)));
+                connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection)));
             }
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),

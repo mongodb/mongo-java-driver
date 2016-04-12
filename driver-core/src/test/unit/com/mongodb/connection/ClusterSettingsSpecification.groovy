@@ -41,28 +41,36 @@ class ClusterSettingsSpecification extends Specification {
         settings.serverSelector == null
         settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
         settings.maxWaitQueueSize == 500
+        settings.clusterListeners == []
     }
 
     def 'should set all properties'() {
         when:
+        def listenerOne = new NoOpClusterListener()
+        def listenerTwo = new NoOpClusterListener()
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
+                                      .description('my cluster')
                                       .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo')
                                       .serverSelector(serverSelector)
                                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
+                                      .addClusterListener(listenerOne)
+                                      .addClusterListener(listenerTwo)
                                       .maxWaitQueueSize(100)
                                       .build();
 
         then:
         settings.hosts == hosts
+        settings.description == 'my cluster'
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
         settings.serverSelector == serverSelector
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
         settings.maxWaitQueueSize == 100
+        settings.clusterListeners == [listenerOne, listenerTwo]
     }
 
     def 'when connection string is applied to builder, all properties should be set'() {
@@ -286,6 +294,25 @@ class ClusterSettingsSpecification extends Specification {
 
         then:
         settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
+    }
+
+    def 'list of cluster listeners should be unmodifiable'() {
+        given:
+        def settings = ClusterSettings.builder().hosts(hosts).build()
+
+        when:
+        settings.clusterListeners.add(new NoOpClusterListener())
+
+        then:
+        thrown(UnsupportedOperationException)
+    }
+
+    def 'cluster listener should not be null'() {
+       when:
+       ClusterSettings.builder().addClusterListener(null)
+
+       then:
+       thrown(IllegalArgumentException)
     }
 
     static class ServerAddressSubclass extends ServerAddress {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,84 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
 
 /**
  * A multicaster for cluster events.
+ *
+ * @since 3.3
  */
-@Beta
-public class ClusterEventMulticaster implements ClusterListener {
-    private final Set<ClusterListener> clusterListeners = Collections.newSetFromMap(new ConcurrentHashMap<ClusterListener, Boolean>());
+public final class ClusterEventMulticaster implements ClusterListener {
+    private static final Logger LOGGER = Loggers.getLogger("cluster.event");
+
+    private final List<ClusterListener> clusterListeners;
 
     /**
-     * Adds the given cluster listener to the list of listeners to invoke on cluster events.
+     * Construct an instance with the given list of cluster listeners
      *
-     * @param clusterListener the cluster listener
+     * @param clusterListeners the non-null list of cluster listeners, none of which may be null
      */
-    public void add(final ClusterListener clusterListener) {
-        clusterListeners.add(clusterListener);
+    public ClusterEventMulticaster(final List<ClusterListener> clusterListeners) {
+        notNull("clusterListeners", clusterListeners);
+        isTrue("All ClusterListener instances are non-null", !clusterListeners.contains(null));
+        this.clusterListeners = new ArrayList<ClusterListener>(clusterListeners);
     }
 
     /**
-     * Removed the given cluster listener from the list of listeners to invoke on cluster events.
+     * Gets the cluster listeners.
      *
-     * @param clusterListener the cluster listener
+     * @return the cluster listeners
      */
-    public void remove(final ClusterListener clusterListener) {
-        clusterListeners.remove(clusterListener);
+    public List<ClusterListener> getClusterListeners() {
+        return Collections.unmodifiableList(clusterListeners);
     }
 
     @Override
-    public void clusterOpened(final ClusterEvent event) {
+    public void clusterOpening(final ClusterOpeningEvent event) {
         for (final ClusterListener cur : clusterListeners) {
-            cur.clusterOpened(event);
+            try {
+                cur.clusterOpening(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising cluster opening event to listener %s", cur), e);
+                }
+            }
         }
     }
 
     @Override
-    public void clusterClosed(final ClusterEvent event) {
+    public void clusterClosed(final ClusterClosedEvent event) {
         for (final ClusterListener cur : clusterListeners) {
-            cur.clusterClosed(event);
+            try {
+                cur.clusterClosed(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising cluster closed event to listener %s", cur), e);
+                }
+
+            }
         }
     }
 
     @Override
     public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
         for (final ClusterListener cur : clusterListeners) {
-            cur.clusterDescriptionChanged(event);
+            try {
+                cur.clusterDescriptionChanged(event);
+            } catch (Exception e) {
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Exception thrown raising cluster description changed event to listener %s", cur), e);
+                }
+            }
         }
     }
 }

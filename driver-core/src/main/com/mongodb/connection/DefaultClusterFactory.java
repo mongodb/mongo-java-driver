@@ -66,27 +66,28 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener,
                           final CommandListener commandListener) {
+        if (clusterListener != null) {
+            throw new IllegalArgumentException("Add cluster listener to ClusterSettings");
+        }
         ClusterId clusterId = new ClusterId(settings.getDescription());
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
-                                                                                     settings,
-                                                                                     serverSettings,
-                                                                                     connectionPoolSettings,
-                                                                                     streamFactory,
-                                                                                     heartbeatStreamFactory,
-                                                                                     credentialList,
-                                                                                     connectionListener != null ? connectionListener
-                                                                                                             : new NoOpConnectionListener(),
-                                                                                     connectionPoolListener != null
-                                                                                     ? connectionPoolListener
-                                                                                     : new NoOpConnectionPoolListener(),
-                                                                                     commandListener);
+                                                                                            settings,
+                                                                                            serverSettings,
+                                                                                            connectionPoolSettings,
+                                                                                            streamFactory,
+                                                                                            heartbeatStreamFactory,
+                                                                                            credentialList,
+                                                                                            connectionListener != null ? connectionListener
+                                                                                                    : new NoOpConnectionListener(),
+                                                                                            connectionPoolListener != null
+                                                                                                    ? connectionPoolListener
+                                                                                                    : new NoOpConnectionPoolListener(),
+                                                                                            commandListener);
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            return new SingleServerCluster(clusterId, settings, serverFactory,
-                                           clusterListener != null ? clusterListener : new NoOpClusterListener());
+            return new SingleServerCluster(clusterId, settings, serverFactory);
         } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            return new MultiServerCluster(clusterId, settings, serverFactory,
-                                          clusterListener != null ? clusterListener : new NoOpClusterListener());
+            return new MultiServerCluster(clusterId, settings, serverFactory);
         } else {
             throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
         }

@@ -32,8 +32,9 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
-import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
@@ -695,8 +696,7 @@ public class Mongo {
                                             .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
-                                            .build(),
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
                              credentialsList, options);
     }
 
@@ -709,14 +709,16 @@ public class Mongo {
                                             .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
-                                            .build(),
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
                              credentialsList, options);
     }
 
-    private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
+    private static Cluster createCluster(final ClusterSettings.Builder settingsBuilder, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
-        return new DefaultClusterFactory().create(settings,
+        for (ClusterListener cur : options.getClusterListeners()) {
+            settingsBuilder.addClusterListener(cur);
+        }
+        return new DefaultClusterFactory().create(settingsBuilder.build(),
                                                   options.getServerSettings(),
                                                   options.getConnectionPoolSettings(),
                                                   new SocketStreamFactory(options.getSocketSettings(),
@@ -725,8 +727,8 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSslSettings(),
                                                                           options.getSocketFactory()),
-                                                  credentialsList,
-                                                  null, new JMXConnectionPoolListener(), null,
+                                                  credentialsList, null,
+                                                  new JMXConnectionPoolListener(), null,
                                                   createCommandListener(options.getCommandListeners()));
     }
 
@@ -737,7 +739,7 @@ public class Mongo {
             case 1:
                 return commandListeners.get(0);
             default:
-                return new CommandListenerMulticaster(commandListeners);
+                return new CommandEventMulticaster(commandListeners);
         }
     }
 

@@ -17,28 +17,21 @@
 package com.mongodb.event;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static java.lang.String.format;
 
 /**
  * A multicaster for connection events. Any Exception thrown by one of the listeners will be caught and not re-thrown, but may be
  * logged.
  *
  * @since 3.1
- *
+ * @deprecated Prefer {@link CommandEventMulticaster}
  */
 @Immutable
+@Deprecated
 public class CommandListenerMulticaster implements CommandListener {
-    private static final Logger LOGGER = Loggers.getLogger("protocol.event");
 
-    private final List<CommandListener> commandListeners;
+    private final CommandEventMulticaster wrapped;
 
     /**
      * Construct an instance with the given list of command listeners
@@ -46,11 +39,7 @@ public class CommandListenerMulticaster implements CommandListener {
      * @param commandListeners the non-null list of command listeners, none of which may be null
      */
     public CommandListenerMulticaster(final List<CommandListener> commandListeners) {
-        notNull("commandListeners", commandListeners);
-        for (CommandListener cur : commandListeners) {
-            notNull("commandListener", cur);
-        }
-        this.commandListeners = new ArrayList<CommandListener>(commandListeners);
+        wrapped = new CommandEventMulticaster(commandListeners);
     }
 
     /**
@@ -59,45 +48,21 @@ public class CommandListenerMulticaster implements CommandListener {
      * @return the unmodifiable set of command listeners
      */
     public List<CommandListener> getCommandListeners() {
-        return Collections.unmodifiableList(commandListeners);
+        return wrapped.getCommandListeners();
     }
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
-        for (CommandListener cur : commandListeners) {
-            try {
-                cur.commandStarted(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising command started event to listener %s", cur), e);
-                }
-            }
-        }
+        wrapped.commandStarted(event);
     }
 
     @Override
     public void commandSucceeded(final CommandSucceededEvent event) {
-        for (CommandListener cur : commandListeners) {
-            try {
-                cur.commandSucceeded(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising command succeeded event to listener %s", cur), e);
-                }
-            }
-        }
+       wrapped.commandSucceeded(event);
     }
 
     @Override
     public void commandFailed(final CommandFailedEvent event) {
-        for (CommandListener cur : commandListeners) {
-            try {
-                cur.commandFailed(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising command failed event to listener %s", cur), e);
-                }
-            }
-        }
+        wrapped.commandFailed(event);
     }
 }

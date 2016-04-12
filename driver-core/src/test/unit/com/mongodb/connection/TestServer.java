@@ -18,37 +18,36 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerListener;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 
 public class TestServer implements ClusterableServer {
-    private ChangeListener<ServerDescription> changeListener;
+    private final ServerListener serverListener;
     private ServerDescription description;
     private boolean isClosed;
-    private final ServerAddress serverAddress;
+    private final ServerId serverId;
     private int connectCount;
 
-    public TestServer(final ServerAddress serverAddress) {
-        this.serverAddress = serverAddress;
+    public TestServer(final ServerAddress serverAddress, final ServerListener serverListener) {
+        this.serverId = new ServerId(new ClusterId(), serverAddress);
+        this.serverListener = serverListener;
+        this.description = ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build();
         invalidate();
     }
 
     public void sendNotification(final ServerDescription newDescription) {
         ServerDescription currentDescription = description;
         description = newDescription;
-        if (changeListener != null) {
-            changeListener.stateChanged(new ChangeEvent<ServerDescription>(currentDescription, newDescription));
+        if (serverListener != null) {
+            serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, newDescription, currentDescription));
         }
     }
 
     @Override
-    public void addChangeListener(final ChangeListener<ServerDescription> newChangeListener) {
-        this.changeListener = newChangeListener;
-    }
-
-    @Override
     public void invalidate() {
-        sendNotification(ServerDescription.builder().state(CONNECTING).address(serverAddress).build());
+        sendNotification(ServerDescription.builder().state(CONNECTING).address(serverId.getAddress()).build());
     }
 
     @Override

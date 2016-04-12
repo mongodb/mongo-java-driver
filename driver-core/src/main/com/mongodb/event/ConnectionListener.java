@@ -31,14 +31,14 @@ public interface ConnectionListener extends EventListener {
      *
      * @param event the event
      */
-    void connectionOpened(ConnectionEvent event);
+    void connectionOpened(ConnectionOpenedEvent event);
 
     /**
      * Publish a connection message closed event.
      *
      * @param event the event
      */
-    void connectionClosed(ConnectionEvent event);
+    void connectionClosed(ConnectionClosedEvent event);
 
     /**
      * Publish a connection messages sent event.

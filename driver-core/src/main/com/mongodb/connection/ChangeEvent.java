@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.annotations.Beta;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -25,17 +23,16 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @param <T> the type of the value that changed.
  */
-@Beta
-public class ChangeEvent<T> {
-    private final T oldValue;
+final class ChangeEvent<T> {
+    private final T previousValue;
     private final T newValue;
 
     /**
-     * @param oldValue the value before the change
+     * @param previousValue the value before the change
      * @param newValue the value after the change
      */
-    public ChangeEvent(final T oldValue, final T newValue) {
-        this.oldValue = notNull("oldValue", oldValue);
+    public ChangeEvent(final T previousValue, final T newValue) {
+        this.previousValue = notNull("oldValue", previousValue);
         this.newValue = notNull("newValue", newValue);
     }
 
@@ -44,8 +41,8 @@ public class ChangeEvent<T> {
      *
      * @return the previous value
      */
-    public T getOldValue() {
-        return oldValue;
+    public T getPreviousValue() {
+        return previousValue;
     }
 
     /**
@@ -73,7 +70,7 @@ public class ChangeEvent<T> {
             return false;
         }
 
-        if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) {
+        if (previousValue != null ? !previousValue.equals(that.previousValue) : that.previousValue != null) {
             return false;
         }
 
@@ -82,7 +79,7 @@ public class ChangeEvent<T> {
 
     @Override
     public int hashCode() {
-        int result = oldValue != null ? oldValue.hashCode() : 0;
+        int result = previousValue != null ? previousValue.hashCode() : 0;
         result = 31 * result + newValue.hashCode();
         return result;
     }
@@ -90,7 +87,7 @@ public class ChangeEvent<T> {
     @Override
     public String toString() {
         return "ChangeEvent{"
-               + "oldValue=" + oldValue
+                + "previousValue=" + previousValue
                + ", newValue=" + newValue
                + '}';
     }

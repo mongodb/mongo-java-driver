@@ -54,25 +54,6 @@ class CommandListenerMulticasterSpecification extends Specification {
         1 * second.commandStarted(event)
     }
 
-    def 'should continue multicasting command started event when a listener throws an Exception'() {
-        given:
-        def first = Stub(CommandListener) {
-            commandStarted(_) >> {
-                throw new UnsupportedOperationException()
-            }
-        }
-        def second = Mock(CommandListener)
-        def multicaster = new CommandListenerMulticaster([first, second])
-        def event = new CommandStartedEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())),
-                                            'admin', 'ping', new BsonDocument('ping', new BsonInt32(1)))
-
-        when:
-        multicaster.commandStarted(event)
-
-        then:
-        1 * second.commandStarted(event)
-    }
-
     def 'should multicast command succeeded event'() {
         given:
         def first = Mock(CommandListener)
@@ -89,25 +70,6 @@ class CommandListenerMulticasterSpecification extends Specification {
         1 * second.commandSucceeded(event)
     }
 
-    def 'should continue multicasting command succeeded event when a listener throws an Exception'() {
-        given:
-        def first = Stub(CommandListener) {
-            commandSucceeded(_) >> {
-                throw new UnsupportedOperationException()
-            }
-        }
-        def second = Mock(CommandListener)
-        def multicaster = new CommandListenerMulticaster([first, second])
-        def event = new CommandSucceededEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())),
-                                              'ping', new BsonDocument('ok', new BsonInt32(1)), 1000)
-
-        when:
-        multicaster.commandSucceeded(event)
-
-        then:
-        1 * second.commandSucceeded(event)
-    }
-
     def 'should multicast command failed event'() {
         given:
         def first = Mock(CommandListener)
@@ -121,25 +83,6 @@ class CommandListenerMulticasterSpecification extends Specification {
 
         then:
         1 * first.commandFailed(event)
-        1 * second.commandFailed(event)
-    }
-
-    def 'should continue multicasting command failed event when a listener throws an Exception'() {
-        given:
-        def first = Stub(CommandListener) {
-            commandFailed(_) >> {
-                throw new UnsupportedOperationException()
-            }
-        }
-        def second = Mock(CommandListener)
-        def multicaster = new CommandListenerMulticaster([first, second])
-        def event = new CommandFailedEvent(1, new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress())),
-                                           'ping', 1000, new NullPointerException())
-
-        when:
-        multicaster.commandFailed(event)
-
-        then:
         1 * second.commandFailed(event)
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.WritableServerSelector;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,6 +88,30 @@ public class ClusterDescription {
         }
         return true;
     }
+
+    /**
+     * Returns true if this cluster has at least one server that satisfies the given read preference.
+     *
+     * @param readPreference the non-null read preference
+     * @return whether this cluster has at least one server that satisfies the given read preference
+     * @since 3.3
+     */
+    public boolean hasReadableServer(final ReadPreference readPreference) {
+        notNull("readPreference", readPreference);
+        return !new ReadPreferenceServerSelector(readPreference).select(this).isEmpty();
+    }
+
+
+    /**
+     * Returns true if this cluster has at least one server that can be used for write operations.
+     *
+     * @return true if this cluster has at least one server that can be used for write operations
+     * @since 3.3
+     */
+    public boolean hasWritableServer() {
+        return !new WritableServerSelector().select(this).isEmpty();
+    }
+
 
     /**
      * Gets whether this cluster is connecting to a single server or multiple servers.
@@ -220,10 +247,13 @@ public class ClusterDescription {
 
         ClusterDescription that = (ClusterDescription) o;
 
-        if (!all.equals(that.all)) {
+        if (connectionMode != that.connectionMode) {
             return false;
         }
-        if (connectionMode != that.connectionMode) {
+        if (type != that.type) {
+            return false;
+        }
+        if (!all.equals(that.all)) {
             return false;
         }
 
@@ -232,8 +262,9 @@ public class ClusterDescription {
 
     @Override
     public int hashCode() {
-        int result = all.hashCode();
-        result = 31 * result + connectionMode.hashCode();
+        int result = connectionMode.hashCode();
+        result = 31 * result + type.hashCode();
+        result = 31 * result + all.hashCode();
         return result;
     }
 

@@ -27,7 +27,7 @@ import static java.util.Collections.newSetFromMap;
  * A multicaster for connection events.
  */
 @Beta
-public class ConnectionEventMulticaster implements ConnectionListener {
+public final class ConnectionEventMulticaster implements ConnectionListener {
     private final Set<ConnectionListener> connectionListeners = newSetFromMap(new ConcurrentHashMap<ConnectionListener, Boolean>());
 
     /**
@@ -49,14 +49,14 @@ public class ConnectionEventMulticaster implements ConnectionListener {
     }
 
     @Override
-    public void connectionOpened(final ConnectionEvent event) {
+    public void connectionOpened(final ConnectionOpenedEvent event) {
         for (final ConnectionListener cur : connectionListeners) {
             cur.connectionOpened(event);
         }
     }
 
     @Override
-    public void connectionClosed(final ConnectionEvent event) {
+    public void connectionClosed(final ConnectionClosedEvent event) {
         for (final ConnectionListener cur : connectionListeners) {
             cur.connectionClosed(event);
         }
