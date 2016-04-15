@@ -68,7 +68,7 @@ public class ConcurrentPoolTest {
         pool.release(first);
         pool.release(second);
 
-        //Get the first item an release it, make sure that get doesn't return the same item back
+        //Get the first item, release it and make sure that `get` doesn't return the same item back
         first = pool.get();
         pool.release(first);
         second = pool.get();
