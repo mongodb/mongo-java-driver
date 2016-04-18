@@ -25,7 +25,7 @@ import static org.bson.assertions.Assertions.notNull;
 /**
  * An efficient map of BsonType to Codec
  *
- * @since 3.2
+ * @since 3.3
  */
 public class BsonTypeCodecMap {
     private final Codec<?>[] codecs = new Codec<?>[256];
