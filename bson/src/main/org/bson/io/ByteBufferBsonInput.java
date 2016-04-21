@@ -142,7 +142,10 @@ public class ByteBufferBsonInput implements BsonInput {
     private String readString(final int size) {
         if (size == 2) {
             byte asciiByte = readByte();               // if only one byte in the string, it must be ascii.
-            readByte();                                // read null terminator
+            byte nullByte = readByte();                // read null terminator
+            if (nullByte != 0) {
+                throw new BsonSerializationException("Found a BSON string that is not null-terminated");
+            }
             if (asciiByte < 0) {
                 return UTF8_CHARSET.newDecoder().replacement();
             }
