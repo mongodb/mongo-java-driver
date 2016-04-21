@@ -505,7 +505,7 @@ public class JsonReader extends AbstractBsonReader {
         JsonToken token = popToken();
         JsonTokenType type = token.getType();
 
-        if ((type != JsonTokenType.STRING && type != JsonTokenType.UNQUOTED_STRING) && !expected.equals(token.getValue())) {
+        if ((type != JsonTokenType.STRING && type != JsonTokenType.UNQUOTED_STRING) || !expected.equals(token.getValue())) {
             throw new JsonParseException("JSON reader expected '%s' but found '%s'.", expected, token.getValue());
         }
     }
