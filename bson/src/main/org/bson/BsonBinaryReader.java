@@ -136,7 +136,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
         byte type = bsonInput.readByte();
 
         if (type == BsonBinarySubType.OLD_BINARY.getValue()) {
-            bsonInput.readInt32();
+            int repeatedNumBytes = bsonInput.readInt32();
+            if (repeatedNumBytes != numBytes - 4) {
+                throw new BsonSerializationException("Binary sub type OldBinary has inconsistent sizes");
+            }
             numBytes -= 4;
         }
         byte[] bytes = new byte[numBytes];
