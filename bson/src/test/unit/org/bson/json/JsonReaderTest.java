@@ -629,6 +629,19 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testTimestampStrictWithOutOfOrderFields() {
+        String json = "{ \"$timestamp\" : { \"i\" : 1, \"t\" : 1234 } }";
+        bsonReader = new JsonReader(json);
+
+        try {
+            bsonReader.readBsonType();
+            fail("Should have failed to read timestamp with fields not in expected order");
+        } catch (JsonParseException e) {
+            // all good
+        }
+    }
+
+    @Test
     public void testTimestampShell() {
         String json = "Timestamp(1234, 1)";
         bsonReader = new JsonReader(json);
