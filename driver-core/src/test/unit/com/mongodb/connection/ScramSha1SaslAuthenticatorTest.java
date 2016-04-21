@@ -160,18 +160,18 @@ public class ScramSha1SaslAuthenticatorTest {
         String expectedFirstCommand = "{ \"saslStart\" : 1, "
                 + "\"mechanism\" : \"SCRAM-SHA-1\", "
                 + "\"payload\" : { \"$binary\" : \"biwsbj11c2VyLHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdM\", "
-                + "\"$type\" : \"0\" } }";
+                + "\"$type\" : \"00\" } }";
 
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
         String expectedSecondCommand = "{ \"saslContinue\" : 1, "
                 + "\"conversationId\" : 1, "
                 + "\"payload\" : { \"$binary\" : \"Yz1iaXdzLHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdMSG8rVmdrN3F2VU9LVXd"
-                + "1V0xJV2c0bC85U3JhR01IRUUscD1NQzJUOEJ2Ym1XUmNrRHc4b1dsNUlWZ2h3Q1k9\", \"$type\" : \"0\" } }";
+                + "1V0xJV2c0bC85U3JhR01IRUUscD1NQzJUOEJ2Ym1XUmNrRHc4b1dsNUlWZ2h3Q1k9\", \"$type\" : \"00\" } }";
 
         String thirdCommand = MessageHelper.decodeCommandAsJson(sent.get(2));
         String expectedThirdCommand = "{ \"saslContinue\" : 1, "
                 + "\"conversationId\" : 1, "
-                + "\"payload\" : { \"$binary\" : \"dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9\", \"$type\" : \"0\" } }";
+                + "\"payload\" : { \"$binary\" : \"dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9\", \"$type\" : \"00\" } }";
 
         assertEquals(expectedFirstCommand, firstCommand);
         assertEquals(expectedSecondCommand, secondCommand);
