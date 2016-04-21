@@ -67,7 +67,7 @@ public class PlainAuthenticatorUnitTest {
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{ \"saslStart\" : 1, "
                                  + "\"mechanism\" : \"PLAIN\", "
-                                 + "\"payload\" : { \"$binary\" : \"dXNlcgB1c2VyAHBlbmNpbA==\", \"$type\" : \"0\" } }";
+                                 + "\"payload\" : { \"$binary\" : \"dXNlcgB1c2VyAHBlbmNpbA==\", \"$type\" : \"00\" } }";
 
         assertEquals(expectedCommand, command);
     }

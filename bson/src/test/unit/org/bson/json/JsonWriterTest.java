@@ -409,16 +409,16 @@ public class JsonWriterTest {
     public void testBinaryStrict() {
         List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
                                                                    "{ \"$binary\" : \"\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1}),
                                                                    "{ \"$binary\" : \"AQ==\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}),
                                                                    "{ \"$binary\" : \"AQI=\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
                                                                    + "\"$type\" : \"80\" }"));

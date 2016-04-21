@@ -154,7 +154,7 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     writeStartDocument();
                     writeString("$binary", printBase64Binary(binary.getData()));
-                    writeString("$type", Integer.toHexString(binary.getType() & 0xFF));
+                    writeString("$type", String.format("%02X", binary.getType()));
                     writeEndDocument();
             }
         } catch (IOException e) {
