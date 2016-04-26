@@ -83,7 +83,7 @@ public final class GridFSFile {
         this.chunkSize = notNull("chunkSize", chunkSize);
         this.uploadDate = notNull("uploadDate", uploadDate);
         this.md5 = notNull("md5", md5);
-        this.metadata = metadata;
+        this.metadata = metadata != null && metadata.isEmpty() ? null : metadata;
         this.extraElements = extraElements;
     }
 

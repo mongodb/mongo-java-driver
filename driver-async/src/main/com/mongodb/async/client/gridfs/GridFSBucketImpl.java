@@ -49,7 +49,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
     private final String bucketName;
     private final int chunkSizeBytes;
-    private final MongoCollection<Document> filesCollection;
+    private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
 
     GridFSBucketImpl(final MongoDatabase database) {
@@ -62,7 +62,7 @@ final class GridFSBucketImpl implements GridFSBucket {
                 getChunksCollection(database, bucketName));
     }
 
-    GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<Document> filesCollection,
+    GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
                      final MongoCollection<Document> chunksCollection) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;
@@ -303,9 +303,10 @@ final class GridFSBucketImpl implements GridFSBucket {
                 .sort(new Document("uploadDate", sort)));
     }
 
-    private static MongoCollection<Document> getFilesCollection(final MongoDatabase database, final String bucketName) {
-        return database.getCollection(bucketName + ".files").withCodecRegistry(fromRegistries(database.getCodecRegistry(),
-                MongoClients.getDefaultCodecRegistry()));
+    private static MongoCollection<GridFSFile> getFilesCollection(final MongoDatabase database, final String bucketName) {
+        return database.getCollection(bucketName + ".files", GridFSFile.class).withCodecRegistry(
+                fromRegistries(database.getCodecRegistry(), MongoClients.getDefaultCodecRegistry())
+        );
     }
 
     private static MongoCollection<Document> getChunksCollection(final MongoDatabase database, final String bucketName) {

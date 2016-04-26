@@ -51,7 +51,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
     private final String bucketName;
     private final int chunkSizeBytes;
-    private final MongoCollection<Document> filesCollection;
+    private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private volatile boolean checkedIndexes;
 
@@ -65,7 +65,7 @@ final class GridFSBucketImpl implements GridFSBucket {
                 getChunksCollection(database, bucketName));
     }
 
-    GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<Document> filesCollection,
+    GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
                      final MongoCollection<Document> chunksCollection) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;
@@ -232,9 +232,10 @@ final class GridFSBucketImpl implements GridFSBucket {
         chunksCollection.drop();
     }
 
-    private static MongoCollection<Document> getFilesCollection(final MongoDatabase database, final String bucketName) {
-        return database.getCollection(bucketName + ".files").withCodecRegistry(fromRegistries(database.getCodecRegistry(),
-                MongoClient.getDefaultCodecRegistry()));
+    private static MongoCollection<GridFSFile> getFilesCollection(final MongoDatabase database, final String bucketName) {
+        return database.getCollection(bucketName + ".files", GridFSFile.class).withCodecRegistry(
+                fromRegistries(database.getCodecRegistry(), MongoClient.getDefaultCodecRegistry())
+        );
     }
 
     private static MongoCollection<Document> getChunksCollection(final MongoDatabase database, final String bucketName) {
@@ -243,7 +244,8 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private void checkCreateIndex() {
         if (!checkedIndexes) {
-            if (filesCollection.withReadPreference(primary()).find().projection(new Document("_id", 1)).first() == null) {
+            if (filesCollection.withDocumentClass(Document.class).withReadPreference(primary())
+                    .find().projection(new Document("_id", 1)).first() == null) {
                 Document filesIndex = new Document("filename", 1).append("uploadDate", 1);
                 if (!hasIndex(filesCollection.withReadPreference(primary()), filesIndex)) {
                     filesCollection.createIndex(filesIndex);
@@ -257,7 +259,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
-    private boolean hasIndex(final MongoCollection<Document> collection, final Document index) {
+    private <T> boolean hasIndex(final MongoCollection<T> collection, final Document index) {
         boolean hasIndex = false;
         ArrayList<Document> indexes = collection.listIndexes().into(new ArrayList<Document>());
         for (Document indexDoc : indexes) {

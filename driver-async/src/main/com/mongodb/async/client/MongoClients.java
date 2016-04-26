@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
@@ -124,7 +125,8 @@ public final class MongoClients {
                     new DocumentCodecProvider(),
                     new BsonValueCodecProvider(),
                     new IterableCodecProvider(),
-                    new GeoJsonCodecProvider()));
+                    new GeoJsonCodecProvider(),
+                    new GridFSFileCodecProvider()));
 
     private static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {
         StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(settings);

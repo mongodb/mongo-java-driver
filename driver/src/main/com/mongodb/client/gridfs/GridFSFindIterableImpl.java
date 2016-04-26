@@ -18,25 +18,19 @@ package com.mongodb.client.gridfs;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import org.bson.Document;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.internal.gridfs.GridFSFileHelper.documentToGridFSFileMapper;
-
 class GridFSFindIterableImpl implements GridFSFindIterable {
-    private static final CodecRegistry DEFAULT_CODEC_REGISTRY = MongoClient.getDefaultCodecRegistry();
-    private final FindIterable<Document> underlying;
+    private final FindIterable<GridFSFile> underlying;
 
-    public GridFSFindIterableImpl(final FindIterable<Document> underlying) {
+    public GridFSFindIterableImpl(final FindIterable<GridFSFile> underlying) {
         this.underlying = underlying;
     }
 
@@ -84,31 +78,27 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
 
     @Override
     public MongoCursor<GridFSFile> iterator() {
-        return toGridFSFileIterable().iterator();
+        return underlying.iterator();
     }
 
     @Override
     public GridFSFile first() {
-        return toGridFSFileIterable().first();
+        return underlying.first();
     }
 
     @Override
     public <U> MongoIterable<U> map(final Function<GridFSFile, U> mapper) {
-        return toGridFSFileIterable().map(mapper);
+        return underlying.map(mapper);
     }
 
     @Override
     public void forEach(final Block<? super GridFSFile> block) {
-        toGridFSFileIterable().forEach(block);
+        underlying.forEach(block);
     }
 
     @Override
     public <A extends Collection<? super GridFSFile>> A into(final A target) {
-        return toGridFSFileIterable().into(target);
-    }
-
-    private MongoIterable<GridFSFile> toGridFSFileIterable() {
-        return underlying.map(documentToGridFSFileMapper(DEFAULT_CODEC_REGISTRY));
+        return underlying.into(target);
     }
 
 }

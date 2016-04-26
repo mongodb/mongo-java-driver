@@ -18,19 +18,21 @@ package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.MongoCollection;
-import org.bson.BsonDateTime;
+import com.mongodb.client.gridfs.model.GridFSFile;
+import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.util.Util.toHex;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
-    private final MongoCollection<Document> filesCollection;
+    private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private final ObjectId fileId;
     private final String filename;
@@ -45,7 +47,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final Object closeLock = new Object();
     private boolean closed = false;
 
-    GridFSUploadStreamImpl(final MongoCollection<Document> filesCollection, final MongoCollection<Document> chunksCollection,
+    GridFSUploadStreamImpl(final MongoCollection<GridFSFile> filesCollection, final MongoCollection<Document> chunksCollection,
                            final ObjectId fileId, final String filename, final int chunkSizeBytes, final Document metadata) {
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -132,17 +134,9 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
             closed = true;
         }
         writeChunk();
-        Document fileDocument = new Document("_id", fileId)
-                .append("length", lengthInBytes)
-                .append("chunkSize", chunkSizeBytes)
-                .append("uploadDate", new BsonDateTime(System.currentTimeMillis()))
-                .append("md5", toHex(md5.digest()))
-                .append("filename", filename);
-
-        if (metadata != null && !metadata.isEmpty()) {
-            fileDocument.append("metadata", metadata);
-        }
-        filesCollection.insertOne(fileDocument);
+        GridFSFile gridFSFile = new GridFSFile(new BsonObjectId(fileId), filename, lengthInBytes, chunkSizeBytes, new Date(),
+                toHex(md5.digest()), metadata);
+        filesCollection.insertOne(gridFSFile);
         buffer = null;
     }
 
