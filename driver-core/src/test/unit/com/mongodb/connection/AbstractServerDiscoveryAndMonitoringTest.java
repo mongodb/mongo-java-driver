@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -37,6 +38,7 @@ import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.DescriptionHelper.getVersion;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 public class AbstractServerDiscoveryAndMonitoringTest {
     private final BsonDocument definition;
@@ -75,8 +77,13 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected ClusterType getClusterType(final String topologyType) {
+        return getClusterType(topologyType, Collections.<ServerDescription>emptyList());
+    }
+
+    protected ClusterType getClusterType(final String topologyType, final Collection<ServerDescription> serverDescriptions) {
         if (topologyType.equalsIgnoreCase("Single")) {
-            return ClusterType.STANDALONE;
+            assertEquals(1, serverDescriptions.size());
+            return serverDescriptions.iterator().next().getClusterType();
         } else if (topologyType.equalsIgnoreCase("Sharded")) {
             return ClusterType.SHARDED;
         } else if (topologyType.startsWith("ReplicaSet")) {

@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
-import static com.mongodb.connection.ClusterType.STANDALONE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -118,7 +117,8 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     private void assertTopologyType(final String topologyType) {
         if (topologyType.equals("Single")) {
             assertEquals(SingleServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType), STANDALONE);
+            assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getAll()),
+                    getCluster().getCurrentDescription().getType());
         } else if (topologyType.equals("ReplicaSetWithPrimary")) {
             assertEquals(MultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());

@@ -85,7 +85,7 @@ final class MultiServerCluster extends BaseCluster {
             newDescription = updateDescription();
         }
         fireChangeEvent(new ClusterDescriptionChangedEvent(clusterId, newDescription,
-                new ClusterDescription(settings.getMode(), settings.getRequiredClusterType(), Collections.<ServerDescription>emptyList())));
+                new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList())));
     }
 
     @Override
