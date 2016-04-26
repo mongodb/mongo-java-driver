@@ -219,6 +219,9 @@ class DefaultServerMonitorSpecification extends Specification {
         succeededEvent.connectionId == connectionDescription.connectionId
         succeededEvent.reply == BsonDocument.parse(isMasterResponse)
         succeededEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0
+
+        cleanup:
+        monitor?.close()
     }
 
     def 'should send started and failed heartbeat events'() {
@@ -291,5 +294,8 @@ class DefaultServerMonitorSpecification extends Specification {
         failedEvent.connectionId == connectionDescription.connectionId
         failedEvent.throwable == exception
         failedEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0
+
+        cleanup:
+        monitor?.close()
     }
 }
