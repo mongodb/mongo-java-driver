@@ -42,6 +42,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -60,6 +61,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -96,6 +98,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -136,6 +139,7 @@ class GridFSIndexCheckSpecification extends Specification {
         1 * findIterable.first(_) >> { it[0].onResult(null, null) }
 
         // Files Index check
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.listIndexes() >> listIndexesIterable
         1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
@@ -165,6 +169,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -199,6 +204,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(futureResult)
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -225,6 +231,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(futureResult)
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -256,6 +263,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(futureResult)
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -290,6 +298,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(futureResult)
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable
@@ -329,6 +338,7 @@ class GridFSIndexCheckSpecification extends Specification {
         indexChecker.checkAndCreateIndex(futureResult)
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(projection) >> findIterable

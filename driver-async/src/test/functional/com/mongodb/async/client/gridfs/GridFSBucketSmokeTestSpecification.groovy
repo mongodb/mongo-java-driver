@@ -21,6 +21,7 @@ import com.mongodb.async.client.FunctionalSpecification
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.async.client.MongoDatabase
+import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import org.bson.BsonDocument
 import org.bson.Document
@@ -43,7 +44,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
-    protected MongoCollection<Document> filesCollection;
+    protected MongoCollection<GridFSFile> filesCollection;
     protected MongoCollection<Document> chunksCollection;
     protected GridFSBucket gridFSBucket;
     def singleChunkString = 'GridFS'
@@ -51,7 +52,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
     def setup() {
         mongoDatabase = getMongoClient().getDatabase(getDefaultDatabaseName())
-        filesCollection = mongoDatabase.getCollection('fs.files')
+        filesCollection = mongoDatabase.getCollection('fs.files', GridFSFile)
         chunksCollection = mongoDatabase.getCollection('fs.chunks')
         run(filesCollection.&drop)
         run(chunksCollection.&drop)
@@ -138,7 +139,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileInfo = run(gridFSBucket.find().filter(eq('_id', fileId)).&first)
 
         then:
-        fileInfo.getId().getValue() == fileId
+        fileInfo.getObjectId() == fileId
         fileInfo.getChunkSize() == gridFSBucket.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
         fileInfo.getMD5() == expectedMD5
@@ -283,6 +284,33 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         then:
         run(filesCollection.listIndexes().&into, [])*.get('key').contains(Document.parse('{ filename: 1, uploadDate: 1 }'))
         run(chunksCollection.listIndexes().&into, [])*.get('key').contains(Document.parse('{ files_id: 1, n: 1 }'))
+    }
+
+    def 'should not create indexes if the files collection is not empty'() {
+        when:
+        run(filesCollection.withDocumentClass(Document).&insertOne, new Document('filename', 'bad file'))
+        def contentBytes = 'Hello GridFS' as byte[]
+
+        then:
+        run(filesCollection.listIndexes().&into, []).size() == 1
+        run(chunksCollection.listIndexes().&into, []).size() == 0
+
+        when:
+        if (direct) {
+            run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes));
+        } else {
+            def outputStream = gridFSBucket.openUploadStream('myFile')
+            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+            run(outputStream.&close)
+        }
+
+
+        then:
+        run(filesCollection.listIndexes().&into, []).size() == 1
+        run(chunksCollection.listIndexes().&into, []).size() == 1
+
+        where:
+        direct << [true, false]
     }
 
     def 'should use the user provided codec registries for encoding / decoding data'() {

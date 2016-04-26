@@ -21,6 +21,7 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
+import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import org.bson.BsonDocument
 import org.bson.Document
@@ -38,7 +39,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
 class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
-    protected MongoCollection<Document> filesCollection;
+    protected MongoCollection<GridFSFile> filesCollection;
     protected MongoCollection<Document> chunksCollection;
     protected GridFSBucket gridFSBucket;
     def singleChunkString = 'GridFS'
@@ -46,7 +47,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
     def setup() {
         mongoDatabase = getMongoClient().getDatabase(getDefaultDatabaseName())
-        filesCollection = mongoDatabase.getCollection('fs.files')
+        filesCollection = mongoDatabase.getCollection('fs.files', GridFSFile)
         chunksCollection = mongoDatabase.getCollection('fs.chunks')
         filesCollection.drop()
         chunksCollection.drop()
@@ -88,11 +89,11 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def file = filesCollection.find().first()
 
         then:
-        file.getObjectId('_id') == fileId
-        file.getInteger('chunkSize') == gridFSBucket.getChunkSizeBytes()
-        file.getLong('length') == expectedLength
-        file.getString('md5') == expectedMD5
-        !file.containsKey('metadata')
+        file.getObjectId() == fileId
+        file.getChunkSize() == gridFSBucket.getChunkSizeBytes()
+        file.getLength() == expectedLength
+        file.getMD5() == expectedMD5
+        file.getMetadata() == null
 
         when:
         if (direct) {
@@ -135,11 +136,11 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def file = filesCollection.find().first()
 
         then:
-        file.getObjectId('_id') == fileId
-        file.getInteger('chunkSize') == gridFSBucket.getChunkSizeBytes()
-        file.getLong('length') == expectedLength
-        file.getString('md5') == expectedMD5
-        !file.containsKey('metadata')
+        file.getObjectId() == fileId
+        file.getChunkSize() == gridFSBucket.getChunkSizeBytes()
+        file.getLength() == expectedLength
+        file.getMD5() == expectedMD5
+        file.getMetadata() == null
 
         when:
         gridFSContentBytes = gridFSBucket.openDownloadStream(fileId).batchSize(1).getBytes()
@@ -178,14 +179,14 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         chunksCollection.count() == expectedNoChunks
 
         when:
-        def file = filesCollection.find().first()
+        def fileInfo = filesCollection.find().first()
 
         then:
-        file.getObjectId('_id') == fileId
-        file.get('metadata', Document) == metadata
-        file.getInteger('chunkSize') == chunkSize
-        file.getLong('length') == expectedLength
-        file.getString('md5') == expectedMD5
+        fileInfo.getId().getValue() == fileId
+        fileInfo.getChunkSize() == options.getChunkSizeBytes()
+        fileInfo.getLength() == expectedLength
+        fileInfo.getMD5() == expectedMD5
+        fileInfo.getMetadata() == options.getMetadata()
 
         when:
         if (direct) {
@@ -406,7 +407,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
     def 'should not create indexes if the files collection is not empty'() {
         when:
-        filesCollection.insertOne(new Document('filename', 'bad file'))
+        filesCollection.withDocumentClass(Document).insertOne(new Document('filename', 'bad file'))
         def contentBytes = 'Hello GridFS' as byte[]
 
         then:

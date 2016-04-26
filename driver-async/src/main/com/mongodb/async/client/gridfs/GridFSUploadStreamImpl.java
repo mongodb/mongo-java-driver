@@ -19,8 +19,9 @@ package com.mongodb.async.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollection;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
-import org.bson.BsonDateTime;
+import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -28,13 +29,14 @@ import org.bson.types.ObjectId;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.HexUtils.toHex;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
-    private final MongoCollection<Document> filesCollection;
+    private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private final ObjectId fileId;
     private final String filename;
@@ -58,7 +60,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private int chunkIndex;
     /* accessed only when writing */
 
-    GridFSUploadStreamImpl(final MongoCollection<Document> filesCollection, final MongoCollection<Document> chunksCollection,
+    GridFSUploadStreamImpl(final MongoCollection<GridFSFile> filesCollection, final MongoCollection<Document> chunksCollection,
                            final ObjectId fileId, final String filename, final int chunkSizeBytes, final Document metadata,
                            final GridFSIndexCheck indexCheck) {
         this.filesCollection = notNull("files collection", filesCollection);
@@ -151,17 +153,10 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     releaseWritingLock();
                     errorHandlingCallback.onResult(null, t);
                 } else {
-                    Document fileDocument = new Document("_id", fileId)
-                            .append("length", lengthInBytes)
-                            .append("chunkSize", chunkSizeBytes)
-                            .append("uploadDate", new BsonDateTime(System.currentTimeMillis()))
-                            .append("md5", toHex(md5.digest()))
-                            .append("filename", filename);
+                    GridFSFile gridFSFile = new GridFSFile(new BsonObjectId(fileId), filename, lengthInBytes, chunkSizeBytes, new Date(),
+                            toHex(md5.digest()), metadata);
 
-                    if (metadata != null && !metadata.isEmpty()) {
-                        fileDocument.append("metadata", metadata);
-                    }
-                    filesCollection.insertOne(fileDocument, new SingleResultCallback<Void>() {
+                    filesCollection.insertOne(gridFSFile, new SingleResultCallback<Void>() {
                         @Override
                         public void onResult(final Void result, final Throwable t) {
                             buffer = null;

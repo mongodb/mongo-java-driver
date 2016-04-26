@@ -18,6 +18,7 @@ package com.mongodb.client.gridfs
 
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.MongoCollection
+import com.mongodb.client.gridfs.model.GridFSFile
 import org.bson.Document
 import org.bson.types.Binary
 import org.bson.types.ObjectId
@@ -84,27 +85,29 @@ class GridFSUploadStreamSpecification extends Specification {
         def content = 'file content ' as byte[]
         def metadata = new Document('contentType', 'text/txt')
         def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata)
+        def chunksData
+        def fileData
 
         when:
         uploadStream.write(content)
         uploadStream.close()
 
         then:
-        1 * chunksCollection.insertOne { Document chunksData ->
-            chunksData.getObjectId('files_id') == fileId
-            chunksData.getInteger('n') == 0
-            chunksData.get('data', Binary).getData() == content
-        }
+        1 * chunksCollection.insertOne { Document data -> chunksData = data }
 
         then:
-        1 * filesCollection.insertOne { Document fileData ->
-            fileData.getObjectId('_id') == fileId &&
-            fileData.getString('filename') == filename &&
-            fileData.getLong('length') == content.length as Long &&
-            fileData.getInteger('chunkSize') == 255 &&
-            fileData.getString('md5') == MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
-            fileData.get('metadata', Document) == metadata
-        }
+        1 * filesCollection.insertOne { GridFSFile data -> fileData = data }
+        then:
+        chunksData.getObjectId('files_id') == fileId
+        chunksData.getInteger('n') == 0
+        chunksData.get('data', Binary).getData() == content
+
+        fileData.getObjectId() == fileId
+        fileData.getFilename() == filename
+        fileData.getLength() == content.length as Long
+        fileData.getChunkSize() == 255
+        fileData.getMD5() == MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
+        fileData.getMetadata() == metadata
     }
 
     def 'should not write an empty chunk'() {

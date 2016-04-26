@@ -18,6 +18,7 @@ package com.mongodb.async.client.gridfs;
 
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollection;
+import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.IndexOptions;
 import org.bson.Document;
 
@@ -28,17 +29,17 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class GridFSIndexCheckImpl implements GridFSIndexCheck {
     private static final Document PROJECTION = new Document("_id", 1);
-    private final MongoCollection<Document> filesCollection;
+    private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
 
-    GridFSIndexCheckImpl(final MongoCollection<Document> filesCollection, final MongoCollection<Document> chunksCollection) {
+    GridFSIndexCheckImpl(final MongoCollection<GridFSFile> filesCollection, final MongoCollection<Document> chunksCollection) {
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
     }
 
     @Override
     public void checkAndCreateIndex(final SingleResultCallback<Void> callback) {
-        filesCollection.withReadPreference(primary()).find().projection(PROJECTION).first(
+        filesCollection.withDocumentClass(Document.class).withReadPreference(primary()).find().projection(PROJECTION).first(
                 new SingleResultCallback<Document>() {
                     @Override
                     public void onResult(final Document result, final Throwable t) {
@@ -53,7 +54,7 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
                 });
     }
 
-    private void hasIndex(final MongoCollection<Document> collection, final Document index, final SingleResultCallback<Boolean> callback) {
+    private <T> void hasIndex(final MongoCollection<T> collection, final Document index, final SingleResultCallback<Boolean> callback) {
         collection.listIndexes().into(new ArrayList<Document>(), new SingleResultCallback<ArrayList<Document>>() {
             @Override
             public void onResult(final ArrayList<Document> indexes, final Throwable t) {
@@ -75,27 +76,28 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
 
     private void checkFilesIndex(final SingleResultCallback<Void> callback) {
         final Document filesIndex = new Document("filename", 1).append("uploadDate", 1);
-        hasIndex(filesCollection.withReadPreference(primary()), filesIndex, new SingleResultCallback<Boolean>() {
-            @Override
-            public void onResult(final Boolean result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (!result) {
-                    filesCollection.createIndex(filesIndex, new SingleResultCallback<String>() {
-                        @Override
-                        public void onResult(final String result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                checkChunksIndex(callback);
-                            }
+        hasIndex(filesCollection.withReadPreference(primary()), filesIndex,
+                new SingleResultCallback<Boolean>() {
+                    @Override
+                    public void onResult(final Boolean result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else if (!result) {
+                            filesCollection.createIndex(filesIndex, new SingleResultCallback<String>() {
+                                @Override
+                                public void onResult(final String result, final Throwable t) {
+                                    if (t != null) {
+                                        callback.onResult(null, t);
+                                    } else {
+                                        checkChunksIndex(callback);
+                                    }
+                                }
+                            });
+                        } else {
+                            checkChunksIndex(callback);
                         }
-                    });
-                } else {
-                    checkChunksIndex(callback);
-                }
-            }
-        });
+                    }
+                });
     }
 
     private void checkChunksIndex(final SingleResultCallback<Void> callback) {
