@@ -25,6 +25,8 @@ import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
@@ -72,10 +74,10 @@ public class TestCommandListener implements CommandListener {
     public void commandStarted(final CommandStartedEvent event) {
         events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                                            event.getCommandName(),
-                                           event.getCommand() == null ? null : getWritableCloneOfCommand(event.getCommand())));
+                                           event.getCommand() == null ? null : getWritableClone(event.getCommand())));
     }
 
-    private BsonDocument getWritableCloneOfCommand(final BsonDocument original) {
+    private BsonDocument getWritableClone(final BsonDocument original) {
         BsonDocument clone = new BsonDocument();
         BsonDocumentWriter writer = new BsonDocumentWriter(clone);
         new BsonDocumentCodec(CODEC_REGISTRY_HACK).encode(writer, original, EncoderContext.builder().build());
@@ -145,8 +147,21 @@ public class TestCommandListener implements CommandListener {
         } else {
             // ignore extra elements in the actual response
             assertTrue("Expected response contains elements not in the actual response",
-                       actual.getResponse().entrySet().containsAll(expected.getResponse().entrySet()));
+                       massageResponse(actual.getResponse()).entrySet()
+                               .containsAll(massageResponse(expected.getResponse()).entrySet()));
         }
+    }
+
+    private BsonDocument massageResponse(final BsonDocument response) {
+        BsonDocument massagedResponse = getWritableClone(response);
+        // massage numbers to the same BSON type
+        if (massagedResponse.containsKey("ok")) {
+            massagedResponse.put("ok", new BsonDouble(response.getNumber("ok").doubleValue()));
+        }
+        if (massagedResponse.containsKey("n")) {
+            massagedResponse.put("n", new BsonInt32(response.getNumber("n").intValue()));
+        }
+        return massagedResponse;
     }
 
     private void assertEquivalence(final CommandStartedEvent actual, final CommandStartedEvent expected) {
