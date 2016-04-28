@@ -124,7 +124,7 @@ class DefaultConnectionPool implements ConnectionPool {
             LOGGER.trace(String.format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
 
-        final SingleResultCallback<InternalConnection> wrappedCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         PooledConnection connection = null;
 
         try {
@@ -141,7 +141,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 LOGGER.trace(String.format("Asynchronously opening pooled connection %s to server %s",
                                            connection.getDescription().getConnectionId(), serverId));
             }
-            openAsync(connection, wrappedCallback);
+            openAsync(connection, errHandlingCallback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
             if (LOGGER.isTraceEnabled()) {
@@ -157,13 +157,13 @@ class DefaultConnectionPool implements ConnectionPool {
                 public void run() {
                     try {
                         if (getRemainingWaitTime() <= 0) {
-                            wrappedCallback.onResult(null, createTimeoutException());
+                            errHandlingCallback.onResult(null, createTimeoutException());
                         } else {
                             PooledConnection connection = getPooledConnection(getRemainingWaitTime(), MILLISECONDS);
-                            openAsync(connection, wrappedCallback);
+                            openAsync(connection, errHandlingCallback);
                         }
                     } catch (Throwable t) {
-                        wrappedCallback.onResult(null, t);
+                        errHandlingCallback.onResult(null, t);
                     } finally {
                         waitQueueSize.decrementAndGet();
                         connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));

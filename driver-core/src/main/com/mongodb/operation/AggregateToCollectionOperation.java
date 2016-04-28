@@ -38,6 +38,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.CommandOperationHelper.VoidTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -173,12 +174,12 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                            connection, new VoidTransformer<BsonDocument>(),
-                            releasingCallback(errorHandlingCallback(callback), connection));
+                            connection, new VoidTransformer<BsonDocument>(), releasingCallback(errHandlingCallback, connection));
                 }
             }
         });

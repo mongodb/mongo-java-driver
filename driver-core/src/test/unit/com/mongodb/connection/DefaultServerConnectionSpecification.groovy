@@ -23,6 +23,7 @@ import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
+import com.mongodb.diagnostics.logging.Logger
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -41,7 +42,7 @@ import static java.util.Arrays.asList
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
     def internalConnection = Mock(InternalConnection)
-    def callback = errorHandlingCallback(Mock(SingleResultCallback))
+    def callback = errorHandlingCallback(Mock(SingleResultCallback), Mock(Logger))
     def executor = Mock(ProtocolExecutor)
     @Shared
     def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),

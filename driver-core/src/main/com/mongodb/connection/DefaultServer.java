@@ -23,6 +23,8 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
@@ -38,6 +40,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 class DefaultServer implements ClusterableServer {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -181,7 +184,7 @@ class DefaultServer implements ClusterableServer {
                     }
                     callback.onResult(result, t);
                 }
-            }));
+            }, LOGGER));
         }
     }
 

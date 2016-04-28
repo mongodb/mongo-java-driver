@@ -45,6 +45,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
 import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -154,13 +155,13 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<WriteConcernResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    releasingCallback(errorHandlingCallback(callback), connection).onResult(null, getBypassDocumentValidationException());
+                    releasingCallback(errHandlingCallback, connection).onResult(null, getBypassDocumentValidationException());
                 } else {
-                    final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
-                                                                                                       connection);
+                    final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                     if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
                             @Override

@@ -35,6 +35,8 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
@@ -49,6 +51,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 final class OperationHelper {
+    public static final Logger LOGGER = Loggers.getLogger("operation");
 
     interface CallableWithConnection<T> {
         T call(Connection connection);
@@ -99,7 +102,6 @@ final class OperationHelper {
         return new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern "
                                         + "is not supported");
     }
-
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress, final int batchSize) {
@@ -243,15 +245,15 @@ final class OperationHelper {
     }
 
     static void withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable)));
+        binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), LOGGER));
     }
 
     static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable)));
+        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), LOGGER));
     }
 
     static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable)));
+        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
     }
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {

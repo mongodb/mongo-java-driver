@@ -17,6 +17,8 @@
 package com.mongodb.connection;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.ByteBuf;
 
 import java.util.List;
@@ -28,6 +30,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
  * A connection that tracks when it was opened and when it was last used.
  */
 class UsageTrackingInternalConnection implements InternalConnection {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private volatile long openedAt;
     private volatile long lastUsedAt;
     private final int generation;
@@ -107,27 +110,27 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<Void> wrappedCallback = errorHandlingCallback(new SingleResultCallback<Void>() {
+        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
                 callback.onResult(result, t);
             }
-        });
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, wrappedCallback);
+        }, LOGGER);
+        wrapped.sendMessageAsync(byteBuffers, lastRequestId, errHandlingCallback);
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", wrapped != null);
-        SingleResultCallback<ResponseBuffers> wrappedCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
+        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
             @Override
             public void onResult(final ResponseBuffers result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
                 callback.onResult(result, t);
             }
-        });
-        wrapped.receiveMessageAsync(responseTo, wrappedCallback);
+        }, LOGGER);
+        wrapped.receiveMessageAsync(responseTo, errHandlingCallback);
     }
 
     @Override

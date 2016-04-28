@@ -49,6 +49,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -346,11 +347,12 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<MapReduceAsyncBatchCursor<T>> wrappedCallback = releasingCallback(
-                            errorHandlingCallback(callback), connection);
+                            errHandlingCallback, connection);
                     checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {

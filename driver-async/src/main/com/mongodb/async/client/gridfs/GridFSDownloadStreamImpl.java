@@ -21,6 +21,8 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.Document;
 import org.bson.types.Binary;
 
@@ -34,6 +36,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static java.lang.String.format;
 
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
+    private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
     private final GridFSFindIterable fileInfoIterable;
     private final MongoCollection<Document> chunksCollection;
     private final ConcurrentLinkedQueue<Document> resultsQueue = new ConcurrentLinkedQueue<Document>();
@@ -64,13 +67,13 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public void getGridFSFile(final SingleResultCallback<GridFSFile> callback) {
         notNull("callback", callback);
-        final SingleResultCallback<GridFSFile> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<GridFSFile> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (hasFileInfo()) {
-            errorHandlingCallback.onResult(fileInfo, null);
+            errHandlingCallback.onResult(fileInfo, null);
             return;
         }
 
-        if (!tryGetReadingLock(errorHandlingCallback)) {
+        if (!tryGetReadingLock(errHandlingCallback)) {
             return;
         }
 
@@ -79,13 +82,13 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
             public void onResult(final GridFSFile result, final Throwable t) {
                 releaseReadingLock();
                 if (t != null) {
-                    errorHandlingCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else if (result == null) {
-                    errorHandlingCallback.onResult(null, new MongoGridFSException("File not found"));
+                    errHandlingCallback.onResult(null, new MongoGridFSException("File not found"));
                 } else {
                     fileInfo = result;
                     numberOfChunks = (int) Math.ceil((double) fileInfo.getLength() / fileInfo.getChunkSize());
-                    errorHandlingCallback.onResult(result, null);
+                    errHandlingCallback.onResult(result, null);
                 }
             }
         });
@@ -103,33 +106,34 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     public void read(final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
         notNull("dst", dst);
         notNull("callback", callback);
-        final SingleResultCallback<Integer> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Integer> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (!hasFileInfo()) {
             getGridFSFile(new SingleResultCallback<GridFSFile>() {
                 @Override
                 public void onResult(final GridFSFile result, final Throwable t) {
                     if (t != null) {
-                        errorHandlingCallback.onResult(null, t);
+                        errHandlingCallback.onResult(null, t);
                     } else {
-                        read(dst, errorHandlingCallback);
+                        read(dst, errHandlingCallback);
                     }
                 }
             });
             return;
         }
 
-        if (!tryGetReadingLock(errorHandlingCallback)) {
+        if (!tryGetReadingLock(errHandlingCallback)) {
             return;
         } else if (currentPosition == fileInfo.getLength()) {
             releaseReadingLock();
-            errorHandlingCallback.onResult(-1, null);
+            errHandlingCallback.onResult(-1, null);
             return;
         }
+
         checkAndFetchResults(0, dst, new SingleResultCallback<Integer>() {
             @Override
             public void onResult(final Integer result, final Throwable t) {
                 releaseReadingLock();
-                errorHandlingCallback.onResult(result, t);
+                errHandlingCallback.onResult(result, t);
             }
         });
     }
@@ -203,9 +207,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public void close(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
-        SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
+        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (checkClosed()) {
-            errorHandlingCallback.onResult(null, null);
+            errHandlingCallback.onResult(null, null);
         } else if (!getReadingLock()) {
             callbackIsReadingException(callback);
         } else {
@@ -215,7 +219,7 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
                 }
             }
             discardCursor();
-            errorHandlingCallback.onResult(null, null);
+            errHandlingCallback.onResult(null, null);
         }
     }
 
