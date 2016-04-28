@@ -122,61 +122,82 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
             return;
         } else if (currentPosition == fileInfo.getLength()) {
             releaseReadingLock();
-            callback.onResult(-1, null);
+            errorHandlingCallback.onResult(-1, null);
             return;
         }
-
-        int amountToRead = dst.remaining();
-        if (fileInfo.getLength() < amountToRead) {
-            amountToRead = (int) fileInfo.getLength();
-        }
-        read(amountToRead, dst, errorHandlingCallback);
+        checkAndFetchResults(0, dst, new SingleResultCallback<Integer>() {
+            @Override
+            public void onResult(final Integer result, final Throwable t) {
+                releaseReadingLock();
+                errorHandlingCallback.onResult(result, t);
+            }
+        });
     }
 
-    private void read(final int amountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
+    private void checkAndFetchResults(final int amountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
         if (currentPosition == fileInfo.getLength() || dst.remaining() == 0) {
-            releaseReadingLock();
             callback.onResult(amountRead, null);
-            return;
-        }
-
-        boolean fetchBuffer = false;
-        if (buffer == null) {
-            fetchBuffer = true;
-        } else if (bufferOffset == buffer.length) {
-            chunkIndex += 1;
-            bufferOffset = 0;
-            fetchBuffer = true;
-        }
-
-        final RecursiveReadCallback recursiveCallback = new RecursiveReadCallback(amountRead, dst, callback);
-        if (fetchBuffer) {
-            getBuffer(chunkIndex, new SingleResultCallback<byte[]>() {
+        } else if (!resultsQueue.isEmpty()) {
+            processResults(amountRead, dst, callback);
+        } else if (cursor == null) {
+            chunksCollection.find(new Document("files_id", fileInfo.getId())
+                    .append("n", new Document("$gte", chunkIndex)))
+                    .batchSize(batchSize).sort(new Document("n", 1))
+                    .batchCursor(new SingleResultCallback<AsyncBatchCursor<Document>>() {
+                        @Override
+                        public void onResult(final AsyncBatchCursor<Document> result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                cursor = result;
+                                checkAndFetchResults(amountRead, dst, callback);
+                            }
+                        }
+                    });
+        } else {
+            cursor.next(new SingleResultCallback<List<Document>>() {
                 @Override
-                public void onResult(final byte[] result, final Throwable t) {
+                public void onResult(final List<Document> result, final Throwable t) {
                     if (t != null) {
-                        releaseReadingLock();
                         callback.onResult(null, t);
+                    } else if (result == null || result.isEmpty()) {
+                        callback.onResult(null, chunkNotFound(chunkIndex));
                     } else {
-                        buffer = result;
-                        readFromBuffer(dst, recursiveCallback);
+                        resultsQueue.addAll(result);
+                        if (batchSize == 1) {
+                            discardCursor();
+                        }
+                        processResults(amountRead, dst, callback);
                     }
                 }
             });
-        } else {
-            readFromBuffer(dst, recursiveCallback);
         }
     }
 
-    private void readFromBuffer(final ByteBuffer dst, final SingleResultCallback<Void> callback) {
-        int amountToCopy = dst.remaining();
-        if (amountToCopy > buffer.length - bufferOffset) {
-            amountToCopy = buffer.length - bufferOffset;
+    private void processResults(final int previousAmountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
+        try {
+            int amountRead = previousAmountRead;
+            while (currentPosition < fileInfo.getLength() && dst.remaining() > 0 && !resultsQueue.isEmpty()) {
+                if (buffer == null || bufferOffset == buffer.length) {
+                    buffer = getBufferFromChunk(resultsQueue.poll(), chunkIndex);
+                    bufferOffset = 0;
+                    chunkIndex += 1;
+                }
+
+                int amountToCopy = dst.remaining();
+                if (amountToCopy > buffer.length - bufferOffset) {
+                    amountToCopy = buffer.length - bufferOffset;
+                }
+                dst.put(buffer, bufferOffset, amountToCopy);
+                bufferOffset += amountToCopy;
+                currentPosition += amountToCopy;
+                amountRead += amountToCopy;
+            }
+
+            checkAndFetchResults(amountRead, dst, callback);
+        } catch (MongoGridFSException e) {
+            callback.onResult(null, e);
         }
-        dst.put(buffer, bufferOffset, amountToCopy);
-        bufferOffset += amountToCopy;
-        currentPosition += amountToCopy;
-        callback.onResult(null, null);
     }
 
     @Override
@@ -206,90 +227,32 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
         return hasInfo;
     }
 
-    private void getChunk(final int startChunkIndex, final SingleResultCallback<Document> callback) {
-        if (resultsQueue.isEmpty()) {
-            if (cursor == null) {
-                chunksCollection.find(new Document("files_id", fileInfo.getId())
-                        .append("n", new Document("$gte", startChunkIndex)))
-                        .batchSize(batchSize).sort(new Document("n", 1))
-                        .batchCursor(new SingleResultCallback<AsyncBatchCursor<Document>>() {
-                            @Override
-                            public void onResult(final AsyncBatchCursor<Document> result, final Throwable t) {
-                                if (t != null) {
-                                    callback.onResult(null, t);
-                                } else if (result == null) {
-                                    chunkNotFound(startChunkIndex, callback);
-                                } else {
-                                    cursor = result;
-                                    getChunk(startChunkIndex, callback);
-                                }
-                            }
-                        });
-            } else {
-                cursor.next(new SingleResultCallback<List<Document>>() {
-                    @Override
-                    public void onResult(final List<Document> result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else if (result == null || result.isEmpty()) {
-                            chunkNotFound(startChunkIndex, callback);
-                        } else {
-                            resultsQueue.addAll(result);
-                            if (batchSize == 1) {
-                                discardCursor();
-                            }
-                            getChunk(startChunkIndex, callback);
-                        }
-                    }
-                });
-            }
-        } else {
-            callback.onResult(resultsQueue.poll(), null);
-        }
+    private MongoGridFSException chunkNotFound(final int chunkIndex) {
+        return new MongoGridFSException(format("Could not find file chunk for files_id: %s at chunk index %s.", fileInfo.getId(),
+                chunkIndex));
     }
 
-    private <T> void chunkNotFound(final int startChunkIndex, final SingleResultCallback<T> callback) {
-        callback.onResult(null, new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",
-                fileInfo.getId(), startChunkIndex)));
-    }
-
-    private void getBufferFromChunk(final Document chunk, final int expectedChunkIndex, final SingleResultCallback<byte[]> callback) {
+    private byte[] getBufferFromChunk(final Document chunk, final int expectedChunkIndex) {
         if (chunk == null || chunk.getInteger("n") != expectedChunkIndex) {
-            chunkNotFound(expectedChunkIndex, callback);
-            return;
+            throw chunkNotFound(expectedChunkIndex);
         } else if (!(chunk.get("data") instanceof Binary)) {
-            callback.onResult(null, new MongoGridFSException("Unexpected data format for the chunk"));
-            return;
+            throw new MongoGridFSException("Unexpected data format for the chunk");
         }
+
         byte[] data = chunk.get("data", Binary.class).getData();
 
-        long expectedDataLength = 0;
-        if (expectedChunkIndex + 1 == numberOfChunks) {
-            expectedDataLength = fileInfo.getLength() - (expectedChunkIndex * (long) fileInfo.getChunkSize());
-        } else {
-            expectedDataLength = fileInfo.getChunkSize();
-        }
+        long expectedDataLength =
+                expectedChunkIndex + 1 == numberOfChunks
+                        ? fileInfo.getLength() - (expectedChunkIndex * (long) fileInfo.getChunkSize())
+                        : fileInfo.getChunkSize();
 
         if (data.length != expectedDataLength) {
-            callback.onResult(null, new MongoGridFSException(format("Chunk size data length is not the expected size. "
-                    + "The size was %s for file_id: %s chunk index %s it should be %s bytes.", data.length, fileInfo.getId(),
-                    expectedChunkIndex, expectedDataLength)));
-        } else {
-            callback.onResult(data, null);
+            throw new MongoGridFSException(format("Chunk size data length is not the expected size. "
+                            + "The size was %s for file_id: %s chunk index %s it should be %s bytes.", data.length, fileInfo.getId(),
+                    expectedChunkIndex, expectedDataLength));
         }
-    }
 
-    private void getBuffer(final int chunkIndexToFetch, final SingleResultCallback<byte[]> callback) {
-        getChunk(chunkIndexToFetch, new SingleResultCallback<Document>() {
-            @Override
-            public void onResult(final Document result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    getBufferFromChunk(result, chunkIndexToFetch, callback);
-                }
-            }
-        });
+        return data;
     }
 
     private <A> boolean tryGetReadingLock(final SingleResultCallback<A> callback) {
@@ -342,26 +305,5 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
 
     private <T> void callbackIsReadingException(final SingleResultCallback<T> callback) {
         callback.onResult(null, new MongoGridFSException("The AsyncInputStream does not support concurrent reading."));
-    }
-
-    private class RecursiveReadCallback implements SingleResultCallback<Void> {
-        private final int amountRead;
-        private final ByteBuffer dst;
-        private final SingleResultCallback<Integer> callback;
-
-        public RecursiveReadCallback(final int amountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
-            this.amountRead = amountRead;
-            this.dst = dst;
-            this.callback = callback;
-        }
-
-        @Override
-        public void onResult(final Void result, final Throwable t) {
-            if (t != null) {
-                callback.onResult(null, t);
-            } else {
-                read(amountRead, dst, callback);
-            }
-        }
     }
 }
