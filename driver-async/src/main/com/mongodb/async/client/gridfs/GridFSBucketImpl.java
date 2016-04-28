@@ -47,6 +47,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @SuppressWarnings("deprecation")
 final class GridFSBucketImpl implements GridFSBucket {
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024 * 4;
     private final String bucketName;
     private final int chunkSizeBytes;
     private final MongoCollection<GridFSFile> filesCollection;
@@ -321,7 +322,8 @@ final class GridFSBucketImpl implements GridFSBucket {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    readAndWriteOutputStream(destination, downloadStream, ByteBuffer.allocate(result.getChunkSize()), 0, callback);
+                    int bufferSize = DEFAULT_BUFFER_SIZE > result.getLength() ? (int) result.getLength() : DEFAULT_BUFFER_SIZE;
+                    readAndWriteOutputStream(destination, downloadStream, ByteBuffer.allocate(bufferSize), 0, callback);
                 }
             }
         });

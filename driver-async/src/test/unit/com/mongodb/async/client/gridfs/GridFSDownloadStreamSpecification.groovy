@@ -284,7 +284,6 @@ class GridFSDownloadStreamSpecification extends Specification {
 
         where:
         description                 | result    | error
-        'when there is no result'   | null      | null
         'when there is an error'    | null      | new MongoException('failure')
     }
 
