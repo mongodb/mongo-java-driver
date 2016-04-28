@@ -29,6 +29,8 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
 import org.bson.BsonValue;
@@ -46,6 +48,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 @SuppressWarnings("deprecation")
 final class GridFSBucketImpl implements GridFSBucket {
+    private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
     private static final int DEFAULT_CHUNKSIZE_BYTES = 255 * 1024;
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 1024 * 4;
     private final String bucketName;
@@ -149,7 +152,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("callback", callback);
         int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
         readAndWriteInputStream(source, openUploadStream(filename, options), ByteBuffer.allocate(chunkSize),
-                errorHandlingCallback(callback));
+                errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -163,7 +166,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("id", id);
         notNull("destination", destination);
         notNull("callback", callback);
-        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback));
+        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -177,7 +180,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("id", id);
         notNull("destination", destination);
         notNull("callback", callback);
-        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback));
+        downloadToAsyncOutputStream(openDownloadStream(id), destination, errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -205,7 +208,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("destination", destination);
         notNull("options", options);
         notNull("callback", callback);
-        downloadToAsyncOutputStream(openDownloadStreamByName(filename, options), destination, errorHandlingCallback(callback));
+        downloadToAsyncOutputStream(openDownloadStreamByName(filename, options), destination, errorHandlingCallback(callback, LOGGER));
     }
 
     @Override
@@ -223,24 +226,24 @@ final class GridFSBucketImpl implements GridFSBucket {
     public void delete(final ObjectId id, final SingleResultCallback<Void> callback) {
         notNull("id", id);
         notNull("callback", callback);
-        final SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         filesCollection.deleteOne(new BsonDocument("_id", new BsonObjectId(id)), new SingleResultCallback<DeleteResult>() {
             @Override
             public void onResult(final DeleteResult filesResult, final Throwable t) {
                 if (t != null) {
-                    errorHandlingCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     chunksCollection.deleteMany(new BsonDocument("files_id", new BsonObjectId(id)),
                             new SingleResultCallback<DeleteResult>() {
                                 @Override
                                 public void onResult(final DeleteResult chunksResult, final Throwable t) {
                                     if (t != null) {
-                                        errorHandlingCallback.onResult(null, t);
+                                        errHandlingCallback.onResult(null, t);
                                     } else if (filesResult.wasAcknowledged() && filesResult.getDeletedCount() == 0) {
-                                        errorHandlingCallback.onResult(null,
+                                        errHandlingCallback.onResult(null,
                                                 new MongoGridFSException(format("No file found with the ObjectId: %s", id)));
                                     } else {
-                                        errorHandlingCallback.onResult(null, null);
+                                        errHandlingCallback.onResult(null, null);
                                     }
                                 }
                             });
@@ -254,19 +257,19 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("id", id);
         notNull("newFilename", newFilename);
         notNull("callback", callback);
-        final SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         filesCollection.updateOne(new Document("_id", id), new Document("$set", new Document("filename", newFilename)),
                 new SingleResultCallback<UpdateResult>() {
 
                     @Override
                     public void onResult(final UpdateResult result, final Throwable t) {
                         if (t != null) {
-                            errorHandlingCallback.onResult(null, t);
+                            errHandlingCallback.onResult(null, t);
                         } else if (result.wasAcknowledged() && result.getMatchedCount() == 0) {
-                            errorHandlingCallback.onResult(null, new MongoGridFSException(format("No file found with the ObjectId: %s",
+                            errHandlingCallback.onResult(null, new MongoGridFSException(format("No file found with the ObjectId: %s",
                                     id)));
                         } else {
-                            errorHandlingCallback.onResult(null, null);
+                            errHandlingCallback.onResult(null, null);
                         }
                     }
                 });
@@ -275,14 +278,14 @@ final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public void drop(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
-        final SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         filesCollection.drop(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 if (t != null) {
-                    errorHandlingCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
-                    chunksCollection.drop(errorHandlingCallback);
+                    chunksCollection.drop(errHandlingCallback);
                 }
             }
         });

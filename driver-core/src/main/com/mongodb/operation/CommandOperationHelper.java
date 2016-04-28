@@ -39,6 +39,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 
 final class CommandOperationHelper {
@@ -248,8 +249,7 @@ final class CommandOperationHelper {
                                                           final CommandTransformer<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
         binding.getReadConnectionSource(new CommandProtocolExecutingCallback<D, T>(database, command, new NoOpFieldNameValidator(),
-                decoder, binding.getReadPreference(), transformer,
-                errorHandlingCallback(callback)));
+                decoder, binding.getReadPreference(), transformer, errorHandlingCallback(callback, LOGGER)));
     }
 
     static <T> void executeWrappedCommandProtocolAsync(final AsyncReadBinding binding,
@@ -327,8 +327,7 @@ final class CommandOperationHelper {
                                                           final CommandTransformer<D, T> transformer,
                                                           final SingleResultCallback<T> callback) {
         binding.getWriteConnectionSource(new CommandProtocolExecutingCallback<D, T>(database, command, fieldNameValidator, decoder,
-                primary(), transformer,
-                errorHandlingCallback(callback)));
+                primary(), transformer, errorHandlingCallback(callback, LOGGER)));
     }
 
     static void executeWrappedCommandProtocolAsync(final AsyncWriteBinding binding,

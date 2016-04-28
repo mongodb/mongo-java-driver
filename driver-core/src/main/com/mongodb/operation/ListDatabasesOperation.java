@@ -40,6 +40,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -112,12 +113,13 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding,  "admin", getCommand(),
                             CommandResultDocumentCodec.create(decoder, "databases"), connection, asyncTransformer(source, connection),
-                            releasingCallback(errorHandlingCallback(callback), connection));
+                            releasingCallback(errHandlingCallback, connection));
                 }
             }
         });

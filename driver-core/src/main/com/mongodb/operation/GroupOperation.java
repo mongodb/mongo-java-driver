@@ -39,6 +39,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -198,12 +199,13 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
                             CommandResultDocumentCodec.create(decoder, "retval"), connection, asyncTransformer(connection),
-                            releasingCallback(errorHandlingCallback(callback), connection));
+                            releasingCallback(errHandlingCallback, connection));
                 }
             }
         });

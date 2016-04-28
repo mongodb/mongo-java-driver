@@ -55,6 +55,8 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexesOperation;
@@ -86,6 +88,7 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
+    private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
@@ -342,7 +345,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                     public void onResult(final BulkWriteResult result, final Throwable t) {
                         callback.onResult(null, t);
                     }
-                }));
+                }, LOGGER));
     }
 
     @Override

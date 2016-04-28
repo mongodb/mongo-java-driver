@@ -49,6 +49,7 @@ import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.createEmptyAsyncBatchCursor;
 import static com.mongodb.operation.OperationHelper.createEmptyBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
@@ -160,10 +161,11 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
                                                                                                         source, connection);
                     if (serverIsAtLeastVersionThreeDotZero(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),

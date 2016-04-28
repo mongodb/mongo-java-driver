@@ -39,6 +39,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -224,13 +225,14 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
         withConnection(binding, new AsyncCallableWithConnection() {
                     @Override
                     public void call(final AsyncConnection connection, final Throwable t) {
+                        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                         if (t != null) {
-                            errorHandlingCallback(callback).onResult(null, t);
+                            errHandlingCallback.onResult(null, t);
                         } else {
                             executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
                                     asCommandDocument(connection.getDescription()),  CommandResultDocumentCodec.create(decoder, "value"),
                                     connection, FindAndModifyHelper.<T>transformer(),
-                                    releasingCallback(errorHandlingCallback(callback), connection));
+                                    releasingCallback(errHandlingCallback, connection));
                         }
                     }
                 });

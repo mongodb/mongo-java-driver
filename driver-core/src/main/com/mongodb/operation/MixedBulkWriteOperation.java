@@ -57,6 +57,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
 import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -194,18 +195,18 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
-        final SingleResultCallback<BulkWriteResult> wrappedCallback = errorHandlingCallback(callback);
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<BulkWriteResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    wrappedCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    releasingCallback(wrappedCallback, connection).onResult(null, getBypassDocumentValidationException());
+                    releasingCallback(errHandlingCallback, connection).onResult(null, getBypassDocumentValidationException());
                 } else {
                     Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
                     executeRunsAsync(runs, connection, new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
-                                                                                  writeConcern), wrappedCallback);
+                                                                                  writeConcern), errHandlingCallback);
                 }
             }
         });

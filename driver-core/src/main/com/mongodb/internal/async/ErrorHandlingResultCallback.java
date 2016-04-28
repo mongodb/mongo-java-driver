@@ -30,10 +30,6 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
     private final SingleResultCallback<T> wrapped;
     private final Logger logger;
 
-    public static <T> SingleResultCallback<T> errorHandlingCallback(final SingleResultCallback<T> callback) {
-        return errorHandlingCallback(callback, null);
-    }
-
     public static <T> SingleResultCallback<T> errorHandlingCallback(final SingleResultCallback<T> callback, final Logger logger) {
         if (callback instanceof ErrorHandlingResultCallback) {
             return callback;
@@ -44,17 +40,15 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
 
     ErrorHandlingResultCallback(final SingleResultCallback<T> wrapped, final Logger logger) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.logger = logger;
+        this.logger = notNull("logger", logger);
     }
 
     @Override
     public void onResult(final T result, final Throwable t) {
         try {
             wrapped.onResult(result, t);
-        } catch (Exception e) {
-            if (logger != null) {
-                logger.warn("Callback onResult call produced an error", e);
-            }
+        } catch (Throwable e) {
+            logger.warn("Callback onResult call produced an error", e);
         }
     }
 

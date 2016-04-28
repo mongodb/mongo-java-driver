@@ -64,6 +64,7 @@ import static com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -517,19 +518,21 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                         executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
                                                            wrapInExplainIfNecessary(asCommandDocument()),
                                                            CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                            connection, asyncTransformer(source, connection),
-                                                           releasingCallback(exceptionTransformingCallback(errorHandlingCallback(callback)),
+                                                           releasingCallback(exceptionTransformingCallback(errHandlingCallback),
                                                                              source, connection));
                     } else {
-                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errorHandlingCallback(callback),
-                                                                                                            source, connection);
+                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
+
+                                source, connection);
                         checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
                             @Override
                             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
@@ -638,8 +641,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                 withConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource connectionSource, final AsyncConnection connection, final Throwable t) {
+                        SingleResultCallback<BsonDocument> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                         if (t != null) {
-                            callback.onResult(null, t);
+                            errHandlingCallback.onResult(null, t);
                         } else {
                             AsyncReadBinding singleConnectionReadBinding =
                             new AsyncSingleConnectionReadBinding(binding.getReadPreference(), connectionSource.getServerDescription(),
@@ -650,13 +654,13 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                                        new BsonDocument("explain", asCommandDocument()),
                                                                        new BsonDocumentCodec())
                                 .executeAsync(singleConnectionReadBinding,
-                                              releasingCallback(exceptionTransformingCallback(errorHandlingCallback(callback)),
+                                              releasingCallback(exceptionTransformingCallback(errHandlingCallback),
                                                                 singleConnectionReadBinding, connectionSource, connection));
                             } else {
                                 createExplainableQueryOperation()
                                 .executeAsync(singleConnectionReadBinding,
-                                              releasingCallback(errorHandlingCallback(new ExplainResultCallback(callback)),
-                                                                singleConnectionReadBinding, connectionSource, connection));
+                                              releasingCallback(new ExplainResultCallback(errHandlingCallback),
+                                                      singleConnectionReadBinding, connectionSource, connection));
                             }
                         }
                     }

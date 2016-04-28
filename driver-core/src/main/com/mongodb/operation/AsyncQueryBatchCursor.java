@@ -38,6 +38,7 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
+import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.QueryHelper.translateCommandException;
@@ -237,7 +238,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
         public CommandResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
-            this.callback = errorHandlingCallback(callback);
+            this.callback = errorHandlingCallback(callback, LOGGER);
         }
 
         @Override
@@ -263,7 +264,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
         public QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
-            this.callback = errorHandlingCallback(callback);
+            this.callback = errorHandlingCallback(callback, LOGGER);
         }
 
         @Override

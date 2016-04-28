@@ -21,6 +21,8 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -36,6 +38,7 @@ import static com.mongodb.internal.HexUtils.toHex;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
+    private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private final ObjectId fileId;
@@ -84,15 +87,15 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     @Override
     public void abort(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
-        final SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
-        if (!takeWritingLock(errorHandlingCallback)) {
+        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        if (!takeWritingLock(errHandlingCallback)) {
             return;
         }
         chunksCollection.deleteMany(new Document("files_id", fileId), new SingleResultCallback<DeleteResult>() {
             @Override
             public void onResult(final DeleteResult result, final Throwable t) {
                 releaseWritingLock();
-                errorHandlingCallback.onResult(null, t);
+                errHandlingCallback.onResult(null, t);
             }
         });
     }
@@ -101,14 +104,14 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     public void write(final ByteBuffer src, final SingleResultCallback<Integer> callback) {
         notNull("src", src);
         notNull("callback", callback);
-        final SingleResultCallback<Integer> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Integer> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         boolean checkIndexes = false;
         synchronized (closeAndWritingLock) {
             checkIndexes = !checkedIndexes;
         }
 
         if (checkIndexes) {
-            if (!takeWritingLock(errorHandlingCallback)) {
+            if (!takeWritingLock(errHandlingCallback)) {
                 return;
             }
             indexCheck.checkAndCreateIndex(new SingleResultCallback<Void>() {
@@ -119,31 +122,31 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     }
                     releaseWritingLock();
                     if (t != null) {
-                        errorHandlingCallback.onResult(null, t);
+                        errHandlingCallback.onResult(null, t);
                     } else {
-                        write(src, errorHandlingCallback);
+                        write(src, errHandlingCallback);
                     }
                 }
             });
         } else {
-            write(src.remaining() == 0 ? -1 : src.remaining(), src, errorHandlingCallback);
+            write(src.remaining() == 0 ? -1 : src.remaining(), src, errHandlingCallback);
         }
     }
 
     @Override
     public void close(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
-        final SingleResultCallback<Void> errorHandlingCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         boolean alreadyClosed = false;
         synchronized (closeAndWritingLock) {
             alreadyClosed = closed;
             closed = true;
         }
         if (alreadyClosed) {
-            errorHandlingCallback.onResult(null, null);
+            errHandlingCallback.onResult(null, null);
             return;
         } else if (!getAndSetWritingLock()) {
-            callbackIsWritingException(errorHandlingCallback);
+            callbackIsWritingException(errHandlingCallback);
             return;
         }
         writeChunk(new SingleResultCallback<Void>() {
@@ -151,7 +154,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
             public void onResult(final Void result, final Throwable t) {
                 if (t != null) {
                     releaseWritingLock();
-                    errorHandlingCallback.onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     GridFSFile gridFSFile = new GridFSFile(new BsonObjectId(fileId), filename, lengthInBytes, chunkSizeBytes, new Date(),
                             toHex(md5.digest()), metadata);
@@ -161,7 +164,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                         public void onResult(final Void result, final Throwable t) {
                             buffer = null;
                             releaseWritingLock();
-                            errorHandlingCallback.onResult(result, t);
+                            errHandlingCallback.onResult(result, t);
                         }
                     });
                 }
@@ -207,13 +210,13 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         }
     }
 
-    private <T> boolean takeWritingLock(final SingleResultCallback<T> errorHandlingCallback) {
+    private <T> boolean takeWritingLock(final SingleResultCallback<T> errHandlingCallback) {
         if (checkClosed()) {
-            callbackClosedException(errorHandlingCallback);
+            callbackClosedException(errHandlingCallback);
             return false;
         } else if (!getAndSetWritingLock()) {
             releaseWritingLock();
-            callbackIsWritingException(errorHandlingCallback);
+            callbackIsWritingException(errHandlingCallback);
             return false;
         }
         return true;
