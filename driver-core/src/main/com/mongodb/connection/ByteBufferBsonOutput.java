@@ -138,11 +138,15 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     public int pipe(final OutputStream out) throws IOException {
         ensureOpen();
 
+        byte[] tmp = new byte[INITIAL_BUFFER_SIZE];
+
         int total = 0;
         for (final ByteBuf cur : getByteBuffers()) {
             ByteBuf dup = cur.duplicate();
             while (dup.hasRemaining()) {
-                out.write(dup.get());
+                int numBytesToCopy = Math.min(dup.remaining(), tmp.length);
+                dup.get(tmp, 0, numBytesToCopy);
+                out.write(tmp, 0, numBytesToCopy);
             }
             total += dup.limit();
         }
