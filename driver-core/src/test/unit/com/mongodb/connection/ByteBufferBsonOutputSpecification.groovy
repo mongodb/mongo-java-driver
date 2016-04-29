@@ -274,7 +274,7 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.writeInt32(1023, 0x1020304)
 
         then:
-        getBytes(bsonOutput)[1023..1026] == [4, 3, 2, 1] as byte[]
+        getBytes(bsonOutput)[1023..1026] as byte[] == [4, 3, 2, 1] as byte[]
         bsonOutput.position == 1032
         bsonOutput.size == 1032
     }
@@ -322,8 +322,8 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.writeInt32(0x1020304)
 
         then:
-        getBytes(bsonOutput)[0..1022] == bytes
-        getBytes(bsonOutput)[1023..1026] == [4, 3, 2, 1] as byte[]
+        getBytes(bsonOutput)[0..1022] as byte[] == bytes
+        getBytes(bsonOutput)[1023..1026] as byte[] == [4, 3, 2, 1] as byte[]
         bsonOutput.position == 1027
         bsonOutput.size == 1027
     }
