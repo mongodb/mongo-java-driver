@@ -39,6 +39,7 @@ import java.security.SecureRandom
 import static GridFSTestHelper.run
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.async.client.Fixture.getMongoClient
+import static com.mongodb.async.client.gridfs.GridFSTestHelper.runSlow
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 import static com.mongodb.client.model.Filters.eq
@@ -134,7 +135,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         ObjectId fileId
 
         when:
-        fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
+        fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
 
         then:
         run(filesCollection.&count) == 1
@@ -143,7 +144,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         when:
         def outStream = new ByteArrayOutputStream();
         def asyncOutputStream = toAsyncOutputStream(outStream);
-        run(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
+        runSlow(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
 
         then:
         outStream.toByteArray() == contentBytes
@@ -160,7 +161,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         ObjectId fileId
 
         when:
-        fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
+        fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
 
         then:
         run(filesCollection.&count) == 1
@@ -169,7 +170,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         when:
         def outStream = new ByteArrayOutputStream();
         def asyncOutputStream = toAsyncOutputStream(outStream);
-        run(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
+        runSlow(gridFSBucket.&downloadToStream, fileId, asyncOutputStream)
 
         then:
         outStream.toByteArray() == contentBytes
