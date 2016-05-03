@@ -28,10 +28,18 @@ import static java.util.concurrent.TimeUnit.SECONDS
 class GridFSTestHelper {
 
     static run(operation, ... args) {
+        runOp(operation, 60, *args)
+    }
+
+    static runSlow(operation, ... args) {
+        runOp(operation, 180, *args)
+    }
+
+    static runOp(operation, timeout, ... args) {
         FutureResultCallback futureResultCallback = new FutureResultCallback()
         List opArgs = (args != null) ? args : []
         operation.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
+        futureResultCallback.get(timeout, SECONDS)
     }
 
     static class TestAsynchronousByteChannel implements AsynchronousByteChannel, Closeable {
