@@ -414,6 +414,11 @@ public class JsonWriter extends AbstractBsonWriter {
         }
     }
 
+    @Override
+    protected boolean supportsArrayAsInitial() {
+        return true;
+    }
+
     private void writeNameHelper(final String name) throws IOException {
         switch (getContext().getContextType()) {
             case ARRAY:

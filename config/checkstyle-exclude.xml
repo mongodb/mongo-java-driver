@@ -63,6 +63,7 @@
     <suppress checks="ConstantName" files="ReflectionDBObject"/>
 
     <suppress checks="JavadocMethod" files="BasicDBObject"/>
+    <suppress checks="JavadocMethod" files="BasicDBList"/>
 
     <suppress checks="MethodName" files="BasicBSONCallback"/>
     <suppress checks="MethodName" files="BasicBSONEncoder"/>
