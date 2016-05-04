@@ -306,6 +306,33 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testNumberInt() {
+        String json = "NumberInt(123)";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.INT32, bsonReader.readBsonType());
+        assertEquals(123, bsonReader.readInt32());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testNumberIntExtendedJson() {
+        String json = "{\"$numberInt\":\"123\"}";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.INT32, bsonReader.readBsonType());
+        assertEquals(123, bsonReader.readInt32());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testNumberIntWithNew() {
+        String json = "new NumberInt(123)";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.INT32, bsonReader.readBsonType());
+        assertEquals(123, bsonReader.readInt32());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
     public void testNumberLong() {
         String json = "NumberLong(123)";
         bsonReader = new JsonReader(json);

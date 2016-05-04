@@ -189,6 +189,9 @@ public class JsonReader extends AbstractBsonReader {
                 } else if ("ISODate".equals(value)) {
                     setCurrentBsonType(BsonType.DATE_TIME);
                     currentValue = visitISODateTimeConstructor();
+                } else if ("NumberInt".equals(value)) {
+                    setCurrentBsonType(BsonType.INT32);
+                    currentValue = visitNumberIntConstructor();
                 } else if ("NumberLong".equals(value)) {
                     setCurrentBsonType(BsonType.INT64);
                     currentValue = visitNumberLongConstructor();
@@ -527,6 +530,9 @@ public class JsonReader extends AbstractBsonReader {
         } else if ("ISODate".equals(value)) {
             currentValue = visitISODateTimeConstructor();
             setCurrentBsonType(BsonType.DATE_TIME);
+        } else if ("NumberInt".equals(value)) {
+            setCurrentBsonType(BsonType.INT32);
+            currentValue = visitNumberIntConstructor();
         } else if ("NumberLong".equals(value)) {
             currentValue = visitNumberLongConstructor();
             setCurrentBsonType(BsonType.INT64);
@@ -598,6 +604,10 @@ public class JsonReader extends AbstractBsonReader {
             } else if ("$undefined".equals(value)) {
                 currentValue = visitUndefinedExtendedJson();
                 setCurrentBsonType(BsonType.UNDEFINED);
+                return;
+            } else if ("$numberInt".equals(value)) {
+                currentValue = visitNumberIntExtendedJson();
+                setCurrentBsonType(BsonType.INT32);
                 return;
             } else if ("$numberLong".equals(value)) {
                 currentValue = visitNumberLongExtendedJson();
@@ -709,6 +719,21 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken(")");
         return new BsonDbPointer(namespaceToken.getValue(String.class), new ObjectId(idToken.getValue(String.class)));
+    }
+
+    private int visitNumberIntConstructor() {
+        verifyToken("(");
+        JsonToken valueToken = popToken();
+        int value;
+        if (valueToken.getType() == JsonTokenType.INT32) {
+            value = valueToken.getValue(Integer.class);
+        } else if (valueToken.getType() == JsonTokenType.STRING) {
+            value = Integer.parseInt(valueToken.getValue(String.class));
+        } else {
+            throw new JsonParseException("JSON reader expected an integer or a string but found '%s'.", valueToken.getValue());
+        }
+        verifyToken(")");
+        return value;
     }
 
     private long visitNumberLongConstructor() {
@@ -1029,6 +1054,16 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken("}");
         return new BsonUndefined();
+    }
+
+    private Integer visitNumberIntExtendedJson() {
+        verifyToken(":");
+        JsonToken nameToken = popToken();
+        if (nameToken.getType() != JsonTokenType.STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
+        }
+        verifyToken("}");
+        return nameToken.getValue(Integer.class);
     }
 
     private Long visitNumberLongExtendedJson() {
