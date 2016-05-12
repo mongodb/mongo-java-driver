@@ -143,9 +143,11 @@ buildvariants:
     <<: *mongo_url_ubuntu1404 # sets ${mongo_url_prefix}
     <<: *mongo_orchestration_unix # sets start_topology and start_mongo_orchestration
   run_on:
-    - ubuntu1404-driversoffsite
+    - ubuntu1404-test
   tasks:
   - name: compileAndAnalyze
+    run_on:
+    - ubuntu1404-build
   - name: test
-  depends_on:
+    depends_on:
      - name: compileAndAnalyze
