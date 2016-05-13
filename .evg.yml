@@ -73,6 +73,10 @@ functions:
         ${start_topology}
         ./gradlew --stacktrace --info test
 
+  "attach junit results" :
+    command: attach.xunit_results
+    params:
+      file: ./mongo-java-driver/*/build/test-results/TEST-*.xml
 
 #######################################
 #               Tasks                 #
@@ -100,6 +104,7 @@ tasks:
         - func: "set version latest"
         - func: "fetch mongodb"
         - func: "run tests"
+        - func: "attach junit results"
 
 scripts:
   ## Scripts that are shared between buildvariants
