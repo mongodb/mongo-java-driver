@@ -144,7 +144,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value of the given key as an Integer.
      *
      * @param key the key
-     * @return the value as an integer, which may be null
+     * @return the value as an Integer, which may be null
      * @throws java.lang.ClassCastException if the value is not an integer
      */
     public Integer getInteger(final Object key) {
@@ -156,7 +156,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      *
      * @param key          the key
      * @param defaultValue what to return if the value is null
-     * @return the value as an integer, which may be null
+     * @return the value as an integer
      * @throws java.lang.ClassCastException if the value is not an integer
      */
     public int getInteger(final Object key, final int defaultValue) {
@@ -168,22 +168,47 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value of the given key as a Long.
      *
      * @param key the key
-     * @return the value as a long, which may be null
-     * @throws java.lang.ClassCastException if the value is not an long
+     * @return the value as a Long, which may be null
+     * @throws java.lang.ClassCastException if the value is not a long
      */
     public Long getLong(final Object key) {
         return (Long) get(key);
     }
 
     /**
+     * Gets the value of the given key as a primitive long.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as a long
+     * @throws java.lang.ClassCastException if the value is not a long
+     */
+    public long getLong(final Object key, final long defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Long) value;
+    }
+
+    /**
      * Gets the value of the given key as a Double.
      *
      * @param key the key
-     * @return the value as a double, which may be null
-     * @throws java.lang.ClassCastException if the value is not an double
+     * @return the value as a Double, which may be null
+     * @throws java.lang.ClassCastException if the value is not a double
      */
     public Double getDouble(final Object key) {
         return (Double) get(key);
+    }
+
+    /**
+     * Gets the value of the given key as a primitive double.
+     *
+     * @param key the key
+     * @return the value as a double
+     * @throws java.lang.ClassCastException if the value is not a double
+     */
+    public Double getDouble(final Object key, final double defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Double) value;
     }
 
     /**
@@ -201,7 +226,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value of the given key as a Boolean.
      *
      * @param key the key
-     * @return the value as a double, which may be null
+     * @return the value as a Boolean, which may be null
      * @throws java.lang.ClassCastException if the value is not an double
      */
     public Boolean getBoolean(final Object key) {
@@ -213,8 +238,8 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      *
      * @param key          the key
      * @param defaultValue what to return if the value is null
-     * @return the value as a double, which may be null
-     * @throws java.lang.ClassCastException if the value is not an double
+     * @return the value as a boolean
+     * @throws java.lang.ClassCastException if the value is not a boolean
      */
     public boolean getBoolean(final Object key, final boolean defaultValue) {
         Object value = get(key);
@@ -241,6 +266,17 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     public Date getDate(final Object key) {
         return (Date) get(key);
+    }
+
+    /**
+     * Gets the value of the given key as a nested document.
+     *
+     * @param key the key
+     * @return the value as a Document, which may be null
+     * @throws java.lang.ClassCastException if the value is not a Document
+     */
+    public Document getDocument(final Object key) {
+        return (Document) get(key);
     }
 
     /**
