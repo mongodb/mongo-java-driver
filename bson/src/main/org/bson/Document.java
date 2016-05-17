@@ -206,7 +206,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * @return the value as a double
      * @throws java.lang.ClassCastException if the value is not a double
      */
-    public Double getDouble(final Object key, final double defaultValue) {
+    public double getDouble(final Object key, final double defaultValue) {
         Object value = get(key);
         return value == null ? defaultValue : (Double) value;
     }
