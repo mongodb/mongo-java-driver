@@ -21,7 +21,7 @@ functions:
       params:
           directory: "mongo-java-driver"
 
-  "set topology standalone no auth" :
+  "set topology standalone" :
     command: expansions.update
     params:
       updates:
@@ -29,6 +29,37 @@ functions:
           value: "basic.json"
         - key: "topology_type"
           value: "server"
+        - key: "mongodb_test_uri"
+          value: "mongodb://localhost:27017"
+        - key: "rs_enabled"
+          value: "false"
+
+
+  "set topology replica set" :
+    command: expansions.update
+    params:
+      updates:
+        - key: "orchestration_file"
+          value: "basic.json"
+        - key: "topology_type"
+          value: "replica_set"
+        - key: "mongodb_test_uri"
+          value: "mongodb://localhost:27017,localhost:27018"
+        - key: "rs_enabled"
+          value: "true"
+
+  "set topology sharded" :
+    command: expansions.update
+    params:
+      updates:
+        - key: "orchestration_file"
+          value: "basic.json"
+        - key: "topology_type"
+          value: "sharded_cluster"
+        - key: "mongodb_test_uri"
+          value: "mongodb://localhost:27017"
+        - key: "rs_enabled"
+          value: "false"
 
   "set version latest" :
     command: expansions.update
@@ -67,11 +98,15 @@ functions:
         #
         curl --location "https://raw.githubusercontent.com/mongodb/mongo-c-driver/master/orchestration_configs/${topology_type}s/${orchestration_file}" > "$ORCHESTRATION_FILE"
         export ORCHESTRATION_URL="http://localhost:8889/v1/${topology_type}s"
-        export MONGO_ORCHESTRATION_HOME=/tmp/mongo-java-test-certificates
+        export MONGO_ORCHESTRATION_HOME=/tmp/orchestration-home
+
+        if [ ! -d /tmp/orchestration-home ]; then
+           mkdir /tmp/orchestration-home
+        fi
 
         ${start_mongo_orchestration}
         ${start_topology}
-        ./gradlew --stacktrace --info test
+        ./gradlew -Dorg.mongodb.test.uri=${mongodb_test_uri} -Prs.enabled=${rs_enabled} --stacktrace --info test
 
   "attach junit results" :
     command: attach.xunit_results
@@ -94,13 +129,35 @@ tasks:
               working_dir: "mongo-java-driver"
               script: |
                   ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses
-    - name: test
+    - name: test-standalone
       commands:
         - func: "fetch source"
         - command: git.apply_patch
           params:
               directory: "mongo-java-driver"
-        - func: "set topology standalone no auth"
+        - func: "set topology standalone"
+        - func: "set version latest"
+        - func: "fetch mongodb"
+        - func: "run tests"
+        - func: "attach junit results"
+    - name: test-replica-set
+      commands:
+        - func: "fetch source"
+        - command: git.apply_patch
+          params:
+              directory: "mongo-java-driver"
+        - func: "set topology replica set"
+        - func: "set version latest"
+        - func: "fetch mongodb"
+        - func: "run tests"
+        - func: "attach junit results"
+    - name: test-sharded
+      commands:
+        - func: "fetch source"
+        - command: git.apply_patch
+          params:
+              directory: "mongo-java-driver"
+        - func: "set topology sharded"
         - func: "set version latest"
         - func: "fetch mongodb"
         - func: "run tests"
@@ -122,9 +179,6 @@ scripts:
           fi
           df -h
           ls -la
-          if [ ! -d /tmp/mongo-java-test-certificates ]; then
-             mkdir /tmp/mongo-java-test-certificates
-          fi
           echo "Starting Mongo Orchestration..."
           echo "{ \"releases\": { \"default\": \"`pwd`/mongodb/bin\" } }" > orchestration.config
           TMPDIR=/data/db mongo-orchestration -f orchestration.config -e default start --socket-timeout-ms=60000 --bind=127.0.0.1  --enable-majority-read-concern --pidfile $pidfile
@@ -153,6 +207,12 @@ buildvariants:
   - name: compileAndAnalyze
     run_on:
     - ubuntu1404-build
-  - name: test
+  - name: test-standalone
+    depends_on:
+     - name: compileAndAnalyze
+  - name: test-replica-set
+    depends_on:
+     - name: compileAndAnalyze
+  - name: test-sharded
     depends_on:
      - name: compileAndAnalyze
