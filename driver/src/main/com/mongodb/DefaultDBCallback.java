@@ -68,7 +68,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         if (!(document instanceof BasicBSONList)) {
             Iterator<String> iterator = document.keySet().iterator();
             if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
-                _put(name, new DBRef((String) document.get("$ref"), document.get("$id")));
+                _put(name, new DBRef((String) document.get("$db"), (String) document.get("$ref"), document.get("$id")));
             }
         }
         return document;

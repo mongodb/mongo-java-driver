@@ -65,6 +65,22 @@ class DBRefCodecSpecification extends Specification {
         writer.document == new BsonDocument('ref', new BsonDocument('$ref', new BsonString('foo')).append('$id', new BsonInt32(1)))
     }
 
+    def 'codec should encode DBRef with database name'() {
+        given:
+        def ref = new DBRef('mydb', 'foo', 1)
+        def writer = new BsonDocumentWriter(new BsonDocument())
+
+        when:
+        writer.writeStartDocument()
+        writer.writeName('ref')
+        new DBRefCodec(fromProviders([new ValueCodecProvider()])).encode(writer, ref, EncoderContext.builder().build())
+        writer.writeEndDocument()
+
+        then:
+        writer.document == new BsonDocument('ref',
+                new BsonDocument('$ref', new BsonString('foo')).append('$id', new BsonInt32(1)).append('$db', new BsonString('mydb')))
+    }
+
     def 'codec should throw UnsupportedOperationException on decode'() {
         when:
         new DBRefCodec(fromProviders([new ValueCodecProvider()])).decode(new BsonDocumentReader(new BsonDocument()),

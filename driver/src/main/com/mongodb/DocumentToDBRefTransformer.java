@@ -25,7 +25,7 @@ final class DocumentToDBRefTransformer implements Transformer {
         if (value instanceof Document) {
             Document document = (Document) value;
             if (document.containsKey("$id") && document.containsKey("$ref")) {
-                return new DBRef((String) document.get("$ref"), document.get("$id"));
+                return new DBRef((String) document.get("$db"), (String) document.get("$ref"), document.get("$id"));
             }
         }
         return value;

@@ -45,7 +45,7 @@ class LazyDBObjectSpecification extends Specification {
         defaultDBDecoder = new DefaultDBDecoder();
     }
 
-    def 'should understand DBRefs'() {
+    def 'should lazily decode a DBRef'() {
         given:
         byte[] bytes = [
                 44, 0, 0, 0, 3, 102, 0, 36, 0, 0, 0, 2, 36, 114, 101, 102,
@@ -59,6 +59,23 @@ class LazyDBObjectSpecification extends Specification {
         then:
         document['f'] instanceof DBRef
         document['f'] == new DBRef('a.b', new ObjectId('123456789012345678901234'))
+    }
+
+    def 'should lazily decode a DBRef with $db'() {
+        given:
+        byte[] bytes = [
+                58, 0, 0, 0, 3, 102, 0, 50, 0, 0, 0, 2, 36, 114, 101, 102,
+                0, 4, 0, 0, 0, 97, 46, 98, 0, 7, 36, 105, 100, 0, 18, 52,
+                86, 120, -112, 18, 52, 86, 120, -112, 18, 52,
+                2, 36, 100, 98, 0, 5, 0, 0, 0, 109, 121, 100, 98, 0, 0, 0
+        ]
+
+        when:
+        LazyDBObject document = new LazyDBObject(bytes, new LazyDBCallback(null))
+
+        then:
+        document['f'] instanceof DBRef
+        document['f'] == new DBRef('mydb', 'a.b', new ObjectId('123456789012345678901234'))
     }
 
     def testDecodeAllTypes() throws IOException {
