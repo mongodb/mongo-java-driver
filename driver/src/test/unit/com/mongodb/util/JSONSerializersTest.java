@@ -123,6 +123,11 @@ public class JSONSerializersTest {
         serializer.serialize(dbref, buf);
         assertEquals("{ \"$ref\" : \"test.test\" , \"$id\" : \"4d83ab59a39562db9c1ae2af\"}", buf.toString());
 
+        DBRef dbrefWithDatabaseName = new com.mongodb.DBRef("mydb", "test.test", "4d83ab59a39562db9c1ae2af");
+        buf = new StringBuilder();
+        serializer.serialize(dbrefWithDatabaseName, buf);
+        assertEquals("{ \"$ref\" : \"test.test\" , \"$id\" : \"4d83ab59a39562db9c1ae2af\" , \"$db\" : \"mydb\"}", buf.toString());
+
         // test  ITERABLE
         BasicBSONList testList = new BasicBSONList();
         testList.add(new BasicDBObject("key1", "val1"));

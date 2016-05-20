@@ -166,7 +166,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testDBRefEncodingAndDecoding() {
         // given
-        Document doc = new Document("_id", 1).append("ref", new DBRef("foo", 5));
+        Document doc = new Document("_id", 1)
+                               .append("ref", new DBRef("foo", 5))
+                               .append("refWithDB", new DBRef("db", "foo", 5));
+
 
         // when
         collection.insertOne(doc);

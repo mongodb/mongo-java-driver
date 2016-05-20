@@ -50,6 +50,9 @@ public class DBRefCodec implements Codec<DBRef> {
         writer.writeName("$id");
         Codec codec = registry.get(value.getId().getClass());
         codec.encode(writer, value.getId(), encoderContext);
+        if (value.getDatabaseName() != null) {
+            writer.writeString("$db", value.getDatabaseName());
+        }
         writer.writeEndDocument();
     }
 

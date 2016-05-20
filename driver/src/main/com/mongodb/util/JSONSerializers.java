@@ -268,6 +268,9 @@ public class JSONSerializers {
             BasicDBObject temp = new BasicDBObject();
             temp.put("$ref", ref.getCollectionName());
             temp.put("$id", ref.getId());
+            if (ref.getDatabaseName() != null) {
+                temp.put("$db", ref.getDatabaseName());
+            }
             serializer.serialize(temp, buf);
         }
 

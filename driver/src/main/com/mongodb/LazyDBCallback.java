@@ -40,7 +40,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
         LazyDBObject document = new LazyDBObject(bytes, offset, this);
         Iterator<String> iterator = document.keySet().iterator();
         if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
-            return new DBRef((String) document.get("$ref"), document.get("$id"));
+            return new DBRef((String) document.get("$db"), (String) document.get("$ref"), document.get("$id"));
         }
         return document;
     }
