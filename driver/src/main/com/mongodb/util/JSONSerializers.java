@@ -101,7 +101,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(Map.class, new MapSerializer(serializer));
         serializer.addObjectSerializer(MaxKey.class, new MaxKeySerializer(serializer));
         serializer.addObjectSerializer(MinKey.class, new MinKeySerializer(serializer));
-        serializer.addObjectSerializer(Number.class, new ToStringSerializer());
+        serializer.addObjectSerializer(Number.class, new NumberSerializer());
         serializer.addObjectSerializer(ObjectId.class, new ObjectIdSerializer(serializer));
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
@@ -157,6 +157,17 @@ public class JSONSerializers {
         }
 
     }
+
+	private static class NumberSerializer extends AbstractObjectSerializer {
+		@Override
+		public void serialize(final Object obj, final StringBuilder buf) {
+			if (obj.equals(Float.NaN) || obj.equals(Double.NaN)) {
+				buf.append("\"NaN\"");
+			} else {
+				buf.append(obj.toString());
+			}
+		}
+	}
 
     private static class LegacyBSONTimestampSerializer extends CompoundObjectSerializer {
 

@@ -63,6 +63,7 @@ public class JSONTest {
         assertEquals("{ \"x\" : 5.0}", JSON.serialize(JSON.parse("{'x' : 5. }")));
         assertEquals("{ \"x\" : 50.0}", JSON.serialize(JSON.parse("{'x' : 5.0e+1 }")));
         assertEquals("{ \"x\" : 0.5}", JSON.serialize(JSON.parse("{'x' : 5.0E-1 }")));
+        assertEquals("{ \"x\" : \"NaN\"}", JSON.serialize(JSON.parse("{'x' : NaN }")));
     }
 
     @Test
