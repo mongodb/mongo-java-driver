@@ -223,6 +223,12 @@ class ByteBufBsonDocumentSpecification extends Specification {
         document.toJson() == rawDocument.toJson()
     }
 
+    def 'toJson should be callable multiple times'() {
+        expect:
+        rawDocument.toJson()
+        rawDocument.toJson()
+    }
+
     def 'toJson should respect JsonWriteSettings'() {
         given:
         def settings = new JsonWriterSettings(JsonMode.SHELL);
