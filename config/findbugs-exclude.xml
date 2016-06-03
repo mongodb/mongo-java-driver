@@ -99,4 +99,9 @@
         <Bug pattern="RANGE_ARRAY_INDEX"/>
     </Match>
 
+    <Match>
+        <Class name="~com.mongodb.connection.ByteBufBsonDocument.*"/>
+        <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
+    </Match>
+
 </FindBugsFilter>
