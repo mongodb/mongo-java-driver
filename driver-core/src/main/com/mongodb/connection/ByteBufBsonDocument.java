@@ -122,30 +122,34 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
         return findInDocument(new Finder<Boolean>() {
             @Override
             public Boolean find(final BsonReader bsonReader) {
-                return bsonReader.getCurrentBsonType() == BsonType.END_OF_DOCUMENT;
+                return false;
             }
-        }, true);
+
+            @Override
+            public Boolean notFound() {
+                return true;
+            }
+        });
     }
 
     @Override
     public int size() {
-        int size = 0;
-        final ByteBuf duplicateByteBuf = byteBuf.duplicate();
-        BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
-        try {
-            bsonReader.readStartDocument();
-            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<Integer>() {
+            private int size;
+
+            @Override
+            public Integer find(final BsonReader bsonReader) {
                 size++;
                 bsonReader.readName();
                 bsonReader.skipValue();
+                return null;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            duplicateByteBuf.release();
-            bsonReader.close();
-        }
 
-        return size;
+            @Override
+            public Integer notFound() {
+                return size;
+            }
+        });
     }
 
     @Override
@@ -178,7 +182,12 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
                 bsonReader.skipValue();
                 return null;
             }
-        }, false);
+
+            @Override
+            public Boolean notFound() {
+                return false;
+            }
+        });
     }
 
     @Override
@@ -192,7 +201,12 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
                 }
                 return null;
             }
-        }, false);
+
+            @Override
+            public Boolean notFound() {
+                return false;
+            }
+        });
     }
 
     @Override
@@ -210,7 +224,12 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
                 bsonReader.skipValue();
                 return null;
             }
-        }, null);
+
+            @Override
+            public BsonValue notFound() {
+                return null;
+            }
+        });
     }
 
     @Override
@@ -244,14 +263,20 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
             public String find(final BsonReader bsonReader) {
                 return bsonReader.readName();
             }
-        }, null);
+
+            @Override
+            public String notFound() {
+                return null;
+            }
+        });
     }
 
     private interface Finder<T> {
         T find(BsonReader bsonReader);
+        T notFound();
     }
 
-    private <T> T findInDocument(Finder<T> finder, T defaultValueIfNotFound) {
+    private <T> T findInDocument(final Finder<T> finder) {
         ByteBuf duplicateByteBuf = byteBuf.duplicate();
         BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
         try {
@@ -268,7 +293,7 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
             bsonReader.close();
         }
 
-        return defaultValueIfNotFound;
+        return finder.notFound();
     }
 
     @Override

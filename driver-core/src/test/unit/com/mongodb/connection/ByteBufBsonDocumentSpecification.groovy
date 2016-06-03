@@ -23,6 +23,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonNull
 import org.bson.BsonValue
+import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.EncoderContext
@@ -37,7 +38,9 @@ import static java.util.Arrays.asList
 import static util.GroovyHelpers.areEqual
 
 class ByteBufBsonDocumentSpecification extends Specification {
-    ByteBufBsonDocument emptyRawDocument = new ByteBufBsonDocument(new ByteBufNIO(ByteBuffer.wrap([5, 0, 0, 0, 0] as byte[])));
+    def emptyDocumentByteBuf = new ByteBufNIO(ByteBuffer.wrap([5, 0, 0, 0, 0] as byte[]))
+    ByteBuf documentByteBuf
+    ByteBufBsonDocument emptyRawDocument = new ByteBufBsonDocument(emptyDocumentByteBuf);
     def document = new BsonDocument()
             .append('a', new BsonInt32(1))
             .append('b', new BsonInt32(2))
@@ -49,7 +52,10 @@ class ByteBufBsonDocumentSpecification extends Specification {
     def setup() {
         def buffer = new BasicOutputBuffer()
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
-        rawDocument = new ByteBufBsonDocument(new CompositeByteBuf(buffer.byteBuffers));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        buffer.pipe(baos)
+        documentByteBuf = new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray()))
+        rawDocument = new ByteBufBsonDocument(documentByteBuf);
     }
 
     def 'get should get the value of the given key'() {
@@ -67,6 +73,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+        documentByteBuf.referenceCount == 1
     }
 
     def 'containKey should throw if the key name is null'() {
@@ -75,6 +82,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+        documentByteBuf.referenceCount == 1
     }
 
     def 'containsKey should find an existing key'() {
@@ -83,6 +91,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
         rawDocument.containsKey('b')
         rawDocument.containsKey('c')
         rawDocument.containsKey('d')
+        documentByteBuf.referenceCount == 1
     }
 
     def 'containsKey should not find a non-existing key'() {
@@ -90,6 +99,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
         !rawDocument.containsKey('e')
         !rawDocument.containsKey('x')
         !rawDocument.containsKey('y')
+        documentByteBuf.referenceCount == 1
     }
 
     def 'containValue should find an existing value'() {
@@ -98,6 +108,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
         rawDocument.containsValue(document.get('b'))
         rawDocument.containsValue(document.get('c'))
         rawDocument.containsValue(document.get('d'))
+        documentByteBuf.referenceCount == 1
     }
 
     def 'containValue should not find a non-existing value'() {
@@ -105,34 +116,43 @@ class ByteBufBsonDocumentSpecification extends Specification {
         !rawDocument.containsValue(new BsonInt32(3))
         !rawDocument.containsValue(new BsonDocument('e', BsonBoolean.FALSE))
         !rawDocument.containsValue(new BsonArray(asList(new BsonInt32(2), new BsonInt32(4))))
+        documentByteBuf.referenceCount == 1
     }
 
     def 'isEmpty should return false when the document is not empty'() {
         expect:
         !rawDocument.isEmpty()
+        documentByteBuf.referenceCount == 1
     }
 
     def 'isEmpty should return true when the document is empty'() {
         expect:
         emptyRawDocument.isEmpty()
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'should get correct size'() {
         expect:
         emptyRawDocument.size() == 0
         rawDocument.size() == 4
+        documentByteBuf.referenceCount == 1
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'should get correct key set'() {
         expect:
         emptyRawDocument.keySet().isEmpty()
         rawDocument.keySet() == ['a', 'b', 'c', 'd'] as Set
+        documentByteBuf.referenceCount == 1
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'should get correct values set'() {
         expect:
         emptyRawDocument.values().isEmpty()
         rawDocument.values() as Set == [document.get('a'), document.get('b'), document.get('c'), document.get('d')] as Set
+        documentByteBuf.referenceCount == 1
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'should get correct entry set'() {
@@ -142,6 +162,8 @@ class ByteBufBsonDocumentSpecification extends Specification {
                                    new TestEntry('b', document.get('b')),
                                    new TestEntry('c', document.get('c')),
                                    new TestEntry('d', document.get('d'))] as Set
+        documentByteBuf.referenceCount == 1
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'all write methods should throw UnsupportedOperationException'() {
@@ -180,11 +202,14 @@ class ByteBufBsonDocumentSpecification extends Specification {
         expect:
         rawDocument.getFirstKey() == document.keySet().iterator().next()
         emptyRawDocument.getFirstKey() == null
+        documentByteBuf.referenceCount == 1
+        emptyDocumentByteBuf.referenceCount == 1
     }
 
     def 'hashCode should equal hash code of identical BsonDocument'() {
         expect:
         rawDocument.hashCode() == document.hashCode()
+        documentByteBuf.referenceCount == 1
     }
 
     def 'equals should equal identical BsonDocument'() {
@@ -193,6 +218,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
         areEqual(document, rawDocument)
         areEqual(rawDocument, rawDocument)
         !areEqual(rawDocument, emptyRawDocument)
+        documentByteBuf.referenceCount == 1
     }
 
     def 'clone should make a deep copy'() {
@@ -201,6 +227,7 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
         then:
         cloned == rawDocument
+        documentByteBuf.referenceCount == 1
     }
 
     def 'should serialize and deserialize'() {
@@ -216,17 +243,27 @@ class ByteBufBsonDocumentSpecification extends Specification {
 
         then:
         rawDocument == deserializedDocument
+        documentByteBuf.referenceCount == 1
     }
 
     def 'toJson should return equivalent'() {
         expect:
         document.toJson() == rawDocument.toJson()
+        documentByteBuf.referenceCount == 1
     }
 
     def 'toJson should be callable multiple times'() {
         expect:
         rawDocument.toJson()
         rawDocument.toJson()
+        documentByteBuf.referenceCount == 1
+    }
+
+    def 'size should be callable multiple times'() {
+        expect:
+        rawDocument.size()
+        rawDocument.size()
+        documentByteBuf.referenceCount == 1
     }
 
     def 'toJson should respect JsonWriteSettings'() {
