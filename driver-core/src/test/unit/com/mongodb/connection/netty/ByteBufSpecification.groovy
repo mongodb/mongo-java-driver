@@ -83,4 +83,69 @@ class ByteBufSpecification extends Specification {
         then:
         thrown(UnsupportedOperationException)
     }
+
+    def 'should manage reference count of proxied Netty ByteBuf correctly'() {
+        given:
+        def nettyBuf = ByteBufAllocator.DEFAULT.buffer(16)
+
+        when:
+        def buf = new NettyByteBuf(nettyBuf)
+
+        then:
+        nettyBuf.refCnt() == 1
+
+        when:
+        buf.retain()
+
+        then:
+        nettyBuf.refCnt() == 2
+
+        when:
+        buf.release()
+
+        then:
+        nettyBuf.refCnt() == 1
+
+        when:
+        buf.release()
+
+        then:
+        nettyBuf.refCnt() == 0
+    }
+
+    def 'should manage reference count of duplicated proxied Netty ByteBuf correctly'() {
+        given:
+        def nettyBuf = ByteBufAllocator.DEFAULT.buffer(16)
+        def buf = new NettyByteBuf(nettyBuf)
+
+        when:
+        def duplicated = buf.duplicate()
+
+        then:
+        nettyBuf.refCnt() == 2
+
+        when:
+        buf.retain()
+
+        then:
+        nettyBuf.refCnt() == 3
+
+        when:
+        buf.release()
+
+        then:
+        nettyBuf.refCnt() == 2
+
+        when:
+        duplicated.release()
+
+        then:
+        nettyBuf.refCnt() == 1
+
+        when:
+        buf.release()
+
+        then:
+        nettyBuf.refCnt() == 0
+    }
 }
