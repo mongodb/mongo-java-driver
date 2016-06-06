@@ -77,6 +77,15 @@ class SslSettingsSpecification extends Specification {
         !builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).build().invalidHostNameAllowed
     }
 
+    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    def 'should apply connection string with ssl and sslInvalidHostNameAllowed'() {
+        expect:
+        builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true'))
+                .build().enabled
+        builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true'))
+                .build().invalidHostNameAllowed
+    }
+
     def 'should apply connection string with ssl and invalidHostNameAllowed'() {
         expect:
         builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).invalidHostNameAllowed(true).build().enabled

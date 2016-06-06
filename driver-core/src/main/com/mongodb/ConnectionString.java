@@ -71,8 +71,10 @@ import static java.util.Collections.singletonList;
  * all members of the set.</li>
  * </ul>
  * <p>Connection Configuration:</p>
+ * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
@@ -189,6 +191,7 @@ public class ConnectionString {
     private Integer connectTimeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
+    private Boolean sslInvalidHostnameAllowed;
     private String requiredReplicaSetName;
 
     /**
@@ -197,7 +200,7 @@ public class ConnectionString {
      * @param connectionString     the connection string
      * @since 3.0
      */
-public ConnectionString(final String connectionString) {
+    public ConnectionString(final String connectionString) {
         this.connectionString = connectionString;
         if (!connectionString.startsWith(PREFIX)) {
             throw new IllegalArgumentException(format("The connection string is invalid. "
@@ -296,6 +299,7 @@ public ConnectionString(final String connectionString) {
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("ssl");
+        GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
 
@@ -352,6 +356,8 @@ public ConnectionString(final String connectionString) {
                 connectTimeout = parseInteger(value, "connecttimeoutms");
             } else if (key.equals("sockettimeoutms")) {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
+            } else if (key.equals("sslinvalidhostnameallowed") && parseBoolean(value, "sslinvalidhostnameallowed")) {
+                sslInvalidHostnameAllowed = true;
             } else if (key.equals("ssl") && parseBoolean(value, "ssl")) {
                 sslEnabled = true;
             } else if (key.equals("replicaset")) {
@@ -872,6 +878,16 @@ public ConnectionString(final String connectionString) {
      */
     public Boolean getSslEnabled() {
         return sslEnabled;
+    }
+
+    /**
+     * Gets the SSL invalidHostnameAllowed value specified in the connection string.
+     *
+     * @return the SSL invalidHostnameAllowed value
+     * @since 3.3
+     */
+    public Boolean getSslInvalidHostnameAllowed() {
+        return sslInvalidHostnameAllowed;
     }
 
     /**

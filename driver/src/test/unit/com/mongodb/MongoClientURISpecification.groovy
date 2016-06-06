@@ -139,22 +139,26 @@ class MongoClientURISpecification extends Specification {
         options.getConnectTimeout() == 2500
         options.getRequiredReplicaSetName() == 'test'
         options.isSslEnabled()
+        options.isSslInvalidHostNameAllowed()
 
         where:
         options <<
         [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
                                     + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                     + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                    + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary').getOptions(),
+                                    + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary&'
+                                    + 'sslInvalidHostNameAllowed=true').getOptions(),
          new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                     + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                     + 'connectTimeoutMS=2500;socketTimeoutMS=5500;ssl=true;'
-                                    + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=secondary').getOptions(),
+                                    + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=secondary;'
+                                    + 'sslInvalidHostNameAllowed=true').getOptions(),
          new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                     + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                     + 'connectTimeoutMS=2500;'
                                     + 'socketTimeoutMS=5500&'
-                                    + 'safe=false&w=1;wtimeout=2500;fsync=true&ssl=true;readPreference=secondary').getOptions()]
+                                    + 'safe=false&w=1;wtimeout=2500;fsync=true&ssl=true;readPreference=secondary&'
+                                    + 'sslInvalidHostNameAllowed=true').getOptions()]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
     }

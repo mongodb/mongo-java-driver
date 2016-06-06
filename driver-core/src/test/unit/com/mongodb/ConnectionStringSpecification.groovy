@@ -107,22 +107,26 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getReadPreference() == primary() ;
         connectionString.getRequiredReplicaSetName() == 'test'
         connectionString.getSslEnabled()
+        connectionString.getSslInvalidHostnameAllowed()
 
         where:
         connectionString <<
                 [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1&wtimeout=2500&fsync=true&readPreference=primary&ssl=true'),
+                                            + 'safe=false&w=1&wtimeout=2500&fsync=true&readPreference=primary&ssl=true&'
+                                            + 'sslInvalidHostNameAllowed=true'),
                  new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
-                                            + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=primary;ssl=true'),
+                                            + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=primary;ssl=true;'
+                                            + 'sslInvalidHostNameAllowed=true'),
                  new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true')]
+                                            + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true&'
+                                            + 'sslInvalidHostNameAllowed=true')]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
     }
