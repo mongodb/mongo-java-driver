@@ -53,6 +53,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * </ul>
@@ -291,6 +292,9 @@ public class MongoClientURI {
         }
         if (proxied.getSslEnabled() != null) {
             builder.sslEnabled(proxied.getSslEnabled());
+        }
+        if (proxied.getSslInvalidHostnameAllowed() != null) {
+            builder.sslInvalidHostNameAllowed(proxied.getSslInvalidHostnameAllowed());
         }
 
         return builder.build();
