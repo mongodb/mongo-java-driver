@@ -1,5 +1,6 @@
 package com.mongodb.connection
 
+import com.mongodb.ConnectionString
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -40,6 +41,16 @@ class ServerSettingsSpecification extends Specification {
         settings.getMinHeartbeatFrequency(MILLISECONDS) == 1000
         settings.serverListeners == [serverListenerOne, serverListenerTwo]
         settings.serverMonitorListeners == [serverMonitorListenerOne, serverMonitorListenerTwo]
+    }
+
+    def 'when connection string is applied to builder, all properties should be set'() {
+        when:
+        def settings = ServerSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                'heartbeatFrequencyMS=20000'))
+                .build()
+
+        then:
+        settings.getHeartbeatFrequency(MILLISECONDS) == 20000
     }
 
     def 'lists of listeners should be unmodifiable'() {
