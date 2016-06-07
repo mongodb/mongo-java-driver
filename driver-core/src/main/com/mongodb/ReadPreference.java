@@ -299,6 +299,7 @@ public abstract class ReadPreference {
             return getName().hashCode();
         }
 
+        @SuppressWarnings("deprecation")
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
             return clusterDescription.getPrimaries();
         }

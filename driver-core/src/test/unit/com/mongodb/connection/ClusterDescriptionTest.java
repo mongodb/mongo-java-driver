@@ -105,11 +105,13 @@ public class ClusterDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testAny() throws UnknownHostException {
         assertEquals(asList(primary, secondary, uninitiatedMember, otherSecondary), cluster.getAny());
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testPrimaryOrSecondary() throws UnknownHostException {
         assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
         assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new TagSet(asList(new Tag("foo", "1"),
@@ -134,6 +136,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void getByServerAddress() throws UnknownHostException {
         assertEquals(primary, cluster.getByServerAddress(primary.getAddress()));
         assertNull(cluster.getByServerAddress(notOkMember.getAddress()));

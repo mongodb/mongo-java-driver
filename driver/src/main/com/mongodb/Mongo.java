@@ -403,6 +403,7 @@ public class Mongo {
      *
      * @return the address
      */
+    @SuppressWarnings("deprecation")
     public ServerAddress getAddress() {
         ClusterDescription description = getClusterDescription();
         if (description.getPrimaries().isEmpty()) {
@@ -654,6 +655,7 @@ public class Mongo {
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException if there's a failure
      */
+    @SuppressWarnings("deprecation")
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
