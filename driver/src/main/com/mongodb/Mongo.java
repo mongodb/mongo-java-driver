@@ -209,16 +209,18 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
-     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     * <p>Creates an instance based on a list of replica set members or mongos servers. For a replica set it will discover all members.
+     * For a list with a single seed, the driver will still discover all members of the replica set.  For a direct
+     * connection to a replica set member, with no discovery, use the {@link #Mongo(ServerAddress)} constructor instead.</p>
      *
-     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
-     * fail over to the next server if the closest is down.</p>
+     * <p>When there is more than one server to choose from based on the type of request (read or write) and the read preference (if it's a
+     * read request), the driver will randomly select a server to send a request. This applies to both replica sets and sharded clusters.
+     * The servers to randomly select from are further limited by the local threshold.  See
+     * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @see com.mongodb.ServerAddress
+     * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
     @Deprecated
@@ -227,17 +229,20 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
-     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     * <p>Creates an instance based on a list of replica set members or mongos servers. For a replica set it will discover all members.
+     * For a list with a single seed, the driver will still discover all members of the replica set.  For a direct
+     * connection to a replica set member, with no discovery, use the {@link #Mongo(ServerAddress, MongoClientOptions)} constructor
+     * instead.</p>
      *
-     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
-     * fail over to the next server if the closest is down.</p>
+     * <p>When there is more than one server to choose from based on the type of request (read or write) and the read preference (if it's a
+     * read request), the driver will randomly select a server to send a request. This applies to both replica sets and sharded clusters.
+     * The servers to randomly select from are further limited by the local threshold.  See
+     * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
-     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
-     *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @param options for configuring this Mongo instance
-     * @see com.mongodb.ServerAddress
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param options the options
+     * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
     @Deprecated
