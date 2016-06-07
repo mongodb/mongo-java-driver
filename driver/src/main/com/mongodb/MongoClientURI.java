@@ -44,6 +44,18 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * <p>The following options are supported (case insensitive):</p>
  *
+ * <p>Server Selection Configuration:</p>
+ * <ul>
+ * <li>{@code serverSelectionTimeoutMS=ms}: How long the driver will wait for server selection to succeed before throwing an exception.</li>
+ * <li>{@code localThresholdMS=ms}: When choosing among multiple MongoDB servers to send a request, the driver will only
+ * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+ * threshold.</li>
+ * </ul>
+ * <p>Server Monitoring Configuration:</p>
+ * <ul>
+ * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
+ * cluster.</li>
+ * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
@@ -295,6 +307,15 @@ public class MongoClientURI {
         }
         if (proxied.getSslInvalidHostnameAllowed() != null) {
             builder.sslInvalidHostNameAllowed(proxied.getSslInvalidHostnameAllowed());
+        }
+        if (proxied.getServerSelectionTimeout() != null) {
+            builder.serverSelectionTimeout(proxied.getServerSelectionTimeout());
+        }
+        if (proxied.getLocalThreshold() != null) {
+            builder.localThreshold(proxied.getLocalThreshold());
+        }
+        if (proxied.getHeartbeatFrequency() != null) {
+            builder.heartbeatFrequency(proxied.getHeartbeatFrequency());
         }
 
         return builder.build();

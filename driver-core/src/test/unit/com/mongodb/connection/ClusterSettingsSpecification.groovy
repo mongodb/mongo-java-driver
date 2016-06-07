@@ -138,6 +138,14 @@ class ClusterSettingsSpecification extends Specification {
 
         then:
         settings.maxWaitQueueSize == 150
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018/?' +
+                'serverSelectionTimeoutMS=50000'))
+                .build()
+
+        then:
+        settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 50000
     }
 
     def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {

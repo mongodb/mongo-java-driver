@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ConnectionString;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ServerListener;
@@ -107,6 +108,20 @@ public class ServerSettings {
         public Builder addServerMonitorListener(final ServerMonitorListener serverMonitorListener) {
             notNull("serverMonitorListener", serverMonitorListener);
             serverMonitorListeners.add(serverMonitorListener);
+            return this;
+        }
+
+        /**
+         * Take the settings from the given ConnectionString and add them to the builder
+         *
+         * @param connectionString a URI containing details of how to connect to MongoDB
+         * @return this
+         * @since 3.3
+         */
+        public Builder applyConnectionString(final ConnectionString connectionString) {
+            if (connectionString.getHeartbeatFrequency() != null) {
+                heartbeatFrequencyMS = connectionString.getHeartbeatFrequency();
+            }
             return this;
         }
 

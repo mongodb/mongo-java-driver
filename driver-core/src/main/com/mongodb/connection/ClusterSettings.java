@@ -218,6 +218,11 @@ public final class ClusterSettings {
             int waitQueueMultiple = connectionString.getThreadsAllowedToBlockForConnectionMultiplier() != null
                                     ? connectionString.getThreadsAllowedToBlockForConnectionMultiplier() : 5;
             maxWaitQueueSize(waitQueueMultiple * maxSize);
+
+            if (connectionString.getServerSelectionTimeout() != null) {
+                serverSelectionTimeout(connectionString.getServerSelectionTimeout(), TimeUnit.MILLISECONDS);
+            }
+
             return this;
         }
 

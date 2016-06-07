@@ -140,6 +140,9 @@ class MongoClientURISpecification extends Specification {
         options.getRequiredReplicaSetName() == 'test'
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
+        options.getServerSelectionTimeout() == 25000
+        options.getLocalThreshold() == 30
+        options.getHeartbeatFrequency() == 20000
 
         where:
         options <<
@@ -147,19 +150,29 @@ class MongoClientURISpecification extends Specification {
                                     + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                     + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                                     + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary&'
-                                    + 'sslInvalidHostNameAllowed=true').getOptions(),
+                                    + 'sslInvalidHostNameAllowed=true&'
+                                    + 'serverSelectionTimeoutMS=25000&'
+                                    + 'localThresholdMS=30&'
+                                    + 'heartbeatFrequencyMS=20000').getOptions(),
          new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                     + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                     + 'connectTimeoutMS=2500;socketTimeoutMS=5500;ssl=true;'
                                     + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=secondary;'
-                                    + 'sslInvalidHostNameAllowed=true').getOptions(),
+                                    + 'sslInvalidHostNameAllowed=true;'
+                                    + 'serverSelectionTimeoutMS=25000;'
+                                    + 'localThresholdMS=30;'
+                                    + 'heartbeatFrequencyMS=20000').getOptions(),
+
          new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                     + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                     + 'connectTimeoutMS=2500;'
                                     + 'socketTimeoutMS=5500&'
                                     + 'safe=false&w=1;wtimeout=2500;fsync=true&ssl=true;readPreference=secondary&'
-                                    + 'sslInvalidHostNameAllowed=true').getOptions()]
-        //for documentation, i.e. the Unroll description for each type
+                                    + 'sslInvalidHostNameAllowed=true;'
+                                    + 'serverSelectionTimeoutMS=25000&'
+                                    + 'localThresholdMS=30;'
+                                    + 'heartbeatFrequencyMS=20000').getOptions()]
+         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
     }
 

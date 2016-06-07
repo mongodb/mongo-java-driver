@@ -65,6 +65,18 @@ import static java.util.Collections.singletonList;
  *
  * <p>The following options are supported (case insensitive):</p>
  *
+ * <p>Server Selection Configuration:</p>
+ * <ul>
+ * <li>{@code serverSelectionTimeoutMS=ms}: How long the driver will wait for server selection to succeed before throwing an exception.</li>
+ * <li>{@code localThresholdMS=ms}: When choosing among multiple MongoDB servers to send a request, the driver will only
+ * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+ * threshold.</li>
+ * </ul>
+ * <p>Server Monitoring Configuration:</p>
+ * <ul>
+ * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
+ * cluster.</li>
+ * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
@@ -193,6 +205,9 @@ public class ConnectionString {
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
     private String requiredReplicaSetName;
+    private Integer serverSelectionTimeout;
+    private Integer localThreshold;
+    private Integer heartbeatFrequency;
 
     /**
      * Creates a ConnectionString from the given string.
@@ -303,6 +318,10 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
 
+        GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
+        GENERAL_OPTIONS_KEYS.add("localthresholdms");
+        GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
+
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
 
@@ -364,6 +383,12 @@ public class ConnectionString {
                 requiredReplicaSetName = value;
             } else if (key.equals("readconcernlevel")) {
                 readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
+            } else if (key.equals("serverselectiontimeoutms")) {
+                serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
+            } else if (key.equals("localthresholdms")) {
+                localThreshold = parseInteger(value, "localthresholdms");
+            } else if (key.equals("heartbeatfrequencyms")) {
+                heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
             }
         }
 
@@ -897,6 +922,34 @@ public class ConnectionString {
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
     }
+
+    /**
+     *
+     * @return the server selection timeout (in milliseconds), or null if unset
+     * @since 3.3
+     */
+    public Integer getServerSelectionTimeout() {
+        return serverSelectionTimeout;
+    }
+
+    /**
+     *
+     * @return the local threshold (in milliseconds), or null if unset
+     * since 3.3
+     */
+    public Integer getLocalThreshold() {
+        return localThreshold;
+    }
+
+    /**
+     *
+     * @return the heartbeat frequency (in milliseconds), or null if unset
+     * since 3.3
+     */
+    public Integer getHeartbeatFrequency() {
+        return heartbeatFrequency;
+    }
+
 
     @Override
     public String toString() {
