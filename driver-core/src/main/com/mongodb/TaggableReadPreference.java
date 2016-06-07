@@ -124,6 +124,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
             if (getTagSetList().isEmpty()) {
@@ -162,6 +163,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
             List<ServerDescription> servers = super.choose(clusterDescription);
             return (!servers.isEmpty()) ? servers : clusterDescription.getPrimaries();
@@ -191,6 +193,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
+        @SuppressWarnings("deprecation")
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
             if (getTagSetList().isEmpty()) {
@@ -228,6 +231,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
             List<ServerDescription> servers = clusterDescription.getPrimaries();
             return (!servers.isEmpty()) ? servers : super.choose(clusterDescription);

@@ -101,6 +101,7 @@ public final class ClusterFixture {
         return getCluster().getDescription().getType() == clusterType;
     }
 
+    @SuppressWarnings("deprecation")
     public static ServerVersion getServerVersion() {
         return getCluster().getDescription().getAny().get(0).getVersion();
     }
@@ -137,6 +138,7 @@ public final class ClusterFixture {
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
+    @SuppressWarnings("deprecation")
     private static ServerVersion getConnectedServerVersion() {
         ClusterDescription clusterDescription = getCluster().getDescription();
         int retries = 0;
@@ -261,6 +263,7 @@ public final class ClusterFixture {
         return builder.build();
     }
 
+    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() throws InterruptedException {
         List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {

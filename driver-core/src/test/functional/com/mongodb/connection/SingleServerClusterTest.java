@@ -65,6 +65,7 @@ public class SingleServerClusterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void shouldGetServerWithOkDescription() throws InterruptedException {
         Server server = cluster.selectServer(new ServerSelector() {
             @Override

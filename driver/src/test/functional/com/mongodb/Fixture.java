@@ -99,6 +99,7 @@ public final class Fixture {
         return getMongoClientURI().getOptions();
     }
 
+    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
         List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();

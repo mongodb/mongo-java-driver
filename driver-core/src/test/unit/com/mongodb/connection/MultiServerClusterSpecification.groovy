@@ -179,6 +179,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.getDescription().all == factory.getDescriptions(firstServer)
     }
 
+    @SuppressWarnings('deprecation')
     def 'should ignore an empty list of hosts when type is replica set'() {
         given:
         def cluster = new MultiServerCluster(
@@ -194,6 +195,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.getDescription().getByServerAddress(secondServer).getType() == REPLICA_SET_GHOST
     }
 
+    @SuppressWarnings('deprecation')
     def 'should ignore a host without a replica set name when type is replica set'() {
         given:
         def cluster = new MultiServerCluster(
