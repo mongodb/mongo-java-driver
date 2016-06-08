@@ -65,7 +65,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     }
 
     private void assertServers(final BsonDocument servers) {
-        if (servers.size() != getCluster().getCurrentDescription().getAll().size()) {
+        if (servers.size() != getCluster().getCurrentDescription().getServerDescriptions().size()) {
             fail("Cluster description contains servers that are not part of the expected outcome");
         }
 
@@ -105,7 +105,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
 
     private ServerDescription getServerDescription(final String serverName) {
         ServerDescription serverDescription  = null;
-        for (ServerDescription cur : getCluster().getCurrentDescription().getAll()) {
+        for (ServerDescription cur : getCluster().getCurrentDescription().getServerDescriptions()) {
             if (cur.getAddress().equals(new ServerAddress(serverName))) {
                 serverDescription = cur;
                 break;
@@ -118,7 +118,7 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
     private void assertTopologyType(final String topologyType) {
         if (topologyType.equals("Single")) {
             assertEquals(SingleServerCluster.class, getCluster().getClass());
-            assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getAll()),
+            assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getServerDescriptions()),
                     getCluster().getCurrentDescription().getType());
         } else if (topologyType.equals("ReplicaSetWithPrimary")) {
             assertEquals(MultiServerCluster.class, getCluster().getClass());

@@ -30,6 +30,7 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.concurrent.TimeUnit.SECONDS
 
+@SuppressWarnings('deprecation')
 class SingleServerClusterSpecification extends Specification {
     private static final ClusterId CLUSTER_ID = new ClusterId()
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')

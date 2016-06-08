@@ -36,6 +36,7 @@ import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+@SuppressWarnings('deprecation')
 class MultiServerClusterSpecification extends Specification {
     private static final ClusterId CLUSTER_ID = new ClusterId()
 
@@ -456,8 +457,12 @@ class MultiServerClusterSpecification extends Specification {
         def clusterListener = Mock(ClusterListener)
         def initialDescription = new ClusterDescription(MULTIPLE, UNKNOWN,
                 [ServerDescription.builder().state(CONNECTING).address(firstServer).build()])
-        def serverDescription = ServerDescription.builder().address(firstServer).state(CONNECTED)
-                .type(REPLICA_SET_PRIMARY).hosts([firstServer, secondServer, thirdServer] as Set).build()
+        def serverDescription = ServerDescription.builder().ok(true).address(firstServer).state(CONNECTED)
+                .type(REPLICA_SET_PRIMARY).hosts([firstServer.toString(), secondServer.toString(), thirdServer.toString()] as Set)
+                .setName('test')
+                .canonicalAddress(firstServer.toString())
+                .setVersion(1)
+                .build()
 
         when:
         def cluster = new MultiServerCluster(CLUSTER_ID,
