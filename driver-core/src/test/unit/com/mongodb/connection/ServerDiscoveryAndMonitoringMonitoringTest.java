@@ -143,7 +143,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
     private void assertEqualClusterDescriptions(final ClusterDescription expected, final ClusterDescription actual) {
         assertEquals(expected.getType(), actual.getType());
         assertEquals(expected.getAll().size(), actual.getAll().size());
-        for (ServerDescription curExpected: actual.getAll()) {
+        for (ServerDescription curExpected: expected.getAll()) {
             ServerDescription curActual = getByServerAddress(curExpected.getAddress(), actual.getAll());
             assertNotNull(curActual);
             assertEqualServerDescriptions(curExpected, curActual);
