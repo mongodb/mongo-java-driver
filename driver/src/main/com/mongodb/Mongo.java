@@ -388,7 +388,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (final ServerDescription cur : getClusterDescription().getAll()) {
+        for (final ServerDescription cur : getClusterDescription().getServerDescriptions()) {
             serverAddresses.add(cur.getAddress());
         }
         return serverAddresses;

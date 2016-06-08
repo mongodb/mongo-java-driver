@@ -21,7 +21,6 @@ import com.mongodb.connection.ServerDescription;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -64,7 +63,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
             return clusterDescription.getAny();
         } else {
             return getServersWithAcceptableLatencyDifference(clusterDescription.getAny(),
-                                                             getFastestRoundTripTimeNanos(clusterDescription.getAll()));
+                                                             getFastestRoundTripTimeNanos(clusterDescription.getServerDescriptions()));
         }
     }
 
@@ -75,7 +74,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
                + '}';
     }
 
-    private long getFastestRoundTripTimeNanos(final Set<ServerDescription> members) {
+    private long getFastestRoundTripTimeNanos(final List<ServerDescription> members) {
         long fastestRoundTripTime = Long.MAX_VALUE;
         for (final ServerDescription cur : members) {
             if (!cur.isOk()) {

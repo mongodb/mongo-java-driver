@@ -97,6 +97,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testAll() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
         assertTrue(description.getAll().isEmpty());
@@ -107,7 +108,12 @@ public class ClusterDescriptionTest {
     @Test
     @SuppressWarnings("deprecation")
     public void testAny() throws UnknownHostException {
-        assertEquals(asList(primary, secondary, uninitiatedMember, otherSecondary), cluster.getAny());
+        List<ServerDescription> any = cluster.getAny();
+        assertEquals(4, any.size());
+        assertTrue(any.contains(primary));
+        assertTrue(any.contains(secondary));
+        assertTrue(any.contains(uninitiatedMember));
+        assertTrue(any.contains(otherSecondary));
     }
 
     @Test
@@ -143,6 +149,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testSortingOfAll() throws UnknownHostException {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
