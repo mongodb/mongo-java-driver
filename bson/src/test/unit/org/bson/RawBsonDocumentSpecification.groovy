@@ -41,6 +41,19 @@ class RawBsonDocumentSpecification extends Specification {
 
     def rawDocument = new RawBsonDocument(document, new BsonDocumentCodec())
 
+    def 'parse should through if parameter is invalid'() {
+        when:
+        RawBsonDocument.parse(null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should parse json'() {
+        expect:
+        RawBsonDocument.parse('{a : 1}') == new BsonDocument('a', new BsonInt32(1))
+    }
+
     def 'containKey should throw if the key name is null'() {
         when:
         rawDocument.containsKey(null)
@@ -222,7 +235,7 @@ class RawBsonDocumentSpecification extends Specification {
         private final String key;
         private BsonValue value
 
-        TestEntry (String key, BsonValue value) {
+        TestEntry(String key, BsonValue value) {
             this.key = key
             this.value = value
         }

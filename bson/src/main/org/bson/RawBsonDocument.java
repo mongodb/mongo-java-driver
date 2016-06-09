@@ -25,19 +25,21 @@ import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
-import java.io.StringWriter;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -52,6 +54,20 @@ public final class RawBsonDocument extends BsonDocument {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final byte[] bytes;
+
+    /**
+     * Parses a string in MongoDB Extended JSON format to a {@code RawBsonDocument}
+     *
+     * @param json the JSON string
+     * @return a corresponding {@code RawBsonDocument} object
+     * @see org.bson.json.JsonReader
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
+     * @since 3.3
+     */
+    public static RawBsonDocument parse(final String json) {
+        notNull("json", json);
+        return new RawBsonDocumentCodec().decode(new JsonReader(json), DecoderContext.builder().build());
+    }
 
     /**
      * Constructs a new instance with the given byte array.  Note that it does not make a copy of the array, so do not modify it after
