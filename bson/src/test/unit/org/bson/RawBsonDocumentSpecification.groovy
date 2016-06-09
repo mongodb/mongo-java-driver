@@ -18,28 +18,100 @@ package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DecoderContext
+import org.bson.codecs.DocumentCodec
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.RawBsonDocumentCodec
+import org.bson.io.BasicOutputBuffer
 import org.bson.json.JsonMode
 import org.bson.json.JsonReader
 import org.bson.json.JsonWriter
 import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
 
+import java.nio.ByteOrder
+
 import static java.util.Arrays.asList
 import static util.GroovyHelpers.areEqual
 
 class RawBsonDocumentSpecification extends Specification {
 
-    def emptyDocument = new BsonDocument()
-    def emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec());
-    def document = new BsonDocument()
+    static emptyDocument = new BsonDocument()
+    static emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec());
+    static document = new BsonDocument()
             .append('a', new BsonInt32(1))
             .append('b', new BsonInt32(2))
             .append('c', new BsonDocument('x', BsonBoolean.TRUE))
             .append('d', new BsonArray(asList(new BsonDocument('y', BsonBoolean.FALSE), new BsonInt32(1))))
 
-    def rawDocument = new RawBsonDocument(document, new BsonDocumentCodec())
+    def 'constructors should throw if parameters are invalid'() {
+        when:
+        new RawBsonDocument(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(null, 0, 5)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(new byte[5], -1, 5)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(new byte[5], 5, 5)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(new byte[5], 0, 0)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(new byte[10], 6, 5)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(null, new DocumentCodec())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new RawBsonDocument(new Document(), null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'byteBuffer should contain the correct bytes'() {
+        when:
+        def byteBuf = rawDocument.getByteBuffer()
+
+        then:
+        rawDocument == document
+        byteBuf.asNIO().order() == ByteOrder.LITTLE_ENDIAN
+        byteBuf.remaining() == 58
+
+        when:
+        def actualBytes = new byte[58]
+        byteBuf.get(actualBytes)
+
+        then:
+        actualBytes == getBytesFromDocument()
+
+        where:
+        rawDocument << createRawDocumentVariants()
+    }
 
     def 'parse should through if parameter is invalid'() {
         when:
@@ -60,6 +132,9 @@ class RawBsonDocumentSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'containsKey should find an existing key'() {
@@ -68,6 +143,9 @@ class RawBsonDocumentSpecification extends Specification {
         rawDocument.containsKey('b')
         rawDocument.containsKey('c')
         rawDocument.containsKey('d')
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'containsKey should not find a non-existing key'() {
@@ -75,6 +153,12 @@ class RawBsonDocumentSpecification extends Specification {
         !rawDocument.containsKey('e')
         !rawDocument.containsKey('x')
         !rawDocument.containsKey('y')
+        rawDocument.get('e') == null
+        rawDocument.get('x') == null
+        rawDocument.get('y') == null
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'containValue should find an existing value'() {
@@ -83,6 +167,9 @@ class RawBsonDocumentSpecification extends Specification {
         rawDocument.containsValue(document.get('b'))
         rawDocument.containsValue(document.get('c'))
         rawDocument.containsValue(document.get('d'))
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'containValue should not find a non-existing value'() {
@@ -90,11 +177,17 @@ class RawBsonDocumentSpecification extends Specification {
         !rawDocument.containsValue(new BsonInt32(3))
         !rawDocument.containsValue(new BsonDocument('e', BsonBoolean.FALSE))
         !rawDocument.containsValue(new BsonArray(asList(new BsonInt32(2), new BsonInt32(4))))
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'isEmpty should return false when the document is not empty'() {
         expect:
         !rawDocument.isEmpty()
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'isEmpty should return true when the document is empty'() {
@@ -102,36 +195,67 @@ class RawBsonDocumentSpecification extends Specification {
         emptyRawDocument.isEmpty()
     }
 
-    def 'should get correct size'() {
+    def 'should get correct size when the document is empty'() {
         expect:
         emptyRawDocument.size() == 0
-        rawDocument.size() == 4
+    }
+
+    def 'should get correct key set when the document is empty'() {
+        expect:
+        emptyRawDocument.keySet().isEmpty()
+    }
+
+    def 'should get correct values set when the document is empty'() {
+        expect:
+        emptyRawDocument.values().isEmpty()
+    }
+
+    def 'should get correct entry set when the document is empty'() {
+        expect:
+        emptyRawDocument.entrySet().isEmpty()
+    }
+
+    def 'should get correct size'() {
+        expect:
+        createRawDocumenFromDocument().size() == 4
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'should get correct key set'() {
         expect:
-        emptyRawDocument.keySet().isEmpty()
         rawDocument.keySet() == ['a', 'b', 'c', 'd'] as Set
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'should get correct values set'() {
         expect:
-        emptyRawDocument.values().isEmpty()
         rawDocument.values() as Set == [document.get('a'), document.get('b'), document.get('c'), document.get('d')] as Set
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'should get correct entry set'() {
         expect:
-        emptyRawDocument.entrySet().isEmpty()
         rawDocument.entrySet() == [new TestEntry('a', document.get('a')),
                                    new TestEntry('b', document.get('b')),
                                    new TestEntry('c', document.get('c')),
                                    new TestEntry('d', document.get('d'))] as Set
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'toJson should return equivalent JSON'() {
         expect:
-        new RawBsonDocumentCodec().decode(new JsonReader(rawDocument.toJson()), DecoderContext.builder().build()) == rawDocument
+        new RawBsonDocumentCodec().decode(new JsonReader(rawDocument.toJson()), DecoderContext.builder().build()) == document
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'toJson should respect default JsonWriterSettings'() {
@@ -143,6 +267,9 @@ class RawBsonDocumentSpecification extends Specification {
 
         then:
         writer.toString() == rawDocument.toJson()
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'toJson should respect JsonWriterSettings'() {
@@ -155,9 +282,15 @@ class RawBsonDocumentSpecification extends Specification {
 
         then:
         writer.toString() == rawDocument.toJson(jsonWriterSettings)
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'all write methods should throw UnsupportedOperationException'() {
+        given:
+        def rawDocument = createRawDocumenFromDocument()
+
         when:
         rawDocument.clear()
 
@@ -191,11 +324,17 @@ class RawBsonDocumentSpecification extends Specification {
 
     def 'should decode'() {
         rawDocument.decode(new BsonDocumentCodec()) == document
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'hashCode should equal hash code of identical BsonDocument'() {
         expect:
         rawDocument.hashCode() == document.hashCode()
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'equals should equal identical BsonDocument'() {
@@ -204,6 +343,9 @@ class RawBsonDocumentSpecification extends Specification {
         areEqual(document, rawDocument)
         areEqual(rawDocument, rawDocument)
         !areEqual(rawDocument, emptyRawDocument)
+
+        where:
+        rawDocument << createRawDocumentVariants()
     }
 
     def 'clone should make a deep copy'() {
@@ -211,8 +353,16 @@ class RawBsonDocumentSpecification extends Specification {
         RawBsonDocument cloned = rawDocument.clone()
 
         then:
-        cloned == rawDocument
-        !cloned.getByteBuffer().array().is(rawDocument.getByteBuffer().array())
+        !cloned.getByteBuffer().array().is(createRawDocumenFromDocument().getByteBuffer().array())
+        cloned.getByteBuffer().remaining() == rawDocument.getByteBuffer().remaining()
+        cloned == createRawDocumenFromDocument()
+
+        where:
+        rawDocument << [
+                createRawDocumenFromDocument(),
+                createRawDocumentFromByteArray(),
+                createRawDocumentFromByteArrayOffsetLength()
+        ]
     }
 
     def 'should serialize and deserialize'() {
@@ -221,13 +371,55 @@ class RawBsonDocumentSpecification extends Specification {
         def oos = new ObjectOutputStream(baos)
 
         when:
-        oos.writeObject(rawDocument)
+        oos.writeObject(localRawDocument)
         def bais = new ByteArrayInputStream(baos.toByteArray())
         def ois = new ObjectInputStream(bais)
         def deserializedDocument = ois.readObject()
 
         then:
-        rawDocument == deserializedDocument
+        document == deserializedDocument
+
+        where:
+        localRawDocument << createRawDocumentVariants()
+
+    }
+
+    private static List<RawBsonDocument> createRawDocumentVariants() {
+        [
+                createRawDocumenFromDocument(),
+                createRawDocumentFromByteArray(),
+                createRawDocumentFromByteArrayOffsetLength()
+        ]
+    }
+
+    private static RawBsonDocument createRawDocumenFromDocument() {
+        new RawBsonDocument(document, new BsonDocumentCodec())
+    }
+
+    private static RawBsonDocument createRawDocumentFromByteArray() {
+        byte[] strippedBytes = getBytesFromDocument()
+        new RawBsonDocument(strippedBytes)
+    }
+
+    private static byte[] getBytesFromDocument() {
+        def (int size, byte[] bytes) = getBytesFromOutputBuffer()
+        def strippedBytes = new byte[size]
+        System.arraycopy(bytes, 0, strippedBytes, 0, size)
+        strippedBytes
+    }
+
+    private static List getBytesFromOutputBuffer() {
+        def outputBuffer = new BasicOutputBuffer(1024)
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(outputBuffer), document, EncoderContext.builder().build())
+        def bytes = outputBuffer.getInternalBuffer()
+        [outputBuffer.position, bytes]
+    }
+
+    private static RawBsonDocument createRawDocumentFromByteArrayOffsetLength() {
+        def (int size, byte[] bytes) = getBytesFromOutputBuffer()
+        def unstrippedBytes = new byte[size + 2]
+        System.arraycopy(bytes, 0, unstrippedBytes, 1, size)
+        new RawBsonDocument(unstrippedBytes, 1, size)
     }
 
     class TestEntry implements Map.Entry<String, BsonValue> {

@@ -309,6 +309,17 @@ class BasicOutputBufferSpecification extends Specification {
         bsonOutput.size == 10
     }
 
+    def 'should get internal buffer'() {
+        given:
+        def bsonOutput = new BasicOutputBuffer(4)
+
+        when:
+        bsonOutput.writeBytes([1, 2] as byte[])
+
+        then:
+        bsonOutput.getInternalBuffer() == [1, 2, 0, 0] as byte[]
+    }
+
     def 'should close'() {
         given:
         def bsonOutput = new BasicOutputBuffer()
