@@ -57,8 +57,10 @@ class RawBsonDocumentCodecSpecification extends Specification {
 
         when:
         RawBsonDocument buffer = codec.decode(reader, DecoderContext.builder().build())
+        def bytes = new byte[buffer.getByteBuffer().remaining()]
+        buffer.getByteBuffer().get(bytes)
 
         then:
-        buffer.getByteBuffer().array() == documentBytes
+        bytes == documentBytes
     }
 }

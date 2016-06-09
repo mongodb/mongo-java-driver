@@ -50,6 +50,15 @@ public class BasicOutputBuffer extends OutputBuffer {
         buffer = new byte[initialSize];
     }
 
+    /**
+     * Gets the internal buffer.
+     *
+     * @return the internal buffer
+     * @since 3.3
+     */
+    public byte[] getInternalBuffer() {
+        return buffer;
+    }
 
     @Override
     public void write(final byte[] b) {

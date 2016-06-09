@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
+import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -50,10 +51,13 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  */
 public final class RawBsonDocument extends BsonDocument {
     private static final long serialVersionUID = 1L;
+    private static final int MIN_BSON_DOCUMENT_SIZE = 5;
 
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
     private final byte[] bytes;
+    private final int offset;
+    private final int length;
 
     /**
      * Parses a string in MongoDB Extended JSON format to a {@code RawBsonDocument}
@@ -77,10 +81,28 @@ public final class RawBsonDocument extends BsonDocument {
      *              after passing it to this construction, unless of course that is your intention.
      */
     public RawBsonDocument(final byte[] bytes) {
-        if (bytes == null) {
-            throw new IllegalArgumentException("bytes can not be null");
-        }
+        this(notNull("bytes", bytes), 0, bytes.length);
+    }
+
+    /**
+     * Constructs a new instance with the given byte array, offset, and length. Note that it does not make a copy of the array, so do not
+     * modify it after passing it to this constructor.
+     *
+     * @param bytes the bytes representing a BSON document.  Note that the byte array is NOT copied, so care must be taken not to modify it
+     *              after passing it to this construction, unless of course that is your intention.
+     * @param offset the offset into the byte array
+     * @param length the length of the subarray to use
+     * @since 3.3
+     */
+    public RawBsonDocument(final byte[] bytes, final int offset, final int length) {
+        notNull("bytes", bytes);
+        isTrueArgument("offset >= 0", offset >= 0);
+        isTrueArgument("offset < bytes.length", offset < bytes.length);
+        isTrueArgument("length <= bytes.length - offset", length <= bytes.length - offset);
+        isTrueArgument("length >= 5", length >= MIN_BSON_DOCUMENT_SIZE);
         this.bytes = bytes;
+        this.offset = offset;
+        this.length = length;
     }
 
     /**
@@ -91,11 +113,15 @@ public final class RawBsonDocument extends BsonDocument {
      * @param <T>      the BSON type that the codec encodes/decodes
      */
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
+        notNull("document", document);
+        notNull("codec", codec);
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
         try {
             codec.encode(writer, document, EncoderContext.builder().build());
-            this.bytes = buffer.toByteArray();
+            this.bytes = buffer.getInternalBuffer();
+            this.offset = 0;
+            this.length = buffer.getPosition();
         } finally {
             writer.close();
         }
@@ -108,7 +134,7 @@ public final class RawBsonDocument extends BsonDocument {
      * @return a byte buffer that wraps the byte array owned by this instance.
      */
     public ByteBuf getByteBuffer() {
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, length);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return new ByteBufNIO(buffer);
     }
@@ -248,9 +274,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public BsonValue get(final Object key) {
-        if (key == null) {
-            throw new IllegalArgumentException("key can not be null");
-        }
+        notNull("key", key);
 
         BsonBinaryReader bsonReader = createReader();
         try {
@@ -293,7 +317,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     @Override
     public BsonDocument clone() {
-        return new RawBsonDocument(bytes.clone());
+        return new RawBsonDocument(bytes.clone(), offset, length);
     }
 
     private BsonValue deserializeBsonValue(final BsonBinaryReader bsonReader) {
@@ -315,7 +339,7 @@ public final class RawBsonDocument extends BsonDocument {
 
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/output.html
     private Object writeReplace() {
-        return new SerializationProxy(this.bytes);
+        return new SerializationProxy(this.bytes, offset, length);
     }
 
     // see https://docs.oracle.com/javase/6/docs/platform/serialization/spec/input.html
@@ -328,8 +352,13 @@ public final class RawBsonDocument extends BsonDocument {
 
         private final byte[] bytes;
 
-        public SerializationProxy(final byte[] bytes) {
-            this.bytes = bytes;
+        public SerializationProxy(final byte[] bytes, final int offset, final int length) {
+            if (bytes.length == length) {
+                this.bytes = bytes;
+            } else {
+                this.bytes = new byte[length];
+                System.arraycopy(bytes, offset, this.bytes, 0, length);
+            }
         }
 
         private Object readResolve() {
