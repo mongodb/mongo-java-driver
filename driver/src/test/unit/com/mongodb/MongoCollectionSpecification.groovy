@@ -53,7 +53,6 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
@@ -820,29 +819,26 @@ class MongoCollectionSpecification extends Specification {
         indexNames == ['key_1', 'key1_1']
 
         when:
-        expectedOperation =
-                new CreateIndexesOperation(namespace,
-                                           [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))
-                                                    .background(true)
-                                                    .unique(true)
-                                                    .sparse(true)
-                                                    .name('aIndex')
-                                                    .expireAfter(100, TimeUnit.SECONDS)
-                                                    .version(1)
-                                                    .weights(new BsonDocument('a', new BsonInt32(1000)))
-                                                    .defaultLanguage('es')
-                                                    .languageOverride('language')
-                                                    .textVersion(1)
-                                                    .sphereVersion(2)
-                                                    .bits(1)
-                                                    .min(-180.0)
-                                                    .max(180.0)
-                                                    .bucketSize(200.0)
-                                                    .storageEngine(new BsonDocument('wiredTiger',
-                                                                                    new BsonDocument('configString',
-                                                                                                     new BsonString(
-                                                                                                             'block_compressor=zlib'))))
-                                           ])
+        expectedOperation = new CreateIndexesOperation(namespace,
+                [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))
+                         .background(true)
+                         .unique(true)
+                         .sparse(true)
+                         .name('aIndex')
+                         .expireAfter(100, TimeUnit.SECONDS)
+                         .version(1)
+                         .weights(new BsonDocument('a', new BsonInt32(1000)))
+                         .defaultLanguage('es')
+                         .languageOverride('language')
+                         .textVersion(1)
+                         .sphereVersion(2)
+                         .bits(1)
+                         .min(-180.0)
+                         .max(180.0)
+                         .bucketSize(200.0)
+                         .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
+                         .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
+                ])
         indexName = collection.createIndex(new Document('key', 1), new IndexOptions()
                 .background(true)
                 .unique(true)
@@ -859,8 +855,8 @@ class MongoCollectionSpecification extends Specification {
                 .min(-180.0)
                 .max(180.0)
                 .bucketSize(200.0)
-                .storageEngine(new BsonDocument('wiredTiger',
-                                                new BsonDocument('configString', new BsonString('block_compressor=zlib')))))
+                .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
+                .partialFilterExpression(BsonDocument.parse('{status: "active"}')))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
