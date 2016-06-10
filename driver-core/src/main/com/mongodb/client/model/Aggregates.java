@@ -77,7 +77,7 @@ public final class Aggregates {
      *
      * @param skip the number of documents to skip
      * @return the $skip pipeline stage
-     * @mongodb.driver.manual  reference/operator/aggregation/skip/ $skip
+     * @mongodb.driver.manual reference/operator/aggregation/skip/ $skip
      */
     public static Bson skip(final int skip) {
         return new BsonDocument("$skip", new BsonInt32(skip));
@@ -97,10 +97,10 @@ public final class Aggregates {
     /**
      * Creates a $lookup pipeline stage for the specified filter
      *
-     * @param from the name of the collection in the same database to perform the join with.
-     * @param localField specifies the field from the local collection to match values against.
+     * @param from         the name of the collection in the same database to perform the join with.
+     * @param localField   specifies the field from the local collection to match values against.
      * @param foreignField specifies the field in the from collection to match values against.
-     * @param as the name of the new array field to add to the input documents.
+     * @param as           the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
      * @mongodb.server.release 3.2
@@ -108,16 +108,16 @@ public final class Aggregates {
      */
     public static Bson lookup(final String from, final String localField, final String foreignField, final String as) {
         return new BsonDocument("$lookup", new BsonDocument("from", new BsonString(from))
-                .append("localField", new BsonString(localField))
-                .append("foreignField", new BsonString(foreignField))
-                .append("as", new BsonString(as)));
+                                                   .append("localField", new BsonString(localField))
+                                                   .append("foreignField", new BsonString(foreignField))
+                                                   .append("as", new BsonString(as)));
     }
 
     /**
      * Creates a $group pipeline stage for the specified filter
      *
-     * @param <TExpression> the expression type
-     * @param id the id expression for the group
+     * @param <TExpression>     the expression type
+     * @param id                the id expression for the group
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
@@ -130,37 +130,15 @@ public final class Aggregates {
     /**
      * Creates a $group pipeline stage for the specified filter
      *
-     * @param <TExpression> the expression type
-     * @param id the id expression for the group
+     * @param <TExpression>     the expression type
+     * @param id                the id expression for the group
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
     public static <TExpression> Bson group(final TExpression id, final List<BsonField> fieldAccumulators) {
-        return new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
-
-                writer.writeStartDocument();
-
-                writer.writeStartDocument("$group");
-
-                writer.writeName("_id");
-                BuildersHelper.encodeValue(writer, id, codecRegistry);
-
-                for (BsonField fieldAccumulator : fieldAccumulators) {
-                    writer.writeName(fieldAccumulator.getName());
-                    BuildersHelper.encodeValue(writer, fieldAccumulator.getValue(), codecRegistry);
-                }
-
-                writer.writeEndDocument();
-                writer.writeEndDocument();
-
-                return writer.getDocument();
-            }
-        };
+        return new GroupStage<TExpression>(id, fieldAccumulators);
     }
 
     /**
@@ -177,12 +155,12 @@ public final class Aggregates {
     /**
      * Creates a $unwind pipeline stage for the specified field name, which must be prefixed by a {@code '$'} sign.
      *
-     * @param fieldName the field name, prefixed by a {@code '$' sign}
+     * @param fieldName     the field name, prefixed by a {@code '$' sign}
      * @param unwindOptions options for the unwind pipeline stage
      * @return the $unwind pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/unwind/ $unwind
-     * @since 3.2
      * @mongodb.server.release 3.2
+     * @since 3.2
      */
     public static Bson unwind(final String fieldName, final UnwindOptions unwindOptions) {
         notNull("unwindOptions", unwindOptions);
@@ -233,6 +211,55 @@ public final class Aggregates {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             return new BsonDocument(name, value.toBsonDocument(documentClass, codecRegistry));
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                           + "name='" + name + '\''
+                           + ", value=" + value
+                           + '}';
+        }
+    }
+
+    private static class GroupStage<TExpression> implements Bson {
+        private final TExpression id;
+        private final List<BsonField> fieldAccumulators;
+
+        public GroupStage(final TExpression id, final List<BsonField> fieldAccumulators) {
+            this.id = id;
+            this.fieldAccumulators = fieldAccumulators;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+
+            writer.writeStartDocument("$group");
+
+            writer.writeName("_id");
+            BuildersHelper.encodeValue(writer, id, codecRegistry);
+
+            for (BsonField fieldAccumulator : fieldAccumulators) {
+                writer.writeName(fieldAccumulator.getName());
+                BuildersHelper.encodeValue(writer, fieldAccumulator.getValue(), codecRegistry);
+            }
+
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                           + "name='$group'"
+                           + ", id=" + id
+                           + ", fieldAccumulators=" + fieldAccumulators
+                           + '}';
         }
     }
 

@@ -126,4 +126,14 @@ public class PushOptions {
         this.sortDocument = sortDocument;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "Push Options{"
+                       + "position=" + position
+                       + ", slice=" + slice
+                       + ((sort == null) ? "" : ", sort=" + sort)
+                       + ((sortDocument == null) ? "" :  ", sortDocument=" + sortDocument)
+                       + '}';
+    }
 }

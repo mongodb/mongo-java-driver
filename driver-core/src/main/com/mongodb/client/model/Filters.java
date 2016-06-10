@@ -59,7 +59,7 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value     the value
-     * @param <TItem>  the value type
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      */
@@ -72,7 +72,7 @@ public final class Filters {
      *
      * @param fieldName the field name
      * @param value     the value
-     * @param <TItem>  the value type
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/ne $ne
      */
@@ -84,8 +84,8 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the given field is greater than the specified value.
      *
      * @param fieldName the field name
-     * @param value the value
-     * @param <TItem> the value type
+     * @param value     the value
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/gt $gt
      */
@@ -97,8 +97,8 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the given field is less than the specified value.
      *
      * @param fieldName the field name
-     * @param value the value
-     * @param <TItem> the value type
+     * @param value     the value
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/lt $lt
      */
@@ -110,8 +110,8 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the given field is greater than or equal to the specified value.
      *
      * @param fieldName the field name
-     * @param value the value
-     * @param <TItem> the value type
+     * @param value     the value
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/gte $gte
      */
@@ -123,8 +123,8 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the given field is less than or equal to the specified value.
      *
      * @param fieldName the field name
-     * @param value the value
-     * @param <TItem> the value type
+     * @param value     the value
+     * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/lte $lte
      */
@@ -155,7 +155,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/in $in
      */
     public static <TItem> Bson in(final String fieldName, final Iterable<TItem> values) {
-        return new SimpleEncodingFilter<Bson>(fieldName , new IterableOperatorFilter<TItem>("$in", values));
+        return new IterableOperatorFilter<TItem>(fieldName, "$in", values);
     }
 
     /**
@@ -181,7 +181,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/nin $nin
      */
     public static <TItem> Bson nin(final String fieldName, final Iterable<TItem> values) {
-        return new SimpleEncodingFilter<Bson>(fieldName, new IterableOperatorFilter<TItem>("$nin", values));
+        return new IterableOperatorFilter<TItem>(fieldName, "$nin", values);
     }
 
     /**
@@ -237,7 +237,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/or $or
      */
     public static Bson or(final Iterable<Bson> filters) {
-        return new OrFilter(filters);
+        return new OrNorFilter(OrNorFilter.Operator.OR, filters);
     }
 
     /**
@@ -264,7 +264,7 @@ public final class Filters {
      *    {x : $not: {$eq : 1}}
      * </pre></blockquote>
      *
-     * @param filter     the value
+     * @param filter the value
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/not $not
      */
@@ -275,7 +275,7 @@ public final class Filters {
     /**
      * Creates a filter that performs a logical NOR operation on all the specified filters.
      *
-     * @param filters    the list of values
+     * @param filters the list of values
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/nor $nor
      */
@@ -286,12 +286,12 @@ public final class Filters {
     /**
      * Creates a filter that performs a logical NOR operation on all the specified filters.
      *
-     * @param filters    the list of values
+     * @param filters the list of values
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/nor $nor
      */
     public static Bson nor(final Iterable<Bson> filters) {
-        return new IterableOperatorFilter<Bson>("$nor", filters);
+        return new OrNorFilter(OrNorFilter.Operator.NOR, filters);
     }
 
     /**
@@ -332,7 +332,7 @@ public final class Filters {
     }
 
     /**
-     *  Creates a filter that matches all documents where the value of the field is of the specified BSON type.
+     * Creates a filter that matches all documents where the value of the field is of the specified BSON type.
      *
      * @param fieldName the field name
      * @param type      the string representation of the BSON type
@@ -438,22 +438,7 @@ public final class Filters {
     public static Bson text(final String search, final TextSearchOptions textSearchOptions) {
         notNull("search", search);
         notNull("textSearchOptions", textSearchOptions);
-        return new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                BsonDocument searchDocument = new BsonDocument("$search", new BsonString(search));
-                if (textSearchOptions.getLanguage() != null) {
-                    searchDocument.put("$language", new BsonString(textSearchOptions.getLanguage()));
-                }
-                if (textSearchOptions.getCaseSensitive() != null) {
-                    searchDocument.put("$caseSensitive", BsonBoolean.valueOf(textSearchOptions.getCaseSensitive()));
-                }
-                if (textSearchOptions.getDiacriticSensitive() != null) {
-                    searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(textSearchOptions.getDiacriticSensitive()));
-                }
-                return new BsonDocument("$text", searchDocument);
-            }
-        };
+        return new TextFilter(search, textSearchOptions);
     }
 
     /**
@@ -491,7 +476,7 @@ public final class Filters {
      * @mongodb.driver.manual reference/operator/query/all $all
      */
     public static <TItem> Bson all(final String fieldName, final Iterable<TItem> values) {
-        return new SimpleEncodingFilter<Bson>(fieldName, new IterableOperatorFilter<TItem>("$all", values));
+        return new IterableOperatorFilter<TItem>(fieldName, "$all", values);
     }
 
     /**
@@ -584,7 +569,7 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param geometry  the bounding GeoJSON geometry object
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
@@ -598,7 +583,7 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that exists entirely within the specified shape.
      *
      * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param geometry  the bounding GeoJSON geometry object
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoWithin/ $geoWithin
@@ -626,10 +611,10 @@ public final class Filters {
     public static Bson geoWithinBox(final String fieldName, final double lowerLeftX, final double lowerLeftY, final double upperRightX,
                                     final double upperRightY) {
         BsonDocument box = new BsonDocument("$box",
-                                            new BsonArray(asList(new BsonArray(asList(new BsonDouble(lowerLeftX),
-                                                                                      new BsonDouble(lowerLeftY))),
-                                                                 new BsonArray(asList(new BsonDouble(upperRightX),
-                                                                                      new BsonDouble(upperRightY))))));
+                                                   new BsonArray(asList(new BsonArray(asList(new BsonDouble(lowerLeftX),
+                                                           new BsonDouble(lowerLeftY))),
+                                                           new BsonArray(asList(new BsonDouble(upperRightX),
+                                                                   new BsonDouble(upperRightY))))));
         return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, box);
     }
 
@@ -670,9 +655,9 @@ public final class Filters {
      */
     public static Bson geoWithinCenter(final String fieldName, final double x, final double y, final double radius) {
         BsonDocument center = new BsonDocument("$center",
-                                               new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
-                                                                                                           new BsonDouble(y))),
-                                                                                      new BsonDouble(radius))));
+                                                      new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                              new BsonDouble(y))),
+                                                              new BsonDouble(radius))));
         return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, center);
     }
 
@@ -692,9 +677,9 @@ public final class Filters {
      */
     public static Bson geoWithinCenterSphere(final String fieldName, final double x, final double y, final double radius) {
         BsonDocument centerSphere = new BsonDocument("$centerSphere",
-                                                     new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
-                                                                                                                 new BsonDouble(y))),
-                                                                                            new BsonDouble(radius))));
+                                                            new BsonArray(Arrays.<BsonValue>asList(new BsonArray(asList(new BsonDouble(x),
+                                                                    new BsonDouble(y))),
+                                                                    new BsonDouble(radius))));
         return new OperatorFilter<BsonDocument>("$geoWithin", fieldName, centerSphere);
     }
 
@@ -702,7 +687,7 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
      *
      * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param geometry  the bounding GeoJSON geometry object
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
@@ -716,7 +701,7 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
      *
      * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param geometry  the bounding GeoJSON geometry object
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/geoIntersects/ $geoIntersects
@@ -729,8 +714,8 @@ public final class Filters {
     /**
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
      *
-     * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param fieldName   the field name
+     * @param geometry    the bounding GeoJSON geometry object
      * @param maxDistance the maximum distance from the point, in meters
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
@@ -745,8 +730,8 @@ public final class Filters {
     /**
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point.
      *
-     * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param fieldName   the field name
+     * @param geometry    the bounding GeoJSON geometry object
      * @param maxDistance the maximum distance from the point, in meters
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
@@ -761,9 +746,9 @@ public final class Filters {
     /**
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point.
      *
-     * @param fieldName the field name
-     * @param x the x coordinate
-     * @param y the y coordinate
+     * @param fieldName   the field name
+     * @param x           the x coordinate
+     * @param y           the y coordinate
      * @param maxDistance the maximum distance from the point, in radians
      * @param minDistance the minimum distance from the point, in radians
      * @return the filter
@@ -779,8 +764,8 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
      * spherical geometry.
      *
-     * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param fieldName   the field name
+     * @param geometry    the bounding GeoJSON geometry object
      * @param maxDistance the maximum distance from the point, in meters
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
@@ -796,8 +781,8 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified GeoJSON point using
      * spherical geometry.
      *
-     * @param fieldName the field name
-     * @param geometry the bounding GeoJSON geometry object
+     * @param fieldName   the field name
+     * @param geometry    the bounding GeoJSON geometry object
      * @param maxDistance the maximum distance from the point, in meters
      * @param minDistance the minimum distance from the point, in meters
      * @return the filter
@@ -813,9 +798,9 @@ public final class Filters {
      * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point using
      * spherical geometry.
      *
-     * @param fieldName the field name
-     * @param x the x coordinate
-     * @param y the y coordinate
+     * @param fieldName   the field name
+     * @param x           the x coordinate
+     * @param y           the y coordinate
      * @param maxDistance the maximum distance from the point, in radians
      * @param minDistance the minimum distance from the point, in radians
      * @return the filter
@@ -840,6 +825,13 @@ public final class Filters {
         return new BsonDocument(fieldName, nearFilter);
     }
 
+    private static String operatorFilterToString(final String fieldName, final String operator, final Object value) {
+        return "Operator Filter{"
+                       + "fieldName='" + fieldName + '\''
+                       + ", operator='" + operator + '\''
+                       + ", value=" + value
+                       + '}';
+    }
 
     private static final class SimpleFilter implements Bson {
         private final String fieldName;
@@ -853,6 +845,11 @@ public final class Filters {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             return new BsonDocument(fieldName, value);
+        }
+
+        @Override
+        public String toString() {
+            return operatorFilterToString(fieldName, "$eq", value);
         }
     }
 
@@ -880,6 +877,11 @@ public final class Filters {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return operatorFilterToString(fieldName, operatorName, value);
         }
     }
 
@@ -952,12 +954,34 @@ public final class Filters {
             document.clear();
             document.put("$and", clauses);
         }
+
+        @Override
+        public String toString() {
+            return "And Filter{"
+                           + "filters=" + filters
+                           + '}';
+        }
     }
 
-    private static class OrFilter implements Bson {
+    private static class OrNorFilter implements Bson {
+        private enum Operator {
+            OR("$or", "Or"),
+            NOR("$nor", "Nor");
+
+            private final String name;
+            private final String toStringName;
+
+            Operator(final String name, final String toStringName) {
+                this.name = name;
+                this.toStringName = toStringName;
+            }
+        }
+
+        private final Operator operator;
         private final Iterable<Bson> filters;
 
-        public OrFilter(final Iterable<Bson> filters) {
+        public OrNorFilter(final Operator operator, final Iterable<Bson> filters) {
+            this.operator = notNull("operator", operator);
             this.filters = notNull("filters", filters);
         }
 
@@ -970,17 +994,26 @@ public final class Filters {
                 filtersArray.add(filter.toBsonDocument(documentClass, codecRegistry));
             }
 
-            orRenderable.put("$or", filtersArray);
+            orRenderable.put(operator.name, filtersArray);
 
             return orRenderable;
+        }
+
+        @Override
+        public String toString() {
+            return operator.toStringName + " Filter{"
+                           + "filters=" + filters
+                           + '}';
         }
     }
 
     private static class IterableOperatorFilter<TItem> implements Bson {
+        private final String fieldName;
         private final String operatorName;
         private final Iterable<TItem> values;
 
-        IterableOperatorFilter(final String operatorName, final Iterable<TItem> values) {
+        IterableOperatorFilter(final String fieldName, final String operatorName, final Iterable<TItem> values) {
+            this.fieldName = notNull("fieldName", fieldName);
             this.operatorName = notNull("operatorName", operatorName);
             this.values = notNull("values", values);
         }
@@ -988,6 +1021,10 @@ public final class Filters {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+            writer.writeName(fieldName);
+
             writer.writeStartDocument();
             writer.writeName(operatorName);
             writer.writeStartArray();
@@ -997,7 +1034,14 @@ public final class Filters {
             writer.writeEndArray();
             writer.writeEndDocument();
 
+            writer.writeEndDocument();
+
             return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return operatorFilterToString(fieldName, operatorName, values);
         }
     }
 
@@ -1020,6 +1064,14 @@ public final class Filters {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "Filter{"
+                           + "fieldName='" + fieldName + '\''
+                           + ", value=" + value
+                           + '}';
         }
     }
 
@@ -1054,6 +1106,12 @@ public final class Filters {
             return new BsonDocument(fieldName, new BsonDocument("$not", new BsonDocument("$eq", value)));
         }
 
+        @Override
+        public String toString() {
+            return "Not Filter{"
+                           + "filter=" + filter
+                           + '}';
+        }
     }
 
     private static class GeometryOperatorFilter<TItem> implements Bson {
@@ -1087,15 +1145,60 @@ public final class Filters {
             writer.writeName("$geometry");
             encodeValue(writer, geometry, codecRegistry);
             if (maxDistance != null) {
-               writer.writeDouble("$maxDistance", maxDistance);
+                writer.writeDouble("$maxDistance", maxDistance);
             }
             if (minDistance != null) {
                 writer.writeDouble("$minDistance", minDistance);
-            }writer.writeEndDocument();
+            }
+            writer.writeEndDocument();
             writer.writeEndDocument();
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "Geometry Operator Filter{"
+                           + "fieldName='" + fieldName + '\''
+                           + ", operator='" + operatorName + '\''
+                           + ", geometry=" + geometry
+                           + ", maxDistance=" + maxDistance
+                           + ", minDistance=" + minDistance
+                           + '}';
+        }
+    }
+
+    private static class TextFilter implements Bson {
+        private final String search;
+        private final TextSearchOptions textSearchOptions;
+
+        public TextFilter(final String search, final TextSearchOptions textSearchOptions) {
+            this.search = search;
+            this.textSearchOptions = textSearchOptions;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocument searchDocument = new BsonDocument("$search", new BsonString(search));
+            if (textSearchOptions.getLanguage() != null) {
+                searchDocument.put("$language", new BsonString(textSearchOptions.getLanguage()));
+            }
+            if (textSearchOptions.getCaseSensitive() != null) {
+                searchDocument.put("$caseSensitive", BsonBoolean.valueOf(textSearchOptions.getCaseSensitive()));
+            }
+            if (textSearchOptions.getDiacriticSensitive() != null) {
+                searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(textSearchOptions.getDiacriticSensitive()));
+            }
+            return new BsonDocument("$text", searchDocument);
+        }
+
+        @Override
+        public String toString() {
+            return "Text Filter{"
+                           + "search='" + search + '\''
+                           + ", textSearchOptions=" + textSearchOptions
+                           + '}';
         }
     }
 

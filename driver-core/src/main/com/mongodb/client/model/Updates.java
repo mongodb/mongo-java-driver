@@ -118,7 +118,7 @@ public final class Updates {
      * Creates an update that increments the value of the field with the given name by the given value.
      *
      * @param fieldName the non-null field name
-     * @param number     the value
+     * @param number    the value
      * @return the update
      * @mongodb.driver.manual reference/operator/update/inc/ $inc
      */
@@ -212,7 +212,7 @@ public final class Updates {
      * already present, in which case it does nothing
      *
      * @param fieldName the non-null field name
-     * @param values     the values
+     * @param values    the values
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
@@ -446,6 +446,15 @@ public final class Updates {
 
             return writer.getDocument();
         }
+
+        @Override
+        public String toString() {
+            return "Update{"
+                           + "fieldName='" + fieldName + '\''
+                           + ", operator='" + operator + '\''
+                           + ", value=" + value
+                           + '}';
+        }
     }
 
     private static class WithEachUpdate<TItem> implements Bson {
@@ -490,6 +499,21 @@ public final class Updates {
         protected <TDocument> void writeAdditionalFields(final BsonDocumentWriter writer, final Class<TDocument> tDocumentClass,
                                                          final CodecRegistry codecRegistry) {
         }
+
+
+        protected String additionalFieldsToString() {
+            return "";
+        }
+
+        @Override
+        public String toString() {
+            return "Each Update{"
+                           + "fieldName='" + fieldName + '\''
+                           + ", operator='" + operator + '\''
+                           + ", values=" + values
+                           + additionalFieldsToString()
+                           + '}';
+        }
     }
 
     private static class PushUpdate<TItem> extends WithEachUpdate<TItem> {
@@ -516,6 +540,11 @@ public final class Updates {
                 writer.writeName("$sort");
                 encodeValue(writer, options.getSortDocument(), codecRegistry);
             }
+        }
+
+        @Override
+        protected String additionalFieldsToString() {
+            return ", options=" + options;
         }
     }
 
@@ -550,6 +579,15 @@ public final class Updates {
 
             return writer.getDocument();
         }
+
+        @Override
+        public String toString() {
+            return "Update{"
+                           + "fieldName='" + fieldName + '\''
+                           + ", operator='$pullAll'"
+                           + ", value=" + values
+                           + '}';
+        }
     }
 
     private static class CompositeUpdate implements Bson {
@@ -571,7 +609,7 @@ public final class Updates {
                         BsonDocument existingOperatorDocument = document.getDocument(element.getKey());
                         for (Map.Entry<String, BsonValue> currentOperationDocumentElements : currentOperatorDocument.entrySet()) {
                             existingOperatorDocument.append(currentOperationDocumentElements.getKey(),
-                                                            currentOperationDocumentElements.getValue());
+                                    currentOperationDocumentElements.getValue());
                         }
                     } else {
                         document.append(element.getKey(), element.getValue());
@@ -580,6 +618,13 @@ public final class Updates {
             }
 
             return document;
+        }
+
+        @Override
+        public String toString() {
+            return "Updates{"
+                           + "updates=" + updates
+                           + '}';
         }
     }
 

@@ -170,6 +170,38 @@ class UpdatesSpecification extends Specification {
                                                                                                   }''')
     }
 
+    def 'should create string representation for simple updates'() {
+        expect:
+        set('x', 1).toString() == 'Update{fieldName=\'x\', operator=\'$set\', value=1}'
+    }
+
+    def 'should create string representation for with each update'() {
+        expect:
+        addEachToSet('x', [1, 2, 3]).toString() == 'Each Update{fieldName=\'x\', operator=\'$addToSet\', values=[1, 2, 3]}'
+    }
+    def 'should create string representation for push each update'() {
+        expect:
+        pushEach('x', [89, 65], new PushOptions().position(0).slice(3).sort(-1)).toString() ==
+                'Each Update{fieldName=\'x\', operator=\'$push\', values=[89, 65], ' +
+                'options=Push Options{position=0, slice=3, sort=-1}}'
+        pushEach('x', [89, 65], new PushOptions().position(0).slice(3).sortDocument(parse('{x : 1}'))).toString() ==
+                'Each Update{fieldName=\'x\', operator=\'$push\', values=[89, 65], ' +
+                'options=Push Options{position=0, slice=3, sortDocument={ "x" : 1 }}}'
+    }
+
+    def 'should create string representation for pull all update'() {
+        expect:
+        pullAll('x', [1, 2, 3]).toString() == 'Update{fieldName=\'x\', operator=\'$pullAll\', value=[1, 2, 3]}'
+    }
+
+    def 'should create string representation for combined update'() {
+        expect:
+        combine(set('x', 1), inc('z', 3)).toString() ==
+                'Updates{updates=[' +
+                'Update{fieldName=\'x\', operator=\'$set\', value=1}, ' +
+                'Update{fieldName=\'z\', operator=\'$inc\', value=3}]}'
+    }
+
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }

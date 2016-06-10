@@ -39,4 +39,12 @@ class SimpleExpression<TExpression> implements Bson {
 
         return writer.getDocument();
     }
+
+    @Override
+    public String toString() {
+        return "Expression{"
+                       + "name='" + name + '\''
+                       + ", expression=" + expression
+                       + '}';
+    }
 }

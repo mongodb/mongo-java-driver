@@ -91,6 +91,30 @@ class ProjectionsSpecification extends Specification {
         toBson(fields(include('x', 'y'), exclude('x'))) == parse('{y : 1, x : 0}')
     }
 
+    def 'should create string representation for include and exclude'() {
+        expect:
+        include(['x', 'y', 'x']).toString() == '{ "y" : 1, "x" : 1 }'
+        exclude(['x', 'y', 'x']).toString() == '{ "y" : 0, "x" : 0 }'
+        excludeId().toString() == '{ "_id" : 0 }'
+    }
+
+    def 'should create string representation for computed'() {
+        expect:
+        computed('c', '$y').toString() == 'Expression{name=\'c\', expression=$y}'
+    }
+
+    def 'should create string representation for elemMatch with filter'() {
+        expect:
+        elemMatch('x', and(eq('y', 1), eq('z', 2))).toString() ==
+                'ElemMatch Projection{fieldName=\'x\', ' +
+                'filter=And Filter{filters=[Filter{fieldName=\'y\', value=1}, Filter{fieldName=\'z\', value=2}]}}'
+    }
+
+    def 'should create string representation for fields'() {
+        expect:
+        fields(include('x', 'y'), exclude('_id')).toString() == 'Projections{projections=[{ "x" : 1, "y" : 1 }, { "_id" : 0 }]}'
+    }
+
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }

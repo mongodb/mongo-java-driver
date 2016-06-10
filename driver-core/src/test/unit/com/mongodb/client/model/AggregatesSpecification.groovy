@@ -16,6 +16,7 @@ package com.mongodb.client.model
 
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.conversions.Bson
@@ -24,22 +25,22 @@ import spock.lang.Specification
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
+import static com.mongodb.client.model.Accumulators.last
+import static com.mongodb.client.model.Accumulators.max
+import static com.mongodb.client.model.Accumulators.min
+import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
+import static com.mongodb.client.model.Accumulators.sum
 import static com.mongodb.client.model.Aggregates.group
-import static com.mongodb.client.model.Accumulators.last
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
-import static com.mongodb.client.model.Accumulators.max
-import static com.mongodb.client.model.Accumulators.min
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
-import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
-import static com.mongodb.client.model.Accumulators.sum
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Projections.computed
@@ -114,7 +115,7 @@ class AggregatesSpecification extends Specification {
 
 
         def groupDocument = parse('''{
-                                    $group : {
+                            $group : {
                                       _id : null,
                                       sum: { $sum: { $multiply: [ "$price", "$quantity" ] } },
                                       avg: { $avg: "$quantity" },
@@ -140,6 +141,23 @@ class AggregatesSpecification extends Specification {
                      stdDevPop('stdDevPop', '$quantity'),
                      stdDevSamp('stdDevSamp', '$quantity')
         )) == groupDocument
+    }
+
+    def 'should create string representation for simple stages'() {
+        expect:
+        match(new BsonDocument('x', new BsonInt32(1))).toString() == 'Stage{name=\'$match\', value={ "x" : 1 }}'
+    }
+
+    def 'should create string representation for group stage'() {
+        expect:
+        group('_id', avg('avg', '$quantity')).toString() ==
+                'Stage{name=\'$group\', id=_id, ' +
+                'fieldAccumulators=[' +
+                'Field{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
+        group(null, avg('avg', '$quantity')).toString() ==
+                'Stage{name=\'$group\', id=null, ' +
+                'fieldAccumulators=[' +
+                'Field{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
     }
 
     def 'should render $sample'() {

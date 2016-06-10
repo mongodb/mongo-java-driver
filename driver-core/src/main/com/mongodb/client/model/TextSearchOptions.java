@@ -91,4 +91,13 @@ public final class TextSearchOptions {
         this.diacriticSensitive = diacriticSensitive;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "Text Search Options{"
+                       + "language='" + language + '\''
+                       + ", caseSensitive=" + caseSensitive
+                       + ", diacriticSensitive=" + diacriticSensitive
+                       + '}';
+    }
 }
