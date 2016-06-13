@@ -98,20 +98,21 @@ class BaseClusterSpecification extends Specification {
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage() == 'Timed out after 1 ms while waiting to connect. Client view of cluster state is {type=UNKNOWN, ' +
-        'servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, exception={com.mongodb.MongoInternalException: oops}}, ' +
-        '{address=localhost:27018, type=UNKNOWN, state=CONNECTING}]'
+        e.getMessage().startsWith('Timed out after 1 ms while waiting to connect. Client view of cluster state is {type=UNKNOWN')
+        e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
+                'exception={com.mongodb.MongoInternalException: oops}}');
+        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
 
         when:
         cluster.selectServer(new WritableServerSelector())
 
         then:
         e = thrown(MongoTimeoutException)
-        e.getMessage() == 'Timed out after 1 ms while waiting for a server that matches WritableServerSelector. Client view of cluster ' +
-        'state is {type=UNKNOWN, servers=[{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
-        'exception={com.mongodb.MongoInternalException: oops}}, {address=localhost:27018, type=UNKNOWN, state=CONNECTING}]'
-
-
+        e.getMessage().startsWith('Timed out after 1 ms while waiting for a server that matches WritableServerSelector. ' +
+                'Client view of cluster state is {type=UNKNOWN')
+        e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
+                'exception={com.mongodb.MongoInternalException: oops}}');
+        e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
     }
 
     def 'should select server asynchronously'() {
