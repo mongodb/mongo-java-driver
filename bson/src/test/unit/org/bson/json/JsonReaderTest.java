@@ -475,6 +475,21 @@ public class JsonReaderTest {
         assertEquals("imxs", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
 
+        json = "{ \"$regex\" : /pattern/imxs }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
+        regex = bsonReader.readRegularExpression();
+        assertEquals("pattern", regex.getPattern());
+        assertEquals("imxs", regex.getOptions());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+
+        json = "{ \"$regex\" : /pattern/, $options : \"is\" }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
+        regex = bsonReader.readRegularExpression();
+        assertEquals("pattern", regex.getPattern());
+        assertEquals("is", regex.getOptions());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
     @Test
