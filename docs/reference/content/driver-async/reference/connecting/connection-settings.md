@@ -108,15 +108,29 @@ following reasons:
 To configure the driver to use Netty, the application must configure the MongoClientSettings appropriately:
          
 ```java
-MongoClientSettings.builder()
-                   .streamFactoryFactory(new NettyStreamFactoryFactory())
-                   .build();
-         
-```         
+MongoClient client = MongoClients.create(MongoClientSettings.builder()
+                                                 .clusterSettings(ClusterSettings.builder()
+                                                                          .hosts(Arrays.asList(new ServerAddress()))
+                                                                          .build())
+                                                 .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
+                                                 .build());
+
+```
+
+or via connection string:
+
+```java
+MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty");
+```
 
 By default the Netty-based streams will use the [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html) 
 and Netty's [default `ByteBufAllocator`](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html#DEFAULT), but these are 
 configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}) constructor.   
+
+{{% note %}}
+Netty is an optional dependency of the asynchronous driver. If your application requires Netty it must explicitly add a dependency to
+Netty artifacts.  The driver is currently tested against Netty 4.0.
+{{% /note %}}
 
 {{% note %}}
 Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as 
