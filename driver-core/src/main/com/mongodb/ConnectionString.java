@@ -85,6 +85,7 @@ import static java.util.Collections.singletonList;
  * <p>Connection Configuration:</p>
  * <p>Connection Configuration:</p>
  * <ul>
+ * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used.</li>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
@@ -204,6 +205,7 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
+    private String streamType;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
@@ -314,6 +316,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("ssl");
+        GENERAL_OPTIONS_KEYS.add("streamtype");
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
@@ -379,6 +382,8 @@ public class ConnectionString {
                 sslInvalidHostnameAllowed = true;
             } else if (key.equals("ssl") && parseBoolean(value, "ssl")) {
                 sslEnabled = true;
+            } else if (key.equals("streamtype")) {
+                streamType = value;
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
             } else if (key.equals("readconcernlevel")) {
@@ -903,6 +908,15 @@ public class ConnectionString {
      */
     public Boolean getSslEnabled() {
         return sslEnabled;
+    }
+
+    /**
+     * Gets the stream type value specified in the connection string.
+     * @return the stream type value
+     * @since 3.3
+     */
+    public String getStreamType() {
+        return streamType;
     }
 
     /**

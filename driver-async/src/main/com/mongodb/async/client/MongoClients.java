@@ -27,6 +27,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
 import com.mongodb.management.JMXConnectionPoolListener;
@@ -38,6 +39,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.List;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -68,10 +70,11 @@ public final class MongoClients {
     }
 
     /**
-     * Create a new client with the given connection string.
+     * Create a new client with the given connection string as if by a call to {@link #create(ConnectionString)}.
      *
      * @param connectionString the connection
      * @return the client
+     * @see #create(ConnectionString)
      */
     public static MongoClient create(final String connectionString) {
         return create(new ConnectionString(connectionString));
@@ -79,12 +82,30 @@ public final class MongoClients {
 
     /**
      * Create a new client with the given connection string.
+     * <p>
+     * For each of the settings classed configurable via {@link MongoClientSettings}, the connection string is applied by calling the
+     * {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to an instance of
+     * {@link com.mongodb.async.client.MongoClientSettings.Builder}.
+     * </p>
+     * <p>
+     * The connection string's stream type is then applied by setting the
+     * {@link com.mongodb.connection.StreamFactoryFactory} to an instance of {@link NettyStreamFactoryFactory},
+     * </p>
      *
      * @param connectionString the settings
      * @return the client
+     * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
+     *
+     * @see ConnectionString#getStreamType()
+     * @see com.mongodb.async.client.MongoClientSettings.Builder
+     * @see com.mongodb.connection.ClusterSettings.Builder#applyConnectionString(ConnectionString)
+     * @see com.mongodb.connection.ConnectionPoolSettings.Builder#applyConnectionString(ConnectionString)
+     * @see com.mongodb.connection.ServerSettings.Builder#applyConnectionString(ConnectionString)
+     * @see com.mongodb.connection.SslSettings.Builder#applyConnectionString(ConnectionString)
+     * @see com.mongodb.connection.SocketSettings.Builder#applyConnectionString(ConnectionString)
      */
     public static MongoClient create(final ConnectionString connectionString) {
-        return create(MongoClientSettings.builder()
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
                                          .clusterSettings(ClusterSettings.builder()
                                                                          .applyConnectionString(connectionString)
                                                                          .build())
@@ -100,8 +121,15 @@ public final class MongoClients {
                                                                  .build())
                                          .socketSettings(SocketSettings.builder()
                                                                        .applyConnectionString(connectionString)
-                                                                       .build())
-                                         .build());
+                                                                       .build());
+        if (connectionString.getStreamType() != null) {
+            if (connectionString.getStreamType().toLowerCase().equals("netty")) {
+                builder.streamFactoryFactory(NettyStreamFactoryFactory.builder().build());
+            } else if (!connectionString.getStreamType().toLowerCase().equals("nio2")) {
+                throw new IllegalArgumentException(format("Unsupported stream type %s", connectionString.getStreamType()));
+            }
+        }
+        return create(builder.build());
     }
 
     /**

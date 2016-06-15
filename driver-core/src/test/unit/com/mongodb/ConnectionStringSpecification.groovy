@@ -111,13 +111,14 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getServerSelectionTimeout() == 25000
         connectionString.getLocalThreshold() == 30
         connectionString.getHeartbeatFrequency() == 20000
+        connectionString.getStreamType() == 'netty'
 
         where:
         connectionString <<
                 [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1&wtimeout=2500&fsync=true&readPreference=primary&ssl=true&'
+                                            + 'safe=false&w=1&wtimeout=2500&fsync=true&readPreference=primary&ssl=true&streamType=netty&'
                                             + 'sslInvalidHostNameAllowed=true&'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30&'
@@ -125,7 +126,7 @@ class ConnectionStringSpecification extends Specification {
                  new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
-                                            + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=primary;ssl=true;'
+                                            + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=primary;ssl=true;streamType=netty;'
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000;'
                                             + 'localThresholdMS=30;'
@@ -134,7 +135,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
-                                            + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true&'
+                                            + 'safe=false&w=1;wtimeout=2500;fsync=true&readPreference=primary;ssl=true&streamType=netty;'
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30;'
@@ -188,6 +189,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getReadPreference() == null;
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
+        connectionString.getStreamType() == null
     }
 
     @Unroll
