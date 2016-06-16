@@ -211,8 +211,14 @@ public class DBPort implements Connection {
     }
 
     synchronized CommandResult runCommand(final DB db, final DBObject cmd, final int maxBsonObjectSize) throws IOException {
+        return runCommand(db, cmd, null, maxBsonObjectSize);
+    }
+
+    synchronized CommandResult runCommand(final DB db, final DBObject cmd, final ReadPreference readPreference,
+                                          final int maxBsonObjectSize) throws IOException {
         isTrue("open", !closed);
-        OutMessage msg = OutMessage.query( db.getCollection("$cmd") , 0 , 0 , -1 , cmd , null, maxBsonObjectSize);
+        OutMessage msg = OutMessage.query( db.getCollection("$cmd") , 0 , 0 , -1 , cmd, null, readPreference,
+                DefaultDBEncoder.FACTORY.create(), maxBsonObjectSize);
         try {
             return convertToCommandResult(cmd, call(msg, db.getCollection("$cmd"), null));
         } finally {

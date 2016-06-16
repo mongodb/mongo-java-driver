@@ -97,7 +97,7 @@ class DBCollectionImpl extends DBCollection {
 
         DBObject last = pipeline.get(pipeline.size() - 1);
         String outCollection = (String) last.get("$out");
-        ReadPreference appliedReadPreference = outCollection != null ? ReadPreference.primary() : readPreference;
+        final ReadPreference appliedReadPreference = outCollection != null ? ReadPreference.primary() : readPreference;
 
         final DBPort port = db.getConnector().getPort(appliedReadPreference);
         try {
@@ -106,7 +106,8 @@ class DBCollectionImpl extends DBCollection {
             CommandResult res = db.getConnector().doOperation(db, port, new DBPort.Operation<CommandResult>() {
                 @Override
                 public CommandResult execute() throws IOException {
-                    return port.runCommand(db, command, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
+                    return port.runCommand(db, command, appliedReadPreference,
+                            db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
                 }
             });
 
