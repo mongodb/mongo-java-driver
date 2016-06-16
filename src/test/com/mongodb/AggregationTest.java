@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.AggregationOptions.OutputMode;
 import com.mongodb.util.TestCase;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -188,7 +187,7 @@ public class AggregationTest extends TestCase {
         checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
-        ServerAddress primary = new ServerAddress("localhost");
+        ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
         MongoClient rsClient = new MongoClient(getMongoClientURI());
         DB rsDatabase = rsClient.getDB(database.getName());
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
@@ -205,25 +204,27 @@ public class AggregationTest extends TestCase {
     }
 
     @Test
-    @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
         checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
-        ServerAddress primary = new ServerAddress("localhost");
-        ServerAddress secondary = new ServerAddress("localhost", 27018);
+        ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
+        ServerAddress secondary = new ServerAddress(getASecondaryAsString(cleanupMongo));
         MongoClient rsClient = new MongoClient(asList(primary, secondary));
         DB rsDatabase = rsClient.getDB(database.getName());
         rsDatabase.dropDatabase();
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
         aggCollection.drop();
 
-        final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
+        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.INLINE)
                 .build();
-        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
+        Cursor cursor = aggCollection.aggregate(pipeline, options, ReadPreference.secondary());
         assertNotEquals(primary, cursor.getServerAddress());
+
+        AggregationOutput aggregationOutput = aggCollection.aggregate(pipeline, ReadPreference.secondary());
+        assertNotEquals(primary, aggregationOutput.getServerUsed());
     }
 
     @Test
