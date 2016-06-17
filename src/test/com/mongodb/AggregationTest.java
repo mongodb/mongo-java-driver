@@ -188,18 +188,14 @@ public class AggregationTest extends TestCase {
         assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
-        MongoClient rsClient = new MongoClient(getMongoClientURI());
-        DB rsDatabase = rsClient.getDB(database.getName());
-        DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
-        aggCollection.drop();
 
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.CURSOR)
                 .build();
-        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
-        assertEquals(2, rsDatabase.getCollection("aggCollection").count());
+        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), collection);
+        assertEquals(2, database.getCollection("aggCollection").count());
         assertEquals(primary.getSocketAddress(), cursor.getServerAddress().getSocketAddress());
     }
 
@@ -209,21 +205,15 @@ public class AggregationTest extends TestCase {
         assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
-        ServerAddress secondary = new ServerAddress(getASecondaryAsString(cleanupMongo));
-        MongoClient rsClient = new MongoClient(asList(primary, secondary));
-        DB rsDatabase = rsClient.getDB(database.getName());
-        rsDatabase.dropDatabase();
-        DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
-        aggCollection.drop();
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         AggregationOptions options = AggregationOptions.builder()
                 .outputMode(OutputMode.INLINE)
                 .build();
-        Cursor cursor = aggCollection.aggregate(pipeline, options, ReadPreference.secondary());
+        Cursor cursor = collection.aggregate(pipeline, options, ReadPreference.secondary());
         assertNotEquals(primary, cursor.getServerAddress());
 
-        AggregationOutput aggregationOutput = aggCollection.aggregate(pipeline, ReadPreference.secondary());
+        AggregationOutput aggregationOutput = collection.aggregate(pipeline, ReadPreference.secondary());
         assertNotEquals(primary, aggregationOutput.getServerUsed());
     }
 
@@ -280,7 +270,7 @@ public class AggregationTest extends TestCase {
         }
     }
 
-    public List<DBObject> prepareData() {
+    private List<DBObject> prepareData() {
         collection.remove(new BasicDBObject());
 
         final DBObject foo = new BasicDBObject("name", "foo").append("count", 5);
