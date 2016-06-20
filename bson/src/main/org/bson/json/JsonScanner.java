@@ -134,9 +134,6 @@ class JsonScanner {
             switch (state) {
                 case IN_PATTERN:
                     switch (c) {
-                        case -1:
-                            state = RegularExpressionState.INVALID;
-                            break;
                         case '/':
                             state = RegularExpressionState.IN_OPTIONS;
                             options = buffer.getPosition();
@@ -177,7 +174,6 @@ class JsonScanner {
                     }
                     break;
                 default:
-                    break;
             }
 
             switch (state) {
