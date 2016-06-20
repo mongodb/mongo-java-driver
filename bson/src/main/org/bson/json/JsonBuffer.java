@@ -20,6 +20,7 @@ class JsonBuffer {
 
     private final String buffer;
     private int position;
+    private boolean eof;
 
     public JsonBuffer(final String buffer) {
         this.buffer = buffer;
@@ -34,11 +35,19 @@ class JsonBuffer {
     }
 
     public int read() {
-        return (position >= buffer.length()) ? -1 : buffer.charAt(position++);
+        if (eof) {
+            throw new JsonParseException("Trying to read past EOF.");
+        } else if (position >= buffer.length()) {
+            eof = true;
+            return -1;
+        } else {
+            return buffer.charAt(position++);
+        }
     }
 
     public void unread(final int c) {
         if (c != -1 && buffer.charAt(position - 1) == c) {
+            eof = false;
             position--;
         }
     }
