@@ -29,7 +29,7 @@ import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.async.client.MongoDatabaseImpl
 import com.mongodb.async.client.TestOperationExecutor
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
@@ -176,7 +176,7 @@ class GridFSBucketSpecification extends Specification {
         def stream = gridFSBucket.openUploadStream('filename')
 
         then:
-        expect stream, isTheSameAs(new GridFSUploadStreamImpl(filesCollection, chunksCollection, stream.getFileId(), 'filename', 255,
+        expect stream, isTheSameAs(new GridFSUploadStreamImpl(filesCollection, chunksCollection, stream.getId(), 'filename', 255,
                 null, new GridFSIndexCheckImpl(filesCollection, chunksCollection)), ['md5', 'closeAndWritingLock'])
     }
 
@@ -450,7 +450,7 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        gridFSBucket.downloadToStreamByName(filename, asyncOutputStream, futureResult)
+        gridFSBucket.downloadToStream(filename, asyncOutputStream, futureResult)
         asyncOutputStream.close(Stub(SingleResultCallback))
         def size = futureResult.get()
 
@@ -506,7 +506,7 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        def stream = gridFSBucket.openDownloadStreamByName(filename, new GridFSDownloadByNameOptions().revision(version))
+        def stream = gridFSBucket.openDownloadStream(filename, new GridFSDownloadOptions().revision(version))
         stream.getGridFSFile(futureResult)
         futureResult.get()
 
@@ -577,7 +577,7 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         when:
         def futureResult = new FutureResultCallback()
-        def stream = gridFSBucket.openDownloadStreamByName('filename')
+        def stream = gridFSBucket.openDownloadStream('filename')
         stream.read(ByteBuffer.wrap(new byte[10]), futureResult)
         futureResult.get()
 
@@ -693,9 +693,9 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.updateOne(new Document('_id', fileId),
-                new Document('$set',
-                        new Document('filename', newFilename)), _) >> {
+        1 * filesCollection.updateOne(new BsonDocument('_id', new BsonObjectId(fileId)),
+                new BsonDocument('$set',
+                        new BsonDocument('filename', new BsonString(newFilename))), _) >> {
             it[2].onResult(new UpdateResult.UnacknowledgedUpdateResult(), null)
         }
     }

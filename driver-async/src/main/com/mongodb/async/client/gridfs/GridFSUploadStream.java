@@ -17,6 +17,7 @@
 package com.mongodb.async.client.gridfs;
 
 import com.mongodb.async.SingleResultCallback;
+import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 
 /**
@@ -31,9 +32,18 @@ public interface GridFSUploadStream extends AsyncOutputStream {
     /**
      * Gets the {@link ObjectId} for the file to be uploaded
      *
+     * Throws a {@link com.mongodb.MongoGridFSException} if the file id is not an ObjectId.
+     *
      * @return the ObjectId for the file to be uploaded
      */
-    ObjectId getFileId();
+    ObjectId getObjectId();
+
+    /**
+     * The {@link BsonValue} id for this file.
+     *
+     * @return the id for this file
+     */
+    BsonValue getId();
 
     /**
      * Aborts the upload and deletes any data.

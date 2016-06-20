@@ -128,16 +128,14 @@ streamToDownloadTo.close();
 System.out.println(streamToDownloadTo.toString());
 ```
 
-### DownloadToStreamByName
-
-If you don't know the [`ObjectId`]({{< apiref "org/bson/types/ObjectId.html">}}) of the file you want to download, then you use the [`downloadToStreamByName`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStreamByName-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadByNameOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html" >}}) to configure which version to download.
+If you don't know the [`ObjectId`]({{< apiref "org/bson/types/ObjectId.html">}}) of the file but know the filename, you can use the [`downloadToStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadByNameOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html" >}}) to configure which version to download.
 
 The following example downloads the original version of the file named "mongodb-tutorial" into the `OutputStream`:
 
 ```java
 FileOutputStream streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.pdf");
 GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
-gridFSBucket.downloadToStreamByName("mongodb-tutorial", streamToDownloadTo, downloadOptions);
+gridFSBucket.downloadToStream("mongodb-tutorial", streamToDownloadTo, downloadOptions);
 streamToDownloadTo.close();
 ```
 
@@ -157,14 +155,12 @@ downloadStream.close();
 System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 ```
 
-### OpenDownloadStreamByName
-
-You can also open a `GridFSDownloadStream` by searching against the filename, using the [`openDownloadStreamByName`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStreamByName-java.lang.String-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadByNameOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html" >}}) to configure which version to download.
+You can also open a `GridFSDownloadStream` by searching against the filename, using the [`openDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openDownloadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions-" >}}) method. By default it will download the latest version of the file. Use the [`GridFSDownloadByNameOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadByNameOptions.html" >}}) to configure which version to download.
 
 The following example downloads the latest version of the file named "sampleData" into the `OutputStream`:
 
 ```java
-GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStreamByName("sampleData");
+GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream("sampleData");
 int fileLength = (int) downloadStream.getGridFSFile().getLength();
 byte[] bytesToWriteTo = new byte[fileLength];
 downloadStream.read(bytesToWriteTo);

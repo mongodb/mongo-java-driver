@@ -90,6 +90,8 @@ public final class GridFSFile {
     /**
      * The {@link ObjectId} for this file.
      *
+     * Throws a MongoGridFSException if the file id is not an ObjectId.
+     *
      * @return the id for this file.
      */
     public ObjectId getObjectId() {

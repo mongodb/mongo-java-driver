@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ package com.mongodb.client.gridfs.model;
  *
  * <p>Controls the selection of the revision to download</p>
  *
- * @since 3.1
- * @deprecated use {@link GridFSDownloadOptions} instead.
+ * @since 3.3
  */
-@Deprecated
-public final class GridFSDownloadByNameOptions {
+public final class GridFSDownloadOptions {
     private int revision;
 
     /**
@@ -33,7 +31,7 @@ public final class GridFSDownloadByNameOptions {
      *
      * <p>Defaults to the most recent revision.</p>
      */
-    public GridFSDownloadByNameOptions() {
+    public GridFSDownloadOptions() {
         revision = -1;
     }
 
@@ -54,7 +52,7 @@ public final class GridFSDownloadByNameOptions {
      * @param revision the file revision to download
      * @return this
      */
-    public GridFSDownloadByNameOptions revision(final int revision) {
+    public GridFSDownloadOptions revision(final int revision) {
         this.revision = revision;
         return this;
     }
