@@ -503,15 +503,7 @@ public class JsonScannerTest {
         String json = "\t /pattern/nsk,";
         JsonBuffer buffer = new JsonBuffer(json);
         JsonScanner scanner = new JsonScanner(buffer);
-        scanner.nextToken();
-    }
-
-    @Test(expected = JsonParseException.class)
-    public void testInvalidRegularExpressionNoEnd() {
-        String json = "/b";
-        JsonBuffer buffer = new JsonBuffer(json);
-        JsonScanner scanner = new JsonScanner(buffer);
-        scanner.nextToken();
+        JsonToken token = scanner.nextToken();
     }
 
     @Test(expected = JsonParseException.class)
