@@ -19,7 +19,7 @@ package com.mongodb.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import org.bson.BsonObjectId;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
@@ -34,7 +34,7 @@ import static com.mongodb.util.Util.toHex;
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
-    private final ObjectId fileId;
+    private final BsonValue fileId;
     private final String filename;
     private final int chunkSizeBytes;
     private final Document metadata;
@@ -48,7 +48,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private boolean closed = false;
 
     GridFSUploadStreamImpl(final MongoCollection<GridFSFile> filesCollection, final MongoCollection<Document> chunksCollection,
-                           final ObjectId fileId, final String filename, final int chunkSizeBytes, final Document metadata) {
+                           final BsonValue fileId, final String filename, final int chunkSizeBytes, final Document metadata) {
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
         this.fileId = notNull("File Id", fileId);
@@ -66,7 +66,21 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     @Override
+    @Deprecated
     public ObjectId getFileId() {
+        return getObjectId();
+    }
+
+    @Override
+    public ObjectId getObjectId() {
+        if (!fileId.isObjectId()) {
+            throw new MongoGridFSException("Custom id type used for this GridFS upload stream");
+        }
+        return fileId.asObjectId().getValue();
+    }
+
+    @Override
+    public BsonValue getId() {
         return fileId;
     }
 
@@ -134,7 +148,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
             closed = true;
         }
         writeChunk();
-        GridFSFile gridFSFile = new GridFSFile(new BsonObjectId(fileId), filename, lengthInBytes, chunkSizeBytes, new Date(),
+        GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
                 toHex(md5.digest()), metadata);
         filesCollection.insertOne(gridFSFile);
         buffer = null;

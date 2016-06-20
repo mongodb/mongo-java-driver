@@ -19,7 +19,7 @@ package com.mongodb.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -238,12 +238,12 @@ public class GridFSTest extends DatabaseTestCase {
 
         try {
             outputStream = new ByteArrayOutputStream();
-            GridFSDownloadByNameOptions options = new GridFSDownloadByNameOptions();
+            GridFSDownloadOptions options = new GridFSDownloadOptions();
             if (arguments.containsKey("options")) {
                 int revision = arguments.getDocument("options").getInt32("revision").getValue();
                 options = options.revision(revision);
             }
-            gridFSBucket.downloadToStreamByName(arguments.getString("filename").getValue(), outputStream, options);
+            gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), outputStream, options);
             outputStream.close();
         } catch (Throwable e) {
             error = e;

@@ -19,15 +19,16 @@ package com.mongodb.client.gridfs
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.BsonObjectId
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.types.Binary
-import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import java.security.MessageDigest
 
 class GridFSUploadStreamSpecification extends Specification {
-    def fileId = new ObjectId()
+    def fileId = new BsonObjectId()
     def filename = 'filename'
     def metadata = new Document()
 
@@ -36,7 +37,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata)
 
         then:
-        uploadStream.getFileId() == fileId
+        uploadStream.getId() == fileId
     }
 
     def 'should write the buffer it reaches the chunk size'() {
@@ -98,11 +99,11 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         1 * filesCollection.insertOne { GridFSFile data -> fileData = data }
         then:
-        chunksData.getObjectId('files_id') == fileId
+        chunksData.get('files_id') == fileId
         chunksData.getInteger('n') == 0
         chunksData.get('data', Binary).getData() == content
 
-        fileData.getObjectId() == fileId
+        fileData.getId() == fileId
         fileData.getFilename() == filename
         fileData.getLength() == content.length as Long
         fileData.getChunkSize() == 255
@@ -172,6 +173,20 @@ class GridFSUploadStreamSpecification extends Specification {
         when:
         uploadStream.close()
         uploadStream.write(1)
+
+        then:
+        thrown(MongoGridFSException)
+    }
+
+    def 'should throw an exception when calling getObjectId and the fileId is not an ObjectId'() {
+        given:
+        def fileId = new BsonString('myFile')
+        def filesCollection = Mock(MongoCollection)
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata)
+
+        when:
+        uploadStream.getObjectId()
 
         then:
         thrown(MongoGridFSException)

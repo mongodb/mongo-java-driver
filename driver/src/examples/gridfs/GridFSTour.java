@@ -24,7 +24,7 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.GridFSUploadStream;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.Document;
@@ -93,7 +93,7 @@ public final class GridFSTour {
         GridFSUploadStream uploadStream = gridFSBucket.openUploadStream("sampleData");
         uploadStream.write(data);
         uploadStream.close();
-        System.out.println("The fileId of the uploaded file is: " + uploadStream.getFileId().toHexString());
+        System.out.println("The fileId of the uploaded file is: " + uploadStream.getObjectId().toHexString());
 
         /*
          * Find documents
@@ -127,8 +127,8 @@ public final class GridFSTour {
          * DownloadToStreamByName
          */
         streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.txt");
-        GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
-        gridFSBucket.downloadToStreamByName("mongodb-tutorial", streamToDownloadTo, downloadOptions);
+        GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions().revision(0);
+        gridFSBucket.downloadToStream("mongodb-tutorial", streamToDownloadTo, downloadOptions);
         streamToDownloadTo.close();
 
         /*
@@ -146,7 +146,7 @@ public final class GridFSTour {
          * OpenDownloadStreamByName
          */
 
-        downloadStream = gridFSBucket.openDownloadStreamByName("sampleData");
+        downloadStream = gridFSBucket.openDownloadStream("sampleData");
         fileLength = (int) downloadStream.getGridFSFile().getLength();
         bytesToWriteTo = new byte[fileLength];
         downloadStream.read(bytesToWriteTo);

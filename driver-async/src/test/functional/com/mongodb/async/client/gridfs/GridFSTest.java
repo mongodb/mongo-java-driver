@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.client.DatabaseTestCase;
 import com.mongodb.async.client.Fixture;
 import com.mongodb.async.client.MongoCollection;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -291,7 +291,7 @@ public class GridFSTest extends DatabaseTestCase {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            final GridFSDownloadByNameOptions options = new GridFSDownloadByNameOptions();
+            final GridFSDownloadOptions options = new GridFSDownloadOptions();
             if (arguments.containsKey("options")) {
                 int revision = arguments.getDocument("options").getInt32("revision").getValue();
                 options.revision(revision);
@@ -300,7 +300,7 @@ public class GridFSTest extends DatabaseTestCase {
             new MongoOperation<Long>() {
                 @Override
                 public void execute() {
-                    gridFSBucket.downloadToStreamByName(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
+                    gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
                             options, getCallback());
                 }
             }.get();

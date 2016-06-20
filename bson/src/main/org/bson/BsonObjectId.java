@@ -28,6 +28,13 @@ public class BsonObjectId extends BsonValue implements Comparable<BsonObjectId> 
     private final ObjectId value;
 
     /**
+    * Construct a new instance with a new {@code ObjectId}.
+    */
+    public BsonObjectId() {
+        this(new ObjectId());
+    }
+
+    /**
      * Construct a new instance with the given {@code ObjectId} instance.
      * @param value the ObjectId
      */

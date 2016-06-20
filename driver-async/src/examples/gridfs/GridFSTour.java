@@ -26,7 +26,7 @@ import com.mongodb.async.client.gridfs.GridFSBucket;
 import com.mongodb.async.client.gridfs.GridFSBuckets;
 import com.mongodb.async.client.gridfs.GridFSDownloadStream;
 import com.mongodb.async.client.gridfs.GridFSUploadStream;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.Document;
@@ -126,7 +126,7 @@ public final class GridFSTour {
             @Override
             public void onResult(final Integer result, final Throwable t) {
                 uploadLatch2.countDown();
-                System.out.println("The fileId of the uploaded file is: " + uploadStream.getFileId().toHexString());
+                System.out.println("The fileId of the uploaded file is: " + uploadStream.getObjectId().toHexString());
 
                 uploadStream.close(new SingleResultCallback<Void>() {
                     @Override
@@ -199,8 +199,8 @@ public final class GridFSTour {
         final CountDownLatch downloadLatch2 = new CountDownLatch(1);
         streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE,
                 StandardOpenOption.DELETE_ON_CLOSE);
-        GridFSDownloadByNameOptions downloadOptions = new GridFSDownloadByNameOptions().revision(0);
-        gridFSBucket.downloadToStreamByName("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions,
+        GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions().revision(0);
+        gridFSBucket.downloadToStream("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions,
                 new SingleResultCallback<Long>() {
                     @Override
                     public void onResult(final Long result, final Throwable t) {
@@ -241,7 +241,7 @@ public final class GridFSTour {
         System.out.println("ByName");
         dstByteBuffer.clear();
         final CountDownLatch downloadLatch4 = new CountDownLatch(1);
-        final GridFSDownloadStream downloadStreamByName = gridFSBucket.openDownloadStreamByName("sampleData");
+        final GridFSDownloadStream downloadStreamByName = gridFSBucket.openDownloadStream("sampleData");
         downloadStreamByName.read(dstByteBuffer, new SingleResultCallback<Integer>() {
             @Override
             public void onResult(final Integer result, final Throwable t) {

@@ -22,9 +22,10 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.BsonObjectId
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.types.Binary
-import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -32,7 +33,7 @@ import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
 
 class GridFSUploadStreamSpecification extends Specification {
-    def fileId = new ObjectId()
+    def fileId = new BsonObjectId()
     def filename = 'filename'
     def metadata = new Document()
     def content = 'file content ' as byte[]
@@ -43,7 +44,7 @@ class GridFSUploadStreamSpecification extends Specification {
                 NOOP_INDEXCHECK)
 
         then:
-        uploadStream.getFileId() == fileId
+        uploadStream.getId() == fileId
     }
 
     def 'should write the buffer it reaches the chunk size'() {
@@ -113,11 +114,11 @@ class GridFSUploadStreamSpecification extends Specification {
         }
 
         then:
-        chunksData.getObjectId('files_id') == fileId
+        chunksData.get('files_id') == fileId
         chunksData.getInteger('n') == 0
         chunksData.get('data', Binary).getData() == content
 
-        fileData.getObjectId() == fileId
+        fileData.getId() == fileId
         fileData.getFilename() == filename
         fileData.getLength() == content.length as Long
         fileData.getChunkSize() == 255
@@ -202,6 +203,20 @@ class GridFSUploadStreamSpecification extends Specification {
 
         then:
         notThrown(MongoGridFSException)
+    }
+
+    def 'should throw an exception when calling getObjectId and the fileId is not an ObjectId'() {
+        given:
+        def fileId = new BsonString('myFile')
+        def filesCollection = Mock(MongoCollection)
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+
+        when:
+        uploadStream.getObjectId()
+
+        then:
+        thrown(MongoGridFSException)
     }
 
     def 'should not allow concurrent writes'() {
