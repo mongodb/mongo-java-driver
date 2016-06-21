@@ -136,7 +136,11 @@ public class DBCursorTest extends TestCase {
         } else {
             assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "x_1" ).count());
         }
-        assertEquals( 2, collection.find().hint( "x_1" ).count());
+        if (serverIsAtLeastVersion(3.3)) {
+            assertEquals(0, collection.find().hint("x_1").count()); // see https://jira.mongodb.org/browse/SERVER-22041
+        } else {
+            assertEquals(2, collection.find().hint("x_1").count());
+        }
     }
 
     @Test
@@ -387,7 +391,11 @@ public class DBCursorTest extends TestCase {
 
         // negative limit works like negative batch size, for legacy reason
         int x = c.find().limit(-800).toArray().size();
-        assertTrue(x < 800);
+        if (serverIsAtLeastVersion(3.3)) {
+            assertEquals(800, x);       // MongoDB 3.4 creates a 12MB OP_REPLY that fits all 800 documents
+        } else {
+            assertTrue(x < 800);        // Previous versions cut off the OP_REPLY at 4MB
+        }
 
         DBCursor a = c.find();
         assertEquals(numToInsert, a.itcount());
