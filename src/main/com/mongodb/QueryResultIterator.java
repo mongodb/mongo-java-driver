@@ -150,7 +150,7 @@ class QueryResultIterator implements Cursor {
     }
 
     private int getGetMoreBatchSize() {
-        return chooseBatchSize(_batchSize, _limit, _numFetched);
+        return Math.abs(chooseBatchSize(_batchSize, _limit, _numFetched));
     }
 
     public void remove(){
