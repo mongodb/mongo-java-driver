@@ -35,14 +35,13 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 
 # Command Monitoring
 
-The driver implements the 
-[command monitoring specification](https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst), 
-which allows an application to attach its own event listeners that are notified when commands are started and when they sucessfully 
-completed or fail.
- 
-Command listeners are registered individually for each instance of `MongoClient` by configuring  `MongoClientOptions` with one or more 
-instances of a class that implements the [`CommandListener`]({{< apiref "com/mongodb/event/CommandListener" >}}) interface.   Consider 
-the following, obviously simplistic, implementation of the `CommandListener` interface:
+The driver implements the
+[command monitoring specification](https://github.com/mongodb/specifications/blob/master/source/command-monitoring/command-monitoring.rst),
+allowing an application to be notified when a command starts and when it either succeeds or fails.
+
+An application registers command listeners with a `MongoClient` by configuring `MongoClientOptions` with instances of classes
+that implement the [`CommandListener`]({{< apiref "com/mongodb/event/CommandListener" >}}) interface. Consider the following, somewhat
+simplistic, implementation of the `CommandListener` interface:
  
 ```java
 public class TestCommandListener implements CommandListener {                        
@@ -88,10 +87,92 @@ and an instance of `MongoClientOptions` configured with an instance of `TestComm
             
 ```java                                                                                   
 MongoClientOptions options = MongoClientOptions.builder()                            
-                                               .addCommandListener(new TestCommandListener())  
-                                               .build();                             
+                                           .addCommandListener(new TestCommandListener())
+                                           .build();
 ```
 
 A `MongoClient` configured with these options will print a message to `System.out` before sending each command to a MongoDB server, and 
 another message upon either successful completion or failure of each command.
+
+# Cluster Monitoring
+
+The driver implements the
+[SDAM Monitoring specification](https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst),
+allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.
+
+An application registers listeners with a `MongoClient` by configuring  `MongoClientOptions` with instances of classes that
+implement any of the [`ClusterListener`]({{< apiref "com/mongodb/event/ClusterListener" >}}),
+ [`ServerListener`]({{< apiref "com/mongodb/event/ServerListener" >}}),
+or [`ServerMonitorListener`]({{< apiref "com/mongodb/event/ServerMonitorListener" >}}) interfaces.
+
+Consider the following, somewhat simplistic, example of a cluster listener:
+
+```java
+public class TestClusterListener implements ClusterListener {
+    private final ReadPreference readPreference;
+    private boolean isWritable;
+    private boolean isReadable;
+
+    public TestClusterListener(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
+    }
+
+    @Override
+    public void clusterOpening(final ClusterOpeningEvent clusterOpeningEvent) {
+        System.out.println(String.format("Cluster with unique client identifier %s opening",
+                clusterOpeningEvent.getClusterId()));
+    }
+
+    @Override
+    public void clusterClosed(final ClusterClosedEvent clusterClosedEvent) {
+        System.out.println(String.format("Cluster with unique client identifier %s closed",
+                clusterClosedEvent.getClusterId()));
+    }
+
+    @Override
+    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+        if (!isWritable) {
+            if (event.getNewDescription().hasWritableServer()) {
+                isWritable = true;
+                System.out.println("Writable server available!");
+            }
+        } else {
+            if (!event.getNewDescription().hasWritableServer()) {
+                isWritable = false;
+                System.out.println("No writable server available!");
+            }
+        }
+
+        if (!isReadable) {
+            if (event.getNewDescription().hasReadableServer(readPreference)) {
+                isReadable = true;
+                System.out.println("Readable server available!");
+            }
+        } else {
+            if (!event.getNewDescription().hasReadableServer(readPreference)) {
+                isReadable = false;
+                System.out.println("No readable server available!");
+            }
+        }
+    }
+}
+```
+
+and an instance of `MongoClientOptions` configured with an instance of `TestClusterListener`:
+
+```java
+List<ServerAddress> seedList = ...
+MongoClientOptions options = MongoClientOptions.builder()
+                                           .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
+                                           .build();
+MongoClient client = new MongoClient(seedList, options);
+```
+
+A `MongoClient` configured with these options will print a message to `System.out` when the MongoClient is constructed with these options,
+and when that MongoClient is closed.  In addition, it will print a message when the client enters a state:
+
+* with an available server that will accept writes
+* without an available server that will accept writes
+* with an available server that will accept reads using the configured `ReadPreference`
+* without an available server that will accept reads using the configured `ReadPreference`
 
