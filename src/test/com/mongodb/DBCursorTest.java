@@ -115,26 +115,26 @@ public class DBCursorTest extends TestCase {
 
         c.createIndex(new BasicDBObject("i", 1));
 
-        assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "_id_" ).count());
-        assertEquals(2, c.find().hint( "_id_" ).count());
+        assertEquals(1, c.find(new BasicDBObject("i", 1)).hint("_id_").count());
+        assertEquals(2, c.find().hint("_id_").count());
 
         if (serverIsAtLeastVersion(2.6)) {
             try {
-                c.find(new BasicDBObject("i", 1)).hint( "BAD HINT" ).count();
+                c.find(new BasicDBObject("i", 1)).hint("BAD HINT").count();
                 fail("Show have thrown");
             } catch (MongoException e) {
                 // good
             }
         } else {
-            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "BAD HINT" ).count());
+            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint("BAD HINT").count());
         }
 
         c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("sparse", true));
 
         if (serverIsAtLeastVersion(2.6)) {
-            assertEquals(0, c.find(new BasicDBObject("i", 1)).hint( "x_1" ).count());
+            assertEquals(0, c.find(new BasicDBObject("i", 1)).hint("x_1").count());
         } else {
-            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "x_1" ).count());
+            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint("x_1").count());
         }
         if (serverIsAtLeastVersion(3.3)) {
             assertEquals(0, collection.find().hint("x_1").count()); // see https://jira.mongodb.org/browse/SERVER-22041
@@ -225,8 +225,8 @@ public class DBCursorTest extends TestCase {
         DBObject secondDBObject = new BasicDBObject("x", 2);
 
         final DBCursor cur = c.find()
-                .sort(new BasicDBObject("$natural", 1))
-                .addOption(Bytes.QUERYOPTION_TAILABLE);
+                                     .sort(new BasicDBObject("$natural", 1))
+                                     .addOption(Bytes.QUERYOPTION_TAILABLE);
         c.save(firstDBObject, WriteConcern.SAFE);
 
         assertEquals(firstDBObject, cur.tryNext());
@@ -257,8 +257,8 @@ public class DBCursorTest extends TestCase {
         }
 
         final DBCursor cur = c.find()
-                              .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE);
+                                     .sort(new BasicDBObject("$natural", 1))
+                                     .addOption(Bytes.QUERYOPTION_TAILABLE);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
@@ -300,8 +300,8 @@ public class DBCursorTest extends TestCase {
         }
 
         final DBCursor cur = c.find()
-                .sort(new BasicDBObject("$natural", 1))
-                .addOption(Bytes.QUERYOPTION_TAILABLE);
+                                     .sort(new BasicDBObject("$natural", 1))
+                                     .addOption(Bytes.QUERYOPTION_TAILABLE);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
@@ -340,8 +340,8 @@ public class DBCursorTest extends TestCase {
 
         c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
         DBCursor cur = c.find()
-               .sort(new BasicDBObject("$natural", 1))
-               .addOption(Bytes.QUERYOPTION_TAILABLE);
+                               .sort(new BasicDBObject("$natural", 1))
+                               .addOption(Bytes.QUERYOPTION_TAILABLE);
 
         try {
             cur.tryNext();
@@ -350,7 +350,7 @@ public class DBCursorTest extends TestCase {
         }
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionOnTryNextForNonTailableCursors() {
         DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
@@ -358,59 +358,46 @@ public class DBCursorTest extends TestCase {
 
         c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
         DBCursor cur = c.find()
-                .sort(new BasicDBObject("$natural", 1))
-                .addOption(Bytes.QUERYOPTION_AWAITDATA);
+                               .sort(new BasicDBObject("$natural", 1))
+                               .addOption(Bytes.QUERYOPTION_AWAITDATA);
 
         cur.tryNext();
     }
 
     @Test
     public void testBig() {
-        DBCollection c = collection;
-        String bigString;
-        {
-            StringBuilder buf = new StringBuilder(16000);
-            for (int i = 0; i < 16000; i++) {
-                buf.append("x");
-            }
-            bigString = buf.toString();
+        StringBuilder buf = new StringBuilder(16000);
+        for (int i = 0; i < 16000; i++) {
+            buf.append("x");
         }
+        String bigString = buf.toString();
 
         int numToInsert = (15 * 1024 * 1024) / bigString.length();
+        assert numToInsert > 800;
 
         for (int i = 0; i < numToInsert; i++) {
-            c.save(BasicDBObjectBuilder.start().add("x", i).add("s", bigString).get());
+            collection.insert(new BasicDBObject("x", i).append("s", bigString));
         }
 
-        assert (800 < numToInsert);
+        assertEquals(numToInsert, collection.find().count());
+        assertEquals(numToInsert, collection.find().toArray().size());
+        assertEquals(numToInsert, collection.find().limit(800).count());
+        assertEquals(800, collection.find().limit(800).toArray().size());
 
-        assertEquals(numToInsert, c.find().count());
-        assertEquals(numToInsert, c.find().toArray().size());
-        assertEquals(numToInsert, c.find().limit(800).count());
-        assertEquals(800, c.find().limit(800).toArray().size());
-
-        // negative limit works like negative batch size, for legacy reason
-        int x = c.find().limit(-800).toArray().size();
-        if (serverIsAtLeastVersion(3.3)) {
-            assertEquals(800, x);       // MongoDB 3.4 creates a 12MB OP_REPLY that fits all 800 documents
-        } else {
-            assertTrue(x < 800);        // Previous versions cut off the OP_REPLY at 4MB
-        }
-
-        DBCursor a = c.find();
+        DBCursor a = collection.find();
         assertEquals(numToInsert, a.itcount());
 
-        DBCursor b = c.find().batchSize(10);
+        DBCursor b = collection.find().batchSize(10);
         assertEquals(numToInsert, b.itcount());
         assertEquals(10, b.getSizes().get(0).intValue());
 
         assertTrue(a.numGetMores() < b.numGetMores());
 
-        assertEquals(numToInsert, c.find().batchSize(2).itcount());
-        assertEquals(numToInsert, c.find().batchSize(1).itcount());
+        assertEquals(numToInsert, collection.find().batchSize(2).itcount());
+        assertEquals(numToInsert, collection.find().batchSize(1).itcount());
 
-        assertEquals(numToInsert, _count(c.find(null, null).skip(0).batchSize(5)));
-        assertEquals(5, _count(c.find(null, null).skip(0).batchSize(-5)));
+        assertEquals(numToInsert, _count(collection.find(null, null).skip(0).batchSize(5)));
+        assertEquals(5, _count(collection.find(null, null).skip(0).batchSize(-5)));
     }
 
     @SuppressWarnings("unchecked")
@@ -680,7 +667,7 @@ public class DBCursorTest extends TestCase {
         Mongo m;
         if (getMongoClientURI().getCredentials() != null) {
             m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), asList(getMongoClientURI().getCredentials()),
-                                mongoOptions);
+                                       mongoOptions);
         } else {
             m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), mongoOptions);
         }
@@ -716,7 +703,7 @@ public class DBCursorTest extends TestCase {
     public void testMaxTimeDuringGetMore() {
         assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
-        for (int i=0; i < 20; i++) {
+        for (int i = 0; i < 20; i++) {
             collection.insert(new BasicDBObject("x", 1));
         }
 
@@ -727,7 +714,7 @@ public class DBCursorTest extends TestCase {
 
         enableMaxTimeFailPoint();
         try {
-            while(cursor.hasNext()) {
+            while (cursor.hasNext()) {
                 cursor.next();
             }
             fail("Show have thrown");
@@ -835,7 +822,7 @@ public class DBCursorTest extends TestCase {
     public void testMaxScan() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$maxScan", 4), 4);
+                             .addSpecial("$maxScan", 4), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
     }
 
@@ -843,38 +830,38 @@ public class DBCursorTest extends TestCase {
     public void testMax() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+                             .addSpecial("$max", new BasicDBObject("x", 4)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .max(new BasicDBObject("x", 4)), 4);
+                             .max(new BasicDBObject("x", 4)), 4);
     }
 
     @Test
     public void testMin() {
         insertData();
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+                             .addSpecial("$min", new BasicDBObject("x", 4)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .min(new BasicDBObject("x", 4)), 6);
+                             .min(new BasicDBObject("x", 4)), 6);
     }
 
     @Test
     public void testReturnKey() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .addSpecial("$returnKey", true);
+                                  .addSpecial("$returnKey", true);
         try {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
-                                        .get("_id"));
+                                          .get("_id"));
             }
         } finally {
             cursor.close();
         }
         cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .returnKey();
+                         .returnKey();
         try {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
-                                        .get("_id"));
+                                          .get("_id"));
             }
         } finally {
             cursor.close();
@@ -884,7 +871,7 @@ public class DBCursorTest extends TestCase {
     @Test
     public void testShowDiskLoc() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .addSpecial("$showDiskLoc", true);
+                                  .addSpecial("$showDiskLoc", true);
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -894,7 +881,7 @@ public class DBCursorTest extends TestCase {
             cursor.close();
         }
         cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .showDiskLoc();
+                         .showDiskLoc();
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -908,8 +895,8 @@ public class DBCursorTest extends TestCase {
     @Test(expected = MongoException.class)
     public void testSnapshotWithHint() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .hint("x")
-                              .addSpecial("$snapshot", true);
+                                  .hint("x")
+                                  .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -922,8 +909,8 @@ public class DBCursorTest extends TestCase {
     @Test(expected = MongoException.class)
     public void testSnapshotWithSort() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .sort(new BasicDBObject("x", 1))
-                              .addSpecial("$snapshot", true);
+                                  .sort(new BasicDBObject("x", 1))
+                                  .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -946,7 +933,7 @@ public class DBCursorTest extends TestCase {
     @Test
     public void testComment() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .addSpecial("$comment", "test comment");
+                                  .addSpecial("$comment", "test comment");
         while (cursor.hasNext()) {
             cursor.next();
         }
@@ -956,7 +943,7 @@ public class DBCursorTest extends TestCase {
     @Test
     public void testBatchSizeTracking() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .batchSize(2);
+                                  .batchSize(2);
 
         assertFalse(cursor.isBatchSizeTrackingDisabled());
         assertFalse(cursor.copy().isBatchSizeTrackingDisabled());
@@ -977,7 +964,7 @@ public class DBCursorTest extends TestCase {
     @Test
     public void testDisabledBatchSizeTracking() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .disableBatchSizeTracking().batchSize(1);
+                                  .disableBatchSizeTracking().batchSize(1);
         assertTrue(cursor.isBatchSizeTrackingDisabled());
         assertTrue(cursor.copy().isBatchSizeTrackingDisabled());
 
