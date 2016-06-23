@@ -305,7 +305,7 @@ public final class MongoClientSettings {
             String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
             if (streamType.equals("netty")) {
-                return new NettyStreamFactoryFactory();
+                return NettyStreamFactoryFactory.builder().build();
             } else if (streamType.equals("nio2")) {
                 return new AsynchronousSocketChannelStreamFactoryFactory();
             } else {
