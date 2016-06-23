@@ -8,9 +8,9 @@ title = "Upgrading to 3.2"
   pre = "<i class='fa fa-wrench'></i>"
 +++
 
-# Upgrading from 3.1.x
+# Upgrading from 3.2.x
 
-The 3.2 release is binary and source compatible with the 3.1 release, except for methods that have been added to interfaces that have 
+The 3.3 release is binary and source compatible with the 3.2 release, except for methods that have been added to interfaces that have
 been marked as unstable.
  
 # Upgrading from 2.x

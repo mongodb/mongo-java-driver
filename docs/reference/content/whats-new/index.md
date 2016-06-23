@@ -7,17 +7,18 @@ title = "What's New"
   pre = "<i class='fa fa-cog'></i>"
 +++
 
-# What's New in 3.2
+# What's New in 3.3
 
-Key new features of the 3.2 driver include:
+New features of the 3.3 driver include:
 
-- Support for bypassing [document validation]({{< docsref "release-notes/3.2/#document-validation" >}}) on collections where document 
-validation has been enabled. 
-- Builder support for new [aggregation stages]({{< docsref "release-notes/3.2/#new-aggregation-stages" >}}) 
-and [accumulators]({{< docsref "release-notes/3.2/#new-accumulators-for-group-stage" >}}) for the $group stage.
-- Support for [read concern]({{< docsref "release-notes/3.2/#readconcern" >}}).
-- Support for [version 3 text indexes]({{< docsref "release-notes/3.2/#text-index-version-3" >}})
-- Support for write concern on all DBCollection helpers for the findandmodify command
+- [Cluster Monitoring]({{<ref "driver/reference/management/monitoring.md#cluster-monitoring">}}) in the synchronous and asynchronous
+drivers
+- [Command Monitoring]({{<ref "driver/reference/management/monitoring.md#command-monitoring">}}) in the asynchronous driver
+(support in the synchronous driver was added in a previous release)
+- Additional query parameters in the [connection string]({{<ref "driver/reference/connecting/connection-settings.md#connection-string">}})
+- [GridFS]({{<ref "driver-async/reference/gridfs/index.md">}}) in the asynchronous driver
+- Additional configuration options for [GSSAPI authentication]({{<ref "driver/reference/connecting/authenticating.md#gssapi">}}).
+- [JNDI]({{<ref "driver/reference/connecting/jndi.md">}}) ObjectFactory implementation
 
 ## Upgrading
 
