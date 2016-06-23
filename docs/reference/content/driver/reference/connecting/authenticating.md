@@ -116,7 +116,7 @@ See the MongoDB server
 [x.509 tutorial](http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user) for
 more information about determining the subject name from the certificate.
 
-## Kerberos (GSSAPI)
+## Kerberos (GSSAPI) {#gssapi}
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Kerberos service.  To
 create a credential of type [Kerberos (GSSAPI)](http://docs.mongodb.org/manual/core/authentication/#kerberos-authentication) use the
