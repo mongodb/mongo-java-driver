@@ -40,7 +40,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.util.concurrent.EventExecutor;
@@ -66,6 +65,7 @@ final class NettyStream implements Stream {
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final EventLoopGroup workerGroup;
+    private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
 
     private volatile boolean isClosed;
@@ -76,11 +76,13 @@ final class NettyStream implements Stream {
     private volatile Throwable pendingException;
 
     public NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
-                       final EventLoopGroup workerGroup, final ByteBufAllocator allocator) {
+                       final EventLoopGroup workerGroup, final Class<? extends SocketChannel> socketChannelClass,
+                       final ByteBufAllocator allocator) {
         this.address = address;
         this.settings = settings;
         this.sslSettings = sslSettings;
         this.workerGroup = workerGroup;
+        this.socketChannelClass = socketChannelClass;
         this.allocator = allocator;
     }
 
@@ -100,7 +102,7 @@ final class NettyStream implements Stream {
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
-        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.channel(socketChannelClass);
 
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
         bootstrap.option(ChannelOption.TCP_NODELAY, true);
@@ -278,6 +280,26 @@ final class NettyStream implements Stream {
         return isClosed;
     }
 
+    public SocketSettings getSettings() {
+        return settings;
+    }
+
+    public SslSettings getSslSettings() {
+        return sslSettings;
+    }
+
+    public EventLoopGroup getWorkerGroup() {
+        return workerGroup;
+    }
+
+    public Class<? extends SocketChannel> getSocketChannelClass() {
+        return socketChannelClass;
+    }
+
+    public ByteBufAllocator getAllocator() {
+        return allocator;
+    }
+
     private class InboundBufferHandler extends SimpleChannelInboundHandler<io.netty.buffer.ByteBuf> {
         @Override
         protected void channelRead0(final ChannelHandlerContext ctx, final io.netty.buffer.ByteBuf buffer) throws Exception {
@@ -344,7 +366,6 @@ final class NettyStream implements Stream {
         }
     }
 
-
     private void scheduleReadTimeout() {
         adjustTimeout(false);
     }
@@ -384,6 +405,5 @@ final class NettyStream implements Stream {
                     }
                 }
             }
-
     }
 }
