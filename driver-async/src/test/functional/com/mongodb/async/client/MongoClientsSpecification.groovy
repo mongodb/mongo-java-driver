@@ -23,6 +23,7 @@ import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.getSslSettings
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
@@ -95,7 +96,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
         client?.close()
     }
 
-    @IgnoreIf({ javaVersion < 1.7 })
+    @IgnoreIf({ javaVersion < 1.7 || getSslSettings().isEnabled() })
     def 'should apply connection string to nio2 stream type'() {
         when:
         def client = MongoClients.create('mongodb://localhost/?streamType=NIO2')
