@@ -590,7 +590,6 @@ public class JsonReaderTest {
         bsonReader.readBinaryData();
     }
 
-    //TODO Together with next text this is just an indicator that our behavior is not very correct.
     @Test(expected = JsonParseException.class)
     public void testEndOfFile0() {
         String json = "{";
@@ -600,13 +599,13 @@ public class JsonReaderTest {
         bsonReader.readBsonType();
     }
 
-    @Test
+    @Test(expected = JsonParseException.class)
     public void testEndOfFile1() {
         String json = "{ test : ";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.DOCUMENT, bsonReader.readBsonType());
         bsonReader.readStartDocument();
-        assertEquals(BsonType.END_OF_DOCUMENT, bsonReader.readBsonType());
+        bsonReader.readBsonType();
     }
 
     @Test
