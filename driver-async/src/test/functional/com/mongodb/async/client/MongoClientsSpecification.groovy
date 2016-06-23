@@ -21,6 +21,7 @@ import com.mongodb.MongoCredential
 import com.mongodb.ServerAddress
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
+import spock.lang.IgnoreIf
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
@@ -71,18 +72,30 @@ class MongoClientsSpecification extends FunctionalSpecification {
         client?.close()
     }
 
-    def 'should apply connection string to netty stream type'() {
+    def 'should apply connection string to ssl settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost/?ssl=true&streamType=Netty')
+        def client = MongoClients.create('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true&streamType=netty')
 
         then:
         client.settings.sslSettings.enabled
+        client.settings.sslSettings.invalidHostNameAllowed
+
+        cleanup:
+        client?.close()
+    }
+
+    def 'should apply connection string to netty stream type'() {
+        when:
+        def client = MongoClients.create('mongodb://localhost/?streamType=Netty')
+
+        then:
         client.settings.streamFactoryFactory instanceof NettyStreamFactoryFactory
 
         cleanup:
         client?.close()
     }
 
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should apply connection string to nio2 stream type'() {
         when:
         def client = MongoClients.create('mongodb://localhost/?streamType=NIO2')
