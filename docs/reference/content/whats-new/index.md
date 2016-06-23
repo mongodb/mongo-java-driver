@@ -22,4 +22,4 @@ drivers
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.2.
+See the [upgrading guide]({{<ref "whats-new/upgrading.md">}}) on how to upgrade to 3.3.

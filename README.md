@@ -4,7 +4,7 @@ Release notes are available [here](https://github.com/mongodb/mongo-java-driver/
 
 ## API Documentation:
 
-Javadoc for all major and minor releases is available [here](http://api.mongodb.org/java/).
+Javadoc for all major and minor releases is available [here](http://api.mongodb.com/java/).
 
 ## Support / Feedback
 
