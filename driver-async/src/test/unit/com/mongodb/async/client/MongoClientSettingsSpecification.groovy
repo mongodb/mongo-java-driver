@@ -124,7 +124,7 @@ class MongoClientSettingsSpecification extends Specification {
 
     def 'should build with set options'() {
         given:
-        def streamFactoryFactory = new NettyStreamFactoryFactory()
+        def streamFactoryFactory = NettyStreamFactoryFactory.builder().build()
         def sslSettings = Stub(SslSettings)
         def socketSettings = Stub(SocketSettings)
         def serverSettings = Stub(ServerSettings)

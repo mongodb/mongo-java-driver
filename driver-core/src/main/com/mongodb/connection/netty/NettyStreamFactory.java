@@ -25,6 +25,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -37,6 +39,7 @@ public class NettyStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SslSettings sslSettings;
     private final EventLoopGroup eventLoopGroup;
+    private final Class<? extends SocketChannel> channelType;
     private final ByteBufAllocator allocator;
 
     /**
@@ -45,29 +48,32 @@ public class NettyStreamFactory implements StreamFactory {
      * @param settings the socket settings
      * @param sslSettings the SSL settings
      * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
+     * @param channelType the class which is used to create channel instances from
      * @param allocator the allocator to use for ByteBuf instances
      */
-    public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup eventLoopGroup,
+    public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings,
+                              final EventLoopGroup eventLoopGroup, final Class<? extends SocketChannel> channelType,
                               final ByteBufAllocator allocator) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.eventLoopGroup = notNull("eventLoopGroup", eventLoopGroup);
+        this.channelType = notNull("channelType", channelType);
         this.allocator = notNull("allocator", allocator);
     }
 
     /**
-     * Construct a new instance of the factory with a default allocator and event loop group.
+     * Construct a new instance of the factory with a default allocator, nio event loop group and nio socket channel.
      *
      * @param settings the socket settings
      * @param sslSettings the SSL settings
      */
     public NettyStreamFactory(final SocketSettings settings, final SslSettings sslSettings) {
-        this(settings, sslSettings, new NioEventLoopGroup(), PooledByteBufAllocator.DEFAULT);
+        this(settings, sslSettings, new NioEventLoopGroup(), NioSocketChannel.class, PooledByteBufAllocator.DEFAULT);
     }
 
     @Override
     public Stream create(final ServerAddress serverAddress) {
-        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, allocator);
+        return new NettyStream(serverAddress, settings, sslSettings, eventLoopGroup, channelType, allocator);
     }
 
 }
