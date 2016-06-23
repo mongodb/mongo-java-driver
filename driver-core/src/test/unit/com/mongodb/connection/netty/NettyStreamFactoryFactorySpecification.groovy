@@ -47,16 +47,16 @@ class NettyStreamFactoryFactorySpecification extends Specification {
         stream.getWorkerGroup().getClass() == eventLoopGroupClass
 
         where:
-        description | factoryFactory   | allocator                         | socketChannelClass | eventLoopGroupClass
-        'default'   | s_defaultFactory | ByteBufAllocator.DEFAULT          | NioSocketChannel   | NioEventLoopGroup
-        'custom'    | s_customFactory  | UnpooledByteBufAllocator.DEFAULT  | OioSocketChannel   | OioEventLoopGroup
+        description | factoryFactory  | allocator                         | socketChannelClass | eventLoopGroupClass
+        'default'   | DEFAULT_FACTORY | ByteBufAllocator.DEFAULT          | NioSocketChannel   | NioEventLoopGroup
+        'custom'    | CUSTOM_FACTORY  | UnpooledByteBufAllocator.DEFAULT  | OioSocketChannel   | OioEventLoopGroup
     }
 
     SocketSettings socketSettings = SocketSettings.builder().build()
     SslSettings sslSettings = SslSettings.builder().build()
     ServerAddress serverAddress = new ServerAddress()
-    static def s_defaultFactory = NettyStreamFactoryFactory.builder().build()
-    static def s_customFactory = NettyStreamFactoryFactory.builder()
+    static final DEFAULT_FACTORY = NettyStreamFactoryFactory.builder().build()
+    static final CUSTOM_FACTORY = NettyStreamFactoryFactory.builder()
             .allocator(UnpooledByteBufAllocator.DEFAULT)
             .socketChannelClass(OioSocketChannel)
             .eventLoopGroup(new OioEventLoopGroup())
