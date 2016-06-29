@@ -566,8 +566,6 @@ public class JsonReaderTest {
         assertEquals("pattern", regex.getPattern());
         assertEquals("imsx", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-        JsonWriterSettings settings = new JsonWriterSettings(JsonMode.STRICT);
-
     }
 
     @Test

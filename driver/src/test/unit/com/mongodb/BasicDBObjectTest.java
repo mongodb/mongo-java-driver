@@ -56,13 +56,14 @@ public class BasicDBObjectTest {
 
         assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }", doc.toJson());
         assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(new JsonWriterSettings(JsonMode.SHELL)));
+                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
 
         assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }",
                      doc.toJson(getDefaultCodecRegistry().get(BasicDBObject.class)));
 
         assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(new JsonWriterSettings(JsonMode.SHELL), getDefaultCodecRegistry().get(BasicDBObject.class)));
+                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(),
+                             getDefaultCodecRegistry().get(BasicDBObject.class)));
     }
 
     @Test
