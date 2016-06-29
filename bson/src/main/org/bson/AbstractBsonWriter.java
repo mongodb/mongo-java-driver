@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Stack;
 
 import static java.lang.String.format;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Represents a BSON writer for some external format (see subclasses).
@@ -350,12 +351,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeBinaryData(final String name, final BsonBinary binary) {
+        notNull("name", name);
+        notNull("value", binary);
         writeName(name);
         writeBinaryData(binary);
     }
 
     @Override
     public void writeBinaryData(final BsonBinary binary) {
+        notNull("value", binary);
         checkPreconditions("writeBinaryData", State.VALUE, State.INITIAL);
         doWriteBinaryData(binary);
         setState(getNextState());
@@ -389,12 +393,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeDBPointer(final String name, final BsonDbPointer value) {
+        notNull("name", name);
+        notNull("value", value);
         writeName(name);
         writeDBPointer(value);
     }
 
     @Override
     public void writeDBPointer(final BsonDbPointer value) {
+        notNull("value", value);
         checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
         doWriteDBPointer(value);
         setState(getNextState());
@@ -441,6 +448,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeDecimal128(final Decimal128 value) {
+        notNull("value", value);
         checkPreconditions("writeInt64", State.VALUE);
         doWriteDecimal128(value);
         setState(getNextState());
@@ -448,18 +456,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeDecimal128(final String name, final Decimal128 value) {
+        notNull("name", name);
+        notNull("value", value);
         writeName(name);
         writeDecimal128(value);
     }
 
     @Override
     public void writeJavaScript(final String name, final String code) {
+        notNull("name", name);
+        notNull("value", code);
         writeName(name);
         writeJavaScript(code);
     }
 
     @Override
     public void writeJavaScript(final String code) {
+        notNull("value", code);
         checkPreconditions("writeJavaScript", State.VALUE);
         doWriteJavaScript(code);
         setState(getNextState());
@@ -467,12 +480,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeJavaScriptWithScope(final String name, final String code) {
+        notNull("name", name);
+        notNull("value", code);
         writeName(name);
         writeJavaScriptWithScope(code);
     }
 
     @Override
     public void writeJavaScriptWithScope(final String code) {
+        notNull("value", code);
         checkPreconditions("writeJavaScriptWithScope", State.VALUE);
         doWriteJavaScriptWithScope(code);
         setState(State.SCOPE_DOCUMENT);
@@ -506,17 +522,25 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeName(final String name) {
+        notNull("name", name);
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
-        }
-        if (name == null) {
-            throw new IllegalArgumentException("BSON field name can not be null");
         }
         if (!fieldNameValidatorStack.peek().validate(name)) {
             throw new IllegalArgumentException(format("Invalid BSON field name %s", name));
         }
+        doWriteName(name);
         context.name = name;
         state = State.VALUE;
+    }
+
+    /**
+     * Handles the logic of writing the element name.
+     *
+     * @param name the name of the element
+     * @since 3.5
+     */
+    protected void doWriteName(final String name) {
     }
 
     @Override
@@ -534,12 +558,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeObjectId(final String name, final ObjectId objectId) {
+        notNull("name", name);
+        notNull("value", objectId);
         writeName(name);
         writeObjectId(objectId);
     }
 
     @Override
     public void writeObjectId(final ObjectId objectId) {
+        notNull("value", objectId);
         checkPreconditions("writeObjectId", State.VALUE);
         doWriteObjectId(objectId);
         setState(getNextState());
@@ -547,12 +574,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeRegularExpression(final String name, final BsonRegularExpression regularExpression) {
+        notNull("name", name);
+        notNull("value", regularExpression);
         writeName(name);
         writeRegularExpression(regularExpression);
     }
 
     @Override
     public void writeRegularExpression(final BsonRegularExpression regularExpression) {
+        notNull("value", regularExpression);
         checkPreconditions("writeRegularExpression", State.VALUE);
         doWriteRegularExpression(regularExpression);
         setState(getNextState());
@@ -560,12 +590,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeString(final String name, final String value) {
+        notNull("name", name);
+        notNull("value", value);
         writeName(name);
         writeString(value);
     }
 
     @Override
     public void writeString(final String value) {
+        notNull("value", value);
         checkPreconditions("writeString", State.VALUE);
         doWriteString(value);
         setState(getNextState());
@@ -574,12 +607,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeSymbol(final String name, final String value) {
+        notNull("name", name);
+        notNull("value", value);
         writeName(name);
         writeSymbol(value);
     }
 
     @Override
     public void writeSymbol(final String value) {
+        notNull("value", value);
         checkPreconditions("writeSymbol", State.VALUE);
         doWriteSymbol(value);
         setState(getNextState());
@@ -587,12 +623,15 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeTimestamp(final String name, final BsonTimestamp value) {
+        notNull("name", name);
+        notNull("value", value);
         writeName(name);
         writeTimestamp(value);
     }
 
     @Override
     public void writeTimestamp(final BsonTimestamp value) {
+        notNull("value", value);
         checkPreconditions("writeTimestamp", State.VALUE);
         doWriteTimestamp(value);
         setState(getNextState());

@@ -93,7 +93,7 @@ public class BsonDocumentTest {
     @Test
     public void toJsonShouldRespectJsonWriterSettings() {
         StringWriter writer = new StringWriter();
-        JsonWriterSettings settings = new JsonWriterSettings(JsonMode.SHELL);
+        JsonWriterSettings settings = JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build();
         new BsonDocumentCodec().encode(new JsonWriter(writer, settings), document, EncoderContext.builder().build());
         assertEquals(writer.toString(), document.toJson(settings));
     }
