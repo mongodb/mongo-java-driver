@@ -167,7 +167,7 @@ public interface MongoDatabase {
     /**
      * Drops this database.
      *
-     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
+     * @mongodb.driver.manual reference/command/dropDatabase/#dbcmd.dropDatabase Drop database
      */
     void drop();
 
@@ -200,7 +200,7 @@ public interface MongoDatabase {
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName);
 
@@ -209,7 +209,7 @@ public interface MongoDatabase {
      *
      * @param collectionName          the name for the new collection to create
      * @param createCollectionOptions various options for creating the collection
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName, CreateCollectionOptions createCollectionOptions);
 

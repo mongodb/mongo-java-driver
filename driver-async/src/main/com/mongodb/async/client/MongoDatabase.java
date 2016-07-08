@@ -170,7 +170,7 @@ public interface MongoDatabase {
      * Drops this database.
      *
      * @param callback the callback that is completed once the database has been dropped
-     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
+     * @mongodb.driver.manual reference/command/dropDatabase/#dbcmd.dropDatabase Drop database
      */
     void drop(SingleResultCallback<Void> callback);
 
@@ -204,7 +204,7 @@ public interface MongoDatabase {
      *
      * @param collectionName the name for the new collection to create
      * @param callback       the callback that is completed once the collection has been created
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName, SingleResultCallback<Void> callback);
 
@@ -214,7 +214,7 @@ public interface MongoDatabase {
      * @param collectionName the name for the new collection to create
      * @param options        various options for creating the collection
      * @param callback       the callback that is completed once the collection has been created
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName, CreateCollectionOptions options, SingleResultCallback<Void> callback);
 
