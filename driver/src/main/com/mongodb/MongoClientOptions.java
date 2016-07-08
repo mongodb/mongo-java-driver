@@ -306,7 +306,7 @@ public class MongoClientOptions {
      *
      * <p>Default is 0 and means no timeout.</p>
      *
-     * @return the socket timeout
+     * @return the socket timeout, in milliseconds
      */
     public int getSocketTimeout() {
         return socketTimeout;
@@ -939,7 +939,7 @@ public class MongoClientOptions {
          * <p> A value of 0 means that it will timeout immediately if no server is available.  A negative value means to wait
          * indefinitely.</p>
          *
-         * @param serverSelectionTimeout the server selection timeout
+         * @param serverSelectionTimeout the server selection timeout, in milliseconds
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getServerSelectionTimeout()
          */
@@ -951,7 +951,7 @@ public class MongoClientOptions {
         /**
          * Sets the maximum time that a thread will block waiting for a connection.
          *
-         * @param maxWaitTime the maximum wait time
+         * @param maxWaitTime the maximum wait time, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getMaxWaitTime()
          */
@@ -963,9 +963,9 @@ public class MongoClientOptions {
         /**
          * Sets the maximum idle time for a pooled connection.
          *
-         * @param maxConnectionIdleTime the maximum idle time
+         * @param maxConnectionIdleTime the maximum idle time, in milliseconds, which must be &gt; 0
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
+         * @throws IllegalArgumentException if {@code maxConnectionIdleTime <= 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
@@ -977,9 +977,9 @@ public class MongoClientOptions {
         /**
          * Sets the maximum life time for a pooled connection.
          *
-         * @param maxConnectionLifeTime the maximum life time
+         * @param maxConnectionLifeTime the maximum life time, in milliseconds, which must be &gt; 0
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
+         * @throws IllegalArgumentException if {@code maxConnectionLifeTime <= 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
@@ -992,7 +992,8 @@ public class MongoClientOptions {
         /**
          * Sets the connection timeout.
          *
-         * @param connectTimeout the connection timeout
+         * @param connectTimeout the connection timeout, in milliseconds, which must be &gt; 0
+         * @throws IllegalArgumentException if {@code connectTimeout <= 0}
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getConnectTimeout()
          */
@@ -1005,7 +1006,7 @@ public class MongoClientOptions {
         /**
          * Sets the socket timeout.
          *
-         * @param socketTimeout the socket timeout
+         * @param socketTimeout the socket timeout, in milliseconds
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
@@ -1239,6 +1240,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds, which must be &gt; 0
          * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatFrequency is not &gt; 0
          * @see MongoClientOptions#getHeartbeatFrequency()
          * @since 2.12
          */
@@ -1254,6 +1256,7 @@ public class MongoClientOptions {
          *
          * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
+         * @throws IllegalArgumentException if {@code minHeartbeatFrequency <= 0}
          * @see MongoClientOptions#getMinHeartbeatFrequency()
          * @since 2.13
          */
@@ -1266,7 +1269,7 @@ public class MongoClientOptions {
         /**
          * Sets the connect timeout for connections used for the cluster heartbeat.
          *
-         * @param connectTimeout the connection timeout
+         * @param connectTimeout the connection timeout, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatConnectTimeout()
          * @since 2.12
@@ -1279,7 +1282,7 @@ public class MongoClientOptions {
         /**
          * Sets the socket timeout for connections used for the cluster heartbeat.
          *
-         * @param socketTimeout the socket timeout
+         * @param socketTimeout the socket timeout, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatSocketTimeout()
          * @since 2.12
@@ -1292,9 +1295,9 @@ public class MongoClientOptions {
         /**
          * Sets the local threshold.
          *
-         * @param localThreshold the acceptable latency difference, in milliseconds
+         * @param localThreshold the acceptable latency difference, in milliseconds, which must be &gt;= 0
          * @return {@code this}
-         * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
+         * @throws IllegalArgumentException if {@code localThreshold < 0}
          * @see com.mongodb.MongoClientOptions#getLocalThreshold()
          * @since 2.13.0
          */
