@@ -58,7 +58,7 @@ public interface MongoClient extends Closeable {
     /**
      * Get a list of the database names
      *
-     * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
      */
     MongoIterable<String> listDatabaseNames();
