@@ -425,7 +425,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
-     * @return the result of the update one operation
+     * @return the result of the update many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
@@ -440,7 +440,7 @@ public interface MongoCollection<TDocument> {
      * @param filter        a document describing the query filter, which may not be null.
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
-     * @return the result of the update one operation
+     * @return the result of the update many operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
