@@ -429,7 +429,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. T
-     * @param callback the callback passed the result of the update one operation
+     * @param callback the callback passed the result of the update many operation
      * @throws com.mongodb.MongoWriteException        returned via the callback
      * @throws com.mongodb.MongoWriteConcernException returned via the callback
      * @throws com.mongodb.MongoException             returned via the callback
@@ -444,7 +444,7 @@ public interface MongoCollection<TDocument> {
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options  the options to apply to the update operation
-     * @param callback the callback passed the result of the update one operation
+     * @param callback the callback passed the result of the update many operation
      * @throws com.mongodb.MongoWriteException        returned via the callback
      * @throws com.mongodb.MongoWriteConcernException returned via the callback
      * @throws com.mongodb.MongoException             returned via the callback
