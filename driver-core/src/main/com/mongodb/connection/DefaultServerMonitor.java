@@ -89,7 +89,7 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     @Override
-    public void invalidate() {
+    public synchronized void invalidate() {
         isTrue("open", !isClosed);
         monitor.close();
         monitorThread.interrupt();
