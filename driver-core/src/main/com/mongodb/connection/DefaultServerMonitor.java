@@ -32,7 +32,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -52,8 +51,8 @@ class DefaultServerMonitor implements ServerMonitor {
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
     private final ServerSettings settings;
-    private volatile ServerMonitorRunnable monitor;
-    private volatile Thread monitorThread;
+    private final ServerMonitorRunnable monitor;
+    private final Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
@@ -69,7 +68,9 @@ class DefaultServerMonitor implements ServerMonitor {
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
-        monitorThread = createMonitorThread();
+        monitor = new ServerMonitorRunnable();
+        monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
+        monitorThread.setDaemon(true);
         isClosed = false;
     }
 
@@ -89,35 +90,13 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     @Override
-    public void invalidate() {
-        isTrue("open", !isClosed);
-        monitor.close();
-        monitorThread.interrupt();
-        monitorThread = createMonitorThread();
-        monitorThread.start();
-    }
-
-    @Override
     public void close() {
-        monitor.close();
-        monitorThread.interrupt();
         isClosed = true;
-    }
-
-    Thread createMonitorThread() {
-        monitor = new ServerMonitorRunnable();
-        Thread monitorThread = new Thread(monitor, "cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
-        monitorThread.setDaemon(true);
-        return monitorThread;
+        monitorThread.interrupt();
     }
 
     class ServerMonitorRunnable implements Runnable {
-        private volatile boolean monitorIsClosed;
         private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
-
-        public void close() {
-            monitorIsClosed = true;
-        }
 
         @Override
         @SuppressWarnings("unchecked")
@@ -126,7 +105,7 @@ class DefaultServerMonitor implements ServerMonitor {
             try {
                 ServerDescription currentServerDescription = getConnectingServerDescription(null);
                 Throwable currentException = null;
-                while (!monitorIsClosed) {
+                while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
                     Throwable previousException = currentException;
                     currentException = null;
@@ -167,7 +146,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         currentServerDescription = getConnectingServerDescription(t);
                     }
 
-                    if (!monitorIsClosed) {
+                    if (!isClosed) {
                         try {
                             logStateChange(previousServerDescription, previousException, currentServerDescription, currentException);
                             sendStateChangedEvent(previousServerDescription, currentServerDescription);

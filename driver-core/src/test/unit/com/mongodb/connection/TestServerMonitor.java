@@ -36,10 +36,6 @@ class TestServerMonitor implements ServerMonitor {
     }
 
     @Override
-    public void invalidate() {
-    }
-
-    @Override
     public void close() {
     }
 
