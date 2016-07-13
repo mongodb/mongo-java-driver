@@ -125,7 +125,7 @@ class DefaultServer implements ClusterableServer {
                                                                                                           .address(serverId.getAddress())
                 .build()));
         connectionPool.invalidate();
-        serverMonitor.invalidate();
+        connect();
     }
 
     @Override

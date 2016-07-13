@@ -144,7 +144,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSecurityException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
     }
 
     def 'failed open should invalidate the server asychronously'() {
@@ -170,7 +170,7 @@ class DefaultServerSpecification extends Specification {
         then:
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
     }
 
     def 'should invalidate on MongoNotPrimaryException'() {
@@ -196,7 +196,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
 
         when:
         def futureResultCallback = new FutureResultCallback()
@@ -207,7 +207,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
 
         when:
         futureResultCallback = new FutureResultCallback()
@@ -218,7 +218,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoNotPrimaryException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
     }
 
     def 'should invalidate on MongoNodeIsRecoveringException'() {
@@ -244,7 +244,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoNodeIsRecoveringException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
     }
 
 
@@ -271,7 +271,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
@@ -282,7 +282,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketException)
         1 * connectionPool.invalidate()
-        1 * serverMonitor.invalidate()
+        1 * serverMonitor.connect()
     }
 
     def 'should not invalidate on MongoSocketReadTimeoutException'() {
@@ -309,7 +309,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketReadTimeoutException)
         0 * connectionPool.invalidate()
-        0 * serverMonitor.invalidate()
+        0 * serverMonitor.connect()
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
@@ -320,7 +320,7 @@ class DefaultServerSpecification extends Specification {
         then:
         thrown(MongoSocketReadTimeoutException)
         0 * connectionPool.invalidate()
-        0 * serverMonitor.invalidate()
+        0 * serverMonitor.connect()
     }
 
     def 'should enable command listener'() {
