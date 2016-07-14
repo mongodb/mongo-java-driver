@@ -109,7 +109,7 @@ public class ServerAddress implements Serializable {
                 }
                 portToUse = Integer.parseInt(host.substring(portIdx + 2));
             }
-            hostToUse = host.substring(1, idx);
+            hostToUse = host.substring(0, idx + 1);
         } else {
             int idx = hostToUse.indexOf(":");
             if (idx > 0) {
@@ -129,6 +129,16 @@ public class ServerAddress implements Serializable {
         this.port = portToUse;
     }
 
+    private String join(final String delimiter, final String[] array, final int start, final int end) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = start; i <= end; i++) {
+            builder.append(array[i]);
+            if (i < end) {
+                builder.append(delimiter);
+            }
+        }
+        return builder.toString();
+    }
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

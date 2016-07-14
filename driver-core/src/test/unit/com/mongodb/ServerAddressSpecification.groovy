@@ -29,7 +29,7 @@ class ServerAddressSpecification extends Specification {
 
         where:
         address                                                 | host                           | port
-        new ServerAddress()                                     | ServerAddress.defaultHost() | ServerAddress.defaultPort()
+        new ServerAddress()                                     | ServerAddress.defaultHost()    | ServerAddress.defaultPort()
         new ServerAddress('10.0.0.1:1000')                      | '10.0.0.1'                     | 1000
         new ServerAddress('10.0.0.1')                           | '10.0.0.1'                     | ServerAddress.defaultPort()
         new ServerAddress('10.0.0.1', 1000)                     | '10.0.0.1'                     | 1000
@@ -37,10 +37,10 @@ class ServerAddressSpecification extends Specification {
         new ServerAddress('SOMEWHERE')                          | 'somewhere'                    | ServerAddress.defaultPort()
         new ServerAddress('somewhere:1000')                     | 'somewhere'                    | 1000
         new ServerAddress('somewhere', 1000)                    | 'somewhere'                    | 1000
-        new ServerAddress('[2010:836b:4179::836b:4179]')        | '2010:836b:4179::836b:4179'    | ServerAddress.defaultPort()
-        new ServerAddress('[2010:836B:4179::836B:4179]')        | '2010:836b:4179::836b:4179'    | ServerAddress.defaultPort()
-        new ServerAddress('[2010:836B:4179::836B:4179]:1000')   | '2010:836b:4179::836b:4179'    | 1000
-        new ServerAddress('[2010:836B:4179::836B:4179]', 1000)  | '2010:836b:4179::836b:4179'    | 1000
+        new ServerAddress('[2010:836b:4179::836b:4179]')        | '[2010:836b:4179::836b:4179]'  | ServerAddress.defaultPort()
+        new ServerAddress('[2010:836B:4179::836B:4179]')        | '[2010:836b:4179::836b:4179]'  | ServerAddress.defaultPort()
+        new ServerAddress('[2010:836B:4179::836B:4179]:1000')   | '[2010:836b:4179::836b:4179]'  | 1000
+        new ServerAddress('[2010:836B:4179::836B:4179]', 1000)  | '[2010:836b:4179::836b:4179]'  | 1000
     }
 
     def 'ipv4 host with a port specified should throw when a port is also specified as an argument'() {
