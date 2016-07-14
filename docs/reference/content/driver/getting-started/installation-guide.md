@@ -10,7 +10,7 @@ title = "Installation Guide"
 
 # Installation
 
-jThere are two Maven artifacts available in the 3.3 release. The preferred artifact for new applications is `mongodb-driver`;
+There are two Maven artifacts available in the 3.3 release. The preferred artifact for new applications is `mongodb-driver`;
 however, we still publish the legacy `mongo-java-driver` uber-jar.
 The recommended way to get started using one of the drivers in your project is with a dependency management system.
 
