@@ -109,7 +109,7 @@ public class ServerAddress implements Serializable {
                 }
                 portToUse = Integer.parseInt(host.substring(portIdx + 2));
             }
-            hostToUse = host.substring(1, idx);
+            hostToUse = host.substring(0, idx + 1);
         } else {
             int idx = hostToUse.indexOf(":");
             if (idx > 0) {
