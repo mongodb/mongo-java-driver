@@ -95,7 +95,8 @@ final class SingleServerCluster extends BaseCluster {
         ClusterDescription oldDescription = getCurrentDescription();
         ClusterDescription description = new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType,
                                                                 serverDescription == null ? Collections.<ServerDescription>emptyList()
-                                                                                          : Arrays.asList(serverDescription));
+                                                                                          : Arrays.asList(serverDescription),
+                                                                       getSettings(), getServerFactory().getSettings());
 
         updateDescription(description);
         fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), description,
@@ -104,7 +105,7 @@ final class SingleServerCluster extends BaseCluster {
 
     private ClusterDescription getInitialDescription() {
         return new ClusterDescription(getSettings().getMode(), getSettings().getRequiredClusterType(),
-                Collections.<ServerDescription>emptyList());
+                Collections.<ServerDescription>emptyList(), getSettings(), getServerFactory().getSettings());
     }
 
     @Override

@@ -139,12 +139,14 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                           .state(ServerConnectionState.CONNECTED)
                                           .address(new ServerAddress())
                                           .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                          .lastUpdateTimeNanos(42L)
                                           .build(),
                          ServerDescription.builder()
                                           .type(ServerType.STANDALONE)
                                           .state(ServerConnectionState.CONNECTED)
                                           .address(new ServerAddress())
                                           .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                          .lastUpdateTimeNanos(42L)
                                           .build());
     }
 

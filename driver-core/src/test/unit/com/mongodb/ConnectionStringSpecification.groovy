@@ -26,6 +26,7 @@ import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -145,7 +146,7 @@ class ConnectionStringSpecification extends Specification {
     }
 
     @Unroll
-    def 'should throw Exception when the string #cause'() {
+    def 'should throw IllegalArgumentException when the string #cause'() {
         when:
         new ConnectionString(connectionString);
 
@@ -171,7 +172,10 @@ class ConnectionStringSpecification extends Specification {
         'has incomplete options'                    | 'mongodb://localhost/?wTimeout'
         'has an unknown auth mechanism'             | 'mongodb://user:password@localhost/?authMechanism=postItNote'
         'invalid readConcern'                       | 'mongodb://localhost:27017/?readConcernLevel=pickThree'
-
+        'contains tags but no mode'                 | 'mongodb://localhost:27017/?readPreferenceTags=dc:ny'
+        'contains max staleness but no mode'        | 'mongodb://localhost:27017/?maxStalenessMS=100'
+        'contains tags and primary mode'            | 'mongodb://localhost:27017/?readPreference=primary&readPreferenceTags=dc:ny'
+        'contains max staleness and primary mode'   | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessMS=100'
     }
 
     def 'should have correct defaults for options'() {
@@ -272,6 +276,11 @@ class ConnectionStringSpecification extends Specification {
 
         where:
         uri                                                              | readPreference
+        new ConnectionString('mongodb://localhost')                      | null
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=primary')                               | primary()
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary')                             | secondary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
@@ -284,6 +293,12 @@ class ConnectionStringSpecification extends Specification {
                                                                                                                  new Tag('rack', '1'))),
                                                                                                new TagSet(asList(new Tag('dc', 'ny'))),
                                                                                                new TagSet()])
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessMS=120000')                                | secondary(120000, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessMS=1')                                     | secondary(1, MILLISECONDS)
     }
 
     @Unroll

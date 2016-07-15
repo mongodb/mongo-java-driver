@@ -29,6 +29,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -82,8 +83,16 @@ final class DescriptionHelper {
                                                                         new BsonInt32(getDefaultMaxWireVersion())).getValue())
                                 .electionId(getElectionId(isMasterResult))
                                 .setVersion(getSetVersion(isMasterResult))
+                                .lastWriteDate(getLastWriteDate(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
+    }
+
+    private static Date getLastWriteDate(final BsonDocument isMasterResult) {
+        if (!isMasterResult.containsKey("lastWrite")) {
+            return null;
+        }
+        return new Date(isMasterResult.getDocument("lastWrite").getDateTime("lastWriteDate").getValue());
     }
 
     private static ObjectId getElectionId(final BsonDocument isMasterResult) {

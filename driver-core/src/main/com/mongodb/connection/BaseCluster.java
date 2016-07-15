@@ -203,6 +203,10 @@ abstract class BaseCluster implements Cluster {
         return settings;
     }
 
+    public ClusterableServerFactory getServerFactory() {
+        return serverFactory;
+    }
+
     protected abstract void connect();
 
     @Override

@@ -18,12 +18,16 @@ package com.mongodb.selector;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerSettings;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.mongodb.ReadPreference.secondary;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -34,6 +38,8 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class CompositeServerSelectorTest {
     private CompositeServerSelector selector;
@@ -83,5 +89,28 @@ public class CompositeServerSelectorTest {
         selector = new CompositeServerSelector(Arrays.<ServerSelector>asList(composedSelector));
         assertEquals(selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third))), asList(second, third));
 
+    }
+
+    @Test
+    public void shouldPassOnClusterDescriptionWithCorrectServersAndSettings() {
+        TestServerSelector firstSelector = new TestServerSelector();
+        TestServerSelector secondSelector = new TestServerSelector();
+        CompositeServerSelector composedSelector = new CompositeServerSelector(asList(firstSelector, secondSelector));
+        composedSelector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(first, second, third),
+                                                              ClusterSettings.builder().hosts(asList(new ServerAddress())).build(),
+                                                              ServerSettings.builder().build()));
+        assertTrue(secondSelector.clusterDescription.getServerDescriptions().isEmpty());
+        assertNotNull(secondSelector.clusterDescription.getClusterSettings());
+        assertNotNull(secondSelector.clusterDescription.getServerSettings());
+    }
+
+    static class TestServerSelector implements ServerSelector {
+        private ClusterDescription clusterDescription;
+
+        @Override
+        public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+            this.clusterDescription = clusterDescription;
+            return Collections.emptyList();
+        }
     }
 }

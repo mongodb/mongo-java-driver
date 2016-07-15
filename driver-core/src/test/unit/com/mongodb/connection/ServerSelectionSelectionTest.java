@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
@@ -26,7 +27,10 @@ import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,30 +42,53 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/server-selection/tests
 @RunWith(Parameterized.class)
 public class ServerSelectionSelectionTest {
+    private final String description;
     private final BsonDocument definition;
     private final ClusterDescription clusterDescription;
+    private final long heartbeatFrequencyMS;
+    private final boolean error;
 
     public ServerSelectionSelectionTest(final String description, final BsonDocument definition) {
+        this.description = description;
         this.definition = definition;
+        this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS" , new BsonInt64(10000)).longValue();
+        this.error = definition.getBoolean("error" , BsonBoolean.FALSE).getValue();
         this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"));
     }
 
     @Test
     public void shouldPassAllOutcomes() {
-        ServerSelector serverSelector = getServerSelector();
+        // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
+        assumeTrue(!description.equals("max-staleness/server_selection/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
 
-        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers"));
-        List<ServerDescription> selectedServers = serverSelector.select(clusterDescription);
+        ServerSelector serverSelector = null;
+        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers" , new BsonArray()));
+        List<ServerDescription> selectedServers = null;
+        try {
+            serverSelector = getServerSelector();
+            selectedServers = serverSelector.select(clusterDescription);
+            if (error) {
+                fail("Should have thrown exception");
+            }
+        } catch (MongoConfigurationException e) {
+            if (!error) {
+                fail("Should not have thrown exception: " + e);
+            }
+            return;
+        }
         assertServers(selectedServers, suitableServers);
 
         ServerSelector latencyBasedServerSelector = new CompositeServerSelector(asList(serverSelector,
@@ -75,17 +102,26 @@ public class ServerSelectionSelectionTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/server-selection/server_selection")) {
-            data.add(new Object[]{file.getName(), JsonPoweredTestHelper.getTestDocument(file)});
+            data.add(new Object[]{getDescription("server-selection/server_selection", file), JsonPoweredTestHelper.getTestDocument(file)});
+        }
+        for (File file : JsonPoweredTestHelper.getTestFiles("/max-staleness/server_selection")) {
+            data.add(new Object[]{getDescription("max-staleness/server_selection", file), JsonPoweredTestHelper.getTestDocument(file)});
         }
         return data;
     }
 
+    private static String getDescription(final String root, final File file) {
+        return root + "/" + file.getParentFile().getName() + "/" + file.getName();
+    }
+
     private ClusterDescription buildClusterDescription(final BsonDocument topologyDescription) {
         ClusterType clusterType = getClusterType(topologyDescription.getString("type").getValue());
-        ClusterConnectionMode connectionMode = clusterType == ClusterType.STANDALONE ? ClusterConnectionMode.SINGLE
-                : ClusterConnectionMode.MULTIPLE;
+        ClusterConnectionMode connectionMode = ClusterConnectionMode.MULTIPLE;
         List<ServerDescription> servers = buildServerDescriptions(topologyDescription.getArray("servers"));
-        return new ClusterDescription(connectionMode, clusterType, servers);
+        return new ClusterDescription(connectionMode, clusterType, servers, null,
+                                             ServerSettings.builder()
+                                                     .heartbeatFrequency(heartbeatFrequencyMS, TimeUnit.MILLISECONDS)
+                                                     .build());
     }
 
     private ClusterType getClusterType(final String type) {
@@ -114,9 +150,24 @@ public class ServerSelectionSelectionTest {
         ServerDescription.Builder builder = ServerDescription.builder();
         builder.address(new ServerAddress(serverDescription.getString("address").getValue()));
         builder.type(getServerType(serverDescription.getString("type").getValue()));
-        builder.tagSet(buildTagSet(serverDescription.getDocument("tags")));
-        builder.roundTripTime(serverDescription.getNumber("avg_rtt_ms").asInt32().getValue(), TimeUnit.MILLISECONDS);
+        if (serverDescription.containsKey("tags")) {
+            builder.tagSet(buildTagSet(serverDescription.getDocument("tags")));
+        }
+        if (serverDescription.containsKey("avg_rtt_ms")) {
+            builder.roundTripTime(serverDescription.getNumber("avg_rtt_ms").asInt32().getValue(), TimeUnit.MILLISECONDS);
+        }
         builder.state(ServerConnectionState.CONNECTED);
+        if (serverDescription.containsKey("lastWriteDate")) {
+            builder.lastWriteDate(new Date(serverDescription.getNumber("lastWriteDate").longValue()));
+        }
+        if (serverDescription.containsKey("lastUpdateTime")) {
+            builder.lastUpdateTimeNanos(serverDescription.getNumber("lastUpdateTime").longValue() * 1000000);  // convert to nanos
+        } else {
+            builder.lastUpdateTimeNanos(42L);
+        }
+        if (serverDescription.containsKey("maxWireVersion")) {
+            builder.maxWireVersion(serverDescription.getNumber("maxWireVersion").intValue());
+        }
         builder.ok(true);
         return builder.build();
     }
@@ -158,14 +209,14 @@ public class ServerSelectionSelectionTest {
 
     private TagSet buildTagSet(final BsonDocument tags) {
         List<Tag> tagsSetTags = new ArrayList<Tag>();
-        for (String key: tags.keySet()) {
+        for (String key : tags.keySet()) {
             tagsSetTags.add(new Tag(key, tags.getString(key).getValue()));
         }
         return new TagSet(tagsSetTags);
     }
 
     private ServerSelector getServerSelector() {
-        if (definition.getString("operation").getValue().equals("write")) {
+        if (definition.getString("operation" , new BsonString("read")).getValue().equals("write")) {
             return new WritableServerSelector();
         } else {
             BsonDocument readPreferenceDefinition = definition.getDocument("read_preference");
@@ -173,15 +224,16 @@ public class ServerSelectionSelectionTest {
             if (readPreferenceDefinition.getString("mode").getValue().equals("Primary")) {
                 readPreference = ReadPreference.valueOf("Primary");
             } else {
-                readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode").getValue(),
-                        buildTagSets(readPreferenceDefinition.getArray("tag_sets")));
+                readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
+                        buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())),
+                        readPreferenceDefinition.getNumber("maxStalenessMS" , new BsonInt64(0)).longValue(), TimeUnit.MILLISECONDS);
             }
             return new ReadPreferenceServerSelector(readPreference);
         }
     }
 
     private void assertServers(final List<ServerDescription> actual, final List<ServerDescription> expected) {
-        assertEquals(actual.size(), expected.size());
+        assertEquals(expected.size(), actual.size());
         assertTrue(actual.containsAll(expected));
     }
 }
