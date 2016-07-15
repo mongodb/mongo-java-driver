@@ -65,6 +65,12 @@ public class SingleServerClusterTest {
     }
 
     @Test
+    public void descriptionShouldIncludeSettings() {
+        assertNotNull(cluster.getDescription().getClusterSettings());
+        assertNotNull(cluster.getDescription().getServerSettings());
+    }
+
+    @Test
     @SuppressWarnings("deprecation")
     public void shouldGetServerWithOkDescription() throws InterruptedException {
         Server server = cluster.selectServer(new ServerSelector() {

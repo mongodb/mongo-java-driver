@@ -22,6 +22,10 @@ import org.bson.BsonString
 import spock.lang.Specification
 
 import static java.util.Arrays.asList
+import static java.util.Collections.emptyList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.SECONDS
+import static org.bson.BsonDocument.parse
 
 @SuppressWarnings(['DuplicateMapLiteral', 'LineLength'])
 class ReadPreferenceSpecification extends Specification {
@@ -37,6 +41,44 @@ class ReadPreferenceSpecification extends Specification {
         ReadPreference.secondary()          | 'secondary'
         ReadPreference.secondaryPreferred() | 'secondaryPreferred'
         ReadPreference.nearest()            | 'nearest'
+    }
+
+    static final TAG_SET = new TagSet(new Tag('rack', '1'))
+    static final TAG_SET_LIST = [TAG_SET]
+
+    def 'should have correct max staleness'() {
+        given:
+
+        expect:
+        ((TaggableReadPreference) readPreference).getMaxStaleness(MILLISECONDS) == maxStalenessMS
+        ((TaggableReadPreference) readPreference).getTagSetList() == tagSetList
+
+        where:
+        readPreference                                               | maxStalenessMS | tagSetList
+        ReadPreference.primaryPreferred()                            | 0              | emptyList()
+        ReadPreference.secondary()                                   | 0              | emptyList()
+        ReadPreference.secondaryPreferred()                          | 0              | emptyList()
+        ReadPreference.nearest()                                     | 0              | emptyList()
+        ReadPreference.secondary(10, SECONDS)                        | 10000          | emptyList()
+        ReadPreference.secondaryPreferred(10, SECONDS)               | 10000          | emptyList()
+        ReadPreference.primaryPreferred(10, SECONDS)                 | 10000          | emptyList()
+        ReadPreference.nearest(10, SECONDS)                          | 10000          | emptyList()
+        ReadPreference.secondary(TAG_SET, 10, SECONDS)               | 10000          | TAG_SET_LIST
+        ReadPreference.secondaryPreferred(TAG_SET, 10, SECONDS)      | 10000          | TAG_SET_LIST
+        ReadPreference.primaryPreferred(TAG_SET, 10, SECONDS)        | 10000          | TAG_SET_LIST
+        ReadPreference.nearest(TAG_SET, 10, SECONDS)                 | 10000          | TAG_SET_LIST
+        ReadPreference.secondary(TAG_SET_LIST, 10, SECONDS)          | 10000          | TAG_SET_LIST
+        ReadPreference.secondaryPreferred(TAG_SET_LIST, 10, SECONDS) | 10000          | TAG_SET_LIST
+        ReadPreference.primaryPreferred(TAG_SET_LIST, 10, SECONDS)   | 10000          | TAG_SET_LIST
+        ReadPreference.nearest(TAG_SET_LIST, 10, SECONDS)            | 10000          | TAG_SET_LIST
+    }
+
+    def 'should throw if max staleness is negative'() {
+        when:
+        ReadPreference.secondary(-1, SECONDS)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should have correct valueOf'() {
@@ -90,6 +132,18 @@ class ReadPreferenceSpecification extends Specification {
         ReadPreference.primaryPreferred(tags) == ReadPreference.valueOf('primaryPreferred', tags)
         ReadPreference.secondaryPreferred(tags) == ReadPreference.valueOf('secondaryPreferred', tags)
         ReadPreference.nearest(tags) == ReadPreference.valueOf('nearest', tags)
+    }
+
+    def 'should convert read preference with max staleness to correct documents'() {
+        expect:
+        readPreference.toDocument() == document
+
+        where:
+        readPreference                                  | document
+        ReadPreference.primaryPreferred(10, SECONDS)    | parse('{mode : "primaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.secondary(10, SECONDS)           | parse('{mode : "secondary", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.secondaryPreferred(10, SECONDS)  | parse('{mode : "secondaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.nearest(10, SECONDS)             | parse('{mode : "nearest", maxStalenessMS : {$numberLong : "10000" }}')
     }
 
     def 'should convert read preferences with a single tag set to correct documents'() {

@@ -37,6 +37,14 @@ class SingleServerClusterSpecification extends Specification {
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
+    def setup() {
+        Time.makeTimeConstant()
+    }
+
+    def cleanup() {
+        Time.makeTimeMove()
+    }
+
     def 'should update description when the server connects'() {
         given:
         def cluster = new SingleServerCluster(CLUSTER_ID,

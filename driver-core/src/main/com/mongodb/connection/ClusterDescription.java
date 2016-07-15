@@ -43,6 +43,9 @@ public class ClusterDescription {
     private final ClusterConnectionMode connectionMode;
     private final ClusterType type;
     private final List<ServerDescription> serverDescriptions;
+    private final ClusterSettings clusterSettings;
+    private final ServerSettings serverSettings;
+
     /**
      * Creates a new ClusterDescription.
      *
@@ -52,10 +55,49 @@ public class ClusterDescription {
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
                               final List<ServerDescription> serverDescriptions) {
+        this(connectionMode, type, serverDescriptions, null, null);
+    }
+
+    /**
+     * Creates a new ClusterDescription.
+     *
+     * @param connectionMode     whether to connect directly to a single server or to multiple servers
+     * @param type               what sort of cluster this is
+     * @param serverDescriptions the descriptions of all the servers currently in this cluster
+     * @param clusterSettings    the cluster settings
+     * @param serverSettings     the server settings
+     * @since 3.4
+     */
+    public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
+                              final List<ServerDescription> serverDescriptions,
+                              final ClusterSettings clusterSettings,
+                              final ServerSettings serverSettings) {
         notNull("all", serverDescriptions);
         this.connectionMode = notNull("connectionMode", connectionMode);
         this.type = notNull("type", type);
         this.serverDescriptions = new ArrayList<ServerDescription>(serverDescriptions);
+        this.clusterSettings = clusterSettings;
+        this.serverSettings = serverSettings;
+    }
+
+    /**
+     * Gets the cluster settings, which may be null if not provided.
+     *
+     * @return the cluster settings
+     * @since 3.4
+     */
+    public ClusterSettings getClusterSettings() {
+        return clusterSettings;
+    }
+
+    /**
+     * Gets the server settings, which may be null if not provided.
+     *
+     * @return the server settings
+     * @since 3.4
+     */
+    public ServerSettings getServerSettings() {
+        return serverSettings;
     }
 
     /**

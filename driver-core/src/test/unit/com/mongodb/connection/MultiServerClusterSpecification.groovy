@@ -46,6 +46,26 @@ class MultiServerClusterSpecification extends Specification {
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
+    def setup() {
+        Time.makeTimeConstant()
+    }
+
+    def cleanup() {
+        Time.makeTimeMove()
+    }
+
+    def 'should include settings in cluster description'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)
+                .serverSelectionTimeout(1, MILLISECONDS)
+                .hosts([firstServer]).build(), factory)
+        sendNotification(firstServer, REPLICA_SET_PRIMARY)
+
+        expect:
+        cluster.getDescription().clusterSettings != null
+        cluster.getDescription().serverSettings != null
+    }
+
     def 'should timeout waiting for description if no servers connect'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)

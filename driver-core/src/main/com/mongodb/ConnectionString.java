@@ -155,6 +155,10 @@ import static java.util.Collections.singletonList;
  * <li>Order matters when using multiple readPreferenceTags.</li>
  * </ul>
  * </li>
+ * <li>{@code maxStalenessMS=ms}. The maximum staleness in milliseconds. For use with any non-primary read preference, the driver estimates
+ * the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those secondaries
+ * whose staleness is less than or equal to maxStalenessMS.  The default is 0, meaning there is no staleness check.
+ * </li>
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
@@ -327,6 +331,7 @@ public class ConnectionString {
 
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
+        READ_PREFERENCE_KEYS.add("maxstalenessms");
 
         WRITE_CONCERN_KEYS.add("safe");
         WRITE_CONCERN_KEYS.add("w");
@@ -432,6 +437,7 @@ public class ConnectionString {
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
         List<TagSet> tagSetList = new ArrayList<TagSet>();
+        long maxStalenessMS = 0;
 
         for (final String key : READ_PREFERENCE_KEYS) {
             String value = getLastValue(optionsMap, key);
@@ -441,6 +447,8 @@ public class ConnectionString {
 
             if (key.equals("readpreference")) {
                 readPreferenceType = value;
+            } else if (key.equals("maxstalenessms")) {
+                 maxStalenessMS = Integer.parseInt(value);
             } else if (key.equals("readpreferencetags")) {
                 for (final String cur : optionsMap.get(key)) {
                     TagSet tagSet = getTags(cur.trim());
@@ -448,7 +456,7 @@ public class ConnectionString {
                 }
             }
         }
-        return buildReadPreference(readPreferenceType, tagSetList);
+        return buildReadPreference(readPreferenceType, tagSetList, maxStalenessMS);
     }
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
@@ -582,12 +590,15 @@ public class ConnectionString {
     }
 
     private ReadPreference buildReadPreference(final String readPreferenceType,
-                                               final List<TagSet> tagSetList) {
+                                               final List<TagSet> tagSetList, final long maxStalenessMS) {
         if (readPreferenceType != null) {
-            if (tagSetList.isEmpty()) {
+            if (tagSetList.isEmpty() && maxStalenessMS == 0) {
                 return ReadPreference.valueOf(readPreferenceType);
             }
-            return ReadPreference.valueOf(readPreferenceType, tagSetList);
+            return ReadPreference.valueOf(readPreferenceType, tagSetList, maxStalenessMS, TimeUnit.MILLISECONDS);
+        } else if (!(tagSetList.isEmpty() && maxStalenessMS == 0)) {
+            throw new IllegalArgumentException("Read preference mode must be specified if "
+                                                       + "either read preference tags or max staleness is specified");
         }
         return null;
     }

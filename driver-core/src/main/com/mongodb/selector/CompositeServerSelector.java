@@ -64,7 +64,9 @@ public final class CompositeServerSelector implements ServerSelector {
         List<ServerDescription> choices = null;
         for (ServerSelector cur : serverSelectors) {
             choices = cur.select(curClusterDescription);
-            curClusterDescription = new ClusterDescription(clusterDescription.getConnectionMode(), clusterDescription.getType(), choices);
+            curClusterDescription = new ClusterDescription(clusterDescription.getConnectionMode(), clusterDescription.getType(), choices,
+                                                                  clusterDescription.getClusterSettings(),
+                                                                  clusterDescription.getServerSettings());
         }
 
         return choices;

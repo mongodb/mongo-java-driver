@@ -43,6 +43,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -94,6 +95,21 @@ public class ClusterDescriptionTest {
     public void testMode() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
         assertEquals(MULTIPLE, description.getConnectionMode());
+    }
+
+    @Test
+    public void testSettings() {
+        ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
+        assertNull(description.getClusterSettings());
+        assertNull(description.getServerSettings());
+
+        ClusterDescription descriptionWithSettings = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList(),
+                                                                                   ClusterSettings.builder()
+                                                                                           .hosts(asList(new ServerAddress()))
+                                                                                           .build(),
+                                                                                   ServerSettings.builder().build());
+        assertNotNull(descriptionWithSettings.getClusterSettings());
+        assertNotNull(descriptionWithSettings.getServerSettings());
     }
 
     @Test
@@ -222,14 +238,17 @@ public class ClusterDescriptionTest {
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27019"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build(),
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27018"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build(),
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27017"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build())
         );
         ClusterDescription descriptionTwo =
@@ -237,14 +256,17 @@ public class ClusterDescriptionTest {
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27019"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build(),
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27018"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build(),
                                                         builder()
                                                         .state(CONNECTING)
                                                         .address(new ServerAddress("loc:27017"))
+                                                        .lastUpdateTimeNanos(42L)
                                                         .build())
         );
         assertEquals(description, descriptionTwo);
