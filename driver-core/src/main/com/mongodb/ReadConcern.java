@@ -55,6 +55,14 @@ public final class ReadConcern {
      */
     public static final ReadConcern MAJORITY = new ReadConcern(ReadConcernLevel.MAJORITY);
 
+    /**
+     * Return the most recent copy of the data that will not be rolled back.
+     *
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public static final ReadConcern LINEARIZABLE = new ReadConcern(ReadConcernLevel.LINEARIZABLE);
+
 
     /**
      * @return true if this is the server default read concern
