@@ -39,7 +39,15 @@ public enum ReadConcernLevel {
     /**
      * Return the node's most recent copy of the data confirmed as having been written to a majority of the nodes.
      */
-    MAJORITY("majority");
+    MAJORITY("majority"),
+
+    /**
+     * Return the most recent copy of the data that will not be rolled back.
+     *
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    LINEARIZABLE("linearizable");
 
     private final String value;
     ReadConcernLevel(final String readConcernLevel) {

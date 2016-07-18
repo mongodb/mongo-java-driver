@@ -25,9 +25,10 @@ class ReadConcernLevelSpecification extends Specification {
         readConcernLevel.getValue() == expectedString
 
         where:
-        readConcernLevel             | expectedString
-        ReadConcernLevel.LOCAL       | 'local'
-        ReadConcernLevel.MAJORITY    | 'majority'
+        readConcernLevel              | expectedString
+        ReadConcernLevel.LOCAL        | 'local'
+        ReadConcernLevel.MAJORITY     | 'majority'
+        ReadConcernLevel.LINEARIZABLE | 'linearizable'
     }
 
     def 'should support valid string representations'() {
@@ -35,7 +36,7 @@ class ReadConcernLevelSpecification extends Specification {
         ReadConcernLevel.fromString(readConcernLevel) instanceof ReadConcernLevel
 
         where:
-        readConcernLevel << ['local', 'majority', 'LOCAL', 'MAJORITY']
+        readConcernLevel << ['local', 'majority', 'linearizable', 'LOCAL', 'MAJORITY', 'LINEARIZABLE']
     }
 
     def 'should throw an illegal Argument exception for invalid values'() {

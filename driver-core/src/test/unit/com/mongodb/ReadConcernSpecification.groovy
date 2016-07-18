@@ -26,10 +26,11 @@ class ReadConcernSpecification extends Specification {
         staticValue == expected
 
         where:
-        staticValue             | expected
-        ReadConcern.DEFAULT     | new ReadConcern()
-        ReadConcern.LOCAL       | new ReadConcern(ReadConcernLevel.LOCAL)
-        ReadConcern.MAJORITY    | new ReadConcern(ReadConcernLevel.MAJORITY)
+        staticValue              | expected
+        ReadConcern.DEFAULT      | new ReadConcern()
+        ReadConcern.LOCAL        | new ReadConcern(ReadConcernLevel.LOCAL)
+        ReadConcern.MAJORITY     | new ReadConcern(ReadConcernLevel.MAJORITY)
+        ReadConcern.LINEARIZABLE | new ReadConcern(ReadConcernLevel.LINEARIZABLE)
     }
 
     def 'should create the expected Documents'() {
@@ -37,10 +38,11 @@ class ReadConcernSpecification extends Specification {
         staticValue.asDocument() == expected
 
         where:
-        staticValue             | expected
-        ReadConcern.DEFAULT     | BsonDocument.parse('{}')
-        ReadConcern.LOCAL       | BsonDocument.parse('{level: "local"}')
-        ReadConcern.MAJORITY    | BsonDocument.parse('{level: "majority"}')
+        staticValue              | expected
+        ReadConcern.DEFAULT      | BsonDocument.parse('{}')
+        ReadConcern.LOCAL        | BsonDocument.parse('{level: "local"}')
+        ReadConcern.MAJORITY     | BsonDocument.parse('{level: "majority"}')
+        ReadConcern.LINEARIZABLE | BsonDocument.parse('{level: "linearizable"}')
     }
 
     def 'should have the correct value for isServerDefault'() {
@@ -48,9 +50,10 @@ class ReadConcernSpecification extends Specification {
         staticValue.isServerDefault() == expected
 
         where:
-        staticValue             | expected
-        ReadConcern.DEFAULT     | true
-        ReadConcern.LOCAL       | false
-        ReadConcern.MAJORITY    | false
+        staticValue              | expected
+        ReadConcern.DEFAULT      | true
+        ReadConcern.LOCAL        | false
+        ReadConcern.MAJORITY     | false
+        ReadConcern.LINEARIZABLE | false
     }
 }
