@@ -32,17 +32,23 @@ import static java.lang.String.format;
 public enum ReadConcernLevel {
 
     /**
-     * Return the node's most recent copy of data. Provides no guarantee that the data has been written to a majority of the nodes.
+     * Queries return the instance’s most recent copy of data. It provides no guarantee that the data has been written to a majority of the
+     * replica set members.
      */
     LOCAL("local"),
 
     /**
-     * Return the node's most recent copy of the data confirmed as having been written to a majority of the nodes.
+     * Queries return the instance’s most recent copy of data confirmed as written to a majority of members in the replica set.
      */
     MAJORITY("majority"),
 
     /**
-     * Return the most recent copy of the data that will not be rolled back.
+     * Queries return the instance’s most recent copy of data confirmed as written to a majority of members in the replica set.  When
+     * combined with {@link WriteConcern#MAJORITY}, it also guarantees that the data is not stale.
+     *
+     * <p>
+     * This read concern level is only compatible with {@link ReadPreference#primary()}.
+     * </p>
      *
      * @since 3.4
      * @mongodb.server.release 3.4
@@ -50,6 +56,7 @@ public enum ReadConcernLevel {
     LINEARIZABLE("linearizable");
 
     private final String value;
+
     ReadConcernLevel(final String readConcernLevel) {
         this.value = readConcernLevel;
     }
