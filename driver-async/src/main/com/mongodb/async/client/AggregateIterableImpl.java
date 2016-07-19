@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.FindOptions;
@@ -48,6 +49,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
+    private final WriteConcern writeConcern;
     private final CodecRegistry codecRegistry;
     private final AsyncOperationExecutor executor;
     private final List<? extends Bson> pipeline;
@@ -60,13 +62,14 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
+                          final WriteConcern writeConcern, final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
     }
@@ -105,7 +108,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
             throw new IllegalArgumentException("The last stage of the aggregation pipeline must be $out");
         }
 
-        executor.execute(new AggregateToCollectionOperation(namespace, aggregateList)
+        executor.execute(new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse), callback);
     }
@@ -152,7 +155,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .bypassDocumentValidation(bypassDocumentValidation);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public void drop() {
-        executor.execute(new DropDatabaseOperation(name));
+        executor.execute(new DropDatabaseOperation(name, getWriteConcern()));
     }
 
     @Override
@@ -164,7 +164,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
-        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName)
+        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
                 .autoIndex(createCollectionOptions.isAutoIndex())

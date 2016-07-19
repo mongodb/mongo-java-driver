@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoServerException
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernException
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
@@ -32,6 +34,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 
@@ -226,6 +229,24 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         WriteConcernException writeConcernException = thrown()
         writeConcernException.getErrorCode() == 121
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName(), new WriteConcern(5))
+
+        when:
+        async ? executeAsync(operation) : operation.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
+
+        where:
+        async << [true, false]
     }
 
     def getCollectionInfo(String collectionName) {

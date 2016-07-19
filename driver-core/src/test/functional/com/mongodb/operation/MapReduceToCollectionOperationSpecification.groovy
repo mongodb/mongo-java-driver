@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncWriteBinding
@@ -46,6 +48,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.gte
 import static java.util.Arrays.asList
@@ -89,6 +92,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getReduceFunction() == reduceF
         operation.getAction() == 'replace'
         operation.getCollectionName() == out
+        operation.getWriteConcern() == null
         operation.getDatabaseName() == null
         operation.getFilter() == null
         operation.getFinalizeFunction() == null
@@ -114,9 +118,11 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def out = 'outCollection'
         def action = 'merge'
         def dbName = 'dbName'
+        def writeConcern = WriteConcern.MAJORITY
 
         when:
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out).action(action).databaseName(dbName)
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, writeConcern)
+                .action(action).databaseName(dbName)
                 .finalizeFunction(finalizeF).filter(filter).limit(10).scope(scope).sort(sort).maxTime(1, MILLISECONDS)
                 .bypassDocumentValidation(true)
 
@@ -125,6 +131,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getReduceFunction() == reduceF
         operation.getAction() == action
         operation.getCollectionName() == out
+        operation.getWriteConcern() == writeConcern
         operation.getDatabaseName() == dbName
         operation.getFilter() == filter
         operation.getLimit() == 10
@@ -229,6 +236,26 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         collectionOutHelper?.drop()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        getCollectionHelper().insertDocuments(new BsonDocument())
+        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+                new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
+                new BsonJavaScript('function(key, values){ return values.length; }'),
+                'collectionOut', new WriteConcern(5))
+
+        when:
+        async ? executeAsync(operation) : operation.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
+
+        where:
+        async << [true, false]
+    }
 
     def 'should create the expected command'() {
         given:
@@ -266,7 +293,11 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .append('scope', BsonNull.VALUE)
                 .append('verbose', BsonBoolean.FALSE)
 
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+        if (includeWriteConcern) {
+            expectedCommand.append('writeConcern', WriteConcern.MAJORITY.asDocument())
+        }
+
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
 
         when:
         operation.execute(writeBinding)
@@ -307,9 +338,10 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         1 * connection.release()
 
         where:
-        serverVersion                   | includeBypassValidation
-        new ServerVersion([3, 2, 0])    | true
-        new ServerVersion([3, 0, 0])    | false
+        serverVersion                   | includeBypassValidation | includeWriteConcern
+        new ServerVersion([3, 4, 0])    | true                    | true
+        new ServerVersion([3, 2, 0])    | true                    | false
+        new ServerVersion([3, 0, 0])    | false                   | false
     }
 
     def 'should create the expected command asynchronously'() {
@@ -347,7 +379,11 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .append('scope', BsonNull.VALUE)
                 .append('verbose', BsonBoolean.FALSE)
 
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out)
+        if (includeWriteConcern) {
+            expectedCommand.append('writeConcern', WriteConcern.MAJORITY.asDocument())
+        }
+
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
 
         when:
         operation.executeAsync(writeBinding, Stub(SingleResultCallback))
@@ -392,9 +428,10 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         1 * connection.release()
 
         where:
-        serverVersion                   | includeBypassValidation
-        new ServerVersion([3, 2, 0])    | true
-        new ServerVersion([3, 0, 0])    | false
+        serverVersion                   | includeBypassValidation | includeWriteConcern
+        new ServerVersion([3, 4, 0])    | true                    | true
+        new ServerVersion([3, 2, 0])    | true                    | false
+        new ServerVersion([3, 0, 0])    | false                   | false
     }
 
 }

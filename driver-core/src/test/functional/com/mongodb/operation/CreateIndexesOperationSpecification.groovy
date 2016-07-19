@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import category.Async
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoException
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
 import com.mongodb.bulk.IndexRequest
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -34,6 +36,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -463,6 +466,23 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         getUserCreatedIndexes('partialFilterExpression').head() == partialFilterExpression
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        def keys = new BsonDocument('field', new BsonInt32(1))
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)], new WriteConcern(5))
+
+        when:
+        async ? executeAsync(operation) : operation.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
+
+        where:
+        async << [true, false]
+    }
 
     Document getIndex(final String indexName) {
         getIndexes().find {

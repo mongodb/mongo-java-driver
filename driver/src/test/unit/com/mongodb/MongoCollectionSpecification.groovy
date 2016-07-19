@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,14 +272,14 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, executor, [new Document('$match', 1)]))
+                readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)]))
 
         when:
         aggregateIterable = collection.aggregate([new Document('$match', 1)], BsonDocument)
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, [new Document('$match', 1)]))
+                readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)]))
     }
 
     def 'should create MapReduceIterable correctly'() {
@@ -292,7 +292,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, executor, 'map', 'reduce'))
+                readPreference, readConcern, writeConcern, executor, 'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
@@ -784,7 +784,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new DropCollectionOperation(namespace)
+        def expectedOperation = new DropCollectionOperation(namespace, writeConcern)
 
         when:
         collection.drop()
@@ -800,7 +800,8 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
 
         when:
-        def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))])
+        def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))],
+                writeConcern)
         def indexName = collection.createIndex(new Document('key', 1))
         def operation = executor.getWriteOperation() as CreateIndexesOperation
 
@@ -810,7 +811,8 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
-                                                                   new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))])
+                                                                   new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))],
+                writeConcern)
         def indexNames = collection.createIndexes([new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))])
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
@@ -838,7 +840,7 @@ class MongoCollectionSpecification extends Specification {
                          .bucketSize(200.0)
                          .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
                          .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
-                ])
+                ], writeConcern)
         indexName = collection.createIndex(new Document('key', 1), new IndexOptions()
                 .background(true)
                 .unique(true)
@@ -899,7 +901,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
 
         when:
-        def expectedOperation = new DropIndexOperation(namespace, 'indexName')
+        def expectedOperation = new DropIndexOperation(namespace, 'indexName', writeConcern)
         collection.dropIndex('indexName')
         def operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -908,7 +910,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def keys = new BsonDocument('x', new BsonInt32(1))
-        expectedOperation = new DropIndexOperation(namespace, keys)
+        expectedOperation = new DropIndexOperation(namespace, keys, writeConcern)
         collection.dropIndex(keys)
         operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -920,7 +922,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new DropIndexOperation(namespace, '*')
+        def expectedOperation = new DropIndexOperation(namespace, '*', writeConcern)
 
         when:
         collection.dropIndexes()
@@ -935,7 +937,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
         def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
-        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace)
+        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace, writeConcern)
 
         when:
         collection.renameCollection(newNamespace)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -28,6 +30,8 @@ import org.bson.types.ObjectId;
 import java.util.Arrays;
 
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
+import static com.mongodb.operation.WriteConcernHelper.createWriteConcernError;
+import static com.mongodb.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
 
@@ -59,6 +63,35 @@ final class UserOperationHelper {
     static BsonDocument asCollectionInsertDocument(final MongoCredential credential, final boolean readOnly) {
         return asCollectionUpdateDocument(credential, readOnly)
                .append("_id", new BsonObjectId(new ObjectId()));
+    }
+
+
+    static void translateUserCommandException(final MongoCommandException e) {
+        if (e.getErrorCode() == 100 && hasWriteConcernError(e.getResponse())) {
+            throw createWriteConcernError(e.getResponse(), e.getServerAddress());
+        } else {
+            throw e;
+        }
+    }
+
+    static SingleResultCallback<Void> userCommandCallback(final SingleResultCallback<Void> wrappedCallback) {
+        return new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                if (t != null) {
+                    if (t instanceof MongoCommandException
+                                && hasWriteConcernError(((MongoCommandException) t).getResponse())) {
+                        wrappedCallback.onResult(null,
+                                createWriteConcernError(((MongoCommandException) t).getResponse(),
+                                        ((MongoCommandException) t).getServerAddress()));
+                    } else {
+                        wrappedCallback.onResult(null, t);
+                    }
+                } else {
+                    wrappedCallback.onResult(null, null);
+                }
+            }
+        };
     }
 
     private UserOperationHelper() {

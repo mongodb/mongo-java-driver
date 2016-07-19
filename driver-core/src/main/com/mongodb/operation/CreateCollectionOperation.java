@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,30 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.CommandOperationHelper.VoidTransformer;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
 
 /**
  * An operation to create a collection
@@ -41,6 +50,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final String collectionName;
+    private final WriteConcern writeConcern;
     private boolean capped = false;
     private long sizeInBytes = 0;
     private boolean autoIndex = true;
@@ -59,8 +69,22 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * @param collectionName the name of the collection to be created.
      */
     public CreateCollectionOperation(final String databaseName, final String collectionName) {
+        this(databaseName, collectionName, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param databaseName   the name of the database for the operation.
+     * @param collectionName the name of the collection to be created.
+     * @param writeConcern   the write concern
+     *
+     * @since 3.4
+     */
+    public CreateCollectionOperation(final String databaseName, final String collectionName, final WriteConcern writeConcern) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
+        this.writeConcern = writeConcern;
     }
 
     /**
@@ -70,6 +94,17 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     public String getCollectionName() {
         return collectionName;
+    }
+
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern, which may be null
+     *
+     * @since 3.4
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     /**
@@ -305,17 +340,33 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(binding, databaseName, asDocument(), new BsonDocumentCodec());
-        return null;
+        return withConnection(binding, new CallableWithConnection<Void>() {
+            @Override
+            public Void call(final Connection connection) {
+                executeWrappedCommandProtocol(binding, databaseName, getCommand(connection.getDescription()), connection,
+                        writeConcernErrorTransformer());
+                return null;
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(binding, databaseName, asDocument(), new BsonDocumentCodec(),
-                                           new VoidTransformer<BsonDocument>(), callback);
+        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
+                            writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
+                }
+            }
+        });
     }
 
-    private BsonDocument asDocument() {
+    private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
         document.put("capped", BsonBoolean.valueOf(capped));
         if (capped) {
@@ -341,6 +392,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (validationAction != null) {
             document.put("validationAction", new BsonString(validationAction.getValue()));
         }
+        appendWriteConcernToCommand(writeConcern, document, description);
         return document;
     }
 

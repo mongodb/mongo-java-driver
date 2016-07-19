@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,14 +319,14 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)]))
+                readConcern, writeConcern, executor, [new Document('$match', 1)]))
 
         when:
         aggregateIterable = collection.aggregate([new Document('$match', 1)], BsonDocument)
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)]))
+                readConcern, writeConcern, executor, [new Document('$match', 1)]))
     }
 
     def 'should create MapReduceIterable correctly'() {
@@ -339,7 +339,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, executor, 'map', 'reduce'))
+                readConcern, writeConcern, executor, 'map', 'reduce'))
     }
 
     def 'bulkWrite should use MixedBulkWriteOperation correctly'() {
@@ -903,7 +903,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new DropCollectionOperation(namespace)
+        def expectedOperation = new DropCollectionOperation(namespace, writeConcern)
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
@@ -921,7 +921,8 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
 
         when:
-        def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))])
+        def expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))],
+                writeConcern)
         def futureResultCallback = new FutureResultCallback<String>()
         collection.createIndex(new Document('key', 1), futureResultCallback)
         def indexName = futureResultCallback.get()
@@ -932,10 +933,12 @@ class MongoCollectionSpecification extends Specification {
         indexName == 'key_1'
 
         when:
-        expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))])
+        expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))],
+                writeConcern)
         futureResultCallback = new FutureResultCallback<List<String>>()
         expectedOperation = new CreateIndexesOperation(namespace, [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
-                                                                   new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))])
+                                                                   new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))],
+                writeConcern)
         collection.createIndexes([new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
                                  futureResultCallback)
         def indexNames = futureResultCallback.get()
@@ -964,7 +967,8 @@ class MongoCollectionSpecification extends Specification {
                          .max(180.0)
                          .bucketSize(200.0)
                          .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
-                         .partialFilterExpression(BsonDocument.parse('{status: "active"}'))])
+                         .partialFilterExpression(BsonDocument.parse('{status: "active"}'))],
+                writeConcern)
         futureResultCallback = new FutureResultCallback<String>()
         collection.createIndex(new Document('key', 1), new IndexOptions()
                 .background(true)
@@ -1025,7 +1029,7 @@ class MongoCollectionSpecification extends Specification {
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
 
         when:
-        def expectedOperation = new DropIndexOperation(namespace, 'indexName')
+        def expectedOperation = new DropIndexOperation(namespace, 'indexName', writeConcern)
         def futureResultCallback = new FutureResultCallback<Void>()
         collection.dropIndex('indexName', futureResultCallback)
         futureResultCallback.get()
@@ -1036,7 +1040,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def keys = new BsonDocument('x', new BsonInt32(1))
-        expectedOperation = new DropIndexOperation(namespace, keys)
+        expectedOperation = new DropIndexOperation(namespace, keys, writeConcern)
         futureResultCallback = new FutureResultCallback<Void>()
         collection.dropIndex(keys, futureResultCallback)
         futureResultCallback.get()
@@ -1050,7 +1054,7 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
-        def expectedOperation = new DropIndexOperation(namespace, '*')
+        def expectedOperation = new DropIndexOperation(namespace, '*', writeConcern)
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
@@ -1067,7 +1071,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
         def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
-        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace)
+        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace, writeConcern)
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:

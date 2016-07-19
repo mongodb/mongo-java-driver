@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,12 @@ import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32
 import org.bson.BsonString
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getMongoClient
+import static java.util.Arrays.asList
 
 class DBFunctionalSpecification extends FunctionalSpecification {
 
@@ -80,5 +84,73 @@ class DBFunctionalSpecification extends FunctionalSpecification {
 
         then:
         thrown(MongoException)
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for drop'() {
+        given:
+        database.createCollection('ctest', new BasicDBObject())
+        database.setWriteConcern(new WriteConcern(5))
+
+        when:
+        database.dropDatabase()
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        database.setWriteConcern(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for create collection'() {
+        given:
+        database.setWriteConcern(new WriteConcern(5))
+
+        when:
+        database.createCollection('ctest', new BasicDBObject())
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        database.setWriteConcern(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for add user'() {
+        given:
+        database.setWriteConcern(new WriteConcern(5))
+
+        when:
+        database.addUser('writeConcernUser', 'foo'.toCharArray())
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        database.setWriteConcern(null)
+        database.removeUser('writeConcernUser')
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for remove user'() {
+        given:
+        database.addUser('writeConcernUser', 'foo'.toCharArray())
+        database.setWriteConcern(new WriteConcern(5))
+
+        when:
+        database.removeUser('writeConcernUser')
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        database.setWriteConcern(null)
     }
 }

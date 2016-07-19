@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,77 +18,149 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.CommandOperationHelper.VoidTransformer;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.operation.IndexHelper.generateIndexName;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
 
 /**
  * An operation that drops an index.
  *
- * @since 3.0
  * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+ * @since 3.0
  */
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;
+    private final WriteConcern writeConcern;
 
     /**
      * Construct a new instance.
      *
      * @param namespace the database and collection namespace for the operation.
      * @param indexName the name of the index to be dropped.
+     * @deprecated Prefer {@link #DropIndexOperation(MongoNamespace, String, WriteConcern)}
      */
+    @Deprecated
     public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
-        this.namespace = notNull("namespace", namespace);
-        this.indexName = notNull("indexName", indexName);
+        this(namespace, indexName, null);
     }
 
     /**
      * Construct a new instance.
      *
      * @param namespace the database and collection namespace for the operation.
-     * @param keys the keys of the index to be dropped
+     * @param keys      the keys of the index to be dropped
+     * @deprecated Prefer {@link #DropIndexOperation(MongoNamespace, BsonDocument, WriteConcern)}
      */
+    @Deprecated
     public DropIndexOperation(final MongoNamespace namespace, final BsonDocument keys) {
+        this(namespace, keys, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace    the database and collection namespace for the operation.
+     * @param indexName    the name of the index to be dropped.
+     * @param writeConcern the write concern
+     * @since 3.4
+     */
+    public DropIndexOperation(final MongoNamespace namespace, final String indexName, final WriteConcern writeConcern) {
+        this.namespace = notNull("namespace", namespace);
+        this.indexName = notNull("indexName", indexName);
+        this.writeConcern = writeConcern;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace    the database and collection namespace for the operation.
+     * @param keys         the keys of the index to be dropped
+     * @param writeConcern the write concern
+     * @since 3.4
+     */
+    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument keys, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = generateIndexName(notNull("keys", keys));
+        this.writeConcern = writeConcern;
+    }
+
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern, which may be null
+     * @since 3.4
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        try {
-            executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand());
-        } catch (MongoCommandException e) {
-            CommandOperationHelper.rethrowIfNotNamespaceError(e);
-        }
-        return null;
+        return withConnection(binding, new CallableWithConnection<Void>() {
+            @Override
+            public Void call(final Connection connection) {
+                try {
+                    executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()), connection,
+                            writeConcernErrorTransformer());
+                } catch (MongoCommandException e) {
+                    CommandOperationHelper.rethrowIfNotNamespaceError(e);
+                }
+                return null;
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), new VoidTransformer<BsonDocument>(),
-                                           new SingleResultCallback<Void>() {
-                                               @Override
-                                               public void onResult(final Void result, final Throwable t) {
-                                                   if (t != null && !isNamespaceError(t)) {
-                                                       callback.onResult(null, t);
-                                                   } else {
-                                                       callback.onResult(result, null);
-                                                   }
-                                               }
-                                           });
+        withConnection(binding, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else {
+                    final SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
+                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                            connection, writeConcernErrorTransformer(), new SingleResultCallback<Void>() {
+                                @Override
+                                public void onResult(final Void result, final Throwable t) {
+                                    if (t != null && !isNamespaceError(t)) {
+                                        releasingCallback.onResult(null, t);
+                                    } else {
+                                        releasingCallback.onResult(result, null);
+                                    }
+                                }
+                            });
+                }
+            }
+        });
     }
 
-    private BsonDocument getCommand() {
-        return new BsonDocument("dropIndexes", new BsonString(namespace.getCollectionName())).append("index", new BsonString(indexName));
+    private BsonDocument getCommand(final ConnectionDescription description) {
+        BsonDocument commandDocument = new BsonDocument("dropIndexes", new BsonString(namespace.getCollectionName()))
+                                               .append("index", new BsonString(indexName));
+        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        return commandDocument;
     }
 }

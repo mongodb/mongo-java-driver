@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ class MongoDatabaseSpecification extends Specification {
         futureResultCallback.get()
 
         then:
-        expect operation, isTheSameAs(new DropDatabaseOperation(name))
+        expect operation, isTheSameAs(new DropDatabaseOperation(name, writeConcern))
     }
 
     def 'should use ListCollectionsOperation correctly'() {
@@ -212,7 +212,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName))
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
 
         when:
         futureResultCallback = new FutureResultCallback<Void>()
@@ -233,7 +233,7 @@ class MongoDatabaseSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName)
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern)
                 .autoIndex(false)
                 .capped(true)
                 .usePowerOf2Sizes(true)

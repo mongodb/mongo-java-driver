@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
@@ -45,7 +46,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class MapReduceTest extends DatabaseTestCase {
 
@@ -99,6 +102,22 @@ public class MapReduceTest extends DatabaseTestCase {
             collection.mapReduce(command);
         } finally {
             disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testWriteConcern() {
+        assumeThat(isDiscoverableReplicaSet(), is(true));
+        assumeTrue(serverVersionAtLeast(asList(3, 3, 8)));
+        DBCollection collection = database.getCollection("testWriteConcernForMapReduce");
+        collection.insert(new BasicDBObject("x", new String[]{"a", "b"}).append("s", 1));
+        collection.setWriteConcern(new WriteConcern(5));
+        try {
+            String anotherCollectionName = "anotherCollection" + System.nanoTime();
+            collection.mapReduce(DEFAULT_MAP, DEFAULT_REDUCE, anotherCollectionName, null);
+            fail("Should have thrown");
+        } catch (WriteConcernException e) {
+            assertEquals(100, e.getCode());
         }
     }
 
