@@ -1,7 +1,6 @@
 +++
 date = "2015-03-17T15:36:56Z"
 title = "Quick Start"
-draft = true
 [menu.main]
   parent = "MongoDB Driver"
   identifier = "Sync Quick Start"
@@ -37,6 +36,7 @@ import org.bson.Document;
 import com.mongodb.client.MongoCursor;
 import static com.mongodb.client.model.Filters.*;
 import com.mongodb.client.result.DeleteResult;
+import static com.mongodb.client.model.Updates.*;
 import com.mongodb.client.result.UpdateResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,7 +172,7 @@ collection.insertOne(doc);
 If no top-level `_id` field is specified in the document, MongoDB automatically adds the `_id` field to the inserted document.
 {{% /note %}}
 
-## Add Multiple Documents
+### Insert Multiple Documents
 
 To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany-java.util.List-" >}}) method method which takes a list of documents to insert.
 
@@ -221,7 +221,7 @@ The [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) m
 
 To return the first document in the collection, use the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method without any parameters and chain to `find()` method the [`first()`] ({{< apiref "com/mongodb/client/MongoIterable.html#first--">}}) method.
 
-If the `FindIterable` object returned by the `find()` method is empty, the operation returns null.
+If the collection is empty, the operation returns null.
 
 {{% note class="tip" %}}
 The `find().first()` construct is useful for queries that should only match a single document or if you are interested in the first document only.
@@ -333,17 +333,13 @@ Pass to the methods:
 
 - An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
 
-```java
-new Document( <field1>, <value1> ).append(<field2>, <value2>) ...
-```
-
 The update methods return an [`UpdateResult`]({{<apiref "com/mongodb/client/result/UpdateResult.html">}}) which provides information about the operation including the number of documents modified by the update.
 
-###Update a Single Document
+### Update a Single Document
 
 To update at most a single document, use the [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
 
-The following example updates the first document that meets the filter ``i`` equals ``10`` and set the value of ``i`` to ``110``:
+The following example updates the first document that meets the filter ``i`` equals ``10`` and sets the value of ``i`` to ``110``:
 
 ```java
 collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
@@ -354,7 +350,7 @@ collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
 
 To update all documents matching the filter, use the [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method.
 
-The following example increments the value of ``i`` by ``100`` where ``i`` is less than ``100``:
+The following example increments the value of ``i`` by ``100`` for all documents where  =``i`` is less than ``100``:
 
 ```java
 UpdateResult updateResult = collection.updateMany(lt("i", 100), inc("i", 100));
@@ -373,7 +369,7 @@ Pass to the methods a filter object to determine the document or documents to de
 The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
 which provides information about the operation including the number of documents deleted.
 
-### Delete a Single Document
+### Delete a Single Document That Match a Filter
 
 To delete at most a single document that match the filter, use the [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}}) method:
 
@@ -383,7 +379,7 @@ The following example deletes at most one document that meets the filter ``i`` e
 collection.deleteOne(eq("i", 110));
 ```
 
-### Delete All Documents That Match the Filter
+### Delete All Documents That Match a Filter
 
 To delete all documents matching the filter use the [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method.
 
