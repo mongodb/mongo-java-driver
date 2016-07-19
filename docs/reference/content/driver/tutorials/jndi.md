@@ -2,7 +2,7 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "JNDI"
 [menu.main]
-  parent = "Sync Connecting"
+  parent = "Connect to MongoDB"
   identifier = "Sync JNDI"
   weight = 30
   pre = "<i class='fa'></i>"

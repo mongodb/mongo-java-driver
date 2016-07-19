@@ -7,24 +7,24 @@ title = "MongoDB Driver"
   pre = "<i class='fa fa-arrows-h'></i>"
 +++
 
-## MongoDB Driver Documentation
+## MongoDB Driver 3.3 Documentation
 
-Welcome to the MongoDB Driver documentation hub.
-
+The following guide provides information on using the synchronous
+MongoDB Java Driver 3.3.
 
 ### What's New in 3.3
 
-The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major new features of the driver. 
+The [What's New]({{< relref "whats-new.md" >}}) guide explains
+the major new features of the driver.
 
-If you are upgrading from the 2.x series of the driver, consult the [Upgrading]({{< relref "whats-new/upgrading.md" >}}) documentation for 
-information on breaking changes. 
+If you are upgrading from the 2.x series of the driver, consult the
+[Upgrading]({{< relref "upgrading.md" >}}) documentation for
+information on breaking changes.
 
+## Getting Started
 
-### Getting Started
+To get started, see the [Installation Guide]({{< relref "driver/getting-started/installation.md" >}}) and the [Quick Start Guide]({{< relref "driver/getting-started/quick-start.md" >}}).
 
-The [Getting Started]({{< relref "driver/getting-started/index.md" >}}) guide contains installation instructions
-and a simple tutorial to get up and running quickly.
+## Tutorials
 
-### Reference
-
-For more detailed documentation, see the [Reference]({{< relref "driver/reference/index.md" >}}) guide.
+For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver/tutorials/index.md">}}).
