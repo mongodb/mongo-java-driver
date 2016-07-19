@@ -2,7 +2,7 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "Monitoring"
 [menu.main]
-  parent = "Sync Management"
+  parent = "Sync Reference"
  identifier = "Sync Monitoring"
   weight = 100
   pre = "<i class='fa'></i>"
@@ -16,11 +16,11 @@ application or end user to monitor various aspects of the driver.
 
 The driver creates MXBean instances of a single type:
 [ConnectionPoolStatisticsMBean]({{< apiref "com/mongodb/management/ConnectionPoolStatisticsMBean" >}}).
- The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica 
+ The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica
  set, the driver creates an instance per each non-hidden member of the replica set.
 
-Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties. All 
-MXBean instances created by the driver are under the domain `"org.mongodb.driver"`.  Instances of `ConnectionPoolStatisticsMBean` will have 
+Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties. All
+MXBean instances created by the driver are under the domain `"org.mongodb.driver"`.  Instances of `ConnectionPoolStatisticsMBean` will have
 the following properties:
 
 - `clusterId`: a client-generated unique identifier, required to ensure object name uniqueness in situations where an
@@ -57,7 +57,7 @@ public class TestCommandListener implements CommandListener {
                                               .getConnectionId(),                                                    
                                          event.getConnectionDescription().getServerAddress()));                      
     }                                                                                                                
-                                                                                                                     
+
     @Override                                                                                                        
     public void commandSucceeded(final CommandSucceededEvent event) {                                                
         System.out.println(String.format("Successfully executed command '%s' with id %s "                            
@@ -68,7 +68,7 @@ public class TestCommandListener implements CommandListener {
                                               .getConnectionId(),                                                    
                                          event.getConnectionDescription().getServerAddress()));                      
     }                                                                                                                
-                                                                                                                     
+
     @Override                                                                                                        
     public void commandFailed(final CommandFailedEvent event) {                                                      
         System.out.println(String.format("Failed execution of command '%s' with id %s "                              
@@ -82,16 +82,20 @@ public class TestCommandListener implements CommandListener {
     }                                                                                                                
 }                                                                                                                            
 ```
-     
-and an instance of `MongoClientOptions` configured with an instance of `TestCommandListener`:            
-            
-```java                                                                                   
-MongoClientOptions options = MongoClientOptions.builder()                            
-                                           .addCommandListener(new TestCommandListener())
-                                           .build();
+
+
+and an instance of `MongoClientSettings` configured with an instance of `TestCommandListener`:
+
+```java
+ClusterSettings clusterSettings = ...
+MongoClientSettings settings = MongoClientSettings.builder()
+                                       .clusterSettings(clusterSettings)
+                                       .addCommandListener(new TestCommandListener())
+                                       .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
-A `MongoClient` configured with these options will print a message to `System.out` before sending each command to a MongoDB server, and 
+A `MongoClient` configured with these options will print a message to `System.out` before sending each command to a MongoDB server, and
 another message upon either successful completion or failure of each command.
 
 # Cluster Monitoring
@@ -100,7 +104,7 @@ The driver implements the
 [SDAM Monitoring specification](https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring-monitoring.rst),
 allowing an application to be notified when the driver detects changes to the topology of the MongoDB cluster to which it is connected.
 
-An application registers listeners with a `MongoClient` by configuring  `MongoClientOptions` with instances of classes that
+An application registers listeners with a `MongoClient` by configuring  `MongoClientSettings` with instances of classes that
 implement any of the [`ClusterListener`]({{< apiref "com/mongodb/event/ClusterListener" >}}),
  [`ServerListener`]({{< apiref "com/mongodb/event/ServerListener" >}}),
 or [`ServerMonitorListener`]({{< apiref "com/mongodb/event/ServerMonitorListener" >}}) interfaces.
@@ -158,21 +162,24 @@ public class TestClusterListener implements ClusterListener {
 }
 ```
 
-and an instance of `MongoClientOptions` configured with an instance of `TestClusterListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestClusterListener`:
 
 ```java
 List<ServerAddress> seedList = ...
-MongoClientOptions options = MongoClientOptions.builder()
-                                           .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
-                                           .build();
-MongoClient client = new MongoClient(seedList, options);
+ClusterSettings clusterSettings = ClusterSettings.builder()
+                                          .hosts(seedList)
+                                          .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
+                                          .build();
+MongoClientSettings settings = MongoClientSettings.builder()
+                                       .clusterSettings(clusterSettings)
+                                       .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
-A `MongoClient` configured with these options will print a message to `System.out` when the MongoClient is constructed with these options,
+A `MongoClient` configured with these settings will print a message to `System.out` when the MongoClient is created with these options,
 and when that MongoClient is closed.  In addition, it will print a message when the client enters a state:
 
 * with an available server that will accept writes
 * without an available server that will accept writes
 * with an available server that will accept reads using the configured `ReadPreference`
 * without an available server that will accept reads using the configured `ReadPreference`
-

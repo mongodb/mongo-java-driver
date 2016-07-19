@@ -2,7 +2,7 @@
 date = "2015-03-18T21:14:20-04:00"
 title = "Logging"
 [menu.main]
-  parent = "Sync Management"
+  parent = "Sync Reference"
   identifier = "Sync Logging"
   weight = 10
   pre = "<i class='fa'></i>"
@@ -11,7 +11,7 @@ title = "Logging"
 # Logging
 
 By default, logging is enabled via the popular [SLF4J](http://www.slf4j.org/) API. The use of [SLF4J](http://www.slf4j.org/) is optional;
-the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to 
+the driver will use SLF4J if the driver detects the presence of SLF4J in the classpath. Otherwise, the driver will fall back to
 JUL (`java.util.logging`).
 
 The driver uses the following logger names:
