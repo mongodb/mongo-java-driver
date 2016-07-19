@@ -11,29 +11,22 @@ Welcome to the MongoDB Java driver documentation hub for the 3.3 driver release.
 
 ### What's New in 3.3
 
-The [What's New]({{< relref "whats-new/index.md" >}}) guide explains the major new features of the driver. 
+For key new features of 3.3, see [What's New]({{< relref "whats-new.md" >}}).
 
-If you are upgrading from the 3.2.x series of the driver, consult the [Upgrading]({{< relref "whats-new/upgrading.md" >}}) documentation
-for information on breaking changes.  If you are upgrading from the 2.x series of the driver, please consult the 3.0 reference 
-documentation as well. 
+### Upgrade
 
+To upgrade, refer to the [Upgrade Considerations]({{< relref "upgrading.md" >}}) documentation.
 
 ### MongoDB Driver
 
-For the synchronous MongoDB Driver, the [Getting Started]({{< relref "driver/getting-started/index.md" >}}) guide contains 
-installation instructions and a simple tutorial to get up  and running quickly. For more detailed documentation, see the 
-[Reference]({{< relref "driver/reference/index.md" >}}) guide.
-
+For the synchronous MongoDB Driver, see [MongoDB Driver section]({{< relref "driver/index.md" >}}).
 
 ### MongoDB Async Driver
 
-For the new asynchronous MongoDB Async Driver, the [Getting Started]({{< relref "driver-async/getting-started/index.md" >}}) 
-guide contains installation instructions and a simple tutorial to get up  and running quickly. For more detailed documentation, see the 
-[Reference]({{< relref "driver-async/reference/index.md" >}}) guide.
-
+For the new asynchronous MongoDB Async Driver, the [MongoDB Async Driver section]({{< relref "driver-async/index.md" >}}).
 
 ### BSON Library
 
-The [BSON]({{< relref "bson/index.md">}}) library comprehensively supports the BSON spec, the data storage and network transfer format that MongoDB uses for 
-“documents".  The [reference guide]({{< relref "bson/index.md">}}) provides information about working with [Documents]({{< relref "bson/documents.md">}}), 
-how to use [Codecs]({{< relref "bson/codecs.md">}}) and [Extended JSON]({{< relref "bson/extended-json.md">}}) support. 
+The [BSON]({{< relref "bson/index.md">}}) library comprehensively supports the BSON spec, the data storage and network transfer format that MongoDB uses for
+“documents".  The [reference guide]({{< relref "bson/index.md">}}) provides information about working with [Documents]({{< relref "bson/documents.md">}}),
+how to use [Codecs]({{< relref "bson/codecs.md">}}) and [Extended JSON]({{< relref "bson/extended-json.md">}}) support.

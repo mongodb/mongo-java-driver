@@ -36,12 +36,12 @@
 </code></pre>
 </section>
 <section class="downloadInfo small">
-    <p>You can also download the jars
+    <p><strong>Note:</strong> You can also download the jars
         <a href="{{$ossUrl}}/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
         from sonatype.</a></p>
     {{ with $dependencies}}
     <p>
-        <strong>Note:</strong> <code>{{$artifactId}}</code> requires the following dependencies:
+        <code>{{$artifactId}}</code> requires the following dependencies:
         <a href="{{$ossUrl}}/org/mongodb/bson/{{$version}}" target="_blank"><code>bson</code></a> and
         <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$version}}" target="_blank"><code>mongodb-driver-core</code></a>
     </p>
@@ -70,12 +70,13 @@
 </code></pre>
 </section>
 <section class="downloadInfo small">
-    <p>You can also download the jars
+    <p><strong>Note:</strong> You can also download the <code>{{$artifactId}}</code> jar
         <a href="{{$ossUrl}}/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
         from sonatype.</a></p>
     {{ with $dependencies}}
     <p>
-        <strong>Note:</strong> <code>{{$artifactId}}</code> requires the following dependencies:
+        If downloading <code>{{$artifactId}}</code> manually, 
+        you must also download its dependencies:
         <a href="{{$ossUrl}}/org/mongodb/bson/{{$version}}" target="_blank"><code>bson</code></a> and
         <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$version}}" target="_blank"><code>mongodb-driver-core</code></a>
     </p>

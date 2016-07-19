@@ -18,12 +18,12 @@ For brevity, you may choose to import the methods of the `Indexes` class statica
 ```java
 import com.mongodb.client.model.Indexes.*;
 ```
-  
+
 All the examples below assume this static import.
 
 ### Ascending
 
-To specify an ascending index key, use one of the `ascending` methods.
+To specify an ascending index key, use one of the [`ascending`]({{< apiref "com/mongodb/client/model/Indexes" >}}) methods.
 
 This example specifies an ascending index key for the `quantity` field:
 
@@ -35,7 +35,7 @@ This example specifies a compound index key composed of the `quantity` field sor
 sorted in ascending order:
 
 ```java
-ascending("quantity", "totalAmount") 
+ascending("quantity", "totalAmount")
 ```
 
 ### Descending
@@ -53,7 +53,7 @@ sorted in descending order:
 
 
 ```java
-descending("quantity", "totalAmount") 
+descending("quantity", "totalAmount")
 ```
 
 ### Compound indexes
@@ -123,8 +123,8 @@ geo2d("points")
 To specify a [geoHaystack]({{< docsref "core/geohaystack/" >}}) index key, use the `geoHaystack` method.
 
 {{% note class="important"%}}
-For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering; 
-geoHaystack indexes require the first field to be the location field. Also, geoHaystack indexes are only usable via commands and so always 
+For queries that use spherical geometry, a 2dsphere index is a better option than a haystack index. 2dsphere indexes allow field reordering;
+geoHaystack indexes require the first field to be the location field. Also, geoHaystack indexes are only usable via commands and so always
 return all results at once.
 {{% /note %}}
 
