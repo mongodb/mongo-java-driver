@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,13 @@ class MapReduceIterableSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
+    def writeConcern = WriteConcern.MAJORITY
 
     def 'should build the expected MapReduceWithInlineResultsOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, executor, 'map', 'reduce')
+                readConcern, writeConcern, executor, 'map', 'reduce')
 
         when: 'default input should be as expected'
         mapReduceIterable.iterator()
@@ -94,7 +95,7 @@ class MapReduceIterableSpecification extends Specification {
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
         def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, 'map', 'reduce')
+                writeConcern, executor, 'map', 'reduce')
                 .collectionName(collectionNamespace.getCollectionName())
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new Document('filter', 1))
@@ -114,7 +115,7 @@ class MapReduceIterableSpecification extends Specification {
 
         def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
         def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
-                new BsonJavaScript('reduce'), 'collName')
+                new BsonJavaScript('reduce'), 'collName', writeConcern)
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .finalizeFunction(new BsonJavaScript('finalize'))
@@ -145,7 +146,7 @@ class MapReduceIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def mapReduceIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
-                                                          readPreference, readConcern, executor, 'map', 'reduce')
+                readPreference, readConcern, writeConcern, executor, 'map', 'reduce')
 
 
         when: 'The operation fails with an exception'
@@ -155,8 +156,8 @@ class MapReduceIterableSpecification extends Specification {
         thrown(MongoException)
 
         when: 'a codec is missing'
-        new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                  'map', 'reduce').iterator()
+        new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                'map', 'reduce').iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -186,7 +187,7 @@ class MapReduceIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, 'map', 'reduce')
+                readConcern, writeConcern, executor, 'map', 'reduce')
 
         when:
         def results = mongoIterable.first()

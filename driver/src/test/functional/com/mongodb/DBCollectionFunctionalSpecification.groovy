@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.mongodb
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.hamcrest.Matchers.contains
@@ -568,5 +569,74 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         [x: 1] as BasicDBObject                   | [x: 1, y: 1] as BasicDBObject | 3
         QueryBuilder.start('x').lessThan(2).get() | [y: -1] as BasicDBObject      | 5
 
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for rename'() {
+        given:
+        assert database.getCollectionNames().contains(collectionName)
+        collection.setWriteConcern(new WriteConcern(5))
+
+        when:
+        collection.rename('someOtherNewName');
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        collection.setWriteConcern(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for drop'() {
+        given:
+        assert database.getCollectionNames().contains(collectionName)
+        collection.setWriteConcern(new WriteConcern(5))
+
+        when:
+        collection.drop()
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        collection.setWriteConcern(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for createIndex'() {
+        given:
+        assert database.getCollectionNames().contains(collectionName)
+        collection.setWriteConcern(new WriteConcern(5))
+
+        when:
+        collection.createIndex(new BasicDBObject('somekey', 1))
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        collection.setWriteConcern(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for dropIndex'() {
+        given:
+        assert database.getCollectionNames().contains(collectionName)
+        collection.createIndex(new BasicDBObject('somekey', 1))
+        collection.setWriteConcern(new WriteConcern(5))
+
+        when:
+        collection.dropIndex(new BasicDBObject('somekey', 1))
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        collection.setWriteConcern(null)
     }
 }

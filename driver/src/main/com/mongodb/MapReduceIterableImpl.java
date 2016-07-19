@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
+    private final WriteConcern writeConcern;
     private final OperationExecutor executor;
     private final String mapFunction;
     private final String reduceFunction;
@@ -66,13 +67,15 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
     MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final OperationExecutor executor, final String mapFunction, final String reduceFunction) {
+                          final WriteConcern writeConcern, final OperationExecutor executor, final String mapFunction,
+                          final String reduceFunction) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
@@ -217,7 +220,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
         } else {
             MapReduceToCollectionOperation operation =
                     new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
-                            collectionName)
+                            collectionName, writeConcern)
                             .filter(toBsonDocument(filter))
                             .limit(limit)
                             .maxTime(maxTimeMS, MILLISECONDS)

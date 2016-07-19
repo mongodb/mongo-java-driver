@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
@@ -35,13 +36,14 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.VoidTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -53,6 +55,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
+    private final WriteConcern writeConcern;
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
@@ -62,14 +65,31 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      *
      * @param namespace the database and collection namespace for the operation.
      * @param pipeline the aggregation pipeline.
+     * @deprecated Prefer {@link #AggregateToCollectionOperation(MongoNamespace, List, WriteConcern)}
      */
+    @Deprecated
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
+        this(namespace, pipeline, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param writeConcern the write concern to apply
+     *
+     * @since 3.4
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
+        this.writeConcern = writeConcern;
 
         isTrueArgument("pipeline is empty", !pipeline.isEmpty());
         isTrueArgument("last stage of pipeline does not contain an output collection",
-                       pipeline.get(pipeline.size() - 1).get("$out") != null);
+                pipeline.get(pipeline.size() - 1).get("$out") != null);
     }
 
     /**
@@ -80,6 +100,17 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public List<BsonDocument> getPipeline() {
         return pipeline;
+    }
+
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern, which may be null
+     *
+     * @since 3.4
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 
     /**
@@ -164,7 +195,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
             @Override
             public Void call(final Connection connection) {
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                        connection, new VoidTransformer<BsonDocument>());
+                        connection, writeConcernErrorTransformer());
             }
         });
     }
@@ -179,7 +210,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
                     errHandlingCallback.onResult(null, t);
                 } else {
                     executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                            connection, new VoidTransformer<BsonDocument>(), releasingCallback(errHandlingCallback, connection));
+                            connection, writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
                 }
             }
         });
@@ -197,6 +228,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
+        appendWriteConcernToCommand(writeConcern, commandDocument, description);
         return commandDocument;
     }
+
 }

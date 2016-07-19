@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -984,10 +984,14 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/renameCollection/ Rename Collection
      */
     public DBCollection rename(final String newName, final boolean dropTarget) {
-        executor.execute(new RenameCollectionOperation(getNamespace(),
-                                                       new MongoNamespace(getNamespace().getDatabaseName(),
-                                                                          newName)).dropTarget(dropTarget));
-        return getDB().getCollection(newName);
+        try {
+            executor.execute(new RenameCollectionOperation(getNamespace(),
+                                                           new MongoNamespace(getNamespace().getDatabaseName(), newName), getWriteConcern())
+                                     .dropTarget(dropTarget));
+            return getDB().getCollection(newName);
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -1231,7 +1235,8 @@ public class DBCollection {
                 new MapReduceToCollectionOperation(getNamespace(),
                                                    new BsonJavaScript(command.getMap()),
                                                    new BsonJavaScript(command.getReduce()),
-                                                   command.getOutputTarget())
+                                                   command.getOutputTarget(),
+                                                   getWriteConcern())
                     .filter(wrapAllowNull(command.getQuery()))
                     .limit(command.getLimit())
                     .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -1248,10 +1253,14 @@ public class DBCollection {
             if (command.getFinalize() != null) {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
             }
-            MapReduceStatistics mapReduceStatistics = executor.execute(operation);
-            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command);
-            DBCursor executionResult = mapReduceOutputCollection.find();
-            return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection);
+            try {
+                MapReduceStatistics mapReduceStatistics = executor.execute(operation);
+                DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command);
+                DBCursor executionResult = mapReduceOutputCollection.find();
+                return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection);
+            } catch (MongoWriteConcernException e) {
+                throw createWriteConcernException(e);
+            }
         }
     }
 
@@ -1357,15 +1366,19 @@ public class DBCollection {
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages)
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages, getWriteConcern())
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse())
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation());
-            executor.execute(operation);
-            if (returnCursorForOutCollection) {
-                return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
-            } else {
-                return null;
+            try {
+                executor.execute(operation);
+                if (returnCursorForOutCollection) {
+                    return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
+                } else {
+                    return null;
+                }
+            } catch (MongoWriteConcernException e) {
+                throw createWriteConcernException(e);
             }
         } else {
             AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, getDefaultDBObjectCodec())
@@ -1538,7 +1551,11 @@ public class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        executor.execute(createIndexOperation(keys, options));
+        try {
+            executor.execute(createIndexOperation(keys, options));
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -1817,10 +1834,7 @@ public class DBCollection {
         try {
             return executor.execute(operation);
         } catch (MongoWriteConcernException e) {
-            throw new WriteConcernException(new BsonDocument("code", new BsonInt32(e.getWriteConcernError().getCode()))
-                                           .append("errmsg", new BsonString(e.getWriteConcernError().getMessage())),
-                                            e.getServerAddress(),
-                                            e.getWriteResult());
+            throw createWriteConcernException(e);
         }
     }
 
@@ -1966,7 +1980,11 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/drop/ Drop Command
      */
     public void drop() {
-        executor.execute(new DropCollectionOperation(getNamespace()));
+        try {
+            executor.execute(new DropCollectionOperation(getNamespace(), getWriteConcern()));
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -2051,7 +2069,11 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final String indexName) {
-        executor.execute(new DropIndexOperation(getNamespace(), indexName));
+        try {
+            executor.execute(new DropIndexOperation(getNamespace(), indexName, getWriteConcern()));
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -2300,7 +2322,7 @@ public class DBCollection {
             request.partialFilterExpression(wrap(convertOptionsToType(options, "partialFilterExpression", DBObject.class)));
         }
 
-        return new CreateIndexesOperation(getNamespace(), asList(request));
+        return new CreateIndexesOperation(getNamespace(), asList(request), writeConcern);
     }
 
     private String getIndexNameFromIndexFields(final DBObject index) {
@@ -2370,4 +2392,12 @@ public class DBCollection {
             return new BsonDocumentWrapper<DBObject>(document, encoder);
         }
     }
+
+    static WriteConcernException createWriteConcernException(final MongoWriteConcernException e) {
+        return new WriteConcernException(new BsonDocument("code", new BsonInt32(e.getWriteConcernError().getCode()))
+                                                .append("errmsg", new BsonString(e.getWriteConcernError().getMessage())),
+                                               e.getServerAddress(),
+                                               e.getWriteResult());
+    }
+
 }

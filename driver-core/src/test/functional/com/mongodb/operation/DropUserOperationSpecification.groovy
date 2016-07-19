@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,17 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoException
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.MongoCredential.createMongoCRCredential
+import static java.util.Arrays.asList
 
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
     def 'should delete user without error'() {
@@ -36,4 +43,21 @@ class DropUserOperationSpecification extends OperationFunctionalSpecification {
         notThrown(MongoException)
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    def 'should throw MongoCommandException on write concern error'() {
+        given:
+        def credential = createMongoCRCredential('userToDrop', databaseName, '123'.toCharArray())
+        new CreateUserOperation(credential, true).execute(getBinding())
+        def operation = new DropUserOperation(databaseName, credential.userName, new WriteConcern(5))
+
+        when:
+        async ? executeAsync(operation) : operation.execute(getBinding())
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.code == 100
+
+        where:
+        async << [true, false]
+    }
 }

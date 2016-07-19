@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,10 @@ final class OperationHelper {
 
     static boolean serverIsAtLeastVersionThreeDotTwo(final ConnectionDescription description) {
         return serverIsAtLeastVersion(description, new ServerVersion(asList(3, 1, 9)));
+    }
+
+    static boolean serverIsAtLeastVersionThreeDotFour(final ConnectionDescription description) {
+        return serverIsAtLeastVersion(description, new ServerVersion(asList(3, 3, 8)));
     }
 
     static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {

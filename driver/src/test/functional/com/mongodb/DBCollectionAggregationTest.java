@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.clusterIsType;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
@@ -230,6 +231,20 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
             assertEquals(50, e.getCode());
         } finally {
             disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testWriteConcern() {
+        assumeThat(isDiscoverableReplicaSet(), is(true));
+        assumeTrue(serverVersionAtLeast(asList(3, 3, 8)));
+        DBCollection collection = database.getCollection("testWriteConcern");
+        collection.setWriteConcern(new WriteConcern(5));
+        try {
+            collection.aggregate(asList(new BasicDBObject("$out", "copy")), AggregationOptions.builder().build());
+            fail("Should have thrown");
+        } catch (WriteConcernException e) {
+            assertEquals(100, e.getCode());
         }
     }
 

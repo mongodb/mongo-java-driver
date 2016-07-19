@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, pipeline);
+                readConcern, writeConcern, executor, pipeline);
     }
 
     @Override
@@ -237,7 +237,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, mapFunction, reduceFunction);
+                readConcern, writeConcern, executor, mapFunction, reduceFunction);
     }
 
     @Override
@@ -416,7 +416,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void drop() {
-        executor.execute(new DropCollectionOperation(namespace));
+        executor.execute(new DropCollectionOperation(namespace, writeConcern));
     }
 
     @Override
@@ -454,7 +454,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
                          .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression())));
         }
-        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests);
+        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
         executor.execute(createIndexesOperation);
         return createIndexesOperation.getIndexNames();
     }
@@ -471,12 +471,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void dropIndex(final String indexName) {
-        executor.execute(new DropIndexOperation(namespace, indexName));
+        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern));
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry)));
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern));
     }
 
     @Override
@@ -491,7 +491,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace)
+        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
                              .dropTarget(renameCollectionOptions.isDropTarget()));
     }
 

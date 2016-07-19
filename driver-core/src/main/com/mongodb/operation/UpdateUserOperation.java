@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -27,11 +28,11 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.VoidTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -43,6 +44,10 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.UserOperationHelper.asCollectionQueryDocument;
 import static com.mongodb.operation.UserOperationHelper.asCollectionUpdateDocument;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
+import static com.mongodb.operation.UserOperationHelper.translateUserCommandException;
+import static com.mongodb.operation.UserOperationHelper.userCommandCallback;
+import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
 import static java.util.Arrays.asList;
 
 /**
@@ -53,16 +58,33 @@ import static java.util.Arrays.asList;
 public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoCredential credential;
     private final boolean readOnly;
+    private final WriteConcern writeConcern;
 
     /**
      * Construct a new instance.
      *
      * @param credential the users credentials.
      * @param readOnly   true if the user is a readOnly user.
+     * @deprecated Prefer {@link #UpdateUserOperation(MongoCredential, boolean, WriteConcern)}
      */
+    @Deprecated
     public UpdateUserOperation(final MongoCredential credential, final boolean readOnly) {
+        this(credential, readOnly, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param credential the users credentials.
+     * @param readOnly   true if the user is a readOnly user.
+     * @param writeConcern the write concern
+     *
+     * @since 3.4
+     */
+    public UpdateUserOperation(final MongoCredential credential, final boolean readOnly, final WriteConcern writeConcern) {
         this.credential = notNull("credential", credential);
         this.readOnly = readOnly;
+        this.writeConcern = writeConcern;
     }
 
     /**
@@ -89,7 +111,12 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    executeWrappedCommandProtocol(binding, credential.getSource(), getCommand(), connection);
+                    try {
+                        executeWrappedCommandProtocol(binding, getCredential().getSource(), getCommand(connection.getDescription()),
+                                connection, writeConcernErrorTransformer());
+                    } catch (MongoCommandException e) {
+                        translateUserCommandException(e);
+                    }
                 } else {
                     connection.update(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getUpdateRequest()));
                 }
@@ -109,8 +136,8 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(binding, credential.getSource(), getCommand(), connection,
-                                                           new VoidTransformer<BsonDocument>(), wrappedCallback);
+                        executeWrappedCommandProtocolAsync(binding, credential.getSource(), getCommand(connection.getDescription()),
+                                connection, writeConcernErrorTransformer(), userCommandCallback(wrappedCallback));
                     } else {
                         connection.updateAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getUpdateRequest()),
                                                new SingleResultCallback<WriteConcernResult>() {
@@ -134,8 +161,10 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
         return new MongoNamespace(credential.getSource(), "system.users");
     }
 
-    private BsonDocument getCommand() {
-        return asCommandDocument(credential, readOnly, "updateUser");
+    private BsonDocument getCommand(final ConnectionDescription description) {
+        BsonDocument commandDocument = asCommandDocument(credential, readOnly, "updateUser");
+        appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        return commandDocument;
     }
 
 }
