@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.bson.BsonString;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * The readConcern option allows clients to choose a level of isolation for their reads.
+ * A read concern allows clients to choose a level of isolation for their reads.
  *
  * @mongodb.server.release 3.2
  * @mongodb.driver.manual reference/readConcern/ Read Concern
@@ -46,19 +46,17 @@ public final class ReadConcern {
     public static final ReadConcern DEFAULT = new ReadConcern();
 
     /**
-     * Queries return the instance’s most recent copy of data. It provides no guarantee that the data has been written to a majority of the
-     * replica set members.
+     * The local read concern.
      */
     public static final ReadConcern LOCAL = new ReadConcern(ReadConcernLevel.LOCAL);
 
     /**
-     * Queries return the instance’s most recent copy of data confirmed as written to a majority of members in the replica set.
+     * The majority read concern.
      */
     public static final ReadConcern MAJORITY = new ReadConcern(ReadConcernLevel.MAJORITY);
 
     /**
-     * Queries return the instance’s most recent copy of data confirmed as written to a majority of members in the replica set.  When
-     * combined with {@link WriteConcern#MAJORITY}, it also guarantees that the data is not stale.
+     * The linearizable read concern.
      *
      * <p>
      * This read concern is only compatible with {@link ReadPreference#primary()}.
