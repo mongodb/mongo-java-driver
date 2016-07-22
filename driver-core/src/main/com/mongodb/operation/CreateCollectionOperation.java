@@ -368,10 +368,10 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
+        document.put("autoIndexId", BsonBoolean.valueOf(autoIndex));
         document.put("capped", BsonBoolean.valueOf(capped));
         if (capped) {
             putIfNotZero(document, "size", sizeInBytes);
-            document.put("autoIndexId", BsonBoolean.valueOf(autoIndex));
             putIfNotZero(document, "max", maxDocuments);
         }
         if (usePowerOf2Sizes != null) {
