@@ -188,6 +188,27 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         }
     }
 
+    def 'should create collection in respect to the autoIndex option'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+
+        when:
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .autoIndex(autoIndex)
+                .execute(getBinding())
+
+        then:
+        new CommandWriteOperation<Document>(getDatabaseName(),
+                new BsonDocument('collStats', new BsonString(getCollectionName())),
+                new DocumentCodec()).execute(getBinding())
+                .getInteger('nindexes') == expectedNumberOfIndexes
+
+        where:
+        autoIndex | expectedNumberOfIndexes
+        true | 1
+        false | 0
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
     def 'should allow indexOptionDefaults'() {
         given:
