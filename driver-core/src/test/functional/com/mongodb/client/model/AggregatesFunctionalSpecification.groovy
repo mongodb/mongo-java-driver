@@ -44,6 +44,7 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Projections.computed
+import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
@@ -88,6 +89,14 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         aggregate([project(fields(include('x'), computed('c', '$y')))]) == [new Document('_id', 1).append('x', 1).append('c', 'a'),
                                                                             new Document('_id', 2).append('x', 2).append('c', 'b'),
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) })
+    def '$project an exclusion'() {
+        expect:
+        aggregate([project(exclude('a', 'a1', 'z'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
+                                                          new Document('_id', 2).append('x', 2).append('y', 'b'),
+                                                          new Document('_id', 3).append('x', 3).append('y', 'c')]
     }
 
     def '$sort'() {
