@@ -23,7 +23,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
@@ -267,25 +266,31 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     @Deprecated
+    @SuppressWarnings("deprecation")
     public GridFSDownloadStream openDownloadStreamByName(final String filename) {
-        return openDownloadStreamByName(filename, new GridFSDownloadByNameOptions());
+        return openDownloadStreamByName(filename, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
     }
 
     @Override
     @Deprecated
-    public GridFSDownloadStream openDownloadStreamByName(final String filename, final GridFSDownloadByNameOptions options) {
+    @SuppressWarnings("deprecation")
+    public GridFSDownloadStream openDownloadStreamByName(final String filename,
+                                                         final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {
         return openDownloadStream(filename, new GridFSDownloadOptions().revision(options.getRevision()));
     }
 
     @Override
     @Deprecated
+    @SuppressWarnings("deprecation")
     public void downloadToStreamByName(final String filename, final OutputStream destination) {
-        downloadToStreamByName(filename, destination, new GridFSDownloadByNameOptions());
+        downloadToStreamByName(filename, destination, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
     }
 
     @Override
     @Deprecated
-    public void downloadToStreamByName(final String filename, final OutputStream destination, final GridFSDownloadByNameOptions options) {
+    @SuppressWarnings("deprecation")
+    public void downloadToStreamByName(final String filename, final OutputStream destination,
+                                       final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {
         downloadToStream(filename, destination, new GridFSDownloadOptions().revision(options.getRevision()));
     }
 
