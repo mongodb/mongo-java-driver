@@ -20,7 +20,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import org.bson.BsonValue;
@@ -36,7 +35,6 @@ import java.io.OutputStream;
  * @since 3.1
  */
 @ThreadSafe
-@SuppressWarnings("deprecation")
 public interface GridFSBucket {
 
     /**
@@ -386,7 +384,8 @@ public interface GridFSBucket {
      * @return the stream
      */
     @Deprecated
-    GridFSDownloadStream openDownloadStreamByName(String filename, GridFSDownloadByNameOptions options);
+    @SuppressWarnings("deprecation")
+    GridFSDownloadStream openDownloadStreamByName(String filename, com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options);
 
     /**
      * Downloads the contents of the latest version of the stored file specified by {@code filename} and writes the contents to
@@ -409,6 +408,8 @@ public interface GridFSBucket {
      * @deprecated use {@link #downloadToStream(String, OutputStream, GridFSDownloadOptions)} instead.
      */
     @Deprecated
-    void downloadToStreamByName(String filename, OutputStream destination, GridFSDownloadByNameOptions options);
+    @SuppressWarnings("deprecation")
+    void downloadToStreamByName(String filename, OutputStream destination,
+                                com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options);
 
 }
