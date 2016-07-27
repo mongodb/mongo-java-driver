@@ -16,6 +16,13 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CollationAlternate
+import com.mongodb.client.model.CollationCaseFirst
+import com.mongodb.client.model.CollationMaxVariable
+import com.mongodb.client.model.CollationStrength
+import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
@@ -639,4 +646,201 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         cleanup:
         collection.setWriteConcern(null)
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support creating an index with collation options'() {
+        given:
+        def collation = Collation.builder()
+                .locale('en')
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build()
+
+        def options = BasicDBObject.parse('''{ collation: { locale: "en", caseLevel: true, caseFirst: "off", strength: 5,
+                    numericOrdering: true, alternate: "shifted",  maxVariable: "space", backwards: true }}''')
+
+        when:
+        collection.drop()
+        collection.createIndex(~['y': 1], new BasicDBObject(options))
+
+        then:
+        collection.getIndexInfo().size() == 2
+
+        when:
+        BsonDocument indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
+                collection.getDefaultDBObjectCodec())
+
+        then:
+        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+
+        when: // Set at the collection level
+        collection.drop()
+        collection.setCollation(collation)
+
+        collection.createIndex(~['y': 1], new BasicDBObject())
+        indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
+                collection.getDefaultDBObjectCodec())
+
+        then:
+        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+
+        when: // Set at both the collection and the options levels
+        collection.drop()
+        collection.setCollation(Collation.builder().locale('fr').build())
+
+        collection.createIndex(~['y': 1], new BasicDBObject(options))
+        indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
+                collection.getDefaultDBObjectCodec())
+
+        then:
+        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should find with collation'() {
+        given:
+        def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
+        collection.insert(document)
+
+        when:
+        def result = collection.find(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        !result.hasNext()
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.find(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        result.hasNext()
+        ++result == document
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should aggregate with collation'() {
+        given:
+        def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
+        collection.insert(document)
+
+        when:
+        def result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')])
+
+        then:
+        !result.results().iterator().hasNext()
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')])
+
+        then:
+        result.results().iterator().hasNext()
+        ++result.results().iterator() == document
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should count with collation'() {
+        given:
+        collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
+
+        when:
+        def result = collection.count(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        result == 0L
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.count(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        result == 1L
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should update with collation'() {
+        given:
+        collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
+
+        when:
+        def result = collection.update(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{str: "bar"}'))
+
+        then:
+        result.getN() == 0
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.update(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{str: "bar"}'))
+
+        then:
+        result.getN() == 1
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should remove with collation'() {
+        given:
+        collection.insert(BasicDBObject.parse('{_id: 1, str: "foo"}'))
+
+        when:
+        def result = collection.remove(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        result.getN() == 0
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.remove(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        result.getN() == 1
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should find and modify with collation'() {
+        given:
+        def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
+        collection.insert(document)
+
+        when:
+        def result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{_id: 1, str: "BAR"}'))
+
+        then:
+        result == null
+
+        when:
+        collection.setCollation(caseInsensitive)
+        result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{_id: 1, str: "BAR"}'))
+
+        then:
+        result == document
+
+        cleanup:
+        collection.setCollation(null)
+    }
+
+
+    def caseInsensitive = Collation.builder().locale('en').collationStrength(CollationStrength.SECONDARY).build()
 }

@@ -22,9 +22,7 @@ import com.mongodb.MongoBulkWriteException
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.binding.SingleConnectionBinding
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.DeleteRequest
@@ -44,12 +42,11 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static ClusterFixture.getBinding
 import static ClusterFixture.getSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
 import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.INSERT
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
@@ -81,11 +78,11 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))], ordered,
+        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))], ordered,
                                              ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result.insertedCount == 1
@@ -93,69 +90,67 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().count() == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when a document with the same id exists, should throw an exception'() {
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(document)
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered,
-                                             ACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.getWriteErrors().get(0).code == 11000
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when documents match the query, a remove of one should remove one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(DELETE, 1, [])
         getCollectionHelper().count() == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when documents match the query, a remove should remove all of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true),
                                               new Document('x', false))
-
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE))],
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(DELETE, 2, [])
         getCollectionHelper().count() == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when multiple document match the query, update of one should update only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE)
@@ -163,20 +158,20 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when documents match the query, update multi should update all of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE)
@@ -184,62 +179,62 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when no document matches the query, an update of one with upsert should insert a document'() {
         def id = new ObjectId()
         def query = new BsonDocument('_id', new BsonObjectId(id))
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
                                                                 UPDATE)
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when no document matches the query, an update multi with upsert should insert a document'() {
         def id = new ObjectId()
         def query = new BsonDocument('_id', new BsonObjectId(id))
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
                                                                 UPDATE)
                                                       .upsert(true).multi(true)],
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when documents matches the query, update one with upsert should update only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE)
@@ -248,20 +243,20 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('y', 1)) == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when documents match the query, update multi with upsert should update all of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))),
                                                                 UPDATE)
@@ -269,54 +264,54 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count(new Document('y', 1)) == 2
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when updating with an empty document, update should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), UPDATE)],
                 true, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when updating with an invalid document, update should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                 [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument('a', new BsonInt32(1)), UPDATE)],
                 true, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when a document contains a key with an illegal character, replacing a document with it should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
                                                                 REPLACE)
@@ -324,19 +319,19 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              true, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(IllegalArgumentException)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when no document matches the query, a replace with upsert should insert a document'() {
         given:
         def id = new ObjectId()
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                                 new BsonDocument('_id', new BsonObjectId(id))
                                                                         .append('x', new BsonInt32(2)),
@@ -345,19 +340,19 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', id).append('x', 2)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when a custom _id is upserted it should be in the write result'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),
                                                                 UPDATE)
@@ -374,7 +369,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
@@ -383,13 +378,13 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().count() == 3
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'unacknowledged upserts with custom _id should not error'() {
         given:
-        def binding = new SingleConnectionBinding(getCluster(), ReadPreference.primary())
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))),
                                                                 UPDATE)
@@ -406,25 +401,22 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, UNACKNOWLEDGED)
 
         when:
-        def result = op.execute(binding)
-        getCollectionHelper().insertDocuments(new DocumentCodec(), binding, new Document('_id', 4))
+        def result = execute(operation, binding)
+        acknowledgeWrite(binding)
 
         then:
         !result.wasAcknowledged()
         getCollectionHelper().count() == 4
 
-        cleanup:
-        binding?.release()
-
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'when multiple documents match the query, replace should replace only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
 
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('y', new BsonInt32(1)).append('x', BsonBoolean.FALSE),
                                                                 REPLACE)
@@ -432,21 +424,21 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count(new Document('x', false)) == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     @Category(Slow)
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('_id', new BsonInt32(1))
                                                                         .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
@@ -455,18 +447,21 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              true, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         getCollectionHelper().count() == 1
+
+        where:
+        async << [true, false]
     }
 
     @Category(Slow)
     def 'when two update documents together exceed 16MB, the documents are still updated'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1), new Document('_id', 2))
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('_id', new BsonInt32(1))
                                                                         .append('x', new BsonBinary(new byte[1024 * 1024 * 16 - 30])),
@@ -478,22 +473,23 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              true, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 2, expectedModifiedCount(2), [])
         getCollectionHelper().count() == 2
+
+        where:
+        async << [true, false]
     }
 
     def 'should handle multi-length runs of ordered insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             getTestWrites(), ordered,
-                                             ACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(), getTestWrites(), ordered, ACKNOWLEDGED)
 
         when:
-        def result = op.execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result.wasAcknowledged()
@@ -507,21 +503,18 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().find(new Document('_id', 8)).first() == new Document('_id', 8)
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'should handle multi-length runs of unacknowledged insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             getTestWrites(), ordered,
-                                             UNACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(),  getTestWrites(), ordered, UNACKNOWLEDGED)
+        def binding = async ? getAsyncSingleConnectionBinding() : getSingleConnectionBinding()
 
         when:
-        def binding = getSingleConnectionBinding()
-        def result = op.execute(binding)
-        new InsertOperation(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))])
-                .execute(binding);
+        def result = execute(operation, binding)
+        execute(new InsertOperation(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))]), binding)
 
         then:
         !result.wasAcknowledged()
@@ -535,9 +528,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().find(new Document('_id', 7)).first() == new Document('_id', 7)
         getCollectionHelper().find(new Document('_id', 8)).first() == new Document('_id', 8)
 
-
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'should split the number of writes is larger than the match write batch size'() {
@@ -546,15 +538,16 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         (0..2000).each {
             writes.add(new InsertRequest(new BsonDocument()))
         }
+        def operation = new MixedBulkWriteOperation(getNamespace(), writes, ordered, ACKNOWLEDGED)
 
         when:
-        new MixedBulkWriteOperation(getNamespace(), writes, ordered, ACKNOWLEDGED).execute(getBinding())
+        execute(operation, async)
 
         then:
         getCollectionHelper().count() == 2001
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'should be able to merge upserts across batches'() {
@@ -567,21 +560,22 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
             writeOperations.add(upsert);
             writeOperations.add(new DeleteRequest(new BsonDocument('key', new BsonInt32(it))));
         }
+        def operation = new MixedBulkWriteOperation(getNamespace(), writeOperations, ordered, ACKNOWLEDGED)
 
         when:
-        def result = new MixedBulkWriteOperation(getNamespace(), writeOperations, ordered, ACKNOWLEDGED).execute(getBinding())
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result.deletedCount == result.upserts.size()
         getCollectionHelper().count() == 0
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     def 'error details should have correct index on ordered write failure'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
@@ -589,19 +583,22 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(1))) // this should fail with index 2
                                              ], true, ACKNOWLEDGED)
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.writeErrors[0].index == 2
         ex.writeErrors[0].code == 11000
+
+        where:
+        async << [true, false]
     }
 
     def 'error details should have correct index on unordered write failure'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3))),
@@ -609,7 +606,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(3))) // this should fail with index 2
                                              ], false, ACKNOWLEDGED)
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
@@ -618,6 +615,9 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ex.writeErrors[0].code == 11000
         ex.writeErrors[1].index == 2
         ex.writeErrors[1].code == 11000
+
+        where:
+        async << [true, false]
     }
 
     def 'should continue to execute batches after a failure if writes are unordered'() {
@@ -627,16 +627,19 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         for (int i = 0; i < 2000; i++) {
             inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
         }
-        def op = new MixedBulkWriteOperation(getNamespace(), inserts, false, ACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(), inserts, false, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 2
         ex.getWriteResult().getInsertedCount() == 1998
         getCollectionHelper().count() == 2000
+
+        where:
+        async << [true, false]
     }
 
     def 'should stop executing batches after a failure if writes are ordered'() {
@@ -646,46 +649,53 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         for (int i = 0; i < 2000; i++) {
             inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(i))))
         }
-        def op = new MixedBulkWriteOperation(getNamespace(), inserts, true, ACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(), inserts, true, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.writeErrors.size() == 1
         ex.getWriteResult().getInsertedCount() == 500
         getCollectionHelper().count() == 502
-    }
 
+
+        where:
+        async << [true, false]
+    }
 
     // using w = 5 to force a timeout
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                              false, new WriteConcern(5, 1)
         )
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.getWriteConcernError() != null
+
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
-        def op = new MixedBulkWriteOperation(getNamespace(),
+        def operation = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
                                               new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
-                                             ], ordered, new WriteConcern(4, 1))
+                                             ], false, new WriteConcern(4, 1))
 
         when:
-        op.execute(getBinding())  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
+        execute(operation, async)  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
 
         then:
         def ex = thrown(MongoBulkWriteException)
@@ -695,7 +705,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ex.writeConcernError != null
 
         where:
-        ordered << [false]
+        async << [true, false]
     }
 
     def 'should throw IllegalArgumentException when passed an empty bulk operation'() {
@@ -713,17 +723,18 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
     def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, UNACKNOWLEDGED)
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], true, UNACKNOWLEDGED)
                 .bypassDocumentValidation(bypassDocumentValidation)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoClientException)
 
         where:
-        bypassDocumentValidation << [true, false]
+        [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
@@ -733,18 +744,19 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def collectionHelper = getCollectionHelper(namespace)
         collectionHelper.create(namespace.getCollectionName(), new CreateCollectionOptions().validationOptions(
                 new ValidationOptions().validator(gte('level', 10))))
-        def op = new MixedBulkWriteOperation(namespace, [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered,
+        def operation = new MixedBulkWriteOperation(namespace, [new InsertRequest(BsonDocument.parse('{ level: 9 }'))], ordered,
                 ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.getWriteErrors().get(0).code == 121
 
         when:
-        def result = op.bypassDocumentValidation(true).execute(getBinding())
+        operation.bypassDocumentValidation(true)
+        BulkWriteResult result = execute(operation, async)
 
         then:
         notThrown(MongoBulkWriteException)
@@ -754,7 +766,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         collectionHelper?.drop()
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
@@ -766,26 +778,71 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                 new ValidationOptions().validator(gte('level', 10))))
 
         collectionHelper.insertDocuments(BsonDocument.parse('{ x: true, level: 10}'))
-        def op = new MixedBulkWriteOperation(namespace,
+        def operation = new MixedBulkWriteOperation(namespace,
                 [new UpdateRequest(BsonDocument.parse ('{x: true}'), BsonDocument.parse ('{$inc: {level: -1}}'),  UPDATE).multi(false)],
                 ordered, ACKNOWLEDGED)
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoBulkWriteException)
         ex.getWriteErrors().get(0).code == 121
 
         when:
-        def result = op.bypassDocumentValidation(true).execute(getBinding())
+        operation.bypassDocumentValidation(true)
+        BulkWriteResult result = execute(operation, async)
 
         then:
         result == BulkWriteResult.acknowledged(UPDATE, 1, expectedModifiedCount(1), [])
         collectionHelper.count(eq('level', 9)) == 1
 
         where:
-        ordered << [true, false]
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should throw an exception when using an unsupported Collation'() {
+        given:
+        def operation = new MixedBulkWriteOperation(namespace, requests, false, ACKNOWLEDGED)
+
+        when:
+        execute(operation, async)
+
+        then:
+        def exception = thrown(Exception)
+        exception instanceof IllegalArgumentException
+        exception.getMessage().startsWith('Collation not supported by server version:')
+
+        where:
+        [async, requests] << [
+                [true, false],
+                [[new DeleteRequest(BsonDocument.parse('{x: 1}}')).collation(defaultCollation)],
+                 [new UpdateRequest(BsonDocument.parse('{x: 1}}'), BsonDocument.parse('{x: 10}}'), REPLACE),
+                  new UpdateRequest(BsonDocument.parse('{y: 1}}'), BsonDocument.parse('{x: 10}}'), REPLACE).collation(defaultCollation)],
+                 [new DeleteRequest(BsonDocument.parse('{x: 1}}')),
+                  new DeleteRequest(BsonDocument.parse('{y: 1}}')).collation(defaultCollation)]]
+        ].combinations()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        given:
+        getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'), Document.parse('{str: "bar"}'))
+        def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation),
+                        new UpdateRequest(BsonDocument.parse('{str: "BAR"}}'), BsonDocument.parse('{str: "bar"}}'), REPLACE)
+                                .collation(caseInsensitiveCollation)]
+        def operation = new MixedBulkWriteOperation(namespace, requests, false, ACKNOWLEDGED)
+
+        when:
+        BulkWriteResult result = execute(operation, async)
+
+        then:
+        result.getDeletedCount() == 1
+        result.getModifiedCount() == 1
+
+        where:
+        async << [true, false]
     }
 
     private static List<WriteRequest> getTestWrites() {

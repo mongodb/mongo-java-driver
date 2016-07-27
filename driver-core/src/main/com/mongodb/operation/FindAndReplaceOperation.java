@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -47,6 +48,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -71,6 +73,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private boolean returnOriginal = true;
     private boolean upsert;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -297,12 +300,38 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public FindAndReplaceOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
             @Override
             public T call(final Connection connection) {
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
+                checkValidCollation(connection, collation);
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         getValidator(), CommandResultDocumentCodec.create(decoder, "value"), connection,
                         FindAndModifyHelper.<T>transformer());
             }
@@ -318,30 +347,44 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
-                            getValidator(), CommandResultDocumentCodec.create(decoder, "value"), connection,
-                            FindAndModifyHelper.<T>transformer(), releasingCallback(errHandlingCallback, connection));
+                    final SingleResultCallback<T> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(connection.getDescription()), getValidator(),
+                                        CommandResultDocumentCodec.create(decoder, "value"), connection,
+                                        FindAndModifyHelper.<T>transformer(), wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
     }
 
-    private BsonDocument asCommandDocument(final ConnectionDescription description) {
-        BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", getFilter());
-        putIfNotNull(command, "fields", getProjection());
-        putIfNotNull(command, "sort", getSort());
-        putIfTrue(command, "new", !isReturnOriginal());
-        putIfTrue(command, "upsert", isUpsert());
-        putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
-        command.put("update", getReplacement());
+    private BsonDocument getCommand(final ConnectionDescription description) {
+        BsonDocument commandDocument = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
+        putIfNotNull(commandDocument, "query", getFilter());
+        putIfNotNull(commandDocument, "fields", getProjection());
+        putIfNotNull(commandDocument, "sort", getSort());
+        putIfTrue(commandDocument, "new", !isReturnOriginal());
+        putIfTrue(commandDocument, "upsert", isUpsert());
+        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        commandDocument.put("update", getReplacement());
         if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
-            command.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
+            commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
-            command.put("writeConcern", writeConcern.asDocument());
+            commandDocument.put("writeConcern", writeConcern.asDocument());
         }
-        return command;
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        return commandDocument;
     }
 
     private FieldNameValidator getValidator() {

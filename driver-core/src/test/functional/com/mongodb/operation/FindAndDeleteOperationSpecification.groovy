@@ -16,22 +16,12 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.WriteBinding
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -40,13 +30,10 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
@@ -55,7 +42,6 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
     def writeConcern = WriteConcern.ACKNOWLEDGED
-
 
     def 'should have the correct defaults'() {
         when:
@@ -69,6 +55,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         operation.getSort() == null
         operation.getProjection() == null
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
+        operation.getCollation() == null
     }
 
     def 'should set optional values correctly'(){
@@ -83,12 +70,14 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
             .sort(sort)
             .projection(projection)
             .maxTime(10, TimeUnit.MILLISECONDS)
+            .collation(defaultCollation)
 
         then:
         operation.getFilter() == filter
         operation.getSort() == sort
         operation.getProjection() == projection
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
+        operation.getCollation() == defaultCollation
     }
 
     def 'should remove single document'() {
@@ -102,33 +91,17 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         when:
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.execute(getBinding())
+        Document returnedDocument = execute(operation, async)
 
         then:
         getCollectionHelper().find().size() == 1;
         getCollectionHelper().find().first().getString('name') == 'Sam'
         returnedDocument.getString('name') == 'Pete'
+
+        where:
+        async << [true, false]
     }
 
-
-    @Category(Async)
-    def 'should remove single document asynchronously'() {
-        given:
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        Document sam = new Document('name', 'Sam').append('job', 'plumber')
-
-        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
-
-        when:
-        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = executeAsync(operation)
-
-        then:
-        getCollectionHelper().find().size() == 1;
-        getCollectionHelper().find().first().getString('name') == 'Sam'
-        returnedDocument.getString('name') == 'Pete'
-    }
 
     def 'should remove single document when using custom codecs'() {
         given:
@@ -139,31 +112,17 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         when:
         FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, workerCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = operation.execute(getBinding())
+        Worker returnedDocument = execute(operation, async)
 
         then:
         getWorkerCollectionHelper().find().size() == 1;
         getWorkerCollectionHelper().find().first() == sam
         returnedDocument == pete
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should remove single document when using custom codecs asynchronously'() {
-        given:
-        Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
-        Worker sam = new Worker('Sam', 'plumber', new Date(), 7)
-        getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
-
-        when:
-        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, workerCodec)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = operation.execute(getBinding())
-
-        then:
-        getWorkerCollectionHelper().find().size() == 1;
-        getWorkerCollectionHelper().find().first() == sam
-        returnedDocument == pete
-    }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
@@ -175,7 +134,9 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         when:
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        operation.execute(getBinding())
+
+        then:
+        testOperationThrows(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -184,48 +145,14 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         ex.writeResult.count == 1
         !ex.writeResult.updateOfExisting
         ex.writeResult.upsertedId == null
-    }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
-    def 'should throw on write concern error asynchronously'() {
-        given:
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        helper.insertDocuments(new DocumentCodec(), pete)
-
-        when:
-        def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        executeAsync(operation)
-
-        then:
-        def ex = thrown(MongoWriteConcernException)
-        ex.writeConcernError.code == 100
-        !ex.writeConcernError.message.isEmpty()
-        ex.writeResult.count == 1
-        !ex.writeResult.updateOfExisting
-        ex.writeResult.upsertedId == null
+        where:
+        async << [true, false]
     }
 
     def 'should create the expected command'() {
-        given:
+        when:
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
-        def filter = BsonDocument.parse('{ filter : 1}')
-        def sort = BsonDocument.parse('{ sort : 1}')
-        def projection = BsonDocument.parse('{ projection : 1}')
-
-        def connection = Mock(Connection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-
-        def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-        }
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
@@ -234,14 +161,14 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
-        when:
-        operation.execute(writeBinding)
-
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResult)
 
         when:
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+
         operation.filter(filter)
                 .sort(sort)
                 .projection(projection)
@@ -252,78 +179,61 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
                 .append('fields', projection)
                 .append('maxTimeMS', new BsonInt64(10))
 
-        operation.execute(writeBinding)
+        if (includeCollation) {
+            operation.collation(defaultCollation)
+            expectedCommand.append('collation', defaultCollation.asDocument())
+        }
 
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResult)
 
         where:
-        serverVersion                | writeConcern                 | includeWriteConcern
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
+        serverVersion | writeConcern                 | includeWriteConcern | includeCollation | async
+        [3, 4, 0]     | WriteConcern.W1              | true                | true             | true
+        [3, 4, 0]     | WriteConcern.ACKNOWLEDGED    | false               | true             | true
+        [3, 4, 0]     | WriteConcern.UNACKNOWLEDGED  | false               | true             | true
+        [3, 4, 0]     | WriteConcern.W1              | true                | true             | false
+        [3, 4, 0]     | WriteConcern.ACKNOWLEDGED    | false               | true             | false
+        [3, 4, 0]     | WriteConcern.UNACKNOWLEDGED  | false               | true             | false
+        [3, 0, 0]     | WriteConcern.ACKNOWLEDGED    | false               | false            | true
+        [3, 0, 0]     | WriteConcern.UNACKNOWLEDGED  | false               | false            | true
+        [3, 0, 0]     | WriteConcern.W1              | false               | false            | true
+        [3, 0, 0]     | WriteConcern.ACKNOWLEDGED    | false               | false            | false
+        [3, 0, 0]     | WriteConcern.UNACKNOWLEDGED  | false               | false            | false
+        [3, 0, 0]     | WriteConcern.W1              | false               | false            | false
     }
 
-    def 'should create the expected command asynchronously'() {
+    def 'should throw an exception when passing an unsupported collation'() {
         given:
-        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
-        def filter = BsonDocument.parse('{ filter : 1}')
-        def sort = BsonDocument.parse('{ sort : 1}')
-        def projection = BsonDocument.parse('{ projection : 1}')
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
-                .append('remove', BsonBoolean.TRUE)
-
-        if (includeWriteConcern) {
-            expectedCommand.put('writeConcern', writeConcern.asDocument())
-        }
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec).collation(defaultCollation)
 
         when:
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+        testOperationThrows(operation, [3, 2, 0], async)
 
         then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        1 * connection.release()
-
-        when:
-        operation.filter(filter)
-                .sort(sort)
-                .projection(projection)
-                .maxTime(10, TimeUnit.MILLISECONDS)
-        expectedCommand.append('query', filter)
-                .append('sort', sort)
-                .append('fields', projection)
-                .append('maxTimeMS', new BsonInt64(10))
-
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        1 * connection.release()
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        serverVersion                | writeConcern                 | includeWriteConcern
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false
+        async << [false, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        given:
+        def document = Document.parse('{_id: 1, str: "foo"}')
+        getCollectionHelper().insertDocuments(document)
+        def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, documentCodec)
+                .filter(BsonDocument.parse('{str: "FOO"}'))
+                .collation(caseInsensitiveCollation)
+
+        when:
+        def result = execute(operation, async)
+
+        then:
+        result == document
+
+        where:
+        async << [true, false]
+    }
 }

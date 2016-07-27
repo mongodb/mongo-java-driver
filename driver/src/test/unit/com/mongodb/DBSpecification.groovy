@@ -16,6 +16,11 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CollationAlternate
+import com.mongodb.client.model.CollationCaseFirst
+import com.mongodb.client.model.CollationMaxVariable
+import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.operation.CreateCollectionOperation
@@ -75,20 +80,40 @@ class DBSpecification extends Specification {
                 .append('validationLevel', ValidationLevel.MODERATE.getValue())
                 .append('validationAction', ValidationAction.WARN.getValue())
 
+
         db.createCollection('ctest', options)
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
-                                              .sizeInBytes(100000)
-                                              .maxDocuments(2000)
-                                              .capped(true)
-                                              .autoIndex(true)
-                                              .storageEngineOptions(BsonDocument.parse('{ wiredTiger: {}}'))
-                                              .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}'))
-                                              .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
-                                              .validationLevel(ValidationLevel.MODERATE)
-                                              .validationAction(ValidationAction.WARN))
+                .sizeInBytes(100000)
+                .maxDocuments(2000)
+                .capped(true)
+                .autoIndex(true)
+                .storageEngineOptions(BsonDocument.parse('{ wiredTiger: {}}'))
+                .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}'))
+                .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
+                .validationLevel(ValidationLevel.MODERATE)
+                .validationAction(ValidationAction.WARN))
+
+        when:
+        def collation = Collation.builder()
+                .locale('en')
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build()
+
+        db.setCollation(collation)
+        db.createCollection('ctest', new BasicDBObject())
+        operation = executor.getWriteOperation() as CreateCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
     }
 
 

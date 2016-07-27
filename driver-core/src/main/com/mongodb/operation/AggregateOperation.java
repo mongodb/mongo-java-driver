@@ -26,6 +26,7 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -49,7 +50,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
@@ -75,6 +76,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private long maxTimeMS;
     private Boolean useCursor;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -219,13 +221,39 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.4
+     */
+    public AggregateOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcern(connection, readConcern);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
+                checkValidReadConcernAndCollation(connection, readConcern, collation);
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
                         connection, transformer(source, connection));
             }
@@ -241,21 +269,23 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback, source,
-                            connection);
-                    checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
-                        @Override
-                        public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                        asCommandDocument(connection.getDescription()),
-                                        CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
-                                        connection, asyncTransformer(source, connection), wrappedCallback);
-                            }
-                        }
-                    });
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
+                            releasingCallback(errHandlingCallback, source, connection);
+                    checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                            new AsyncCallableWithConnectionAndSource() {
+                                @Override
+                                public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                                    if (t != null) {
+                                        wrappedCallback.onResult(null, t);
+                                    } else {
+                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                                getCommand(connection.getDescription()),
+                                                CommandResultDocumentCodec.create(decoder,
+                                                        getFieldNameWithResults(connection.getDescription())),
+                                                connection, asyncTransformer(source, connection), wrappedCallback);
+                                    }
+                                }
+                            });
                 }
             }
         });
@@ -289,7 +319,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return (useCursor != null && !useCursor) || !serverIsAtLeastVersionTwoDotSix(description);
     }
 
-    private BsonDocument asCommandDocument(final ConnectionDescription description) {
+    private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
         commandDocument.put("pipeline", new BsonArray(pipeline));
         if (maxTimeMS > 0) {
@@ -307,6 +337,9 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         }
         if (!readConcern.isServerDefault()) {
             commandDocument.put("readConcern", readConcern.asDocument());
+        }
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
         }
 
         return commandDocument;

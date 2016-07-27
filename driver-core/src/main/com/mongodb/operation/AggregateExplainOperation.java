@@ -20,6 +20,9 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.Connection;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -30,8 +33,17 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.operation.CommandOperationHelper.IdentityTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.withConnection;
+
 
 // an operation that executes an explain on an aggregation pipeline
 class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, ReadOperation<BsonDocument> {
@@ -39,6 +51,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     private final List<BsonDocument> pipeline;
     private Boolean allowDiskUse;
     private long maxTimeMS;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -78,14 +91,55 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         return this;
     }
 
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.4
+     */
+    public AggregateExplainOperation collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public BsonDocument execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand());
+        return withConnection(binding, new CallableWithConnection<BsonDocument>() {
+            @Override
+            public BsonDocument call(final Connection connection) {
+                checkValidCollation(connection, collation);
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), connection);
+            }
+        });
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
-        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(), callback);
+        withConnection(binding, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<BsonDocument> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else {
+                    final SingleResultCallback<BsonDocument> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                        connection, new IdentityTransformer<BsonDocument>(),  wrappedCallback);
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     private BsonDocument getCommand() {
@@ -97,6 +151,9 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         }
         if (allowDiskUse != null) {
             commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
+        }
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
         }
         return commandDocument;
     }

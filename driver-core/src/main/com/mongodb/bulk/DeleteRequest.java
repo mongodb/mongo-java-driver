@@ -16,6 +16,7 @@
 
 package com.mongodb.bulk;
 
+import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -28,6 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class DeleteRequest extends WriteRequest {
     private final BsonDocument filter;
     private boolean isMulti = true;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -66,6 +68,30 @@ public final class DeleteRequest extends WriteRequest {
      */
     public boolean isMulti() {
         return isMulti;
+    }
+
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public DeleteRequest collation(final Collation collation) {
+        this.collation = collation;
+        return this;
     }
 
     @Override

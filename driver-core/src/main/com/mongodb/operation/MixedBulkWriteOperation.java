@@ -59,6 +59,8 @@ import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.checkValidWriteRequestCollations;
 import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -426,11 +428,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 WriteConcernResult executeWriteProtocol(final int index) {
-                    return connection.delete(namespace, ordered, writeConcern, singletonList(deleteRequests.get(index)));
+                    DeleteRequest deleteRequest = deleteRequests.get(index);
+                    checkValidCollation(connection, deleteRequest.getCollation());
+                    return connection.delete(namespace, ordered, writeConcern, singletonList(deleteRequest));
                 }
 
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
+                    checkValidWriteRequestCollations(connection, deleteRequests);
                     return connection.deleteCommand(namespace, ordered, writeConcern, deleteRequests);
                 }
 
@@ -473,11 +478,14 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 WriteConcernResult executeWriteProtocol(final int index) {
-                    return connection.update(namespace, ordered, writeConcern, singletonList(updates.get(index)));
+                    UpdateRequest updateRequest = updates.get(index);
+                    checkValidCollation(connection, updateRequest.getCollation());
+                    return connection.update(namespace, ordered, writeConcern, singletonList(updateRequest));
                 }
 
                 @Override
                 BulkWriteResult executeWriteCommandProtocol() {
+                    checkValidWriteRequestCollations(connection, updates);
                     return connection.updateCommand(namespace, ordered, writeConcern, bypassDocumentValidation, updates);
                 }
 
@@ -494,12 +502,31 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
-                    connection.deleteAsync(namespace, ordered, writeConcern, singletonList(deleteRequests.get(index)), callback);
+                    final DeleteRequest deleteRequest = deleteRequests.get(index);
+                    checkValidCollation(connection, deleteRequest.getCollation(), new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                connection.deleteAsync(namespace, ordered, writeConcern, singletonList(deleteRequest), callback);
+                            }
+                        }
+                    });
                 }
 
                 @Override
                 void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests, callback);
+                    checkValidWriteRequestCollations(connection, deleteRequests, new AsyncCallableWithConnection(){
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                connection.deleteCommandAsync(namespace, ordered, writeConcern, deleteRequests, callback);
+                            }
+                        }
+                    });
                 }
 
                 @Override
@@ -541,12 +568,32 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
                 @Override
                 void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
-                    connection.updateAsync(namespace, ordered, writeConcern, singletonList(updates.get(index)), callback);
+                    final UpdateRequest updateRequest = updates.get(index);
+                    checkValidCollation(connection, updateRequest.getCollation(), new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                connection.updateAsync(namespace, ordered, writeConcern, singletonList(updateRequest), callback);
+                            }
+                        }
+                    });
                 }
 
                 @Override
                 void executeWriteCommandProtocolAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                    connection.updateCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, updates, callback);
+                    checkValidWriteRequestCollations(connection, updates, new AsyncCallableWithConnection(){
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                connection.updateCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, updates,
+                                        callback);
+                            }
+                        }
+                    });
                 }
 
                 @Override
@@ -646,9 +693,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (shouldUseWriteCommands(connection.getDescription())) {
                     return executeWriteCommandProtocol();
                 } else {
-                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
-                                                                                                         .getServerAddress(),
-                                                                                               ordered, writeConcern);
+                    BulkWriteBatchCombiner bulkWriteBatchCombiner =
+                            new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered, writeConcern);
                     for (int i = 0; i < runWrites.size(); i++) {
                         IndexMap indexMap = IndexMap.create(i, 1);
                         indexMap = indexMap.add(0, i);

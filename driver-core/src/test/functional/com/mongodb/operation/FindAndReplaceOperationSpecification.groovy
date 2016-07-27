@@ -16,26 +16,16 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.WriteBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -46,13 +36,10 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.executeAsync
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.gte
@@ -62,7 +49,6 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
     def writeConcern = WriteConcern.ACKNOWLEDGED
-
 
     def 'should have the correct defaults and passed values'() {
         when:
@@ -79,6 +65,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation.getProjection() == null
         operation.getMaxTime(TimeUnit.SECONDS) == 0
         operation.getBypassDocumentValidation() == null
+        operation.getCollation() == null
     }
 
     def 'should set optional values correctly'(){
@@ -91,6 +78,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec,
                 new BsonDocument('replace', new BsonInt32(1))).filter(filter).sort(sort).projection(projection)
                 .bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true).returnOriginal(false)
+                .collation(defaultCollation)
 
         then:
         operation.getFilter() == filter
@@ -100,6 +88,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.getBypassDocumentValidation()
         !operation.isReturnOriginal()
+        operation.getCollation() == defaultCollation
     }
 
     def 'should replace single document'() {
@@ -114,7 +103,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.execute(getBinding())
+        Document returnedDocument = execute(operation, async)
 
         then:
         returnedDocument.getString('name') == 'Pete'
@@ -126,41 +115,13 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                                                           new BsonDocumentWrapper<Document>(pete, documentCodec))
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
-        returnedDocument = operation.execute(getBinding())
+        returnedDocument = execute(operation, async)
 
         then:
         returnedDocument.getString('name') == 'Pete'
-    }
 
-    @Category(Async)
-    def 'should replace single document asynchronously'() {
-        given:
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        Document sam = new Document('name', 'Sam').append('job', 'plumber')
-        BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
-
-        helper.insertDocuments(new DocumentCodec(), pete, sam)
-
-        when:
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = executeAsync(operation)
-
-        then:
-        returnedDocument.getString('name') == 'Pete'
-        helper.find().size() == 2;
-        helper.find().get(0).getString('name') == 'Jordan'
-
-        when:
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec,
-                                                          new BsonDocumentWrapper<Document>(pete, documentCodec))
-                .filter(new BsonDocument('name', new BsonString('Jordan')))
-                .returnOriginal(false)
-        returnedDocument = executeAsync(operation)
-
-        then:
-        returnedDocument.getString('name') == 'Pete'
+        where:
+        async << [true, false]
     }
 
     def 'should replace single document when using custom codecs'() {
@@ -176,7 +137,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec,
                 replacement).filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = operation.execute(getBinding())
+        Worker returnedDocument = execute(operation, async)
 
         then:
         returnedDocument == pete
@@ -187,41 +148,13 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
                 .filter(new BsonDocument('name', new BsonString('Jordan')))
                 .returnOriginal(false)
-        returnedDocument = operation.execute(getBinding())
+        returnedDocument = execute(operation, async)
 
         then:
         returnedDocument == pete
-    }
 
-    @Category(Async)
-    def 'should replace single document when using custom codecs asynchronously'() {
-        given:
-        CollectionHelper<Worker> helper = new CollectionHelper<Worker>(workerCodec, getNamespace())
-        Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
-        Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
-        Worker jordan = new Worker(pete.id, 'Jordan', 'sparky', new Date(), 7)
-        BsonDocument replacement = new BsonDocumentWrapper<Worker>(jordan, workerCodec)
-
-        helper.insertDocuments(new WorkerCodec(), pete, sam)
-
-        when:
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        Worker returnedDocument = executeAsync(operation)
-
-        then:
-        returnedDocument == pete
-        helper.find().get(0) == jordan
-
-        when:
-        replacement = new BsonDocumentWrapper<Worker>(pete, workerCodec)
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, workerCodec, replacement)
-                .filter(new BsonDocument('name', new BsonString('Jordan')))
-                .returnOriginal(false)
-        returnedDocument = executeAsync(operation)
-
-        then:
-        returnedDocument == pete
+        where:
+        async << [true, false]
     }
 
     def 'should return null if query fails to match'() {
@@ -229,41 +162,28 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = operation.execute(getBinding())
+        Document returnedDocument = execute(operation, async)
 
         then:
         returnedDocument == null
-    }
 
-    @Category(Async)
-    def 'should return null if query fails to match asynchronously'() {
-        when:
-        BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, jordan)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        Document returnedDocument = executeAsync(operation)
-
-        then:
-        returnedDocument == null
+        where:
+        async << [true, false]
     }
 
     def 'should throw an exception if replacement contains update operators'() {
-        when:
+        given:
         def replacement = new BsonDocumentWrapper<Document>(['$inc': 1] as Document, documentCodec)
-        new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement).execute(getBinding())
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
+
+        when:
+        execute(operation, async)
 
         then:
         thrown(IllegalArgumentException)
-    }
 
-    @Category(Async)
-    def 'should throw an exception if replacement contains update operators asynchronously'() {
-        when:
-        def replacement = new BsonDocumentWrapper<Document>(['$inc': 1] as Document, documentCodec)
-        executeAsync(new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement))
-
-        then:
-        thrown(IllegalArgumentException)
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
@@ -278,19 +198,21 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         def replacement = new BsonDocument('level', new BsonInt32(9))
         def operation = new FindAndReplaceOperation<Document>(namespace, writeConcern, documentCodec, replacement)
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoCommandException)
 
         when:
-        operation.bypassDocumentValidation(false).execute(getBinding())
+        operation.bypassDocumentValidation(false)
+        execute(operation, async)
 
         then:
         thrown(MongoCommandException)
 
         when:
-        Document returnedDocument = operation.bypassDocumentValidation(true).returnOriginal(false).execute(getBinding())
+        operation.bypassDocumentValidation(true).returnOriginal(false)
+        Document returnedDocument = execute(operation, async)
 
         then:
         notThrown(MongoCommandException)
@@ -298,41 +220,9 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         cleanup:
         collectionHelper?.drop()
-    }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
-    def 'should support bypassDocumentValidation asynchronously'() {
-        given:
-        def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
-        def collectionHelper = getCollectionHelper(namespace)
-        collectionHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
-                new ValidationOptions().validator(gte('level', 10))))
-        collectionHelper.insertDocuments(BsonDocument.parse('{ level: 10 }'))
-
-        when:
-        def replacement = new BsonDocument('level', new BsonInt32(9))
-        def operation = new FindAndReplaceOperation<Document>(namespace, writeConcern, documentCodec, replacement)
-        executeAsync(operation)
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        executeAsync(operation.bypassDocumentValidation(false))
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        Document returnedDocument = executeAsync(operation.bypassDocumentValidation(true).returnOriginal(false))
-
-        then:
-        notThrown(MongoCommandException)
-        returnedDocument.getInteger('level') == 9
-
-        cleanup:
-        collectionHelper?.drop()
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
@@ -347,7 +237,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         when:
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -361,7 +251,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         operation = new FindAndReplaceOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec, jordan)
                 .filter(new BsonDocument('name', new BsonString('Bob')))
                 .upsert(true)
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         ex = thrown(MongoWriteConcernException)
@@ -370,65 +260,15 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         ex.writeResult.count == 1
         !ex.writeResult.updateOfExisting
         ex.writeResult.upsertedId instanceof BsonObjectId
-    }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
-    def 'should throw on write concern error asynchronously'() {
-        given:
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        helper.insertDocuments(new DocumentCodec(), pete)
-
-        BsonDocument jordan = new BsonDocumentWrapper<Document>([name: 'Jordan', job: 'sparky'] as Document, documentCodec)
-
-        when:
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec, jordan)
-                .filter(new BsonDocument('name', new BsonString('Pete')))
-        executeAsync(operation)
-
-        then:
-        def ex = thrown(MongoWriteConcernException)
-        ex.writeConcernError.code == 100
-        !ex.writeConcernError.message.isEmpty()
-        ex.writeResult.count == 1
-        ex.writeResult.updateOfExisting
-        ex.writeResult.upsertedId == null
-
-        when:
-        operation = new FindAndReplaceOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec, jordan)
-                .filter(new BsonDocument('name', new BsonString('Bob')))
-                .upsert(true)
-        executeAsync(operation)
-
-        then:
-        ex = thrown(MongoWriteConcernException)
-        ex.writeConcernError.code == 100
-        !ex.writeConcernError.message.isEmpty()
-        ex.writeResult.count == 1
-        !ex.writeResult.updateOfExisting
-        ex.writeResult.upsertedId instanceof BsonObjectId
+        where:
+        async << [true, false]
     }
 
     def 'should create the expected command'() {
-        given:
+        when:
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def replacement = BsonDocument.parse('{ replacement: 1}')
-        def filter = BsonDocument.parse('{ filter : 1}')
-        def sort = BsonDocument.parse('{ sort : 1}')
-        def projection = BsonDocument.parse('{ projection : 1}')
-
-        def connection = Mock(Connection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-
-        def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-        }
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
         def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
@@ -436,14 +276,14 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
             expectedCommand.put('writeConcern', writeConcern.asDocument())
         }
 
-        when:
-        operation.execute(writeBinding)
-
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResult)
 
         when:
+        def filter = BsonDocument.parse('{ filter : 1}')
+        def sort = BsonDocument.parse('{ sort : 1}')
+        def projection = BsonDocument.parse('{ projection : 1}')
+
         operation.filter(filter)
                 .sort(sort)
                 .projection(projection)
@@ -455,87 +295,68 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
                 .append('fields', projection)
                 .append('maxTimeMS', new BsonInt64(10))
 
+        if (includeCollation) {
+            operation.collation(defaultCollation)
+            expectedCommand.append('collation', defaultCollation.asDocument())
+        }
         if (includeBypassValidation) {
             expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
         }
 
-        operation.execute(writeBinding)
-
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResult
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResult)
 
         where:
-        serverVersion                | writeConcern                 | includeWriteConcern   | includeBypassValidation
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true                  | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | true
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false                 | false
+        serverVersion  | writeConcern                 | includeWriteConcern | includeCollation | includeBypassValidation | async
+        [3, 4, 0]      | WriteConcern.W1              | true                | true             | true                    | true
+        [3, 4, 0]      | WriteConcern.ACKNOWLEDGED    | false               | true             | true                    | true
+        [3, 4, 0]      | WriteConcern.UNACKNOWLEDGED  | false               | true             | true                    | true
+        [3, 4, 0]      | WriteConcern.W1              | true                | true             | true                    | false
+        [3, 4, 0]      | WriteConcern.ACKNOWLEDGED    | false               | true             | true                    | false
+        [3, 4, 0]      | WriteConcern.UNACKNOWLEDGED  | false               | true             | true                    | false
+        [3, 0, 0]      | WriteConcern.ACKNOWLEDGED    | false               | false            | false                   | true
+        [3, 0, 0]      | WriteConcern.UNACKNOWLEDGED  | false               | false            | false                   | true
+        [3, 0, 0]      | WriteConcern.W1              | false               | false            | false                   | true
+        [3, 0, 0]      | WriteConcern.ACKNOWLEDGED    | false               | false            | false                   | false
+        [3, 0, 0]      | WriteConcern.UNACKNOWLEDGED  | false               | false            | false                   | false
+        [3, 0, 0]      | WriteConcern.W1              | false               | false            | false                   | false
     }
 
-    def 'should create the expected command asynchronously'() {
+    def 'should throw an exception when passing an unsupported collation'() {
         given:
-        def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def replacement = BsonDocument.parse('{ replacement: 1}')
-        def filter = BsonDocument.parse('{ filter : 1}')
-        def sort = BsonDocument.parse('{ sort : 1}')
-        def projection = BsonDocument.parse('{ projection : 1}')
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
-                .append('update', replacement)
-        if (includeWriteConcern) {
-            expectedCommand.put('writeConcern', writeConcern.asDocument())
-        }
+        def operation =  new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
+                .collation(defaultCollation)
 
         when:
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+        testOperationThrows(operation, [3, 2, 0], async)
 
         then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        1 * connection.release()
-
-        when:
-        operation.filter(filter)
-                .sort(sort)
-                .projection(projection)
-                .bypassDocumentValidation(true)
-                .maxTime(10, TimeUnit.MILLISECONDS)
-
-        expectedCommand.append('query', filter)
-                .append('sort', sort)
-                .append('fields', projection)
-                .append('maxTimeMS', new BsonInt64(10))
-
-        if (includeBypassValidation) {
-            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
-        }
-
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(cannedResult, null) }
-        1 * connection.release()
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        serverVersion                | writeConcern                 | includeWriteConcern   | includeBypassValidation
-        new ServerVersion([3, 2, 0]) | WriteConcern.W1              | true                  | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | true
-        new ServerVersion([3, 2, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | true
-        new ServerVersion([3, 0, 0]) | WriteConcern.ACKNOWLEDGED    | false                 | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.UNACKNOWLEDGED  | false                 | false
-        new ServerVersion([3, 0, 0]) | WriteConcern.W1              | false                 | false
+        async << [false, false]
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        given:
+        def document = Document.parse('{_id: 1, str: "foo"}')
+        getCollectionHelper().insertDocuments(document)
+        def replacement = BsonDocument.parse('{str: "bar"}')
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, documentCodec, replacement)
+                .filter(BsonDocument.parse('{str: "FOO"}'))
+                .collation(caseInsensitiveCollation)
+
+        when:
+        def result = execute(operation, async)
+
+        then:
+        result == document
+
+        where:
+        async << [true, false]
+    }
+
 }

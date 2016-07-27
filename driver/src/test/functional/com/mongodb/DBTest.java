@@ -17,7 +17,16 @@
 package com.mongodb;
 
 import category.ReplicaSet;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationAlternate;
+import com.mongodb.client.model.CollationCaseFirst;
+import com.mongodb.client.model.CollationMaxVariable;
+import com.mongodb.client.model.CollationStrength;
+import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.UserExistsOperation;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -32,6 +41,7 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
+import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
@@ -171,6 +181,60 @@ public class DBTest extends DatabaseTestCase {
         DBObject creationOptions = BasicDBObjectBuilder.start().add("capped", true)
                                                        .add("size", -20).get();
         database.createCollection(collectionName, creationOptions);
+    }
+
+    @Test
+    public void shouldCreateCollectionWithTheSetCollation() {
+        assumeThat(serverVersionAtLeast(asList(3, 3, 10)), is(true));
+        // Given
+        collection.drop();
+        Collation collation = Collation.builder()
+                .locale("en")
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build();
+
+        DBObject options = BasicDBObject.parse("{ collation: { locale: 'en', caseLevel: true, caseFirst: 'off', strength: 5,"
+                + "numericOrdering: true, alternate: 'shifted',  maxVariable: 'space', backwards: true }}");
+
+        // When
+        database.createCollection(collectionName, options);
+        BsonDocument collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
+
+        // Then
+        BsonDocument collationDocument = collation.asDocument();
+        for (String key: collationDocument.keySet()) {
+            assertEquals(collationDocument.get(key), collectionCollation.get(key));
+        }
+
+        // When - collation set on the database
+        database.getCollection(collectionName).drop();
+        database.setCollation(collation);
+        database.createCollection(collectionName, new BasicDBObject());
+        collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
+
+        // Then
+        collationDocument = collation.asDocument();
+        for (String key: collationDocument.keySet()) {
+            assertEquals(collationDocument.get(key), collectionCollation.get(key));
+        }
+
+        // When - collation set on the database and in options
+        database.getCollection(collectionName).drop();
+        database.setCollation(Collation.builder().locale("fr").build());
+        database.createCollection(collectionName, options);
+        collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
+
+        // Then
+        collationDocument = collation.asDocument();
+        for (String key: collationDocument.keySet()) {
+            assertEquals(collationDocument.get(key), collectionCollation.get(key));
+        }
     }
 
     @Test(expected = DuplicateKeyException.class)
@@ -396,5 +460,10 @@ public class DBTest extends DatabaseTestCase {
         // Then
         assertThat(commandResult.ok(), is(true));
         assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    BsonDocument getCollectionInfo(final String collectionName) {
+        return new ListCollectionsOperation<BsonDocument>(getDefaultDatabaseName(), new BsonDocumentCodec())
+                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
     }
 }

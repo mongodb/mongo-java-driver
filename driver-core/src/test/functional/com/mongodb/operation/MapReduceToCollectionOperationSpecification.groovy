@@ -16,24 +16,14 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.WriteBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -43,10 +33,8 @@ import org.bson.BsonNull
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
@@ -101,6 +89,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getSort() == null
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getBypassDocumentValidation() == null
+        operation.getCollation() == null
         !operation.isJsMode()
         !operation.isVerbose()
         !operation.isSharded()
@@ -122,9 +111,16 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
         when:
         def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, writeConcern)
-                .action(action).databaseName(dbName)
-                .finalizeFunction(finalizeF).filter(filter).limit(10).scope(scope).sort(sort).maxTime(1, MILLISECONDS)
+                .action(action)
+                .databaseName(dbName)
+                .finalizeFunction(finalizeF)
+                .filter(filter)
+                .limit(10)
+                .scope(scope)
+                .sort(sort)
+                .maxTime(1, MILLISECONDS)
                 .bypassDocumentValidation(true)
+                .collation(defaultCollation)
 
         then:
         operation.getMapFunction() == mapF
@@ -139,11 +135,12 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getSort() == sort
         operation.getMaxTime(MILLISECONDS) == 1
         operation.getBypassDocumentValidation() == true
+        operation.getCollation() == defaultCollation
     }
 
     def 'should return the correct statistics and save the results'() {
         when:
-        MapReduceStatistics results = mapReduceOperation.execute(getBinding())
+        MapReduceStatistics results = execute(mapReduceOperation, async)
 
         then:
         results.emitCount == 3
@@ -151,21 +148,11 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         results.outputCount == 2
         helper.count() == 2
         helper.find() == expectedResults
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should return the correct statistics and save the results asynchronously'() {
-
-        when:
-        MapReduceStatistics results = executeAsync(mapReduceOperation)
-
-        then:
-        results.emitCount == 3
-        results.inputCount == 3
-        results.outputCount == 2
-        helper.count() == 2
-        helper.find() == expectedResults
-    }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
     def 'should support bypassDocumentValidation'() {
@@ -180,60 +167,30 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
                 new BsonJavaScript('function(key, values){ return values.length; }'),
                 'collectionOut')
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoCommandException)
 
         when:
-        operation.bypassDocumentValidation(false).execute(getBinding())
+        operation.bypassDocumentValidation(false)
+        execute(operation, async)
 
         then:
         thrown(MongoCommandException)
 
         when:
-        operation.bypassDocumentValidation(true).execute(getBinding())
+        operation.bypassDocumentValidation(true)
+        execute(operation, async)
 
         then:
         notThrown(MongoCommandException)
 
         cleanup:
         collectionOutHelper?.drop()
-    }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
-    def 'should support bypassDocumentValidation asynchronously'() {
-        given:
-        def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
-        collectionOutHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
-                new ValidationOptions().validator(gte('level', 10))))
-        getCollectionHelper().insertDocuments(new BsonDocument())
-
-        when:
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
-                new BsonJavaScript('function(){ emit( "level" , 1 ); }'),
-                new BsonJavaScript('function(key, values){ return values.length; }'),
-                'collectionOut')
-        executeAsync(operation)
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        executeAsync(operation.bypassDocumentValidation(false))
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        executeAsync(operation.bypassDocumentValidation(true))
-
-        then:
-        notThrown(MongoCommandException)
-
-        cleanup:
-        collectionOutHelper?.drop()
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
@@ -246,7 +203,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 'collectionOut', new WriteConcern(5))
 
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -259,18 +216,6 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should create the expected command'() {
         given:
-        def connection = Mock(Connection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-        def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-        }
-
         def cannedResults = BsonDocument.parse('''{result : "outCollection", timeMillis: 11,
                                                    counts: {input: 3, emit: 3, reduce: 1, output: 2 }, ok: 1.0 }''')
         def mapF = new BsonJavaScript('function(){ emit( "level" , 1 ); }')
@@ -283,6 +228,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         def action = 'merge'
         def dbName = 'dbName'
 
+        when:
+        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
         def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
                 .append('map', mapF)
                 .append('reduce', reduceF)
@@ -297,14 +244,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
             expectedCommand.append('writeConcern', WriteConcern.MAJORITY.asDocument())
         }
 
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
-
-        when:
-        operation.execute(writeBinding)
-
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResults
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResults)
 
         when:
         operation.action(action)
@@ -327,111 +268,65 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
                 .append('limit', new BsonInt32(10))
                 .append('maxTimeMS', new BsonInt64(10))
 
+        if (includeCollation) {
+            operation.collation(defaultCollation)
+            expectedCommand.append('collation', defaultCollation.asDocument())
+        }
         if (includeBypassValidation) {
             expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
         }
 
-        operation.execute(writeBinding)
-
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _) >> cannedResults
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResults)
 
         where:
-        serverVersion                   | includeBypassValidation | includeWriteConcern
-        new ServerVersion([3, 4, 0])    | true                    | true
-        new ServerVersion([3, 2, 0])    | true                    | false
-        new ServerVersion([3, 0, 0])    | false                   | false
+        serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async
+        [3, 4, 0]     | true                    | true                | true             | true
+        [3, 4, 0]     | true                    | true                | true             | false
+        [3, 2, 0]     | true                    | false               | false            | true
+        [3, 2, 0]     | true                    | false               | false            | false
+        [3, 0, 0]     | false                   | false               | false            | true
+        [3, 0, 0]     | false                   | false               | false            | false
     }
 
-    def 'should create the expected command asynchronously'() {
+    def 'should throw an exception when passing an unsupported collation'() {
         given:
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def cannedResults = BsonDocument.parse('''{result : "outCollection", timeMillis: 11,
-                                                   counts: {input: 3, emit: 3, reduce: 1, output: 2 }, ok: 1.0 }''')
-        def mapF = new BsonJavaScript('function(){ emit( "level" , 1 ); }')
-        def reduceF = new BsonJavaScript('function(key, values){ return values.length; }')
-        def finalizeF = new BsonJavaScript('function(key, value) { return value }')
-        def filter = BsonDocument.parse('{level: {$gte: 5}}')
-        def sort = BsonDocument.parse('{level: 1}')
-        def scope = BsonDocument.parse('{level: 1}')
-        def out = 'outCollection'
-        def action = 'merge'
-        def dbName = 'dbName'
-
-        def expectedCommand = new BsonDocument('mapreduce', new BsonString(getCollectionName()))
-                .append('map', mapF)
-                .append('reduce', reduceF)
-                .append('out', BsonDocument.parse('{replace: "outCollection", sharded: false, nonAtomic: false}'))
-                .append('query', BsonNull.VALUE)
-                .append('sort', BsonNull.VALUE)
-                .append('finalize', BsonNull.VALUE)
-                .append('scope', BsonNull.VALUE)
-                .append('verbose', BsonBoolean.FALSE)
-
-        if (includeWriteConcern) {
-            expectedCommand.append('writeConcern', WriteConcern.MAJORITY.asDocument())
-        }
-
-        def operation =  new MapReduceToCollectionOperation(getNamespace(), mapF, reduceF, out, WriteConcern.MAJORITY)
+        def operation = mapReduceOperation.collation(defaultCollation)
 
         when:
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+        testOperationThrows(operation, [3, 2, 0], async)
 
         then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> {
-            it[5].onResult(cannedResults, null)
-        }
-        1 * connection.release()
-
-        when:
-        operation.action(action)
-                .databaseName(dbName)
-                .finalizeFunction(finalizeF)
-                .filter(filter)
-                .limit(10)
-                .scope(scope)
-                .sort(sort)
-                .maxTime(10, MILLISECONDS)
-                .bypassDocumentValidation(true)
-                .verbose(true)
-
-        expectedCommand.append('out', BsonDocument.parse('{merge: "outCollection", sharded: false, nonAtomic: false, db: "dbName"}'))
-                .append('query', filter)
-                .append('sort', sort)
-                .append('finalize', finalizeF)
-                .append('scope', scope)
-                .append('verbose', BsonBoolean.TRUE)
-                .append('limit', new BsonInt32(10))
-                .append('maxTimeMS', new BsonInt64(10))
-
-        if (includeBypassValidation) {
-            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
-        }
-
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> {
-            it[5].onResult(cannedResults, null)
-        }
-        1 * connection.release()
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        serverVersion                   | includeBypassValidation | includeWriteConcern
-        new ServerVersion([3, 4, 0])    | true                    | true
-        new ServerVersion([3, 2, 0])    | true                    | false
-        new ServerVersion([3, 0, 0])    | false                   | false
+        async << [false, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        given:
+        def outCollectionHelper = getCollectionHelper(new MongoNamespace(mapReduceInputNamespace.getDatabaseName(), 'collectionOut'))
+        outCollectionHelper.drop()
+
+        def document = Document.parse('{_id: 1, str: "foo"}')
+        getCollectionHelper(mapReduceInputNamespace).insertDocuments(document)
+        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+                new BsonJavaScript('function(){ emit( this._id, this.str ); }'),
+                new BsonJavaScript('function(key, values){ return values; }'),
+                'collectionOut')
+                .filter(BsonDocument.parse('{str: "FOO"}'))
+                .collation(caseInsensitiveCollation)
+
+        when:
+        execute(operation, async)
+
+        then:
+        outCollectionHelper.count() == 1
+
+        where:
+        async << [true, false]
     }
 
 }

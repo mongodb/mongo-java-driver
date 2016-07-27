@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -38,7 +39,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -50,6 +54,7 @@ import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransfor
  * a read operation).
  *
  * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
@@ -59,6 +64,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -181,7 +187,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
      * @since 3.2
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 3.2
      */
     public AggregateToCollectionOperation bypassDocumentValidation(final Boolean bypassDocumentValidation) {
@@ -189,11 +194,36 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public AggregateToCollectionOperation collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+        return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
+                checkValidCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         connection, writeConcernErrorTransformer());
             }
@@ -202,15 +232,26 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+        withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                            connection, writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
+                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(connection.getDescription()), connection, writeConcernErrorTransformer(),
+                                        wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -229,6 +270,9 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
         return commandDocument;
     }
 

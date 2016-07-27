@@ -255,6 +255,15 @@ final class CommandOperationHelper {
     static <T> void executeWrappedCommandProtocolAsync(final AsyncReadBinding binding,
                                                        final String database,
                                                        final BsonDocument command,
+                                                       final AsyncConnection connection,
+                                                       final CommandTransformer<BsonDocument, T> transformer,
+                                                       final SingleResultCallback<T> callback) {
+        executeWrappedCommandProtocolAsync(binding, database, command, new BsonDocumentCodec(), connection, transformer, callback);
+    }
+
+    static <T> void executeWrappedCommandProtocolAsync(final AsyncReadBinding binding,
+                                                       final String database,
+                                                       final BsonDocument command,
                                                        final Decoder<BsonDocument> decoder,
                                                        final AsyncConnection connection,
                                                        final CommandTransformer<BsonDocument, T> transformer,
