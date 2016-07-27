@@ -34,6 +34,7 @@ public class DatabaseTestCase {
     @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void setUp() {
         database = getMongoClient().getDB(getDefaultDatabaseName());
+        database.setCollation(null);
 
         //create a brand new collection for each test
         collectionName = getClass().getName() + System.nanoTime();
@@ -42,6 +43,8 @@ public class DatabaseTestCase {
 
     @After
     public void tearDown() {
+        database.setCollation(null);
+        collection.setCollation(null);
         collection.drop();
     }
 

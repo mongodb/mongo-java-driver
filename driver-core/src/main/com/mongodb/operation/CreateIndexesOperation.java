@@ -52,6 +52,7 @@ import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidIndexRequestCollations;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -145,6 +146,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     try {
+                        checkValidIndexRequestCollations(connection, requests);
                         executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                                 connection, writeConcernErrorTransformer());
                     } catch (MongoCommandException e) {
@@ -172,14 +174,23 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                                connection, writeConcernErrorTransformer(),
-                                new SingleResultCallback<Void>() {
-                                    @Override
-                                    public void onResult(final Void result, final Throwable t) {
-                                        wrappedCallback.onResult(null, translateException(t));
-                                    }
-                                });
+                        checkValidIndexRequestCollations(connection, requests, new AsyncCallableWithConnection(){
+                            @Override
+                            public void call(final AsyncConnection connection, final Throwable t) {
+                                if (t != null) {
+                                    wrappedCallback.onResult(null, t);
+                                } else {
+                                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                            getCommand(connection.getDescription()), connection, writeConcernErrorTransformer(),
+                                            new SingleResultCallback<Void>() {
+                                                @Override
+                                                public void onResult(final Void result, final Throwable t) {
+                                                    wrappedCallback.onResult(null, translateException(t));
+                                                }
+                                            });
+                                }
+                            }
+                        });
                     } else {
                         if (requests.size() > 1) {
                             wrappedCallback.onResult(null, new MongoInternalException("Creation of multiple indexes simultaneously not "
@@ -256,6 +267,9 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         }
         if (request.getPartialFilterExpression() != null) {
             index.append("partialFilterExpression", request.getPartialFilterExpression());
+        }
+        if (request.getCollation() != null) {
+            index.append("collation", request.getCollation().asDocument());
         }
         return index;
     }

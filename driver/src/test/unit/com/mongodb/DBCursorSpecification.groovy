@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.FindOperation
@@ -71,6 +72,41 @@ class DBCursorSpecification extends Specification {
 
         then:
         cursor.readConcern == ReadConcern.MAJORITY
+    }
+
+    def 'should get and set collation'() {
+        when:
+        def collection = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([])).getCollection('test')
+        def enCollation = Collation.builder().locale('en').build()
+        collection.setCollation(enCollation)
+        def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+
+        then:
+        cursor.getCollation() == enCollation
+
+        when:
+        def frCollation = Collation.builder().locale('fr').build()
+        cursor.setCollation(frCollation)
+
+        then:
+        cursor.getCollation() == frCollation
+
+        when:
+        cursor.setCollation(null)
+
+        then:
+        cursor.getCollation() == enCollation
+    }
+
+    def 'should copy as expected'() {
+        when:
+        def collection = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([])).getCollection('test')
+        def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.nearest())
+            .setReadConcern(ReadConcern.LOCAL)
+            .setCollation(Collation.builder().locale('en').build())
+
+        then:
+        expect(cursor, isTheSameAs(cursor.copy()))
     }
 
     def 'find should create the correct FindOperation'() {

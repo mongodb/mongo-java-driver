@@ -16,17 +16,34 @@
 
 package com.mongodb
 
+import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.bulk.UpdateRequest
+import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CollationAlternate
+import com.mongodb.client.model.CollationCaseFirst
+import com.mongodb.client.model.CollationMaxVariable
+import com.mongodb.client.model.CollationStrength
 import com.mongodb.operation.AggregateOperation
+import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
+import com.mongodb.operation.DeleteOperation
 import com.mongodb.operation.DistinctOperation
+import com.mongodb.operation.FindAndDeleteOperation
+import com.mongodb.operation.FindAndReplaceOperation
+import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
+import com.mongodb.operation.GroupOperation
 import com.mongodb.operation.MapReduceBatchCursor
+import com.mongodb.operation.MapReduceStatistics
+import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
+import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
+import com.mongodb.operation.UpdateOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
@@ -39,6 +56,7 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.Fixture.getMongoClient
+import static java.util.Arrays.asList
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
@@ -65,10 +83,42 @@ class DBCollectionSpecification extends Specification {
         collection.readConcern == ReadConcern.MAJORITY
     }
 
-    def 'should use CreateIndexOperation properly'() {
+    def 'should get and set collation'() {
+        when:
+        def db = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([]))
+        def collection = db.getCollection('test')
 
+        then:
+        collection.getCollation() == null
+
+        when:
+        db.setCollation(frenchCollation)
+
+        then:
+        collection.getCollation() == frenchCollation
+
+        when:
+        collection.setCollation(collation)
+
+        then:
+        collection.getCollation() == collation
+
+        when:
+        collection.setCollation(null)
+
+        then:
+        collection.getCollation() == frenchCollation
+
+        when:
+        db.setCollation(null)
+
+        then:
+        collection.getCollation() == null
+    }
+
+    def 'should use CreateIndexOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null, null]);
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def keys = new BasicDBObject('a', 1);
 
@@ -82,6 +132,17 @@ class DBCollectionSpecification extends Specification {
         when:
         def storageEngine = '{ wiredTiger: { configString: "block_compressor=zlib" }}'
         def partialFilterExpression = '{ a: { $gte: 10 } }'
+        def collation = Collation.builder()
+                .locale('en')
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build()
+        collection.setCollation(collation)
         collection.createIndex(keys, new BasicDBObject(['background': true, 'unique': true, 'sparse': true, 'name': 'aIndex',
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
@@ -94,24 +155,25 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect request, isTheSameAs(new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
-                                            .background(true)
-                                            .unique(true)
-                                            .sparse(true)
-                                            .name('aIndex')
-                                            .expireAfter(100, TimeUnit.SECONDS)
-                                            .version(1)
-                                            .weights(new BsonDocument('a', new BsonInt32(1000)))
-                                            .defaultLanguage('es')
-                                            .languageOverride('language')
-                                            .textVersion(1)
-                                            .sphereVersion(1)
-                                            .bits(1)
-                                            .min(-180.0)
-                                            .max(180.0)
-                                            .bucketSize(200.0)
-                                            .dropDups(true)
-                                            .storageEngine(BsonDocument.parse(storageEngine))
-                                            .partialFilterExpression(BsonDocument.parse(partialFilterExpression)))
+                .background(true)
+                .unique(true)
+                .sparse(true)
+                .name('aIndex')
+                .expireAfter(100, TimeUnit.SECONDS)
+                .version(1)
+                .weights(new BsonDocument('a', new BsonInt32(1000)))
+                .defaultLanguage('es')
+                .languageOverride('language')
+                .textVersion(1)
+                .sphereVersion(1)
+                .bits(1)
+                .min(-180.0)
+                .max(180.0)
+                .bucketSize(200.0)
+                .dropDups(true)
+                .storageEngine(BsonDocument.parse(storageEngine))
+                .partialFilterExpression(BsonDocument.parse(partialFilterExpression))
+                .collation(collation))
     }
 
     def 'should support boolean index options that are numbers'() {
@@ -203,51 +265,248 @@ class DBCollectionSpecification extends Specification {
         executor.getReadPreference() == collection.getReadPreference()
     }
 
+    def 'find should create the correct FindOperation'() {
+        given:
+        def cursor = Stub(BatchCursor) {
+            hasNext() >> false
+            getServerCursor() >> new ServerCursor(12L, new ServerAddress())
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.find().iterator().hasNext()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .modifiers(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.find().iterator().hasNext()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .modifiers(new BsonDocument())
+                .readConcern(ReadConcern.MAJORITY)
+                .collation(collation))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.find().iterator().hasNext()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .modifiers(new BsonDocument())
+                .readConcern(ReadConcern.LOCAL)
+                .collation(frenchCollation))
+    }
+
     def 'findOne should create the correct FindOperation'() {
         given:
         def dbObject = new BasicDBObject('_id', 1)
-        def executor = new TestOperationExecutor([Stub(BatchCursor) {
-            next() >> {
-                [dbObject]
-            }
-            hasNext() >> {
-                true
-            }
-        }]);
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
+        def cursor = Stub(BatchCursor) {
+            next() >> [dbObject]
+            hasNext() >> true
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
 
         when:
-        def one = collection.findOne()
+        collection.findOne()
 
         then:
-        one == dbObject
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
-                                                                .filter(new BsonDocument())
-                                                                .limit(-1))
+                .filter(new BsonDocument())
+                .limit(-1))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.findOne()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .limit(-1)
+                .readConcern(ReadConcern.MAJORITY)
+                .collation(collation))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.findOne()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .limit(-1)
+                .readConcern(ReadConcern.LOCAL)
+                .collation(frenchCollation))
+    }
+
+    def 'findAndRemove should create the correct FindAndDeleteOperation'() {
+        given:
+        def query = new BasicDBObject()
+        def cannedResult = BasicDBObject.parse('{value: {}}')
+        def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.findAndRemove(query)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec())
+                .filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.findAndRemove(query)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .collation(collation))
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.findAndRemove(query)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec())
+                .filter(new BsonDocument())
+                .collation(frenchCollation))
+    }
+
+    def 'findAndModify should create the correct FindAndUpdateOperation'() {
+        given:
+        def query = new BasicDBObject()
+        def updateJson = '{$set: {a : 1}}'
+        def update = BasicDBObject.parse(updateJson)
+        def bsonUpdate = BsonDocument.parse(updateJson)
+        def cannedResult = BasicDBObject.parse('{value: {}}')
+        def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.findAndModify(query, update)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonUpdate)
+                .filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.findAndModify(query, update)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonUpdate)
+                .filter(new BsonDocument())
+                .collation(collation))
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.findAndModify(query, update)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonUpdate)
+                .filter(new BsonDocument())
+                .collation(frenchCollation))
+    }
+
+    def 'findAndModify should create the correct FindAndReplaceOperation'() {
+        given:
+        def query = new BasicDBObject()
+        def replacementJson = '{a : 1}'
+        def replace = BasicDBObject.parse(replacementJson)
+        def bsonReplace = BsonDocument.parse(replacementJson)
+        def cannedResult = BasicDBObject.parse('{value: {}}')
+        def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.findAndModify(query, replace)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonReplace)
+                .filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.findAndModify(query, replace)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonReplace)
+                .filter(new BsonDocument())
+                .collation(collation))
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.findAndModify(query, replace)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
+                collection.getObjectCodec(), bsonReplace)
+                .filter(new BsonDocument())
+                .collation(frenchCollation))
     }
 
     def 'count should create the correct CountOperation'() {
         given:
-        def executor = new TestOperationExecutor([42L]);
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
+        def executor = new TestOperationExecutor([42L, 42L, 42L]);
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
 
         when:
-        def count = collection.count
+        collection.count()
 
         then:
-        count == 42L
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace()).filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.count()
+
+        then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                                                                .readConcern(ReadConcern.MAJORITY)
-                                                                .filter(new BsonDocument())
-        )
+                .filter(new BsonDocument())
+                .readConcern(ReadConcern.MAJORITY)
+                .collation(collation))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.count()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+                .filter(new BsonDocument())
+                .readConcern(ReadConcern.LOCAL)
+                .collation(frenchCollation))
     }
 
     def 'distinct should create the correct DistinctOperation'() {
         given:
-        def executor = new TestOperationExecutor([Stub(BatchCursor) {
+        def cursor = Stub(BatchCursor) {
             def count = 0
             next() >> {
                 count++
@@ -256,9 +515,10 @@ class DBCollectionSpecification extends Specification {
             hasNext() >> {
                 count == 0
             }
-        }]);
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor]);
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
 
         when:
         def distinctFieldValues = collection.distinct('field1')
@@ -266,69 +526,269 @@ class DBCollectionSpecification extends Specification {
         then:
         distinctFieldValues == [1, 2]
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
-                                                                .filter(new BsonDocument())
+                                                                .filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.distinct('field1')
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
+                .filter(new BsonDocument())
+                .readConcern(ReadConcern.MAJORITY)
+                .collation(collation))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.distinct('field1')
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
+                .filter(new BsonDocument())
+                .readConcern(ReadConcern.LOCAL)
+                .collation(frenchCollation))
+    }
+
+    def 'group should create the correct GroupOperation'() {
+        given:
+        def cursor = Stub(BatchCursor) {
+            next() >> []
+            hasNext() >> false
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def key = BasicDBObject.parse('{name: 1}')
+        def reduce = 'function ( curr, result ) { }'
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
+                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
+                .filter(new BsonDocument()))
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
+                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
+                .filter(new BsonDocument()).collation(collation))
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
+                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
+                .filter(new BsonDocument()).collation(frenchCollation))
+    }
+
+    def 'mapReduce should create the correct MapReduceInlineResultsOperation'() {
+        given:
+        def cursor = Stub(MapReduceBatchCursor) {
+            next() >> { }
+            hasNext() >> false
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(
+                new MapReduceWithInlineResultsOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        collection.getDefaultDBObjectCodec())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+        )
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(
+                new MapReduceWithInlineResultsOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        collection.getDefaultDBObjectCodec())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+                        .collation(collation)
+        )
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(
+                new MapReduceWithInlineResultsOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        collection.getDefaultDBObjectCodec())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+                        .collation(frenchCollation)
         )
     }
 
-    def 'mapReduce should create the correct MapReduceOperation'() {
+    def 'mapReduce should create the correct MapReduceToCollectionOperation'() {
         given:
-        def dbObject = new BasicDBObject('_id', 1)
-        def executor = new TestOperationExecutor([Stub(MapReduceBatchCursor) {
-            def count = 0
-            next() >> {
-                count++
-                [dbObject]
-            }
-            hasNext() >> {
-                count == 0
-            }
-        }])
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
+        def stats = Stub(MapReduceStatistics)
+        def executor = new TestOperationExecutor([stats, stats, stats])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
 
         when:
-        def mapReduceOutput = collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+        collection.mapReduce('map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE, new BasicDBObject())
 
         then:
-        mapReduceOutput.results() == [dbObject]
-        expect executor.getReadOperation(), isTheSameAs(new MapReduceWithInlineResultsOperation(collection.getNamespace(),
-                                                                                                new BsonJavaScript('map'),
-                                                                                                new BsonJavaScript('reduce'),
-                                                                                                collection.getDefaultDBObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
-                                                                .verbose(true)
-                                                                .filter(new BsonDocument())
+        expect executor.getWriteOperation(), isTheSameAs(
+                new MapReduceToCollectionOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        'myColl', collection.getWriteConcern())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+        )
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.mapReduce('map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE, new BasicDBObject())
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(
+                new MapReduceToCollectionOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        'myColl', collection.getWriteConcern())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+                        .collation(collation)
+        )
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.mapReduce('map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE, new BasicDBObject())
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(
+                new MapReduceToCollectionOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        'myColl', collection.getWriteConcern())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+                        .collation(frenchCollation)
         )
     }
 
     def 'aggregate should create the correct AggregateOperation'() {
         given:
-        def dbObject = new BasicDBObject('_id', 1)
-        def executor = new TestOperationExecutor([Stub(BatchCursor) {
-            def count = 0
-            next() >> {
-                count++
-                [dbObject]
-            }
-            hasNext() >> {
-                count == 0
-            }
-        }])
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        collection.setReadConcern(ReadConcern.MAJORITY)
+        def cursor = Stub(MapReduceBatchCursor) {
+            next() >> { }
+            hasNext() >> false
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def pipeline = [BasicDBObject.parse('{$match: {}}')]
+        def bsonPipeline = [BsonDocument.parse('{$match: {}}')]
 
         when:
-        def aggregationOutput = collection.aggregate([new BasicDBObject('$match', new BasicDBObject())])
+        collection.aggregate(pipeline)
 
         then:
-        aggregationOutput.results() == [dbObject]
-        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(),
-                                                                               [new BsonDocument('$match', new BsonDocument())],
-                                                                               collection.getDefaultDBObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
-                                                                .useCursor(false)
-        )
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).useCursor(false))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.aggregate(pipeline)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.MAJORITY).collation(collation))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.aggregate(pipeline)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(frenchCollation))
+    }
+
+    def 'aggregate should create the correct AggregateToCollectionOperation'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def pipeline = [BasicDBObject.parse('{$match: {}}'), BasicDBObject.parse('{$out: "myColl"}')]
+        def bsonPipeline = [BsonDocument.parse('{$match: {}}'), BsonDocument.parse('{$out: "myColl"}')]
+
+        when:
+        collection.aggregate(pipeline)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+                bsonPipeline, collection.getWriteConcern()))
+
+        when: // Inherits from DB
+        db.setCollation(collation)
+        collection.aggregate(pipeline)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+                bsonPipeline, collection.getWriteConcern()).collation(collation))
+
+        when:
+        collection.setCollation(frenchCollation)
+        collection.aggregate(pipeline)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+                bsonPipeline, collection.getWriteConcern()).collation(frenchCollation))
+    }
+
+    def 'explainAggregate should create the correct AggregateOperation'() {
+        given:
+        def result = BsonDocument.parse('{ok: 1}')
+        def executor = new TestOperationExecutor([result, result, result])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def options = AggregationOptions.builder().build()
+        def pipeline = [BasicDBObject.parse('{$match: {}}')]
+        def bsonPipeline = [BsonDocument.parse('{$match: {}}')]
+
+        when:
+        collection.explainAggregate(pipeline, options)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+
+        when: // Inherits from DB
+        db.setReadConcern(ReadConcern.MAJORITY)
+        db.setCollation(collation)
+        collection.explainAggregate(pipeline, options)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).readConcern(ReadConcern.MAJORITY).collation(collation)
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+
+        when:
+        collection.setReadConcern(ReadConcern.LOCAL)
+        collection.setCollation(frenchCollation)
+        collection.explainAggregate(pipeline, options)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(frenchCollation)
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
     }
 
     def 'parallel should create the correct ParallelCollectionScanOperation'() {
@@ -352,4 +812,144 @@ class DBCollectionSpecification extends Specification {
         )
     }
 
+    def 'update should create the correct UpdateOperation'() {
+        given:
+        def result = Stub(WriteConcernResult)
+        def executor = new TestOperationExecutor([result, result, result])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def query = '{a: 1}'
+        def update = '{$set: {a: 2}}'
+
+        when:
+        def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
+                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false)
+        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
+                WriteConcern.ACKNOWLEDGED, asList(updateRequest)))
+
+        when: // Inherits from DB
+        db.setWriteConcern(WriteConcern.W3)
+        db.setCollation(collation)
+        updateRequest.collation(collation)
+        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
+
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
+                WriteConcern.W3, asList(updateRequest)))
+
+        when:
+        collection.setWriteConcern(WriteConcern.W1)
+        collection.setCollation(frenchCollation)
+        updateRequest.collation(frenchCollation)
+        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
+                WriteConcern.W1, asList(updateRequest)))
+    }
+
+    def 'remove should create the correct DeleteOperation'() {
+        given:
+        def result = Stub(WriteConcernResult)
+        def executor = new TestOperationExecutor([result, result, result])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def query = '{a: 1}'
+
+        when:
+        def deleteRequest = new DeleteRequest(BsonDocument.parse(query))
+        collection.remove(BasicDBObject.parse(query))
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+                WriteConcern.ACKNOWLEDGED, asList(deleteRequest)))
+
+        when: // Inherits from DB
+        db.setWriteConcern(WriteConcern.W3)
+        db.setCollation(collation)
+        deleteRequest.collation(collation)
+        collection.remove(BasicDBObject.parse(query))
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+                WriteConcern.W3, asList(deleteRequest)))
+
+        when:
+        collection.setWriteConcern(WriteConcern.W1)
+        collection.setCollation(frenchCollation)
+        deleteRequest.collation(frenchCollation)
+        collection.remove(BasicDBObject.parse(query))
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
+                WriteConcern.W1, asList(deleteRequest)))
+    }
+
+    def 'should create the correct MixedBulkWriteOperation'() {
+        given:
+        def result = Stub(com.mongodb.bulk.BulkWriteResult)
+        def executor = new TestOperationExecutor([result, result, result])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        def query = '{a: 1}'
+        def update = '{$set: {level: 1}}'
+        def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
+                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false)
+        def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false)
+        def bulk = {
+            def bulkOp = ordered ? collection.initializeOrderedBulkOperation() : collection.initializeUnorderedBulkOperation()
+            bulkOp.find(BasicDBObject.parse(query)).updateOne(BasicDBObject.parse(update))
+            bulkOp.find(BasicDBObject.parse(query)).removeOne()
+            bulkOp
+        }
+
+        when:
+        bulk().execute()
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
+                asList(updateRequest, deleteRequest), ordered, WriteConcern.ACKNOWLEDGED))
+
+        when: // Inherits from DB
+        db.setWriteConcern(WriteConcern.W3)
+        db.setCollation(collation)
+        updateRequest.collation(collation)
+        deleteRequest.collation(collation)
+        bulk().execute()
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
+                asList(updateRequest, deleteRequest), ordered, WriteConcern.W3))
+
+        when:
+        collection.setWriteConcern(WriteConcern.W1)
+        collection.setCollation(frenchCollation)
+        updateRequest.collation(frenchCollation)
+        deleteRequest.collation(frenchCollation)
+        bulk().execute()
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
+                asList(updateRequest, deleteRequest), ordered, WriteConcern.W1))
+
+        where:
+        ordered << [true, false]
+    }
+
+    def collation = Collation.builder()
+            .locale('en')
+            .caseLevel(true)
+            .collationCaseFirst(CollationCaseFirst.OFF)
+            .collationStrength(CollationStrength.IDENTICAL)
+            .numericOrdering(true)
+            .collationAlternate(CollationAlternate.SHIFTED)
+            .collationMaxVariable(CollationMaxVariable.SPACE)
+            .backwards(true)
+            .build()
+
+    def frenchCollation = Collation.builder().locale('fr').build()
 }

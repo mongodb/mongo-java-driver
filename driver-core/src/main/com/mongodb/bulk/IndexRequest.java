@@ -16,6 +16,7 @@
 
 package com.mongodb.bulk;
 
+import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
 
 import java.util.List;
@@ -53,6 +54,7 @@ public class IndexRequest {
     private boolean dropDups;
     private BsonDocument storageEngine;
     private BsonDocument partialFilterExpression;
+    private Collation collation;
 
     /**
      * Construct a new instance with the given keys
@@ -485,4 +487,27 @@ public class IndexRequest {
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public IndexRequest collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
 }

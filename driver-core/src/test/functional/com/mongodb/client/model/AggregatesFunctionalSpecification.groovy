@@ -91,7 +91,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) })
+    @IgnoreIf({ !serverVersionAtLeast([3, 3, 10]) })
     def '$project an exclusion'() {
         expect:
         aggregate([project(exclude('a', 'a1', 'z'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
@@ -152,8 +152,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         expect:
         aggregate([group(null)]) == [new Document('_id', null)]
 
-        aggregate([group('$z')]) == [new Document('_id', true),
-                                     new Document('_id', false)]
+        aggregate([group('$z')]).containsAll([new Document('_id', true), new Document('_id', false)])
 
         aggregate([group(null, sum('acc', '$x'))]) == [new Document('_id', null).append('acc', 6)]
 
@@ -167,11 +166,11 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         aggregate([group(null, min('acc', '$x'))]) == [new Document('_id', null).append('acc', 1)]
 
-        aggregate([group('$z', push('acc', '$z'))]) == [new Document('_id', true).append('acc', [true, true]),
-                                                        new Document('_id', false).append('acc', [false])]
+        aggregate([group('$z', push('acc', '$z'))]).containsAll([new Document('_id', true).append('acc', [true, true]),
+                                                                 new Document('_id', false).append('acc', [false])])
 
-        aggregate([group('$z', addToSet('acc', '$z'))]) == [new Document('_id', true).append('acc', [true]),
-                                                            new Document('_id', false).append('acc', [false])]
+        aggregate([group('$z', addToSet('acc', '$z'))]).containsAll([new Document('_id', true).append('acc', [true]),
+                                                                     new Document('_id', false).append('acc', [false])])
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })

@@ -21,6 +21,7 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
@@ -76,6 +77,7 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -122,6 +124,7 @@ public class DBCollection {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
+    private volatile Collation collation;
     private List<DBObject> hintFields;
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
@@ -490,14 +493,13 @@ public class DBCollection {
 
         if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
             UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                            com.mongodb.bulk.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
+                    com.mongodb.bulk.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi).collation(getCollation());
 
             return executeWriteOperation(new UpdateOperation(getNamespace(), false, concern, asList(updateRequest))
                                          .bypassDocumentValidation(bypassDocumentValidation));
         } else {
             UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                             com.mongodb.bulk.WriteRequest.Type.REPLACE)
-                                           .upsert(upsert);
+                    com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(upsert).collation(getCollation());
             return executeWriteOperation(new UpdateOperation(getNamespace(), true, concern, asList(replaceRequest))
                                          .bypassDocumentValidation(bypassDocumentValidation));
         }
@@ -578,7 +580,8 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
-        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, asList(new DeleteRequest(wrap(query)))));
+        DeleteRequest deleteRequest = new DeleteRequest(wrap(query)).collation(getCollation());
+        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, singletonList(deleteRequest)));
     }
 
     /**
@@ -594,9 +597,8 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
-        DeleteRequest deleteRequest = new DeleteRequest(wrap(query, encoder));
-
-        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, asList(deleteRequest)));
+        DeleteRequest deleteRequest = new DeleteRequest(wrap(query, encoder)).collation(getCollation());
+        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, singletonList(deleteRequest)));
     }
 
     /**
@@ -744,33 +746,19 @@ public class DBCollection {
      */
     public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                             final ReadPreference readPreference) {
-        return findOne(query, projection, sort, readPreference, getReadConcern(), 0, MILLISECONDS);
+        return findOne(query, projection, sort, readPreference, getReadConcern(), getCollation(), 0, MILLISECONDS);
     }
 
-    /**
-     * Get a single document from collection.
-     *
-     * @param query          the selection criteria using query operators.
-     * @param projection     specifies which projection MongoDB will return from the documents in the result set.
-     * @param sort           A document whose fields specify the attributes on which to sort the result set.
-     * @param readPreference {@code ReadPreference} to be used for this operation
-     * @param readConcern    {@code ReadConcern} to be used for this operation
-     * @param maxTime        the maximum time that the server will allow this operation to execute before killing it
-     * @param maxTimeUnit    the unit that maxTime is specified in
-     * @return A document that satisfies the query specified as the argument to this method.
-     * @mongodb.driver.manual tutorial/query-documents/ Querying
-     * @since 2.12.0
-     */
     DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
-                     final ReadPreference readPreference, final ReadConcern readConcern,
+                     final ReadPreference readPreference, final ReadConcern readConcern, final Collation collation,
                      final long maxTime, final TimeUnit maxTimeUnit) {
-        FindOperation<DBObject> operation = new FindOperation<DBObject>(getNamespace(),
-                                                                            objectCodec)
-                                                    .readConcern(readConcern)
-                                                    .projection(wrapAllowNull(projection))
-                                                    .sort(wrapAllowNull(sort))
-                                                    .limit(-1)
-                                                    .maxTime(maxTime, maxTimeUnit);
+        FindOperation<DBObject> operation = new FindOperation<DBObject>(getNamespace(), objectCodec)
+                .readConcern(readConcern)
+                .projection(wrapAllowNull(projection))
+                .sort(wrapAllowNull(sort))
+                .limit(-1)
+                .maxTime(maxTime, maxTimeUnit)
+                .collation(collation);
         if (query != null) {
             operation.filter(wrap(query));
         }
@@ -928,18 +916,11 @@ public class DBCollection {
      */
     public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
                          final ReadPreference readPreference) {
-        return getCount(query, limit, skip, readPreference, getReadConcern(), 0, MILLISECONDS);
+        return getCount(query, limit, skip, readPreference, getReadConcern(), getCollation(), 0, MILLISECONDS, null);
     }
 
-    long getCount(final DBObject query, final long limit, final long skip,
-                  final ReadPreference readPreference, final ReadConcern readConcern,
-                  final long maxTime, final TimeUnit maxTimeUnit) {
-        return getCount(query, limit, skip, readPreference, readConcern, maxTime, maxTimeUnit, null);
-    }
-
-    long getCount(final DBObject query, final long limit, final long skip,
-                  final ReadPreference readPreference, final ReadConcern readConcern,
-                  final long maxTime, final TimeUnit maxTimeUnit,
+    long getCount(final DBObject query, final long limit, final long skip, final ReadPreference readPreference,
+                  final ReadConcern readConcern, final Collation collation, final long maxTime, final TimeUnit maxTimeUnit,
                   final BsonValue hint) {
 
         if (limit > Integer.MAX_VALUE) {
@@ -955,7 +936,8 @@ public class DBCollection {
                                        .hint(hint)
                                        .skip(skip)
                                        .limit(limit)
-                                       .maxTime(maxTime, maxTimeUnit);
+                                       .maxTime(maxTime, maxTimeUnit)
+                                       .collation(collation);
         if (query != null) {
             operation.filter(wrap(query));
         }
@@ -1118,7 +1100,8 @@ public class DBCollection {
         return new OperationIterable<BsonValue>(new DistinctOperation<BsonValue>(getNamespace(), fieldName,
                                                 new BsonValueCodec())
                                                 .readConcern(getReadConcern())
-                                                .filter(wrap(query)),
+                                                .filter(wrap(query))
+                                                .collation(getCollation()),
                                                 readPreference, executor).map(new Function<BsonValue, Object>() {
             @Override
             public Object apply(final BsonValue bsonValue) {
@@ -1195,17 +1178,16 @@ public class DBCollection {
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
 
             MapReduceWithInlineResultsOperation<DBObject> operation =
-                new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
-                                                                  new BsonJavaScript(command.getMap()),
-                                                                  new BsonJavaScript(command.getReduce()),
-                                                                  getDefaultDBObjectCodec());
-            operation.readConcern(getReadConcern());
-            operation.filter(wrapAllowNull(command.getQuery()));
-            operation.limit(command.getLimit());
-            operation.maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS);
-            operation.jsMode(command.getJsMode() == null ? false : command.getJsMode());
-            operation.sort(wrapAllowNull(command.getSort()));
-            operation.verbose(command.isVerbose());
+                    new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(), new BsonJavaScript(command.getMap()),
+                            new BsonJavaScript(command.getReduce()), getDefaultDBObjectCodec())
+                            .readConcern(getReadConcern())
+                            .filter(wrapAllowNull(command.getQuery()))
+                            .limit(command.getLimit())
+                            .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
+                            .jsMode(command.getJsMode() == null ? false : command.getJsMode())
+                            .sort(wrapAllowNull(command.getSort()))
+                            .verbose(command.isVerbose())
+                            .collation(getCollation());
 
             if (command.getScope() != null) {
                 operation.scope(wrap(new BasicDBObject(command.getScope())));
@@ -1245,7 +1227,8 @@ public class DBCollection {
                     .verbose(command.isVerbose())
                     .action(action)
                     .databaseName(command.getOutputDB())
-                    .bypassDocumentValidation(command.getBypassDocumentValidation());
+                    .bypassDocumentValidation(command.getBypassDocumentValidation())
+                    .collation(getCollation());
 
             if (command.getScope() != null) {
                 operation.scope(wrap(new BasicDBObject(command.getScope())));
@@ -1369,7 +1352,8 @@ public class DBCollection {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages, getWriteConcern())
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse())
-                                                       .bypassDocumentValidation(options.getBypassDocumentValidation());
+                                                       .bypassDocumentValidation(options.getBypassDocumentValidation())
+                                                       .collation(getCollation());
             try {
                 executor.execute(operation);
                 if (returnCursorForOutCollection) {
@@ -1382,11 +1366,12 @@ public class DBCollection {
             }
         } else {
             AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, getDefaultDBObjectCodec())
-                                                         .readConcern(getReadConcern())
-                                                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                         .allowDiskUse(options.getAllowDiskUse())
-                                                         .batchSize(options.getBatchSize())
-                                                         .useCursor(options.getOutputMode() == CURSOR);
+                    .readConcern(getReadConcern())
+                    .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                    .allowDiskUse(options.getAllowDiskUse())
+                    .batchSize(options.getBatchSize())
+                    .useCursor(options.getOutputMode() == CURSOR)
+                    .collation(getCollation());
             BatchCursor<DBObject> cursor = executor.execute(operation, readPreference);
             return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
         }
@@ -1406,7 +1391,8 @@ public class DBCollection {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
                                                                                           new BsonDocumentCodec())
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                         .allowDiskUse(options.getAllowDiskUse());
+                                                         .allowDiskUse(options.getAllowDiskUse())
+                                                         .collation(getCollation());
         return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred()));
     }
 
@@ -1805,7 +1791,8 @@ public class DBCollection {
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(fields))
                         .sort(wrapAllowNull(sort))
-                        .maxTime(maxTime, maxTimeUnit);
+                        .maxTime(maxTime, maxTimeUnit)
+                        .collation(getCollation());
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
@@ -1818,7 +1805,8 @@ public class DBCollection {
                             .returnOriginal(!returnNew)
                             .upsert(upsert)
                             .maxTime(maxTime, maxTimeUnit)
-                            .bypassDocumentValidation(bypassDocumentValidation);
+                            .bypassDocumentValidation(bypassDocumentValidation)
+                            .collation(getCollation());
             } else {
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, objectCodec, wrap(update))
                             .filter(wrapAllowNull(query))
@@ -1827,7 +1815,8 @@ public class DBCollection {
                             .returnOriginal(!returnNew)
                             .upsert(upsert)
                             .maxTime(maxTime, maxTimeUnit)
-                            .bypassDocumentValidation(bypassDocumentValidation);
+                            .bypassDocumentValidation(bypassDocumentValidation)
+                            .collation(getCollation());
             }
         }
 
@@ -1923,6 +1912,30 @@ public class DBCollection {
         return database.getReadConcern();
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        if (collation != null) {
+            return collation;
+        }
+        return database.getCollation();
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public void setCollation(final Collation collation) {
+        this.collation = collation;
+    }
 
     /**
      * Makes this query ok to run on a slave node
@@ -2215,11 +2228,8 @@ public class DBCollection {
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(getNamespace(),
-                                                                                         translateWriteRequestsToNew(writeRequests,
-                                                                                                                     getObjectCodec()),
-                                                                                         ordered, writeConcern)
-                                                             .bypassDocumentValidation(bypassDocumentValidation)),
-                                            getObjectCodec());
+                            translateWriteRequestsToNew(writeRequests, getCollation()), ordered, writeConcern)
+                            .bypassDocumentValidation(bypassDocumentValidation)), getObjectCodec());
         } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));
         }
@@ -2321,8 +2331,12 @@ public class DBCollection {
         if (options.containsField("partialFilterExpression")) {
             request.partialFilterExpression(wrap(convertOptionsToType(options, "partialFilterExpression", DBObject.class)));
         }
-
-        return new CreateIndexesOperation(getNamespace(), asList(request), writeConcern);
+        Collation collation = getCollation();
+        if (options.containsField("collation")) {
+            collation = DBObjectCollationHelper.createOptions(options);
+        }
+        request.collation(collation);
+        return new CreateIndexesOperation(getNamespace(), singletonList(request), writeConcern);
     }
 
     private String getIndexNameFromIndexFields(final DBObject index) {

@@ -33,6 +33,7 @@ import com.mongodb.binding.AsyncSingleConnectionReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.SingleConnectionReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -65,7 +66,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -97,6 +98,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private boolean noCursorTimeout;
     private boolean partial;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -478,6 +480,30 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public FindOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
@@ -485,15 +511,16 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                     try {
+                        checkValidReadConcernAndCollation(connection, readConcern, collation);
                         return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
-                                                             wrapInExplainIfNecessary(asCommandDocument()),
+                                                             wrapInExplainIfNecessary(getCommand()),
                                                              CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                              connection, transformer(source, connection));
                     } catch (MongoCommandException e) {
                         throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
                     }
                 } else {
-                    checkValidReadConcern(connection, readConcern);
+                    checkValidReadConcernAndCollation(connection, readConcern, collation);
                     QueryResult<T> queryResult = connection.query(namespace,
                                                                   asDocument(connection.getDescription(), binding.getReadPreference()),
                                                                   projection,
@@ -523,39 +550,52 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     errHandlingCallback.onResult(null, t);
                 } else {
                     if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                           wrapInExplainIfNecessary(asCommandDocument()),
-                                                           CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
-                                                           connection, asyncTransformer(source, connection),
-                                                           releasingCallback(exceptionTransformingCallback(errHandlingCallback),
-                                                                             source, connection));
+                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
+                                releasingCallback(exceptionTransformingCallback(errHandlingCallback), source, connection);
+                        checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                                new AsyncCallableWithConnectionAndSource() {
+                                    @Override
+                                    public void call(final AsyncConnectionSource source, final AsyncConnection connection,
+                                                     final Throwable t) {
+                                        if (t != null) {
+                                            wrappedCallback.onResult(null, t);
+                                        } else {
+                                            executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                                    wrapInExplainIfNecessary(getCommand()),
+                                                    CommandResultDocumentCodec.create(decoder, FIRST_BATCH), connection,
+                                                    asyncTransformer(source, connection), wrappedCallback);
+                                        }
+                                    }
+                                });
                     } else {
-                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback,
-
-                                source, connection);
-                        checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
-                            @Override
-                            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
-                                if (t != null) {
-                                    wrappedCallback.onResult(null, t);
-                                } else {
-                                    connection.queryAsync(namespace, asDocument(connection.getDescription(), binding.getReadPreference()),
-                                            projection, skip, limit, batchSize, isSlaveOk() || binding.getReadPreference().isSlaveOk(),
-                                            isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(), decoder,
-                                            new SingleResultCallback<QueryResult<T>>() {
-                                                @Override
-                                                public void onResult(final QueryResult<T> result, final Throwable t) {
-                                                    if (t != null) {
-                                                        wrappedCallback.onResult(null, t);
-                                                    } else {
-                                                        wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit, batchSize,
-                                                                        getMaxTimeForCursor(),
-                                                                        decoder, source, connection), null);
-                                                    }
-                                                }
-                                            });
-                                }
-                            }
+                        final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
+                                releasingCallback(errHandlingCallback, source, connection);
+                        checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                                new AsyncCallableWithConnectionAndSource() {
+                                    @Override
+                                    public void call(final AsyncConnectionSource source, final AsyncConnection connection, final
+                                    Throwable t) {
+                                        if (t != null) {
+                                            wrappedCallback.onResult(null, t);
+                                        } else {
+                                            connection.queryAsync(namespace, asDocument(connection.getDescription(),
+                                                    binding.getReadPreference()), projection, skip, limit, batchSize,
+                                                    isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                                    isTailableCursor(), isAwaitData(), isNoCursorTimeout(), isPartial(), isOplogReplay(),
+                                                    decoder, new SingleResultCallback<QueryResult<T>>() {
+                                                        @Override
+                                                        public void onResult(final QueryResult<T> result, final Throwable t) {
+                                                            if (t != null) {
+                                                                wrappedCallback.onResult(null, t);
+                                                            } else {
+                                                                wrappedCallback.onResult(new AsyncQueryBatchCursor<T>(result, limit,
+                                                                        batchSize, getMaxTimeForCursor(), decoder, source, connection),
+                                                                        null);
+                                                            }
+                                                        }
+                                                    });
+                                        }
+                                    }
                         });
                     }
                 }
@@ -605,7 +645,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                                 try {
                                     return new CommandReadOperation<BsonDocument>(getNamespace().getDatabaseName(),
-                                                                                  new BsonDocument("explain", asCommandDocument()),
+                                                                                  new BsonDocument("explain", getCommand()),
                                                                                   new BsonDocumentCodec()).execute(singleConnectionBinding);
                                 } catch (MongoCommandException e) {
                                     throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
@@ -651,7 +691,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
                             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                                 new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                                       new BsonDocument("explain", asCommandDocument()),
+                                                                       new BsonDocument("explain", getCommand()),
                                                                        new BsonDocumentCodec())
                                 .executeAsync(singleConnectionReadBinding,
                                               releasingCallback(exceptionTransformingCallback(errHandlingCallback),
@@ -693,19 +733,15 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         if (modifiers != null) {
             document.putAll(modifiers);
         }
-
         if (sort != null) {
             document.put("$orderby", sort);
         }
-
         if (maxTimeMS > 0) {
             document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
         }
-
         if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
         }
-
         if (document.isEmpty()) {
             document = filter != null ? filter : new BsonDocument();
         } else if (filter != null) {
@@ -733,86 +769,74 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         META_OPERATOR_TO_COMMAND_FIELD_MAP.put("$snapshot", "snapshot");
     }
 
-    private BsonDocument asCommandDocument() {
-        BsonDocument document = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
+    private BsonDocument getCommand() {
+        BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
         if (modifiers != null) {
             for (Map.Entry<String, BsonValue> cur : modifiers.entrySet()) {
                 String commandFieldName = META_OPERATOR_TO_COMMAND_FIELD_MAP.get(cur.getKey());
                 if (commandFieldName != null) {
-                    document.append(commandFieldName, cur.getValue());
+                    commandDocument.append(commandFieldName, cur.getValue());
                 }
             }
         }
-
         if (filter != null) {
-            document.put("filter", filter);
+            commandDocument.put("filter", filter);
         }
-
         if (sort != null) {
-            document.put("sort", sort);
+            commandDocument.put("sort", sort);
         }
-
         if (projection != null) {
-            document.put("projection", projection);
+            commandDocument.put("projection", projection);
         }
-
         if (skip > 0) {
-            document.put("skip", new BsonInt32(skip));
+            commandDocument.put("skip", new BsonInt32(skip));
         }
-
         if (limit != 0) {
-            document.put("limit", new BsonInt32(Math.abs(limit)));
+            commandDocument.put("limit", new BsonInt32(Math.abs(limit)));
         }
-
         if (limit >= 0) {
             if (batchSize < 0 && Math.abs(batchSize) < limit) {
-                document.put("limit", new BsonInt32(Math.abs(batchSize)));
+                commandDocument.put("limit", new BsonInt32(Math.abs(batchSize)));
             } else if (batchSize != 0) {
-                document.put("batchSize", new BsonInt32(Math.abs(batchSize)));
+                commandDocument.put("batchSize", new BsonInt32(Math.abs(batchSize)));
             }
         }
-
         if (limit < 0 || batchSize < 0) {
-            document.put("singleBatch", BsonBoolean.TRUE);
+            commandDocument.put("singleBatch", BsonBoolean.TRUE);
         }
-
         if (maxTimeMS > 0) {
-            document.put("maxTimeMS", new BsonInt64(maxTimeMS));
+            commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
-
         if (isTailableCursor()) {
-            document.put("tailable", BsonBoolean.TRUE);
+            commandDocument.put("tailable", BsonBoolean.TRUE);
         }
-
         if (isAwaitData()) {
-            document.put("awaitData", BsonBoolean.TRUE);
+            commandDocument.put("awaitData", BsonBoolean.TRUE);
         }
-
         if (oplogReplay) {
-            document.put("oplogReplay", BsonBoolean.TRUE);
+            commandDocument.put("oplogReplay", BsonBoolean.TRUE);
         }
-
         if (noCursorTimeout) {
-            document.put("noCursorTimeout", BsonBoolean.TRUE);
+            commandDocument.put("noCursorTimeout", BsonBoolean.TRUE);
         }
-
         if (partial) {
-            document.put("allowPartialResults", BsonBoolean.TRUE);
+            commandDocument.put("allowPartialResults", BsonBoolean.TRUE);
         }
-
         if (!readConcern.isServerDefault()) {
-            document.put("readConcern", readConcern.asDocument());
+            commandDocument.put("readConcern", readConcern.asDocument());
         }
-
-        return document;
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        return commandDocument;
     }
 
-    private BsonDocument wrapInExplainIfNecessary(final BsonDocument findCommandDocument) {
+    private BsonDocument wrapInExplainIfNecessary(final BsonDocument commandDocument) {
         if (isExplain()) {
-            return new BsonDocument("explain", findCommandDocument);
+            return new BsonDocument("explain", commandDocument);
         } else {
-            return findCommandDocument;
+            return commandDocument;
         }
     }
 

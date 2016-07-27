@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CollationStrength
 import com.mongodb.operation.BatchCursor
 import spock.lang.IgnoreIf
 import spock.lang.Subject
@@ -377,6 +379,54 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         then:
         executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
+
+    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should throw an exception when using an unsupported Collation'() {
+        given:
+        collection.setCollation(caseInsensitiveCollation)
+        dbCursor = collection.find()
+
+        when:
+        dbCursor.count()
+
+        then:
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
+
+        when:
+        dbCursor.one()
+
+        then:
+        exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
+
+        when:
+        ++dbCursor.iterator()
+
+        then:
+        exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        when:
+        def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
+        collection.insert(document)
+        collection.setCollation(caseInsensitiveCollation)
+        dbCursor = collection.find(BasicDBObject.parse('{str: "FOO"}'))
+
+        then:
+        dbCursor.count() == 1
+
+        then:
+        dbCursor.one() == document
+
+        then:
+        ++dbCursor.iterator() == document
+    }
+
+    def caseInsensitiveCollation = Collation.builder().locale('en').collationStrength(CollationStrength.SECONDARY).build()
 
     static DBObject getKeyPattern(DBObject explainPlan) {
         if (explainPlan.queryPlanner.winningPlan.inputStage != null) {

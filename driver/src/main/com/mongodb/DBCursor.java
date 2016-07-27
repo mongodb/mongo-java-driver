@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.OperationExecutor;
@@ -80,6 +81,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
     private OptionalFinalizer optionalFinalizer;
+    private Collation collation;
 
 
     /**
@@ -126,7 +128,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, executor, filter, modifiers, projection, sort, new FindOptions(findOptions), readPreference);
+        return new DBCursor(collection, executor, filter, modifiers, projection, sort, new FindOptions(findOptions), readPreference)
+                .setReadConcern(getReadConcern()).setCollation(getCollation());
     }
 
     /**
@@ -501,7 +504,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .sort(collection.wrapAllowNull(sort))
                                                 .noCursorTimeout(options.isNoCursorTimeout())
                                                 .oplogReplay(options.isOplogReplay())
-                                                .partial(options.isPartial());
+                                                .partial(options.isPartial())
+                                                .collation(getCollation());
 
         if ((this.options & Bytes.QUERYOPTION_TAILABLE) != 0) {
             if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
@@ -667,9 +671,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see DBCursor#size
      */
     public int count() {
-        return (int) collection.getCount(getQuery(), 0, 0, getReadPreferenceForCursor(), getReadConcern(),
-                                         findOptions.getMaxTime(MILLISECONDS), MILLISECONDS,
-                                         collection.wrap(modifiers).get("$hint"));
+        return (int) collection.getCount(getQuery(), 0, 0, getReadPreferenceForCursor(), getReadConcern(), getCollation(),
+                                         findOptions.getMaxTime(MILLISECONDS), MILLISECONDS,  collection.wrap(modifiers).get("$hint"));
     }
 
     /**
@@ -679,8 +682,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBObject one() {
-        return collection.findOne(getQuery(), getKeysWanted(), sort,
-                                  getReadPreferenceForCursor(), getReadConcern(), findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
+        return collection.findOne(getQuery(), getKeysWanted(), sort, getReadPreferenceForCursor(), getReadConcern(),
+                getCollation(), findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -723,8 +726,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public int size() {
         return (int) collection.getCount(getQuery(), findOptions.getLimit(),
-                                         findOptions.getSkip(), getReadPreference(), getReadConcern(),
-                                         findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                         findOptions.getSkip(), getReadPreference(), getReadConcern(), getCollation(),
+                                         findOptions.getMaxTime(MILLISECONDS), MILLISECONDS, null);
     }
 
     /**
@@ -813,6 +816,33 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             return readConcern;
         }
         return collection.getReadConcern();
+    }
+
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        if (collation != null) {
+            return collation;
+        }
+        return collection.getCollation();
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public DBCursor setCollation(final Collation collation) {
+        this.collation = collation;
+        return this;
     }
 
     /**

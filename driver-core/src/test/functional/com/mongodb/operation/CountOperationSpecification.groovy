@@ -24,16 +24,8 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadBinding
 import com.mongodb.bulk.IndexRequest
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
@@ -299,76 +291,25 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
-        given:
-        def connection = Mock(Connection)
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
-            getReadPreference() >> readPreference
-        }
+        when:
         def operation = new CountOperation(helper.namespace).filter(BsonDocument.parse('{a: 1}'))
 
-        when:
-        operation.execute(readBinding)
-
         then:
-        _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
-        1 * connection.release()
+        testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
 
         where:
-        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
-    }
-
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
-        given:
-        def connection = Mock(AsyncConnection)
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def readBinding = Stub(AsyncReadBinding) {
-            getReadPreference() >> readPreference
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def operation = new CountOperation(helper.namespace).filter(BsonDocument.parse('{a: 1}'))
-
-        when:
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        1 * connection.release()
-
-        where:
-        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+        [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()
     }
 
     def 'should create the expected command'() {
-        given:
+        when:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def hint = new BsonString('hint')
-        def connection = Mock(Connection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([3, 2, 0])
-            }
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
-        }
         def operation = new CountOperation(helper.namespace)
         def expectedCommand = new BsonDocument('count', new BsonString(helper.namespace.getCollectionName()))
-        when:
-        operation.execute(readBinding)
 
         then:
-        1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> { helper.commandResult }
-        1 * connection.release()
+        testOperation(operation, [3, 4, 0], expectedCommand, async, helper.commandResult)
 
         when:
         operation.filter(filter)
@@ -377,6 +318,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .hint(hint)
                 .maxTime(10, MILLISECONDS)
                 .readConcern(ReadConcern.MAJORITY)
+                .collation(defaultCollation)
 
          expectedCommand.append('query', filter)
                 .append('limit', new BsonInt64(20))
@@ -384,108 +326,59 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .append('hint', hint)
                 .append('maxTimeMS', new BsonInt64(10))
                 .append('readConcern', new BsonDocument('level', new BsonString('majority')))
-
-        operation.execute(readBinding)
+                .append('collation', defaultCollation.asDocument())
 
         then:
-        1 * connection.command(helper.dbName, expectedCommand, _, _, _) >> { helper.commandResult }
-        1 * connection.release()
+        testOperation(operation, [3, 4, 0], expectedCommand, async, helper.commandResult)
+
+        where:
+        async << [true, false]
     }
 
-    def 'should create the expected command asynchronously'() {
+    def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def filter = new BsonDocument('filter', new BsonInt32(1))
-        def hint = new BsonString('hint')
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([3, 2, 0])
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def operation = new CountOperation(helper.namespace)
-        def expectedCommand = new BsonDocument('count', new BsonString(helper.namespace.getCollectionName()))
-
-        when:
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        1 * connection.release()
-
-        when:
-        operation.filter(filter)
-                .limit(20)
-                .skip(30)
-                .hint(hint)
-                .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
-
-        expectedCommand.append('query', filter)
-                .append('limit', new BsonInt64(20))
-                .append('skip', new BsonInt64(30))
-                .append('hint', hint)
-                .append('maxTimeMS', new BsonInt64(10))
-                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
-
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(helper.dbName, expectedCommand, _, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
-        1 * connection.release()
-    }
-
-    def 'should validate the ReadConcern'() {
-        given:
-        def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> Stub(ConnectionSource) {
-                getConnection() >> Stub(Connection) {
-                    getDescription() >> Stub(ConnectionDescription) {
-                        getServerVersion() >> new ServerVersion([3, 0, 0])
-                    }
-                }
-            }
-        }
         def operation = new CountOperation(helper.namespace).readConcern(readConcern)
 
         when:
-        operation.execute(readBinding)
+        testOperationThrows(operation, [3, 0, 0], async)
 
         then:
-        thrown(IllegalArgumentException)
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('ReadConcern not supported by server version:')
 
         where:
-        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
+        [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
     }
 
-    def 'should validate the ReadConcern asynchronously'() {
+    def 'should throw an exception when using an unsupported Collation'() {
         given:
-        def connection = Stub(AsyncConnection) {
-            getDescription() >>  Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([3, 0, 0])
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
-        def operation = new CountOperation(helper.namespace).readConcern(readConcern)
-        def callback = Mock(SingleResultCallback)
+        def operation = new CountOperation(helper.namespace).collation(defaultCollation)
 
         when:
-        operation.executeAsync(readBinding, callback)
+        testOperationThrows(operation, [3, 2, 0], async)
 
         then:
-        1 * callback.onResult(null, _ as IllegalArgumentException)
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
+        async << [false, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should support collation'() {
+        given:
+        getCollectionHelper().insertDocuments(BsonDocument.parse('{str: "foo"}'))
+        def operation = new CountOperation(namespace).filter(BsonDocument.parse('{str: "FOO"}')).collation(caseInsensitiveCollation)
+
+        when:
+        def result = execute(operation, async)
+
+        then:
+        result == 1
+
+        where:
+        async << [true, false]
     }
 
     def helper = [

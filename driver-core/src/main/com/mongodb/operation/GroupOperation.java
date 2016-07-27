@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -40,6 +41,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -60,6 +62,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
     private BsonJavaScript keyFunction;
     private BsonDocument filter;
     private BsonJavaScript finalizeFunction;
+    private Collation collation;
 
     /**
      * Create an operation that will perform a Group on a given collection.
@@ -76,6 +79,27 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
         this.initial = notNull("initial", initial);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     * @since 3.4
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     * @since 3.4
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
     }
 
     /**
@@ -177,6 +201,30 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
     }
 
     /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation
+     *
+     * @param collation the collation
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public GroupOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    /**
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @param binding the binding
@@ -187,6 +235,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
+                checkValidCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
                                                      connection, transformer(connectionSource, connection));
@@ -203,35 +252,46 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                            CommandResultDocumentCodec.create(decoder, "retval"), connection, asyncTransformer(connection),
-                            releasingCallback(errHandlingCallback, connection));
+                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                        CommandResultDocumentCodec.create(decoder, "retval"), connection, asyncTransformer(connection),
+                                        wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
     }
 
     private BsonDocument getCommand() {
-        BsonDocument document = new BsonDocument("ns", new BsonString(namespace.getCollectionName()));
+        BsonDocument commandDocument = new BsonDocument("ns", new BsonString(namespace.getCollectionName()));
 
         if (getKey() != null) {
-            document.put("key", getKey());
+            commandDocument.put("key", getKey());
         } else if (getKeyFunction() != null) {
-            document.put("$keyf", getKeyFunction());
+            commandDocument.put("$keyf", getKeyFunction());
         }
 
-        document.put("initial", getInitial());
-        document.put("$reduce", getReduceFunction());
+        commandDocument.put("initial", getInitial());
+        commandDocument.put("$reduce", getReduceFunction());
 
         if (getFinalizeFunction() != null) {
-            document.put("finalize", getFinalizeFunction());
+            commandDocument.put("finalize", getFinalizeFunction());
         }
-
         if (getFilter() != null) {
-            document.put("cond", getFilter());
+            commandDocument.put("cond", getFilter());
         }
-
-        return new BsonDocument("group", document);
+        if (getCollation() != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        return new BsonDocument("group", commandDocument);
     }
 
     private CommandTransformer<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source, final Connection connection) {

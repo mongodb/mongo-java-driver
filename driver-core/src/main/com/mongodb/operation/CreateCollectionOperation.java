@@ -20,6 +20,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.AsyncConnection;
@@ -36,6 +37,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -61,6 +63,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private BsonDocument validator;
     private ValidationLevel validationLevel = null;
     private ValidationAction validationAction = null;
+    private Collation collation = null;
 
     /**
      * Construct a new instance.
@@ -338,11 +341,36 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public CreateCollectionOperation collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
+                checkValidCollation(connection, collation);
                 executeWrappedCommandProtocol(binding, databaseName, getCommand(connection.getDescription()), connection,
                         writeConcernErrorTransformer());
                 return null;
@@ -359,8 +387,18 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
-                            writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
+                    final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new OperationHelper.AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()),
+                                        connection, writeConcernErrorTransformer(), wrappedCallback);
+                            }
+                        }
+                    });
                 }
             }
         });
@@ -393,6 +431,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             document.put("validationAction", new BsonString(validationAction.getValue()));
         }
         appendWriteConcernToCommand(writeConcern, document, description);
+        if (collation != null) {
+            document.put("collation", collation.asDocument());
+        }
         return document;
     }
 

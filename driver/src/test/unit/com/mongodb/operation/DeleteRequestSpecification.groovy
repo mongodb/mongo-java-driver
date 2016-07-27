@@ -20,6 +20,7 @@ package com.mongodb.operation
 
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.WriteRequest
+import com.mongodb.client.model.Collation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
@@ -58,5 +59,14 @@ class DeleteRequestSpecification extends Specification {
     def 'should set multi property'() {
         expect:
         !new DeleteRequest(new BsonDocument()).multi(false).isMulti()
+    }
+
+    def 'should set collation property'() {
+        when:
+        def collation = Collation.builder().locale('en').build()
+
+        then:
+        new DeleteRequest(new BsonDocument()).collation(null).getCollation() == null
+        new DeleteRequest(new BsonDocument()).collation(collation).getCollation() == collation
     }
 }

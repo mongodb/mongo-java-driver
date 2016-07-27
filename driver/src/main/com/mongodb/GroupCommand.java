@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
 import com.mongodb.operation.GroupOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
@@ -35,6 +36,7 @@ public class GroupCommand {
     private final DBObject initial;
     private final String reduce;
     private final String finalize;
+    private final Collation collation;
 
     /**
      * Creates a new group command.
@@ -56,6 +58,7 @@ public class GroupCommand {
         this.reduce = reduce;
         this.finalize = finalize;
         this.keyf = null;
+        this.collation = collection.getCollation();
     }
 
     /**
@@ -80,6 +83,7 @@ public class GroupCommand {
         this.reduce = reduce;
         this.finalize = finalize;
         this.keys = null;
+        this.collation = collection.getCollation();
     }
 
     /**
@@ -134,7 +138,7 @@ public class GroupCommand {
         if (finalize != null) {
             operation.finalizeFunction(new BsonJavaScript(finalize));
         }
-
+        operation.collation(collation);
         return operation;
     }
 

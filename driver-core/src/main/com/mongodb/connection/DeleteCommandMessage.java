@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
@@ -88,6 +89,11 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeName("q");
             getCodec(deleteRequest.getFilter()).encode(writer, deleteRequest.getFilter(), EncoderContext.builder().build());
             writer.writeInt32("limit", deleteRequest.isMulti() ? 0 : 1);
+            if (deleteRequest.getCollation() != null) {
+                writer.writeName("collation");
+                BsonDocument collation = deleteRequest.getCollation().asDocument();
+                getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
+            }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {

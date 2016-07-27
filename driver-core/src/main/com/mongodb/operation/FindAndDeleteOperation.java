@@ -21,6 +21,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -40,6 +41,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.checkValidCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -49,8 +51,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * An operation that atomically finds and deletes a single document.
  *
  * @param <T> the operations result type.
- * @since 3.0
  * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
+ * @since 3.0
  */
 public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
@@ -60,12 +62,13 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
     private BsonDocument sort;
     private long maxTimeMS;
     private WriteConcern writeConcern;
+    private Collation collation;
 
     /**
      * Construct a new instance.
      *
      * @param namespace the database and collection namespace for the operation.
-     * @param decoder the decoder for the result documents.
+     * @param decoder   the decoder for the result documents.
      * @deprecated use {@link #FindAndDeleteOperation(MongoNamespace, WriteConcern, Decoder)} instead
      */
     @Deprecated
@@ -76,9 +79,9 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
     /**
      * Construct a new instance.
      *
-     * @param namespace the database and collection namespace for the operation.
+     * @param namespace    the database and collection namespace for the operation.
      * @param writeConcern the writeConcern for the operation
-     * @param decoder the decoder for the result documents.
+     * @param decoder      the decoder for the result documents.
      * @since 3.2
      */
     public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder) {
@@ -100,8 +103,8 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Get the write concern for this operation
      *
      * @return the {@link com.mongodb.WriteConcern}
-     * @since 3.2
      * @mongodb.server.release 3.2
+     * @since 3.2
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
@@ -208,12 +211,37 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @return this
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public FindAndDeleteOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
             @Override
             public T call(final Connection connection) {
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), asCommandDocument(connection.getDescription()),
+                checkValidCollation(connection, collation);
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         CommandResultDocumentCodec.create(decoder, "value"), connection,
                         FindAndModifyHelper.<T>transformer());
             }
@@ -223,31 +251,43 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
         withConnection(binding, new AsyncCallableWithConnection() {
-                    @Override
-                    public void call(final AsyncConnection connection, final Throwable t) {
-                        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                        if (t != null) {
-                            errHandlingCallback.onResult(null, t);
-                        } else {
-                            executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                    asCommandDocument(connection.getDescription()),  CommandResultDocumentCodec.create(decoder, "value"),
-                                    connection, FindAndModifyHelper.<T>transformer(),
-                                    releasingCallback(errHandlingCallback, connection));
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else {
+                    final SingleResultCallback<T> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(connection.getDescription()), CommandResultDocumentCodec.create(decoder, "value"),
+                                        connection, FindAndModifyHelper.<T>transformer(), wrappedCallback);
+                            }
                         }
-                    }
-                });
+                    });
+                }
+            }
+        });
     }
 
-    private BsonDocument asCommandDocument(final ConnectionDescription description) {
-        BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", getFilter());
-        putIfNotNull(command, "fields", getProjection());
-        putIfNotNull(command, "sort", getSort());
-        putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
-        command.put("remove", BsonBoolean.TRUE);
+    private BsonDocument getCommand(final ConnectionDescription description) {
+        BsonDocument commandDocument = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
+        putIfNotNull(commandDocument, "query", getFilter());
+        putIfNotNull(commandDocument, "fields", getProjection());
+        putIfNotNull(commandDocument, "sort", getSort());
+        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        commandDocument.put("remove", BsonBoolean.TRUE);
         if (serverIsAtLeastVersionThreeDotTwo(description) && writeConcern.isAcknowledged() && !writeConcern.isServerDefault()) {
-            command.put("writeConcern", writeConcern.asDocument());
+            commandDocument.put("writeConcern", writeConcern.asDocument());
         }
-        return command;
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        return commandDocument;
     }
 }

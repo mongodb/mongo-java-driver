@@ -45,8 +45,11 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -317,6 +320,22 @@ public final class ClusterFixture {
         }
     }
 
+    public static <T> T executeSync(final WriteOperation<T> op) throws Throwable {
+        return executeSync(op, getBinding());
+    }
+
+    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+        return op.execute(binding);
+    }
+
+    public static <T> T executeSync(final ReadOperation<T> op) throws Throwable {
+        return executeSync(op, getBinding());
+    }
+
+    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+        return op.execute(binding);
+    }
+
     public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
@@ -376,6 +395,27 @@ public final class ClusterFixture {
                     }
             }
         });
+    }
+
+    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
+        final List<T> results = new ArrayList<T>();
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+        loopCursor(batchCursor, new Block<T>() {
+            @Override
+            public void apply(final T t) {
+                results.add(t);
+            }
+        }, futureResultCallback);
+        futureResultCallback.get(TIMEOUT, SECONDS);
+        return results;
+    }
+
+    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) throws Throwable {
+        List<T> results = new ArrayList<T>();
+        while (batchCursor.hasNext()) {
+            results.addAll(batchCursor.next());
+        }
+        return results;
     }
 
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
