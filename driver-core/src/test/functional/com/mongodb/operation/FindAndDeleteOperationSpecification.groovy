@@ -130,13 +130,11 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         helper.insertDocuments(new DocumentCodec(), pete)
-
-        when:
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), new WriteConcern(5, 1), documentCodec)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
 
-        then:
-        testOperationThrows(operation, async)
+        when:
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)

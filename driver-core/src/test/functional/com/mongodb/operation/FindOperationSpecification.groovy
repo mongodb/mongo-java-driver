@@ -26,6 +26,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.binding.ClusterBinding
@@ -508,7 +509,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
         def syncBinding = new ClusterBinding(getCluster(), ReadPreference.secondary())
-        def asyncBinding = new ClusterBinding(getAsyncCluster(), ReadPreference.secondary())
+        def asyncBinding = new AsyncClusterBinding(getAsyncCluster(), ReadPreference.secondary())
 
         when:
         def result = async ? executeAsync(operation, asyncBinding) : executeSync(operation, syncBinding)
