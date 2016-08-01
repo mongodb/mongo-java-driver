@@ -1,14 +1,14 @@
 +++
 date = "2015-03-19T12:53:30-04:00"
-title = "Connection Settings"
+title = "Connect to MongoDB"
 [menu.main]
-  parent = "Async Connecting"
+  parent = "Async Tutorials"
   identifier = "Async Connection Settings"
   weight = 10
   pre = "<i class='fa'></i>"
 +++
 
-## Connection Settings
+## Connect to MongoDB
 
 The Java driver has two ways of specifying the settings of a connection to a MongoDB server deployment.
 
@@ -31,7 +31,7 @@ mongodb://host:27017
 mongodb://host1:27017,host2:27017
 ```
 
-The [authentication guide]({{< relref "driver-async/reference/connecting/authenticating.md" >}}) contains information on how to provide credentials in the connection string.
+The [authentication guide]({{< relref "driver-async/tutorials/authentication.md" >}}) contains information on how to provide credentials in the connection string.
 
 #### The Database Component
 

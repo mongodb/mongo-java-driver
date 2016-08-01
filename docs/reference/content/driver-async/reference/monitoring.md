@@ -2,9 +2,9 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "Monitoring"
 [menu.main]
-  parent = "Async Management"
+  parent = "Async Reference"
   identifier = "Async Monitoring"
-  weight = 100
+  weight = 20
   pre = "<i class='fa'></i>"
 +++
 

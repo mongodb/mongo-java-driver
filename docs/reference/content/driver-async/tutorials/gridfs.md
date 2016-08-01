@@ -2,9 +2,9 @@
 date = "2015-11-27T12:00:00-00:00"
 title = "GridFS"
 [menu.main]
-  parent = "Async Reference"
+  parent = "Async Tutorials"
   identifier = "Async GridFS"
-  weight = 80
+  weight = 90
   pre = "<i class='fa'></i>"
 +++
 

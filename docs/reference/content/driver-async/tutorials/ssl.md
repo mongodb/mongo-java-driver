@@ -2,7 +2,7 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "SSL"
 [menu.main]
-  parent = "Async Connecting"
+  parent = "Async Connection Settings"
   identifier = "Async SSL"
   weight = 10
   pre = "<i class='fa'></i>"
@@ -33,7 +33,7 @@ or via connection string:
 MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&streamType=netty");
 ```
 
-See [Netty Configuration]({{< relref "driver-async/reference/connecting/connection-settings.md#netty-configuration" >}}) for details on 
+See [Netty Configuration]({{< relref "driver-async/tutorials/connect-to-mongodb.md#netty-configuration" >}}) for details on 
 configuring Netty.
 
 ### Host name verification

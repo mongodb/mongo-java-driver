@@ -2,7 +2,7 @@
 date = "2015-03-19T14:27:51-04:00"
 title = "Authenticating"
 [menu.main]
-  parent = "Async Connecting"
+  parent = "Async Connection Settings"
   identifier = "Async Authenticating"
   weight = 20
   pre = "<i class='fa'></i>"

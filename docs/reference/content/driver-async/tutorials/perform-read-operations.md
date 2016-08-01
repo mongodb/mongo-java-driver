@@ -1,17 +1,16 @@
 +++
 date = "2015-03-19T12:53:30-04:00"
-title = "CRUD Operations"
+title = "Read Operations"
 [menu.main]
-  parent = "Async Reference"
-  identifier = "Async CRUD Operations"
-  weight = 70
+  parent = "Async Tutorials"
+  identifier = "Async Read Operations"
+  weight = 15
   pre = "<i class='fa'></i>"
 +++
 
 
 ## CRUD
 
-For a walkthrough of the main CRUD operations please refer to the [Quick Tour]({{< ref "driver-async/getting-started/quick-tour.md" >}}).
 
 All CRUD-related methods in the Java driver are accessed through the 
 [`MongoCollection`]({{< apiref "com/mongodb/async/client/MongoCollection" >}}) interface.  Instances of 

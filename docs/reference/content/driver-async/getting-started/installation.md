@@ -1,9 +1,9 @@
 +++
 date = "2015-03-17T15:36:56Z"
-title = "Installation Guide"
+title = "Installation"
 [menu.main]
-  parent = "Async Getting Started"
-  identifier = "Async Installation Guide"
+  parent = "MongoDB Async Driver"
+  identifier = "Async Installation"
   weight = 1
   pre = "<i class='fa'></i>"
 +++
@@ -20,6 +20,7 @@ The MongoDB Async Driver requires either [Netty](http://netty.io/) or Java 7.
 {{< distroPicker >}}
 
 ## MongoDB Async Driver
-The new asynchronous API that can leverage either Netty or Java 7's AsynchronousSocketChannel for fast and non-blocking IO.
+
+The MongoDB Async Driver provides asynchronous API that can leverage either Netty or Java 7's AsynchronousSocketChannel for fast and non-blocking I/O.
 
 {{< install artifactId="mongodb-driver-async" version="3.3.0" dependencies="true">}}

@@ -1,28 +1,16 @@
 +++
 date = "2015-03-17T15:36:56Z"
-title = "Admin Quick Tour"
+title = "Databases and Collections"
 [menu.main]
-  parent = "Async Getting Started"
+  parent = "Async Tutorials"
   identifier = "Async Admin Quick Tour"
-  weight = 50
+  weight = 11
   pre = "<i class='fa'></i>"
 +++
 
-# MongoDB Driver Admin Quick Tour
+## Databases and Collections
 
-This is the second part of the MongoDB driver quick tour. In the
-[quick tour]({{< relref "driver-async/getting-started/quick-tour.md" >}}) we looked at how to
-use the Async Java driver to execute basic CRUD operations.  In this section we'll look at some of the
-administrative features available in the driver.
-
-The following code snippets come from the `QuickTourAdmin.java` example code
-that can be found with the [driver
-source]({{< srcref "driver-async/src/examples/tour/QuickTourAdmin.java">}}).
-
-{{% note %}}
-See the [installation guide]({{< relref "driver-async/getting-started/installation-guide.md" >}})
-for instructions on how to install the MongoDB Driver.
-{{% /note %}}
+MongoDB stores documents in collections; the collections in databases.
 
 ## Setup
 
@@ -220,17 +208,4 @@ Highest scoring document: { "_id" : 1, "content" : "additional content", "score"
 For more information about text search see the [text index]({{< docsref "/core/index-text" >}}) and
 [$text query operator]({{< docsref "/reference/operator/query/text">}}) documentation.
 
-## Running a command
 
-While not all commands have a specific helper, however you can run any [command]({{< docsref "/reference/command">}})
-by using the [`runCommand()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-com.mongodb.async.SingleResultCallback-">}})
-method.  Here we call the [buildInfo]({{ docsref "reference/command/buildInfo" }}) command:
-
-```java
-database.runCommand(new Document("buildInfo", 1), new SingleResultCallback<Document>() {
-    @Override
-    public void onResult(final Document buildInfo, final Throwable t) {
-        System.out.println(buildInfo);
-    }
-});
-```

@@ -10,11 +10,11 @@ title = "Reference"
 
 ## Reference
 
-The reference documentation for the Java driver focuses on high-level documentation and use-cases. The Javadoc-generated API reference is
-[here]({{< apiref "" >}}).    
+The reference documentation for the Java driver focuses on high-level documentation and use-cases. 
 
-- [Connecting]({{< relref "driver-async/reference/connecting/index.md" >}}): Documentation of the driver's support for connecting to MongoDB servers
-- [CRUD]({{< relref "driver-async/reference/crud/index.md" >}}): Documentation of the driver's support for CRUD operations
-- [Management]({{< relref "driver-async/reference/management/index.md" >}}): Documentation of the driver's support for logging and monitoring of its 
-internal state
+- [Logging]({{< relref "driver-async/reference/logging.md" >}})
+
+- [Monitoring]({{< relref "driver-async/reference/monitoring.md" >}})
+
+See also [Javadoc-generated API]({{< apiref "" >}}).
 
