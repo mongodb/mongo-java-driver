@@ -30,6 +30,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class DeleteManyModel<T> extends WriteModel<T> {
     private final Bson filter;
+    private final Collation collation;
+    private final boolean hasSetCollation;
 
     /**
      * Construct a new instance.
@@ -37,7 +39,26 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
      * @param filter a document describing the query filter, which may not be null.
      */
     public DeleteManyModel(final Bson filter) {
+        this(filter, null, false);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param collation the collation to apply to the filter.
+     *                  A null value will use the default {@link Collation} as configured on the server.
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public DeleteManyModel(final Bson filter, final Collation collation) {
+        this(filter, collation, true);
+    }
+
+    private DeleteManyModel(final Bson filter, final Collation collation, final boolean hasSetCollation) {
         this.filter = notNull("filter", filter);
+        this.collation = collation;
+        this.hasSetCollation = hasSetCollation;
     }
 
     /**
@@ -47,5 +68,27 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
      */
     public Bson getFilter() {
         return filter;
+    }
+
+    /**
+     * Gets the collation to apply to the query, which may be null
+     *
+     * @return the collation to apply to the query
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Returns true if the collation has been set
+     *
+     * @return true if the collation has been set
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public boolean hasSetCollation() {
+        return hasSetCollation;
     }
 }

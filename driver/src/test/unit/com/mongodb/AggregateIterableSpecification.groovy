@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
@@ -44,13 +45,14 @@ class AggregateIterableSpecification extends Specification {
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
     def writeConcern = WriteConcern.MAJORITY
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected AggregationOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                                                            readConcern, writeConcern, executor, pipeline)
+                                                            readConcern, writeConcern, executor, pipeline, collation)
 
         when: 'default input should be as expected'
         aggregationIterable.iterator()
@@ -59,8 +61,8 @@ class AggregateIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec()));
+        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()).collation(collation));
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -69,11 +71,9 @@ class AggregateIterableSpecification extends Specification {
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec())
-                .maxTime(999, MILLISECONDS)
-                .useCursor(true))
-
+        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .collation(collation).maxTime(999, MILLISECONDS).useCursor(true))
     }
 
     def 'should build the expected AggregateToCollectionOperation'() {
@@ -85,7 +85,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline)
+                                  pipeline, collation)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -96,8 +96,7 @@ class AggregateIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .maxTime(999, MILLISECONDS)
-                .allowDiskUse(true))
+                .maxTime(999, MILLISECONDS).allowDiskUse(true).collation(collation))
 
         when: 'the subsequent read should have the batchSize set'
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -113,7 +112,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
-                                                            readPreference, readConcern, writeConcern, executor, pipeline)
+                                                            readPreference, readConcern, writeConcern, executor, pipeline, collation)
 
         when: 'The operation fails with an exception'
         aggregationIterable.iterator()
@@ -123,7 +122,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline).iterator()
+                                  pipeline, collation).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -152,7 +151,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new Document('$match', 1)])
+                readConcern, writeConcern, executor, [new Document('$match', 1)], collation)
 
         when:
         def results = mongoIterable.first()

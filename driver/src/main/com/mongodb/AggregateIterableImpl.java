@@ -20,6 +20,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
@@ -47,6 +48,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final List<? extends Bson> pipeline;
+    private final Collation collation;
 
     private Boolean allowDiskUse;
     private Integer batchSize;
@@ -56,8 +58,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final WriteConcern writeConcern,
-                          final OperationExecutor executor, final List<? extends Bson> pipeline) {
+                          final WriteConcern writeConcern, final OperationExecutor executor, final List<? extends Bson> pipeline,
+                          final Collation collation) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -67,6 +69,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
+        this.collation = collation;
     }
 
     @Override
@@ -134,11 +137,12 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
-                    .bypassDocumentValidation(bypassDocumentValidation);
+                    .bypassDocumentValidation(bypassDocumentValidation)
+                    .collation(collation);
             executor.execute(operation);
             FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, readPreference, readConcern, executor,
-                    new BsonDocument(), new FindOptions());
+                    new BsonDocument(), new FindOptions(), collation);
             if (batchSize != null) {
                 findOperation.batchSize(batchSize);
             }
@@ -149,7 +153,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
                     .useCursor(useCursor)
-                    .readConcern(readConcern),
+                    .readConcern(readConcern)
+                    .collation(collation),
                     readPreference, executor);
         }
     }

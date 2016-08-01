@@ -24,6 +24,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
@@ -49,6 +50,7 @@ class FindIterableSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected findOperation'() {
         given:
@@ -71,7 +73,7 @@ class FindIterableSpecification extends Specification {
                 .noCursorTimeout(false)
                 .partial(false)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions)
+                                                new Document('filter', 1), findOptions, collation)
 
         when: 'default input should be as expected'
         findIterable.into([]) { result, t -> }
@@ -92,6 +94,7 @@ class FindIterableSpecification extends Specification {
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .collation(collation)
         )
         readPreference == secondary()
 
@@ -129,6 +132,7 @@ class FindIterableSpecification extends Specification {
                 .noCursorTimeout(true)
                 .partial(true)
                 .slaveOk(true)
+                .collation(collation)
         )
     }
 
@@ -142,7 +146,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions)
+                                                new Document('filter', 1), findOptions, collation)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -161,6 +165,7 @@ class FindIterableSpecification extends Specification {
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .batchSize(100)
+                .collation(collation)
         )
     }
 
@@ -185,7 +190,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
-                                                 readPreference, readConcern, executor, new Document(), findOptions)
+                                                 readPreference, readConcern, executor, new Document(), findOptions, collation)
 
         when:
         def results = new FutureResultCallback()
@@ -248,7 +253,7 @@ class FindIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions())
+                readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions(), collation)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)

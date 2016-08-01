@@ -26,6 +26,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -99,6 +100,11 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
+    public Collation getCollation() {
+        return filesCollection.getCollation();
+    }
+
+    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
     }
@@ -119,6 +125,12 @@ final class GridFSBucketImpl implements GridFSBucket {
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
                 chunksCollection.withReadConcern(readConcern));
+    }
+
+    @Override
+    public GridFSBucket withCollation(final Collation collation) {
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withCollation(collation),
+                chunksCollection.withCollation(collation));
     }
 
     @Override

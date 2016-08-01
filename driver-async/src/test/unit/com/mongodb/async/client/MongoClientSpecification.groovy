@@ -86,7 +86,7 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', fromProviders([new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, ReadConcern.MAJORITY, null, new TestOperationExecutor([]))
     }
 
     def 'default codec registry should contain all supported providers'() {

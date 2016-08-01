@@ -32,6 +32,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class UpdateManyModel<T> extends WriteModel<T> {
     private final Bson filter;
+    private final Collation collation;
+    private final boolean hasSetCollation;
     private final Bson update;
     private final UpdateOptions options;
 
@@ -40,7 +42,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators.
+     *               operators.
      */
     public UpdateManyModel(final Bson filter, final Bson update) {
         this(filter, update, new UpdateOptions());
@@ -55,18 +57,61 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * @param options the options to apply
      */
     public UpdateManyModel(final Bson filter, final Bson update, final UpdateOptions options) {
+        this(filter, null, update, options, false);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param collation the collation to apply to the filter.
+     *                  A null value will use the default {@link Collation} as configured on the server.
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators.
+     * @param options the options to apply
+     */
+    public UpdateManyModel(final Bson filter, final Collation collation, final Bson update, final UpdateOptions options) {
+        this(filter, collation, update, options, true);
+    }
+
+    private UpdateManyModel(final Bson filter, final Collation collation, final Bson update, final UpdateOptions options,
+                            final boolean hasSetCollation) {
         this.filter = notNull("filter", filter);
+        this.collation = collation;
         this.update = notNull("update", update);
         this.options = notNull("options", options);
+        this.hasSetCollation = hasSetCollation;
     }
 
     /**
      * Gets the query filter.
      *
-     * @return the query filtert
+     * @return the query filter
      */
     public Bson getFilter() {
         return filter;
+    }
+
+    /**
+     * Gets the collation to apply to the query, which may be null
+     *
+     * @return the collation to apply to the query
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Returns true if the collation has been set
+     *
+     * @return true if the collation has been set
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public boolean hasSetCollation() {
+        return hasSetCollation;
     }
 
     /**

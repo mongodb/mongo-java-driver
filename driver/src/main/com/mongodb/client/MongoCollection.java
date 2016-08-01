@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
@@ -104,6 +105,16 @@ public interface MongoCollection<TDocument> {
     ReadConcern getReadConcern();
 
     /**
+     * Get the collation for the MongoCollection
+     *
+     * <p>A null value represents the server default</p>
+     * @return the {@link com.mongodb.client.model.Collation} or null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    Collation getCollation();
+
+    /**
      * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
      *
      * @param clazz the default class to cast any documents returned from the database into.
@@ -146,6 +157,16 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
+
+    /**
+     * Create a new MongoCollection instance with a different collation
+     *
+     * @param collation the new {@link Collation} for the collection, which may be null.
+     * @return a new MongoCollection instance with the different collation
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    MongoCollection<TDocument> withCollation(Collation collation);
 
     /**
      * Counts the number of documents in the collection.

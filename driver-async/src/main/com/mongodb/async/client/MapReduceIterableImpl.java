@@ -24,6 +24,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.operation.AsyncOperationExecutor;
@@ -53,6 +54,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private final String mapFunction;
     private final String reduceFunction;
     private final WriteConcern writeConcern;
+    private final Collation collation;
 
     private boolean inline = true;
     private String collectionName;
@@ -74,7 +76,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
                           final WriteConcern writeConcern, final AsyncOperationExecutor executor, final String mapFunction,
-                          final String reduceFunction) {
+                          final String reduceFunction, final Collation collation) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -85,6 +87,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
         this.executor = notNull("executor", executor);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
+        this.collation = collation;
     }
 
     @Override
@@ -240,7 +243,8 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
                             .scope(toBsonDocument(scope))
                             .sort(toBsonDocument(sort))
                             .verbose(verbose)
-                            .readConcern(readConcern);
+                            .readConcern(readConcern)
+                            .collation(collation);
             if (finalizeFunction != null) {
                 operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
             }
@@ -251,7 +255,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(dbName, collectionName),
                     documentClass, resultClass, codecRegistry, primary(), readConcern, executor, new BsonDocument(),
-                    new FindOptions()).batchSize(batchSize);
+                    new FindOptions(), collation).batchSize(batchSize);
             return new AwaitingWriteOperationIterable<TResult, MapReduceStatistics>(operation, executor, delegated);
         }
     }
@@ -270,7 +274,8 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
                 .nonAtomic(nonAtomic)
                 .sharded(sharded)
                 .databaseName(databaseName)
-                .bypassDocumentValidation(bypassDocumentValidation);
+                .bypassDocumentValidation(bypassDocumentValidation)
+                .collation(collation);
 
         if (finalizeFunction != null) {
             operation.finalizeFunction(new BsonJavaScript(finalizeFunction));

@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
@@ -42,11 +43,12 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
+    private final Collation collation;
     private Bson filter;
 
     FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                      final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                     final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
+                     final OperationExecutor executor, final Bson filter, final FindOptions findOptions, final Collation collation) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -56,6 +58,7 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
         this.executor = notNull("executor", executor);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
+        this.collation = collation;
     }
 
     @Override
@@ -183,7 +186,8 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
                    .slaveOk(readPreference.isSlaveOk())
-                   .readConcern(readConcern);
+                   .readConcern(readConcern)
+                   .collation(collation);
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

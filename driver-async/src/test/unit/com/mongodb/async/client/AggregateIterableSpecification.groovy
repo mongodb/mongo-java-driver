@@ -25,6 +25,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.AsyncOperationExecutor
@@ -53,6 +54,7 @@ class AggregateIterableSpecification extends Specification {
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
     def writeConcern = WriteConcern.MAJORITY
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected AggregationOperation'() {
         given:
@@ -64,7 +66,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline)
+                writeConcern, executor, pipeline, collation)
 
         when: 'default input should be as expected'
         aggregationIterable.into([]) { result, t -> }
@@ -74,7 +76,7 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec()));
+                new DocumentCodec()).collation(collation));
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -86,7 +88,8 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
                 new DocumentCodec())
                 .maxTime(999, MILLISECONDS)
-                .useCursor(true))
+                .useCursor(true)
+                .collation(collation))
 
     }
 
@@ -104,7 +107,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline)
+                pipeline, collation)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -116,7 +119,8 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
                 .maxTime(999, MILLISECONDS)
-                .allowDiskUse(true))
+                .allowDiskUse(true)
+                .collation(collation))
 
         when: 'the subsequent read should have the batchSize set'
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -128,7 +132,7 @@ class AggregateIterableSpecification extends Specification {
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline)
+                pipeline, collation)
                 .allowDiskUse(true)
                 .toCollection(futureResultCallback);
         futureResultCallback.get()
@@ -138,7 +142,7 @@ class AggregateIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .allowDiskUse(true))
+                .allowDiskUse(true).collation(collation))
     }
 
     def 'should handle exceptions correctly'() {
@@ -147,7 +151,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline)
+                writeConcern, executor, pipeline, collation)
 
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
@@ -167,7 +171,7 @@ class AggregateIterableSpecification extends Specification {
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
-                pipeline)
+                pipeline, collation)
                 .into([], futureResultCallback)
         futureResultCallback.get()
 
@@ -195,7 +199,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))])
+                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))], collation)
 
         when:
         def results = new FutureResultCallback()
@@ -258,7 +262,7 @@ class AggregateIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
+                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')], collation)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
