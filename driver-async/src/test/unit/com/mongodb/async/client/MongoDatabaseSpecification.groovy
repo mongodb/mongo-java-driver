@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
@@ -49,10 +50,12 @@ class MongoDatabaseSpecification extends Specification {
     def readPreference = secondary()
     def writeConcern = WriteConcern.ACKNOWLEDGED
     def readConcern = ReadConcern.DEFAULT
+    def collation = Collation.builder().locale('en').build()
 
     def 'should return the correct name from getName'() {
         given:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, new TestOperationExecutor([]))
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation,
+                new TestOperationExecutor([]))
 
         expect:
         database.getName() == name
@@ -64,12 +67,13 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern,
-                readConcern, executor).withCodecRegistry(newCodecRegistry)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .withCodecRegistry(newCodecRegistry)
 
         then:
         database.getCodecRegistry() == newCodecRegistry
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, newCodecRegistry, readPreference, writeConcern, readConcern, executor))
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, newCodecRegistry, readPreference, writeConcern, readConcern, collation,
+                executor))
     }
 
     def 'should behave correctly when using withReadPreference'() {
@@ -78,12 +82,13 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern,
-                readConcern, executor).withReadPreference(newReadPreference)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .withReadPreference(newReadPreference)
 
         then:
         database.getReadPreference() == newReadPreference
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, newReadPreference, writeConcern, readConcern, executor))
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, newReadPreference, writeConcern, readConcern, collation,
+                executor))
     }
 
     def 'should behave correctly when using withWriteConcern'() {
@@ -92,12 +97,13 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern,
-                executor).withWriteConcern(newWriteConcern)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .withWriteConcern(newWriteConcern)
 
         then:
         database.getWriteConcern() == newWriteConcern
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, newWriteConcern, readConcern, executor))
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, newWriteConcern, readConcern, collation,
+                executor))
     }
 
 
@@ -107,20 +113,42 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern,
-                executor).withReadConcern(newReadConcern)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .withReadConcern(newReadConcern)
 
         then:
         database.getReadConcern() == newReadConcern
         expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, newReadConcern,
+                collation, executor))
+    }
+
+    def 'should behave correctly when using withCollation'() {
+        given:
+        def newCollation = Collation.builder().locale('fr').build()
+        def executor = new TestOperationExecutor([])
+
+        when:
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .withCollation(newCollation)
+
+        then:
+        database.getCollation() == newCollation
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, newCollation,
                 executor))
+
+        when:
+        database = database.withCollation(null)
+
+        then:
+        database.getCollation() == null
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, null, executor))
     }
 
     def 'should be able to executeCommand correctly'() {
         given:
         def command = new BsonDocument('command', new BsonInt32(1))
         def executor = new TestOperationExecutor([null, null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
         def futureResultCallback = new FutureResultCallback<Document>()
 
         when:
@@ -171,7 +199,8 @@ class MongoDatabaseSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor).drop(futureResultCallback)
+        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
+                .drop(futureResultCallback)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
         futureResultCallback.get()
 
@@ -182,7 +211,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should use ListCollectionsOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
 
         when:
         def listCollectionIterable = database.listCollections()
@@ -203,7 +232,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def collectionName = 'collectionName'
         def executor = new TestOperationExecutor([null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor)
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
@@ -212,7 +241,7 @@ class MongoDatabaseSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
+        expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern).collation(collation))
 
         when:
         futureResultCallback = new FutureResultCallback<Void>()
@@ -243,25 +272,24 @@ class MongoDatabaseSpecification extends Specification {
                 .indexOptionDefaults(BsonDocument.parse('{ storageEngine : { mmapv1 : {}}}'))
                 .validator(BsonDocument.parse('{level: {$gte: 10}}'))
                 .validationLevel(ValidationLevel.MODERATE)
-                .validationAction(ValidationAction.WARN))
+                .validationAction(ValidationAction.WARN)
+                .collation(collation))
     }
 
     def 'should pass the correct options to getCollection'() {
         given:
         def codecRegistry = fromProviders([new BsonValueCodecProvider()])
         def database = new MongoDatabaseImpl('databaseName', codecRegistry, secondary(), WriteConcern.MAJORITY,
-                ReadConcern.MAJORITY, new TestOperationExecutor([]))
+                ReadConcern.MAJORITY, collation, new TestOperationExecutor([]))
+        def expectedCollection = new MongoCollectionImpl<Document>(new MongoNamespace('databaseName', 'collectionName'), Document,
+                fromProviders([new BsonValueCodecProvider()]), secondary(), WriteConcern.MAJORITY, ReadConcern.MAJORITY, collation,
+                new TestOperationExecutor([]))
 
         when:
         def collection = database.getCollection('collectionName')
 
         then:
         expect collection, isTheSameAs(expectedCollection)
-
-        where:
-        expectedCollection = new MongoCollectionImpl<Document>(new MongoNamespace('databaseName', 'collectionName'), Document,
-                fromProviders([new BsonValueCodecProvider()]), secondary(), WriteConcern.MAJORITY, ReadConcern.MAJORITY,
-                new TestOperationExecutor([]))
     }
 
 }

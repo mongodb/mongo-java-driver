@@ -31,6 +31,7 @@ import com.mongodb.async.client.MongoDatabaseImpl
 import com.mongodb.async.client.TestOperationExecutor
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.client.model.Collation
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.AsyncOperationExecutor
@@ -61,8 +62,9 @@ class GridFSBucketSpecification extends Specification {
     def readConcern = ReadConcern.DEFAULT
     def registry = MongoClients.defaultCodecRegistry
     def database = databaseWithExecutor(Stub(AsyncOperationExecutor))
+    def collation = Collation.builder().locale('en').build()
     def databaseWithExecutor(AsyncOperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, readConcern, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, readConcern, collation, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -150,11 +152,31 @@ class GridFSBucketSpecification extends Specification {
         1 * filesCollection.getReadConcern() >> newReadConcern
     }
 
+    def 'should behave correctly when using withCollation'() {
+        given:
+        def filesCollection = Mock(MongoCollection)
+        def chunksCollection = Mock(MongoCollection)
+        def newCollation = Collation.builder().locale('fr').build()
+
+        when:
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection).withCollation(newCollation)
+
+        then:
+        1 * filesCollection.withCollation(newCollation) >> filesCollection
+        1 * chunksCollection.withCollation(newCollation) >> chunksCollection
+
+        when:
+        gridFSBucket.getCollation()
+
+        then:
+        1 * filesCollection.getCollation() >> newCollation
+    }
+
     def 'should get defaults from MongoDatabase'() {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                readConcern, new TestOperationExecutor([]))
+                readConcern, collation, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)
@@ -164,6 +186,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.getReadPreference() == database.getReadPreference()
         gridFSBucket.getWriteConcern() == database.getWriteConcern()
         gridFSBucket.getReadConcern() == database.getReadConcern()
+        gridFSBucket.getCollation() == database.getCollation()
     }
 
     def 'should create the expected GridFSUploadStream'() {
@@ -556,7 +579,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == primary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).collation(collation))
 
         when:
         def filter = new BsonDocument('filename', new BsonString('filename'))
@@ -566,7 +589,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .readConcern(readConcern).filter(filter).slaveOk(true))
+                .readConcern(readConcern).filter(filter).slaveOk(true).collation(collation))
     }
 
     def 'should throw an exception if file not found when opening by name'() {

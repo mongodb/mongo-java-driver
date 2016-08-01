@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CreateCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -74,6 +75,16 @@ public interface MongoDatabase {
     ReadConcern getReadConcern();
 
     /**
+     * Get the collation for the MongoCollection
+     *
+     * <p>A null value represents the server default</p>
+     * @return the {@link Collation} or null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    Collation getCollation();
+
+    /**
      * Create a new MongoDatabase instance with a different codec registry.
      *
      * @param codecRegistry the new {@link org.bson.codecs.configuration.CodecRegistry} for the database
@@ -107,6 +118,16 @@ public interface MongoDatabase {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoDatabase withReadConcern(ReadConcern readConcern);
+
+    /**
+     * Create a new MongoDatabase instance with a different collation
+     *
+     * @param collation the new {@link Collation} for the database, which may be null.
+     * @return a new MongoDatabase instance with the different collation
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    MongoDatabase withCollation(Collation collation);
 
     /**
      * Gets a collection.

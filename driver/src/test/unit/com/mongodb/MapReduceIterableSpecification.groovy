@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
@@ -45,12 +46,13 @@ class MapReduceIterableSpecification extends Specification {
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
     def writeConcern = WriteConcern.MAJORITY
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected MapReduceWithInlineResultsOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce')
+                readConcern, writeConcern, executor, 'map', 'reduce', collation)
 
         when: 'default input should be as expected'
         mapReduceIterable.iterator()
@@ -60,7 +62,7 @@ class MapReduceIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace, new BsonJavaScript('map'),
-                new BsonJavaScript('reduce'), new DocumentCodec()).verbose(true));
+                new BsonJavaScript('reduce'), new DocumentCodec()).verbose(true).collation(collation));
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -85,6 +87,7 @@ class MapReduceIterableSpecification extends Specification {
                 .scope(new BsonDocument('scope', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .verbose(false)
+                .collation(collation)
         )
     }
 
@@ -95,7 +98,7 @@ class MapReduceIterableSpecification extends Specification {
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
         def mapReduceIterable = new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, 'map', 'reduce')
+                writeConcern, executor, 'map', 'reduce', collation)
                 .collectionName(collectionNamespace.getCollectionName())
                 .databaseName(collectionNamespace.getDatabaseName())
                 .filter(new Document('filter', 1))
@@ -129,6 +132,7 @@ class MapReduceIterableSpecification extends Specification {
                 .jsMode(true)
                 .sharded(true)
                 .bypassDocumentValidation(true)
+                .collation(collation)
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(expectedOperation)
@@ -146,7 +150,7 @@ class MapReduceIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def mapReduceIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, 'map', 'reduce')
+                readPreference, readConcern, writeConcern, executor, 'map', 'reduce', collation)
 
 
         when: 'The operation fails with an exception'
@@ -157,7 +161,7 @@ class MapReduceIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                'map', 'reduce').iterator()
+                'map', 'reduce', collation).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -187,7 +191,7 @@ class MapReduceIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new MapReduceIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, 'map', 'reduce')
+                readConcern, writeConcern, executor, 'map', 'reduce', collation)
 
         when:
         def results = mongoIterable.first()

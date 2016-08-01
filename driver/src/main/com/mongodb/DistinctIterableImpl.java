@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -39,6 +40,7 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final String fieldName;
+    private final Collation collation;
 
     private Bson filter;
     private long maxTimeMS;
@@ -46,7 +48,7 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
 
     DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                         final OperationExecutor executor, final String fieldName, final Bson filter) {
+                         final OperationExecutor executor, final String fieldName, final Bson filter, final Collation collation) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -56,6 +58,7 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
         this.executor = notNull("executor", executor);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;
+        this.collation = collation;
     }
 
     @Override
@@ -106,7 +109,8 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
         DistinctOperation<TResult> operation = new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .readConcern(readConcern);
+                .readConcern(readConcern)
+                .collation(collation);
         return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 }

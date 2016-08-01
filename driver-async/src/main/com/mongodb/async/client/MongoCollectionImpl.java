@@ -34,6 +34,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
@@ -95,17 +96,19 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
+    private final Collation collation;
     private final AsyncOperationExecutor executor;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final ReadConcern readConcern,
-                        final AsyncOperationExecutor executor) {
+                        final Collation collation, final AsyncOperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.readConcern = notNull("readConcern", readConcern);
+        this.collation = collation;
         this.executor = notNull("executor", executor);
     }
 
@@ -140,33 +143,44 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    public Collation getCollation() {
+        return collation;
+    }
+
+    @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> newDocumentClass) {
         return new MongoCollectionImpl<NewTDocument>(namespace, newDocumentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+                collation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+                collation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-            executor);
+                collation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+                collation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+                collation, executor);
+    }
+
+    @Override
+    public MongoCollection<TDocument> withCollation(final Collation collation) {
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
+                collation, executor);
     }
 
     @Override
@@ -185,7 +199,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                    .filter(toBsonDocument(filter))
                                    .skip(options.getSkip())
                                    .limit(options.getLimit())
-                                   .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                   .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                   .collation(collation);
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
@@ -202,7 +217,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Bson filter, final Class<TResult> resultClass) {
         return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, fieldName, filter);
+                readConcern, executor, fieldName, filter, collation);
     }
 
     @Override
@@ -223,7 +238,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> resultClass) {
         return new FindIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern,
-                executor, filter, new FindOptions());
+                executor, filter, new FindOptions(), collation);
     }
 
     @Override
@@ -234,7 +249,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline);
+                readConcern, writeConcern, executor, pipeline, collation);
     }
 
     @Override
@@ -246,7 +261,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, mapFunction, reduceFunction);
+                readConcern, writeConcern, executor, mapFunction, reduceFunction, collation);
     }
 
     @Override
@@ -270,28 +285,36 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 writeRequest = new InsertRequest(documentToBsonDocument(document));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<TDocument> replaceOneModel = (ReplaceOneModel<TDocument>) writeModel;
+                Collation modelCollation = replaceOneModel.hasSetCollation() ? replaceOneModel.getCollation() : collation;
                 writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()), documentToBsonDocument(replaceOneModel
-                                                                                                                     .getReplacement()),
-                                                 WriteRequest.Type.REPLACE)
-                               .upsert(replaceOneModel.getOptions().isUpsert());
+                        .getReplacement()),
+                        WriteRequest.Type.REPLACE)
+                        .upsert(replaceOneModel.getOptions().isUpsert())
+                        .collation(modelCollation);
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
+                Collation modelCollation = updateOneModel.hasSetCollation() ? updateOneModel.getCollation() : collation;
                 writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
-                                                 WriteRequest.Type.UPDATE)
-                               .multi(false)
-                               .upsert(updateOneModel.getOptions().isUpsert());
+                        WriteRequest.Type.UPDATE)
+                        .multi(false)
+                        .upsert(updateOneModel.getOptions().isUpsert())
+                        .collation(modelCollation);
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
+                Collation modelCollation = updateManyModel.hasSetCollation() ? updateManyModel.getCollation() : collation;
                 writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
-                                                 WriteRequest.Type.UPDATE)
-                               .multi(true)
-                               .upsert(updateManyModel.getOptions().isUpsert());
+                        WriteRequest.Type.UPDATE)
+                        .multi(true)
+                        .upsert(updateManyModel.getOptions().isUpsert())
+                        .collation(modelCollation);
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false);
+                Collation modelCollation = deleteOneModel.hasSetCollation() ? deleteOneModel.getCollation() : collation;
+                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false).collation(modelCollation);
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true);
+                Collation modelCollation = deleteManyModel.hasSetCollation() ? deleteManyModel.getCollation() : collation;
+                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true).collation(modelCollation);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
@@ -367,7 +390,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement), WriteRequest.Type.REPLACE)
-                                  .upsert(options.isUpsert()), options.getBypassDocumentValidation(),
+                                  .upsert(options.isUpsert()).collation(collation), options.getBypassDocumentValidation(),
                                   new SingleResultCallback<BulkWriteResult>() {
                                       @Override
                                       public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -413,7 +436,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .filter(toBsonDocument(filter))
                          .projection(toBsonDocument(options.getProjection()))
                          .sort(toBsonDocument(options.getSort()))
-                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS), callback);
+                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                         .collation(collation), callback);
     }
 
     @Override
@@ -431,7 +455,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                          .upsert(options.isUpsert())
                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                         .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
+                         .bypassDocumentValidation(options.getBypassDocumentValidation())
+                         .collation(collation), callback);
     }
 
     @Override
@@ -449,7 +474,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                 .upsert(options.isUpsert())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()), callback);
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .collation(collation), callback);
     }
 
     @Override
@@ -499,7 +525,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                               .max(model.getOptions().getMax())
                               .bucketSize(model.getOptions().getBucketSize())
                               .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
-                              .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression())));
+                              .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
+                              .collation(model.getOptions().hasSetCollation() ? model.getOptions().getCollation() : collation));
         }
         final CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
         executor.execute(createIndexesOperation, new SingleResultCallback<Void>() {
@@ -552,7 +579,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private void delete(final Bson filter, final boolean multi, final SingleResultCallback<DeleteResult> callback) {
-        executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), null,
+        executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi).collation(collation), null,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -573,7 +600,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private void update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi,
                         final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update), WriteRequest.Type.UPDATE)
-                        .upsert(updateOptions.isUpsert()).multi(multi), updateOptions.getBypassDocumentValidation(),
+                        .upsert(updateOptions.isUpsert()).multi(multi).collation(collation), updateOptions.getBypassDocumentValidation(),
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {

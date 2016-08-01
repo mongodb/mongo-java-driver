@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
@@ -42,6 +43,7 @@ class FindIterableSpecification extends Specification {
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
     def namespace = new MongoNamespace('db', 'coll')
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected findOperation'() {
         given:
@@ -59,7 +61,7 @@ class FindIterableSpecification extends Specification {
                                            .noCursorTimeout(false)
                                            .partial(false)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
+                executor, new Document('filter', 1), findOptions, collation)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -80,6 +82,7 @@ class FindIterableSpecification extends Specification {
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .collation(collation)
         )
         readPreference == secondary()
 
@@ -117,6 +120,7 @@ class FindIterableSpecification extends Specification {
                 .noCursorTimeout(true)
                 .partial(true)
                 .slaveOk(true)
+                .collation(collation)
         )
     }
 
@@ -125,7 +129,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
+                executor, new Document('filter', 1), findOptions, collation)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -142,6 +146,7 @@ class FindIterableSpecification extends Specification {
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .collation(collation)
         )
     }
 
@@ -169,7 +174,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document(), findOptions)
+                executor, new Document(), findOptions, collation)
 
         when:
         def results = mongoIterable.first()

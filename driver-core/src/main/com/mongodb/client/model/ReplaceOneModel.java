@@ -29,6 +29,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ReplaceOneModel<T> extends WriteModel<T> {
     private final Bson filter;
+    private final Collation collation;
+    private final boolean hasSetCollation;
     private final T replacement;
     private final UpdateOptions options;
 
@@ -50,9 +52,29 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param options     the options to apply
      */
     public ReplaceOneModel(final Bson filter, final T replacement, final UpdateOptions options) {
+        this(filter, null, replacement, options, false);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter    a document describing the query filter, which may not be null.
+     * @param collation the collation to apply to the filter.
+     *                  A null value will use the default {@link Collation} as configured on the server.
+     * @param replacement the replacement document
+     * @param options     the options to apply
+     */
+    public ReplaceOneModel(final Bson filter, final Collation collation, final T replacement, final UpdateOptions options) {
+        this(filter, collation, replacement, options, true);
+    }
+
+    private ReplaceOneModel(final Bson filter, final Collation collation, final T replacement, final UpdateOptions options,
+                            final boolean hasSetCollation) {
         this.filter = notNull("filter", filter);
-        this.replacement = notNull("replacement", replacement);
+        this.collation = collation;
         this.options = notNull("options", options);
+        this.replacement = notNull("replacement", replacement);
+        this.hasSetCollation = hasSetCollation;
     }
 
     /**
@@ -62,6 +84,28 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      */
     public Bson getFilter() {
         return filter;
+    }
+
+    /**
+     * Gets the collation to apply to the query, which may be null
+     *
+     * @return the collation to apply to the query
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Returns true if the collation has been set
+     *
+     * @return true if the collation has been set
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public boolean hasSetCollation() {
+        return hasSetCollation;
     }
 
     /**
