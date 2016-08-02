@@ -32,6 +32,7 @@ class CollationSpecification extends Specification {
         options.getCaseLevel() == null
         options.getLocale() == null
         options.getMaxVariable() == null
+        options.getNormalization() == null
         options.getNumericOrdering() == null
         options.getStrength() == null
     }
@@ -47,6 +48,7 @@ class CollationSpecification extends Specification {
                 .collationAlternate(CollationAlternate.SHIFTED)
                 .collationMaxVariable(CollationMaxVariable.SPACE)
                 .backwards(true)
+                .normalization(true)
                 .build()
 
         then:
@@ -56,6 +58,7 @@ class CollationSpecification extends Specification {
         options.getCaseLevel() == true
         options.getLocale() == 'en'
         options.getMaxVariable() == CollationMaxVariable.SPACE
+        options.getNormalization() == true
         options.getNumericOrdering() == true
         options.getStrength() == CollationStrength.IDENTICAL
     }
@@ -76,10 +79,11 @@ class CollationSpecification extends Specification {
                 .numericOrdering(true)
                 .collationAlternate(CollationAlternate.SHIFTED)
                 .collationMaxVariable(CollationMaxVariable.SPACE)
+                .normalization(true)
                 .backwards(true)
                 .build()                         | '''{locale: "en", caseLevel: true, caseFirst: "off", strength: 5,
                                                        numericOrdering: true, alternate: "shifted",
-                                                       maxVariable: "space", backwards: true}'''
+                                                       maxVariable: "space", normalization: true, backwards: true}'''
     }
 
 

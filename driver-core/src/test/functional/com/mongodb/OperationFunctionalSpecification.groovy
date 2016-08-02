@@ -242,6 +242,7 @@ class OperationFunctionalSpecification extends Specification {
             .numericOrdering(true)
             .collationAlternate(CollationAlternate.SHIFTED)
             .collationMaxVariable(CollationMaxVariable.SPACE)
+            .normalization(true)
             .backwards(true)
             .build()
 

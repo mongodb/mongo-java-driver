@@ -38,6 +38,7 @@ public final class Collation {
     private final Boolean numericOrdering;
     private final CollationAlternate alternate;
     private final CollationMaxVariable maxVariable;
+    private final Boolean normalization;
     private final Boolean backwards;
 
     /**
@@ -71,6 +72,7 @@ public final class Collation {
         private Boolean numericOrdering;
         private CollationAlternate alternate;
         private CollationMaxVariable maxVariable;
+        private Boolean normalization;
         private Boolean backwards;
 
         private Builder() {
@@ -84,6 +86,7 @@ public final class Collation {
             this.numericOrdering = options.getNumericOrdering();
             this.alternate = options.getAlternate();
             this.maxVariable = options.getMaxVariable();
+            this.normalization = options.getNormalization();
             this.backwards = options.getBackwards();
         }
 
@@ -100,10 +103,10 @@ public final class Collation {
         }
 
         /**
-         * Sets the caseLevel
+         * Sets the case level value
          *
          * <p>Turns on case sensitivity</p>
-         * @param caseLevel the caseLevel
+         * @param caseLevel the case level value
          * @return this
          */
         public Builder caseLevel(final Boolean caseLevel) {
@@ -170,11 +173,23 @@ public final class Collation {
         }
 
         /**
-         * Sets the backwards
+         * Sets the normalization value
+         *
+         * <p>If true, normalizes text into Unicode NFD.</p>
+         * @param normalization the normalization value
+         * @return this
+         */
+        public Builder normalization(final Boolean normalization) {
+            this.normalization = normalization;
+            return this;
+        }
+
+        /**
+         * Sets the backwards value
          *
          * <p>Causes secondary differences to be considered in reverse order, as it is done in the French language</p>
          *
-         * @param backwards the backwards
+         * @param backwards the backwards value
          * @return this
          */
         public Builder backwards(final Boolean backwards) {
@@ -203,9 +218,9 @@ public final class Collation {
     }
 
     /**
-     * Returns the caseLevel
+     * Returns the case level value
      *
-     * @return the caseLevel
+     * @return the case level value
      */
     public Boolean getCaseLevel() {
         return caseLevel;
@@ -258,23 +273,22 @@ public final class Collation {
     }
 
     /**
-     * Returns the backwards
+     * Returns the normalization value
      *
-     * @return the backwards
+     * <p>If true, normalizes text into Unicode NFD.</p>
+     * @return the normalization
+     */
+    public Boolean getNormalization() {
+        return normalization;
+    }
+
+    /**
+     * Returns the backwards value
+     *
+     * @return the backwards value
      */
     public Boolean getBackwards() {
         return backwards;
-    }
-
-    private Collation(final Builder builder) {
-        this.locale = builder.locale;
-        this.caseLevel = builder.caseLevel;
-        this.caseFirst = builder.caseFirst;
-        this.strength = builder.strength;
-        this.numericOrdering = builder.numericOrdering;
-        this.alternate = builder.alternate;
-        this.maxVariable = builder.maxVariable;
-        this.backwards = builder.backwards;
     }
 
     /**
@@ -304,6 +318,9 @@ public final class Collation {
         }
         if (maxVariable != null) {
             collation.put("maxVariable", new BsonString(maxVariable.getValue()));
+        }
+        if (normalization != null) {
+            collation.put("normalization", new BsonBoolean(normalization));
         }
         if (backwards != null) {
             collation.put("backwards", new BsonBoolean(backwards));
@@ -342,6 +359,9 @@ public final class Collation {
         if (getMaxVariable() != that.getMaxVariable()) {
             return false;
         }
+        if (getNormalization() != null ? !getNormalization().equals(that.getNormalization()) : that.getNormalization() != null) {
+            return false;
+        }
         if (getBackwards() != null ? !getBackwards().equals(that.getBackwards()) : that.getBackwards() != null) {
             return false;
         }
@@ -357,6 +377,7 @@ public final class Collation {
         result = 31 * result + (getNumericOrdering() != null ? getNumericOrdering().hashCode() : 0);
         result = 31 * result + (getAlternate() != null ? getAlternate().hashCode() : 0);
         result = 31 * result + (getMaxVariable() != null ? getMaxVariable().hashCode() : 0);
+        result = 31 * result + (getNormalization() != null ? getNormalization().hashCode() : 0);
         result = 31 * result + (getBackwards() != null ? getBackwards().hashCode() : 0);
         return result;
     }
@@ -371,7 +392,21 @@ public final class Collation {
                 + ", numericOrdering=" + numericOrdering
                 + ", alternate=" + alternate
                 + ", maxVariable=" + maxVariable
+                + ", normalization=" + normalization
                 + ", backwards=" + backwards
                 + "}";
+    }
+
+
+    private Collation(final Builder builder) {
+        this.locale = builder.locale;
+        this.caseLevel = builder.caseLevel;
+        this.caseFirst = builder.caseFirst;
+        this.strength = builder.strength;
+        this.numericOrdering = builder.numericOrdering;
+        this.alternate = builder.alternate;
+        this.maxVariable = builder.maxVariable;
+        this.normalization = builder.normalization;
+        this.backwards = builder.backwards;
     }
 }
