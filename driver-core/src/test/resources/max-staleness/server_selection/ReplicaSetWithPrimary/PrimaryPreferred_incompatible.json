@@ -1,8 +1,8 @@
 {
     "error": true,
     "read_preference": {
-        "maxStalenessMS": 120000,
-        "mode": "Nearest"
+        "maxStalenessMS": 50000,
+        "mode": "PrimaryPreferred"
     },
     "topology_description": {
         "servers": [

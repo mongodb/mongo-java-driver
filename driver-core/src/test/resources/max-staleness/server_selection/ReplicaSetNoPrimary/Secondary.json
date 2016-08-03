@@ -5,7 +5,11 @@
             "address": "b:27017",
             "avg_rtt_ms": 5,
             "lastUpdateTime": 0,
-            "lastWriteDate": 1,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "2"
+                }
+            },
             "maxWireVersion": 5,
             "tags": {
                 "data_center": "nyc"
@@ -27,7 +31,11 @@
             "address": "b:27017",
             "avg_rtt_ms": 5,
             "lastUpdateTime": 0,
-            "lastWriteDate": 1,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "2"
+                }
+            },
             "maxWireVersion": 5,
             "tags": {
                 "data_center": "nyc"
@@ -41,7 +49,11 @@
                 "address": "a:27017",
                 "avg_rtt_ms": 5,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 25001,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "25002"
+                    }
+                },
                 "maxWireVersion": 5,
                 "tags": {
                     "data_center": "tokyo"
@@ -52,7 +64,11 @@
                 "address": "b:27017",
                 "avg_rtt_ms": 5,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 1,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "2"
+                    }
+                },
                 "maxWireVersion": 5,
                 "tags": {
                     "data_center": "nyc"
@@ -63,7 +79,11 @@
                 "address": "c:27017",
                 "avg_rtt_ms": 5,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 0,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "1"
+                    }
+                },
                 "maxWireVersion": 5,
                 "tags": {
                     "data_center": "nyc"
@@ -74,7 +94,11 @@
                 "address": "d:27017",
                 "avg_rtt_ms": 5,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 1,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "2"
+                    }
+                },
                 "maxWireVersion": 5,
                 "tags": {
                     "data_center": "tokyo"
