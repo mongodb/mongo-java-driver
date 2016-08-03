@@ -71,8 +71,9 @@ public class ServerSelectionSelectionTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        // skip this test because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
+        // skip these tests because the driver prohibits maxStaleness or tagSets with mode of primary at a much lower level
         assumeTrue(!description.equals("max-staleness/server_selection/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
+        assumeTrue(!description.equals("max-staleness/server_selection/ReplicaSetWithPrimary/PrimaryPreferred_incompatible.json"));
 
         ServerSelector serverSelector = null;
         List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers" , new BsonArray()));
@@ -157,8 +158,8 @@ public class ServerSelectionSelectionTest {
             builder.roundTripTime(serverDescription.getNumber("avg_rtt_ms").asInt32().getValue(), TimeUnit.MILLISECONDS);
         }
         builder.state(ServerConnectionState.CONNECTED);
-        if (serverDescription.containsKey("lastWriteDate")) {
-            builder.lastWriteDate(new Date(serverDescription.getNumber("lastWriteDate").longValue()));
+        if (serverDescription.containsKey("lastWrite")) {
+            builder.lastWriteDate(new Date(serverDescription.getDocument("lastWrite").getNumber("lastWriteDate").longValue()));
         }
         if (serverDescription.containsKey("lastUpdateTime")) {
             builder.lastUpdateTimeNanos(serverDescription.getNumber("lastUpdateTime").longValue() * 1000000);  // convert to nanos

@@ -4,7 +4,11 @@
             "address": "b:27017",
             "avg_rtt_ms": 5,
             "lastUpdateTime": 0,
-            "lastWriteDate": 1,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "1"
+                }
+            },
             "maxWireVersion": 5,
             "type": "RSSecondary"
         }
@@ -17,7 +21,11 @@
             "address": "a:27017",
             "avg_rtt_ms": 50,
             "lastUpdateTime": 0,
-            "lastWriteDate": 1000001,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "1000001"
+                }
+            },
             "maxWireVersion": 5,
             "type": "RSSecondary"
         },
@@ -25,7 +33,11 @@
             "address": "b:27017",
             "avg_rtt_ms": 5,
             "lastUpdateTime": 0,
-            "lastWriteDate": 1,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "1"
+                }
+            },
             "maxWireVersion": 5,
             "type": "RSSecondary"
         }
@@ -36,7 +48,11 @@
                 "address": "a:27017",
                 "avg_rtt_ms": 50,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 1000001,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "1000001"
+                    }
+                },
                 "maxWireVersion": 5,
                 "type": "RSSecondary"
             },
@@ -44,7 +60,11 @@
                 "address": "b:27017",
                 "avg_rtt_ms": 5,
                 "lastUpdateTime": 0,
-                "lastWriteDate": 1,
+                "lastWrite": {
+                    "lastWriteDate": {
+                        "$numberLong": "1"
+                    }
+                },
                 "maxWireVersion": 5,
                 "type": "RSSecondary"
             }

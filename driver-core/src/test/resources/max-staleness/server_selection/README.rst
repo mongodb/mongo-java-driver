@@ -26,7 +26,9 @@ YAML files contain the following setup for each test:
 
     - ``avg_rtt_ms``: average round trip time in milliseconds [1]_
 
-    - ``lastWriteDate``: milliseconds
+    - ``lastWrite``: subdocument
+
+      - ``lastWriteDate``: nonzero int64, milliseconds since some past time
 
     - ``maxWireVersion``: an int
 
