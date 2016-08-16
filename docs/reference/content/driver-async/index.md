@@ -9,7 +9,7 @@ title = "MongoDB Async Driver"
 
 ## MongoDB Async Java Driver Documentation
 
-The following guide provides information on using the synchronous
+The following guide provides information on using the
 MongoDB Async Java Driver 3.3.
 
 ### What's New in 3.3

@@ -19,8 +19,10 @@ Not all commands have a specific helper. However, you can run any [MongoDB comma
 - Include the following import statements:
 
      ```java
-     import com.mongodb.MongoClient;
-     import com.mongodb.client.MongoDatabase;
+     import com.mongodb.async.client.MongoClient;
+     import com.mongodb.async.client.MongoClients;
+     import com.mongodb.async.client.MongoDatabase;
+     import com.mongodb.async.SingleResultCallback;
      import org.bson.Document;
      ```
 
@@ -31,7 +33,7 @@ Connect to a MongoDB deployment and declare and define a `MongoDatabase` instanc
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017` and define `database` to refer to the `test` database:
 
 ```java
-MongoClient mongoClient = new MongoClient(new ConnectionString("mongodb://localhost"));
+MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("mydb");
 ```
 

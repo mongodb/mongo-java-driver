@@ -9,186 +9,337 @@ title = "Read Operations"
 +++
 
 
-## CRUD
+## Find Operations
 
+Find operations retrieve documents from a collection. You can specify a filter to select only those documents that match the filter condition.
 
-All CRUD-related methods in the Java driver are accessed through the 
-[`MongoCollection`]({{< apiref "com/mongodb/async/client/MongoCollection" >}}) interface.  Instances of 
-[`MongoCollection`]({{< apiref "com/mongodb/async/client/MongoCollection" >}}) can be obtained from a  
-[`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient" >}}) instance by way of a
-[`MongoDatabase`]({{< apiref "com/mongodb/async/client/MongoDatabase" >}}):
+## Prerequisites
+
+- The example below requires a ``restaurants`` collection in the ``test`` database. To create and populate the collection, follow the directions in [github] (https://github.com/mongodb/docs-assets/tree/drivers).
+
+- Include the following import statements:
 
 ```java
-MongoClient client = MongoClients.create();
-MongoDatabase database = client.getDatabase("mydb");
-MongoCollection<Document> collection = database.getCollection("mycoll");
+import com.mongodb.*;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.*;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.connection.ClusterSettings;
+import org.bson.Document;
+
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Projections.excludeId;
+import static com.mongodb.client.model.Projections.fields;
+import static com.mongodb.client.model.Projections.include;
+import static java.util.Arrays.asList;
 ```
 
-[`MongoCollection`]({{< apiref "com/mongodb/async/client/MongoCollection" >}}) is a generic interface: the `TDocument` type parameter 
-is the class that clients use to insert or replace documents in a collection, and the default type returned from `find` and `aggregate`.
- 
-The single-argument `getCollection` method returns an instance of `MongoCollection<Document>`, and so with this type of collection 
-an application uses instances of the `Document` class:
+- Include the following callback code which the examples in the tutorials will use:
 
 ```java
-MongoCollection<Document> collection = database.getCollection("mycoll");
-
-// insert a document
-Document document = new Document("x", 1)
-collection.insertOne(document, new SingleResultCallback<Void>() {
-   @Override
-   public void onResult(final Void result, final Throwable t) {
-       System.out.println("Inserted!");
-   }
-});
-
-...
-
-document.append("x", 2).append("y", 3);
-
-// replace a document
-collection.replaceOne(Filters.eq("_id", document.get("_id"), document, 
-    new SingleResultCallback<UpdateResult>() {
-       @Override
-       public void onResult(final UpdateResult result, final Throwable t) {
-           System.out.println(result.getModifiedCount());
-       }
-   });
-
-...
-
-// find documents
-collection.find().into(new ArrayList<Document>(), 
-    new SingleResultCallback<List<Document>>() {
-        @Override
-        public void onResult(final List<Document> result, final Throwable t) {
-            System.out.println("Found Documents: #" + result.size());
-        }
-    });
+SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println("Operation Finished!");
+    }
+};
 ```
 
-### CodecRegistry
-
-An overload of the `getCollection` method allows clients to specify a different class for representing BSON documents.  For example, 
-users my wish to use the type-safe [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) with the CRUD API:
+- Include the following code which the examples will use to print the results of the find operations:
 
 ```java
-// Pass BsonDocument.class as the second argument
-MongoCollection<BsonDocument> collection = database.getCollection("mycoll", BsonDocument.class);
-
-// insert a document
-BsonDocument document = new BsonDocument("x", new BsonInt32(1));
-collection.insertOne(document, new SingleResultCallback<Void>() {
-   @Override
-   public void onResult(final Void result, final Throwable t) {
-       System.out.println("Inserted!");
-   }
-});
-
-...
-
-document.append("x", new BsonInt32(2)).append("y", new BsonInt32(3));
-
-// replace a document
-collection.replaceOne(Filters.eq("_id", document.get("_id"), document, 
-    new SingleResultCallback<UpdateResult>() {
-       @Override
-       public void onResult(final UpdateResult result, final Throwable t) {
-           System.out.println(result.getModifiedCount());
-       }
-   });
-
-...
-
-// find documents
-collection.find().into(new ArrayList<BsonDocument>(), 
-    new SingleResultCallback<List<BsonDocument>>() {
-        @Override
-        public void onResult(final List<BsonDocument> result, final Throwable t) {
-            System.out.println("Found BsonDocuments: #" + result.size());
-        }
-    });
+Block<Document> printBlock = new Block<Document>() {
+    @Override
+    public void apply(final Document document) {
+        System.out.println(document.toJson());
+    }
+};
 ```
 
-There are two requirements that must be met for any class used in this way:
+## Considerations
 
-- a `Codec` for it must be registered in the `MongoCollection`'s `CodecRegistry`
-- the `Codec` must be one that encodes and decodes a full BSON document (and not just, for example, a single BSON value like an Int32)
+{{% note class="important" %}}
+Always check for errors in any `SingleResultCallback<T>` implementation
+and handle them appropriately.
 
-By default, a `MongoCollection` is configured with `Codec`s for two classes:
- 
-- `Document`
-- `BsonDocument`
+For sake of brevity, this tutorial omits the error check logic in the code examples.
+{{% /note %}}
 
-Applications, however, are free to register `Codec` implementations for other classes by customizing the `CodecRegistry`.  New 
-`CodecRegistry` instances are configurable at three levels:
 
-- In a `MongoClient` via `MongoClientOptions`
-- In a `MongoDatabase` via its `withCodecRegistry` method
-- In a `MongoCollection` via its `withCodecRegistry` method
+## Connect to a MongoDB Deployment
 
-Consider the case of encoding and decoding instances of the `UUID` class.  The Java driver by default encodes instances of `UUID` using a
-byte ordering that is not compatible with other MongoDB drivers, and changing the default would be quite dangerous.  But it is 
-possible for new applications that require interoperability across multiple drivers to be able to change that default, and they can do 
-that with a `CodecRegistry`.   
+Connect to a MongoDB deployment and declare and define a `MongoDatabase` and a `MongoCollection` instances.
+
+For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017` and define `database` to refer to the `test` database and `collection` to refer to the `restaurants` collection:
 
 ```java
-// Replaces the default UuidCodec with one that uses the new standard UUID representation
-CodecRegistry codecRegistry = 
-CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
-                               MongoClient.getDefaultCodecRegistry());
-
-// globally
-MongoClientSettings clientSettings = MongoClients.create("mongodb://localhost").ggetSettings();
-newClientSettings = MongoClientSettings.builder(clientSettings).codecRegistry(codecRegistry).build();
-MongoClient client = MongoClients.create(newClientSettings);
- 
-
-// or per database
-MongoDatabase database = client.getDatabase("mydb")
-                               .withCodecRegistry(codecRegistry);
-
-// or per collection
-MongoCollection<Document> collection = database.getCollection("mycoll")
-                                               .withCodecRegistry(codecRegistry);
+MongoClient mongoClient = MongoClients.create();
+MongoDatabase database = mongoClient.getDatabase("test");
+MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-
-### Write Concern
-
-Applications can configure the `WriteConcern` that a `MongoCollection` uses for write operations.  Like `CodecRegistry`, the 
-`WriteConcern` can be configured at three levels:
-
-- In a `MongoClient` via `MongoClientOptions`
-- In a `MongoDatabase` via its `withWriteConcern` method
-- In a `MongoCollection` via its `withWriteConcern` method
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< relref "driver-async/tutorials/connect-to-mongodb.md" >}}).
 
 
-### Read Preference
+## Query a Collection
 
-Applications can configure the `ReadPreference` that a `MongoCollection` uses for read operations.  Like `WriteConcern`, the 
-`ReadPreference` can be configured at three levels:
+To query the collection, you can use the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find-org.bson.conversions.Bson-">}}) method.
 
-- In a `MongoClient` via `MongoClientOptions`
-- In a `MongoDatabase` via its `withReadPreference` method
-- In a `MongoCollection` via its `withReadPreference` method
-
-### Immutability of MongoDatabase and MongoCollection
-
-Instance of `MongoDatabase` and `MongoCollection` are immutable, so rather than mutate the state of the `MongoCollection` on which they
-are invoked, the three methods discussed above return new instances.  Applications should therefore be sure to store the result of the 
-method call.  For example:
+You can call the method without any arguments to query all documents in a collection:
 
 ```java
-// CORRECT: The results of the method calls are chained and the final one is referenced 
-// by collection 
-MongoCollection<Document> collection = database.getCollection("mycoll")
-                                                .withWriteConcern(WriteConcern.JOURNALED)
-                                                .withReadPreference(ReadPreference.primary())
-                                                .withCodecRegistry(newRegistry);
+collection.find().forEach(printBlock, callbackWhenFinished);
+```
 
-// INCORRECT: withReadPreference returns a new instance of MongoCollection
-// It does not modify the collection it's called on.  So this will
-// have no effect
-collection.withReadPreference(ReadPreference.secondary());
+Or pass a filter to query for documents that match the filter criteria:
+
+```java
+collection.find(eq("name", "456 Cookies Shop"))
+            .forEach(printBlock, callbackWhenFinished);
+```
+
+## Query Filters
+
+To query for documents that match certain conditions, pass a filter document to the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find-org.bson.conversions.Bson-">}}) method.
+
+### Empty Filter
+
+To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+
+```java
+collection.find(new Document()).forEach(printBlock, callbackWhenFinished);
+```
+
+{{% note class="tip"%}}
+For the [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method, you can also call the method without passing a filter object to match all documents in a collection.
+{{% /note %}}
+
+```java
+collection.find().forEach(printBlock, callbackWhenFinished);
+```
+
+### `Filters` Helper
+
+To facilitate the creation of filter documents, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class that provides filter condition helper methods.
+
+Consider the following `find` operation which includes a filter `Document` which specifies that:
+
+- the `stars` field is greater than or equal to 2 and less than 5, *AND*
+
+- the `categories` field equals `"Bakery"` (or if `categories` is an array, contains the string `"Bakery"` as an element):
+
+```java
+collection.find(
+    new Document("stars", new Document("$gte", 2)
+          .append("$lt", 5))
+          .append("categories", "Bakery")).forEach(printBlock, callbackWhenFinished);
+```
+
+The following example specifies the same filter condition using the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper methods:
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+            .forEach(printBlock, callbackWhenFinished);
+```
+
+For a list of MongoDB query filter operators, refer to the [MongoDB Manual]({{<docsref "reference/operator/query">}}). For the associated `Filters` helpers, see [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}).
+See also the  [Query Documents Tutorial]({{<docsref "tutorial/query-documents">}}) for an overview of querying in MongoDB, including specifying filter conditions on arrays and embedded documents.
+
+## FindIterable
+
+The [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method returns an instance of the [`FindIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) interface. The interface provides various methods that you can chain to the `find()` method to modify the output or behavior of the query, such as [`sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort-org.bson.conversions.Bson-">}})  or [`projection()`]({{<apiref "com/mongodb/async/client/FindIterable.html#projection-org.bson.conversions.Bson-">}}), as well as for iterating the results, such as [`forEach()`]({{<apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-">}}).
+
+
+### Projections
+
+By default, queries in MongoDB return all fields in matching documents. To specify the fields to return in the matching documents, you can specify a [projection document]({{<docsref "tutorial/project-fields-from-query-results/#projection-document">}}).
+
+Consider the following `find` operation which includes a projection `Document` which specifies that the matching documents return only the `name` field, `stars` field, and the `categories` field.
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+                .projection(new Document("name", 1)
+                     .append("stars", 1)
+                     .append("categories",1)
+                     .append("_id", 0))
+                .forEach(printBlock, callbackWhenFinished);
+```
+
+To facilitate the creation of projection documents, the Java driver provides the
+[`Projections`]({{<apiref "com/mongodb/client/model/Projections.html">}}) class.
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+                .projection(fields(include("name", "stars", "categories"), excludeId()))
+                .forEach(printBlock, callbackWhenFinished);
+```
+
+In the projection document, you can also specify a projection expression using a [projection operator]({{<apiref "reference/operator/projection/">}})
+
+For an example on using the [`Projections.metaTextScore`]({{<apiref "com/mongodb/client/model/Projections.html#metaTextScore-java.lang.String-">}}),
+see the [Text Search tutorial]({{<relref "driver/tutorials/text-search.md">}}).
+
+### Sorts
+
+To sort documents, pass a [sort specification document]({{<docsref "reference/method/cursor.sort/#cursor.sort">}}) to the [`FindIterable.sort()`]({{<apiref "com/mongodb/async/client/FindIterable.html#sort-org.bson.conversions.Bson-">}}) method.  The Java driver provides [`Sorts`]({{< relref "builders/sorts.md">}}) helpers to facilitate the sort specification document.
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+                .sort(Sorts.ascending("name"))
+                .forEach(printBlock, callbackWhenFinished);
+
+```
+
+### Sort with Projections
+
+The [`FindIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) methods themselves return `FindIterable` objects, and as such, you can append multiple `FindIterable` methods to the `find()` method.
+
+```java
+collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
+                .sort(Sorts.ascending("name"))
+                .projection(fields(include("name", "stars", "categories"), excludeId()))
+                .forEach(printBlock, callbackWhenFinished);
+```
+
+## MongoIterable
+
+The [`MongoIterable`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) interface provides helper methods to access the results of an operation:
+
+
+- [`first()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#first-com.mongodb.async.SingleResultCallback-" >}})
+
+- [`forEach()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-" >}})
+
+- [`map()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#map-com.mongodb.Function-" >}})
+
+- [`into()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#into-A-com.mongodb.async.SingleResultCallback-" >}})
+
+
+## Read Preference
+
+For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read preference]({{<docsref "reference/read-preference">}}) at three levels:
+
+- In a [`MongoClient()`]({{< apiref "com/mongodb/async/client/MongoClient.html" >}})
+
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/async/client/MongoClientSettings.html">}}), as in the following example:
+
+      ```java
+      ClusterSettings clusterSettings = ClusterSettings.builder()
+                                .hosts(asList(
+                                new ServerAddress("host1", 27017),
+                                new ServerAddress("host2", 27017))).build();
+      MongoClientSettings settings = MongoClientSettings.builder()
+                                        .clusterSettings(clusterSettings)
+                                        .readPreference(ReadPreference.secondary())
+                                        .build();
+      MongoClient mongoClient = MongoClients.create(settings);
+      ```                                      
+
+  - Via a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object.
+
+      ```java
+      MongoClient mongoClient = MongoClients.create(new ConnectionString(
+            "mongodb://host1:27017,host2:27017/?readPreference=secondary"));
+      ```
+
+  - Via string that specifies the connection URI:
+
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+            "mongodb://host1:27017,host2:27017/?readPreference=secondary");
+      ```
+
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/async/client/MongoDatabase.html">}}) via its [`withReadPreference`]({{<apiref
+"com/mongodb/async/client/MongoDatabase.html#withReadPreference-com.mongodb.ReadPreference-">}}) method, as in the following example:
+
+
+    ```java
+     MongoDatabase database = mongoClient.getDatabase("test")     
+            .withReadPreference(ReadPreference.secondary());
+    ```
+
+- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/async/client/MongoCollection.html#withReadPreference-com.mongodb.ReadPreference-">}}) method, as in the following example:
+
+    ```java
+    MongoCollection<Document> collection = database.getCollection("restaurants")
+              .withReadPreference(ReadPreference.secondary());
+    ```
+
+`MongoDatabase` and `MongoCollection` instances are immutable. Calling `.withReadPreference()` on an existing `MongoDatabase` or `MongoCollection` instance returns a new instance and does not affect the instance on which the method is called.
+
+For example, in the following, the `collectionWithReadPref` instance has the read preference of primaryPreferred whereas the read preference of the `collection` is unaffected.
+
+```java
+  MongoCollection<Document> collectionWithReadPref =
+                collection.withReadPreference(ReadPreference.primaryPreferred());
+```
+
+## Read Concern
+
+For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read concern]({{<docsref "reference/read-concern">}}) at three levels:
+
+- In a [`MongoClient()`]({{< apiref "com/mongodb/async/client/MongoClient.html" >}})
+
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/async/client/MongoClientSettings.html">}}), as in the following example:
+
+      ```java
+      ClusterSettings clusterSettings = ClusterSettings.builder()
+                                .hosts(asList(
+                                new ServerAddress("host1", 27017),
+                                new ServerAddress("host2", 27017))).build();
+      MongoClientSettings settings = MongoClientSettings.builder()
+                                        .clusterSettings(clusterSettings)
+                                        .readConcern(ReadConcern.DEFAULT)
+                                        .build();
+      MongoClient mongoClient = MongoClients.create(settings);
+      ```                                      
+
+  - Via a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object.
+
+      ```java
+      MongoClient mongoClient = MongoClients.create(new ConnectionString(
+              "mongodb://host1:27017,host2:27017/?readConcernLevel=majority"));
+      ```
+
+  - Via string that specifies the connection URI:
+
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+              "mongodb://host1:27017,host2:27017/?readConcernLevel=majority");
+      ```
+
+- In a [`MongoDatabase`]({{<apiref "com/mongodb/async/client/MongoDatabase.html">}}) via its [`withReadConcern`]({{<apiref
+"com/mongodb/client/MongoDatabase.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+
+
+    ```java
+     MongoDatabase database = mongoClient.getDatabase("test")
+                                .withReadConcern(ReadConcern.DEFAULT);
+    ```
+
+- In a [`MongoCollection`]({{<apiref "com/mongodb/async/client/MongoCollection.html">}}) via its [`withReadConcern`]({{<apiref "com/mongodb/client/MongoCollection.html#withReadConcern-com.mongodb.ReadConcern-">}}) method, as in the following example:
+
+    ```java
+    MongoCollection<Document> collection = database.getCollection("restaurants")
+                                .withReadConcern(ReadConcern.DEFAULT);
+    ```
+
+`MongoDatabase` and `MongoCollection` instances are immutable. Calling `.withReadConcern()` on an existing `MongoDatabase` or `MongoCollection` instance returns a new instance and does not affect the instance on which the method is called.
+
+For example, in the following, the `collWithReadConcern` instance has majority read concern whereas the read concern of the `collection` is unaffected.
+
+```java
+MongoCollection<Document> collWithReadConcern = collection
+                                                  .withReadConcern(ReadConcern.MAJORITY);
+```
+
+You can build `MongoClientOptions`, `MongoDatabase`, or `MongoCollection` to include a combination of read concern, read preference, and [write concern]({{<docsref "reference/write-concern">}}).
+
+For example, the following sets all three at the collection level:
+
+```java
+collection = database.getCollection("restaurants")
+                .withReadPreference(ReadPreference.primary())
+                .withReadConcern(ReadConcern.MAJORITY)
+                .withWriteConcern(WriteConcern.MAJORITY);
 ```

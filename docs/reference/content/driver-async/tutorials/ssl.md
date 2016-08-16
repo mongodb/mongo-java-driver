@@ -8,41 +8,72 @@ title = "SSL"
   pre = "<i class='fa'></i>"
 +++
 
-## SSL
+## TLS/SSL
 
-The async Java driver supports SSL connections to MongoDB servers using the underlying support for SSL provided by
-[Netty](http://netty .io/). You can configure the driver to use SSL with `MongoClientSettings` by setting the sslEnabled property to true 
-and the stream factory to [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in:
+The Java driver supports TLS/SSL connections to MongoDB servers using
+the underlying support for TLS/SSL provided by the JDK.
+To use TLS/SSL, you must configure the asynchronous driver to use [Netty](http://netty.io/).
+
+
+## Specify TLS/SSL and Netty Configuration
+
+{{% note %}}
+If your application requires Netty, it must explicitly add a dependency to
+Netty artifacts.  The driver is currently tested against Netty 4.0.
+{{% /note %}}
+
+### Via Connection String
+
+To configure the driver to use Netty, include the  `ssl=true`  and  `streamType=netty` options in the connection string, as in:
+
+```java
+MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty&ssl=true");
+```
+
+{{% note %}}
+You can also specify the connection string via the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) object.
+{{% /note %}}
+
+### Via `MongoClientSettings`
+
+To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) , set the ``sslEnabled`` property to ``true``, and the stream factory to [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
 
 ```java
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                                                 .clusterSettings(ClusterSettings.builder()
-                                                                          .hosts(Arrays.asList(new ServerAddress()))
-                                                                          .build())
-                                                 .sslSettings(SslSettings.builder()
-                                                                      .enabled(true)
-                                                                      .build())
-                                                 .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
-                                                 .build());
-
+                        .clusterSettings(ClusterSettings.builder()
+                                          .hosts(Arrays.asList(new ServerAddress()))
+                                          .build())
+                        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                                          .build())
+                        .sslSettings(SslSettings.builder()
+                                          .enabled(true)
+                                          .build())
+                        .build());
 ```
 
-or via connection string:
+By default, the Netty-based streams will use the [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html)
+and Netty's [default `ByteBufAllocator`](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html#DEFAULT), but these are
+configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}) constructor.   
 
-```java
-MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&streamType=netty");
-```
 
-See [Netty Configuration]({{< relref "driver-async/tutorials/connect-to-mongodb.md#netty-configuration" >}}) for details on 
-configuring Netty.
+{{% note %}}
+Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as
+deprecated as of the 3.1 driver release.
+{{% /note %}}
 
-### Host name verification
 
-By default, the driver ensures that the host name included in the server's SSL certificate(s) matches the host name(s) provided when 
-constructing a `MongoClient`.  However, this host name verification requires a Java 7 JVM, as it relies on additions to the 
-`javax.net.SSLParameters` class that were introduced in Java 7.  If your application must run on Java 6, or for some other reason you need
- to disable host name verification, you must expicitly indicate this in `SslSettings` using the `invalidHostNameAllowed` property:
-   
+## Disable Hostname Verification
+
+
+By default, the driver ensures that the hostname included in the
+server's SSL certificate(s) matches the hostname(s) provided when
+creating a `MongoClient`. However, the hostname verification
+requires a Java 7 JVM, as it relies on additions introduced in Java 7
+to the `javax.net.SSLParameters` class.
+
+If your application must run on Java 6, or for some other reason you need
+to disable host name verification, you must explicitly indicate this using the `invalidHostNameAllowed` property:
+
 ```java
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
                                                  .clusterSettings(ClusterSettings.builder()
@@ -56,43 +87,49 @@ MongoClient client = MongoClients.create(MongoClientSettings.builder()
                                                   .build());
 ```
 
-or via connection string:
+Or via the connection string:
 
 ```java
 MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true&streamType=netty");
 ```
 
-### JVM system properties
+## JVM System Properties for TLS/SSL
 
-A typical application will need to set several JVM system properties to ensure that the client is able to validate the SSL certificate 
+A typical application will need to set several JVM system properties to
+ensure that the client is able to validate the TLS/SSL certificate
 presented by the server:
 
-- `javax.net.ssl.trustStore`: the path to a trust store containing the certificate of the signing authority
-- `javax.net.ssl.trustStorePassword`: the password to access this trust store 
+-  `javax.net.ssl.trustStore`:
+      The path to a trust store containing the certificate of the
+      signing authority
 
-The trust store is typically created with the [keytool](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) 
-command line program provided as part of the JDK.  For example:
+-  `javax.net.ssl.trustStorePassword`:
+      The password to access this trust store
+
+The trust store is typically created with the
+[`keytool`](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html)
+command line program provided as part of the JDK. For example:
 
 ```bash
-    keytool -importcert -trustcacerts -file <path to certificate authority file> 
+    keytool -importcert -trustcacerts -file <path to certificate authority file>
         -keystore <path to trust store> -storepass <password>
 ```
 
-A typical application will also need to set several JVM system properties to ensure that the client presents an SSL certificate to the 
+A typical application will also need to set several JVM system
+properties to ensure that the client presents an TLS/SSL certificate to the
 MongoDB server:
 
-- `javax.net.ssl.keyStore`: the path to a key store containing the client's SSL certificates
-- `javax.net.ssl.keyStorePassword`: the password to access this key store
- 
-The key store is typically created with the [keytool](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html) or the
-[openssl](https://www.openssl.org/docs/apps/openssl.html) command line program.
+- `javax.net.ssl.keyStore`
+      The path to a key store containing the client's TLS/SSL certificates
 
-For more information on configuring a Java application for SSL, please refer to the  
-[JSSE Reference Guide](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html).
+- `javax.net.ssl.keyStorePassword`
+      The password to access this key store
 
+The key store is typically created with the
+[`keytool`](http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html)
+or the [`openssl`](https://www.openssl.org/docs/apps/openssl.html)
+command line program.
 
-
-
-
-
-   
+For more information on configuring a Java application for TLS/SSL, please
+refer to the [`JSSE Reference Guide`](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSS
+ERefGuide.html).
