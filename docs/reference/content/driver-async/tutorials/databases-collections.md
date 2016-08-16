@@ -3,7 +3,7 @@ date = "2015-03-17T15:36:56Z"
 title = "Databases and Collections"
 [menu.main]
   parent = "Async Tutorials"
-  identifier = "Async Admin Quick Tour"
+  identifier = "Async Databases and Collections"
   weight = 11
   pre = "<i class='fa'></i>"
 +++
@@ -12,42 +12,74 @@ title = "Databases and Collections"
 
 MongoDB stores documents in collections; the collections in databases.
 
-## Setup
+## Consideration
 
-To get started we'll quickly connect and create a `mongoClient`, `database` and `collection`
-variable for use in the examples below:
+{{% note class="important" %}}
+Always check for errors in any [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/SingleResultCallback.html">}}) implementation
+and handle them appropriately.
+
+For sake of brevity, this tutorial omits the error check logic in the code examples.
+{{% /note %}}
+
+## Prerequisites
+
+- Include the following import statements:
+
+    ```java
+    import com.mongodb.Block;
+    import com.mongodb.async.SingleResultCallback;
+    import com.mongodb.async.client.MongoClient;
+    import com.mongodb.async.client.MongoClients;
+    import com.mongodb.async.client.MongoCollection;
+    import com.mongodb.async.client.MongoDatabase;
+    import com.mongodb.client.model.CreateCollectionOptions;
+    import com.mongodb.client.model.Filters;
+    import com.mongodb.client.model.ValidationOptions;
+    import org.bson.Document;
+    ```
+
+- The following callback:
+
+    ```java
+    SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
+        @Override
+        public void onResult(final Void result, final Throwable t) {
+            System.out.println("Operation Finished!");
+        }
+    };
+    ```
+
+## Connect to a MongoDB Deployment
+
+Connect to a running MongoDB deployment.
+
+For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017`.
 
 ```java
-MongoClient mongoClient = new MongoClient(new ConnectionString("mongodb://localhost"));
-MongoDatabase database = mongoClient.getDatabase("mydb");
-MongoCollection<Document> collection = database.getCollection("test");
+MongoClient mongoClient = MongoClients.create();
+```
+
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< relref "driver-async/tutorials/connect-to-mongodb.md" >}}).
+
+## Access a Database
+
+Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "com/mongodb/async/client/MongoClient.html#getDatabase-java.lang.String-">}}) method to access a database.
+
+Specify the name of the database to the `getDatabase()` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
+
+The following example accesses the ``test`` database:
+
+```java
+MongoDatabase database = mongoClient.getDatabase("test");
 ```
 
 {{% note %}}
-Calling the `getDatabase()` on `MongoClient` does not create a database.
-Only when a database is written to will a database be created.  Examples include the creation of an index or the insertion of a document 
-into a previously non-existent collection.
+`MongoDatabase` instances are immutable.
 {{% /note %}}
-
-{{% note %}}
-Sometimes you will need the same or similar callbacks more than once.  In these situations
-it makes sense to DRY (Do not Repeat Yourself) up your code and save the callback either
-as a concrete class or assign to a variable as below:
-
-```java
-SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
-    @Override
-    public void onResult(final Void result, final Throwable t) {
-        System.out.println("Operation Finished!");
-    }
-};
-```
-{{% /note %}}
-
 
 ## Get A List of Databases
 
-You can get a list of the available databases:
+You can get a list of the available databases using the `MongoClient` instance's  [`listDatabaseNames`]({{ < apiref "com/mongodb/async/client/MongoClient.html#listDatabaseNames--">}}) method.
 
 ```java
 mongoClient.listDatabaseNames().forEach(new Block<String>() {
@@ -60,27 +92,61 @@ mongoClient.listDatabaseNames().forEach(new Block<String>() {
 
 ## Drop A Database
 
-You can drop a database by name using a `MongoClient` instance:
+You can drop the current database using its [`drop`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#drop-com.mongodb.async.SingleResultCallback-">}}):
 
 ```java
 mongoClient.getDatabase("databaseToBeDropped").drop(callbackWhenFinished);
 ```
 
-## Create A Collection
+## Access a Collection
 
-Collections in MongoDB are created automatically simply by inserted a document into it. Using the 
-[`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) 
-method, you can also create a collection explicitly in order to customize its configuration. For example, to create a capped collection sized to 1 megabyte:
+Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection-java.lang.String-">}}) method to access a collection.
+
+Specify the name of the collection to the `getCollection()` method.
+
+For example, using the `database` instance, the following statement accesses the collection named `myTestCollection`:
+
+```java
+MongoCollection<Document> coll = database.getCollection("myTestCollection");
+```
+
+{{% note %}}
+`MongoCollection` instances are immutable.
+{{% /note %}}
+
+If a collection does not exist, MongoDB creates the collection when you first store data for that collection.
+
+You can also explicitly create a collection with various options, such as setting the maximum size or the documentation validation rules.
+
+## Explicitly Create a Collection
+
+The async driver provides the [`createCollection`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.async.SingleResultCallback-">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
+
+### Capped Collection
+
+For example, the following operation creates a [capped collection]({{<docsref "core/capped-collections">}}) sized to 1 megabyte:
 
 ```java
 database.createCollection("cappedCollection",
-  new CreateCollectionOptions().capped(true).sizeInBytes(0x100000),
-  callbackWhenFinished);
+          new CreateCollectionOptions().capped(true).sizeInBytes(0x100000),
+          callbackWhenFinished);
+```
+
+### Document Validation
+
+MongoDB provides the capability to [validate documents]({{<docsref "core/document-validation">}}) during updates and insertions. Validation rules are specified on a per-collection basis using the [`ValidationOptions`]({{< apiref "com/mongodb/client/model/ValidationOptions.html">}}), which takes a filter document that specifies the validation rules or expressions.
+
+```java
+ValidationOptions collOptions = new ValidationOptions().validator(
+        Filters.or(Filters.exists("email"), Filters.exists("phone")));
+database.createCollection("contacts",
+        new CreateCollectionOptions().validationOptions(collOptions),
+        callbackWhenFinished);
 ```
 
 ## Get A List of Collections
 
-You can get a list of the available collections in a database:
+You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#listCollectionNames--">}}) method:
 
 ```java
 database.listCollectionNames().forEach(new Block<String>() {
@@ -91,121 +157,10 @@ database.listCollectionNames().forEach(new Block<String>() {
 }, callbackWhenFinished);
 ```
 
-## Drop A Collection
+## Drop a Collection
 
-You can drop a collection by using the drop() method:
+You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#drop-com.mongodb.async.SingleResultCallback-">}}) method:
 
 ```java
 collection.drop(callbackWhenFinished);
 ```
-
-## Create An Index
-
-MongoDB supports secondary indexes. To create an index, you just
-specify the field or combination of fields, and for each field specify the direction of the index for that field.
-We can use the [`Indexes`]({{< relref "builders/indexes.md">}}) helpers to create index keys:
-
-```java
-// create an ascending index on the "i" field
- collection.createIndex(Indexes.ascending("i"), callbackWhenFinished);
-```
-
-## Get a List of Indexes on a Collection
-
-Use the `listIndexes()` method to get a list of indexes. The following creates a
-`printDocumentBlock` Block that prints out the Json version of a document and then passes
-that block to the `forEach` method on a
-[`mongoIterable`]({{< apiref "com/mongodb/async/client/MongoIterable.html">}})
-so that it will printout all the indexes on the collection `test`:
-
-```java
-Block<Document> printDocumentBlock = new Block<Document>() {
-    @Override
-    public void apply(final Document document) {
-        System.out.println(document.toJson());
-    }
-};
-
-collection.listIndexes().forEach(printDocumentBlock, callbackWhenFinished);
-```
-
-The example should print the following indexes:
-
-```json
-{ "v" : 1, "key" : { "_id" : 1 }, "name" : "_id_", "ns" : "mydb.test" }
-{ "v" : 1, "key" : { "i" : 1 }, "name" : "i_1", "ns" : "mydb.test" }
-Operation Finished!
-```
-
-## Text indexes
-
-MongoDB also provides text indexes to support text search of string
-content. Text indexes can include any field whose value is a string or
-an array of string elements. To create a text index use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
-static helper:
-
-```java
-// create a text index on the "content" field
-coll.createIndex(Indexes.text("content"), callbackWhenFinished);
-```
-
-As of MongoDB 2.6, text indexes are now integrated into the main query
-language and enabled by default (here we use the [`Filters.text`]({{< relref "builders/filters.md#evaluation">}}) helper):
-
-```java
-// Insert some documents
-collection.insertOne(new Document("_id", 0).append("content", "textual content"), callbackWhenFinished);
-collection.insertOne(new Document("_id", 1).append("content", "additional content"), callbackWhenFinished);
-collection.insertOne(new Document("_id", 2).append("content", "irrelevant content"), callbackWhenFinished);
-
-// Find using the text index
-long matchCount = collection.count(text("textual content -irrelevant"));
-System.out.println("Text search matches: " + matchCount);
-
-// Find using the $language operator
-Bson textSearch = Filters.text("textual content -irrelevant", new TextSearchOptions().language("english"));
-matchCount = collection.count(textSearch);
-System.out.println("Text search matches (english): " + matchCount);
-
-// Find the highest scoring match
-// Find using the text index
-collection.count(text("textual content -irrelevant"), new SingleResultCallback<Long>() {
-    @Override
-    public void onResult(final Long matchCount, final Throwable t) {
-        System.out.println("Text search matches: " + matchCount);
-    }
-});
-
-
-// Find using the $language operator
-Bson textSearch = text("textual content -irrelevant", "english");
-collection.count(textSearch, new SingleResultCallback<Long>() {
-    @Override
-    public void onResult(final Long matchCount, final Throwable t) {
-        System.out.println("Text search matches (english): " + matchCount);
-    }
-});
-
-// Find the highest scoring match
-Document projection = new Document("score", new Document("$meta", "textScore"));
-collection.find(textSearch).projection(projection).first(new SingleResultCallback<Document>() {
-    @Override
-    public void onResult(final Document highest, final Throwable t) {
-        System.out.println("Highest scoring document: " + highest.toJson());
-
-    }
-});
-```
-
-and it should print:
-
-```json
-Text search matches: 2
-Text search matches (english): 2
-Highest scoring document: { "_id" : 1, "content" : "additional content", "score" : 0.75 }
-```
-
-For more information about text search see the [text index]({{< docsref "/core/index-text" >}}) and
-[$text query operator]({{< docsref "/reference/operator/query/text">}}) documentation.
-
-

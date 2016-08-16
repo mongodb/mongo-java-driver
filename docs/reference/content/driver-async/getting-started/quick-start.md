@@ -1,130 +1,205 @@
 +++
 date = "2015-03-17T15:36:56Z"
-title = "Quick Tour"
+title = "Quick Start"
 [menu.main]
-  parent = "Async Getting Started"
+  parent = "MongoDB Async Driver"
   identifier = "Async Quick Tour"
-  weight = 30
+  weight = 10
   pre = "<i class='fa'></i>"
 +++
 
 # MongoDB Async Driver Quick Tour
 
-The following code snippets come from the `QuickTour.java` example code
-that can be found with the [async driver
-source]({{< srcref "driver-async/src/examples/tour/QuickTour.java">}}).
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-async/src/examples/tour/QuickTour.java">}}) example code
+that can be found with the async driver source on github.
 
-{{% note %}}
-See the [installation guide]({{< relref "driver-async/getting-started/installation-guide.md#mongodb-async-driver" >}})
-for instructions on how to install the MongoDB Async Driver.
-{{% /note %}}
+## SingleResultCallback
 
-## Going Async with Callbacks
+The MongoDB Async driver provides an asynchronous API that can leverage either Netty or Java 7's `AsynchronousSocketChannel` for fast and non-blocking I/O.
 
-The MongoDB Async driver provides an asynchronous API that can leverage either Netty or Java 7's `AsynchronousSocketChannel` for fast and non-blocking IO.
-
-The API mirrors the new Synchronous API from the MongoDB Driver, but any methods that cause network IO take a `SingleResponseCallback<T>` and return immediately, where `T` is the type of response for the document.
-
-The `SingleResponseCallback<T>` interface requires the implementation of a single method `onResult(T result, Throwable t)` which is called when the operation has completed.  The `result` parameter contains the result of the operation, if successful. If the operation failed for any reason then the `t` contains the `Throwable` reason for the failure.
+The MongoDB Asynchronous Driver API mirrors the new Synchronous MongoDB Driver API, but asynchronous methods that make network I/O operations take a [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/SingleResultCallback.html">}}) and return immediately. The `SingleResultCallback<T>` interface requires the implementation of a single method `onResult(T result, Throwable t)` which is called upon the completion of the operation.  Upon successful operation, the `result` parameter contains the result of the operation. If the operation failed for any reason, then the `t` contains the reason for the failure.
 
 {{% note class="important" %}}
-It's important to always check for errors in any `SingleResponseCallback<T>` implementation
-and handle them appropriately! Below the error checks are left out only for the sake of brevity.
+Always check for errors in any `SingleResultCallback<T>` implementation
+and handle them appropriately.
+
+For sake of brevity, this tutorial omits the error check logic in the code examples.
 {{% /note %}}
+
+To use a callback more than once, you can either create a class that implements the callback or assign the callback to a variable.
+
+## Prerequisites
+
+- A running MongoDB on localhost using the default port for MongoDB `27017`
+
+- MongoDB Async Driver.  See [Installation]({{< relref "driver-async/getting-started/installation.md" >}}) for instructions on how to install the MongoDB driver.
+
+- The following import statements:
+
+```java
+import com.mongodb.Block;
+import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.*;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.ConnectionString;
+import org.bson.Document;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Updates.inc;
+import static com.mongodb.client.model.Updates.set;
+import static java.util.Arrays.asList;
+```
+
+- The following callback code which the examples in the tutorials will use:
+
+```java
+SingleResultCallback<Document> callbackPrintDocuments = new SingleResultCallback<Document>() {
+   @Override
+   public void onResult(final Document document, final Throwable t) {
+       System.out.println(document.toJson());
+   }
+};
+
+SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println("Operation Finished!");
+    }
+};
+
+```
+
+- The following `Block` code which the exexamples will use used to print the results of the find operations:
+
+```java
+Block<Document> printDocumentBlock = new Block<Document>() {
+    @Override
+    public void apply(final Document document) {
+        System.out.println(document.toJson());
+    }
+};
+```
 
 ## Make a Connection
 
-The following example shows multiple ways to connect to the database `mydb` on the local machine, using the 
-[`MongoClients.create`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) helper.
-
-
-```java
-// To directly connect to the default server localhost on port 27017
-MongoClient mongoClient = MongoClients.create();
-
-// Use a Connection String
-MongoClient mongoClient = MongoClients.create("mongodb://localhost");
-
-// or a Connection String
-MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
-
-// or provide custom MongoClientSettings
-ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder().clusterSettings(clusterSettings).build();
-MongoClient mongoClient = MongoClients.create(settings);
-
-MongoDatabase database = mongoClient.getDatabase("mydb");
-```
-
-At this point, the `database` object will be a connection to a MongoDB
-server for the specified database.
-
-{{% note %}}
-There is no callback required for `getDatabase("mydb")` as there is no network IO required.
-A `MongoDatabase` instance provides methods to interact with a database
-but the database might not actually exist and will only be created on the
-insertion of data via some means; e.g. the creation of a collection or the insertion of documents
-which do require callbacks as they require network IO.
-{{% /note %}}
-
-### MongoClient
-
-The `MongoClient` instance actually represents a pool of connections
+To make a connection to a running MongoDB instance, use [`MongoClients.create`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}) to create a new [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient.html">}}) instance. A `MongoClient` instance actually represents a pool of connections
 to the database; you will only need one instance of class
 `MongoClient` even with multiple concurrently executing asynchronous operations.
 
 {{% note class="important" %}}
-Typically you only create one `MongoClient` instance for a given database
-cluster and use it across your application. When creating multiple instances:
+Typically you only create one `MongoClient` instance for a given MongoDB
+deployment (e.g. standalone, replica set, or a sharded cluster) and use it across your application. However, if you do create multiple instances:
 
--   All resource usage limits (max connections, etc) apply per
-    `MongoClient` instance
--   To dispose of an instance, make sure you call `MongoClient.close()`
-    to clean up resources
+-  All resource usage limits (max connections, etc.) apply per `MongoClient` instance.
+-  To dispose of an instance, call `MongoClient.close()` to clean up resources.
 {{% /note %}}
+
+### Connect to a Standalone MongoDB Instance
+
+The following example shows various ways to connect to a standalone MongoDB instance running on the local machine.
+
+To connect to a standalone MongoDB instance:
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}) without any parameters to connect to a MongoDB instance running on localhost on port ``27017``:
+
+```java
+MongoClient mongoClient = MongoClients.create();
+```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) with a string that specifies the connection string:
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://localhost");
+```
+
+The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name. For MongoDB, it is possible to list multiple domain names separated by a comma. For more information on the connection string, see [connection string]({{< docsref "reference/connection-string" >}}).
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) with a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object:
+
+```java
+MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
+```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object:
+
+```java
+ClusterSettings clusterSettings = ClusterSettings.builder()
+                                  .hosts(asList(new ServerAddress("localhost"))).build();
+MongoClientSettings settings = MongoClientSettings.builder()
+                                  .clusterSettings(clusterSettings).build();
+MongoClient mongoClient = MongoClients.create(settings);
+```
+
+## Access a Database
+
+Once you have a [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient.html">}}) instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "com/mongodb/async/client/MongoClient.html#getDatabase-java.lang.String-">}}) method to access a database.
+
+Specify the name of the database to the `getDatabase()` method. The `getDatabase()` method does not require a callback since there is no network I/O required.  If a database does not exist, MongoDB creates the database when you first store data for that database.
+
+The following example accesses the `mydb` database:
+
+```java
+MongoDatabase database = mongoClient.getDatabase("mydb");
+```
 
 ## Get a Collection
 
-To get a collection to operate upon, specify the name of the collection to
-the [`getCollection(String collectionName)`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection-java.lang.String-">}})
-method:
+Once you have a [`MongoDatabase`]({{< apiref "com/mongodb/async/client/MongoDatabase.html" >}}) instance, use its [`getCollection()`]({{< apiref "com/mongodb/async/client/MongoDatabase.html#getCollection-java.lang.String-">}})
+method to access a collection.
 
-The following example gets the collection `test`:
+Specify the name of the collection to the `getCollection()` method. If a collection does not exist, MongoDB creates the collection when you first store data for that collection.
+
+For example, using the `database` instance, the following statement accesses the collection named `test` in the `mydb` database:
 
 ```java
 MongoCollection<Document> collection = database.getCollection("test");
 ```
 
-## Insert a Document
+## Create a Document
 
-Once you have the collection object, you can insert documents into the
-collection. For example, consider the following JSON document; the document
-contains a field `info` which is an embedded document:
+To create the document using the Java async driver, use the [`Document`]({{< apiref "org/bson/Document.html" >}}) class.
 
-``` javascript
-{
+For example, consider the following JSON document:
+
+```javascript
+  {
    "name" : "MongoDB",
    "type" : "database",
    "count" : 1,
-   "info" : {
-               x : 203,
-               y : 102
-             }
-}
+   "versions": [ "v3.2", "v3.0", "v2.6" ],
+   "info" : { x : 203, y : 102 }
+  }
 ```
 
-To create the document using the Java driver, use the
-[Document]({{< apiref "org/bson/Document.html">}}) class. You
-can use this class to create the embedded document as well.
+To create the document using the Java async driver, instantiate a `Document` object with a field and value, and use its
+ [`append()`]({{< apiref "org/bson/Document.html#append" >}}) method to include additional fields and values to the document object. The value can be another `Document` object to specify an embedded document:
 
-```java
-Document doc = new Document("name", "MongoDB")
-               .append("type", "database")
-               .append("count", 1)
-               .append("info", new Document("x", 203).append("y", 102));
-```
+ ```java
+ Document doc = new Document("name", "MongoDB")
+                .append("type", "database")
+                .append("count", 1)
+                .append("versions", Arrays.asList("v3.2", "v3.0", "v2.6"))
+                .append("info", new Document("x", 203).append("y", 102));
+ ```
 
-To insert the document into the collection, use the `insertOne()` method.
+{{% note %}}
+The BSON type of array corresponds to the Java type `java.util.List`. For a list of the BSON type and the corresponding type in Java, see [BSON  Documents reference]({{<relref "bson/documents.md" >}}).
+{{% /note %}}
+
+## Insert a Document
+
+Once you have the [`MongoCollection`]({{< apiref "com/mongodb/async/client/MongoCollection.html">}}) object, you can insert documents into the collection.
+
+### Insert One Document
+
+To insert the document into the collection, use the [`insertOne()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#insertOne-TDocument-com.mongodb.async.SingleResultCallback-">}}) method.
 
 ```java
 collection.insertOne(doc, new SingleResultCallback<Void>() {
@@ -135,20 +210,19 @@ collection.insertOne(doc, new SingleResultCallback<Void>() {
 });
 ```
 
-As `SingleResponseCallback<T>` is a [functional interface](https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.8) and it can be
-implemented as a lambda for users on Java 8:
+{{% note %}}
+If no top-level `_id` field is specified in the document, the driver automatically adds the `_id` field to the inserted document.
+{{% /note %}}
+
+`SingleResultCallback<T>` is a [functional interface](https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.8) and can be implemented as a lambda if using Java 8:
 
 ```java
 collection.insertOne(doc, (Void result, final Throwable t) -> System.out.println("Inserted!"));
 ```
 
-Once the document has been inserted the `onResult` callback will be called and it will
-print "Inserted!".  Remember, in a normal application you would always check for the presence of
-errors in the `t` variable.
+### Insert Multiple Documents
 
-## Add Multiple Documents
-
-To add multiple documents, you can use the `insertMany()` method.
+To add multiple documents, you can use the [`insertMany()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#insertMany-java.util.List-com.mongodb.async.SingleResultCallback-">}}) method which takes a list of documents to insert.
 
 The following example will add multiple documents of the form:
 
@@ -156,7 +230,7 @@ The following example will add multiple documents of the form:
 { "i" : value }
 ```
 
-Create the documents in a loop.
+Create the documents in a loop and add to the `documents` list:
 
 ```java
 List<Document> documents = new ArrayList<Document>();
@@ -166,7 +240,7 @@ for (int i = 0; i < 100; i++) {
 ```
 
 To insert these documents to the collection, pass the list of documents to the
-`insertMany()` method.
+[`insertMany()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#insertMany-java.util.List-com.mongodb.async.SingleResultCallback-">}}) method.
 
 ```java
 collection.insertMany(documents, new SingleResultCallback<Void>() {
@@ -177,12 +251,14 @@ collection.insertMany(documents, new SingleResultCallback<Void>() {
 });
 ```
 
+{{% note %}}
+If no top-level `_id` field is specified in the document, the driver automatically adds the `_id` field to the inserted document.
+{{% /note %}}
+
 ## Count Documents in A Collection
 
-Now that we've inserted 101 documents (the 100 we did in the loop, plus
-the first one), we can check to see if we have them all using the
-[count()]({{< apiref "com/mongodb/async/client/MongoCollection#count--">}})
-method. The following code should print `101`.
+To count the number of documents in a collection, you can use the collection's [`count()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#count-com.mongodb.async.SingleResultCallback-">}})
+method.  The following code should print `101` (the 100 inserted via `insertMany` plus the 1 inserted via the `insertOne`).
 
 ```java
 collection.count(
@@ -196,186 +272,99 @@ collection.count(
 
 ## Query the Collection
 
-Use the
-[find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}})
-method to query the collection.
+To query the collection, you can use the collection's [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method. You can call the method without any arguments to query all documents in a collection or pass a filter to query for documents that match the filter criteria.
+
+The [`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method returns a [`FindIterable()`]({{< apiref "com/mongodb/async/client/FindIterable.html" >}}) instance that provides a fluent interface for chaining other methods.
 
 ### Find the First Document in a Collection
 
-To get the first document in the collection, call the
-[first()]({{< apiref "com/mongodb/async/client/MongoIterable.html#first--">}})
-method on the [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}})
-operation. `collection.find().first()` returns the first document or null rather than a cursor.
-This is useful for queries that should only match a single document, or if you are
-interested in the first document only.
+To return the first document in the collection, use the [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method without any parameters and chain to [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method the [`first()`] ({{< apiref "com/mongodb/async/client/MongoIterable.html#first-com.mongodb.async.SingleResultCallback-">}}) method.
 
-{{% note %}}
-Sometimes you will need the same or similar callbacks more than once.  In these situations
-it makes sense to DRY (Do not Repeat Yourself) up your code and save the callback either
-as a concrete class or assign to a variable as below:
+If the `FindIterable` object returned by the `find()` method is empty, the operation returns null.
 
-```java
-SingleResultCallback<Document> printDocument = new SingleResultCallback<Document>() {
-    @Override
-    public void onResult(final Document document, final Throwable t) {
-        System.out.println(document.toJson());
-    }
-};
-```
+{{% note class="tip" %}}
+The `find().first()` construct is useful for queries that should only match a single document or if you are interested in the first document only.
 {{% /note %}}
 
-The following example passes the `printDocument` callback  to the `first` method:
+The following example prints the first document found in the collection, using the `printDocument` callback declared earlier in the tutorial:
 
 ```java
-collection.find().first(printDocument);
+collection.find().first(callbackPrintDocuments);
 ```
 
 The example will print the following document:
 
 ```json
-{ "_id" : { "$oid" : "551582c558c7b4fbacf16735" },
-  "name" : "MongoDB", "type" : "database", "count" : 1,
-  "info" : { "x" : 203, "y" : 102 } }
+{ "_id" : { "$oid" : "579f5278b9c1d14ae2a31c27" }, "name" : "MongoDB", "type" : "database", "count" : 1, "versions" : ["v3.2", "v3.0", "v2.6"], "info" : { "x" : 203, "y" : 102 } }
 ```
 
 {{% note %}}
-The `_id` element has been added automatically by MongoDB to your
+The `_id` element has been added automatically by the Java async driver to your
 document and your value will differ from that shown. MongoDB reserves field
-names that start with
-"_" and "$" for internal use.
+names that start with `"_"` and `"$"` for internal use.
 {{% /note %}}
 
 ### Find All Documents in a Collection
 
 To retrieve all the documents in the collection, we will use the
-`find()` method. The `find()` method returns a `FindIterable` instance that
-provides a fluent interface for chaining or controlling find operations. Use the
-`forEach()` method to provide a `Block` to apply to each document and a callback that
-is run once the iteration has finished.
-The following code retrieves all documents in the collection and prints them out
-(101 documents) and then finally prints out "Operation Finished!":
+[`find()`]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method without any parameters.
+
+You can chain the
+[`forEach()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-" >}}) method to the `find()` method to iterate through the results and apply a [`Block`]({{< apiref "com/mongodb/Block.html" >}}) to each document in the results.  The [`forEach()`]({{< apiref "com/mongodb/async/client/MongoIterable.html#forEach-com.mongodb.Block-com.mongodb.async.SingleResultCallback-" >}}) method also takes a callback that is run once the iteration has finished.
+
+The following code retrieves all documents in the collection and prints the returned documents (101 documents). The example uses the `callbackWhenFinished` and the `printDocumentBlock` defined earlier in the tutorial:
 
 ```java
-Block<Document> printDocumentBlock = new Block<Document>() {
-    @Override
-    public void apply(final Document document) {
-        System.out.println(document.toJson());
-    }
-};
-SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
-    @Override
-    public void onResult(final Void result, final Throwable t) {
-        System.out.println("Operation Finished!");
-    }
-};
-
 collection.find().forEach(printDocumentBlock, callbackWhenFinished);
 ```
 
-## Get A Single Document with a Query Filter
+## Specify a Query Filter
 
-We can create a filter to pass to the find() method to get a subset of
-the documents in our collection. For example, if we wanted to find the
-document for which the value of the "i" field is 71, we would do the
-following (reusing the `printDocument` callback):
+To query for documents that match certain conditions, pass a filter object to the [find()]({{< apiref "com/mongodb/async/client/MongoCollection.html#find--">}}) method. To facilitate creating filter objects, the driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+
+### Get a Single Document That Matches a Filter
+
+For example, to find the first document where the field ``i`` has the value `71`, pass an [`eq`]({{<apiref  "com/mongodb/client/model/Filters.html#eq-java.lang.String-TItem-">}}) filter object to specify the equality condition. The example uses the `callbackPrintDocuments` defined earlier in the tutorial:
+
 
 ```java
-import static com.mongodb.client.model.Filters.*;
-
-collection.find(eq("i", 71)).first(printDocument);
+collection.find(eq("i", 71)).first(callbackPrintDocuments);
 ```
 
-will eventually print just one document:
+### Get All Documents That Match a Filter
 
-```json
-{ "_id" : { "$oid" : "5515836e58c7b4fbc756320b" }, "i" : 71 }
-```
-
-
-{{% note %}}
-Use the [`Filters`]({{< relref "builders/filters.md">}}), [`Sorts`]({{< relref "builders/sorts.md">}}),
-[`Projections`]({{< relref "builders/projections.md">}}) and [`Updates`]({{< relref "builders/updates.md">}})
-helpers for simple and concise ways of building up queries.
-{{% /note %}}
-
-## Get a Set of Documents with a Query
-
-We can use the query to get a set of documents from our collection. For
-example, if we wanted to get all documents where `"i" > 50`, we could
-write (reusing `printDocumentBlock` block and `callbackWhenFinished` callback):
+The following example returns and prints all documents where `"i" > 50`. The example uses the `printDocumentBlock` code and `callbackWhenFinished`  defined earlier in the tutorial:
 
 ```java
-// now use a range query to get a larger subset
 collection.find(gt("i", 50)).forEach(printDocumentBlock, callbackWhenFinished);
 ```
-which should print the documents where `i > 50`.
 
-We could also get a range, say `50 < i <= 100`:
+To specify a filter for a range, such as ``50 < i <= 100``, you can use the [`and`]({{<apiref "com/mongodb/client/model/Filters.html#and-org.bson.conversions.Bson...-">}}) helper:
+
 
 ```java
 collection.find(and(gt("i", 50), lte("i", 100))).forEach(printDocumentBlock, callbackWhenFinished);
 ```
 
-## Sorting documents
-
-We can also use the [Sorts]({{< relref "builders/sorts.md">}}) helpers to sort documents.
-We add a sort to a find query by calling the `sort()` method on a `FindIterable`.  Below we use the [`exists()`]({{< relref "builders/filters.md#elements">}}) helper and sort
-[`descending("i")`]({{< relref "builders/sorts.md#descending">}}) helper to sort our documents:
-
-```java
-collection.find(exists("i")).sort(descending("i")).first(printDocument);
-```
-
-## Projecting fields
-
-Sometimes we don't need all the data contained in a document. The [Projections]({{< relref "builders/projections.md">}}) 
-helpers can be used to build the projection parameter for the find operation and limit the fields returned.  
-Below we'll sort the collection, exclude the `_id` field and output the first matching document:
-
-```java
-collection.find().projection(excludeId()).first(printDocument);
-```
-
-## Aggregations
-
-Sometimes we need to aggregate the data stored in MongoDB. The [`Aggregates`]({{< relref "builders/aggregation.md" >}}) helper provides 
-builders for each of type of aggregation stage.
-
-Below we'll do a simple two step transformation that will calculate the value of `i * 10`. First we find all Documents 
-where `i > 0` by using the [`Aggregates.match`]({{< relref "builders/aggregation.md#match" >}}) 
-helper. Then we reshape the document by using [`Aggregates.project`]({{< relref "builders/aggregation.md#project" >}}) 
-in conjunction with the [`$multiply`]({{< docsref "reference/operator/aggregation/multiply/" >}}) operator to calculate the "`ITimes10`" 
-value:
-
-```java
-collection.aggregate(asList(
-    match(gt("i", 0)),
-    project(Document.parse("{ITimes10: {$multiply: ['$i', 10]}}")))
-).forEach(printDocumentBlock, callbackWhenFinished);
-```
-
-For [`$group`]({{< relref "builders/aggregation.md#group" >}}) operations use the 
-[`Accumulators`]({{< apiref "com/mongodb/client/model/Accumulators" >}}) helper for any 
-[accumulator operations]({{< docsref "reference/operator/aggregation/group/#accumulator-operator" >}}). Below we sum up all the values of 
-`i` by using the [`Aggregates.group`]({{< relref "builders/aggregation.md#group" >}}) helper in conjunction with the 
-[`Accumulators.sum`]({{< apiref "com/mongodb/client/model/Accumulators#sum-java.lang.String-TExpression-" >}}) helper:
-
-```java
-collection.aggregate(singletonList(group(null, sum("total", "$i")))).first(printDocument);
-```
-
-{{% note %}}
-Currently, there are no helpers for [aggregation expressions]({{< docsref "meta/aggregation-quick-reference/#aggregation-expressions" >}}). 
-Use the [`Document.parse()`]({{< relref "bson/extended-json.md" >}}) helper to quickly build aggregation expressions from extended JSON.
-{{% /note %}}
-
 ## Updating documents
 
-There are numerous [update operators](http://docs.mongodb.org/manual/reference/operator/update-field/)
-supported by MongoDB.
+To update documents in a collection, you can use the collection's [`updateOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}})  and  [`updateMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}) methods.
 
-To update at most a single document (may be 0 if none match the filter), use the [`updateOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateOne-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
-method to specify the filter and the update document. Here we use the [`Updates.set`]({{< relref "builders/updates.md#set">}}) helper to update the first document that meets the filter `i` equals `10` and set the value of `i` to `110`:
+Pass to the methods:
+
+- A filter object to determine the document or documents to update. To facilitate creating filter objects, Java async driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+
+- An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
+
+- A callback.
+
+The update methods return an [`UpdateResult`]({{<apiref "com/mongodb/client/result/UpdateResult.html">}}), which provides information about the operation including the number of documents modified by the update.
+
+### Update a Single Document
+
+To update at most a single document, use the [`updateOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}).
+
+The following example updates the first document that meets the filter ``i`` equals ``10`` and sets the value of ``i`` to ``110``:
 
 ```java
 collection.updateOne(eq("i", 10), set("i", 110),
@@ -387,9 +376,11 @@ collection.updateOne(eq("i", 10), set("i", 110),
     });
 ```
 
-To update all documents matching the filter use the [`updateMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}})
-method. Here we use the [`Updates.inc`]({{< relref "builders/updates.md#increment">}}) helper to increment the value of `i` by `100` 
-where `i` is less than `100`.
+### Update Multiple Documents
+
+To update all documents matching the filter, use the [`updateMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#updateMany-org.bson.conversions.Bson-org.bson.conversions.Bson-">}}) method.
+
+The following example increments the value of ``i`` by ``100`` for all documents where ``i`` is less than ``100``:
 
 ```java
 collection.updateMany(lt("i", 100), inc("i", 100),
@@ -401,13 +392,24 @@ collection.updateMany(lt("i", 100), inc("i", 100),
     });
 ```
 
-The update methods return an [`UpdateResult`]({{< apiref "com/mongodb/client/result/UpdateResult.html">}}),
-which provides information about the operation including the number of documents modified by the update.
+## Delete Documents
 
-## Deleting documents
+To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}) and [`deleteMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}) methods.
 
-To delete at most a single document (may be 0 if none match the filter) use the [`deleteOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-">}})
-method:
+Pass to the methods:
+
+- A filter object to determine the document or documents to delete. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+
+- A callback.
+
+The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
+which provides information about the operation including the number of documents deleted.
+
+### Delete a Single Document That Match a Filter
+
+To delete at most a single document that match the filter, use the [`deleteOne`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteOne-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}) method:
+
+The following example deletes at most one document that meets the filter ``i`` equals ``110``:
 
 ```java
 collection.deleteOne(eq("i", 110), new SingleResultCallback<DeleteResult>() {
@@ -418,9 +420,11 @@ collection.deleteOne(eq("i", 110), new SingleResultCallback<DeleteResult>() {
 });
 ```
 
-To delete all documents matching the filter use the 
-[`deleteMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-">}}) method. Here we delete 
-all documents where `i` is greater or equal to `100`:
+### Delete All Documents That Match a Filter
+
+To delete all documents matching the filter use the [`deleteMany`]({{< apiref "com/mongodb/async/client/MongoCollection.html#deleteMany-org.bson.conversions.Bson-com.mongodb.async.SingleResultCallback-">}}) method.
+
+The following example deletes all documents where ``i`` is greater or equal to ``100``:
 
 ```java
 collection.deleteMany(gte("i", 100), new SingleResultCallback<DeleteResult>() {
@@ -430,66 +434,3 @@ collection.deleteMany(gte("i", 100), new SingleResultCallback<DeleteResult>() {
     }
 });
 ```
-
-The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}}),
-which provides information about the operation including the number of documents deleted.
-
-
-## Bulk operations
-
-These commands allow for the execution of bulk
-insert/update/delete operations. There are two types of bulk operations:
-
-1.  Ordered bulk operations.
-
-      Executes all the operation in order and error out on the first write error.
-
-2.   Unordered bulk operations.
-
-      Executes all the operations and reports any the errors.
-
-      Unordered bulk operations do not guarantee order of execution.
-
-Let's look at two simple examples using ordered and unordered
-operations:
-
-```java
-SingleResultCallback<BulkWriteResult> printBatchResult = new SingleResultCallback<BulkWriteResult>() {
-    @Override
-    public void onResult(final BulkWriteResult result, final Throwable t) {
-        System.out.println(result);
-    }
-};
-
-// 2. Ordered bulk operation - order is guaranteed
-collection.bulkWrite(
-  Arrays.asList(new InsertOneModel<>(new Document("_id", 4)),
-                new InsertOneModel<>(new Document("_id", 5)),
-                new InsertOneModel<>(new Document("_id", 6)),
-                new UpdateOneModel<>(new Document("_id", 1),
-                                     new Document("$set", new Document("x", 2))),
-                new DeleteOneModel<>(new Document("_id", 2)),
-                new ReplaceOneModel<>(new Document("_id", 3),
-                                      new Document("_id", 3).append("x", 4))),
-  printBatchResult
-);
-
-
- // 2. Unordered bulk operation - no guarantee of order of operation
-collection.bulkWrite(
-  Arrays.asList(new InsertOneModel<>(new Document("_id", 4)),
-                new InsertOneModel<>(new Document("_id", 5)),
-                new InsertOneModel<>(new Document("_id", 6)),
-                new UpdateOneModel<>(new Document("_id", 1),
-                                     new Document("$set", new Document("x", 2))),
-                new DeleteOneModel<>(new Document("_id", 2)),
-                new ReplaceOneModel<>(new Document("_id", 3),
-                                      new Document("_id", 3).append("x", 4))),
-  new BulkWriteOptions().ordered(false),
-  printBatchResult
-);
-```
-
-{{% note class="important" %}}
-Use of the bulkWrite methods is not recommended when connected to pre-2.6 MongoDB servers, as this was the first server version to support bulk write commands for insert, update, and delete in a way that allows the driver to implement the correct semantics for BulkWriteResult and BulkWriteException. The methods will still work for pre-2.6 servers, but performance will suffer, as each write operation has to be executed one at a time.
-{{% /note %}}

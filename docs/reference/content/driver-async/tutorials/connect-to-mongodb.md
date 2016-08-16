@@ -10,129 +10,247 @@ title = "Connect to MongoDB"
 
 ## Connect to MongoDB
 
-The Java driver has two ways of specifying the settings of a connection to a MongoDB server deployment.
+To make a connection to a running MongoDB instance, use [`MongoClients.create`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}) to create a new [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient.html">}}) instance.
 
-### Connection String
+A [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient.html">}}) instance actually represents a pool of connections
+to the database; you will only need one instance of class
+`MongoClient` even with multiple concurrently executing asynchronous operations.
 
-The [connection string](http://docs.mongodb.org/manual/reference/connection-string/) is the simplest way to specify the properties of a 
-connection. . A connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name.
- For MongoDB, it is possible to list multiple domain names separated by a comma. Below are some example connection strings.
+{{% note class="important" %}}
+Typically you only create one `MongoClient` instance for a given MongoDB
+deployment (e.g. standalone, replica set, or a sharded cluster) and use it across your application. However, if you do create multiple instances:
 
-
-- For a standalone mongod, mongos, or a direct connection to a member of a replica set:
-
-```ini
-mongodb://host:27017
-```
-
-- To connect to multiple mongos or a replica set:
-
-```ini
-mongodb://host1:27017,host2:27017
-```
-
-The [authentication guide]({{< relref "driver-async/tutorials/authentication.md" >}}) contains information on how to provide credentials in the connection string.
-
-#### The Database Component
-
-The database component is optional and is used to indicate which database to authenticate against. When the database component is not
-provided, the "admin" database is used.
-
-```ini
-mongodb://host:27017/mydb
-```
-
-Above, the database by the name of "mydb" is where the credentials are stored for the application.
-
-{{% note %}}
-Some drivers utilize the database component to indicate which database to work with by default. The Java driver, while it parses the 
-database component, does not use the database component for anything other than authentication.
+-  All resource usage limits (max connections, etc.) apply per `MongoClient` instance.
+-  To dispose of an instance, call `MongoClient.close()` to clean up resources.
 {{% /note %}}
 
-#### Options
 
-Many options can be provided via the connection string. The ones that cannot may be provided in a 
-[`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) instance. To
-provide an option, append a `?` to the connection string and separate options by an `&`.
+## Prerequisites
 
-```ini
-mongodb://host:27017/?replicaSet=rs0&maxPoolSize=200
-```
+- Running MongoDB deployments to which to connect. For example, to connect to a standalone, you must have a running standalone.
 
-The above connection string sets the "replicaSet" value to "rs0" and the "maxPoolSize" to "200".
+- The MongoDB Asynchronous Driver.  See [Installation]({{< relref "driver-async/getting-started/installation.md" >}}) for instructions on how to install the MongoDB async driver.
 
-For a comprehensive list of the available options, see the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) documentation.  
+- The following import statements:
+
+    ```java
+    import com.mongodb.ConnectionString;
+    import com.mongodb.ServerAddress;
+    import com.mongodb.async.client.*;
+    import com.mongodb.connection.ClusterSettings;
+    import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+    import java.util.Arrays;
+    import static java.util.Arrays.asList;
+    ```
+
+## Connect to a Standalone MongoDB Instance
+
+To connect to a standalone MongoDB instance:
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}) without any parameters to connect to a MongoDB instance running on localhost on port ``27017``:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create();
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) with a string that specifies the connection string:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create("mongodb://localhost");
+    ```
+
+    The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name. For MongoDB, it is possible to list multiple domain names separated by a comma. For more information on the connection string, see [connection string]({{< docsref "reference/connection-string" >}}).
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) with a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object. To specify the host information, use the [`ClusterSettings`]({{<apiref "com/mongodb/connection/ClusterSettings.html">}}).
+
+    ```java
+    ClusterSettings clusterSettings = ClusterSettings.builder()
+                                      .hosts(asList(new ServerAddress("localhost")))
+                                      .build();
+    MongoClientSettings settings = MongoClientSettings.builder()
+                                      .clusterSettings(clusterSettings).build();
+    MongoClient mongoClient = MongoClients.create(settings);
+    ```
+
+{{% note class="tip" %}}
+[`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) provide more configuration options than a connection string.
+{{% /note %}}
+
+## Connect to a Replica Set
+
+To connect to a [replica set]({{<docsref "replication/">}}), specify at least one or more members of the replica set in the connection string or `MongoClientSettings` object and pass to [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}).
+
+{{% note %}}
+MongoDB will auto-discover the primary and the secondaries.
+{{% /note %}}
 
 
-### MongoClient
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) with a connection string that specifies the members of the replica set:
 
-A [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient" >}}) instance will be the root object for all interaction with MongoDB. It is all 
-that is needed to handle connecting to servers, monitoring servers, and performing operations against those servers. 
+  - Specify at least two members of the replica set if you are not specifying the replica set name
 
-To create a `MongoClient` use the [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) 
-static helper.  Without any arguments `MongoClients.create()` will return a [`MongoClient`]({{< apiref "com/mongodb/async/client/MongoClient" >}}) 
-instance will connect to "localhost" port 27017.  
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+                  "mongodb://host1:27017,host2:27017,host3:27017");
+      ```
 
-```java
-MongoClient client = MongoClients.create();
-```
+  - Specify at least one member of the replica set and the replica set name
 
-Alternatively, a connection string may be provided:
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+                  "mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet");
+      ```
 
-```java
-MongoClient client = MongoClients.create(new ConnectionString("mongodb://host:27017,host2:27017/?replicaSet=rs0"));
-```
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) with a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object that specifies the members of the replica set:
 
-Finally, the [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) class provides an in-code way to set the 
-same options from a connection string.  This is sometimes necessary, as the connection string does not allow an application to configure as 
-many properties of the connection as  `MongoClientSettings`.  
-[`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) instances are immutable, so to create one an 
-application uses a builder: 
+  - Specify at least two members of the replica set if you are not specifying the replica set name
 
-```java
-ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(new ServerAddress("localhost"))).description("Local Server").build();
-MongoClientSettings settings = MongoClientSettings.builder().clusterSettings(clusterSettings).build();
-MongoClient client = MongoClients.create(settings);
-```
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+                  ConnectionString("mongodb://host1:27017,host2:27017,host3:27017"));
+      ```
+
+  - Specify at least one member of the replica set and the replica set name:
+
+      ```java
+      MongoClient mongoClient = MongoClients.create(
+          new ConnectionString("mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet"));
+      ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object. To specify the host information of the replica set members, use [`ClusterSettings`]({{<apiref "com/mongodb/connection/ClusterSettings.html">}}).
+
+      ```java
+      ClusterSettings clusterSettings = ClusterSettings.builder()
+                                          .hosts(asList(
+                                              new ServerAddress("host1", 27017),
+                                              new ServerAddress("host2", 27017),
+                                              new ServerAddress("host3", 27017)))
+                                          .build();
+
+      MongoClientSettings settings = MongoClientSettings.builder()
+                                          .clusterSettings(clusterSettings).build();
+
+      MongoClient mongoClient = MongoClients.create(settings);
+      ```
+
+## Connect to a Sharded Cluster
+
+To connect to a [sharded cluster]({{<docsref "sharding/">}}), specify the `mongos` instance or instances to the `MongoClient` constructor.
+
+To connect to a single `mongos` instance:
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create--" >}}) without any parameters to connect to a :program:`mongos` running on localhost on port ``27017``:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create();
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) with a string that specifies the host information of the `mongos` instance in the connection URI:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create("mongodb://localhost");
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) with a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object that specifies the host information of the `mongos` instance:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create(
+                new ConnectionString("mongodb://localhost"));
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object. To specify the host information of the `mongos` instance, use [`ClusterSettings`]({{<apiref "com/mongodb/connection/ClusterSettings.html">}}):
+
+    ```java
+    ClusterSettings clusterSettings = ClusterSettings.builder()
+                                        .hosts(asList(new ServerAddress("localhost")))
+                                        .build();
+    MongoClientSettings settings = MongoClientSettings.builder()
+                                        .clusterSettings(clusterSettings)
+                                        .build();
+    MongoClient mongoClient = MongoClients.create(settings);
+    ```
+
+To connect to multiple `mongos` instances, specify the host and port of the `mongos` instances:
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) with a string that specifies the host and port information of the `mongos` instances in the connection URI:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017");
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) with a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) object that specifies the host and port information of the `mongos` instances:
+
+    ```java
+    MongoClient mongoClient = MongoClients.create(
+                new ConnectionString("mongodb://host1:27017,host2:27017"));
+    ```
+
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object. To specify the host information of the `mongos` instances, use [`ClusterSettings`]({{<apiref "com/mongodb/connection/ClusterSettings.html">}}):
+
+
+    ```java
+    ClusterSettings clusterSettings = ClusterSettings.builder()
+                                          .hosts(asList(
+                                              new ServerAddress("host1", 27017),
+                                              new ServerAddress("host2", 27017)))
+                                          .build();
+
+
+    MongoClientSettings settings = MongoClientSettings.builder()
+                                          .clusterSettings(clusterSettings).build();
+    MongoClient mongoClient = MongoClients.create(settings);
+    ```
+
+
+## Connection Options
+
+You can specify the connection settings using either the
+connection string (or `ConnectionString` object) or the `MongoClientSettings` or both.
+
 
 ### Netty Configuration
 
-By default, the async driver relies on the
-[`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) class, introduced
-in Java 7.  If configured properly, the driver will use [Netty](http://netty.io/) instead.  An application must use Netty for the 
-following reasons:
-      
-* The application is configured to use SSL to communicate with the MongoDB server.
-* The application runs on Java 6.
-         
-To configure the driver to use Netty, the application must configure the MongoClientSettings appropriately:
-         
-```java
-MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                                                 .clusterSettings(ClusterSettings.builder()
-                                                                          .hosts(Arrays.asList(new ServerAddress()))
-                                                                          .build())
-                                                 .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
-                                                 .build());
-
-```
-
-or via connection string:
-
-```java
-MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty");
-```
-
-By default the Netty-based streams will use the [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html) 
-and Netty's [default `ByteBufAllocator`](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html#DEFAULT), but these are 
-configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}) constructor.   
-
 {{% note %}}
-Netty is an optional dependency of the asynchronous driver. If your application requires Netty it must explicitly add a dependency to
+Netty is an optional dependency of the asynchronous driver. If your application requires Netty, it must explicitly add a dependency to
 Netty artifacts.  The driver is currently tested against Netty 4.0.
 {{% /note %}}
 
+By default, the async driver relies on the
+[`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) class, introduced
+in Java 7.  However, an application must use [Netty](http://netty.io/) instead if:
+
+* The application is configured to use SSL to communicate with the MongoDB server, or
+
+* The application runs on Java 6.
+
+To configure the driver to use Netty,  
+
+- Include the `streamType` option set to `netty`  in the connection string
+
+    ```java
+    MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty");
+    ```
+
+- Configure [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) with the `StreamFactory` set to use Netty:
+
+    ```java
+    MongoClient client = MongoClients.create(MongoClientSettings.builder()
+                              .clusterSettings(ClusterSettings.builder()
+                                                  .hosts(Arrays.asList(new ServerAddress()))
+                                                  .build())
+                              .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                                                  .build())
+                              .build());
+
+    ```
+
 {{% note %}}
-Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as 
+Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as
 deprecated as of the 3.1 driver release.
 {{% /note %}}
