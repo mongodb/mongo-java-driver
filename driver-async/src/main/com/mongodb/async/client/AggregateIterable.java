@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.Collation;
 
 import java.util.concurrent.TimeUnit;
 
@@ -87,4 +88,15 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.2
      */
     AggregateIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    AggregateIterable<TResult> collation(Collation collation);
 }

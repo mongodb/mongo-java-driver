@@ -72,8 +72,9 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(false)
                 .noCursorTimeout(false)
                 .partial(false)
+                .collation(null)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions, collation)
+                                                new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.into([]) { result, t -> }
@@ -94,7 +95,6 @@ class FindIterableSpecification extends Specification {
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
-                .collation(collation)
         )
         readPreference == secondary()
 
@@ -112,6 +112,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
+                .collation(collation)
                 .into([]) { result, t -> }
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -146,7 +147,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions, collation)
+                                                new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -165,7 +166,6 @@ class FindIterableSpecification extends Specification {
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .batchSize(100)
-                .collation(collation)
         )
     }
 
@@ -190,7 +190,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
-                                                 readPreference, readConcern, executor, new Document(), findOptions, collation)
+                                                 readPreference, readConcern, executor, new Document(), findOptions)
 
         when:
         def results = new FutureResultCallback()
@@ -253,7 +253,7 @@ class FindIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions(), collation)
+                readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions())
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)

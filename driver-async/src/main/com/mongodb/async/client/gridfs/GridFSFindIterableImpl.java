@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.model.Collation;
 import org.bson.conversions.Bson;
 
 import java.util.Collection;
@@ -94,6 +95,12 @@ final class GridFSFindIterableImpl implements GridFSFindIterable {
     @Override
     public GridFSFindIterable batchSize(final int batchSize) {
         underlying.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public GridFSFindIterable collation(final Collation collation) {
+        underlying.collation(collation);
         return this;
     }
 

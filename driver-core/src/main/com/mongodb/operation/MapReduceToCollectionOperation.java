@@ -485,9 +485,10 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
     }
 
     /**
-     * Sets the collation
+     * Sets the collation options
      *
-     * @param collation the collation
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      * @since 3.4
      * @mongodb.server.release 3.4

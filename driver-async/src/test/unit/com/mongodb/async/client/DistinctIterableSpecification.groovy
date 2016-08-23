@@ -60,7 +60,7 @@ class DistinctIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor]);
         def distinctIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, 'field', new BsonDocument(), collation)
+                executor, 'field', new BsonDocument())
 
         when: 'default input should be as expected'
         distinctIterable.into([]) { result, t -> }
@@ -70,11 +70,12 @@ class DistinctIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument()).collation(collation));
+                .filter(new BsonDocument()));
         readPreference == secondary()
 
         when: 'overriding initial options'
-        distinctIterable.filter(new Document('field', 1)).maxTime(999, MILLISECONDS).batchSize(99).into([]) { result, t -> }
+        distinctIterable.filter(new Document('field', 1)).maxTime(999, MILLISECONDS).batchSize(99)
+                .collation(collation).into([]) { result, t -> }
 
         operation = executor.getReadOperation() as DistinctOperation<Document>
 
@@ -90,7 +91,7 @@ class DistinctIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def distinctIterable = new DistinctIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
-                executor, 'field', new BsonDocument(), collation)
+                executor, 'field', new BsonDocument())
 
         def futureResultCallback = new FutureResultCallback()
 
@@ -131,7 +132,7 @@ class DistinctIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, 'field', new BsonDocument(), collation)
+                executor, 'field', new BsonDocument())
 
         when:
         def results = new FutureResultCallback()
@@ -194,7 +195,7 @@ class DistinctIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new DistinctIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(AsyncOperationExecutor), 'field', new BsonDocument(), collation)
+                readConcern, Stub(AsyncOperationExecutor), 'field', new BsonDocument())
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)

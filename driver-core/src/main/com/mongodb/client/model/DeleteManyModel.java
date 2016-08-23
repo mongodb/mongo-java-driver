@@ -30,8 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class DeleteManyModel<T> extends WriteModel<T> {
     private final Bson filter;
-    private final Collation collation;
-    private final boolean hasSetCollation;
+    private final DeleteOptions options;
 
     /**
      * Construct a new instance.
@@ -39,26 +38,20 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
      * @param filter a document describing the query filter, which may not be null.
      */
     public DeleteManyModel(final Bson filter) {
-        this(filter, null, false);
+        this(filter, new DeleteOptions());
     }
 
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may not be null.
-     * @param collation the collation to apply to the filter.
-     *                  A null value will use the default {@link Collation} as configured on the server.
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param options the options to apply
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public DeleteManyModel(final Bson filter, final Collation collation) {
-        this(filter, collation, true);
-    }
-
-    private DeleteManyModel(final Bson filter, final Collation collation, final boolean hasSetCollation) {
+    public DeleteManyModel(final Bson filter, final DeleteOptions options) {
         this.filter = notNull("filter", filter);
-        this.collation = collation;
-        this.hasSetCollation = hasSetCollation;
+        this.options = notNull("options", options);
     }
 
     /**
@@ -71,24 +64,12 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
     }
 
     /**
-     * Gets the collation to apply to the query, which may be null
+     * Gets the options to apply.
      *
-     * @return the collation to apply to the query
+     * @return the options
      * @since 3.4
-     * @mongodb.server.release 3.4
      */
-    public Collation getCollation() {
-        return collation;
-    }
-
-    /**
-     * Returns true if the collation has been set
-     *
-     * @return true if the collation has been set
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public boolean hasSetCollation() {
-        return hasSetCollation;
+    public DeleteOptions getOptions() {
+        return options;
     }
 }

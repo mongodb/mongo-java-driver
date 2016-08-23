@@ -26,6 +26,7 @@ class UpdateOptionsSpecification extends Specification {
         then:
         !options.isUpsert()
         options.getBypassDocumentValidation() == null
+        options.getCollation() == null
     }
 
     def 'should set upsert'() {
@@ -42,5 +43,13 @@ class UpdateOptionsSpecification extends Specification {
 
         where:
         bypassValidation << [null, true, false]
+    }
+
+    def 'should set collation'() {
+        expect:
+        new UpdateOptions().collation(collation).getCollation() == collation
+
+        where:
+        collation << [null, Collation.builder().locale('en').build()]
     }
 }

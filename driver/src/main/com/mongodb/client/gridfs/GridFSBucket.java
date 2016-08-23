@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
-import com.mongodb.client.model.Collation;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -77,16 +76,6 @@ public interface GridFSBucket {
     ReadConcern getReadConcern();
 
     /**
-     * Get the collation for the GridFSBucket
-     *
-     * <p>A null value represents the server default</p>
-     * @return the {@link Collation} or null
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    Collation getCollation();
-
-    /**
      *  Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -120,16 +109,6 @@ public interface GridFSBucket {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
-
-    /**
-     * Create a new GridFSBucket instance with a different collation
-     *
-     * @param collation the new {@link Collation} for the GridFSBucket, which may be null.
-     * @return a new GridFSBucket instance with the different collation
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    GridFSBucket withCollation(Collation collation);
 
     /**
      * Opens a Stream that the application can write the contents of the file to.

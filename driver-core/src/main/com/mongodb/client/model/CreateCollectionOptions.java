@@ -35,6 +35,7 @@ public class CreateCollectionOptions {
     private Bson storageEngineOptions;
     private IndexOptionDefaults indexOptionDefaults = new IndexOptionDefaults();
     private ValidationOptions validationOptions = new ValidationOptions();
+    private Collation collation;
 
     /**
      * Gets if auto-index is enabled
@@ -208,6 +209,31 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions validationOptions(final ValidationOptions validationOptions) {
         this.validationOptions = notNull("validationOptions", validationOptions);
+        return this;
+    }
+
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public CreateCollectionOptions collation(final Collation collation) {
+        this.collation = collation;
         return this;
     }
 }

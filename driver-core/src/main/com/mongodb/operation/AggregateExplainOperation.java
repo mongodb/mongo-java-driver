@@ -94,7 +94,8 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     /**
      * Sets the collation options
      *
-     * @param collation the collation options
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      * @since 3.4
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation

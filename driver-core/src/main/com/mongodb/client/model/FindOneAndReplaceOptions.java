@@ -36,6 +36,7 @@ public class FindOneAndReplaceOptions {
     private ReturnDocument returnDocument = ReturnDocument.BEFORE;
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     /**
      * Gets a document describing the fields to return for all matching documents.
@@ -166,6 +167,31 @@ public class FindOneAndReplaceOptions {
      */
     public FindOneAndReplaceOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
+        return this;
+    }
+
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public FindOneAndReplaceOptions collation(final Collation collation) {
+        this.collation = collation;
         return this;
     }
 }

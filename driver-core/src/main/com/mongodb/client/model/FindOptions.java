@@ -44,6 +44,7 @@ public final class FindOptions {
     private boolean noCursorTimeout;
     private boolean oplogReplay;
     private boolean partial;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -352,6 +353,31 @@ public final class FindOptions {
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public FindOptions collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FindOptions{"
@@ -366,6 +392,7 @@ public final class FindOptions {
                + ", noCursorTimeout=" + noCursorTimeout
                + ", oplogReplay=" + oplogReplay
                + ", partial=" + partial
+               + ", collation=" + collation
                + '}';
     }
 }

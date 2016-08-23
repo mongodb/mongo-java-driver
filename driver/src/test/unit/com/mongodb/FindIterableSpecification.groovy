@@ -61,7 +61,7 @@ class FindIterableSpecification extends Specification {
                                            .noCursorTimeout(false)
                                            .partial(false)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions, collation)
+                executor, new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -82,7 +82,6 @@ class FindIterableSpecification extends Specification {
                 .skip(10)
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
-                .collation(collation)
         )
         readPreference == secondary()
 
@@ -100,6 +99,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
+                .collation(collation)
                 .iterator()
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -129,7 +129,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions, collation)
+                executor, new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -146,7 +146,6 @@ class FindIterableSpecification extends Specification {
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
-                .collation(collation)
         )
     }
 
@@ -174,7 +173,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document(), findOptions, collation)
+                executor, new Document(), findOptions)
 
         when:
         def results = mongoIterable.first()

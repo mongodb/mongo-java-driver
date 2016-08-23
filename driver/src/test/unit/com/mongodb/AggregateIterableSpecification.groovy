@@ -52,7 +52,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null, null, null, null]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                                                            readConcern, writeConcern, executor, pipeline, collation)
+                                                            readConcern, writeConcern, executor, pipeline)
 
         when: 'default input should be as expected'
         aggregationIterable.iterator()
@@ -62,11 +62,11 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
-                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()).collation(collation));
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()));
         readPreference == secondary()
 
         when: 'overriding initial options'
-        aggregationIterable.maxTime(999, MILLISECONDS).useCursor(true).iterator()
+        aggregationIterable.maxTime(999, MILLISECONDS).useCursor(true).collation(collation).iterator()
 
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
@@ -85,11 +85,12 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, collation)
+                                  pipeline)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true).iterator()
+                .useCursor(true)
+                .collation(collation).iterator()
 
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
@@ -104,6 +105,7 @@ class AggregateIterableSpecification extends Specification {
         then: 'should use the correct settings'
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
+        operation.getCollation() == collation
     }
 
     def 'should handle exceptions correctly'() {
@@ -112,7 +114,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(namespace, BsonDocument, BsonDocument, codecRegistry,
-                                                            readPreference, readConcern, writeConcern, executor, pipeline, collation)
+                                                            readPreference, readConcern, writeConcern, executor, pipeline)
 
         when: 'The operation fails with an exception'
         aggregationIterable.iterator()
@@ -122,7 +124,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, collation).iterator()
+                                  pipeline).iterator()
 
         then:
         thrown(CodecConfigurationException)
@@ -151,7 +153,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new Document('$match', 1)], collation)
+                readConcern, writeConcern, executor, [new Document('$match', 1)])
 
         when:
         def results = mongoIterable.first()

@@ -18,6 +18,7 @@ package com.mongodb.async.client.gridfs;
 
 import com.mongodb.async.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.model.Collation;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -101,4 +102,15 @@ public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
      */
     @Override
     GridFSFindIterable batchSize(int batchSize);
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    GridFSFindIterable collation(Collation collation);
 }

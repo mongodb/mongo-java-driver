@@ -501,7 +501,8 @@ public class IndexRequest {
     /**
      * Sets the collation options
      *
-     * @param collation the collation options
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      * @mongodb.server.release 3.4
      * @since 3.4

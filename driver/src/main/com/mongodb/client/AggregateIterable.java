@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.client.model.Collation;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,7 +36,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<TResult> allowDiskUse(final Boolean allowDiskUse);
+    AggregateIterable<TResult> allowDiskUse(Boolean allowDiskUse);
 
     /**
      * Sets the number of documents to return per batch.
@@ -43,7 +45,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    AggregateIterable<TResult> batchSize(final int batchSize);
+    AggregateIterable<TResult> batchSize(int batchSize);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -53,7 +55,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit);
+    AggregateIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets whether the server should use a cursor to return results.
@@ -63,7 +65,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<TResult> useCursor(final Boolean useCursor);
+    AggregateIterable<TResult> useCursor(Boolean useCursor);
 
     /**
      * Sets the bypass document level validation flag.
@@ -76,6 +78,16 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 3.2
      */
-    AggregateIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation);
+    AggregateIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
 
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    AggregateIterable<TResult> collation(Collation collation);
 }
