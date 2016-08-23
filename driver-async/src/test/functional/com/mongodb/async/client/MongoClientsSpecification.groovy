@@ -18,12 +18,17 @@
 package com.mongodb.async.client
 
 import com.mongodb.MongoCredential
+import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
+import com.mongodb.WriteConcern
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import spock.lang.IgnoreIf
+import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ReadPreference.primary
+import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
@@ -117,5 +122,56 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
         cleanup:
         client?.close()
+    }
+
+    @Unroll
+    def 'should apply read preference from connection string to settings'() {
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getReadPreference() == readPreference
+
+        cleanup:
+        client?.close()
+
+        where:
+        uri                                                              | readPreference
+        'mongodb://localhost/'                                           | primary()
+        'mongodb://localhost/?readPreference=secondaryPreferred'         | secondaryPreferred()
+    }
+
+    @Unroll
+    def 'should apply read concern from connection string to settings'() {
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getReadConcern() == readConcern
+
+        cleanup:
+        client?.close()
+
+        where:
+        uri                                               | readConcern
+        'mongodb://localhost/'                            | ReadConcern.DEFAULT
+        'mongodb://localhost/?readConcernLevel=local'     | ReadConcern.LOCAL
+    }
+
+    @Unroll
+    def 'should apply write concern from connection string to settings'() {
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getWriteConcern() == writeConcern
+
+        cleanup:
+        client?.close()
+
+        where:
+        uri                               | writeConcern
+        'mongodb://localhost'             | WriteConcern.ACKNOWLEDGED
+        'mongodb://localhost/?w=majority' | WriteConcern.MAJORITY
     }
 }

@@ -129,6 +129,15 @@ public final class MongoClients {
                 throw new IllegalArgumentException(format("Unsupported stream type %s", connectionString.getStreamType()));
             }
         }
+        if (connectionString.getReadPreference() != null) {
+            builder.readPreference(connectionString.getReadPreference());
+        }
+        if (connectionString.getReadConcern() != null) {
+            builder.readConcern(connectionString.getReadConcern());
+        }
+        if (connectionString.getWriteConcern() != null) {
+            builder.writeConcern(connectionString.getWriteConcern());
+        }
         return create(builder.build());
     }
 
