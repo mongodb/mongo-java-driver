@@ -66,7 +66,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline, collation)
+                writeConcern, executor, pipeline)
 
         when: 'default input should be as expected'
         aggregationIterable.into([]) { result, t -> }
@@ -76,11 +76,11 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec()).collation(collation));
+                new DocumentCodec()));
         readPreference == secondary()
 
         when: 'overriding initial options'
-        aggregationIterable.maxTime(999, MILLISECONDS).useCursor(true).into([]) { result, t -> }
+        aggregationIterable.maxTime(999, MILLISECONDS).collation(collation).useCursor(true).into([]) { result, t -> }
 
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
@@ -107,11 +107,12 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, collation)
+                pipeline)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true).into([]) { result, t -> }
+                .useCursor(true)
+                .collation(collation).into([]) { result, t -> }
 
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
@@ -132,8 +133,9 @@ class AggregateIterableSpecification extends Specification {
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, collation)
+                pipeline)
                 .allowDiskUse(true)
+                .collation(collation)
                 .toCollection(futureResultCallback);
         futureResultCallback.get()
 
@@ -151,7 +153,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline, collation)
+                writeConcern, executor, pipeline)
 
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
@@ -171,7 +173,7 @@ class AggregateIterableSpecification extends Specification {
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
-                pipeline, collation)
+                pipeline)
                 .into([], futureResultCallback)
         futureResultCallback.get()
 
@@ -199,7 +201,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))], collation)
+                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))])
 
         when:
         def results = new FutureResultCallback()
@@ -262,7 +264,7 @@ class AggregateIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')], collation)
+                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)

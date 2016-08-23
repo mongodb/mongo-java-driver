@@ -33,7 +33,7 @@ class GridFSBucketsSpecification extends Specification {
 
     def 'should create a GridFSBucket with default bucket name'() {
         given:
-        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern, null,
+        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern,
                 Stub(OperationExecutor))
 
         when:
@@ -46,7 +46,7 @@ class GridFSBucketsSpecification extends Specification {
 
     def 'should create a GridFSBucket with custom bucket name'() {
         given:
-        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern, null,
+        def database = new MongoDatabaseImpl('db', Stub(CodecRegistry), Stub(ReadPreference), Stub(WriteConcern), readConcern,
                 Stub(OperationExecutor))
         def customName = 'custom'
 

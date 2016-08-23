@@ -208,6 +208,8 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Returns the collation options
      *
      * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
      */
     public Collation getCollation() {
         return collation;
@@ -216,7 +218,8 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     /**
      * Sets the collation options
      *
-     * @param collation the collation options
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      */
     public CountOperation collation(final Collation collation) {

@@ -22,7 +22,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
@@ -43,18 +42,15 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
-    private final Collation collation;
     private final AsyncOperationExecutor executor;
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                      final WriteConcern writeConcern, final ReadConcern readConcern, final Collation collation,
-                      final AsyncOperationExecutor executor) {
+                      final WriteConcern writeConcern, final ReadConcern readConcern, final AsyncOperationExecutor executor) {
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.readConcern = notNull("readConcern", readConcern);
-        this.collation = collation;
         this.executor = notNull("executor", executor);
     }
 
@@ -84,33 +80,23 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public Collation getCollation() {
-        return collation;
-    }
-
-    @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor);
-    }
-
-    @Override
-    public MongoDatabase withCollation(final Collation collation) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, collation, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
     }
 
     @Override
@@ -142,7 +128,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                                                  writeConcern, readConcern, collation, executor);
+                                                  writeConcern, readConcern, executor);
     }
 
     @Override
@@ -191,7 +177,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                 .maxDocuments(createCollectionOptions.getMaxDocuments())
                 .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes())
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()))
-                .collation(collation);
+                .collation(createCollectionOptions.getCollation());
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
         if (indexOptionDefaults.getStorageEngine() != null) {

@@ -314,7 +314,8 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     /**
      * Sets the collation options
      *
-     * @param collation the collation options
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      * @since 3.4
      * @mongodb.server.release 3.4

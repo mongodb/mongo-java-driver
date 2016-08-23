@@ -23,8 +23,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -105,16 +105,6 @@ public interface MongoCollection<TDocument> {
     ReadConcern getReadConcern();
 
     /**
-     * Get the collation for the MongoCollection
-     *
-     * <p>A null value represents the server default</p>
-     * @return the {@link com.mongodb.client.model.Collation} or null
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    Collation getCollation();
-
-    /**
      * Create a new MongoCollection instance with a different default class to cast any documents returned from the database into..
      *
      * @param clazz the default class to cast any documents returned from the database into.
@@ -157,16 +147,6 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
-
-    /**
-     * Create a new MongoCollection instance with a different collation
-     *
-     * @param collation the new {@link Collation} for the collection, which may be null.
-     * @return a new MongoCollection instance with the different collation
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    MongoCollection<TDocument> withCollation(Collation collation);
 
     /**
      * Counts the number of documents in the collection.
@@ -375,6 +355,20 @@ public interface MongoCollection<TDocument> {
     DeleteResult deleteOne(Bson filter);
 
     /**
+     * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
+     * modified.
+     *
+     * @param filter the query filter to apply the the delete operation
+     * @param options  the options to apply to the delete operation
+     * @return the result of the remove one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.4
+     */
+    DeleteResult deleteOne(Bson filter, DeleteOptions options);
+
+    /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
      * @param filter the query filter to apply the the delete operation
@@ -384,6 +378,19 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     DeleteResult deleteMany(Bson filter);
+
+    /**
+     * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
+     *
+     * @param filter the query filter to apply the the delete operation
+     * @param options  the options to apply to the delete operation
+     * @return the result of the remove many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.4
+     */
+    DeleteResult deleteMany(Bson filter, DeleteOptions options);
 
     /**
      * Replace a document in the collection according to the specified arguments.

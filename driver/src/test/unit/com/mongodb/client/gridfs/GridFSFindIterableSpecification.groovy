@@ -55,7 +55,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def underlying = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions(), collation)
+                new Document(), new FindOptions())
         def findIterable = new GridFSFindIterableImpl(underlying)
 
         when: 'default input should be as expected'
@@ -66,7 +66,7 @@ class GridFSFindIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
-                .filter(new BsonDocument()).slaveOk(true).collation(collation))
+                .filter(new BsonDocument()).slaveOk(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -77,6 +77,7 @@ class GridFSFindIterableSpecification extends Specification {
                 .limit(99)
                 .skip(9)
                 .noCursorTimeout(true)
+                .collation(collation)
                 .iterator()
 
         operation = executor.getReadOperation() as FindOperation<GridFSFile>
@@ -100,7 +101,7 @@ class GridFSFindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document('filter', 1), findOptions, collation)
+                new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -117,7 +118,6 @@ class GridFSFindIterableSpecification extends Specification {
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
-                .collation(collation)
         )
     }
 
@@ -151,7 +151,7 @@ class GridFSFindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def underlying = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions(), collation)
+                new Document(), new FindOptions())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
         when:

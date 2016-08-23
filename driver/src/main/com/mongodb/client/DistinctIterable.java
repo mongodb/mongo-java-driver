@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.client.model.Collation;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,7 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    DistinctIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit);
+    DistinctIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
      * Sets the number of documents to return per batch.
@@ -53,5 +54,16 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    DistinctIterable<TResult> batchSize(final int batchSize);
+    DistinctIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    DistinctIterable<TResult> collation(Collation collation);
 }

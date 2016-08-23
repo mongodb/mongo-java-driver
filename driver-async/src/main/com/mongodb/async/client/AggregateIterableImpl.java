@@ -54,18 +54,17 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final CodecRegistry codecRegistry;
     private final AsyncOperationExecutor executor;
     private final List<? extends Bson> pipeline;
-    private final Collation collation;
 
     private Boolean allowDiskUse;
     private Integer batchSize;
     private long maxTimeMS;
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final WriteConcern writeConcern, final AsyncOperationExecutor executor, final List<? extends Bson> pipeline,
-                          final Collation collation) {
+                          final WriteConcern writeConcern, final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -75,7 +74,6 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
-        this.collation = collation;
     }
 
     @Override
@@ -155,6 +153,12 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         return this;
     }
 
+    @Override
+    public AggregateIterable<TResult> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList();
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
@@ -167,7 +171,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .collation(collation);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, primary(), readConcern,
-                    executor, new BsonDocument(), new FindOptions(), collation);
+                    executor, new BsonDocument(), new FindOptions().collation(collation));
             if (batchSize != null) {
                 delegated.batchSize(batchSize);
             }

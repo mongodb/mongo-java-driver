@@ -45,7 +45,6 @@ public class IndexOptions {
     private Bson storageEngine;
     private Bson partialFilterExpression;
     private Collation collation;
-    private boolean hasSetCollation;
 
     /**
      * Create the index in the background
@@ -440,25 +439,14 @@ public class IndexOptions {
     /**
      * Sets the collation options
      *
-     * @param collation the collation options
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
      * @return this
      * @since 3.4
      * @mongodb.server.release 3.4
      */
     public IndexOptions collation(final Collation collation) {
-        hasSetCollation = true;
         this.collation = collation;
         return this;
-    }
-
-    /**
-     * Returns true if the collation has been set
-     *
-     * @return true if the collation has been set
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public boolean hasSetCollation() {
-        return hasSetCollation;
     }
 }
