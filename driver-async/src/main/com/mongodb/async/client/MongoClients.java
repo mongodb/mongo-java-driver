@@ -122,6 +122,15 @@ public final class MongoClients {
                                          .socketSettings(SocketSettings.builder()
                                                                        .applyConnectionString(connectionString)
                                                                        .build());
+
+        if (connectionString.getReadPreference() != null) {
+            builder = builder.readPreference(connectionString.getReadPreference());
+        }
+
+        if (connectionString.getReadConcern() != null) {
+            builder = builder.readConcern(connectionString.getReadConcern());
+        }
+
         if (connectionString.getStreamType() != null) {
             if (connectionString.getStreamType().toLowerCase().equals("netty")) {
                 builder.streamFactoryFactory(NettyStreamFactoryFactory.builder().build());
