@@ -1472,10 +1472,7 @@ public class DBCollection {
     }
 
     @SuppressWarnings("unchecked")
-    private List<BsonDocument> preparePipeline(final List<? extends DBObject> pipeline) {
-        if (pipeline.isEmpty()) {
-            throw new MongoException("Aggregation pipelines can not be empty");
-        }
+    List<BsonDocument> preparePipeline(final List<? extends DBObject> pipeline) {
         List<BsonDocument> stages = new ArrayList<BsonDocument>();
         for (final DBObject op : pipeline) {
             stages.add(wrap(op));

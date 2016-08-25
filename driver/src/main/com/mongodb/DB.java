@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
@@ -25,6 +26,7 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateUserOperation;
+import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.ListCollectionsOperation;
@@ -48,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.mongodb.DBCollection.createWriteConcernException;
 import static com.mongodb.MongoCredential.createMongoCRCredential;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -281,7 +284,9 @@ public class DB {
      * @param collectionName the name of the collection to return
      * @param options        options
      * @return the collection
-     * @throws MongoException if there's a failure
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
      * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
@@ -294,6 +299,53 @@ public class DB {
         }
         return getCollection(collectionName);
     }
+
+    /**
+     * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @return the view as a DBCollection
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    public DBCollection createView(final String viewName, final String viewOn, final List<? extends DBObject> pipeline) {
+        return createView(viewName, viewOn, pipeline, new DBCreateViewOptions());
+    }
+
+    /**
+     * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @param options  the options for creating the view
+     * @return the view as a DBCollection
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    public DBCollection createView(final String viewName, final String viewOn, final List<? extends DBObject> pipeline,
+                                   final DBCreateViewOptions options) {
+        try {
+            notNull("options", options);
+            DBCollection view = getCollection(viewName);
+            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
+                                     .collation(options.getCollation()));
+            return view;
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
+    }
+
 
     private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
