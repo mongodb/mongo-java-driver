@@ -18,13 +18,16 @@ package com.mongodb
 
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.CreateViewOptions
 import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
+import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -229,6 +232,32 @@ class MongoDatabaseSpecification extends Specification {
                 .validator(BsonDocument.parse('{level: {$gte: 10}}'))
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.WARN))
+    }
+
+    def 'should use CreateViewOperation correctly'() {
+        given:
+        def viewName = 'view1'
+        def viewOn = 'col1'
+        def pipeline = [new Document('$match', new Document('x', true))];
+        def writeConcern = WriteConcern.JOURNALED
+        def executor = new TestOperationExecutor([null, null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        database.createView(viewName, viewOn, pipeline)
+        def operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+
+        when:
+        database.createView(viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
+        operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
     }
 
     def 'should pass the correct options to getCollection'() {

@@ -21,9 +21,12 @@ import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
+import com.mongodb.client.model.DBCreateViewOptions
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.operation.CreateCollectionOperation
+import com.mongodb.operation.CreateViewOperation
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import spock.lang.Specification
@@ -113,6 +116,39 @@ class DBSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
+    }
+
+    def 'should execute CreateViewOperation'() {
+        given:
+        def mongo = Stub(Mongo)
+        mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        def executor = new TestOperationExecutor([1L, 2L, 3L])
+
+        def databaseName = 'test'
+        def viewName = 'view1'
+        def viewOn = 'collection1'
+        def pipeline = [new BasicDBObject('$match', new BasicDBObject('x', true))]
+        def writeConcern = WriteConcern.JOURNALED
+        def collation = Collation.builder().locale('en').build()
+
+        def db = new DB(mongo, databaseName, executor)
+        db.setWriteConcern(writeConcern)
+
+        when:
+        db.createView(viewName, viewOn, pipeline)
+
+        then:
+        def operation = executor.getWriteOperation() as CreateViewOperation
+        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+
+        when:
+        db.createView(viewName, viewOn, pipeline, new DBCreateViewOptions().collation(collation))
+        operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
     }
 
 

@@ -22,13 +22,16 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.CreateViewOptions
 import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
+import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -248,6 +251,36 @@ class MongoDatabaseSpecification extends Specification {
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.WARN)
                 .collation(collation))
+    }
+
+    def 'should use CreateViewOperation correctly'() {
+        given:
+        def viewName = 'view1'
+        def viewOn = 'col1'
+        def pipeline = [new Document('$match', new Document('x', true))];
+        def writeConcern = WriteConcern.JOURNALED
+        def executor = new TestOperationExecutor([null, null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def futureResultCallback = new FutureResultCallback<Void>()
+
+        when:
+        database.createView(viewName, viewOn, pipeline, futureResultCallback)
+        futureResultCallback.get()
+        def operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+
+        when:
+        futureResultCallback = new FutureResultCallback<Void>()
+        database.createView(viewName, viewOn, pipeline, new CreateViewOptions().collation(collation), futureResultCallback)
+        futureResultCallback.get()
+        operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
     }
 
     def 'should pass the correct options to getCollection'() {

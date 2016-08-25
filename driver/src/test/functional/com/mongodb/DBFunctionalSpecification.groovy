@@ -120,6 +120,22 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.setWriteConcern(null)
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) || !isDiscoverableReplicaSet() })
+    def 'should throw WriteConcernException on write concern error for create view'() {
+        given:
+        database.setWriteConcern(new WriteConcern(5))
+
+        when:
+        database.createView('view1', 'collection1', [])
+
+        then:
+        def e = thrown(WriteConcernException)
+        e.getErrorCode() == 100
+
+        cleanup:
+        database.setWriteConcern(null)
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for add user'() {
         given:
