@@ -244,17 +244,10 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if array is null or not of length 12
      */
     public ObjectId(final byte[] bytes) {
-        if (bytes == null) {
-            throw new IllegalArgumentException();
-        }
-        if (bytes.length != 12) {
-            throw new IllegalArgumentException("need 12 bytes");
-        }
-
-        timestamp = makeInt(bytes[0], bytes[1], bytes[2], bytes[3]);
-        machineIdentifier = makeInt((byte) 0, bytes[4], bytes[5], bytes[6]);
-        processIdentifier = (short) makeInt((byte) 0, (byte) 0, bytes[7], bytes[8]);
-        counter = makeInt((byte) 0, bytes[9], bytes[10], bytes[11]);
+        // This null check allows the delegate constructor to throw the expected IllegalArgumentException.
+        // (ByteBuffer.wrap throws NullPointerException if bytes is null, which violates ObjectId's contract
+        // to callers.)
+        this(bytes != null ? ByteBuffer.wrap(bytes) : null);
     }
 
     /**
@@ -266,6 +259,28 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      */
     ObjectId(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
         this(legacyToBytes(timestamp, machineAndProcessIdentifier, counter));
+    }
+
+    /**
+     * Constructs a new instance from the given ByteBuffer
+     *
+     * @param buffer the ByteBuffer
+     * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
+     */
+    public ObjectId(final ByteBuffer buffer) {
+        if (buffer == null) {
+            throw new IllegalArgumentException();
+        }
+        if (buffer.remaining() < 12) {
+            throw new IllegalArgumentException("need 12 bytes");
+        }
+
+        // Note: Cannot use ByteBuffer.getInt because it depends on tbe buffer's byte order
+        // and ObjectId's are always in big-endian order.
+        timestamp = makeInt(buffer.get(), buffer.get(), buffer.get(), buffer.get());
+        machineIdentifier = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
+        processIdentifier = (short) makeInt((byte) 0, (byte) 0, buffer.get(), buffer.get());
+        counter = makeInt((byte) 0, buffer.get(), buffer.get(), buffer.get());
     }
 
     private static byte[] legacyToBytes(final int timestamp, final int machineAndProcessIdentifier, final int counter) {
@@ -291,21 +306,39 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @return the byte array
      */
     public byte[] toByteArray() {
-        byte[] bytes = new byte[12];
-        bytes[0] = int3(timestamp);
-        bytes[1] = int2(timestamp);
-        bytes[2] = int1(timestamp);
-        bytes[3] = int0(timestamp);
-        bytes[4] = int2(machineIdentifier);
-        bytes[5] = int1(machineIdentifier);
-        bytes[6] = int0(machineIdentifier);
-        bytes[7] = short1(processIdentifier);
-        bytes[8] = short0(processIdentifier);
-        bytes[9] = int2(counter);
-        bytes[10] = int1(counter);
-        bytes[11] = int0(counter);
-        return bytes;
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+        putToByteBuffer(buffer);
+        return buffer.array();  // using .allocate ensures there is a backing array that can be returned
     }
+
+    /**
+      * Convert to bytes and put those bytes to the provided ByteBuffer.
+      * Note that the numbers are stored in big-endian order.
+      *
+      * @param buffer the ByteBuffer
+      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
+      */
+    public void putToByteBuffer(final ByteBuffer buffer) {
+        if (buffer == null) {
+            throw new IllegalArgumentException();
+        }
+        if (buffer.remaining() < 12) {
+            throw new IllegalArgumentException("need 12 bytes");
+        }
+
+        buffer.put(int3(timestamp));
+        buffer.put(int2(timestamp));
+        buffer.put(int1(timestamp));
+        buffer.put(int0(timestamp));
+        buffer.put(int2(machineIdentifier));
+        buffer.put(int1(machineIdentifier));
+        buffer.put(int0(machineIdentifier));
+        buffer.put(short1(processIdentifier));
+        buffer.put(short0(processIdentifier));
+        buffer.put(int2(counter));
+        buffer.put(int1(counter));
+        buffer.put(int0(counter));
+   }
 
     /**
      * Gets the timestamp (number of seconds since the Unix epoch).
