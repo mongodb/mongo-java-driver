@@ -24,6 +24,12 @@ import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
+import com.mongodb.client.model.DBCollectionCountOptions
+import com.mongodb.client.model.DBCollectionDistinctOptions
+import com.mongodb.client.model.DBCollectionFindAndModifyOptions
+import com.mongodb.client.model.DBCollectionFindOptions
+import com.mongodb.client.model.DBCollectionRemoveOptions
+import com.mongodb.client.model.DBCollectionUpdateOptions
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
@@ -83,39 +89,6 @@ class DBCollectionSpecification extends Specification {
         collection.readConcern == ReadConcern.MAJORITY
     }
 
-    def 'should get and set collation'() {
-        when:
-        def db = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([]))
-        def collection = db.getCollection('test')
-
-        then:
-        collection.getCollation() == null
-
-        when:
-        db.setCollation(frenchCollation)
-
-        then:
-        collection.getCollation() == frenchCollation
-
-        when:
-        collection.setCollation(collation)
-
-        then:
-        collection.getCollation() == collation
-
-        when:
-        collection.setCollation(null)
-
-        then:
-        collection.getCollation() == frenchCollation
-
-        when:
-        db.setCollation(null)
-
-        then:
-        collection.getCollation() == null
-    }
-
     def 'should use CreateIndexOperation properly'() {
         given:
         def executor = new TestOperationExecutor([null, null, null]);
@@ -142,14 +115,14 @@ class DBCollectionSpecification extends Specification {
                 .collationMaxVariable(CollationMaxVariable.SPACE)
                 .backwards(true)
                 .build()
-        collection.setCollation(collation)
         collection.createIndex(keys, new BasicDBObject(['background': true, 'unique': true, 'sparse': true, 'name': 'aIndex',
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
                                                       'max'          : new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true,
                                                       'storageEngine': BasicDBObject.parse(storageEngine),
-                                                      'partialFilterExpression':  BasicDBObject.parse(partialFilterExpression)]))
+                                                      'partialFilterExpression':  BasicDBObject.parse(partialFilterExpression),
+                                                      'collation': BasicDBObject.parse(collation.asDocument().toJson())]))
 
         request = (executor.getWriteOperation() as CreateIndexesOperation).requests[0]
 
@@ -285,27 +258,24 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.find().iterator().hasNext()
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY)
-                .collation(collation))
+                .readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
-        collection.find().iterator().hasNext()
+        collection.find(new BasicDBObject(), new DBCollectionFindOptions().collation(collation)).iterator().hasNext()
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .readConcern(ReadConcern.LOCAL)
-                .collation(frenchCollation))
+                .collation(collation)
+                .readConcern(ReadConcern.LOCAL))
     }
 
     def 'findOne should create the correct FindOperation'() {
@@ -314,6 +284,7 @@ class DBCollectionSpecification extends Specification {
         def cursor = Stub(BatchCursor) {
             next() >> [dbObject]
             hasNext() >> true
+            getServerCursor() >> new ServerCursor(12L, new ServerAddress())
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
@@ -325,31 +296,31 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
+                .modifiers(new BsonDocument())
                 .limit(-1))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.findOne()
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
+                .modifiers(new BsonDocument())
                 .limit(-1)
-                .readConcern(ReadConcern.MAJORITY)
-                .collation(collation))
+                .readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
-        collection.findOne()
+        collection.findOne(new BasicDBObject(), new DBCollectionFindOptions().collation(collation))
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
+                .modifiers(new BsonDocument())
                 .limit(-1)
                 .readConcern(ReadConcern.LOCAL)
-                .collation(frenchCollation))
+                .collation(collation))
     }
 
     def 'findAndRemove should create the correct FindAndDeleteOperation'() {
@@ -367,26 +338,6 @@ class DBCollectionSpecification extends Specification {
         expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
                 collection.getObjectCodec())
                 .filter(new BsonDocument()))
-
-        when: // Inherits from DB
-        db.setCollation(collation)
-        collection.findAndRemove(query)
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec())
-                .filter(new BsonDocument())
-                .collation(collation))
-
-        when:
-        collection.setCollation(frenchCollation)
-        collection.findAndRemove(query)
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec())
-                .filter(new BsonDocument())
-                .collation(frenchCollation))
     }
 
     def 'findAndModify should create the correct FindAndUpdateOperation'() {
@@ -408,25 +359,15 @@ class DBCollectionSpecification extends Specification {
                 collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument()))
 
-        when: // Inherits from DB
-        db.setCollation(collation)
-        collection.findAndModify(query, update)
+        when: // With options
+        collection.findAndModify(query, new DBCollectionFindAndModifyOptions().update(update).collation(collation)
+                .writeConcern(WriteConcern.W3))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
                 collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument())
                 .collation(collation))
-
-        when:
-        collection.setCollation(frenchCollation)
-        collection.findAndModify(query, update)
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec(), bsonUpdate)
-                .filter(new BsonDocument())
-                .collation(frenchCollation))
     }
 
     def 'findAndModify should create the correct FindAndReplaceOperation'() {
@@ -448,25 +389,15 @@ class DBCollectionSpecification extends Specification {
                 collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument()))
 
-        when: // Inherits from DB
-        db.setCollation(collation)
-        collection.findAndModify(query, replace)
+        when: // With options
+        collection.findAndModify(query, new DBCollectionFindAndModifyOptions().update(replace).collation(collation)
+                .writeConcern(WriteConcern.W3))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
+        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
                 collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument())
                 .collation(collation))
-
-        when:
-        collection.setCollation(frenchCollation)
-        collection.findAndModify(query, replace)
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec(), bsonReplace)
-                .filter(new BsonDocument())
-                .collation(frenchCollation))
     }
 
     def 'count should create the correct CountOperation'() {
@@ -483,25 +414,22 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.count()
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
                 .filter(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY)
-                .collation(collation))
+                .readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
-        collection.count()
+        collection.count(new BasicDBObject(), new DBCollectionCountOptions().collation(collation))
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
                 .filter(new BsonDocument())
                 .readConcern(ReadConcern.LOCAL)
-                .collation(frenchCollation))
+                .collation(collation))
     }
 
     def 'distinct should create the correct DistinctOperation'() {
@@ -530,25 +458,21 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.distinct('field1')
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
                 .filter(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY)
-                .collation(collation))
+                .readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
-        collection.distinct('field1')
+        collection.distinct('field1', new DBCollectionDistinctOptions().collation(collation))
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .filter(new BsonDocument())
                 .readConcern(ReadConcern.LOCAL)
-                .collation(frenchCollation))
+                .collation(collation))
     }
 
     def 'group should create the correct GroupOperation'() {
@@ -571,23 +495,16 @@ class DBCollectionSpecification extends Specification {
                 new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
                 .filter(new BsonDocument()))
 
-        when: // Inherits from DB
-        db.setCollation(collation)
-        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
+        when: // Can set collation
+        def groupCommand = new GroupCommand(collection, key, new BasicDBObject(), new BasicDBObject(), reduce, null, collation)
+        collection.group(groupCommand)
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
-                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
-                .filter(new BsonDocument()).collation(collation))
+                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}')).collation(collation)
+                .filter(new BsonDocument())
+        )
 
-        when:
-        collection.setCollation(frenchCollation)
-        collection.group(key, new BasicDBObject(), new BasicDBObject(), reduce)
-
-        then:
-        expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
-                new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
-                .filter(new BsonDocument()).collation(frenchCollation))
     }
 
     def 'mapReduce should create the correct MapReduceInlineResultsOperation'() {
@@ -612,7 +529,7 @@ class DBCollectionSpecification extends Specification {
         )
 
         when: // Inherits from DB
-        db.setCollation(collation)
+        db.setReadConcern(ReadConcern.LOCAL)
         collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
 
         then:
@@ -621,12 +538,15 @@ class DBCollectionSpecification extends Specification {
                         collection.getDefaultDBObjectCodec())
                         .verbose(true)
                         .filter(new BsonDocument())
-                        .collation(collation)
+                        .readConcern(ReadConcern.LOCAL)
         )
 
         when:
-        collection.setCollation(frenchCollation)
-        collection.mapReduce('map', 'reduce', null, MapReduceCommand.OutputType.INLINE, new BasicDBObject())
+        collection.setReadConcern(ReadConcern.MAJORITY)
+        def mapReduceCommand = new MapReduceCommand(collection, 'map', 'reduce', null, MapReduceCommand.OutputType.INLINE,
+                new BasicDBObject())
+        mapReduceCommand.setCollation(collation)
+        collection.mapReduce(mapReduceCommand)
 
         then:
         expect executor.getReadOperation(), isTheSameAs(
@@ -634,7 +554,8 @@ class DBCollectionSpecification extends Specification {
                         collection.getDefaultDBObjectCodec())
                         .verbose(true)
                         .filter(new BsonDocument())
-                        .collation(frenchCollation)
+                        .readConcern(ReadConcern.MAJORITY)
+                        .collation(collation)
         )
     }
 
@@ -657,8 +578,21 @@ class DBCollectionSpecification extends Specification {
         )
 
         when: // Inherits from DB
-        db.setCollation(collation)
         collection.mapReduce('map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE, new BasicDBObject())
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(
+                new MapReduceToCollectionOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
+                        'myColl', collection.getWriteConcern())
+                        .verbose(true)
+                        .filter(new BsonDocument())
+        )
+
+        when:
+        def mapReduceCommand = new MapReduceCommand(collection, 'map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE,
+                new BasicDBObject())
+        mapReduceCommand.setCollation(collation)
+        collection.mapReduce(mapReduceCommand)
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(
@@ -667,19 +601,6 @@ class DBCollectionSpecification extends Specification {
                         .verbose(true)
                         .filter(new BsonDocument())
                         .collation(collation)
-        )
-
-        when:
-        collection.setCollation(frenchCollation)
-        collection.mapReduce('map', 'reduce', 'myColl', MapReduceCommand.OutputType.REPLACE, new BasicDBObject())
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(
-                new MapReduceToCollectionOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                        'myColl', collection.getWriteConcern())
-                        .verbose(true)
-                        .filter(new BsonDocument())
-                        .collation(frenchCollation)
         )
     }
 
@@ -704,21 +625,19 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.aggregate(pipeline)
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.MAJORITY).collation(collation))
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
-        collection.aggregate(pipeline)
+        collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(frenchCollation))
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(collation))
     }
 
     def 'aggregate should create the correct AggregateToCollectionOperation'() {
@@ -737,20 +656,18 @@ class DBCollectionSpecification extends Specification {
                 bsonPipeline, collection.getWriteConcern()))
 
         when: // Inherits from DB
-        db.setCollation(collation)
         collection.aggregate(pipeline)
+
+        then:
+        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
+                bsonPipeline, collection.getWriteConcern()))
+
+        when:
+        collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
                 bsonPipeline, collection.getWriteConcern()).collation(collation))
-
-        when:
-        collection.setCollation(frenchCollation)
-        collection.aggregate(pipeline)
-
-        then:
-        expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()).collation(frenchCollation))
     }
 
     def 'explainAggregate should create the correct AggregateOperation'() {
@@ -759,7 +676,7 @@ class DBCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
         def collection = db.getCollection('test')
-        def options = AggregationOptions.builder().build()
+        def options = AggregationOptions.builder().collation(collation).build()
         def pipeline = [BasicDBObject.parse('{$match: {}}')]
         def bsonPipeline = [BsonDocument.parse('{$match: {}}')]
 
@@ -768,11 +685,10 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                collection.getDefaultDBObjectCodec()).collation(collation).asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
-        db.setCollation(collation)
         collection.explainAggregate(pipeline, options)
 
         then:
@@ -782,12 +698,11 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
-        collection.setCollation(frenchCollation)
         collection.explainAggregate(pipeline, options)
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(frenchCollation)
+                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
     }
 
@@ -832,8 +747,6 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
-        db.setCollation(collation)
-        updateRequest.collation(collation)
         collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
 
 
@@ -843,9 +756,8 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
-        collection.setCollation(frenchCollation)
-        updateRequest.collation(frenchCollation)
-        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
+        updateRequest.collation(collation)
+        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update), new DBCollectionUpdateOptions().collation(collation))
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
@@ -870,8 +782,6 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
-        db.setCollation(collation)
-        deleteRequest.collation(collation)
         collection.remove(BasicDBObject.parse(query))
 
         then:
@@ -880,9 +790,8 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
-        collection.setCollation(frenchCollation)
-        deleteRequest.collation(frenchCollation)
-        collection.remove(BasicDBObject.parse(query))
+        deleteRequest.collation(collation)
+        collection.remove(BasicDBObject.parse(query), new DBCollectionRemoveOptions().collation(collation))
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
@@ -898,12 +807,12 @@ class DBCollectionSpecification extends Specification {
         def query = '{a: 1}'
         def update = '{$set: {level: 1}}'
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
-                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false)
-        def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false)
+                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
+        def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false).collation(frenchCollation)
         def bulk = {
             def bulkOp = ordered ? collection.initializeOrderedBulkOperation() : collection.initializeUnorderedBulkOperation()
-            bulkOp.find(BasicDBObject.parse(query)).updateOne(BasicDBObject.parse(update))
-            bulkOp.find(BasicDBObject.parse(query)).removeOne()
+            bulkOp.find(BasicDBObject.parse(query)).collation(collation).updateOne(BasicDBObject.parse(update))
+            bulkOp.find(BasicDBObject.parse(query)).collation(frenchCollation).removeOne()
             bulkOp
         }
 
@@ -916,9 +825,6 @@ class DBCollectionSpecification extends Specification {
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
-        db.setCollation(collation)
-        updateRequest.collation(collation)
-        deleteRequest.collation(collation)
         bulk().execute()
 
         then:
@@ -927,9 +833,6 @@ class DBCollectionSpecification extends Specification {
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
-        collection.setCollation(frenchCollation)
-        updateRequest.collation(frenchCollation)
-        deleteRequest.collation(frenchCollation)
         bulk().execute()
 
         then:

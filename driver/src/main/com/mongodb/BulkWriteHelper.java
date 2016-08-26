@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.Decoder;
@@ -70,17 +69,10 @@ final class BulkWriteHelper {
         return retVal;
     }
 
-    static List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests,
-                                                                           final Collation collation) {
+    static List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
         List<com.mongodb.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.bulk.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
-            com.mongodb.bulk.WriteRequest request = cur.toNew();
-            if (request instanceof com.mongodb.bulk.UpdateRequest) {
-                ((com.mongodb.bulk.UpdateRequest) request).collation(collation);
-            } else if (request instanceof com.mongodb.bulk.DeleteRequest) {
-                ((com.mongodb.bulk.DeleteRequest) request).collation(collation);
-            }
-            retVal.add(request);
+            retVal.add(cur.toNew());
         }
         return retVal;
     }

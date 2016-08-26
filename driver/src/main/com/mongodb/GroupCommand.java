@@ -50,6 +50,24 @@ public class GroupCommand {
      */
     public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
                         final DBObject initial, final String reduce, final String finalize) {
+        this(collection, keys, condition, initial, reduce, finalize, null);
+    }
+
+    /**
+     * Creates a new group command.
+     *
+     * @param collection the collection from which to perform the group by operation.
+     * @param keys       the field or fields to group.
+     * @param condition  optional - a filter to determine which documents in the collection to process.
+     * @param initial    the initial state of the aggregation result document.
+     * @param reduce     a JavaScript aggregation function that operates on the documents during the grouping operation.
+     * @param finalize   optional - a JavaScript function that runs each item in the result set before group returns the final value.
+     * @param collation  optional - the collation options
+     *
+     * @since 3.4
+     */
+    public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
+                        final DBObject initial, final String reduce, final String finalize, final Collation collation) {
         notNull("collection", collection);
         this.collectionName = collection.getName();
         this.keys = keys;
@@ -58,7 +76,7 @@ public class GroupCommand {
         this.reduce = reduce;
         this.finalize = finalize;
         this.keyf = null;
-        this.collation = collection.getCollation();
+        this.collation = collation;
     }
 
     /**
@@ -75,6 +93,24 @@ public class GroupCommand {
      */
     public GroupCommand(final DBCollection collection, final String keyf, final DBObject condition,
                         final DBObject initial, final String reduce, final String finalize) {
+        this(collection, keyf, condition, initial, reduce, finalize, null);
+    }
+
+    /**
+     * Creates a new group command.
+     *
+     * @param collection the collection from which to perform the group by operation.
+     * @param keyf       the function that creates a "key object" for use as the grouping key
+     * @param condition  optional - a filter to determine which documents in the collection to process.
+     * @param initial    the initial state of the aggregation result document.
+     * @param reduce     a JavaScript aggregation function that operates on the documents during the grouping operation.
+     * @param finalize   optional - a JavaScript function that runs each item in the result set before group returns the final value.
+     * @param collation  optional - the collation options
+     *
+     * @since 3.4
+     */
+    public GroupCommand(final DBCollection collection, final String keyf, final DBObject condition,
+                        final DBObject initial, final String reduce, final String finalize, final Collation collation) {
         notNull("collection", collection);
         this.collectionName = collection.getName();
         this.keyf = notNull("keyf", keyf);
@@ -83,7 +119,7 @@ public class GroupCommand {
         this.reduce = reduce;
         this.finalize = finalize;
         this.keys = null;
-        this.collation = collection.getCollation();
+        this.collation = collation;
     }
 
     /**

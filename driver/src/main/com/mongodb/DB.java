@@ -76,7 +76,6 @@ public class DB {
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
-    private volatile Collation collation;
 
     DB(final Mongo mongo, final String name, final OperationExecutor executor) {
         if (!isValidName(name)) {
@@ -173,29 +172,6 @@ public class DB {
      */
     public ReadConcern getReadConcern() {
         return readConcern != null ? readConcern : mongo.getReadConcern();
-    }
-
-    /**
-     * Gets the collation options
-     *
-     * @return the collation options
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public Collation getCollation() {
-        return collation;
-    }
-
-    /**
-     * Sets the collation options
-     *
-     * <p>A null value represents the server default.</p>
-     * @param collation the collation options to use
-     * @since 3.4
-     * @mongodb.server.release 3.4
-     */
-    public void setCollation(final Collation collation) {
-        this.collation = collation;
     }
 
     /**
@@ -389,10 +365,7 @@ public class DB {
         if (options.get("validationAction") != null) {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
-        Collation collation = getCollation();
-        if (options.containsField("collation")) {
-            collation = DBObjectCollationHelper.createOptions(options);
-        }
+        Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
         return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
                    .capped(capped)
                    .collation(collation)

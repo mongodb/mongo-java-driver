@@ -24,7 +24,7 @@ import com.mongodb.client.model.CollationStrength;
 
 final class DBObjectCollationHelper {
 
-    static Collation createOptions(final DBObject options) {
+    static Collation createCollationFromOptions(final DBObject options) {
         if (options.get("collation") == null) {
             return null;
         } else if (!(options.get("collation") instanceof DBObject)) {

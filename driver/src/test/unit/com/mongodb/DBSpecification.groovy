@@ -108,8 +108,7 @@ class DBSpecification extends Specification {
                 .backwards(true)
                 .build()
 
-        db.setCollation(collation)
-        db.createCollection('ctest', new BasicDBObject())
+        db.createCollection('ctest', new BasicDBObject('collation', BasicDBObject.parse(collation.asDocument().toJson())))
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:

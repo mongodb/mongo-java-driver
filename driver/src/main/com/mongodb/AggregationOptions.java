@@ -18,6 +18,7 @@ package com.mongodb;
 
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.client.model.Collation;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +37,7 @@ public class AggregationOptions {
     private final OutputMode outputMode;
     private final long maxTimeMS;
     private final Boolean bypassDocumentValidation;
+    private final Collation collation;
 
     /**
      * Enumeration to define where the results of the aggregation will be output.
@@ -60,6 +62,7 @@ public class AggregationOptions {
         outputMode = builder.outputMode;
         maxTimeMS = builder.maxTimeMS;
         bypassDocumentValidation = builder.bypassDocumentValidation;
+        collation = builder.collation;
     }
 
     /**
@@ -116,21 +119,27 @@ public class AggregationOptions {
         return bypassDocumentValidation;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("AggregationOptions{");
-        sb.append("allowDiskUse=")
-          .append(allowDiskUse);
-        sb.append(", batchSize=")
-          .append(batchSize);
-        sb.append(", outputMode=")
-          .append(outputMode);
-        sb.append(", maxTimeMS=")
-          .append(maxTimeMS);
-        sb.append(", bypassDocumentValidation=")
-        .append(bypassDocumentValidation);
-        sb.append('}');
-        return sb.toString();
+        return "AggregationOptions{"
+                + "batchSize=" + batchSize
+                + ", allowDiskUse=" + allowDiskUse
+                + ", outputMode=" + outputMode
+                + ", maxTimeMS=" + maxTimeMS
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + ", collation=" + collation
+                + "}";
     }
 
     /**
@@ -155,6 +164,7 @@ public class AggregationOptions {
         private OutputMode outputMode = OutputMode.INLINE;
         private long maxTimeMS;
         private Boolean bypassDocumentValidation;
+        private Collation collation;
 
         private Builder() {
         }
@@ -219,6 +229,19 @@ public class AggregationOptions {
          */
         public Builder bypassDocumentValidation(final Boolean bypassDocumentValidation) {
             this.bypassDocumentValidation = bypassDocumentValidation;
+            return this;
+        }
+
+        /**
+         * Sets the collation
+         *
+         * @param collation the collation
+         * @return this
+         * @since 3.4
+         * @mongodb.server.release 3.4
+         */
+        public Builder collation(final Collation collation) {
+            this.collation = collation;
             return this;
         }
 

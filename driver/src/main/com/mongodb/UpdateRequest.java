@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
@@ -25,14 +26,16 @@ class UpdateRequest extends WriteRequest {
     private final boolean multi;
     private final boolean upsert;
     private final Encoder<DBObject> codec;
+    private final Collation collation;
 
     public UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
-                         final Encoder<DBObject> codec) {
+                         final Encoder<DBObject> codec, final Collation collation) {
         this.query = query;
         this.update = update;
         this.multi = multi;
         this.upsert = upsert;
         this.codec = codec;
+        this.collation = collation;
     }
 
     public DBObject getQuery() {
@@ -51,12 +54,17 @@ class UpdateRequest extends WriteRequest {
         return multi;
     }
 
+    public Collation getCollation() {
+        return collation;
+    }
+
     @Override
     com.mongodb.bulk.WriteRequest toNew() {
         return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(update, codec),
                                                        com.mongodb.bulk.WriteRequest.Type.UPDATE)
                .upsert(isUpsert())
-               .multi(isMulti());
+               .multi(isMulti())
+               .collation(getCollation());
     }
 }

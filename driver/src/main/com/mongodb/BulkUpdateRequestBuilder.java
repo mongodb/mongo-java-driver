@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
 import org.bson.codecs.Encoder;
 
 /**
@@ -31,14 +32,41 @@ public class BulkUpdateRequestBuilder {
     private final boolean upsert;
     private final Encoder<DBObject> queryCodec;
     private final Encoder<DBObject> replacementCodec;
+    private Collation collation;
 
     BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert,
-                             final Encoder<DBObject> queryCodec, final Encoder<DBObject> replacementCodec) {
+                             final Encoder<DBObject> queryCodec, final Encoder<DBObject> replacementCodec,
+                             final Collation collation) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
         this.queryCodec = queryCodec;
         this.replacementCodec = replacementCodec;
+        this.collation = collation;
+    }
+
+    /**
+     * Returns the collation
+     *
+     * @return the collation
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation
+     *
+     * @param collation the collation
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public BulkUpdateRequestBuilder collation(final Collation collation) {
+        this.collation = collation;
+        return this;
     }
 
     /**
@@ -48,7 +76,7 @@ public class BulkUpdateRequestBuilder {
      *                 update operators.
      */
     public void replaceOne(final DBObject document) {
-        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, queryCodec, replacementCodec));
+        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, queryCodec, replacementCodec, collation));
     }
 
     /**
@@ -57,7 +85,7 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, queryCodec));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, queryCodec, collation));
     }
 
     /**
@@ -66,6 +94,6 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, queryCodec));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, queryCodec, collation));
     }
 }
