@@ -383,8 +383,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
-        collection.setCollation(caseInsensitiveCollation)
-        dbCursor = collection.find()
+        dbCursor = collection.find().setCollation(caseInsensitiveCollation)
 
         when:
         dbCursor.count()
