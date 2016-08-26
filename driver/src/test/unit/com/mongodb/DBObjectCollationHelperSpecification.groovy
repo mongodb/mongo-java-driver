@@ -27,7 +27,7 @@ class DBObjectCollationHelperSpecification extends Specification {
 
     def 'should create the expected collation'() {
         expect:
-        DBObjectCollationHelper.createOptions(new BasicDBObject('collation', BasicDBObject.parse(options))) == collation
+        DBObjectCollationHelper.createCollationFromOptions(new BasicDBObject('collation', BasicDBObject.parse(options))) == collation
 
         where:
         collation                                | options
@@ -47,12 +47,12 @@ class DBObjectCollationHelperSpecification extends Specification {
     }
 
     def 'should return null if no options are set'() {
-        DBObjectCollationHelper.createOptions(new BasicDBObject()) == null
+        DBObjectCollationHelper.createCollationFromOptions(new BasicDBObject()) == null
     }
 
     def 'should throw an exception if the collation options are invalid'() {
         when:
-        DBObjectCollationHelper.createOptions(new BasicDBObject('collation', BasicDBObject.parse(options)))
+        DBObjectCollationHelper.createCollationFromOptions(new BasicDBObject('collation', BasicDBObject.parse(options)))
 
         then:
         thrown(IllegalArgumentException)

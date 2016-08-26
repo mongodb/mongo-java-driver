@@ -21,6 +21,10 @@ import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
+import com.mongodb.client.model.DBCollectionCountOptions
+import com.mongodb.client.model.DBCollectionFindAndModifyOptions
+import com.mongodb.client.model.DBCollectionRemoveOptions
+import com.mongodb.client.model.DBCollectionUpdateOptions
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import spock.lang.IgnoreIf
@@ -677,31 +681,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
-
-        when: // Set at the collection level
-        collection.drop()
-        collection.setCollation(collation)
-
-        collection.createIndex(~['y': 1], new BasicDBObject())
-        indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
-                collection.getDefaultDBObjectCodec())
-
-        then:
-        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
-
-        when: // Set at both the collection and the options levels
-        collection.drop()
-        collection.setCollation(Collation.builder().locale('fr').build())
-
-        collection.createIndex(~['y': 1], new BasicDBObject(options))
-        indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
-                collection.getDefaultDBObjectCodec())
-
-        then:
-        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
-
-        cleanup:
-        collection.setCollation(null)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -717,15 +696,11 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         !result.hasNext()
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.find(BasicDBObject.parse('{str: "FOO"}'))
+        result = collection.find(BasicDBObject.parse('{str: "FOO"}')).setCollation(caseInsensitive)
 
         then:
         result.hasNext()
         ++result == document
-
-        cleanup:
-        collection.setCollation(null)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -735,21 +710,18 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.insert(document)
 
         when:
-        def result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')])
+        def result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')], AggregationOptions.builder().build())
 
         then:
-        !result.results().iterator().hasNext()
+        !result.hasNext()
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')])
+        result = collection.aggregate([BasicDBObject.parse('{ $match: { str: "FOO"}}')],
+                AggregationOptions.builder().collation(caseInsensitive).build())
 
         then:
-        result.results().iterator().hasNext()
-        ++result.results().iterator() == document
-
-        cleanup:
-        collection.setCollation(null)
+        result.hasNext()
+        ++result == document
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -764,14 +736,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result == 0L
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.count(BasicDBObject.parse('{str: "FOO"}'))
+        result = collection.count(BasicDBObject.parse('{str: "FOO"}'), new DBCollectionCountOptions().collation(caseInsensitive))
 
         then:
         result == 1L
-
-        cleanup:
-        collection.setCollation(null)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -786,14 +754,11 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result.getN() == 0
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.update(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{str: "bar"}'))
+        result = collection.update(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{str: "bar"}'),
+                new DBCollectionUpdateOptions().collation(caseInsensitive))
 
         then:
         result.getN() == 1
-
-        cleanup:
-        collection.setCollation(null)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -808,14 +773,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result.getN() == 0
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.remove(BasicDBObject.parse('{str: "FOO"}'))
+        result = collection.remove(BasicDBObject.parse('{str: "FOO"}'), new DBCollectionRemoveOptions().collation(caseInsensitive))
 
         then:
         result.getN() == 1
-
-        cleanup:
-        collection.setCollation(null)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
@@ -825,20 +786,18 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.insert(document)
 
         when:
-        def result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{_id: 1, str: "BAR"}'))
+        def result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'),
+                new DBCollectionFindAndModifyOptions().update(BasicDBObject.parse('{_id: 1, str: "BAR"}')))
 
         then:
         result == null
 
         when:
-        collection.setCollation(caseInsensitive)
-        result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'), BasicDBObject.parse('{_id: 1, str: "BAR"}'))
+        result = collection.findAndModify(BasicDBObject.parse('{str: "FOO"}'),
+                new DBCollectionFindAndModifyOptions().update(BasicDBObject.parse('{_id: 1, str: "BAR"}')).collation(caseInsensitive))
 
         then:
         result == document
-
-        cleanup:
-        collection.setCollation(null)
     }
 
 

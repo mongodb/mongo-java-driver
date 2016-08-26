@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
+
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -44,6 +46,7 @@ public class MapReduceCommand {
     private Boolean jsMode;
     private Boolean verbose;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     /**
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
@@ -385,6 +388,28 @@ public class MapReduceCommand {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
+    }
+
+    /**
+     * Returns the collation
+     *
+     * @return the collation
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * @param collation the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public void setCollation(final Collation collation) {
+        this.collation = collation;
     }
 
     @Override

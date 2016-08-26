@@ -214,20 +214,7 @@ public class DBTest extends DatabaseTestCase {
 
         // When - collation set on the database
         database.getCollection(collectionName).drop();
-        database.setCollation(collation);
-        database.createCollection(collectionName, new BasicDBObject());
-        collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
-
-        // Then
-        collationDocument = collation.asDocument();
-        for (String key: collationDocument.keySet()) {
-            assertEquals(collationDocument.get(key), collectionCollation.get(key));
-        }
-
-        // When - collation set on the database and in options
-        database.getCollection(collectionName).drop();
-        database.setCollation(Collation.builder().locale("fr").build());
-        database.createCollection(collectionName, options);
+        database.createCollection(collectionName, new BasicDBObject("collation", BasicDBObject.parse(collation.asDocument().toJson())));
         collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
 
         // Then

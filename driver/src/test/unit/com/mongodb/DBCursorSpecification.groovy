@@ -77,25 +77,23 @@ class DBCursorSpecification extends Specification {
     def 'should get and set collation'() {
         when:
         def collection = new DB(getMongoClient(), 'myDatabase', new TestOperationExecutor([])).getCollection('test')
-        def enCollation = Collation.builder().locale('en').build()
-        collection.setCollation(enCollation)
+        def collation = Collation.builder().locale('en').build()
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
 
         then:
-        cursor.getCollation() == enCollation
+        cursor.getCollation() == null
 
         when:
-        def frCollation = Collation.builder().locale('fr').build()
-        cursor.setCollation(frCollation)
+        cursor.setCollation(collation)
 
         then:
-        cursor.getCollation() == frCollation
+        cursor.getCollation() == collation
 
         when:
         cursor.setCollation(null)
 
         then:
-        cursor.getCollation() == enCollation
+        cursor.getCollation() == null
     }
 
     def 'should copy as expected'() {
@@ -153,6 +151,7 @@ class DBCursorSpecification extends Specification {
             hasNext() >> {
                 count == 0
             }
+            getServerCursor() >> new ServerCursor(12L, new ServerAddress())
         }]);
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
@@ -165,9 +164,10 @@ class DBCursorSpecification extends Specification {
         result == dbObject
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                                                                 .readConcern(ReadConcern.MAJORITY)
-                                                                .filter(new BsonDocument())
                                                                 .limit(-1)
-                                                                .projection(new BsonDocument()))
+                                                                .filter(new BsonDocument())
+                                                                .projection(new BsonDocument())
+                                                                .modifiers(new BsonDocument()))
     }
 
     def 'count should create the correct CountOperation'() {

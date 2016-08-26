@@ -413,8 +413,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         when:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')
         collection.insert(document)
-        collection.setCollation(caseInsensitiveCollation)
-        dbCursor = collection.find(BasicDBObject.parse('{str: "FOO"}'))
+        dbCursor = collection.find(BasicDBObject.parse('{str: "FOO"}')).setCollation(caseInsensitiveCollation)
 
         then:
         dbCursor.count() == 1
