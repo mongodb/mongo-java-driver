@@ -114,7 +114,8 @@ $ cd mongo-java-driver
 $ ./gradlew check
 ```
 
-The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands).
+The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
+command-line parameter.
 
 
 ### Build status:
