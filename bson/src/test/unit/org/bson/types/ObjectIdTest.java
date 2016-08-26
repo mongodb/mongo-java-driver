@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.Random;
+import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -27,22 +28,36 @@ import static org.junit.Assert.assertTrue;
 
 public class ObjectIdTest {
     @Test
-    public void testToByteArray() {
+    public void testToBytes() {
         ObjectId objectId = new ObjectId(0x5106FC9A, 0x00BC8237, (short) 0x5581, 0x0036D289);
-        assertArrayEquals(new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119}, objectId.toByteArray());
+        byte[] expectedBytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+
+        assertArrayEquals(expectedBytes, objectId.toByteArray());
+
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+        objectId.putToByteBuffer(buffer);
+        assertArrayEquals(expectedBytes, buffer.array());
     }
 
     @Test
-    public void testFromByteArray() {
-        ObjectId objectId = new ObjectId(new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119});
-        assertEquals(0x5106FC9A, objectId.getTimestamp());
-        assertEquals(0x00BC8237, objectId.getMachineIdentifier());
-        assertEquals((short) 0x5581, objectId.getProcessIdentifier());
-        assertEquals(0x0036D289, objectId.getCounter());
+    public void testFromBytes() {
+        byte[] bytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+
+        ObjectId objectId1 = new ObjectId(bytes);
+        assertEquals(0x5106FC9A, objectId1.getTimestamp());
+        assertEquals(0x00BC8237, objectId1.getMachineIdentifier());
+        assertEquals((short) 0x5581, objectId1.getProcessIdentifier());
+        assertEquals(0x0036D289, objectId1.getCounter());
+
+        ObjectId objectId2 = new ObjectId(ByteBuffer.wrap(bytes));
+        assertEquals(0x5106FC9A, objectId2.getTimestamp());
+        assertEquals(0x00BC8237, objectId2.getMachineIdentifier());
+        assertEquals((short) 0x5581, objectId2.getProcessIdentifier());
+        assertEquals(0x0036D289, objectId2.getCounter());
     }
 
     @Test
-    public void testBytes() {
+    public void testBytesRoundtrip() {
         ObjectId expected = new ObjectId();
         ObjectId actual = new ObjectId(expected.toByteArray());
         assertEquals(expected, actual);
