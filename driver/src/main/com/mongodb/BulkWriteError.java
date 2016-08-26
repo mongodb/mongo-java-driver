@@ -117,4 +117,14 @@ public class BulkWriteError {
         result = 31 * result + details.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "BulkWriteError{"
+                       + "index=" + index
+                       + ", code=" + code
+                       + ", message='" + message + '\''
+                       + ", details=" + details
+                       + '}';
+    }
 }
