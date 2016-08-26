@@ -19,7 +19,9 @@ Pull requests should generally be made against the master (default) branch and i
 
 Code should compile and tests should pass under all Java versions which the driver currently supports.  Currently the Java driver 
 supports a minimum version of Java 6.  Please run './gradlew test' to confirm.   By default, running the tests requires that you started a 
-mongod server on localhost, listening on the default port.   At minimum, please test against the latest release version of the MongoDB 
+mongod server on localhost, listening on the default port and configured to run with
+[`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands), which may be set with the 
+`--setParameter enableTestCommands=1` command-line parameter.   At minimum, please test against the latest release version of the MongoDB 
 server.
 
 The results of pull request testing will be appended to the request. If any tests do not pass, or relevant tests are not included, the 
