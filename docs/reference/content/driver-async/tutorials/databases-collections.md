@@ -151,8 +151,8 @@ You can get a list of the collections in a database using the [`MongoDatabase.li
 ```java
 database.listCollectionNames().forEach(new Block<String>() {
     @Override
-    public void apply(final String databaseName) {
-        System.out.println(databaseName);
+    public void apply(final String name) {
+        System.out.println(name);
     }
 }, callbackWhenFinished);
 ```

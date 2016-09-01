@@ -221,7 +221,7 @@ The [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) m
 
 To return the first document in the collection, use the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method without any parameters and chain to `find()` method the [`first()`] ({{< apiref "com/mongodb/client/MongoIterable.html#first--">}}) method.
 
-If the `FindIterable` object returned by the `find()` method is empty, the operation returns null.
+If the collection is empty, the operation returns null.
 
 {{% note class="tip" %}}
 The `find().first()` construct is useful for queries that should only match a single document or if you are interested in the first document only.
