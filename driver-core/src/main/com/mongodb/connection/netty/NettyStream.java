@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.bson.ByteBuf;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
+import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -122,9 +124,12 @@ final class NettyStream implements Stream {
                 if (sslSettings.isEnabled()) {
                     SSLEngine engine = SSLContext.getDefault().createSSLEngine(address.getHost(), address.getPort());
                     engine.setUseClientMode(true);
+                    SSLParameters sslParameters = engine.getSSLParameters();
+                    enableSni(address, sslParameters);
                     if (!sslSettings.isInvalidHostNameAllowed()) {
-                        engine.setSSLParameters(enableHostNameVerification(engine.getSSLParameters()));
+                        enableHostNameVerification(sslParameters);
                     }
+                    engine.setSSLParameters(sslParameters);
                     ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
                 }
                 int readTimeout = settings.getReadTimeout(MILLISECONDS);
