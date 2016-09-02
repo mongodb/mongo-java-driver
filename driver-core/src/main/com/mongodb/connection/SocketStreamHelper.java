@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package com.mongodb.connection;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
+import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class SocketStreamHelper {
@@ -42,10 +44,15 @@ final class SocketStreamHelper {
             if (!(socket instanceof SSLSocket)) {
                 throw new MongoInternalException("SSL is enabled but the socket is not an instance of javax.net.ssl.SSLSocket");
             }
+            SSLSocket sslSocket = (SSLSocket) socket;
+            SSLParameters sslParameters = sslSocket.getSSLParameters();
+
+            enableSni(address, sslParameters);
+
             if (!sslSettings.isInvalidHostNameAllowed()) {
-                SSLSocket sslSocket = (SSLSocket) socket;
-                sslSocket.setSSLParameters(enableHostNameVerification(sslSocket.getSSLParameters()));
+                enableHostNameVerification(sslParameters);
             }
+            sslSocket.setSSLParameters(sslParameters);
         }
         socket.connect(address.getSocketAddress(), settings.getConnectTimeout(MILLISECONDS));
     }
