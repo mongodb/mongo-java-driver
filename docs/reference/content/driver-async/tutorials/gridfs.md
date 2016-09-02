@@ -157,36 +157,13 @@ gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options,
 );
 ```
 
+
 ### OpenUploadStream
 
-You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) which extends [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
+For a finer-grained control of the upload, the driver also provides a [`GridFSBucket.openUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-">}}) method, which returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}). You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) which extends [`AsyncOutputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncOutputStream" >}}).
 
 The [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}) buffers data until it reaches the `chunkSizeBytes` and then inserts the chunk into the `chunks` collection.  When the `GridFSUploadStream` is closed, the final chunk is written and the file metadata is inserted into the `files` collection.
 
-The [`GridFSBucket.openUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openUploadStream-java.lang.String-com.mongodb.client.gridfs.model.GridFSUploadOptions-">}}) method returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSUploadStream.html">}}).
-
-The following example uploads into a `GridFSBucket` via the returned `GridFSUploadStream`:
-
-```java
-ByteBuffer data = ByteBuffer.wrap(
-                          "/tmp/mongodb-tutorial.pdf".getBytes(StandardCharsets.UTF_8);
-final GridFSUploadStream uploadStream = gridFSBucket.openUploadStream("sampleData");
-
-uploadStream.write(data, new SingleResultCallback<Integer>() {
-    @Override
-    public void onResult(final Integer result, final Throwable t) {
-        System.out.println("The fileId of the uploaded file is: " +
-                                    uploadStream.getObjectId().toHexString());
-
-        uploadStream.close(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                        // Stream closed
-            }
-        });
-    }
-});
-```
 
 ## Find Files Stored in GridFS
 
@@ -283,55 +260,7 @@ streamToDownloadTo.close();
 
 ### OpenDownloadStream
 
-The [`openDownloadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-">}}) method returns a [`GridFSDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSDownloadStream.html">}}) which extends [`AsyncInputStream`]({{< apiref "com/mongodb/async/client/gridfs/AsyncInputStream" >}}).
-
-The following example reads from the `GridFSBucket` via the returned `AsyncInputStream`. For the `fileId` variable, specify an `ObjectId` value returned from the find operation section in this tutorial.
-
-```java
-final ByteBuffer dstByteBuffer = ByteBuffer.allocate(1024 * 1024);
-final GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
-downloadStream.read(dstByteBuffer, new SingleResultCallback<Integer>() {
-    @Override
-    public void onResult(final Integer result, final Throwable t) {
-        dstByteBuffer.flip();
-        byte[] bytes = new byte[result];
-        dstByteBuffer.get(bytes);
-        System.out.println(new String(bytes, StandardCharsets.UTF_8));
-
-        downloadStream.close(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                // Finished
-            }
-        });
-    }
-});
-```
-
-You can also pass the filename to the [`openDownloadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream-java.lang.String-">}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
-
-The following example downloads the latest version of the file named "sampleData" into the `dstByteBuffer` ByteBuffer:
-
-```java
-final ByteBuffer dstByteBuffer = ByteBuffer.allocate(1024 * 1024);
-final GridFSDownloadStream downloadStreamByName = gridFSBucket.openDownloadStream("sampleData");
-downloadStreamByName.read(dstByteBuffer, new SingleResultCallback<Integer>() {
-    @Override
-    public void onResult(final Integer result, final Throwable t) {
-        dstByteBuffer.flip();
-        byte[] bytes = new byte[result];
-        dstByteBuffer.get(bytes);
-        System.out.println(new String(bytes, StandardCharsets.UTF_8));
-
-        downloadStreamByName.close(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                // Finished
-            }
-        });
-    }
-});
-```
+For a finer-grained control of the upload, the driver also provides a [`openDownloadStream`]({{< apiref "com/mongodb/async/client/gridfs/GridFSBucket.html#openDownloadStream-org.bson.types.ObjectId-">}}) method, which returns a [`GridFSDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSDownloadStream.html">}}).
 
 ## Rename Files
 
