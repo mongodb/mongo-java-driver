@@ -76,6 +76,13 @@ public final class BsonDecimal128 extends BsonNumber {
     }
 
     @Override
+    public String toString() {
+        return "BsonDecimal128{"
+                       + "value=" + value
+                       + '}';
+    }
+
+    @Override
     public int intValue() {
         return value.bigDecimalValue().intValue();
     }
