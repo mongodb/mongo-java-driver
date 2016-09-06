@@ -418,6 +418,9 @@ public class JsonReader extends AbstractBsonReader {
             case INT64:
                 readInt64();
                 break;
+            case DECIMAL128:
+                readDecimal128();
+                break;
             case JAVASCRIPT:
                 readJavaScript();
                 break;
