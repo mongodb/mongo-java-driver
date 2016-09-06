@@ -21,6 +21,7 @@ import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.CodeWScope
+import org.bson.types.Decimal128
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -83,6 +84,7 @@ class LazyBSONObjectSpecification extends Specification {
         Long.MAX_VALUE                                                        | [16, 0, 0, 0, 18, 102, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
         new MinKey()                                                          | [8, 0, 0, 0, -1, 102, 0, 0]
         new MaxKey()                                                          | [8, 0, 0, 0, 127, 102, 0, 0]
+        Decimal128.parse("0E-6176")                                           | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
     }
