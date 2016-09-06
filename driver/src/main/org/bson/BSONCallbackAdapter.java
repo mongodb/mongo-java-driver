@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
 
     @Override
     protected void doWriteDecimal128(final Decimal128 value) {
-        throw new UnsupportedOperationException("Decimal128 not support for legacy API");
+        bsonCallback.gotDecimal128(getName(), value);
     }
 
     @Override
