@@ -211,6 +211,8 @@ public class LazyBSONObject implements BSONObject {
                 return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
             case INT64:
                 return reader.readInt64();
+            case DECIMAL128:
+                return reader.readDecimal128();
             case MIN_KEY:
                 reader.readMinKey();
                 return new MinKey();
