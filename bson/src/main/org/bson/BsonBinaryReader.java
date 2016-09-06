@@ -318,6 +318,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
             case INT64:
                 skip = 8;
                 break;
+            case DECIMAL128:
+                skip = 16;
+                break;
             case JAVASCRIPT:
                 skip = readSize();
                 break;
