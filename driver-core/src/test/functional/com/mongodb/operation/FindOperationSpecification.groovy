@@ -901,6 +901,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         document.remove('millis')
         document.remove('executionStats')
         document.remove('serverInfo')
+        document.remove('executionTimeMillis')
         document
     }
 
