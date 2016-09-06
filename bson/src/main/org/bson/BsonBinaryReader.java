@@ -353,6 +353,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
             case UNDEFINED:
                 skip = 0;
                 break;
+            case DB_POINTER:
+                skip = readSize() + 12;   // String followed by ObjectId
+                break;
             default:
                 throw new BSONException("Unexpected BSON type: " + getCurrentBsonType());
         }
