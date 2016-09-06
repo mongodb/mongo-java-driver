@@ -23,6 +23,7 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
+import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -155,6 +156,8 @@ public class BasicBSONEncoder implements BSONEncoder {
             putDate(name, (Date) value);
         } else if (value instanceof Number) {
             putNumber(name, (Number) value);
+        } else if (value instanceof Decimal128) {
+            putDecimal128(name, (Decimal128) value);
         } else if (value instanceof Character) {
             putString(name, value.toString());
         } else if (value instanceof String) {
@@ -305,6 +308,19 @@ public class BasicBSONEncoder implements BSONEncoder {
         } else {
             throw new IllegalArgumentException("Can't serialize " + number.getClass());
         }
+    }
+
+    /**
+     * Encodes a Decimal128 field.
+     *
+     * @param name   the field name
+     * @param value the value
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    protected void putDecimal128(final String name, final Decimal128 value) {
+        putName(name);
+        bsonWriter.writeDecimal128(value);
     }
 
     /**

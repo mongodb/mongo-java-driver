@@ -24,6 +24,7 @@ import org.bson.types.BasicBSONList
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.CodeWScope
+import org.bson.types.Decimal128
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -88,6 +89,7 @@ class BasicBSONEncoderSpecification extends Specification {
         ['i': Long.MAX_VALUE]                                    | [16, 0, 0, 0, 18, 105, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
         ['k': new MinKey()]                                      | [8, 0, 0, 0, -1, 107, 0, 0]
         ['k': new MaxKey()]                                      | [8, 0, 0, 0, 127, 107, 0, 0]
+        ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         aClass = document.find { true }.value.getClass()
     }
