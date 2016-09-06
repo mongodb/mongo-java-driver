@@ -282,20 +282,6 @@ public class JsonReader extends AbstractBsonReader {
         }
     }
 
-    private void setStateOnEnd() {
-        switch (getContext().getContextType()) {
-            case ARRAY:
-            case DOCUMENT:
-                setState(State.TYPE);
-                break;
-            case TOP_LEVEL:
-                setState(State.DONE);
-                break;
-            default:
-                throw new JsonParseException("Unexpected ContextType %s.", getContext().getContextType());
-        }
-    }
-
     @Override
     protected void doReadEndDocument() {
         setContext(getContext().getParentContext());
