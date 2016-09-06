@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
+import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -131,6 +132,8 @@ public class JSONCallback extends BasicBSONCallback {
             o = new BsonUndefined();
         } else if (b.containsField("$numberLong")) {
             o = Long.valueOf((String) b.get("$numberLong"));
+        } else if (b.containsField("$numberDecimal")) {
+            o = Decimal128.parse((String) b.get("$numberDecimal"));
         }
 
         if (!isStackEmpty()) {
