@@ -19,7 +19,7 @@ package com.mongodb;
 
 /**
  * This class lets you access the results of the previous acknowledged write. If the write was unacknowledged, all property access
- * methods will throw {@link java.lang.UnsupportedOperationException}.
+ * methods will throw {@link UnsupportedOperationException}.
  *
  * @see WriteConcern#UNACKNOWLEDGED
  */
@@ -65,7 +65,7 @@ public class WriteResult {
      * Returns true if the write was acknowledged.
      *
      * @return true if the write was acknowledged
-     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
+     * @see WriteConcern#UNACKNOWLEDGED
      * @since 3.0
      */
     public boolean wasAcknowledged() {
@@ -76,7 +76,7 @@ public class WriteResult {
      * Gets the "n" field, which contains the number of documents affected in the write operation.
      *
      * @return the value of the "n" field
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
+     * @throws UnsupportedOperationException if the write was unacknowledged
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public int getN() {
@@ -89,7 +89,7 @@ public class WriteResult {
      * this method will return null unless the _id of the upserted document was of type ObjectId.
      *
      * @return the value of the _id of an upserted document
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
+     * @throws UnsupportedOperationException if the write was unacknowledged
      * @since 2.12
      */
     public Object getUpsertedId() {
@@ -102,7 +102,7 @@ public class WriteResult {
      * Returns true if this write resulted in an update of an existing document.
      *
      * @return whether the write resulted in an update of an existing document.
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged
+     * @throws UnsupportedOperationException if the write was unacknowledged
      * @since 2.12
      */
     public boolean isUpdateOfExisting() {
@@ -114,7 +114,7 @@ public class WriteResult {
     public String toString() {
         if (acknowledged) {
             return "WriteResult{"
-                   + ", n=" + n
+                   + "n=" + n
                    + ", updateOfExisting=" + updateOfExisting
                    + ", upsertedId=" + upsertedId
                    + '}';
