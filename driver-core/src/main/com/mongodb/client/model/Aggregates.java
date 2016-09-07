@@ -114,6 +114,46 @@ public final class Aggregates {
     }
 
     /**
+     * Creates a graphLookup pipeline stage for the specified filter
+     *
+     * @param <TExpression>     the expression type
+     * @param from             the collection to query
+     * @param startWith        the expression to start the graph lookup with
+     * @param connectFromField the from field
+     * @param connectToField   the to field
+     * @param as               name of field in output document
+     * @return the graphLookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/graphLookup/ graphLookup
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public static <TExpression> Bson graphLookup(final String from, final TExpression startWith, final String connectFromField,
+                                                 final String connectToField, final String as) {
+        return graphLookup(from, startWith, connectFromField, connectToField, as, new GraphLookupOptions());
+    }
+
+    /**
+     * Creates a graphLookup pipeline stage for the specified filter
+     *
+     * @param <TExpression>    the expression type
+     * @param from             the collection to query
+     * @param startWith        the expression to start the graph lookup with
+     * @param connectFromField the from field
+     * @param connectToField   the to field
+     * @param as               name of field in output document
+     * @param options          optional values for the graphLookup
+     * @return the graphLookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/graphLookup/ graphLookup
+     * @mongodb.server.release 3.4
+     * @since 3.4
+     */
+    public static <TExpression> Bson graphLookup(final String from, final TExpression startWith, final String connectFromField,
+                                                 final String connectToField, final String as, final GraphLookupOptions options) {
+        notNull("options", options);
+        return new GraphLookupStage<TExpression>(from, startWith, connectFromField, connectToField, as, options);
+    }
+
+    /**
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression>     the expression type
@@ -219,6 +259,64 @@ public final class Aggregates {
                            + "name='" + name + '\''
                            + ", value=" + value
                            + '}';
+        }
+    }
+
+    private static final class GraphLookupStage<TExpression> implements Bson {
+        private final String from;
+        private final TExpression startWith;
+        private final String connectFromField;
+        private final String connectToField;
+        private final String as;
+        private final GraphLookupOptions options;
+
+        private GraphLookupStage(final String from, final TExpression startWith, final String connectFromField, final String connectToField,
+                                 final String as, final GraphLookupOptions options) {
+            this.from = from;
+            this.startWith = startWith;
+            this.connectFromField = connectFromField;
+            this.connectToField = connectToField;
+            this.as = as;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+
+            writer.writeStartDocument("$graphLookup");
+
+            writer.writeString("from", from);
+            writer.writeName("startWith");
+            BuildersHelper.encodeValue(writer, startWith, codecRegistry);
+
+            writer.writeString("connectFromField", connectFromField);
+            writer.writeString("connectToField", connectToField);
+            writer.writeString("as", as);
+            if (options.getMaxDepth() != null) {
+                writer.writeInt32("maxDepth", options.getMaxDepth());
+            }
+            if (options.getDepthField() != null) {
+                writer.writeString("depthField", options.getDepthField());
+            }
+
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "GraphLookupStage{"
+                + "as='" + as + '\''
+                + ", connectFromField='" + connectFromField + '\''
+                + ", connectToField='" + connectToField + '\''
+                + ", from='" + from + '\''
+                + ", options=" + options
+                + ", startWith=" + startWith
+                + '}';
         }
     }
 

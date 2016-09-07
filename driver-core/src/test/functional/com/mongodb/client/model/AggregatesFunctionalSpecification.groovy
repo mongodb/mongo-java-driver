@@ -16,6 +16,7 @@ package com.mongodb.client.model
 
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
@@ -32,6 +33,7 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
@@ -227,6 +229,84 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
             Document.parse('{_id: 1, a: null, "same": [{_id: 1, b: null}, {_id: 2}]}'),
             Document.parse('{_id: 2, "same": [{_id: 1, b: null}, {_id: 2}]}')
         ]
+
+        cleanup:
+        fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$graphLookup'() {
+        given:
+        def fromCollectionName = 'contacts'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+
+        fromHelper.drop()
+
+        fromHelper.insertDocuments(Document.parse('{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"] }'))
+
+        def lookupDoc = graphLookup('contacts', new BsonString('$friends'), 'friends', 'name', 'socialNetwork')
+
+        when:
+        def results = fromHelper.aggregate([lookupDoc])
+
+        then:
+        results[0] ==
+            Document.parse('''{
+                _id: 0,
+                name: "Bob Smith",
+                friends: ["Anna Jones", "Chris Green"],
+                socialNetwork: [
+                    { _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ] },
+                    { _id: 4, name: "Fred Brown", friends: ["Joe Lee"] },
+                    { _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"] },
+                    { _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"] },
+                    { _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"] }
+                ]
+            }''')
+
+        cleanup:
+        fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$graphLookup with options'() {
+        given:
+        def fromCollectionName = 'contacts'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+
+        fromHelper.drop()
+
+        fromHelper.insertDocuments(Document.parse('{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"] }'))
+        fromHelper.insertDocuments(Document.parse('{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"] }'))
+
+        def lookupDoc = graphLookup('contacts', new BsonString('$friends'), 'friends', 'name', 'socialNetwork',
+                                    new GraphLookupOptions()
+                                        .maxDepth(1)
+                                        .depthField('depth'))
+
+        when:
+        def results = fromHelper.aggregate([lookupDoc])
+
+        then:
+        results[0] ==
+            Document.parse('''{
+                _id: 0,
+                name: "Bob Smith",
+                friends: ["Anna Jones", "Chris Green"],
+                socialNetwork: [
+                    { _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ], depth:1 },
+                    { _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], depth:1 },
+                    { _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"], depth:0 },
+                    { _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"], depth:0 }
+                ]
+            }''')
 
         cleanup:
         fromHelper?.drop()

@@ -32,6 +32,7 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
@@ -78,6 +79,25 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(lookup('from', 'localField', 'foreignField', 'as')) == parse('''{ $lookup : { from: "from", localField: "localField",
             foreignField: "foreignField", as: "as" } }''')
+    }
+
+    def 'should render $graphLookup'() {
+        expect:
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork')) ==
+        parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
+            as: "socialNetwork" } }''')
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().maxDepth(1))) ==
+        parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
+            as: "socialNetwork", maxDepth: 1 } }''')
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1)
+                .depthField('master'))) ==
+        parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
+            as: "socialNetwork", maxDepth: 1, depthField: "master" } }''')
+        toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .depthField('master'))) ==
+        parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
+            as: "socialNetwork", depthField: "master" } }''')
     }
 
     def 'should render $skip'() {
