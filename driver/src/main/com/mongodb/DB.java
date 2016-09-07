@@ -246,21 +246,33 @@ public class DB {
     }
 
     /**
-     * Returns a set containing the names of all collections in this database.
+     * Returns a set containing the names of all collections in this database from primary.
      *
      * @return the names of collections in this database
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
+        return getCollectionNames(primary());
+    }
+
+    /**
+     * Returns a set containing the names of all collections in this database.
+     *
+     * @param readPreference the read preference to get the collection names
+     * @return the names of collections in this database
+     * @throws MongoException if the operation failed
+     * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
+     */
+    public Set<String> getCollectionNames(final ReadPreference readPreference) {
         List<String> collectionNames = new OperationIterable<DBObject>(new ListCollectionsOperation<DBObject>(name, commandCodec),
-                                                                       primary(), executor)
-                                       .map(new Function<DBObject, String>() {
-                                           @Override
-                                           public String apply(final DBObject result) {
-                                               return (String) result.get("name");
-                                           }
-                                       }).into(new ArrayList<String>());
+                readPreference, executor)
+                .map(new Function<DBObject, String>() {
+                    @Override
+                    public String apply(final DBObject result) {
+                        return (String) result.get("name");
+                    }
+                }).into(new ArrayList<String>());
         Collections.sort(collectionNames);
         return new LinkedHashSet<String>(collectionNames);
     }

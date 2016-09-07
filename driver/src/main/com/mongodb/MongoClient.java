@@ -305,15 +305,27 @@ public class MongoClient extends Mongo implements Closeable {
     }
 
     /**
-     * Get a list of the database names
+     * Get a list of the database names from primary
      *
      * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
      * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
+        return listDatabaseNames(ReadPreference.primary());
+    }
+
+    /**
+     * Get a list of the database names
+     *
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @param readPreference the read preference used to get the list of databases
+     * @return an iterable containing all the names of all the databases
+     * @since 3.0
+     */
+    public MongoIterable<String> listDatabaseNames(final ReadPreference readPreference) {
         return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor()).map(new Function<BsonDocument, String>() {
+                readPreference, createOperationExecutor()).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -321,18 +333,30 @@ public class MongoClient extends Mongo implements Closeable {
         });
     }
 
+
     /**
-     * Gets the list of databases
+     * Gets the list of databases from primary
      *
      * @return the list of databases
      * @since 3.0
      */
     public ListDatabasesIterable<Document> listDatabases() {
-        return listDatabases(Document.class);
+        return listDatabases(Document.class, ReadPreference.primary());
     }
 
     /**
      * Gets the list of databases
+     *
+     * @param readPreference the read preference used to get the list of databases
+     * @return the list of databases
+     * @since 3.4
+     */
+    public ListDatabasesIterable<Document> listDatabases(final ReadPreference readPreference) {
+        return listDatabases(Document.class, readPreference);
+    }
+
+    /**
+     * Gets the list of databases from primary
      *
      * @param clazz the class to cast the database documents to
      * @param <T>   the type of the class to use instead of {@code Document}.
@@ -340,8 +364,21 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
+        return listDatabases(clazz, ReadPreference.primary());
+    }
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clazz the class to cast the database documents to
+     * @param readPreference  the read preference used to get the list of database
+     * @param <T>   the type of the class to use instead of {@code Document}.
+     * @return the list of databases
+     * @since 3.4
+     */
+    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz, final ReadPreference readPreference) {
         return new ListDatabasesIterableImpl<T>(clazz, getMongoClientOptions().getCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor());
+                readPreference, createOperationExecutor());
     }
 
     /**

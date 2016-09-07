@@ -150,4 +150,29 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             secondDatabase.drop();
         }
     }
+
+    @Test
+    public void shouldBeAbleToListAllTheDatabasesAvailableWithReadPreference() {
+        MongoClient mongoClient = getMongoClient();
+        MongoDatabase firstDatabase = mongoClient.getDatabase("FirstNewDatabase");
+        MongoDatabase secondDatabase = mongoClient.getDatabase("SecondNewDatabase");
+        MongoDatabase otherDatabase = mongoClient.getDatabase("DatabaseThatDoesNotExistYet");
+
+        try {
+            // given
+            firstDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
+            secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
+
+            //when
+            List<String> databaseNames = mongoClient.listDatabaseNames(ReadPreference.primaryPreferred()).into(new ArrayList<String>());
+
+            //then
+            assertThat(databaseNames, hasItems(firstDatabase.getName(), secondDatabase.getName()));
+            assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
+        } finally {
+            //tear down
+            firstDatabase.drop();
+            secondDatabase.drop();
+        }
+    }
 }

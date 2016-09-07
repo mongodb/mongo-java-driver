@@ -105,6 +105,9 @@ public class DBTest extends DatabaseTestCase {
         }
 
         assertThat(database.getCollectionNames(), hasItems(collectionNames));
+
+        assertThat(database.getCollectionNames(ReadPreference.secondary()), hasItems(collectionNames));
+
     }
 
     @Test

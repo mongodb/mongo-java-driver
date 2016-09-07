@@ -16,6 +16,7 @@
 
 package com.mongodb.acceptancetest.core;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
@@ -41,6 +42,14 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
     public void shouldListDatabaseNamesFromDatabase() {
         database.createCollection(getCollectionName());
         List<String> names = client.listDatabaseNames().into(new ArrayList<String>());
+
+        assertThat(names.contains(getDatabaseName()), is(true));
+    }
+
+    @Test
+    public void shouldListDatabaseNamesFromDatabaseWithReadPreference() {
+        database.createCollection(getCollectionName());
+        List<String> names = client.listDatabaseNames(ReadPreference.primaryPreferred()).into(new ArrayList<String>());
 
         assertThat(names.contains(getDatabaseName()), is(true));
     }
@@ -75,6 +84,15 @@ public class ClientAcceptanceTest extends DatabaseTestCase {
 
         database.createCollection(getCollectionName());
         databases = client.listDatabases().into(new ArrayList<Document>());
+        assertThat(databases, new DatabaseNameMatcher(getDatabaseName()));
+    }
+
+    @Test
+    public void shouldListDatabaseWithReadPreference() {
+        List<Document> databases = client.listDatabases().into(new ArrayList<Document>());
+
+        database.createCollection(getCollectionName());
+        databases = client.listDatabases(ReadPreference.primaryPreferred()).into(new ArrayList<Document>());
         assertThat(databases, new DatabaseNameMatcher(getDatabaseName()));
     }
 

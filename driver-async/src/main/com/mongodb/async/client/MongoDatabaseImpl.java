@@ -106,8 +106,13 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoIterable<String> listCollectionNames() {
+        return listCollectionNames(ReadPreference.primary());
+    }
+
+    @Override
+    public MongoIterable<String> listCollectionNames(final ReadPreference readPreference) {
         return new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument.class, MongoClients.getDefaultCodecRegistry(),
-                                                             ReadPreference.primary(), executor).map(new Function<BsonDocument, String>() {
+                readPreference, executor).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -117,11 +122,22 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public ListCollectionsIterable<Document> listCollections() {
-        return listCollections(Document.class);
+        return listCollections(Document.class, ReadPreference.primary());
+    }
+
+    @Override
+    public ListCollectionsIterable<Document> listCollections(final ReadPreference readPreference) {
+        return listCollections(Document.class, readPreference);
     }
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
+        return listCollections(resultClass, ReadPreference.primary());
+    }
+
+    @Override
+    public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass,
+                                                                      final ReadPreference readPreference) {
         return new ListCollectionsIterableImpl<TResult>(name, resultClass, codecRegistry, ReadPreference.primary(), executor);
     }
 

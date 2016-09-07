@@ -2125,16 +2125,29 @@ public class DBCollection {
     }
 
     /**
-     * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
+     * Return a list of the indexes for this collection from primary.  Each object in the list is the "info document" from MongoDB
      *
      * @return list of index documents
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new OperationIterable<DBObject>(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()),
-                                               primary(), executor).into(new ArrayList<DBObject>());
+        return getIndexInfo(primary());
     }
+
+    /**
+     * Return a list of the indexes for this collection.  Each object in the list is the "info document" from MongoDB
+     *
+     * @param readPreference the read preference used to get index documents
+     * @return list of index documents
+     * @throws MongoException if the operation failed
+     * @mongodb.driver.manual core/indexes/ Indexes
+     */
+    public List<DBObject> getIndexInfo(final ReadPreference readPreference) {
+        return new OperationIterable<DBObject>(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()),
+                readPreference, executor).into(new ArrayList<DBObject>());
+    }
+
 
     /**
      * Drops an index from this collection.  The DBObject index parameter must match the specification of the index to drop, i.e. correct

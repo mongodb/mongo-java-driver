@@ -175,14 +175,22 @@ public interface MongoDatabase {
     void drop();
 
     /**
-     * Gets the names of all the collections in this database.
+     * Gets the names of all the collections in this database from primary.
      *
      * @return an iterable containing all the names of all the collections in this database
      */
     MongoIterable<String> listCollectionNames();
 
     /**
-     * Finds all the collections in this database.
+     * Gets the names of all the collections in this database.
+     *
+     * @param readPreference the read preference used to get all connection
+     * @return an iterable containing all the names of all the collections in this database
+     */
+     MongoIterable<String> listCollectionNames(ReadPreference readPreference);
+
+    /**
+     * Finds all the collections in this database from primary.
      *
      * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
@@ -192,12 +200,32 @@ public interface MongoDatabase {
     /**
      * Finds all the collections in this database.
      *
+     * @param readPreference the read preference used to get all connection
+     * @return the list collections iterable interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    ListCollectionsIterable<Document> listCollections(ReadPreference readPreference);
+
+    /**
+     * Finds all the collections in this database from primary.
+     *
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
     <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass);
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @param resultClass the class to decode each document into
+     * @param readPreference the read preference used to get all connection
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list collections iterable interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass, ReadPreference readPreference);
 
     /**
      * Create a new collection with the given name.

@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.annotations.Immutable;
 import org.bson.Document;
 
@@ -56,7 +57,7 @@ public interface MongoClient extends Closeable {
     MongoClientSettings getSettings();
 
     /**
-     * Get a list of the database names
+     * Get a list of the database names from primary
      *
      * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
@@ -64,7 +65,16 @@ public interface MongoClient extends Closeable {
     MongoIterable<String> listDatabaseNames();
 
     /**
-     * Gets the list of databases
+     * Get a list of the database names
+     *
+     * @param readPreference read preference used to get the list of database names
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @return an iterable containing all the names of all the databases
+     */
+    MongoIterable<String> listDatabaseNames(ReadPreference readPreference);
+
+    /**
+     * Gets the list of databases from primary
      *
      * @return the list databases iterable interface
      */
@@ -73,10 +83,28 @@ public interface MongoClient extends Closeable {
     /**
      * Gets the list of databases
      *
+     * @param readPreference read preference used to get the list of databases
+     * @return the list databases iterable interface
+     */
+    ListDatabasesIterable<Document> listDatabases(ReadPreference readPreference);
+
+    /**
+     * Gets the list of databases from primary
+     *
      * @param resultClass the class to cast the database documents to
      * @param <TResult>   the type of the class to use instead of {@code Document}.
      * @return the list databases iterable interface
      */
     <TResult> ListDatabasesIterable<TResult> listDatabases(Class<TResult> resultClass);
+
+    /**
+     * Gets the list of databases
+     *
+     * @param resultClass the class to cast the database documents to
+     * @param readPreference read preference used to get the list of databases
+     * @param <TResult>   the type of the class to use instead of {@code Document}.
+     * @return the list databases iterable interface
+     */
+    <TResult> ListDatabasesIterable<TResult> listDatabases(Class<TResult> resultClass, ReadPreference readPreference);
 
 }
