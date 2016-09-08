@@ -2,15 +2,19 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrade Considerations"
 [menu.main]
-  identifier = "Upgrading to 3.3"
+  identifier = "Upgrading to 3.4"
   weight = 80
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## Upgrading from 3.2.x
+## Upgrading from 3.3.x
 
-The 3.3 release is binary and source compatible with the 3.2 release, except for methods that have been added to interfaces that have
-been marked as unstable.
+There is one breaking API change in the 3.4 release: due to the addition of a new BSON type for 128-bit decimal values, a new method
+had to be added to the BSONCallback({{< apiref "org/bson/BSONCallback.html">}}) interface.  Any clients that directly implement that
+interface must add an implementation of the new method in order to be compatible with the 3.4 driver.
+
+Otherwise, the 3.4 release is binary and source compatible with the 3.3 release, except for methods that have been added to interfaces that
+have been marked as unstable.
 
 ## Upgrading from 2.x
 
