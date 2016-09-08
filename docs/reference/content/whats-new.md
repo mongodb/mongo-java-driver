@@ -7,19 +7,152 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-# What's New in 3.3
+# What's New
 
-New features of the 3.3 driver include:
+Some key new features of the Java driver and Java Async driver include:
 
-- [Cluster Monitoring]({{<ref "driver/reference/monitoring.md#cluster-monitoring">}}) in the synchronous and asynchronous
-drivers
-- [Command Monitoring]({{<ref "driver-async/reference/monitoring.md#command-monitoring">}}) in the asynchronous driver
-(support in the synchronous driver was added in a previous release)
-- Additional query parameters in the [connection string]({{<ref "driver/tutorials/connect-to-mongodb.md">}})
-- [GridFS]({{<ref "driver-async/tutorials/gridfs.md">}}) in the asynchronous driver
-- Additional configuration options for [GSSAPI authentication]({{<ref "driver/tutorials/authentication.md#gssapi">}}).
-- [JNDI]({{<ref "driver/tutorials/jndi.md">}}) ObjectFactory implementation
+### Support for Decimal128 Format
+
+``` java
+import org.bson.types.Decimal128;
+```
+
+The `Decimal128` format supports numbers with up to 34 decimal digits
+(i.e. significant digits) and an exponent range of −6143 to +6144.
+
+To create a `Decimal128` number, you can use
+
+- [`Decimal128.parse()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a string:
+
+      ```java
+      Decimal128.parse("9.9900");
+      ```
+
+- [`new Decimal128()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a long:
+
+
+      ```java
+      new Decimal128(10L);
+      ```
+
+- [`new Decimal128()`] ({{<apiref "org/bson/types/Decimal128.html">}}) with a `java.math.BigDecimal`:
+
+      ```java
+      new Decimal128(new BigDecimal("4.350000"));
+      ```
+
+### Support for Collation
+
+```java
+import com.mongodb.client.model.Collation;
+```
+
+[Collation]({{<docsref "release-notes/3.3-dev-series-collation/">}}) allows users to specify language-specific rules for string
+comparison. 
+Use the [`Collation.builder()`] ({{<apiref "com/mongodb/client/model/Collation.html">}}) 
+to create the `Collation` object. For example, the following example creates a `Collation` object with Primary level of comparison and [locale]({{<docsref "release-notes/3.3-dev-series-collation/#supported-languages-and-locales">}}) ``fr``.
+
+```java
+Collation.builder().collationStrength(CollationStrength.PRIMARY).locale("fr").build()));
+```
+
+You can specify collation at the collection level, at an index level, or at a collation-supported operation level:
+
+#### Collection Level
+
+To specify collation at the collection level, pass a `Collation` object as an option to the `createCollection()` method. To specify options to the `createCollection` method, use the [`CreateCollectionOptions`]({{<apiref "com/mongodb/client/model/CreateCollectionOptions.html">}}) class. 
+
+```java
+database.createCollection("myColl", new CreateCollectionOptions().collation(
+                              Collation.builder()
+                                    .collationStrength(CollationStrength.PRIMARY)
+                                    .locale("fr").build()));
+```
+
+#### Index Level
+
+To specify collation for an index, pass a `Collation` object as an option to the `createIndex()` method. To specify index options, use the [IndexOptions]({{<apiref "com/mongodb/client/model/IndexOptions.html">}}) class. 
+
+```java
+IndexOptions collationIndexOptions = new IndexOptions().name("collation-fr")
+                                       .collation(Collation.builder()
+                                       .collationStrength(CollationStrength.SECONDARY)
+                                       .locale("fr").build());
+
+collection.createIndex(
+        Indexes.ascending("name"), collationIndexOptions);
+```
+
+#### Operation Level
+
+The following operations support collation by specifying the
+`Collation` object to their respective Iterable object.
+
+- `MongoCollection.aggregate()`
+   
+- `MongoCollection.distinct()`
+   
+- `MongoCollection.find()`
+
+- `MongoCollection.mapReduce()`
+
+For example:
+
+```java
+Collation collation = Collation.builder()
+                                 .collationStrength(CollationStrength.SECONDARY)
+                                 .locale("fr").build();
+
+collection.find(Filters.eq("category", "cafe")).collation(collation);
+
+collection.aggregate(Arrays.asList(
+                         Aggregates.group("$category", Accumulators.sum("count", 1))))
+          .collation(collation);
+
+```
+
+The following operations support collation by specifying the
+`Collation` object as an option using the corresponding option class
+for the method:
+
+- `MongoCollection.count()`
+- `MongoCollection.deleteOne()`
+- `MongoCollection.deleteMany()`
+- `MongoCollection.findOneAndDelete()` 
+- `MongoCollection.findOneAndReplace()`
+- `MongoCollection.findOneAndUpdate()`
+- `MongoCollection.updateOne()`
+- `MongoCollection.updateMany()`
+- `MongoCollection.bulkWrite()` for:
+
+   - `DeleteManyModel` and `DeleteOneModel` using `DeleteOptions` to specify the collation
+   - `ReplaceOneModel`, `UpdateManyModel`, and `UpdateOneModel` using `UpdateOptions` to specify the collation.
+
+For example:
+
+```java
+Collation collation = Collation.builder()
+                                 .collationStrength(CollationStrength.SECONDARY)
+                                 .locale("fr").build();
+
+collection.count(Filters.eq("category", "cafe"), new CountOptions().collation(collation));
+
+collection.updateOne(Filters.eq("category", "cafe"), set("stars", 1), 
+                     new UpdateOptions().collation(collation));
+
+collection.bulkWrite(Arrays.asList(
+                new UpdateOneModel<>(new Document("category", "cafe"),
+                                     new Document("$set", new Document("x", 0)), 
+                                     new UpdateOptions().collation(collation)),
+                new DeleteOneModel<>(new Document("category", "cafe"), 
+                                     new DeleteOptions().collation(collation))));
+```
+  
+
+For more information on collation, including the supported locales, refer to the
+[manual]({{<docsref "release-notes/3.3-dev-series-collation/">}}).
+
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "upgrading.md">}}) on how to upgrade to 3.3.
+See the [upgrading guide]({{<ref "upgrading.md">}}) on how to upgrade to 3.4.
