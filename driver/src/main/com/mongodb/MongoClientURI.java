@@ -154,6 +154,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
  * </li>
  * </ul>
+ * <p>Server Handshake configuration:</p>
+ * <ul>
+ * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
+ * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
+ * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
@@ -320,6 +325,9 @@ public class MongoClientURI {
         }
         if (proxied.getHeartbeatFrequency() != null) {
             builder.heartbeatFrequency(proxied.getHeartbeatFrequency());
+        }
+        if (proxied.getApplicationName() != null) {
+            builder.applicationName(proxied.getApplicationName());
         }
 
         return builder.build();

@@ -138,6 +138,9 @@ public final class MongoClients {
         if (connectionString.getWriteConcern() != null) {
             builder.writeConcern(connectionString.getWriteConcern());
         }
+        if (connectionString.getApplicationName() != null) {
+            builder.applicationName(connectionString.getApplicationName());
+        }
         return create(builder.build());
     }
 
@@ -173,7 +176,8 @@ public final class MongoClients {
                                                   settings.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
                                                   settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
-                                                  createCommandListener(settings.getCommandListeners()));
+                                                  createCommandListener(settings.getCommandListeners()),
+                                                  settings.getApplicationName());
     }
 
     private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {

@@ -30,6 +30,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class MongoClientOptions {
 
     private final String description;
+    private final String applicationName;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
@@ -93,6 +95,7 @@ public class MongoClientOptions {
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
+        applicationName = builder.applicationName;
         minConnectionsPerHost = builder.minConnectionsPerHost;
         maxConnectionsPerHost = builder.maxConnectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
@@ -202,6 +205,20 @@ public class MongoClientOptions {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Gets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+     * the application to the server, for use in server logs, slow query logs, and profile collection.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the application name, which may be null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public String getApplicationName() {
+        return applicationName;
     }
 
     /**
@@ -669,6 +686,9 @@ public class MongoClientOptions {
         if (description != null ? !description.equals(that.description) : that.description != null) {
             return false;
         }
+        if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
+            return false;
+        }
         if (!readPreference.equals(that.readPreference)) {
             return false;
         }
@@ -707,6 +727,7 @@ public class MongoClientOptions {
     @Override
     public int hashCode() {
         int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
@@ -745,6 +766,7 @@ public class MongoClientOptions {
     public String toString() {
         return "MongoClientOptions{"
                + "description='" + description + '\''
+               + ", applicationName='" + applicationName + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", readConcern=" + readConcern
@@ -791,6 +813,7 @@ public class MongoClientOptions {
     @NotThreadSafe
     public static class Builder {
         private String description;
+        private String applicationName;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
@@ -844,6 +867,7 @@ public class MongoClientOptions {
          */
         public Builder(final MongoClientOptions options) {
             description = options.getDescription();
+            applicationName = options.getApplicationName();
             minConnectionsPerHost = options.getMinConnectionsPerHost();
             maxConnectionsPerHost = options.getConnectionsPerHost();
             threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
@@ -886,6 +910,26 @@ public class MongoClientOptions {
          */
         public Builder description(final String description) {
             this.description = description;
+            return this;
+        }
+
+        /**
+         * Sets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+         * the application to the server, for use in server logs, slow query logs, and profile collection.
+         *
+         * @param applicationName the logical name of the application using this MongoClient.  It may be null.
+         *                        The UTF-8 encoding may not exceed 128 bytes.
+         * @return {@code this}
+         * @see #getApplicationName()
+         * @since 3.4
+         * @mongodb.server.release 3.4
+         */
+        public Builder applicationName(final String applicationName) {
+            if (applicationName != null) {
+                isTrueArgument("applicationName UTF-8 encoding length <= 128",
+                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+            }
+            this.applicationName = applicationName;
             return this;
         }
 

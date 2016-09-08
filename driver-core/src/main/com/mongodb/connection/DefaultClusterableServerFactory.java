@@ -37,6 +37,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionListener connectionListener;
     private final StreamFactory heartbeatStreamFactory;
     private final CommandListener commandListener;
+    private final String applicationName;
 
     public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
@@ -44,7 +45,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final StreamFactory heartbeatStreamFactory,
                                            final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener,
-                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener) {
+                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener,
+                                           final String applicationName) {
         this.clusterId = clusterId;
         this.clusterSettings = clusterSettings;
         this.settings = settings;
@@ -55,6 +57,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         this.connectionListener = connectionListener;
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.commandListener = commandListener;
+        this.applicationName = applicationName;
     }
 
     @Override
@@ -62,13 +65,13 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                                                                   new InternalStreamConnectionFactory(streamFactory,
                                                                                                       credentialList,
-                                                                                                      connectionListener),
-                                                                  connectionPoolSettings, connectionPoolListener);
+                                                                                                      connectionListener, applicationName),
+                                                                         connectionPoolSettings, connectionPoolListener);
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), settings,
                                             new InternalStreamConnectionFactory(heartbeatStreamFactory,
                                                                                 credentialList,
-                                                                                connectionListener),
+                                                                                connectionListener, applicationName),
                                             connectionPool);
         List<ServerListener> serverListeners = new ArrayList<ServerListener>();
         if (serverListener != null) {

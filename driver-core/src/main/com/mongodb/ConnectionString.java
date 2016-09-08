@@ -178,6 +178,11 @@ import static java.util.Collections.singletonList;
  *   Deprecated, please use {@code authMechanismProperties=SERVICE_NAME:string} instead.
  * </li>
  * </ul>
+ * <p>Server Handshake configuration:</p>
+ * <ul>
+ * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
+ * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
+ * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
  * @since 3.0.0
@@ -214,6 +219,7 @@ public class ConnectionString {
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
     private Integer heartbeatFrequency;
+    private String applicationName;
 
     /**
      * Creates a ConnectionString from the given string.
@@ -329,6 +335,8 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
 
+        GENERAL_OPTIONS_KEYS.add("appname");
+
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
         READ_PREFERENCE_KEYS.add("maxstalenessms");
@@ -399,6 +407,8 @@ public class ConnectionString {
                 localThreshold = parseInteger(value, "localthresholdms");
             } else if (key.equals("heartbeatfrequencyms")) {
                 heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
+            } else if (key.equals("appname")) {
+                applicationName = value;
             }
         }
 
@@ -975,6 +985,19 @@ public class ConnectionString {
         return heartbeatFrequency;
     }
 
+    /**
+     * Gets the logical name of the application.  The application name may be used by the client to identify the application to the server,
+     * for use in server logs, slow query logs, and profile collection.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the application name, which may be null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public String getApplicationName() {
+        return applicationName;
+    }
 
     @Override
     public String toString() {
@@ -1047,6 +1070,9 @@ public class ConnectionString {
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
             return false;
         }
+        if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
+            return false;
+        }
 
         return true;
     }
@@ -1071,6 +1097,7 @@ public class ConnectionString {
         result = 31 * result + (socketTimeout != null ? socketTimeout.hashCode() : 0);
         result = 31 * result + (sslEnabled != null ? sslEnabled.hashCode() : 0);
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
+        result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
         return result;
     }
 }

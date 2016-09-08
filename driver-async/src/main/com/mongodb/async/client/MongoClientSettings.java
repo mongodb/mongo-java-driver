@@ -33,10 +33,12 @@ import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
@@ -62,6 +64,7 @@ public final class MongoClientSettings {
     private final ConnectionPoolSettings connectionPoolSettings;
     private final ServerSettings serverSettings;
     private final SslSettings sslSettings;
+    private final String applicationName;
 
     /**
      * Convenience method to create a Builder.
@@ -105,6 +108,7 @@ public final class MongoClientSettings {
         private ServerSettings serverSettings = ServerSettings.builder().build();
         private SslSettings sslSettings = SslSettings.builder().build();
         private List<MongoCredential> credentialList = Collections.emptyList();
+        private String applicationName;
 
         private Builder() {
         }
@@ -129,6 +133,7 @@ public final class MongoClientSettings {
             heartbeatSocketSettings = settings.getHeartbeatSocketSettings();
             connectionPoolSettings = settings.getConnectionPoolSettings();
             sslSettings = settings.getSslSettings();
+            applicationName = settings.getApplicationName();
         }
 
         /**
@@ -292,6 +297,27 @@ public final class MongoClientSettings {
             return this;
         }
 
+
+        /**
+         * Sets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+         * the application to the server, for use in server logs, slow query logs, and profile collection.
+         *
+         * @param applicationName the logical name of the application using this MongoClient.  It may be null.
+         *                        The UTF-8 encoding may not exceed 128 bytes.
+         * @return {@code this}
+         * @see #getApplicationName()
+         * @since 3.4
+         * @mongodb.server.release 3.4
+         */
+        public Builder applicationName(final String applicationName) {
+            if (applicationName != null) {
+                isTrueArgument("applicationName UTF-8 encoding length <= 128",
+                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+            }
+            this.applicationName = applicationName;
+            return this;
+        }
+
         /**
          * Build an instance of {@code MongoClientSettings}.
          *
@@ -392,6 +418,21 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+     * the application to the server, for use in server logs, slow query logs, and profile collection.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the application name, which may be null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public String getApplicationName() {
+        return applicationName;
+    }
+
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -463,6 +504,7 @@ public final class MongoClientSettings {
         streamFactoryFactory = builder.streamFactoryFactory;
         codecRegistry = builder.codecRegistry;
         commandListeners = builder.commandListeners;
+        applicationName = builder.applicationName;
         clusterSettings = builder.clusterSettings;
         serverSettings = builder.serverSettings;
         socketSettings = builder.socketSettings;

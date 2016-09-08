@@ -113,6 +113,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getLocalThreshold() == 30
         connectionString.getHeartbeatFrequency() == 20000
         connectionString.getStreamType() == 'netty'
+        connectionString.getApplicationName() == 'app1'
 
         where:
         connectionString <<
@@ -123,7 +124,8 @@ class ConnectionStringSpecification extends Specification {
                                             + 'sslInvalidHostNameAllowed=true&'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30&'
-                                            + 'heartbeatFrequencyMS=20000'),
+                                            + 'heartbeatFrequencyMS=20000&'
+                                            + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
@@ -131,7 +133,8 @@ class ConnectionStringSpecification extends Specification {
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000;'
                                             + 'localThresholdMS=30;'
-                                            + 'heartbeatFrequencyMS=20000'),
+                                            + 'heartbeatFrequencyMS=20000;'
+                                            + 'appName=app1'),
                  new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
@@ -140,7 +143,8 @@ class ConnectionStringSpecification extends Specification {
                                             + 'sslInvalidHostNameAllowed=true;'
                                             + 'serverSelectionTimeoutMS=25000&'
                                             + 'localThresholdMS=30;'
-                                            + 'heartbeatFrequencyMS=20000')]
+                                            + 'heartbeatFrequencyMS=20000&'
+                                            + 'appName=app1')]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
     }
@@ -194,6 +198,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
         connectionString.getStreamType() == null
+        connectionString.getApplicationName() == null
     }
 
     @Unroll
