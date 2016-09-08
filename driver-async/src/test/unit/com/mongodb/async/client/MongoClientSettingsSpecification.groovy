@@ -46,6 +46,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.getReadConcern() == ReadConcern.DEFAULT
         options.getReadPreference() == ReadPreference.primary()
         options.getCommandListeners().isEmpty()
+        options.getApplicationName() == null
         options.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         options.socketSettings == SocketSettings.builder().build()
         options.heartbeatSocketSettings == SocketSettings.builder().build()
@@ -139,6 +140,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .readConcern(ReadConcern.LOCAL)
+                .applicationName('app1')
                 .addCommandListener(commandListener)
                 .sslSettings(sslSettings)
                 .socketSettings(socketSettings)
@@ -155,6 +157,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getReadConcern() == ReadConcern.LOCAL
+        options.getApplicationName() == 'app1'
         options.commandListeners.get(0) == commandListener
         options.connectionPoolSettings == connectionPoolSettings
         options.socketSettings == socketSettings
@@ -183,6 +186,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .readConcern(ReadConcern.LOCAL)
+                .applicationName('app1')
                 .addCommandListener(commandListener)
                 .sslSettings(sslSettings)
                 .socketSettings(socketSettings)
@@ -197,6 +201,29 @@ class MongoClientSettingsSpecification extends Specification {
         then:
         expect options, isTheSameAs(MongoClientSettings.builder(options).build())
     }
+
+    def 'applicationName can be 128 bytes when encoded as UTF-8'() {
+        given:
+        def applicationName = 'a' * 126 + '\u00A0'
+
+        when:
+        def options = MongoClientSettings.builder().applicationName(applicationName).build()
+
+        then:
+        options.applicationName == applicationName
+    }
+
+    def 'should throw IllegalArgumentException if applicationName exceeds 128 bytes when encoded as UTF-8'() {
+        given:
+        def applicationName = 'a' * 127 + '\u00A0'
+
+        when:
+        MongoClientSettings.builder().applicationName(applicationName)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 
     def 'should add command listeners'() {
         given:
@@ -249,9 +276,9 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['clusterSettings', 'codecRegistry', 'commandListeners', 'connectionPoolSettings', 'credentialList',
-                        'heartbeatSocketSettings', 'readConcern', 'readPreference', 'serverSettings', 'socketSettings', 'sslSettings',
-                        'streamFactoryFactory', 'writeConcern']
+        def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'connectionPoolSettings',
+                        'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference', 'serverSettings', 'socketSettings',
+                        'sslSettings', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected

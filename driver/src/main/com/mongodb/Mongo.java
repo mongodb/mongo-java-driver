@@ -736,7 +736,8 @@ public class Mongo {
                                                                           options.getSocketFactory()),
                                                   credentialsList, null,
                                                   new JMXConnectionPoolListener(), null,
-                                                  createCommandListener(options.getCommandListeners()));
+                                                  createCommandListener(options.getCommandListeners()),
+                                                  options.getApplicationName());
     }
 
     private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {

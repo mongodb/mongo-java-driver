@@ -43,6 +43,7 @@ class MongoClientOptionsSpecification extends Specification {
 
         expect:
         options.getDescription() == null
+        options.getApplicationName() == null
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
@@ -143,6 +144,7 @@ class MongoClientOptionsSpecification extends Specification {
         def encoderFactory = new MyDBEncoderFactory()
         def options = MongoClientOptions.builder()
                                         .description('test')
+                                        .applicationName('appName')
                                         .readPreference(ReadPreference.secondary())
                                         .writeConcern(WriteConcern.JOURNALED)
                                         .minConnectionsPerHost(30)
@@ -170,6 +172,7 @@ class MongoClientOptionsSpecification extends Specification {
 
         expect:
         options.getDescription() == 'test'
+        options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getServerSelectionTimeout() == 150
@@ -232,6 +235,7 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         def options = MongoClientOptions.builder()
                 .description('test')
+                .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
@@ -263,6 +267,28 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         expect options, isTheSameAs(MongoClientOptions.builder(options).build())
+    }
+
+    def 'applicationName can be 128 bytes when encoded as UTF-8'() {
+        given:
+        def applicationName = 'a' * 126 + '\u00A0'
+
+        when:
+        def options = MongoClientOptions.builder().applicationName(applicationName).build()
+
+        then:
+        options.applicationName == applicationName
+    }
+
+    def 'should throw IllegalArgumentException if applicationName exceeds 128 bytes when encoded as UTF-8'() {
+        given:
+        def applicationName = 'a' * 127 + '\u00A0'
+
+        when:
+        MongoClientOptions.builder().applicationName(applicationName)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should throw MongoInternalException mentioning MongoClientOptions if sslEnabled is true and sslInvalidHostNameAllowed is false'() {
@@ -482,6 +508,7 @@ class MongoClientOptionsSpecification extends Specification {
         1 * options.getDbDecoderFactory()
         1 * options.getDbEncoderFactory()
         1 * options.getDescription()
+        1 * options.getApplicationName()
         1 * options.getHeartbeatConnectTimeout()
         1 * options.getHeartbeatFrequency()
         1 * options.getHeartbeatSocketTimeout()
@@ -514,7 +541,7 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
+        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
                         'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout',
                         'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
                         'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',

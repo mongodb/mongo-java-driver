@@ -111,6 +111,31 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 }
 
+def getGitVersion() {
+    def outputAsString
+    new ByteArrayOutputStream().withStream { os ->
+        def result = exec {
+            executable 'git'
+            args 'describe', '--tags'
+            standardOutput = os
+        }
+        outputAsString = os.toString().substring(1)
+    }
+    return outputAsString
+}
+
+configure(subprojects.findAll { it.name != 'util' }) {
+
+    project.ext.generatedResources = "$buildDir/generated-resources/main"
+
+    task generateVersionPropertiesFile << {
+        def directory = new File(project.ext.generatedResources)
+        directory.mkdirs()
+        def propertiesFile = new File(directory, "version.properties")
+        propertiesFile.text = "version=${getGitVersion()}"
+    }
+}
+
 configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
@@ -131,6 +156,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     sourceSets {
         main {
             java.srcDirs = ['src/main']
+            output.dir(project.ext.generatedResources, builtBy: 'generateVersionPropertiesFile')
         }
         test {
             groovy.srcDirs = ['src/test/functional', 'src/test/unit']

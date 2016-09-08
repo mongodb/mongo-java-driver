@@ -189,7 +189,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                new InternalStreamConnectionInitializer(credential == null ? [] : [new GSSAPIAuthenticator(credential)]),
+                new InternalStreamConnectionInitializer(credential == null ? [] : [new GSSAPIAuthenticator(credential)], null),
                 new NoOpConnectionListener())
     }
 

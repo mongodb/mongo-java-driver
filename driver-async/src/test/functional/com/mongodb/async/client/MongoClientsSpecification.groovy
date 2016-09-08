@@ -23,12 +23,17 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
+import org.bson.Document
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.isStandalone
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
+import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString
+import static com.mongodb.async.client.TestHelper.run
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
@@ -173,5 +178,45 @@ class MongoClientsSpecification extends FunctionalSpecification {
         uri                               | writeConcern
         'mongodb://localhost'             | WriteConcern.ACKNOWLEDGED
         'mongodb://localhost/?w=majority' | WriteConcern.MAJORITY
+    }
+
+    @Unroll
+    def 'should apply application name from connection string to settings'() {
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getApplicationName() == applicationName
+
+        cleanup:
+        client?.close()
+
+        where:
+        uri                                 | applicationName
+        'mongodb://localhost'               | null
+        'mongodb://localhost/?appname=app1' | 'app1'
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) || !isStandalone() })
+    def 'application name should appear in the system.profile collection'() {
+        given:
+        def appName = 'appName1'
+        def client = MongoClients.create(getMongoClientBuilderFromConnectionString().applicationName(appName).build())
+        def database = client.getDatabase(getDatabaseName())
+        def collection = database.getCollection(getCollectionName())
+        run(database.&runCommand, new Document('profile', 2))
+
+        when:
+        run(collection.&count)
+
+        then:
+        Document profileDocument = run(database.getCollection('system.profile').find().&first)
+        profileDocument.get('appName') == appName
+
+        cleanup:
+        if (database != null) {
+            run(database.&runCommand, new Document('profile', 0))
+        }
+        client?.close()
     }
 }
