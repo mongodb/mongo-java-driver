@@ -50,7 +50,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
@@ -253,7 +253,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcernAndCollation(connection, readConcern, collation);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
                         connection, transformer(source, connection));
@@ -272,7 +272,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                             releasingCallback(errHandlingCallback, source, connection);
-                    checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                    validateReadConcernAndCollation(source, connection, readConcern, collation,
                             new AsyncCallableWithConnectionAndSource() {
                                 @Override
                                 public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {

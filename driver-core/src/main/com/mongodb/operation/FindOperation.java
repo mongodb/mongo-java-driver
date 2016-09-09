@@ -66,7 +66,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -512,7 +512,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                     try {
-                        checkValidReadConcernAndCollation(connection, readConcern, collation);
+                        validateReadConcernAndCollation(connection, readConcern, collation);
                         return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
                                                              wrapInExplainIfNecessary(getCommand()),
                                                              CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
@@ -521,7 +521,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                         throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
                     }
                 } else {
-                    checkValidReadConcernAndCollation(connection, readConcern, collation);
+                    validateReadConcernAndCollation(connection, readConcern, collation);
                     QueryResult<T> queryResult = connection.query(namespace,
                                                                   asDocument(connection.getDescription(), binding.getReadPreference()),
                                                                   projection,
@@ -553,7 +553,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(exceptionTransformingCallback(errHandlingCallback), source, connection);
-                        checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                        validateReadConcernAndCollation(source, connection, readConcern, collation,
                                 new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection,
@@ -571,7 +571,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(errHandlingCallback, source, connection);
-                        checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                        validateReadConcernAndCollation(source, connection, readConcern, collation,
                                 new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final

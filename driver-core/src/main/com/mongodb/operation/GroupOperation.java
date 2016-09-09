@@ -41,7 +41,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -236,7 +236,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource connectionSource, final Connection connection) {
-                checkValidCollation(connection, collation);
+                validateCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
                                                      connection, transformer(connectionSource, connection));
@@ -254,7 +254,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

@@ -52,7 +52,7 @@ import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidIndexRequestCollations;
+import static com.mongodb.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -146,7 +146,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                     try {
-                        checkValidIndexRequestCollations(connection, requests);
+                        validateIndexRequestCollations(connection, requests);
                         executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                                 connection, writeConcernErrorTransformer());
                     } catch (MongoCommandException e) {
@@ -174,7 +174,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                     if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        checkValidIndexRequestCollations(connection, requests, new AsyncCallableWithConnection(){
+                        validateIndexRequestCollations(connection, requests, new AsyncCallableWithConnection(){
                             @Override
                             public void call(final AsyncConnection connection, final Throwable t) {
                                 if (t != null) {

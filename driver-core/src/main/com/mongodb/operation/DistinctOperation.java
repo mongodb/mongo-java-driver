@@ -47,7 +47,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -183,7 +183,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcernAndCollation(connection, readConcern, collation);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
                         connection, transformer(source, connection));
             }
@@ -201,7 +201,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(
                             errHandlingCallback, source, connection);
-                    checkValidReadConcernAndCollation(source, connection, readConcern, collation,
+                    validateReadConcernAndCollation(source, connection, readConcern, collation,
                             new AsyncCallableWithConnectionAndSource() {
                                 @Override
                                 public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {

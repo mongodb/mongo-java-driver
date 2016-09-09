@@ -30,7 +30,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.checkValidWriteRequestCollations;
+import static com.mongodb.operation.OperationHelper.validateWriteRequestCollations;
 
 /**
  * An operation that deletes one or more documents from a collection.
@@ -65,14 +65,14 @@ public class DeleteOperation extends BaseWriteOperation {
 
     @Override
     protected WriteConcernResult executeProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern());
+        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern());
         return connection.delete(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected void executeProtocolAsync(final AsyncConnection connection,
                                         final SingleResultCallback<WriteConcernResult> callback) {
-        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
+        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -86,13 +86,13 @@ public class DeleteOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern());
+        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern());
         return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
+        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
