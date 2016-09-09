@@ -226,7 +226,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         given:
         def contentBytes = new byte[9000];
         new SecureRandom().nextBytes(contentBytes);
-        def bufferSize = 3000
+        def bufferSize = 2000
         def options = new GridFSUploadOptions().chunkSizeBytes(4000)
 
         when:
@@ -264,6 +264,24 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         when:
         fileBuffer.put(byteBuffer.array())
+        totalRead += read
+        read = run(downloadStream.&read, byteBuffer.clear())
+        then:
+        read == bufferSize
+
+        when:
+        fileBuffer.put(byteBuffer.array())
+        totalRead += read
+        read = run(downloadStream.&read, byteBuffer.clear())
+
+        then:
+        read == 1000
+
+        when:
+        def remaining = new byte[read]
+        byteBuffer.flip()
+        byteBuffer.get(remaining, 0, 1000)
+        fileBuffer.put(remaining)
         totalRead += read
         read = run(downloadStream.&read, byteBuffer.clear())
 
