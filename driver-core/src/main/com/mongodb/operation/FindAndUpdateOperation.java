@@ -48,7 +48,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -331,7 +331,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         return withConnection(binding, new CallableWithConnection<T>() {
             @Override
             public T call(final Connection connection) {
-                checkValidCollation(connection, collation);
+                validateCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         getValidator(), CommandResultDocumentCodec.create(decoder, "value"), connection,
                         FindAndModifyHelper.<T>transformer());
@@ -349,7 +349,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<T> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

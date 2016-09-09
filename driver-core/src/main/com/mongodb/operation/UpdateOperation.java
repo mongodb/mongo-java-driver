@@ -30,7 +30,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.checkValidWriteRequestCollations;
+import static com.mongodb.operation.OperationHelper.validateWriteRequestCollations;
 
 /**
  * An operation that updates a document in a collection.
@@ -65,13 +65,13 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected WriteConcernResult executeProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, updates, getWriteConcern());
+        validateWriteRequestCollations(connection, updates, getWriteConcern());
         return connection.update(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override
     protected void executeProtocolAsync(final AsyncConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
-        checkValidWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
+        validateWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -85,13 +85,13 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, updates, getWriteConcern());
+        validateWriteRequestCollations(connection, updates, getWriteConcern());
         return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        checkValidWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
+        validateWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {

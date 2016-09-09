@@ -43,7 +43,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcernAndCollation;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -232,7 +232,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return withConnection(binding, new CallableWithConnection<Long>() {
             @Override
             public Long call(final Connection connection) {
-                checkValidReadConcernAndCollation(connection, readConcern, collation);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
                         connection, transformer());
             }
@@ -249,7 +249,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Long> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    checkValidReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
+                    validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

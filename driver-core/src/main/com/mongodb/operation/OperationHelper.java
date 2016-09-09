@@ -74,15 +74,15 @@ final class OperationHelper {
         void call(AsyncConnectionSource source, AsyncConnection connection, Throwable t);
     }
 
-    static void checkValidReadConcern(final Connection connection, final ReadConcern readConcern) {
+    static void validateReadConcern(final Connection connection, final ReadConcern readConcern) {
         if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throw new IllegalArgumentException(format("ReadConcern not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
         }
     }
 
-    static void checkValidReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
-                                      final AsyncCallableWithConnection callable) {
+    static void validateReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
+                                    final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throwable = new IllegalArgumentException(format("ReadConcern not supported by server version: %s",
@@ -91,9 +91,9 @@ final class OperationHelper {
         callable.call(connection, throwable);
     }
 
-    static void checkValidReadConcern(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
-                                      final AsyncCallableWithConnectionAndSource callable) {
-        checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
+    static void validateReadConcern(final AsyncConnectionSource source, final AsyncConnection connection, final ReadConcern readConcern,
+                                    final AsyncCallableWithConnectionAndSource callable) {
+        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(source, connection, t);
@@ -101,15 +101,15 @@ final class OperationHelper {
         });
     }
 
-    static void checkValidCollation(final Connection connection, final Collation collation) {
+    static void validateCollation(final Connection connection, final Collation collation) {
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throw new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
         }
     }
 
-    static void checkValidCollationAndWriteConcern(final Connection connection, final Collation collation,
-                                                   final WriteConcern writeConcern) {
+    static void validateCollationAndWriteConcern(final Connection connection, final Collation collation,
+                                                 final WriteConcern writeConcern) {
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throw new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
@@ -118,8 +118,8 @@ final class OperationHelper {
         }
     }
 
-    static void checkValidCollation(final AsyncConnection connection, final Collation collation,
-                                    final AsyncCallableWithConnection callable) {
+    static void validateCollation(final AsyncConnection connection, final Collation collation,
+                                  final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by server version: %s",
@@ -128,8 +128,8 @@ final class OperationHelper {
         callable.call(connection, throwable);
     }
 
-    static void checkValidCollationAndWriteConcern(final AsyncConnection connection, final Collation collation,
-                                                   final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
+    static void validateCollationAndWriteConcern(final AsyncConnection connection, final Collation collation,
+                                                 final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by server version: %s",
@@ -140,9 +140,9 @@ final class OperationHelper {
         callable.call(connection, throwable);
     }
 
-    static void checkValidCollation(final AsyncConnectionSource source, final AsyncConnection connection,
-                                    final Collation collation, final AsyncCallableWithConnectionAndSource callable) {
-        checkValidCollation(connection, collation, new AsyncCallableWithConnection(){
+    static void validateCollation(final AsyncConnectionSource source, final AsyncConnection connection,
+                                  final Collation collation, final AsyncCallableWithConnectionAndSource callable) {
+        validateCollation(connection, collation, new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(source, connection, t);
@@ -150,7 +150,7 @@ final class OperationHelper {
         });
     }
 
-    static void checkValidWriteRequestCollations(final Connection connection, final List<? extends WriteRequest> requests,
+    static void validateWriteRequestCollations(final Connection connection, final List<? extends WriteRequest> requests,
                                                  final WriteConcern writeConcern) {
         Collation collation = null;
         for (WriteRequest request : requests) {
@@ -163,10 +163,10 @@ final class OperationHelper {
                 break;
             }
         }
-        checkValidCollationAndWriteConcern(connection, collation, writeConcern);
+        validateCollationAndWriteConcern(connection, collation, writeConcern);
     }
 
-    static void checkValidWriteRequestCollations(final AsyncConnection connection, final List<? extends WriteRequest> requests,
+    static void validateWriteRequestCollations(final AsyncConnection connection, final List<? extends WriteRequest> requests,
                                                  final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
         Collation collation = null;
         for (WriteRequest request : requests) {
@@ -179,7 +179,7 @@ final class OperationHelper {
                 break;
             }
         }
-        checkValidCollationAndWriteConcern(connection, collation, writeConcern, new AsyncCallableWithConnection() {
+        validateCollationAndWriteConcern(connection, collation, writeConcern, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(connection, t);
@@ -187,13 +187,13 @@ final class OperationHelper {
         });
     }
 
-    static void checkValidWriteRequests(final Connection connection, final Boolean bypassDocumentValidation,
+    static void validateWriteRequests(final Connection connection, final Boolean bypassDocumentValidation,
                                         final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
         checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern);
-        checkValidWriteRequestCollations(connection, requests, writeConcern);
+        validateWriteRequestCollations(connection, requests, writeConcern);
     }
 
-    static void checkValidWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
+    static void validateWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
                                         final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
                                         final AsyncCallableWithConnection callable) {
         checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern, new AsyncCallableWithConnection() {
@@ -202,28 +202,28 @@ final class OperationHelper {
                 if (t != null) {
                     callable.call(connection, t);
                 } else {
-                    checkValidWriteRequestCollations(connection, requests, writeConcern, callable);
+                    validateWriteRequestCollations(connection, requests, writeConcern, callable);
                 }
             }
         });
     }
 
-    static void checkValidIndexRequestCollations(final Connection connection, final List<IndexRequest> requests) {
+    static void validateIndexRequestCollations(final Connection connection, final List<IndexRequest> requests) {
         for (IndexRequest request : requests) {
             if (request.getCollation() != null) {
-                checkValidCollation(connection, request.getCollation());
+                validateCollation(connection, request.getCollation());
                 break;
             }
         }
     }
 
-    static void checkValidIndexRequestCollations(final AsyncConnection connection, final List<IndexRequest> requests,
+    static void validateIndexRequestCollations(final AsyncConnection connection, final List<IndexRequest> requests,
                                                  final AsyncCallableWithConnection callable) {
         boolean calledTheCallable = false;
         for (IndexRequest request : requests) {
             if (request.getCollation() != null) {
                 calledTheCallable = true;
-                checkValidCollation(connection, request.getCollation(), new AsyncCallableWithConnection() {
+                validateCollation(connection, request.getCollation(), new AsyncCallableWithConnection() {
                     @Override
                     public void call(final AsyncConnection connection, final Throwable t) {
                         callable.call(connection, t);
@@ -237,31 +237,31 @@ final class OperationHelper {
         }
     }
 
-    static void checkValidReadConcernAndCollation(final Connection connection, final ReadConcern readConcern,
+    static void validateReadConcernAndCollation(final Connection connection, final ReadConcern readConcern,
                                                   final Collation collation) {
-        checkValidReadConcern(connection, readConcern);
-        checkValidCollation(connection, collation);
+        validateReadConcern(connection, readConcern);
+        validateCollation(connection, collation);
     }
 
-    static void checkValidReadConcernAndCollation(final AsyncConnection connection, final ReadConcern readConcern,
+    static void validateReadConcernAndCollation(final AsyncConnection connection, final ReadConcern readConcern,
                                                   final Collation collation,
                                                   final AsyncCallableWithConnection callable) {
-        checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
+        validateReadConcern(connection, readConcern, new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     callable.call(connection, t);
                 } else {
-                    checkValidCollation(connection, collation, callable);
+                    validateCollation(connection, collation, callable);
                 }
             }
         });
     }
 
-    static void checkValidReadConcernAndCollation(final AsyncConnectionSource source, final AsyncConnection connection,
+    static void validateReadConcernAndCollation(final AsyncConnectionSource source, final AsyncConnection connection,
                                                   final ReadConcern readConcern, final Collation collation,
                                                   final AsyncCallableWithConnectionAndSource callable) {
-        checkValidReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection(){
+        validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(source, connection, t);

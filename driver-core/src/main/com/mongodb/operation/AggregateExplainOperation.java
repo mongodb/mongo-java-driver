@@ -40,7 +40,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -111,7 +111,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         return withConnection(binding, new CallableWithConnection<BsonDocument>() {
             @Override
             public BsonDocument call(final Connection connection) {
-                checkValidCollation(connection, collation);
+                validateCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), connection);
             }
         });
@@ -127,7 +127,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<BsonDocument> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

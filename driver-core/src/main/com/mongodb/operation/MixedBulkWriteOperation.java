@@ -58,7 +58,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidBypassDocumentValidationAndWriteRequestCollations;
+import static com.mongodb.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
@@ -168,7 +168,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
-                OperationHelper.checkValidWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                validateWriteRequests(connection, bypassDocumentValidation, writeRequests,
                         writeConcern);
                 BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
                                                                                            ordered, writeConcern);
@@ -201,7 +201,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    checkValidWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                    validateWriteRequests(connection, bypassDocumentValidation, writeRequests,
                             writeConcern, new AsyncCallableWithConnection() {
                                 @Override
                                 public void call(final AsyncConnection connection, final Throwable t) {

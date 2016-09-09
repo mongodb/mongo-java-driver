@@ -48,7 +48,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.checkValidCollation;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -509,7 +509,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
         return withConnection(binding, new OperationHelper.CallableWithConnection<MapReduceStatistics>() {
             @Override
             public MapReduceStatistics call(final Connection connection) {
-                checkValidCollation(connection, collation);
+                validateCollation(connection, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                         connection, transformer());
             }
@@ -526,7 +526,7 @@ MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistic
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<MapReduceStatistics> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {
