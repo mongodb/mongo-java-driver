@@ -29,7 +29,7 @@ import java.nio.ByteBuffer
 
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.async.client.Fixture.getMongoClient
-import static com.mongodb.async.client.gridfs.GridFSTestHelper.run
+import static com.mongodb.async.client.TestHelper.run
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 
