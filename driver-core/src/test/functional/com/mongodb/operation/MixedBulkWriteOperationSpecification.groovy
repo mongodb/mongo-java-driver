@@ -737,6 +737,22 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should throw if collation is set and write is unacknowledged'() {
+        given:
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new DeleteRequest(BsonDocument.parse('{ level: 9 }')).collation(defaultCollation)], true, UNACKNOWLEDGED)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoClientException)
+
+        where:
+        [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
     def 'should honour the bypass validation flag for inserts'() {
         given:

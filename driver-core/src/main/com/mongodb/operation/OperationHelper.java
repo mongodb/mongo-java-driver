@@ -108,12 +108,34 @@ final class OperationHelper {
         }
     }
 
+    static void checkValidCollationAndWriteConcern(final Connection connection, final Collation collation,
+                                                   final WriteConcern writeConcern) {
+        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
+            throw new IllegalArgumentException(format("Collation not supported by server version: %s",
+                    connection.getDescription().getServerVersion()));
+        } else if (collation != null && !writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Specifying collation with an unacknowledged WriteConcern is not supported");
+        }
+    }
+
     static void checkValidCollation(final AsyncConnection connection, final Collation collation,
                                     final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
         if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
+        }
+        callable.call(connection, throwable);
+    }
+
+    static void checkValidCollationAndWriteConcern(final AsyncConnection connection, final Collation collation,
+                                                   final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
+        Throwable throwable = null;
+        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
+            throwable = new IllegalArgumentException(format("Collation not supported by server version: %s",
+                    connection.getDescription().getServerVersion()));
+        } else if (collation != null && !writeConcern.isAcknowledged()) {
+            throwable = new MongoClientException("Specifying collation with an unacknowledged WriteConcern is not supported");
         }
         callable.call(connection, throwable);
     }
@@ -128,7 +150,8 @@ final class OperationHelper {
         });
     }
 
-    static void checkValidWriteRequestCollations(final Connection connection, final List<? extends WriteRequest> requests) {
+    static void checkValidWriteRequestCollations(final Connection connection, final List<? extends WriteRequest> requests,
+                                                 final WriteConcern writeConcern) {
         Collation collation = null;
         for (WriteRequest request : requests) {
             if (request instanceof UpdateRequest) {
@@ -140,11 +163,11 @@ final class OperationHelper {
                 break;
             }
         }
-        checkValidCollation(connection, collation);
+        checkValidCollationAndWriteConcern(connection, collation, writeConcern);
     }
 
     static void checkValidWriteRequestCollations(final AsyncConnection connection, final List<? extends WriteRequest> requests,
-                                                 final AsyncCallableWithConnection callable) {
+                                                 final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
         Collation collation = null;
         for (WriteRequest request : requests) {
             if (request instanceof UpdateRequest) {
@@ -156,10 +179,31 @@ final class OperationHelper {
                 break;
             }
         }
-        checkValidCollation(connection, collation, new AsyncCallableWithConnection() {
+        checkValidCollationAndWriteConcern(connection, collation, writeConcern, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 callable.call(connection, t);
+            }
+        });
+    }
+
+    static void checkValidWriteRequests(final Connection connection, final Boolean bypassDocumentValidation,
+                                        final List<? extends WriteRequest> requests, final WriteConcern writeConcern) {
+        checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern);
+        checkValidWriteRequestCollations(connection, requests, writeConcern);
+    }
+
+    static void checkValidWriteRequests(final AsyncConnection connection, final Boolean bypassDocumentValidation,
+                                        final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
+                                        final AsyncCallableWithConnection callable) {
+        checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                if (t != null) {
+                    callable.call(connection, t);
+                } else {
+                    checkValidWriteRequestCollations(connection, requests, writeConcern, callable);
+                }
             }
         });
     }
@@ -225,15 +269,25 @@ final class OperationHelper {
         });
     }
 
-    static boolean bypassDocumentValidationNotSupported(final Boolean bypassDocumentValidation, final WriteConcern writeConcern,
-                                                        final ConnectionDescription description) {
-        return bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description) && !writeConcern.isAcknowledged();
+    static void checkBypassDocumentValidationIsSupported(final Connection connection, final Boolean bypassDocumentValidation,
+                                             final WriteConcern writeConcern) {
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connection.getDescription())
+                && !writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
+        }
     }
 
-    static MongoClientException getBypassDocumentValidationException() {
-        return new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern "
-                                        + "is not supported");
+    static void checkBypassDocumentValidationIsSupported(final AsyncConnection connection, final Boolean bypassDocumentValidation,
+                                                         final WriteConcern writeConcern, final AsyncCallableWithConnection callable) {
+        Throwable throwable = null;
+        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connection.getDescription())
+                && !writeConcern.isAcknowledged()) {
+            throwable = new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is "
+                    + "not supported");
+        }
+        callable.call(connection, throwable);
     }
+
 
     static <T> QueryBatchCursor<T> createEmptyBatchCursor(final MongoNamespace namespace, final Decoder<T> decoder,
                                                           final ServerAddress serverAddress, final int batchSize) {

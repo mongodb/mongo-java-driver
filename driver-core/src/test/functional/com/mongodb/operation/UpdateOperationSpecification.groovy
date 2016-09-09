@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
@@ -33,6 +34,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static java.util.Arrays.asList
 
@@ -262,6 +264,23 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         result.getCount() == 1
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    def 'should throw if collation is set and write is unacknowledged'() {
+        given:
+        def requests = [new UpdateRequest(BsonDocument.parse('{str: "FOO"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)
+                                .collation(caseInsensitiveCollation)]
+        def operation = new UpdateOperation(getNamespace(), false, UNACKNOWLEDGED, requests)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoClientException)
 
         where:
         async << [true, false]
