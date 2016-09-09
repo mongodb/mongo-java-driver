@@ -141,7 +141,7 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private void checkAndFetchResults(final int amountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
         if (currentPosition == fileInfo.getLength() || dst.remaining() == 0) {
             callback.onResult(amountRead, null);
-        } else if (!resultsQueue.isEmpty()) {
+        } else if (hasResultsToProcess()) {
             processResults(amountRead, dst, callback);
         } else if (cursor == null) {
             chunksCollection.find(new Document("files_id", fileInfo.getId())
@@ -181,23 +181,27 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private void processResults(final int previousAmountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
         try {
             int amountRead = previousAmountRead;
-            while (currentPosition < fileInfo.getLength() && dst.remaining() > 0 && !resultsQueue.isEmpty()) {
-                if (buffer == null || bufferOffset == buffer.length) {
+            int amountToCopy = dst.remaining();
+            while (currentPosition < fileInfo.getLength() && amountToCopy > 0) {
+
+                if (getBufferFromResultsQueue()) {
                     buffer = getBufferFromChunk(resultsQueue.poll(), chunkIndex);
                     bufferOffset = 0;
                     chunkIndex += 1;
                 }
 
-                int amountToCopy = dst.remaining();
                 if (amountToCopy > buffer.length - bufferOffset) {
                     amountToCopy = buffer.length - bufferOffset;
                 }
-                dst.put(buffer, bufferOffset, amountToCopy);
-                bufferOffset += amountToCopy;
-                currentPosition += amountToCopy;
-                amountRead += amountToCopy;
-            }
 
+                if (amountToCopy > 0) {
+                    dst.put(buffer, bufferOffset, amountToCopy);
+                    bufferOffset += amountToCopy;
+                    currentPosition += amountToCopy;
+                    amountRead += amountToCopy;
+                    amountToCopy = dst.remaining();
+                }
+            }
             checkAndFetchResults(amountRead, dst, callback);
         } catch (MongoGridFSException e) {
             callback.onResult(null, e);
@@ -257,6 +261,14 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
         }
 
         return data;
+    }
+
+    private boolean getBufferFromResultsQueue() {
+        return !resultsQueue.isEmpty() && (buffer == null || bufferOffset == buffer.length);
+    }
+
+    private boolean hasResultsToProcess() {
+        return !resultsQueue.isEmpty() || (buffer != null && bufferOffset < buffer.length);
     }
 
     private <A> boolean tryGetReadingLock(final SingleResultCallback<A> callback) {
