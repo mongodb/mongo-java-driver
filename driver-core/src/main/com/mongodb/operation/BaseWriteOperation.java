@@ -46,8 +46,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
-import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
+import static com.mongodb.operation.OperationHelper.checkBypassDocumentValidationIsSupported;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -135,9 +134,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             @Override
             public WriteConcernResult call(final Connection connection) {
                 try {
-                    if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                        throw getBypassDocumentValidationException();
-                    }
+                    checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern);
                     if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
                         return translateBulkWriteResult(executeCommandProtocol(connection));
                     } else {
@@ -155,36 +152,45 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<WriteConcernResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                final SingleResultCallback<WriteConcernResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
-                } else if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    releasingCallback(errHandlingCallback, connection).onResult(null, getBypassDocumentValidationException());
                 } else {
-                    final SingleResultCallback<WriteConcernResult> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
-                            @Override
-                            public void onResult(final BulkWriteResult result, final Throwable t) {
-                                if (t != null) {
-                                    wrappedCallback.onResult(null, translateException(t));
-                                } else {
-                                    wrappedCallback.onResult(translateBulkWriteResult(result), null);
+                    checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern,
+                            new AsyncCallableWithConnection() {
+                                @Override
+                                public void call(final AsyncConnection connection, final Throwable t1) {
+                                    if (t1 != null) {
+                                        releasingCallback(errHandlingCallback, connection).onResult(null, t1);
+                                    } else {
+                                        final SingleResultCallback<WriteConcernResult> wrappedCallback =
+                                                releasingCallback(errHandlingCallback, connection);
+                                        if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
+                                            executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
+                                                @Override
+                                                public void onResult(final BulkWriteResult result, final Throwable t) {
+                                                    if (t != null) {
+                                                        wrappedCallback.onResult(null, translateException(t));
+                                                    } else {
+                                                        wrappedCallback.onResult(translateBulkWriteResult(result), null);
+                                                    }
+                                                }
+                                            });
+                                        } else {
+                                            executeProtocolAsync(connection, new SingleResultCallback<WriteConcernResult>() {
+                                                @Override
+                                                public void onResult(final WriteConcernResult result, final Throwable t) {
+                                                    if (t != null) {
+                                                        wrappedCallback.onResult(null, translateException(t));
+                                                    } else {
+                                                        wrappedCallback.onResult(result, null);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
                                 }
-                            }
-                        });
-                    } else {
-                        executeProtocolAsync(connection, new SingleResultCallback<WriteConcernResult>() {
-                            @Override
-                            public void onResult(final WriteConcernResult result, final Throwable t) {
-                                if (t != null) {
-                                    wrappedCallback.onResult(null, translateException(t));
-                                } else {
-                                    wrappedCallback.onResult(result, null);
-                                }
-                            }
-                        });
-                    }
+                            });
                 }
             }
         });

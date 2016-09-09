@@ -58,9 +58,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
-import static com.mongodb.operation.OperationHelper.checkValidWriteRequestCollations;
-import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
+import static com.mongodb.operation.OperationHelper.checkValidBypassDocumentValidationAndWriteRequestCollations;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
@@ -170,12 +168,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
-                if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    throw getBypassDocumentValidationException();
-                }
-
-                checkValidWriteRequestCollations(connection, writeRequests);
-
+                OperationHelper.checkValidWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                        writeConcern);
                 BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
                                                                                            ordered, writeConcern);
                 for (Run run : getRunGenerator(connection.getDescription())) {
@@ -207,23 +201,21 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    checkValidWriteRequestCollations(connection, writeRequests, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                releasingCallback(errHandlingCallback, connection).onResult(null, t);
-                            } else if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern,
-                                    connection.getDescription())) {
-                                releasingCallback(errHandlingCallback, connection).onResult(null, getBypassDocumentValidationException());
-                            } else {
-                                Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
-                                executeRunsAsync(runs, connection, new BulkWriteBatchCombiner(connection.getDescription()
-                                                                                                      .getServerAddress(),
-                                                                                                     ordered, writeConcern),
-                                        errHandlingCallback);
-                            }
-                        }
-                    });
+                    checkValidWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                            writeConcern, new AsyncCallableWithConnection() {
+                                @Override
+                                public void call(final AsyncConnection connection, final Throwable t) {
+                                    if (t != null) {
+                                        releasingCallback(errHandlingCallback, connection).onResult(null, t);
+                                    } else {
+                                        Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
+                                        executeRunsAsync(runs, connection,
+                                                new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
+                                                        writeConcern),
+                                                errHandlingCallback);
+                                    }
+                                }
+                            });
                 }
             }
         });

@@ -65,13 +65,13 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected WriteConcernResult executeProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, updates);
+        checkValidWriteRequestCollations(connection, updates, getWriteConcern());
         return connection.update(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override
     protected void executeProtocolAsync(final AsyncConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
-        checkValidWriteRequestCollations(connection, updates, new AsyncCallableWithConnection(){
+        checkValidWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -85,13 +85,13 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, updates);
+        checkValidWriteRequestCollations(connection, updates, getWriteConcern());
         return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        checkValidWriteRequestCollations(connection, updates, new AsyncCallableWithConnection(){
+        checkValidWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {

@@ -65,14 +65,14 @@ public class DeleteOperation extends BaseWriteOperation {
 
     @Override
     protected WriteConcernResult executeProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, deleteRequests);
+        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern());
         return connection.delete(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected void executeProtocolAsync(final AsyncConnection connection,
                                         final SingleResultCallback<WriteConcernResult> callback) {
-        checkValidWriteRequestCollations(connection, deleteRequests, new AsyncCallableWithConnection(){
+        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -86,13 +86,13 @@ public class DeleteOperation extends BaseWriteOperation {
 
     @Override
     protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        checkValidWriteRequestCollations(connection, deleteRequests);
+        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern());
         return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        checkValidWriteRequestCollations(connection, deleteRequests, new AsyncCallableWithConnection(){
+        checkValidWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
