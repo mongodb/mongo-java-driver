@@ -37,10 +37,10 @@ import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.SecureRandom
 
-import static GridFSTestHelper.run
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.async.client.Fixture.getMongoClient
-import static com.mongodb.async.client.gridfs.GridFSTestHelper.runSlow
+import static com.mongodb.async.client.TestHelper.run
+import static com.mongodb.async.client.TestHelper.runSlow
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 import static com.mongodb.client.model.Filters.eq
