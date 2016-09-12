@@ -288,9 +288,9 @@ task wrapper(type: Wrapper) {
 }
 
 gradle.buildFinished { BuildResult result ->
-    if (result.failure && !JavaVersion.current().isJava7Compatible()) {
-        gradle.rootProject.logger.error("\n* Warning:\nJDK ${JavaVersion.VERSION_1_7} is minimal requirement for building the driver. " +
-                                        "You have ${JavaVersion.current()}.")
+    if (result.failure && !JavaVersion.current().isJava8Compatible()) {
+        gradle.rootProject.logger.error("\nWARNING:\nJDK ${JavaVersion.VERSION_1_8} is required to build the driver: " +
+                "you are using JDK ${JavaVersion.current()}.")
     }
 }
 
