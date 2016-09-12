@@ -251,22 +251,23 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         def lookupDoc = graphLookup('contacts', new BsonString('$friends'), 'friends', 'name', 'socialNetwork')
 
         when:
-        def results = fromHelper.aggregate([lookupDoc])
+        def results = fromHelper.aggregate([lookupDoc,
+                                            unwind('$socialNetwork'),
+                                            sort(new Document('_id', 1).append('socialNetwork._id', 1))])
 
         then:
-        results[0] ==
-            Document.parse('''{
-                _id: 0,
-                name: "Bob Smith",
-                friends: ["Anna Jones", "Chris Green"],
-                socialNetwork: [
-                    { _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ] },
-                    { _id: 4, name: "Fred Brown", friends: ["Joe Lee"] },
-                    { _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"] },
-                    { _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"] },
-                    { _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"] }
-                ]
-            }''')
+        results.subList(0, 5) == [
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 4, name: "Fred Brown", friends: ["Joe Lee"] } }''')
+        ]
 
         cleanup:
         fromHelper?.drop()
@@ -292,21 +293,22 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                         .depthField('depth'))
 
         when:
-        def results = fromHelper.aggregate([lookupDoc])
+        def results = fromHelper.aggregate([lookupDoc,
+                                            unwind('$socialNetwork'),
+                                            sort(new Document('_id', 1)
+                                                         .append('socialNetwork._id', 1))])
 
         then:
-        results[0] ==
-            Document.parse('''{
-                _id: 0,
-                name: "Bob Smith",
-                friends: ["Anna Jones", "Chris Green"],
-                socialNetwork: [
-                    { _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ], depth:1 },
-                    { _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], depth:1 },
-                    { _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"], depth:0 },
-                    { _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"], depth:0 }
-                ]
-            }''')
+        results.subList(0, 4) == [
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], depth:1 } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"], depth:0 } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"], depth:0 } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
+                    _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ], depth:1 } }''')
+        ]
 
         cleanup:
         fromHelper?.drop()
