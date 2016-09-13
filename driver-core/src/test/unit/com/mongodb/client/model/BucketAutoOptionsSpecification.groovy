@@ -21,6 +21,15 @@ import spock.lang.Specification
 import static com.mongodb.client.model.Accumulators.sum
 
 class BucketAutoOptionsSpecification extends Specification {
+    def 'defaults should be null'() {
+        when:
+        def options = new BucketAutoOptions()
+
+        then:
+        options.granularity == null
+        options.output == null
+    }
+
     def "should return new options with the same property values"() {
         when:
         def options = new BucketAutoOptions()

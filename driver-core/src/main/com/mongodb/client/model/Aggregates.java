@@ -162,23 +162,6 @@ public final class Aggregates {
         return new SimplePipelineStage("$sort", sort);
     }
 
-/*
-    */
-/**
-     * Creates a $sortByCount pipeline stage for the specified filter
-     *
-     * @param field    the field name, prefixed by a {@code '$' sign}
-     * @return the $sortByCount pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/sortByCount/ $sortByCount
-     * @mongodb.server.release 3.4
-     * @since 3.4
-     *//*
-
-    public static Bson sortByCount(final String field) {
-        return new BsonDocument("$sortByCount", new BsonString(field));
-    }
-*/
-
     /**
      * Creates a $sortByCount pipeline stage for the specified filter
      *
