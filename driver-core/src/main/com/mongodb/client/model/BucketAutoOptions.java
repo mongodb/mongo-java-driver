@@ -51,7 +51,7 @@ public class BucketAutoOptions {
      *
      * @param granularity the granularity of the bucket definitions
      * @return this
-     * @link the <a href="https://en.wikipedia.org/wiki/Preferred_number">wiki page</a> on preferred numbers
+     * @see <a href="https://en.wikipedia.org/wiki/Preferred_number">Preferred numbers</a>
      * @see BucketGranularity
      */
     public BucketAutoOptions granularity(final BucketGranularity granularity) {
