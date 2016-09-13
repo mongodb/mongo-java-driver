@@ -393,7 +393,7 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson replaceRoot(final TExpression value) {
-        return new ReplaceRootStage(value);
+        return new ReplaceRootStage<TExpression>(value);
     }
 
     /**
