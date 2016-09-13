@@ -116,7 +116,7 @@ def getGitVersion() {
     new ByteArrayOutputStream().withStream { os ->
         def result = exec {
             executable 'git'
-            args 'describe', '--tags'
+            args 'describe', '--tags', '--always', '--dirty'
             standardOutput = os
         }
         outputAsString = os.toString().substring(1)
