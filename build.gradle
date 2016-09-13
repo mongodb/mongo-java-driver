@@ -124,16 +124,6 @@ def getGitVersion() {
     return outputAsString
 }
 
-configure(subprojects.findAll { it.name != 'util' }) {
-
-    project.ext.generatedResources = "$buildDir/generated-resources/main"
-
-    task generateVersionPropertiesFile << {
-        def directory = new File(project.ext.generatedResources)
-        directory.mkdirs()
-    }
-}
-
 configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
@@ -154,7 +144,6 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     sourceSets {
         main {
             java.srcDirs = ['src/main']
-            output.dir(project.ext.generatedResources, builtBy: 'generateVersionPropertiesFile')
         }
         test {
             groovy.srcDirs = ['src/test/functional', 'src/test/unit']

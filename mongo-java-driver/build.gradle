@@ -39,7 +39,6 @@ sourceSets {
     main {
         java {
             srcDirs = ["$rootDir/driver/src/main", "$rootDir/driver-core/src/main", "$rootDir/bson/src/main"]
-            output.dir(project.ext.generatedResources, builtBy: 'generateVersionPropertiesFile')
         }
     }
 }

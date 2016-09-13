@@ -150,8 +150,9 @@ class ClientMetadataHelperSpecification extends Specification {
     }
 
     static BsonDocument createExpectedClientMetadataDocument(String appName) {
+        String driverVersion = 'unknown'
         def expectedDriverDocument = new BsonDocument('name', new BsonString('mongo-java-driver'))
-                .append('version', new BsonString(getDriverVersion()))
+                .append('version', new BsonString(driverVersion))
         def expectedOperatingSystemDocument = new BsonDocument('type',
                 new BsonString(ClientMetadataHelper.getOperatingSystemType(System.getProperty('os.name'))))
                 .append('name', new BsonString(System.getProperty('os.name')))
@@ -181,20 +182,5 @@ class ClientMetadataHelperSpecification extends Specification {
         def platforms = [expectedClientDocument.getString('platform').getValue(), *driverInformation.getDriverPlatforms()].join(separator)
         expectedClientDocument.append('platform', new BsonString(platforms))
         expectedClientDocument
-    }
-
-
-    // not sure how else to test this.  It's really a test of the build system that generates the version.properties file
-    private static String getDriverVersion() {
-        String driverVersion = 'unknown';
-        Class<InternalStreamConnectionInitializer> clazz = InternalStreamConnectionInitializer;
-        URL versionPropertiesFileURL = clazz.getResource('/version.properties');
-        if (versionPropertiesFileURL != null) {
-            Properties versionProperties = new Properties();
-            InputStream versionPropertiesInputStream = versionPropertiesFileURL.openStream();
-            versionProperties.load(versionPropertiesInputStream);
-            driverVersion = versionProperties.getProperty('version');
-        }
-        driverVersion;
     }
 }
