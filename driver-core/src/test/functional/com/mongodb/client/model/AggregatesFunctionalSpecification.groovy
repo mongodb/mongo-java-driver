@@ -34,6 +34,7 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
@@ -45,6 +46,7 @@ import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
+import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
@@ -539,5 +541,110 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         cleanup:
         helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    def '$addFields'() {
+        given:
+        def helper = getCollectionHelper()
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        def results = helper.aggregate([addFields(new Field('newField', null))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, newField: null}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('newField', 'hello'))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, newField: "hello"}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('b', '$a'))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, b: 1}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('this', '$$CURRENT'))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, this: {_id: 0, a: 1}}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('myNewField',
+                                                        new Document('c', 3).append('d', 4)))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, myNewField: {c: 3, d: 4}}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('alt3', new Document('$lt', asList('$a', 3))))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, alt3: true}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('b', 3), new Field('c', 5))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: 1, b: 3, c: 5}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a: 1}'))
+        results = helper.aggregate([addFields(new Field('a', [1, 2, 3]))])
+
+        then:
+        results == [Document.parse('{_id: 0, a: [1, 2, 3]}')]
+
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    def '$replaceRoot'() {
+        given:
+        def helper = getCollectionHelper()
+        def results = []
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1}, a2: 2}'))
+        results = helper.aggregate([replaceRoot('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: {c1: 4, c2: 5}}, a2: 2}'))
+        results = helper.aggregate([replaceRoot('$a1.b')])
+
+        then:
+        results == [Document.parse('{c1: 4, c2: 5}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1, _id: 7}, a2: 2}'))
+        results = helper.aggregate([replaceRoot('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1, _id: 7}')]
     }
 }

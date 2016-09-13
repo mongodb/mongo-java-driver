@@ -22,8 +22,11 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static BucketGranularity.R5
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
 import static com.mongodb.client.model.Accumulators.first
@@ -34,6 +37,7 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
 import static com.mongodb.client.model.Aggregates.count
@@ -45,24 +49,39 @@ import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
+import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
-import static BucketGranularity.R5
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
+import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class AggregatesSpecification extends Specification {
     def registry = fromProviders([new BsonValueCodecProvider(), new DocumentCodecProvider(), new ValueCodecProvider(),
                                   new GeoJsonCodecProvider()])
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    def 'should render $addFields'() {
+        expect:
+        toBson(addFields(new Field('newField', null))) == parse('{$addFields: {newField: null}}')
+        toBson(addFields(new Field('newField', 'hello'))) == parse('{$addFields: {newField: "hello"}}')
+        toBson(addFields(new Field('this', '$$CURRENT'))) == parse('{$addFields: {this: "$$CURRENT"}}')
+        toBson(addFields(new Field('myNewField', new Document('c', 3)
+                .append('d', 4)))) == parse('{$addFields: {myNewField: {c: 3, d: 4}}}')
+        toBson(addFields(new Field('alt3', new Document('$lt', asList('$a', 3))))) == parse(
+                '{$addFields: {alt3: {$lt: ["$a", 3]}}}')
+        toBson(addFields(new Field('b', 3), new Field('c', 5))) == parse('{$addFields: {b: 3, c: 5}}')
+        toBson(addFields(asList(new Field('b', 3), new Field('c', 5)))) == parse('{$addFields: {b: 3, c: 5}}')
+    }
 
     def 'should render $bucket'() {
         expect:
@@ -149,6 +168,14 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(project(fields(include('title', 'author'), computed('lastName', '$author.last')))) ==
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    def 'should render $replaceRoot'() {
+        expect:
+        toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
+        toBson(replaceRoot('$a1.b')) == parse('{$replaceRoot: {newRoot: "$a1.b"}}')
+        toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
     }
 
     def 'should render $sort'() {

@@ -51,6 +51,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -68,6 +69,7 @@ public final class CollectionHelper<T> {
 
     private Codec<T> codec;
     private CodecRegistry registry = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
+                                                                   new IterableCodecProvider(),
                                                                    new ValueCodecProvider(),
                                                                    new DocumentCodecProvider(),
                                                                    new GeoJsonCodecProvider());
