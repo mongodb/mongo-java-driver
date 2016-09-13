@@ -21,7 +21,8 @@ import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.isEnterpriseServer
+import java.security.SecureRandom
+
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
@@ -33,6 +34,10 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.Aggregates.bucket
+import static com.mongodb.client.model.Aggregates.bucketAuto
+import static com.mongodb.client.model.Aggregates.count
+import static com.mongodb.client.model.Aggregates.facet
 import static com.mongodb.client.model.Aggregates.graphLookup
 import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
@@ -43,6 +48,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
+import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Projections.computed
@@ -206,7 +212,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) || !isEnterpriseServer() })
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
     def '$lookup'() {
         given:
         def fromCollectionName = 'lookupCollection'
@@ -232,6 +238,58 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         cleanup:
         fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$facet'() {
+        given:
+        def helper = getCollectionHelper()
+
+        helper.drop()
+
+        (0..50).forEach {
+            def size = (35 + it)
+            def manufacturer = ['Sony', 'Samsung', 'Vizio'][it % 3]
+            helper.insertDocuments(Document.parse("""    {
+                  title: "${manufacturer} ${size} inch HDTV",
+                  attributes: {
+                    "type": "HD",
+                    "screen_size": ${size},
+                    "manufacturer": "${manufacturer}",
+                  }
+                }"""))
+        }
+        def stage = facet(
+                new Facet('Screen Sizes',
+                          unwind('$attributes'),
+                          bucketAuto('$attributes.screen_size', 5, new BucketAutoOptions()
+                                  .output(sum('count', 1)))),
+                new Facet('Manufacturer',
+                          sortByCount('$attributes.manufacturer'),
+                          limit(5)))
+
+        when:
+        def results = aggregate([stage])
+
+        then:
+        results == [
+            Document.parse(
+                    '''{ 'Manufacturer': [
+                        {'_id': "Vizio", 'count': 17},
+                        {'_id': "Samsung", 'count': 17},
+                        {'_id': "Sony", 'count': 17}
+                    ], 'Screen Sizes': [
+                        {'_id': {'min': 35, 'max': 45}, 'count': 10},
+                        {'_id': {'min': 45, 'max': 55}, 'count': 10},
+                        {'_id': {'min': 55, 'max': 65}, 'count': 10},
+                        {'_id': {'min': 65, 'max': 75}, 'count': 10},
+                        {'_id': {'min': 75, 'max': 85}, 'count': 11}
+                    ]}
+                    '''),
+        ]
+
+        cleanup:
+        helper?.drop()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
@@ -312,5 +370,174 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         cleanup:
         fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$bucket'() {
+        given:
+        def helper = getCollectionHelper()
+
+        helper.drop()
+
+        helper.insertDocuments(Document.parse('{screenSize: 30}'))
+        helper.insertDocuments(Document.parse('{screenSize: 24}'))
+        helper.insertDocuments(Document.parse('{screenSize: 42}'))
+        helper.insertDocuments(Document.parse('{screenSize: 22}'))
+        helper.insertDocuments(Document.parse('{screenSize: 55}'))
+        helper.insertDocuments(Document.parse('{screenSize: 155}'))
+        helper.insertDocuments(Document.parse('{screenSize: 75}'))
+
+        def bucket = bucket('$screenSize', [0, 24, 32, 50, 70], new BucketOptions()
+                .defaultBucket('monster')
+                .output(sum('count', 1), push('matches', '$screenSize')))
+
+        when:
+        def results = helper.aggregate([sort(new Document('screenSize', 1)), bucket])
+
+        then:
+        results == [
+                Document.parse('{_id: 0, count: 1, matches: [22]}'),
+                Document.parse('{_id: 24, count: 2, matches: [24, 30]}'),
+                Document.parse('{_id: 32, count: 1, matches: [42]}'),
+                Document.parse('{_id: 50, count: 1, matches: [55]}'),
+                Document.parse('{_id: "monster", count: 2, matches: [75, 155]}')
+        ]
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$bucketAuto'() {
+        given:
+        def helper = getCollectionHelper()
+
+        helper.drop()
+
+        (1..100).forEach {
+            helper.insertDocuments(Document.parse("{price: ${it * 2}}"))
+        }
+
+        when:
+        def results = helper.aggregate([bucketAuto('$price', 10)])
+
+        then:
+        results[0]._id.min == 2
+        results[0].count == 10
+
+        results[-1]._id.max == 200
+
+        when:
+        results = helper.aggregate([bucketAuto('$price', 7)])
+
+        then:
+        results[0]._id.min == 2
+        results[0].count == 14
+
+        results[-1]._id.max == 200
+        results[-1].count == 16
+
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$bucketAuto with options'() {
+        given:
+        def helper = getCollectionHelper()
+
+        helper.drop()
+
+        def random = new SecureRandom()
+        (1..2000).forEach {
+            def document = new Document('price', random.nextDouble() * 5000D + 5.01D)
+            helper.insertDocuments(document)
+        }
+
+        when:
+        def results = helper.aggregate([bucketAuto('$price', 10, new BucketAutoOptions()
+            .granularity(BucketGranularity.E6)
+            .output(sum('count', 1), avg('avgPrice', '$price')))])
+
+        then:
+        results.size() == 6
+        results[0].count != null
+        results[0].avgPrice != null
+
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$count'() {
+        given:
+        def helper = getCollectionHelper()
+
+        helper.drop()
+
+        def random = new SecureRandom()
+        def total = random.nextInt(2000)
+        (1..total).forEach {
+            helper.insertDocuments(new Document('price', random.nextDouble() * 5000D + 5.01D))
+        }
+
+        when:
+        def results = helper.aggregate([count()])
+
+        then:
+        results[0].count == total
+
+        when:
+        results = helper.aggregate([count('count')])
+
+        then:
+        results[0].count == total
+
+        when:
+        results = helper.aggregate([count('total')])
+
+        then:
+        results[0].total == total
+
+        cleanup:
+        helper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    def '$sortByCount'() {
+        given:
+        def helper = getCollectionHelper()
+
+        when:
+        helper.drop()
+
+        helper.insertDocuments(Document.parse('{_id: 0, x: 1}'))
+        helper.insertDocuments(Document.parse('{_id: 1, x: 2}'))
+        helper.insertDocuments(Document.parse('{_id: 2, x: 1}'))
+        helper.insertDocuments(Document.parse('{_id: 3, x: 0}'))
+
+        def results = helper.aggregate([sortByCount('$x')])
+
+        then:
+        results == [Document.parse('{_id: 1, count: 2}'),
+                    Document.parse('{_id: 0, count: 1}'),
+                    Document.parse('{_id: 2, count: 1}')]
+
+        when:
+        helper.drop()
+
+        helper.insertDocuments(Document.parse('{_id: 0, x: 1.4}'))
+        helper.insertDocuments(Document.parse('{_id: 1, x: 2.3}'))
+        helper.insertDocuments(Document.parse('{_id: 2, x: 1.1}'))
+        helper.insertDocuments(Document.parse('{_id: 3, x: 0.5}'))
+
+        results = helper.aggregate([sortByCount(new Document('$floor', '$x'))])
+
+        then:
+        results == [Document.parse('{_id: 1, count: 2}'),
+                    Document.parse('{_id: 0, count: 1}'),
+                    Document.parse('{_id: 2, count: 1}')]
+
+        cleanup:
+        helper?.drop()
     }
 }
