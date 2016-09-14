@@ -47,7 +47,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(
                 new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(),
-                new NoOpConnectionListener(), null
+                new NoOpConnectionListener(), null, null
         ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
 
         when:
@@ -62,7 +62,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         given:
         def connection = new InternalStreamConnectionFactory(
                 new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(),
-                new NoOpConnectionListener(), null
+                new NoOpConnectionListener(), null, null
         ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
@@ -83,7 +83,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener(), null
+                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener(), null, null
         ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
 
         when:
@@ -97,7 +97,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener(), null
+                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(), new NoOpConnectionListener(), null, null
         ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 

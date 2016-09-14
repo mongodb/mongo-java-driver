@@ -44,7 +44,7 @@ public class PlainAuthenticatorTest {
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
         internalConnection = new InternalStreamConnectionFactory(streamFactory, Collections.<MongoCredential>emptyList(),
-                                                                 new NoOpConnectionListener(), null)
+                                                                 new NoOpConnectionListener(), null, null)
                              .create(new ServerId(new ClusterId(), new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }

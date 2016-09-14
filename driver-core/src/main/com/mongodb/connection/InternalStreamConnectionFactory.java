@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.event.ConnectionListener;
 import org.bson.BsonDocument;
 
@@ -33,10 +34,11 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final List<Authenticator> authenticators;
 
     public InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
-                                           final ConnectionListener connectionListener, final String applicationName) {
+                                           final ConnectionListener connectionListener, final String applicationName,
+                                           final MongoDriverInformation mongoDriverInformation) {
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.connectionListener = notNull("connectionListener", connectionListener);
-        this.clientMetadataDocument = createClientMetadataDocument(applicationName);
+        this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         notNull("credentialList", credentialList);
         this.authenticators = new ArrayList<Authenticator>(credentialList.size());
         for (MongoCredential credential : credentialList) {

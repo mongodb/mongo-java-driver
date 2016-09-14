@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.Cluster;
@@ -66,7 +67,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings) {
-        return new MongoClientImpl(settings, createCluster(settings, getStreamFactory(settings)));
+        return create(settings, null);
     }
 
     /**
@@ -105,23 +106,52 @@ public final class MongoClients {
      * @see com.mongodb.connection.SocketSettings.Builder#applyConnectionString(ConnectionString)
      */
     public static MongoClient create(final ConnectionString connectionString) {
+        return create(connectionString, null);
+    }
+
+    /**
+     * Creates a new client with the given client settings.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param settings the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @return the client
+     * @since 3.4
+     */
+    public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+        return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation));
+    }
+
+    /**
+     * Create a new client with the given connection string.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param connectionString the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @return the client
+     * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
+     * @see MongoClients#create(ConnectionString)
+     */
+    public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
         MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                                         .clusterSettings(ClusterSettings.builder()
-                                                                         .applyConnectionString(connectionString)
-                                                                         .build())
-                                         .connectionPoolSettings(ConnectionPoolSettings.builder()
-                                                                                       .applyConnectionString(connectionString)
-                                                                                       .build())
-                                         .serverSettings(ServerSettings.builder()
-                                                                       .applyConnectionString(connectionString)
-                                                                       .build())
-                                         .credentialList(connectionString.getCredentialList())
-                                         .sslSettings(SslSettings.builder()
-                                                                 .applyConnectionString(connectionString)
-                                                                 .build())
-                                         .socketSettings(SocketSettings.builder()
-                                                                       .applyConnectionString(connectionString)
-                                                                       .build());
+                .clusterSettings(ClusterSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .build())
+                .connectionPoolSettings(ConnectionPoolSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .build())
+                .serverSettings(ServerSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .build())
+                .credentialList(connectionString.getCredentialList())
+                .sslSettings(SslSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .build())
+                .socketSettings(SocketSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .build());
         if (connectionString.getStreamType() != null) {
             if (connectionString.getStreamType().toLowerCase().equals("netty")) {
                 builder.streamFactoryFactory(NettyStreamFactoryFactory.builder().build());
@@ -141,7 +171,7 @@ public final class MongoClients {
         if (connectionString.getApplicationName() != null) {
             builder.applicationName(connectionString.getApplicationName());
         }
-        return create(builder.build());
+        return create(builder.build(), mongoDriverInformation);
     }
 
     /**
@@ -170,14 +200,15 @@ public final class MongoClients {
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider()));
 
-    private static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {
+    private static Cluster createCluster(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+        StreamFactory streamFactory = getStreamFactory(settings);
         StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(settings);
         return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
                                                   settings.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
                                                   settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
                                                   createCommandListener(settings.getCommandListeners()),
-                                                  settings.getApplicationName());
+                                                  settings.getApplicationName(), mongoDriverInformation);
     }
 
     private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {

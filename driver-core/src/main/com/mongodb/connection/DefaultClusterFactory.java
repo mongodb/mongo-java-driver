@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionListener;
@@ -67,7 +68,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ConnectionListener connectionListener,
                           final CommandListener commandListener) {
         return create(settings, serverSettings, connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList,
-                clusterListener, connectionPoolListener, connectionListener, commandListener, null);
+                clusterListener, connectionPoolListener, connectionListener, commandListener, null, null);
     }
 
     /**
@@ -84,6 +85,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param connectionListener     an optional listener for connection-related events
      * @param commandListener        an optional listener for command-related events
      * @param applicationName        an optional application name to associate with connections to the servers in this cluster
+     * @param mongoDriverInformation the optional driver information associate with connections to the servers in this cluster
      * @return the cluster
      *
      * @since 3.4
@@ -95,25 +97,18 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener,
                           final CommandListener commandListener,
-                          final String applicationName) {
+                          final String applicationName,
+                          final MongoDriverInformation mongoDriverInformation) {
         if (clusterListener != null) {
             throw new IllegalArgumentException("Add cluster listener to ClusterSettings");
         }
         ClusterId clusterId = new ClusterId(settings.getDescription());
-        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
-                                                                                            settings,
-                                                                                            serverSettings,
-                                                                                            connectionPoolSettings,
-                                                                                            streamFactory,
-                                                                                            heartbeatStreamFactory,
-                                                                                            credentialList,
-                                                                                            connectionListener != null ? connectionListener
-                                                                                                    : new NoOpConnectionListener(),
-                                                                                            connectionPoolListener != null
-                                                                                                    ? connectionPoolListener
-                                                                                                    : new NoOpConnectionPoolListener(),
-                                                                                            commandListener,
-                                                                                            applicationName);
+        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, settings, serverSettings,
+                connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList,
+                connectionListener != null ? connectionListener : new NoOpConnectionListener(),
+                connectionPoolListener != null ? connectionPoolListener : new NoOpConnectionPoolListener(),
+                commandListener, applicationName,
+                mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build());
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
             return new SingleServerCluster(clusterId, settings, serverFactory);

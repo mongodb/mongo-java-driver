@@ -23,6 +23,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -284,17 +285,30 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(serverAddress, credentialsList, options), options, credentialsList);
+        this(serverAddress, credentialsList, options, null);
+    }
+
+    Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+          final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(serverAddress, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(seedList, credentialsList, options), options, credentialsList);
+        this(seedList, credentialsList, options, null);
+    }
+
+    Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+          final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(seedList, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
     Mongo(final MongoClientURI mongoURI) {
-        this(createCluster(mongoURI),
-             mongoURI.getOptions(),
-             mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
+        this(mongoURI, null);
+    }
+
+    Mongo(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(mongoURI, mongoDriverInformation), mongoURI.getOptions(),
+                mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
@@ -677,7 +691,7 @@ public class Mongo {
                                  .build();
     }
 
-    private static Cluster createCluster(final MongoClientURI mongoURI) {
+    private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? asList(mongoURI.getCredentials())
@@ -686,29 +700,30 @@ public class Mongo {
         if (mongoURI.getHosts().size() == 1) {
             return createCluster(new ServerAddress(mongoURI.getHosts().get(0)),
                                  credentialList,
-                                 mongoURI.getOptions());
+                                 mongoURI.getOptions(), null);
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
             for (final String host : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(host));
             }
-            return createCluster(seedList, credentialList, mongoURI.getOptions());
+            return createCluster(seedList, credentialList, mongoURI.getOptions(), mongoDriverInformation);
         }
     }
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
-                                         final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+                                         final List<MongoCredential> credentialsList, final MongoClientOptions options,
+                                         final MongoDriverInformation mongoDriverInformation) {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
                                             .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
-                             credentialsList, options);
+                             credentialsList, options, mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options) {
+                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
         return createCluster(ClusterSettings.builder()
                                             .mode(getSingleServerClusterMode(options))
                                             .hosts(asList(serverAddress))
@@ -717,11 +732,11 @@ public class Mongo {
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
                                             .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
-                             credentialsList, options);
+                             credentialsList, options, mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ClusterSettings.Builder settingsBuilder, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options) {
+                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
         for (ClusterListener cur : options.getClusterListeners()) {
             settingsBuilder.addClusterListener(cur);
         }
@@ -737,7 +752,8 @@ public class Mongo {
                                                   credentialsList, null,
                                                   new JMXConnectionPoolListener(), null,
                                                   createCommandListener(options.getCommandListeners()),
-                                                  options.getApplicationName());
+                                                  options.getApplicationName(),
+                                                  mongoDriverInformation);
     }
 
     private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {

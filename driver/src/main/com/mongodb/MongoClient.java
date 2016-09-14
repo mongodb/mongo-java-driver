@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
@@ -281,6 +282,54 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public MongoClient(final MongoClientURI uri) {
         super(uri);
+    }
+
+    /**
+     * Creates a Mongo described by a URI.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param uri the URI
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @throws MongoException if theres a failure
+     * @since 3.4
+     */
+    public MongoClient(final MongoClientURI uri, final MongoDriverInformation mongoDriverInformation) {
+        super(uri, mongoDriverInformation);
+    }
+
+    /**
+     * Creates a MongoClient to a single node using a given ServerAddress.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param addr            the database address
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @param options         default options
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @see com.mongodb.ServerAddress
+     * @since 3.4
+     */
+    public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+                       final MongoDriverInformation mongoDriverInformation) {
+        super(addr, credentialsList, options, mongoDriverInformation);
+    }
+
+    /**
+     * Creates a MongoClient
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param credentialsList the list of credentials used to authenticate all connections
+     * @param options         the options
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @since 3.4
+     */
+    public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+                       final MongoDriverInformation mongoDriverInformation) {
+        super(seeds, credentialsList, options, mongoDriverInformation);
     }
 
     /**
