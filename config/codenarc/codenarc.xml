@@ -23,6 +23,9 @@
         <rule-config name='NoDef'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
+        <rule-config name='HashtableIsObsolete'>
+            <property name='doNotApplyToFileNames' value='MongoClientFactorySpecification.groovy'/>
+        </rule-config>
     </ruleset-ref>
     <ruleset-ref path='rulesets/design.xml'>
         <rule-config name='BuilderMethodWithSideEffects'>
