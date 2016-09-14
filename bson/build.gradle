@@ -28,6 +28,7 @@ clirr {
 
 jar {
     manifest {
+        instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                     'javax.xml.bind.*',
                     'org.slf4j;resolution:=optional'

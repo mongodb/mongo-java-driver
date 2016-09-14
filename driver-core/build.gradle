@@ -38,6 +38,7 @@ dependencies {
 
 jar {
     manifest {
+        instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                     'org.bson.*',                       // unfortunate that this is necessary, but if it's left out then it's not included
                     'javax.crypto.*',

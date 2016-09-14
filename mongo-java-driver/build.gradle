@@ -47,6 +47,7 @@ sourceSets {
 // copied from driver-core
 jar {
     manifest {
+        instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                     'javax.xml.bind.*',
                     'javax.crypto.*',
