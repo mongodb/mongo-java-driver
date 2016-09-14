@@ -25,9 +25,11 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
+import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.security.CodeSource;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -106,17 +108,22 @@ final class ClientMetadataHelper {
         String driverVersion = "unknown";
 
         try {
-            String path = InternalStreamConnectionInitializer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-            URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
-            if (jarUrl != null) {
-                JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
-                Manifest manifest = jarURLConnection.getManifest();
-                String version = (String) manifest.getMainAttributes().get(new Attributes.Name("Build-Version"));
-                if (version != null) {
-                    driverVersion = version;
+            CodeSource codeSource = InternalStreamConnectionInitializer.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null) {
+                String path = codeSource.getLocation().getPath();
+                URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
+                if (jarUrl != null) {
+                    JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
+                    Manifest manifest = jarURLConnection.getManifest();
+                    String version = (String) manifest.getMainAttributes().get(new Attributes.Name("Build-Version"));
+                    if (version != null) {
+                        driverVersion = version;
+                    }
                 }
             }
-        } catch (Exception e) {
+        } catch (SecurityException e) {
+            // do nothing
+        } catch (IOException e) {
             // do nothing
         }
         return driverVersion;
