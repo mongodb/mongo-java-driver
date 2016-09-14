@@ -10,9 +10,9 @@ title = "MongoDB Async Driver"
 ## MongoDB Async Java Driver Documentation
 
 The following guide provides information on using the
-MongoDB Async Java Driver 3.3.
+MongoDB Async Java Driver 3.4.
 
-### What's New in 3.3
+### What's New in 3.4
 
 The [What's New]({{< relref "whats-new.md" >}}) guide explains
 the major new features of the driver.

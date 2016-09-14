@@ -9,7 +9,7 @@ title = "What's New"
 
 # What's New
 
-Some key new features of the Java driver and Java Async driver include:
+This release includes full support for the upcoming MongoDB 3.4 server release.  Key new features include:
 
 ### Support for Decimal128 Format
 
@@ -17,7 +17,7 @@ Some key new features of the Java driver and Java Async driver include:
 import org.bson.types.Decimal128;
 ```
 
-The `Decimal128` format supports numbers with up to 34 decimal digits
+The [Decimal128]({{<docsref "release-notes/3.3-dev-series/#decimal-type">}}) format supports numbers with up to 34 decimal digits
 (i.e. significant digits) and an exponent range of −6143 to +6144.
 
 To create a `Decimal128` number, you can use
@@ -151,6 +151,19 @@ collection.bulkWrite(Arrays.asList(
 
 For more information on collation, including the supported locales, refer to the
 [manual]({{<docsref "release-notes/3.3-dev-series-collation/">}}).
+
+### Other MongoDB 3.4 features
+
+* Support for specification of
+[maximum staleness for secondary reads](https://github.com/mongodb/specifications/blob/master/source/max-staleness/max-staleness.rst)
+* Support for the
+[MongoDB handshake protocol](https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst).
+* Builders for [eight new aggregation pipeline stages]({{<docsref "release-notes/3.3-dev-series/#aggregation">}})
+* Helpers for creating [read-only views]({{<docsref "release-notes/3.3-dev-series/#views">}})
+
+### Support for JNDI
+
+The synchronous driver now includes a [JNDI]({{<ref "driver/tutorials/jndi.md">}}) ObjectFactory implementation.
 
 
 ## Upgrading
