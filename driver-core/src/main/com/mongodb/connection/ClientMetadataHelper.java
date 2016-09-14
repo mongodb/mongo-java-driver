@@ -26,11 +26,12 @@ import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
@@ -106,13 +107,13 @@ final class ClientMetadataHelper {
         String driverVersion = "unknown";
 
         try {
-            Class<InternalStreamConnectionInitializer> clazz = InternalStreamConnectionInitializer.class;
-            URL versionPropertiesFileURL = clazz.getResource("/version.properties");
-            if (versionPropertiesFileURL != null) {
-                Properties versionProperties = new Properties();
-                InputStream versionPropertiesInputStream = versionPropertiesFileURL.openStream();
-                versionProperties.load(versionPropertiesInputStream);
-                driverVersion = versionProperties.getProperty("version");
+            String path = InternalStreamConnectionInitializer.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
+            if (jarUrl != null) {
+                JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
+                Manifest manifest = jarURLConnection.getManifest();
+                String version = (String) manifest.getMainAttributes().get(new Attributes.Name("Build-Version"));
+                driverVersion = version;
             }
         } catch (IOException e) {
             // do nothing
