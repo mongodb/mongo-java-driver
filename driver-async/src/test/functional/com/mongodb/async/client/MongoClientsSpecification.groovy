@@ -21,6 +21,7 @@ import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
+import com.mongodb.client.MongoDriverInformation
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import org.bson.Document
@@ -201,7 +202,8 @@ class MongoClientsSpecification extends FunctionalSpecification {
     def 'application name should appear in the system.profile collection'() {
         given:
         def appName = 'appName1'
-        def client = MongoClients.create(getMongoClientBuilderFromConnectionString().applicationName(appName).build())
+        def driverInfo = MongoDriverInformation.builder().driverName('myDriver').driverVersion('42').build()
+        def client = MongoClients.create(getMongoClientBuilderFromConnectionString().applicationName(appName).build(), driverInfo)
         def database = client.getDatabase(getDatabaseName())
         def collection = database.getCollection(getCollectionName())
         run(database.&runCommand, new Document('profile', 2))

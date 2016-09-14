@@ -47,7 +47,7 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 Collections.<MongoCredential>emptyList(),
-                                                new NoOpConnectionListener(), null);
+                                                new NoOpConnectionListener(), null, null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -63,7 +63,7 @@ public class AuthenticatingConnectionTest {
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createMongoCRCredential(userName, source,
                                                                                                password.toCharArray())),
-                                                new NoOpConnectionListener(), null);
+                                                new NoOpConnectionListener(), null, null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -74,7 +74,7 @@ public class AuthenticatingConnectionTest {
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createPlainCredential(userName, source,
                                                                                              password.toCharArray())),
-                                                new NoOpConnectionListener(), null);
+                                                new NoOpConnectionListener(), null, null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -84,7 +84,7 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 asList(MongoCredential.createGSSAPICredential(userName)),
-                                                new NoOpConnectionListener(), null);
+                                                new NoOpConnectionListener(), null, null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -97,7 +97,7 @@ public class AuthenticatingConnectionTest {
                                                 asList(MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,"
                                                                                                  + "O=10Gen,L=New York City,"
                                                                                                  + "ST=New York,C=US")),
-                                                new NoOpConnectionListener(), null);
+                                                new NoOpConnectionListener(), null, null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
 
     }

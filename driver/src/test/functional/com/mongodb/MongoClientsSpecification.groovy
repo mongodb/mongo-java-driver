@@ -17,6 +17,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.MongoDriverInformation
 import org.bson.Document
 import spock.lang.IgnoreIf
 
@@ -29,7 +30,8 @@ class MongoClientsSpecification extends FunctionalSpecification {
     def 'application name should appear in the system.profile collection'() {
         given:
         def appName = 'appName1'
-        def client = new MongoClient(getMongoClientURI(MongoClientOptions.builder().applicationName(appName)))
+        def driverInfo = MongoDriverInformation.builder().driverName('myDriver').driverVersion('42').build()
+        def client = new MongoClient(getMongoClientURI(MongoClientOptions.builder().applicationName(appName)), driverInfo)
         def database = client.getDatabase(getDatabaseName())
         def collection = database.getCollection(getCollectionName())
         database.runCommand(new Document('profile', 2))

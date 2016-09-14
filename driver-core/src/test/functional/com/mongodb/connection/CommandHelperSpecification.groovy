@@ -21,7 +21,7 @@ class CommandHelperSpecification extends Specification {
 
     def setup() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), new NoOpConnectionListener(), null)
+                getCredentialList(), new NoOpConnectionListener(), null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
     }

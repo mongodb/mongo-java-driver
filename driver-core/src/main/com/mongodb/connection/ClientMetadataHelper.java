@@ -17,6 +17,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.client.MongoDriverInformation;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -28,13 +29,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Properties;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static java.lang.String.format;
 import static java.lang.System.getProperty;
 
 final class ClientMetadataHelper {
     public static final BsonDocument CLIENT_METADATA_DOCUMENT = new BsonDocument();
+
+    private static final String SEPARATOR = "|";
+
+    private static final String APPLICATION_FIELD = "application";
+    private static final String APPLICATION_NAME_FIELD = "name";
 
     private static final String DRIVER_FIELD = "driver";
     private static final String DRIVER_NAME_FIELD = "name";
@@ -51,10 +59,8 @@ final class ClientMetadataHelper {
     private static final int MAXIMUM_CLIENT_METADATA_ENCODED_SIZE = 512;
 
     static {
-        BsonDocument driverMetadataDocument = new BsonDocument(DRIVER_NAME_FIELD, new BsonString("mongo-java-driver"))
-                                                      .append(DRIVER_VERSION_FIELD, new BsonString(getDriverVersion()));
-
-        CLIENT_METADATA_DOCUMENT.append(DRIVER_FIELD, driverMetadataDocument);
+        BsonDocument driverMetadataDocument = addDriverInformation(null, new BsonDocument());
+        CLIENT_METADATA_DOCUMENT.append(DRIVER_FIELD, driverMetadataDocument.get(DRIVER_FIELD));
 
         try {
             String operatingSystemName = getProperty("os.name", "unknown");
@@ -67,9 +73,7 @@ final class ClientMetadataHelper {
                                                                       new BsonString(getProperty("os.arch", "unknown")))
                                                               .append(OS_VERSION_FIELD,
                                                                       new BsonString(getProperty("os.version", "unknown"))))
-                    .append(PLATFORM_FIELD,
-                            new BsonString("Java/" + getProperty("java.vendor", "unknown-vendor")
-                                                   + "/" + getProperty("java.runtime.version", "unknown-version")));
+                    .append(PLATFORM_FIELD, driverMetadataDocument.get(PLATFORM_FIELD, new BsonString("")));
         } catch (SecurityException e) {
             // do nothing
         }
@@ -115,21 +119,28 @@ final class ClientMetadataHelper {
         }
         return driverVersion;
     }
-
     static BsonDocument createClientMetadataDocument(final String applicationName) {
-        return createClientMetadataDocument(applicationName, CLIENT_METADATA_DOCUMENT);
+        return createClientMetadataDocument(applicationName, null);
     }
 
-    static BsonDocument createClientMetadataDocument(final String applicationName, final BsonDocument templateDocument) {
+    static BsonDocument createClientMetadataDocument(final String applicationName, final MongoDriverInformation mongoDriverInformation) {
+        return createClientMetadataDocument(applicationName, mongoDriverInformation, CLIENT_METADATA_DOCUMENT);
+    }
+
+    static BsonDocument createClientMetadataDocument(final String applicationName, final MongoDriverInformation mongoDriverInformation,
+                                                     final BsonDocument templateDocument) {
         if (applicationName != null) {
             isTrueArgument("applicationName UTF-8 encoding length <= 128",
                     applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
-
         }
 
         BsonDocument document = templateDocument.clone();
         if (applicationName != null) {
-            document.append("application", new BsonDocument("name", new BsonString(applicationName)));
+            document.append(APPLICATION_FIELD, new BsonDocument(APPLICATION_NAME_FIELD, new BsonString(applicationName)));
+        }
+
+        if (mongoDriverInformation != null) {
+            addDriverInformation(mongoDriverInformation, document);
         }
 
         if (clientMetadataDocumentTooLarge(document)) {
@@ -145,11 +156,25 @@ final class ClientMetadataHelper {
                 // second try: remove the optional 'platform' field
                 document.remove(PLATFORM_FIELD);
                 if (clientMetadataDocumentTooLarge(document)) {
-                    // Worst case scenario: don't send client metadata at all
-                    document = null;
+                    // Third try: Try the minimum required amount of data.
+                    document = new BsonDocument(DRIVER_FIELD, templateDocument.getDocument(DRIVER_FIELD));
+                    document.append(OS_FIELD, new BsonDocument(OS_TYPE_FIELD, new BsonString("unknown")));
+                    if (clientMetadataDocumentTooLarge(document)) {
+                        // Worst case scenario: give up and don't send any client metadata at all
+                        document = null;
+                    }
                 }
             }
         }
+        return document;
+    }
+
+    private static BsonDocument addDriverInformation(final MongoDriverInformation mongoDriverInformation, final BsonDocument document) {
+        MongoDriverInformation driverInformation = getDriverInformation(mongoDriverInformation);
+        BsonDocument driverMetadataDocument = new BsonDocument(DRIVER_NAME_FIELD, listToBsonString(driverInformation.getDriverNames()))
+                .append(DRIVER_VERSION_FIELD, listToBsonString(driverInformation.getDriverVersions()));
+        document.append(DRIVER_FIELD, driverMetadataDocument);
+        document.append(PLATFORM_FIELD, listToBsonString(driverInformation.getDriverPlatforms()));
         return document;
     }
 
@@ -157,6 +182,30 @@ final class ClientMetadataHelper {
         BasicOutputBuffer buffer = new BasicOutputBuffer(MAXIMUM_CLIENT_METADATA_ENCODED_SIZE);
         new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
         return buffer.getPosition() > MAXIMUM_CLIENT_METADATA_ENCODED_SIZE;
+    }
+
+    static MongoDriverInformation getDriverInformation(final MongoDriverInformation mongoDriverInformation) {
+        MongoDriverInformation.Builder builder = mongoDriverInformation != null ? MongoDriverInformation.builder(mongoDriverInformation)
+                : MongoDriverInformation.builder();
+        return builder
+                .driverName("mongo-java-driver")
+                .driverVersion(getDriverVersion())
+                .driverPlatform(format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
+                        getProperty("java.runtime.version", "unknown-version")))
+                .build();
+    }
+
+    static BsonString listToBsonString(final List<String> listOfStrings) {
+        StringBuilder stringBuilder = new StringBuilder();
+        int i = 0;
+        for (String val : listOfStrings) {
+            if (i > 0) {
+                stringBuilder.append(SEPARATOR);
+            }
+            stringBuilder.append(val);
+            i++;
+        }
+        return new BsonString(stringBuilder.toString());
     }
 
     private ClientMetadataHelper() {

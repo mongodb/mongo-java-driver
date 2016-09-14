@@ -44,6 +44,8 @@
 
     <suppress checks="ParameterNumber" files="Connection"/>
     <suppress checks="ParameterNumber" files="DefaultServer"/>
+    <suppress checks="ParameterNumber" files="DefaultClusterFactory"/>
+    <suppress checks="ParameterNumber" files="DefaultClusterableServerFactory"/>
 
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>
