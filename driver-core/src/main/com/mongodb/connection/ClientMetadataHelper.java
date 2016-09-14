@@ -25,7 +25,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
-import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -113,9 +112,11 @@ final class ClientMetadataHelper {
                 JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
                 Manifest manifest = jarURLConnection.getManifest();
                 String version = (String) manifest.getMainAttributes().get(new Attributes.Name("Build-Version"));
-                driverVersion = version;
+                if (version != null) {
+                    driverVersion = version;
+                }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             // do nothing
         }
         return driverVersion;
