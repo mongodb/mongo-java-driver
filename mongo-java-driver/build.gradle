@@ -52,6 +52,7 @@ jar {
                     'javax.crypto.*',
                     'javax.crypto.spec.*',
                     'javax.management.*',
+                    'javax.naming.spi.*',
                     'javax.net.*',
                     'javax.net.ssl.*',
                     'javax.security.sasl.*',
