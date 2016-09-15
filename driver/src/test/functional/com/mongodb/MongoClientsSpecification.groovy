@@ -34,19 +34,22 @@ class MongoClientsSpecification extends FunctionalSpecification {
         def client = new MongoClient(getMongoClientURI(MongoClientOptions.builder().applicationName(appName)), driverInfo)
         def database = client.getDatabase(getDatabaseName())
         def collection = database.getCollection(getCollectionName())
+
+        def profileCollection = database.getCollection('system.profile')
+        profileCollection.drop()
+
         database.runCommand(new Document('profile', 2))
 
         when:
         collection.count()
 
         then:
-        Document profileDocument = database.getCollection('system.profile').find().first()
+        Document profileDocument = profileCollection.find().first()
         profileDocument.get('appName') == appName
 
         cleanup:
-        if (database != null) {
-            database.runCommand(new Document('profile', 0))
-        }
+        database?.runCommand(new Document('profile', 0))
+        profileCollection?.drop()
         client?.close()
     }
 

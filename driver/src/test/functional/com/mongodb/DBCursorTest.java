@@ -400,29 +400,34 @@ public class DBCursorTest extends DatabaseTestCase {
         assumeThat(isSharded(), is(false));
 
         // given
-        database.command(new BasicDBObject("profile", 2));
         String expectedComment = "test comment";
 
-        // when
-        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                          .comment(expectedComment);
-        while (cursor.hasNext()) {
-            cursor.next();
-        }
-
-        // then
         DBCollection profileCollection = database.getCollection("system.profile");
-        assertEquals(1, profileCollection.count());
-
-        DBObject profileDocument = profileCollection.findOne();
-        if (serverVersionAtLeast(asList(3, 1, 7))) {
-            assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
-        } else {
-            assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("$comment"));
-        }
-        // finally
-        database.command(new BasicDBObject("profile", 0));
         profileCollection.drop();
+
+        database.command(new BasicDBObject("profile", 2));
+
+        try {
+            // when
+            DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                              .comment(expectedComment);
+            while (cursor.hasNext()) {
+                cursor.next();
+            }
+
+            // then
+            assertEquals(1, profileCollection.count());
+
+            DBObject profileDocument = profileCollection.findOne();
+            if (serverVersionAtLeast(asList(3, 1, 7))) {
+                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
+            } else {
+                assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("$comment"));
+            }
+        } finally {
+            database.command(new BasicDBObject("profile", 0));
+            profileCollection.drop();
+        }
     }
 
     @Test
