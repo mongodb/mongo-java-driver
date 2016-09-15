@@ -249,7 +249,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         helper.drop()
 
-        (0..50).forEach {
+        (0..50).each {
             def size = (35 + it)
             def manufacturer = ['Sony', 'Samsung', 'Vizio'][it % 3]
             helper.insertDocuments(Document.parse("""    {
@@ -415,7 +415,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         helper.drop()
 
-        (1..100).forEach {
+        (1..100).each {
             helper.insertDocuments(Document.parse("{price: ${it * 2}}"))
         }
 
@@ -450,7 +450,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
 
         def random = new SecureRandom()
-        (1..2000).forEach {
+        (1..2000).each {
             def document = new Document('price', random.nextDouble() * 5000D + 5.01D)
             helper.insertDocuments(document)
         }
@@ -478,7 +478,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         def random = new SecureRandom()
         def total = random.nextInt(2000)
-        (1..total).forEach {
+        (1..total).each {
             helper.insertDocuments(new Document('price', random.nextDouble() * 5000D + 5.01D))
         }
 
