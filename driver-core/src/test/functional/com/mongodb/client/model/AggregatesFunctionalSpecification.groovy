@@ -449,7 +449,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         helper.drop()
 
-        def random = new SecureRandom()
         (0..2000).each {
             def document = new Document('price', it * 5.01D)
             helper.insertDocuments(document)
