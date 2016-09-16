@@ -450,18 +450,18 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
 
         def random = new SecureRandom()
-        (1..2000).each {
-            def document = new Document('price', random.nextDouble() * 5000D + 5.01D)
+        (0..2000).each {
+            def document = new Document('price', it * 5.01D)
             helper.insertDocuments(document)
         }
 
         when:
         def results = helper.aggregate([bucketAuto('$price', 10, new BucketAutoOptions()
-            .granularity(BucketGranularity.E6)
+            .granularity(BucketGranularity.POWERSOF2)
             .output(sum('count', 1), avg('avgPrice', '$price')))])
 
         then:
-        results.size() == 6
+        results.size() == 5
         results[0].count != null
         results[0].avgPrice != null
 
