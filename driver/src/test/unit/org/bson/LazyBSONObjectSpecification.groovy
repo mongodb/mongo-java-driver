@@ -152,18 +152,28 @@ class LazyBSONObjectSpecification extends Specification {
         ]
 
         when:
-        LazyBSONObject bsonObject1 = new LazyBSONObject(bytes, new LazyBSONCallback())
-        LazyBSONObject bsonObject2 = new LazyBSONObject(bytes, new LazyBSONCallback())
-        LazyBSONObject bsonObject3 = new LazyBSONObject(bytes, 7, new LazyBSONCallback())
-        LazyBSONObject bsonObject4 = new LazyBSONObject(bytes, 24, new LazyBSONCallback())
-
+        def bsonObject1 = new LazyBSONObject(bytes, new LazyBSONCallback())
+        def bsonObject2 = new LazyBSONObject(bytes, new LazyBSONCallback())
+        def bsonObject3 = new LazyBSONObject(bytes, 7, new LazyBSONCallback())
+        def bsonObject4 = new LazyBSONObject(bytes, 24, new LazyBSONCallback())
+        def bsonObject5 = new LazyBSONObject([14, 0, 0, 0, 2, 120, 0, 2, 0, 0, 0, 121, 0, 0] as byte[], new LazyBSONCallback())
+        def bsonObject6 = new LazyBSONObject([5, 0, 0, 0, 0] as byte[], new LazyBSONCallback())
 
         then:
-        bsonObject1 == bsonObject2
-        bsonObject3 == bsonObject4
-        bsonObject1 != bsonObject3
-        bsonObject4 == new LazyBSONObject([14, 0, 0, 0, 2, 120, 0, 2, 0, 0, 0, 121, 0, 0] as byte[], new LazyBSONCallback())
-        bsonObject1 != new LazyBSONObject([] as byte[], new LazyBSONCallback())
+        bsonObject1.equals(bsonObject1)
+        !bsonObject1.equals(null)
+        !bsonObject1.equals('not equal')
+        bsonObject1.equals(bsonObject2)
+        bsonObject3.equals(bsonObject4)
+        !bsonObject1.equals(bsonObject3)
+        bsonObject4.equals(bsonObject5)
+        !bsonObject1.equals(bsonObject6)
+
+        bsonObject1.hashCode() == bsonObject2.hashCode()
+        bsonObject3.hashCode() == bsonObject4.hashCode()
+        bsonObject1.hashCode() != bsonObject3.hashCode()
+        bsonObject4.hashCode() == bsonObject5.hashCode()
+        bsonObject1.hashCode() != bsonObject6.hashCode()
     }
 
     def 'should return the size of a document'() {
@@ -205,14 +215,67 @@ class LazyBSONObjectSpecification extends Specification {
     def 'should implement Map.entrySet()'() {
         given:
         byte[] bytes = [16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 8, 98, 0, 1, 0]
-
-        when:
         LazyBSONObject document = new LazyBSONObject(bytes, new LazyBSONCallback())
 
+        when:
+        def entrySet = document.entrySet()
+
         then:
-        document.entrySet().size() == 2
-        document.entrySet().find { it.value == 1 } != null
-        document.entrySet().find { it.value == true } != null
+        entrySet.size() == 2
+        !entrySet.isEmpty()
+        entrySet.contains(new AbstractMap.SimpleImmutableEntry('a', 1))
+        !entrySet.contains(new AbstractMap.SimpleImmutableEntry('a', 2))
+        entrySet.containsAll([new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)])
+        !entrySet.containsAll([new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', false)])
+        entrySet.toArray() == [new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)].toArray()
+        entrySet.toArray(new Map.Entry[2]) ==
+                [new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)].toArray()
+
+        when:
+        def iterator = entrySet.iterator()
+
+        then:
+        iterator.hasNext()
+        iterator.next() == new AbstractMap.SimpleImmutableEntry('a', 1)
+        iterator.hasNext()
+        iterator.next() == new AbstractMap.SimpleImmutableEntry('b', true)
+        !iterator.hasNext()
+
+        when:
+        entrySet.add(new AbstractMap.SimpleImmutableEntry('key', null))
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.addAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.clear()
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.remove(new AbstractMap.SimpleImmutableEntry('key', null))
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.removeAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.retainAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
     }
 
     def 'should throw on modification'() {
