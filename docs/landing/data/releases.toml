@@ -3,7 +3,7 @@ current = "3.4.0"
 [[versions]]
   version = "3.4.0-beta1"
   docs = "./3.4"
-  api = "http://api.mongodb.com/java/3.4"
+  api = "./3.4/javadoc"
 
 [[versions]]
   version = "3.3.0"
