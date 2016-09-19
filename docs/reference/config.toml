@@ -14,7 +14,7 @@ canonifyurls = false
     pre = "<i class='fa fa-file-text-o'></i>"
     weight = 90
     identifier = "apiDocs"
-    url = "http://api.mongodb.com/java/3.4"
+    url = "/javadoc"
 
 [[menu.main]]
     name = "Source Code"
