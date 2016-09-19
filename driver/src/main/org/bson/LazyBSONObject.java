@@ -32,11 +32,14 @@ import java.nio.ByteOrder;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.AbstractMap;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -203,7 +206,7 @@ public class LazyBSONObject implements BSONObject {
             case SYMBOL:
                 return new Symbol(reader.readSymbol());
             case JAVASCRIPT_WITH_SCOPE:
-                return new CodeWScope(reader.readJavaScriptWithScope(), (BSONObject) readDocument(reader));
+                return new CodeWScope(reader.readJavaScriptWithScope(), (BSONObject) readJavaScriptWithScopeDocument(reader));
             case INT32:
                 return reader.readInt32();
             case TIMESTAMP:
@@ -231,6 +234,12 @@ public class LazyBSONObject implements BSONObject {
     }
 
     private Object readDocument(final BsonBinaryReader reader) {
+        int position = reader.getBsonInput().getPosition();
+        reader.skipValue();
+        return callback.createObject(bytes, offset + position);
+    }
+
+    private Object readJavaScriptWithScopeDocument(final BsonBinaryReader reader) {
         int position = reader.getBsonInput().getPosition();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -285,12 +294,12 @@ public class LazyBSONObject implements BSONObject {
     }
 
     /**
-     * Gets the entry set for all the key/value pairs in this {@code BSONObject}.
+     * Gets the entry set for all the key/value pairs in this {@code BSONObject}.  The returned set is immutable.
      *
      * @return then entry set
      */
     public Set<Map.Entry<String, Object>> entrySet() {
-        Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
+        final List<Map.Entry<String, Object>> entries = new ArrayList<Map.Entry<String, Object>>();
         BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
@@ -301,12 +310,82 @@ public class LazyBSONObject implements BSONObject {
         } finally {
             reader.close();
         }
-        return Collections.unmodifiableSet(entries);
+        return new Set<Map.Entry<String, Object>>() {
+            @Override
+            public int size() {
+                return entries.size();
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return entries.isEmpty();
+            }
+
+            @Override
+            public Iterator<Map.Entry<String, Object>> iterator() {
+                return entries.iterator();
+            }
+
+            @Override
+            public Object[] toArray() {
+                return entries.toArray();
+            }
+
+            @Override
+            public <T> T[] toArray(final T[] a) {
+                return entries.toArray(a);
+            }
+
+            @Override
+            public boolean contains(final Object o) {
+                return entries.contains(o);
+            }
+
+            @Override
+            public boolean containsAll(final Collection<?> c) {
+                return entries.containsAll(c);
+            }
+
+            @Override
+            public boolean add(final Map.Entry<String, Object> stringObjectEntry) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean remove(final Object o) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean addAll(final Collection<? extends Map.Entry<String, Object>> c) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean retainAll(final Collection<?> c) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean removeAll(final Collection<?> c) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void clear() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(bytes);
+        int result = 1;
+        int size = getBSONSize();
+        for (int i = offset; i < offset + size; i++) {
+            result = 31 * result + bytes[i];
+        }
+        return result;
     }
 
     @Override
