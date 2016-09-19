@@ -373,8 +373,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private void backpatchSize() {
         int size = bsonOutput.getPosition() - getContext().startPosition;
         if (size > maxDocumentSizeStack.peek()) {
-            throw new BsonSerializationException(format("Size %d is larger than MaxDocumentSize %d.", size,
-                                                        binaryWriterSettings.getMaxDocumentSize()));
+            throw new BsonSerializationException(format("Document size of %d is larger than maximum of %d.", size,
+                    maxDocumentSizeStack.peek()));
         }
         bsonOutput.writeInt32(bsonOutput.getPosition() - size, size);
     }
