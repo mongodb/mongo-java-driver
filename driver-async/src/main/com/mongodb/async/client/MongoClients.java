@@ -20,6 +20,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -155,6 +156,8 @@ public final class MongoClients {
         if (connectionString.getStreamType() != null) {
             if (connectionString.getStreamType().toLowerCase().equals("netty")) {
                 builder.streamFactoryFactory(NettyStreamFactoryFactory.builder().build());
+            } else if (connectionString.getStreamType().toLowerCase().equals("nio2")) {
+                builder.streamFactoryFactory(new AsynchronousSocketChannelStreamFactoryFactory());
             } else if (!connectionString.getStreamType().toLowerCase().equals("nio2")) {
                 throw new IllegalArgumentException(format("Unsupported stream type %s", connectionString.getStreamType()));
             }

@@ -171,9 +171,7 @@ final class NettyStream implements Stream {
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
         CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
         for (ByteBuf cur : buffers) {
-            io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
-            composite.addComponent(byteBuf.retain());
-            composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
+            composite.addComponent(true, ((NettyByteBuf) cur).asByteBuf());
         }
 
         channel.writeAndFlush(composite).addListener(new ChannelFutureListener() {

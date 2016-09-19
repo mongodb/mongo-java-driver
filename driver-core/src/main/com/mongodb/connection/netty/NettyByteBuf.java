@@ -113,6 +113,7 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public ByteBuf order(final ByteOrder byteOrder) {
         proxied = proxied.order(byteOrder);
         return this;

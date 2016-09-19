@@ -198,6 +198,30 @@ class MongoClientsSpecification extends FunctionalSpecification {
         'mongodb://localhost/?appname=app1' | 'app1'
     }
 
+    @Unroll
+    def 'should respect the streamType over the system properties'() {
+        given:
+        def asyncType = System.getProperty('org.mongodb.async.type', null)
+        System.setProperty('org.mongodb.async.type', systemType)
+
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getStreamFactoryFactory().getClass() == streamFactoryFactoryClass
+
+        cleanup:
+        client?.close()
+        if (asyncType != null) {
+            System.setProperty('org.mongodb.async.type', asyncType)
+        }
+
+        where:
+        uri                                     |  systemType | streamFactoryFactoryClass
+        'mongodb://localhost/?streamType=nio2'  | 'netty'     | AsynchronousSocketChannelStreamFactoryFactory
+        'mongodb://localhost/?streamType=netty' | 'nio2'      | NettyStreamFactoryFactory
+    }
+
     @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) || !isStandalone() })
     def 'application name should appear in the system.profile collection'() {
         given:
