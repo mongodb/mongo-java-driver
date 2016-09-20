@@ -7,8 +7,8 @@ java_driver_variables:
   mongo_download_url_prefixes:
     linux64: &mongo_url_linux64
       mongo_url_prefix: "http://downloads.mongodb.org/linux/mongodb-linux-x86_64-"
-    ubuntu1404: &mongo_url_ubuntu1404
-      mongo_url_platform: "ubuntu1404-"
+    ubuntu1604: &mongo_url_ubuntu1604
+      mongo_url_platform: "ubuntu1604-"
       <<: *mongo_url_linux64
 
 #######################################
@@ -195,18 +195,18 @@ scripts:
 #######################################
 
 buildvariants:
-- name: ubuntu-1404
-  display_name: "Ubuntu-1404"
+- name: ubuntu-1604
+  display_name: "Ubuntu-1604"
   expansions:
     <<: *start_topology_command
-    <<: *mongo_url_ubuntu1404 # sets ${mongo_url_prefix}
+    <<: *mongo_url_ubuntu1604 # sets ${mongo_url_prefix}
     <<: *mongo_orchestration_unix # sets start_topology and start_mongo_orchestration
   run_on:
-    - ubuntu1404-test
+    - ubuntu1604-test
   tasks:
   - name: compileAndAnalyze
     run_on:
-    - ubuntu1404-build
+    - ubuntu1604-build
   - name: test-standalone
     depends_on:
      - name: compileAndAnalyze
