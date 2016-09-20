@@ -20,6 +20,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.Fixture;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
@@ -50,8 +51,7 @@ public class TestCase {
 
     public static synchronized MongoClientURI getMongoClientURI() {
         if (mongoClientURI == null) {
-            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.length() == 0? DEFAULT_URI : mongoURIProperty;
+            String mongoURIString = getMongoClientURIString();
             mongoClientURI = new MongoClientURI(mongoURIString);
         }
         return mongoClientURI;
@@ -132,14 +132,14 @@ public class TestCase {
         return msg != null && msg.equals("isdbgrid");
     }
 
-    @SuppressWarnings({"unchecked"})
-    protected String getPrimaryAsString(Mongo mongo) {
-        return getMemberNameByState(mongo, "primary");
+    protected static String getMongoClientURIString() {
+        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        return mongoURIProperty == null || mongoURIProperty.length() == 0? DEFAULT_URI : mongoURIProperty;
     }
 
     @SuppressWarnings({"unchecked"})
     protected String getASecondaryAsString(Mongo mongo) {
-        return getMemberNameByState(mongo, "secondary");
+        return Fixture.getMemberNameByState(mongo, "secondary");
     }
 
     protected void enableMaxTimeFailPoint() {
@@ -155,29 +155,11 @@ public class TestCase {
     }
 
 
-    @SuppressWarnings({"unchecked"})
-    protected String getMemberNameByState(Mongo mongo, String stateStrToMatch) {
-        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
-
-        for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
-            String hostnameAndPort = member.getString("name");
-            if (!hostnameAndPort.contains(":"))
-                hostnameAndPort = hostnameAndPort + ":27017";
-
-            final String stateStr = member.getString("stateStr");
-
-            if (stateStr.equalsIgnoreCase(stateStrToMatch))
-                return hostnameAndPort;
-        }
-
-        throw new IllegalStateException("No member found in state " + stateStrToMatch);
-    }
-
     @SuppressWarnings("unchecked")
     protected int getReplicaSetSize(Mongo mongo) {
         int size = 0;
 
-        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+        CommandResult replicaSetStatus = Fixture.runReplicaSetStatusCommand(mongo);
 
         for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
 
@@ -190,20 +172,6 @@ public class TestCase {
         return size;
     }
 
-    
-    protected static CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
-        // Check to see if this is a replica set... if not, get out of here.
-        final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
-
-        final String errorMsg = result.getErrorMessage();
-
-        if (errorMsg != null && errorMsg.indexOf("--replSet") != -1) {
-            System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
-            return null;
-        }
-
-        return result;
-    }
 
     protected static CommandResult runIsMaster(final Mongo pMongo) {
         // Check to see if this is a replica set... if not, get out of here.

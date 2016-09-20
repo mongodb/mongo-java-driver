@@ -96,6 +96,43 @@ public final class Fixture {
         return getMongoClient().getDB("admin").command(new BasicDBObject("ismaster", 1));
     }
 
+    @SuppressWarnings({"unchecked"})
+    public static String getPrimaryAsString() {
+        return getMemberNameByState(getMongoClient(), "primary");
+    }
+
+    @SuppressWarnings({"unchecked"})
+    public static String getMemberNameByState(Mongo mongo, String stateStrToMatch) {
+        CommandResult replicaSetStatus = runReplicaSetStatusCommand(mongo);
+
+        for (final BasicDBObject member : (List<BasicDBObject>) replicaSetStatus.get("members")) {
+            String hostnameAndPort = member.getString("name");
+            if (!hostnameAndPort.contains(":"))
+                hostnameAndPort = hostnameAndPort + ":27017";
+
+            final String stateStr = member.getString("stateStr");
+
+            if (stateStr.equalsIgnoreCase(stateStrToMatch))
+                return hostnameAndPort;
+        }
+
+        throw new IllegalStateException("No member found in state " + stateStrToMatch);
+    }
+
+    public static CommandResult runReplicaSetStatusCommand(final Mongo pMongo) {
+        // Check to see if this is a replica set... if not, get out of here.
+        final CommandResult result = pMongo.getDB("admin").command(new BasicDBObject("replSetGetStatus", 1));
+
+        final String errorMsg = result.getErrorMessage();
+
+        if (errorMsg != null && errorMsg.indexOf("--replSet") != -1) {
+            System.err.println("---- SecondaryReadTest: This is not a replica set - not testing secondary reads");
+            return null;
+        }
+
+        return result;
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {

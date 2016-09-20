@@ -663,14 +663,8 @@ public class DBCursorTest extends TestCase {
         cursor.close();
 
         // finally, no finalizer if disabled in mongo options
-        MongoClientOptions mongoOptions = new MongoClientOptions.Builder().cursorFinalizerEnabled(false).build();
-        Mongo m;
-        if (getMongoClientURI().getCredentials() != null) {
-            m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), asList(getMongoClientURI().getCredentials()),
-                                       mongoOptions);
-        } else {
-            m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), mongoOptions);
-        }
+        MongoClient m = new MongoClient(new MongoClientURI(getMongoClientURIString(),
+                                                                  new MongoClientOptions.Builder().cursorFinalizerEnabled(false)));
         try {
             c = m.getDB(getDatabase().getName()).getCollection("HasFinalizerTest");
             cursor = c.find();
@@ -798,6 +792,7 @@ public class DBCursorTest extends TestCase {
         assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
         enableMaxTimeFailPoint();
+        collection.insert(new BasicDBObject("x", 1));
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.setDecoderFactory(new SubsitutingDBDecoderFactory(new BasicDBObject()));
         cursor.maxTime(1, SECONDS);

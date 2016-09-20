@@ -23,6 +23,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.Fixture.runReplicaSetStatusCommand;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;

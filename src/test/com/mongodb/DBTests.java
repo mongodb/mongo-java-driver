@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 
+import static com.mongodb.Fixture.getPrimaryAsString;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -124,7 +125,7 @@ public class DBTests extends TestCase {
         Mongo mongo = new MongoClient(getMongoClientURI());
 
         try {
-            String primary = getPrimaryAsString(mongo);
+            String primary = getPrimaryAsString();
             mongo.close();
             if (getMongoClientURI().getCredentials() == null) {
                 mongo = new MongoClient(primary);

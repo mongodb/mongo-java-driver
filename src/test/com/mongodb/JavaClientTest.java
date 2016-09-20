@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.mongodb.Fixture.getPrimaryAsString;
 import static com.mongodb.Fixture.isAuthenticated;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -718,7 +719,7 @@ public class JavaClientTest extends TestCase {
         try {
             getDatabase().addUser("xx", "e".toCharArray());
 
-            MongoClient m = new MongoClient();
+            MongoClient m = new MongoClient(getMongoClientURI());
             try {
                 DB db = m.getDB(getDatabase().getName());
                 try {
@@ -749,11 +750,11 @@ public class JavaClientTest extends TestCase {
         getDatabase().addUser("xx", "e".toCharArray());
 
         try {
-            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + getDatabase().getName()));
+            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@" + getPrimaryAsString() + "/" + getDatabase().getName()));
             try {
                 DB db = m.getDB(getDatabase().getName());
                 assertNotNull(db.getAuthenticationCredentials());
-                assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
+                 assertEquals(true, db.authenticate("xx", "e".toCharArray()) );
             }
             finally {
                 m.close();
@@ -768,7 +769,7 @@ public class JavaClientTest extends TestCase {
         getDatabase().addUser("xx", "e".toCharArray());
 
         try {
-            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@localhost/" + getDatabase().getName()));
+            MongoClient m = new MongoClient(new MongoClientURI("mongodb://xx:e@" + getPrimaryAsString() + "/" + getDatabase().getName()));
             try {
                 DB db = m.getDB(getDatabase().getName());
 

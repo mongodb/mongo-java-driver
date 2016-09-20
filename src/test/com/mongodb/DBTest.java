@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.Fixture.getPrimaryAsString;
 import static com.mongodb.Fixture.isAuthenticated;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -206,19 +207,19 @@ public class DBTest extends TestCase {
             CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), Bytes.QUERYOPTION_SLAVEOK, secondary());
             // Then
             assertThat(commandResult.ok(), is(true));
-            assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+            assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
 
             // When
             commandResult = database.command(new BasicDBObject("dbstats", 1), 0, secondary());
             // Then
             assertThat(commandResult.ok(), is(true));
-            assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+            assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
 
             // When
             commandResult = database.command(new BasicDBObject("dbstats", 1), Bytes.QUERYOPTION_SLAVEOK, primary());
             // Then
             assertThat(commandResult.ok(), is(true));
-            assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+            assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
         } finally {
             database.dropDatabase();
         }
@@ -235,7 +236,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
     }
 
     @Test
@@ -251,7 +252,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
     }
 
     @Test
@@ -265,7 +266,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
     }
 
     @Test
@@ -279,7 +280,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+        assertThat((String) commandResult.get("serverUsed"), not(containsString(getPrimaryAsString())));
     }
 
     @Test
@@ -293,7 +294,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
+        assertThat((String) commandResult.get("serverUsed"), containsString(getPrimaryAsString()));
     }
 
     @Test
@@ -308,7 +309,7 @@ public class DBTest extends TestCase {
 
         // Then
         assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
+        assertThat((String) commandResult.get("serverUsed"), containsString(getPrimaryAsString()));
     }
 
     @Test

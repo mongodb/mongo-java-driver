@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.Fixture.getPrimaryAsString;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
@@ -187,7 +188,7 @@ public class AggregationTest extends TestCase {
         checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
-        ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
+        ServerAddress primary = new ServerAddress(getPrimaryAsString());
 
         final List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -204,7 +205,7 @@ public class AggregationTest extends TestCase {
         checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
-        ServerAddress primary = new ServerAddress(getPrimaryAsString(cleanupMongo));
+        ServerAddress primary = new ServerAddress(getPrimaryAsString());
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         AggregationOptions options = AggregationOptions.builder()

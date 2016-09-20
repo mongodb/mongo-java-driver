@@ -9,6 +9,7 @@ import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.Fixture.serverIsAtLeastVersion
 import static com.mongodb.ServerMonitor.exceptionHasChanged
 import static com.mongodb.ServerMonitor.stateHasChanged
+import static com.mongodb.Fixture.getPrimaryAsString
 
 class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription
@@ -34,7 +35,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
     def 'should set canonicalAddress'() {
         given:
-        initializeServerMonitor(new ServerAddress())
+        initializeServerMonitor(new ServerAddress(getPrimaryAsString()))
         CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
         def expectedCanonicalAddress = commandResult.getString('me')
 
@@ -61,7 +62,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
     def 'should set electionId'() {
         given:
-        initializeServerMonitor(new ServerAddress())
+        initializeServerMonitor(new ServerAddress(getPrimaryAsString()))
         CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
         def expected = commandResult.get('electionId')
 
@@ -74,7 +75,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
     def 'should set setVersion'() {
         given:
-        initializeServerMonitor(new ServerAddress())
+        initializeServerMonitor(new ServerAddress(getPrimaryAsString()))
         CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
         def expected = commandResult.get('setVersion')
 
@@ -88,7 +89,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
     @IgnoreIf( { serverIsAtLeastVersion(2.6) } )
     def 'should set default max wire batch size when not provided by server'() {
         given:
-        initializeServerMonitor(new ServerAddress())
+        initializeServerMonitor(new ServerAddress(getPrimaryAsString()))
 
         when:
         latch.await()
