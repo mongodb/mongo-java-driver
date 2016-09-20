@@ -316,7 +316,11 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     @Override
     public void writeStartArray() {
-        checkPreconditions("writeStartArray", State.VALUE);
+        if (supportsArrayAsInitial()) {
+            checkPreconditions("writeStartArray", State.VALUE, State.INITIAL);
+        } else {
+            checkPreconditions("writeStartArray", State.VALUE);
+        }
 
         if (context != null && context.name != null) {
             fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
@@ -812,6 +816,17 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             default:
                 throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
         }
+    }
+
+    /**
+     * Indicates if the implementation supports writing array when in the INITIAL state.
+     *
+     * It is obviously false for writer producing documents so it defaults to false.
+     *
+     * @return true if this implementation supports writing an array when in the INITIAL state.
+     */
+    protected boolean supportsArrayAsInitial() {
+        return false;
     }
 
     /**

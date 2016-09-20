@@ -66,6 +66,7 @@
     <suppress checks="ConstantName" files="Decimal128"/>  <!-- For NaN -->
 
     <suppress checks="JavadocMethod" files="BasicDBObject"/>
+    <suppress checks="JavadocMethod" files="BasicDBList"/>
 
     <suppress checks="MethodName" files="BasicBSONCallback"/>
     <suppress checks="MethodName" files="BasicBSONEncoder"/>
