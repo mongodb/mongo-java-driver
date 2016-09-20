@@ -98,7 +98,11 @@ public final class Fixture {
 
     @SuppressWarnings({"unchecked"})
     public static String getPrimaryAsString() {
-        return getMemberNameByState(getMongoClient(), "primary");
+        if (isReplicaSet()) {
+            return getMemberNameByState(getMongoClient(), "primary");
+        } else {
+            return getMongoClientURI().getHosts().get(0);
+        }
     }
 
     @SuppressWarnings({"unchecked"})
