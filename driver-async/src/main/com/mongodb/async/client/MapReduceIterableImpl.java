@@ -192,7 +192,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     public void toCollection(final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
         if (inline) {
-            throw new IllegalArgumentException("The options must specify a non-inline result");
+            throw new IllegalStateException("The options must specify a non-inline result");
         }
         executor.execute(createMapReduceToCollectionOperation(),
                 new SingleResultCallback<MapReduceStatistics>() {

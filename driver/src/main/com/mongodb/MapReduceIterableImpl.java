@@ -84,6 +84,15 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     }
 
     @Override
+    public void toCollection() {
+        if (inline) {
+            throw new IllegalStateException("The options must specify a non-inline result");
+        }
+
+        executor.execute(createMapReduceToCollectionOperation());
+    }
+
+    @Override
     public MapReduceIterable<TResult> collectionName(final String collectionName) {
         this.collectionName = notNull("collectionName", collectionName);
         this.inline = false;
@@ -227,33 +236,37 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
             }
             return new OperationIterable<TResult>(operation, readPreference, executor);
         } else {
-            MapReduceToCollectionOperation operation =
-                    new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
-                            collectionName, writeConcern)
-                            .filter(toBsonDocument(filter))
-                            .limit(limit)
-                            .maxTime(maxTimeMS, MILLISECONDS)
-                            .jsMode(jsMode)
-                            .scope(toBsonDocument(scope))
-                            .sort(toBsonDocument(sort))
-                            .verbose(verbose)
-                            .action(action.getValue())
-                            .nonAtomic(nonAtomic)
-                            .sharded(sharded)
-                            .databaseName(databaseName)
-                            .bypassDocumentValidation(bypassDocumentValidation)
-                            .collation(collation);
-
-            if (finalizeFunction != null) {
-                operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
-            }
-            executor.execute(operation);
+            executor.execute(createMapReduceToCollectionOperation());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
             return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(dbName, collectionName), documentClass, resultClass,
                                                             codecRegistry, primary(), readConcern, executor, new BsonDocument(),
                                                             new FindOptions().collation(collation).batchSize(batchSize));
         }
+    }
+
+    private MapReduceToCollectionOperation createMapReduceToCollectionOperation() {
+        MapReduceToCollectionOperation operation =
+                new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
+                        collectionName, writeConcern)
+                        .filter(toBsonDocument(filter))
+                        .limit(limit)
+                        .maxTime(maxTimeMS, MILLISECONDS)
+                        .jsMode(jsMode)
+                        .scope(toBsonDocument(scope))
+                        .sort(toBsonDocument(sort))
+                        .verbose(verbose)
+                        .action(action.getValue())
+                        .nonAtomic(nonAtomic)
+                        .sharded(sharded)
+                        .databaseName(databaseName)
+                        .bypassDocumentValidation(bypassDocumentValidation)
+                        .collation(collation);
+
+        if (finalizeFunction != null) {
+            operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
+        }
+        return operation;
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

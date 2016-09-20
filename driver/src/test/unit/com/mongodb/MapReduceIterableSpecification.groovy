@@ -94,7 +94,7 @@ class MapReduceIterableSpecification extends Specification {
 
     def 'should build the expected MapReduceToCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
+        def executor = new TestOperationExecutor([null, null, null]);
 
         when: 'mapReduce to a collection'
         def collectionNamespace = new MongoNamespace('dbName', 'collName')
@@ -146,6 +146,14 @@ class MapReduceIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
+
+        when: 'toCollection should work as expected'
+        mapReduceIterable.toCollection()
+
+        operation = executor.getWriteOperation() as MapReduceToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
     }
 
     def 'should handle exceptions correctly'() {
@@ -161,6 +169,12 @@ class MapReduceIterableSpecification extends Specification {
 
         then: 'the future should handle the exception'
         thrown(MongoException)
+
+        when: 'toCollection should throw IllegalStateException if its inline'
+        mapReduceIterable.toCollection()
+
+        then:
+        thrown(IllegalStateException)
 
         when: 'a codec is missing'
         new MapReduceIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,

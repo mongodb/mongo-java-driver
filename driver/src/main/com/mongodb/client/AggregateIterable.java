@@ -24,9 +24,19 @@ import java.util.concurrent.TimeUnit;
  * Iterable for aggregate.
  *
  * @param <TResult> The type of the result.
+ * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
 public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     *
+     * @throws IllegalStateException if the pipeline does not end with a $out stage
+     * @mongodb.driver.manual reference/operator/aggregation/out/ $out stage
+     * @since 3.4
+     */
+    void toCollection();
 
     /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.

@@ -190,6 +190,8 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * non-inline result.
      *
      * @param callback the callback, which is called when the aggregation completes
+     * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @see #collectionName(String)
      * @mongodb.driver.manual aggregation/ Aggregation
      */
     void toCollection(SingleResultCallback<Void> callback);
