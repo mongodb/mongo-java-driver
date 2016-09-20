@@ -34,6 +34,16 @@ import java.util.concurrent.TimeUnit;
 public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**
+     * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
+     * non-inline result.
+     *
+     * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @see #collectionName(String)
+     * @since 3.4
+     */
+    void toCollection();
+
+    /**
      * Sets the collectionName for the output of the MapReduce
      *
      * <p>The default action is replace the collection if it exists, to change this use {@link #action}.</p>

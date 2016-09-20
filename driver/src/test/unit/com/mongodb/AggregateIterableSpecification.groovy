@@ -106,6 +106,20 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
+
+        when: 'toCollection should work as expected'
+        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline)
+                .allowDiskUse(true)
+                .collation(collation)
+                .toCollection();
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
+                .allowDiskUse(true).collation(collation))
     }
 
     def 'should handle exceptions correctly'() {
@@ -121,6 +135,12 @@ class AggregateIterableSpecification extends Specification {
 
         then: 'the future should handle the exception'
         thrown(MongoException)
+
+        when: 'toCollection should throw IllegalStateException when last state is not $out'
+        aggregationIterable.toCollection()
+
+        then:
+        thrown(IllegalStateException)
 
         when: 'a codec is missing'
         new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,

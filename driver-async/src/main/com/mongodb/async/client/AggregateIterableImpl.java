@@ -107,7 +107,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
 
         if (outCollection == null) {
-            throw new IllegalArgumentException("The last stage of the aggregation pipeline must be $out");
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
         }
 
         executor.execute(new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)

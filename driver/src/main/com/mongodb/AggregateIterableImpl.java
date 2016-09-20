@@ -71,6 +71,17 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     }
 
     @Override
+    public void toCollection() {
+        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
+
+        if (getOutCollection(aggregateList) == null) {
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
+        }
+
+        executor.execute(createAggregateToCollectionOperation(aggregateList));
+    }
+
+    @Override
     public AggregateIterable<TResult> allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
@@ -135,15 +146,10 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
 
-        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+        BsonValue outCollection = getOutCollection(aggregateList);
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
-                    .maxTime(maxTimeMS, MILLISECONDS)
-                    .allowDiskUse(allowDiskUse)
-                    .bypassDocumentValidation(bypassDocumentValidation)
-                    .collation(collation);
-            executor.execute(operation);
+            executor.execute(createAggregateToCollectionOperation(aggregateList));
             FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, readPreference, readConcern, executor,
                     new BsonDocument(), new FindOptions().collation(collation));
@@ -161,6 +167,19 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .collation(collation),
                     readPreference, executor);
         }
+    }
+
+
+    private BsonValue getOutCollection(final List<BsonDocument> aggregateList) {
+        return aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+    }
+
+    private AggregateToCollectionOperation createAggregateToCollectionOperation(final List<BsonDocument> aggregateList) {
+        return new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
+                        .maxTime(maxTimeMS, MILLISECONDS)
+                        .allowDiskUse(allowDiskUse)
+                        .bypassDocumentValidation(bypassDocumentValidation)
+                        .collation(collation);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

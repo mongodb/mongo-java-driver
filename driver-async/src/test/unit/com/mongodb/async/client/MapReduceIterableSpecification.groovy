@@ -193,11 +193,11 @@ class MapReduceIterableSpecification extends Specification {
         then: 'the future should handle the exception'
         thrown(MongoException)
 
-        when: 'toCollection should throw IllegalArgumentException its inline'
+        when: 'toCollection should throw IllegalStateException its inline'
         mapReduceIterable.toCollection(new FutureResultCallback())
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(IllegalStateException)
 
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()

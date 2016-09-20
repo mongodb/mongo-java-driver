@@ -63,6 +63,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
      *
      * @param callback the callback, which is called when the aggregation completes
+     * @throws IllegalStateException if the pipeline does not end with a $out stage
      * @mongodb.driver.manual aggregation/ Aggregation
      */
     void toCollection(SingleResultCallback<Void> callback);
