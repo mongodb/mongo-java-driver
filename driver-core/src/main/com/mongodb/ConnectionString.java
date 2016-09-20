@@ -827,12 +827,12 @@ public class ConnectionString {
 
 
     /**
-     * Gets the credentials.
+     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
      *
-     * @return the credentials
+     * @return the credentials in an immutable list
      */
     public List<MongoCredential> getCredentialList() {
-        return credentials != null ? asList(credentials) : new ArrayList<MongoCredential>();
+        return credentials != null ? singletonList(credentials) : Collections.<MongoCredential>emptyList();
     }
 
     /**

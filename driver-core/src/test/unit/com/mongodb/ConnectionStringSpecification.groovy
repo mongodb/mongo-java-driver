@@ -252,6 +252,18 @@ class ConnectionStringSpecification extends Specification {
                                                                           .withMechanismProperty('SERVICE_REALM', 'AWESOME'))
     }
 
+    @Unroll
+    def 'should create immutable credential list'() {
+        when:
+        uri.credentialList.add(createGSSAPICredential('user'))
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        where:
+        uri << [new ConnectionString('mongodb://jeff:123@localhost'), new ConnectionString('mongodb://localhost')]
+    }
+
     def 'should support thrown an IllegalArgumentException when given invalid authMechanismProperties'() {
         when:
         new ConnectionString('mongodb://jeff@localhost/?' +
