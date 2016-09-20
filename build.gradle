@@ -119,6 +119,6 @@ gradle.taskGraph.whenReady { taskGraph ->
 task testCoverage(dependsOn: test)
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '1.9'
 }
 
