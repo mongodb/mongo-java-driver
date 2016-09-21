@@ -59,6 +59,17 @@ public enum BsonBinarySubType {
 
     private final byte value;
 
+    /**
+     * Returns true if the given value is a UUID subtype
+     *
+     * @param value the subtype value as a byte
+     * @return true if value is a UUID subtype
+     * @since 3.4
+     */
+    public static boolean isUuid(final byte value) {
+        return value == UUID_LEGACY.getValue() || value == UUID_STANDARD.getValue();
+    }
+
     BsonBinarySubType(final byte value) {
         this.value = value;
     }
@@ -71,5 +82,4 @@ public enum BsonBinarySubType {
     public byte getValue() {
         return value;
     }
-
 }

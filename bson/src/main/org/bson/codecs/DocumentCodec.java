@@ -205,12 +205,9 @@ public class DocumentCodec implements CollectibleCodec<Document> {
             reader.readNull();
             return null;
         } else if (bsonType == BsonType.ARRAY) {
-           return readList(reader, decoderContext);
-        } else if (bsonType == BsonType.BINARY) {
-            byte bsonSubType = reader.peekBinarySubType();
-            if (bsonSubType == BsonBinarySubType.UUID_STANDARD.getValue() || bsonSubType == BsonBinarySubType.UUID_LEGACY.getValue()) {
-                return registry.get(UUID.class).decode(reader, decoderContext);
-            }
+            return readList(reader, decoderContext);
+        } else if (bsonType == BsonType.BINARY && BsonBinarySubType.isUuid(reader.peekBinarySubType()) && reader.peekBinarySize() == 16) {
+            return registry.get(UUID.class).decode(reader, decoderContext);
         }
         return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }

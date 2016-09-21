@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.UuidCodec;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -42,10 +44,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
-import static org.bson.io.Bits.readLong;
+import static org.bson.BsonBinarySubType.BINARY;
+import static org.bson.BsonBinarySubType.OLD_BINARY;
 
 /**
  * An immutable {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
@@ -171,12 +173,13 @@ public class LazyBSONObject implements BSONObject {
             case STRING:
                 return reader.readString();
             case BINARY:
+                byte binarySubType = reader.peekBinarySubType();
+                if (BsonBinarySubType.isUuid(binarySubType) && reader.peekBinarySize() == 16) {
+                    return new UuidCodec().decode(reader, DecoderContext.builder().build());
+                }
                 BsonBinary binary = reader.readBinaryData();
-                byte binaryType = binary.getType();
-                if (binaryType == BsonBinarySubType.BINARY.getValue() || binaryType == BsonBinarySubType.OLD_BINARY.getValue()) {
+                if (binarySubType == BINARY.getValue() || binarySubType == OLD_BINARY.getValue()) {
                     return binary.getData();
-                } else if (binaryType == BsonBinarySubType.UUID_LEGACY.getValue()) {
-                    return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
                 } else {
                     return new Binary(binary.getType(), binary.getData());
                 }

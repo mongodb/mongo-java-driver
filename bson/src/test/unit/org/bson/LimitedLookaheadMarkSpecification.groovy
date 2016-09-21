@@ -242,7 +242,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         ]
     }
 
-    def 'should peek binary subtype'(BsonWriter writer) {
+    def 'should peek binary subtype and size'(BsonWriter writer) {
         given:
         writer.with {
             writeStartDocument()
@@ -265,12 +265,14 @@ class LimitedLookaheadMarkSpecification extends Specification {
         reader.readStartDocument()
         reader.readName()
         def subType = reader.peekBinarySubType()
+        def size = reader.peekBinarySize()
         def binary = reader.readBinaryData()
         def longValue = reader.readInt64('int64')
         reader.readEndDocument()
 
         then:
         subType == BsonBinarySubType.UUID_LEGACY.value
+        size == 16
         binary == new BsonBinary(BsonBinarySubType.UUID_LEGACY, new byte[16])
         longValue == 52L
 

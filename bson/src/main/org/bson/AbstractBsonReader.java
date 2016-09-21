@@ -121,6 +121,14 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     protected abstract byte doPeekBinarySubType();
 
     /**
+     * Handles the logic to peek at the binary size.
+     *
+     * @return the binary size
+     * @since 3.4
+     */
+    protected abstract int doPeekBinarySize();
+
+    /**
      * Handles the logic to read booleans
      *
      * @return the boolean value
@@ -281,6 +289,12 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     public byte peekBinarySubType() {
         checkPreconditions("readBinaryData", BsonType.BINARY);
         return doPeekBinarySubType();
+    }
+
+    @Override
+    public int peekBinarySize() {
+        checkPreconditions("readBinaryData", BsonType.BINARY);
+        return doPeekBinarySize();
     }
 
     @Override
