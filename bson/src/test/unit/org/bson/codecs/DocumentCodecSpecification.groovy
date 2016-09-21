@@ -139,6 +139,25 @@ class DocumentCodecSpecification extends Specification {
         ]
     }
 
+    @SuppressWarnings(['LineLength'])
+    def 'should decode binary subtypes for UUID'() {
+        given:
+        def reader = new BsonBinaryReader(ByteBuffer.wrap(bytes as byte[]))
+
+        when:
+        def document = new DocumentCodec().decode(reader, DecoderContext.builder().build())
+
+        then:
+        value == document.get('f')
+
+        where:
+        value                                                   | bytes
+        new Binary((byte) 0x03, (byte[]) [115, 116, 11])        | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 3, 115, 116, 11, 0]
+        new Binary((byte) 0x04, (byte[]) [115, 116, 11])        | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 4, 115, 116, 11, 0]
+        UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+    }
+
     def 'should respect encodeIdFirst property in encoder context'() {
         given:
         def originalDocument = new Document('x', 2)

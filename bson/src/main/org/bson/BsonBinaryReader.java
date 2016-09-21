@@ -154,6 +154,14 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
+    protected int doPeekBinarySize() {
+        mark();
+        int size = readSize();
+        reset();
+        return size;
+    }
+
+    @Override
     protected boolean doReadBoolean() {
         byte booleanByte = bsonInput.readByte();
         if (booleanByte != 0 && booleanByte != 1) {

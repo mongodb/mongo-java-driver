@@ -19,6 +19,7 @@ package com.mongodb;
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BsonBinary;
+import org.bson.BsonBinarySubType;
 import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -51,8 +52,6 @@ import java.util.regex.Pattern;
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.BsonBinarySubType.BINARY;
 import static org.bson.BsonBinarySubType.OLD_BINARY;
-import static org.bson.BsonBinarySubType.UUID_LEGACY;
-import static org.bson.BsonBinarySubType.UUID_STANDARD;
 
 /**
  * A collectible codec for a DBObject.
@@ -318,11 +317,11 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {
-        byte bsonSubType = reader.peekBinarySubType();
+        byte bsonBinarySubType = reader.peekBinarySubType();
 
-        if (bsonSubType == UUID_STANDARD.getValue() || bsonSubType == UUID_LEGACY.getValue()) {
+        if (BsonBinarySubType.isUuid(bsonBinarySubType) && reader.peekBinarySize() == 16) {
             return codecRegistry.get(UUID.class).decode(reader, decoderContext);
-        } else if (bsonSubType == BINARY.getValue() || bsonSubType == OLD_BINARY.getValue()) {
+        } else if (bsonBinarySubType == BINARY.getValue() || bsonBinarySubType == OLD_BINARY.getValue()) {
             return codecRegistry.get(byte[].class).decode(reader, decoderContext);
         } else {
             return codecRegistry.get(Binary.class).decode(reader, decoderContext);

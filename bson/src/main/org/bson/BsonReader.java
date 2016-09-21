@@ -53,6 +53,15 @@ public interface BsonReader {
     byte peekBinarySubType();
 
     /**
+     * Peeks the size of the binary data that the reader is positioned at.  This operation is not permitted if the mark is already set.
+     *
+     * @return the size of the binary data
+     * @see #mark()
+     * @since 3.4
+     */
+    int peekBinarySize();
+
+    /**
      * Reads a BSON Binary data element from the reader.
      *
      * @param name The name of the element.
