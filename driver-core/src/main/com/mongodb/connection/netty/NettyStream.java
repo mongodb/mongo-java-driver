@@ -19,6 +19,7 @@ package com.mongodb.connection.netty;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
@@ -145,6 +146,12 @@ final class NettyStream implements Stream {
             public void operationComplete(final ChannelFuture future) throws Exception {
                 if (future.isSuccess()) {
                     channel = channelFuture.channel();
+                    channel.closeFuture().addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(final ChannelFuture f2) throws Exception {
+                            handleReadResponse(null, new IOException("The connection to the server was closed"));
+                        }
+                    });
                     handler.completed(null);
                 } else {
                     handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
