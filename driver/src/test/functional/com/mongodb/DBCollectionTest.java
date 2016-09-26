@@ -124,6 +124,12 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testFindWithNullQuery() {
+        collection.insert(new BasicDBObject("_id", 1).append("x", 2));
+        assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.find(null).next());
+    }
+
+    @Test
     public void testInsertDuplicateKeyException() {
         DBObject doc = new BasicDBObject("_id", 1);
         collection.insert(doc, WriteConcern.ACKNOWLEDGED);
