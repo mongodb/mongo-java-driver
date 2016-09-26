@@ -103,7 +103,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private DBCursor(final DBCollection collection, final DBObject filter, final DBCollectionFindOptions findOptions,
                      final OperationExecutor executor, final DBDecoderFactory decoderFactory, final Decoder<DBObject> decoder) {
         this.collection = notNull("collection", collection);
-        this.filter = notNull("filter", filter);
+        this.filter = filter;
         this.executor = notNull("executor", executor);
         this.findOptions = notNull("findOptions", findOptions.copy());
         this.decoderFactory = decoderFactory;
