@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 @Immutable
 public class MongoClientOptions {
+
+    private static final SocketFactory DEFAULT_SSL_SOCKET_FACTORY = SSLSocketFactory.getDefault();
+    private static final SocketFactory DEFAULT_SOCKET_FACTORY = SocketFactory.getDefault();
 
     private final String description;
     private final String applicationName;
@@ -572,7 +575,13 @@ public class MongoClientOptions {
      * @return the socket factory
      */
     public SocketFactory getSocketFactory() {
-        return socketFactory;
+        if (socketFactory != null) {
+            return socketFactory;
+        } else if (getSslSettings().isEnabled()) {
+            return DEFAULT_SSL_SOCKET_FACTORY;
+        } else {
+            return DEFAULT_SOCKET_FACTORY;
+        }
     }
 
     /**
@@ -717,7 +726,7 @@ public class MongoClientOptions {
                                            : that.requiredReplicaSetName != null) {
             return false;
         }
-        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) {
+        if (socketFactory != null ? !socketFactory.equals(that.socketFactory) : that.socketFactory != null) {
             return false;
         }
 
@@ -758,7 +767,7 @@ public class MongoClientOptions {
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
-        result = 31 * result + socketFactory.getClass().hashCode();
+        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         return result;
     }
 
@@ -846,7 +855,7 @@ public class MongoClientOptions {
         private String requiredReplicaSetName;
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
-        private SocketFactory socketFactory = SocketFactory.getDefault();
+        private SocketFactory socketFactory;
         private boolean cursorFinalizerEnabled = true;
 
         /**
@@ -893,7 +902,7 @@ public class MongoClientOptions {
             requiredReplicaSetName = options.getRequiredReplicaSetName();
             dbDecoderFactory = options.getDbDecoderFactory();
             dbEncoderFactory = options.getDbEncoderFactory();
-            socketFactory = options.getSocketFactory();
+            socketFactory = options.socketFactory;
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
             commandListeners.addAll(options.getCommandListeners());
             clusterListeners.addAll(options.getClusterListeners());
@@ -1072,17 +1081,23 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether to use SSL.  Setting this to true will also set the socketFactory to {@code SSLSocketFactory.getDefault()} and
-         * setting it to false will set the socketFactory to {@code SocketFactory.getDefault()}
+         * Sets whether to use SSL.
+         *
+         * <p>If the socketFactory is unset, setting this to true will also set the socketFactory to
+         * {@link SSLSocketFactory#getDefault()} and setting it to false will set the socketFactory to
+         * {@link SocketFactory#getDefault()}</p>
+         *
+         * <p>If the socket factory is set and sslEnabled is also set, the socket factory must create instances of
+         * {@link javax.net.ssl.SSLSocket}. Otherwise, MongoClient will refuse to connect.</p>
          *
          * @param sslEnabled set to true if using SSL
          * @return {@code this}
          * @see MongoClientOptions#isSslEnabled()
+         * @see MongoClientOptions#getSocketFactory()
          * @since 3.0
          */
         public Builder sslEnabled(final boolean sslEnabled) {
             this.sslEnabled = sslEnabled;
-            this.socketFactory(sslEnabled ? SSLSocketFactory.getDefault() : SocketFactory.getDefault());
             return this;
         }
 
@@ -1216,9 +1231,6 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getSocketFactory()
          */
         public Builder socketFactory(final SocketFactory socketFactory) {
-            if (socketFactory == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
             this.socketFactory = socketFactory;
             return this;
         }

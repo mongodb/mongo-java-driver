@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,7 @@ class MongoClientOptionsSpecification extends Specification {
     def 'should build with set options'() {
         given:
         def encoderFactory = new MyDBEncoderFactory()
+        def socketFactory = SSLSocketFactory.getDefault()
         def options = MongoClientOptions.builder()
                                         .description('test')
                                         .applicationName('appName')
@@ -157,6 +158,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionLifeTime(400)
                                         .threadsAllowedToBlockForConnectionMultiplier(2)
                                         .socketKeepAlive(true)
+                                        .socketFactory(socketFactory)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .dbDecoderFactory(LazyDBDecoder.FACTORY)
@@ -185,6 +187,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getSocketTimeout() == 700
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
         options.isSocketKeepAlive()
+        options.socketFactory == socketFactory
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getDbDecoderFactory() == LazyDBDecoder.FACTORY
@@ -212,23 +215,25 @@ class MongoClientOptionsSpecification extends Specification {
     }
 
     @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
-    def 'should set sslEnabled based on socketFactory'() {
-        given:
-        MongoClientOptions.Builder builder = MongoClientOptions.builder()
-        SocketFactory socketFactory = SSLSocketFactory.getDefault()
-
+    def 'should get socketFactory based on sslEnabled'() {
         when:
-        builder.socketFactory(socketFactory)
+        MongoClientOptions.Builder builder = MongoClientOptions.builder()
+
         then:
-        builder.build().getSocketFactory() == socketFactory
-        builder.sslEnabled(false)
-        builder.build().getSocketFactory() != null
-        !(builder.build().getSocketFactory() instanceof SSLSocketFactory)
+        builder.build().getSocketFactory() == MongoClientOptions.DEFAULT_SOCKET_FACTORY
 
         when:
         builder.sslEnabled(true)
+
         then:
-        builder.build().getSocketFactory() instanceof SSLSocketFactory
+        builder.build().getSocketFactory() == MongoClientOptions.DEFAULT_SSL_SOCKET_FACTORY
+
+        when:
+        def socketFactory = Mock(SocketFactory)
+        builder.socketFactory(socketFactory)
+
+        then:
+        builder.build().getSocketFactory() == socketFactory
     }
 
     def 'should be easy to create new options from existing'() {
@@ -493,48 +498,44 @@ class MongoClientOptionsSpecification extends Specification {
 
     def 'builder should copy all values from the existing MongoClientOptions'() {
         given:
-        def options = Mock(MongoClientOptions)
-
+        def options = MongoClientOptions.builder()
+                .description('test')
+                .applicationName('appName')
+                .readPreference(ReadPreference.secondary())
+                .writeConcern(WriteConcern.JOURNALED)
+                .minConnectionsPerHost(30)
+                .connectionsPerHost(500)
+                .connectTimeout(100)
+                .socketTimeout(700)
+                .serverSelectionTimeout(150)
+                .maxWaitTime(200)
+                .maxConnectionIdleTime(300)
+                .maxConnectionLifeTime(400)
+                .threadsAllowedToBlockForConnectionMultiplier(2)
+                .socketKeepAlive(true)
+                .sslEnabled(true)
+                .sslInvalidHostNameAllowed(true)
+                .socketFactory(SSLSocketFactory.getDefault())
+                .dbDecoderFactory(LazyDBDecoder.FACTORY)
+                .heartbeatFrequency(5)
+                .minHeartbeatFrequency(11)
+                .heartbeatConnectTimeout(15)
+                .heartbeatSocketTimeout(20)
+                .localThreshold(25)
+                .requiredReplicaSetName('test')
+                .cursorFinalizerEnabled(false)
+                .dbEncoderFactory(new MyDBEncoderFactory())
+                .addCommandListener(Mock(CommandListener))
+                .addClusterListener(Mock(ClusterListener))
+                .addServerListener(Mock(ServerListener))
+                .addServerMonitorListener(Mock(ServerMonitorListener))
+                .build()
 
         when:
-        MongoClientOptions.builder(options)
+        def copy = MongoClientOptions.builder(options).build()
 
         then:
-        1 * options.isAlwaysUseMBeans()
-        1 * options.getCodecRegistry()
-        1 * options.getConnectionsPerHost()
-        1 * options.getConnectTimeout()
-        1 * options.isCursorFinalizerEnabled()
-        1 * options.getDbDecoderFactory()
-        1 * options.getDbEncoderFactory()
-        1 * options.getDescription()
-        1 * options.getApplicationName()
-        1 * options.getHeartbeatConnectTimeout()
-        1 * options.getHeartbeatFrequency()
-        1 * options.getHeartbeatSocketTimeout()
-        1 * options.getLocalThreshold()
-        1 * options.getMaxConnectionIdleTime()
-        1 * options.getMaxConnectionLifeTime()
-        1 * options.getMaxWaitTime()
-        1 * options.getMinConnectionsPerHost()
-        1 * options.getMinHeartbeatFrequency()
-        1 * options.getReadPreference()
-        1 * options.getRequiredReplicaSetName()
-        1 * options.getServerSelectionTimeout()
-        1 * options.getSocketFactory()
-        1 * options.isSocketKeepAlive()
-        1 * options.getSocketTimeout()
-        1 * options.isSslEnabled()
-        1 * options.isSslInvalidHostNameAllowed()
-        1 * options.getThreadsAllowedToBlockForConnectionMultiplier()
-        1 * options.getWriteConcern()
-        1 * options.getReadConcern()
-        1 * options.getCommandListeners() >> Collections.unmodifiableList(Collections.emptyList())
-        1 * options.getClusterListeners() >> Collections.unmodifiableList(Collections.emptyList())
-        1 * options.getServerListeners() >> Collections.unmodifiableList(Collections.emptyList())
-        1 * options.getServerMonitorListeners() >> Collections.unmodifiableList(Collections.emptyList())
-
-        0 * options._ // Ensure no other interactions
+        copy == options
     }
 
     def 'should only have the following fields in the builder'() {
