@@ -40,7 +40,7 @@ final class SocketStreamHelper {
         if (settings.getSendBufferSize() > 0) {
             socket.setSendBufferSize(settings.getSendBufferSize());
         }
-        if (sslSettings.isEnabled()) {
+        if (sslSettings.isEnabled() || socket instanceof SSLSocket) {
             if (!(socket instanceof SSLSocket)) {
                 throw new MongoInternalException("SSL is enabled but the socket is not an instance of javax.net.ssl.SSLSocket");
             }
