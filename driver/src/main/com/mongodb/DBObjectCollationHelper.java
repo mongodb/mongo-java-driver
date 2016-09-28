@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
-import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationStrength;
 
 final class DBObjectCollationHelper {
@@ -89,6 +89,14 @@ final class DBObjectCollationHelper {
                     throw new IllegalArgumentException("collation 'maxVariable' should be a String");
                 } else {
                     builder.collationMaxVariable(CollationMaxVariable.fromString((String) maxVariable));
+                }
+            }
+            if (collation.get("normalization") != null) {
+                Object normalization = collation.get("normalization");
+                if (!(normalization instanceof Boolean)) {
+                    throw new IllegalArgumentException("collation 'normalization' should be a Boolean");
+                } else {
+                    builder.normalization((Boolean) normalization);
                 }
             }
             if (collation.get("backwards") != null) {

@@ -16,10 +16,10 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
-import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
 import spock.lang.Specification
 
@@ -40,10 +40,11 @@ class DBObjectCollationHelperSpecification extends Specification {
                 .numericOrdering(true)
                 .collationAlternate(CollationAlternate.SHIFTED)
                 .collationMaxVariable(CollationMaxVariable.SPACE)
+                .normalization(true)
                 .backwards(true)
                 .build()                         | '''{locale: "en", caseLevel: true, caseFirst: "off", strength: 5,
                                                                   numericOrdering: true, alternate: "shifted",
-                                                                  maxVariable: "space", backwards: true}'''
+                                                                  maxVariable: "space", normalization: true, backwards: true}'''
     }
 
     def 'should return null if no options are set'() {
@@ -66,6 +67,7 @@ class DBObjectCollationHelperSpecification extends Specification {
                     '{ locale: "en", numericOrdering: 1}',
                     '{ locale: "en", alternate: true}',
                     '{ locale: "en", maxVariable: true}',
+                    '{ locale: "en", normalization: 1}',
                     '{ locale: "en", backwards: 1}']
     }
 }
