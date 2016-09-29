@@ -4,17 +4,16 @@ title = "Reference"
 [menu.main]
   parent = "MongoDB Driver"
   identifier = "Sync Reference"
-  weight = 20
+  weight = 30
   pre = "<i class='fa fa-book'></i>"
 +++
 
 ## Reference
 
-The reference documentation for the Java driver focuses on high-level documentation and use-cases. The Javadoc-generated API reference is
-[here](http://api.mongodb.com/java/3.3/).
+The reference documentation for the Java driver focuses on high-level documentation and use-cases.
 
-- [Connecting]({{< relref "driver/reference/connecting/index.md" >}}): Documentation of the driver's support for connecting to MongoDB servers
-- [CRUD]({{< relref "driver/reference/crud/index.md" >}}): Documentation of the driver's support for CRUD operations
-- [Management]({{< relref "driver/reference/management/index.md" >}}): Documentation of the driver's support for logging and monitoring of its 
-internal state
+- [Logging]({{< relref "driver/reference/logging.md" >}})
 
+- [Monitoring]({{< relref "driver/reference/monitoring.md" >}})
+
+See also [Javadoc-generated API]({{<apiref "">}}).
