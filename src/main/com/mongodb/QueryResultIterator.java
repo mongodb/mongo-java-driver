@@ -37,12 +37,12 @@ class QueryResultIterator implements Cursor {
     private final ServerAddress _host;
     private final int _limit;
 
-    private long _cursorId;
+    private final long[] _cursorId = new long[] { 0L };
     private Iterator<DBObject> _cur;
     private int _curSize;
     private int _batchSize;
 
-    private boolean closed;
+    private final boolean[] closed = new boolean[] { false };
 
     private final List<Integer> _sizes = new ArrayList<Integer>();
     private int _numGetMores = 0;
@@ -103,7 +103,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public DBObject next() {
-        if (closed) {
+        if (closed[0]) {
             throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -115,7 +115,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public boolean hasNext() {
-        if (closed) {
+        if (closed[0]) {
            throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -123,7 +123,7 @@ class QueryResultIterator implements Cursor {
             return true;
         }
 
-        while (_cursorId != 0) {
+        while (_cursorId[0] != 0) {
             getMore();
             if (_curSize > 0) {
                 return true;
@@ -135,7 +135,7 @@ class QueryResultIterator implements Cursor {
 
     private void getMore(){
         Response res = _db._connector.call(_collection.getDB(), _collection,
-                                           OutMessage.getMore(_collection, _cursorId, getGetMoreBatchSize()),
+                                           OutMessage.getMore(_collection, _cursorId[0], getGetMoreBatchSize()),
                                            _host, _decoder);
         _numGetMores++;
         initFromQueryResponse(res);
@@ -154,7 +154,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public long getCursorId(){
-        return _cursorId;
+        return _cursorId[0];
     }
 
     int numGetMores(){
@@ -166,8 +166,8 @@ class QueryResultIterator implements Cursor {
     }
 
     public void close(){
-        if (!closed) {
-            closed = true;
+        if (!closed[0]) {
+            closed[0] = true;
             killCursor();
         }
     }
@@ -195,8 +195,8 @@ class QueryResultIterator implements Cursor {
         _sizes.add(size);
         _numFetched += size;
 
-        throwOnQueryFailure(_cursorId, flags);
-        _cursorId = cursorId;
+        throwOnQueryFailure(_cursorId[0], flags);
+        _cursorId[0] = cursorId;
 
         if (cursorId != 0 && _limit > 0 && _limit - _numFetched <= 0) {
             // fetched all docs within limit, close cursor server-side
@@ -221,14 +221,14 @@ class QueryResultIterator implements Cursor {
 
 
     void killCursor() {
-        if (_cursorId == 0)
+        if (_cursorId[0] == 0)
             return;
 
         try {
-            _db.killCursors(_host, asList(_cursorId));
-            _cursorId = 0;
+            _db.killCursors(_host, asList(_cursorId[0]));
+            _cursorId[0] = 0;
         } catch (MongoException e) {
-            _db.addDeadCursor(new DeadCursor(_cursorId, _host));
+            _db.addDeadCursor(new DeadCursor(_cursorId[0], _host));
         }
     }
 
@@ -241,15 +241,33 @@ class QueryResultIterator implements Cursor {
     }
 
     private OptionalFinalizer getOptionalFinalizer(final DBCollectionImpl coll) {
-        return coll.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && _cursorId != 0 ?
-               new OptionalFinalizer() : null;
+        return coll.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && _cursorId[0] != 0 ?
+               new OptionalFinalizer(_db, _cursorId, _host, closed) : null;
     }
 
-    private class OptionalFinalizer {
+    private static class OptionalFinalizer {
+      
+        private final DBApiLayer _db;
+      
+        private final long[] _cursorId;
+      
+        private final ServerAddress _host;
+      
+        private final boolean[] closed;
+      
+        public OptionalFinalizer(DBApiLayer _db, long[] _cursorId, 
+                ServerAddress _host, boolean[] closed) {
+        
+            this._db = _db;
+            this._cursorId = _cursorId;
+            this._host = _host;
+            this.closed = closed;
+        }
+      
         @Override
         protected void finalize() throws Throwable {
-            if (!closed && _cursorId != 0) {
-                _db.addDeadCursor(new DeadCursor(_cursorId, _host));
+            if (!closed[0] && _cursorId[0] != 0) {
+                _db.addDeadCursor(new DeadCursor(_cursorId[0], _host));
             }
             super.finalize();
         }
