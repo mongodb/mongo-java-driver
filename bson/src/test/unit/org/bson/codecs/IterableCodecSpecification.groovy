@@ -20,6 +20,7 @@ package org.bson.codecs
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.types.Binary
 import spock.lang.Specification
 
 import static org.bson.BsonDocument.parse
@@ -85,10 +86,10 @@ class IterableCodecSpecification extends Specification {
         iterable == ['1', '2', '3']
     }
 
-    def 'should decode a BSON Binary with subtype of UIID_LEGACY to a UUID'() {
+    def 'should decode binary subtypes for UUID'() {
         given:
         def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
-        def reader = new BsonDocumentReader(parse('{array : [{ "$binary" : "D0dqZ20GeYvWzXdt0gkSlA==", "$type" : "3" }]}'))
+        def reader = new BsonDocumentReader(parse(document))
 
         when:
         reader.readStartDocument()
@@ -97,22 +98,14 @@ class IterableCodecSpecification extends Specification {
         reader.readEndDocument()
 
         then:
-        iterable == [UUID.fromString('8b79066d-676a-470f-9412-09d26d77cdd6')]
-    }
+        iterable == value
 
-    def 'should decode a BSON Binary with subtype of UIID_STANDARD to a UUID'() {
-        given:
-        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), null)
-        def reader = new BsonDocumentReader(parse('{array : [{ "$binary" : "i3kGbWdqRw+UEgnSbXfN1g==", "$type" : "4" }]}'))
-
-        when:
-        reader.readStartDocument()
-        reader.readName('array')
-        def iterable = codec.decode(reader, DecoderContext.builder().build())
-        reader.readEndDocument()
-
-        then:
-        iterable == [UUID.fromString('8b79066d-676a-470f-9412-09d26d77cdd6')]
+        where:
+        document                                                                 | value
+        '{"array": [{ "$binary" : "c3QL", "$type" : "3" }]}'                     | [new Binary((byte) 0x03, (byte[]) [115, 116, 11])]
+        '{"array": [{ "$binary" : "c3QL", "$type" : "4" }]}'                     | [new Binary((byte) 0x04, (byte[]) [115, 116, 11])]
+        '{"array": [{ "$binary" : "AQIDBAUGBwgJCgsMDQ4PEA==", "$type" : "3" }]}' | [UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09')]
+        '{"array": [{ "$binary" : "CAcGBQQDAgEQDw4NDAsKCQ==", "$type" : "3" }]}' | [UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')]
     }
 
 }
