@@ -24,8 +24,10 @@ import spock.lang.Specification
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLParameters
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 
-@IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+@IgnoreIf({ isNotAtLeastJava7() })
 class SslHelperSpecification extends Specification {
     def 'should enable HTTPS host name verification'() {
         given:
@@ -38,7 +40,7 @@ class SslHelperSpecification extends Specification {
         sslParameters.getEndpointIdentificationAlgorithm() == 'HTTPS'
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.7.') })
+    @IgnoreIf({ isNotAtLeastJava8() })
     def 'should enable server name indicator'() {
         given:
         def serverName = 'server.me'

@@ -160,6 +160,18 @@ public final class ClusterFixture {
         return clusterDescription.getAny().get(0).getVersion();
     }
 
+    public static boolean isNotAtLeastJava7() {
+        return javaVersionStartsWith("1.6");
+    }
+
+    public static boolean isNotAtLeastJava8() {
+        return isNotAtLeastJava7() || javaVersionStartsWith("1.7");
+    }
+
+    private static boolean javaVersionStartsWith(final String versionPrefix) {
+        return System.getProperty("java.version").startsWith(versionPrefix + ".");
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {

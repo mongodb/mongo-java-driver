@@ -28,6 +28,8 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
 import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -67,8 +69,8 @@ class SocketStreamHelperSpecification extends Specification {
         socket?.close()
     }
 
-    @IgnoreIf({ !ClusterFixture.sslSettings.enabled || System.getProperty('java.version').startsWith('1.6.') })
-    def 'should enable SSL options if socket is an instance of SSLSocket'() {
+    @IgnoreIf({ !ClusterFixture.sslSettings.enabled || isNotAtLeastJava7() })
+    def 'should enable host name verification if socket is an instance of SSLSocket'() {
         given:
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
@@ -77,7 +79,6 @@ class SocketStreamHelperSpecification extends Specification {
 
         then:
         socket.getSSLParameters().endpointIdentificationAlgorithm == (sslSettings.invalidHostNameAllowed ? null : 'HTTPS')
-        socket.getSSLParameters().getServerNames() == [new SNIHostName(getPrimary().getHost())]
 
         cleanup:
         socket?.close()
@@ -86,6 +87,25 @@ class SocketStreamHelperSpecification extends Specification {
         sslSettings << [SslSettings.builder().enabled(true).build(),
                         SslSettings.builder().enabled(false).build(),
                         SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()]
+    }
+
+    @IgnoreIf({ !ClusterFixture.sslSettings.enabled || isNotAtLeastJava8() })
+    def 'should enable SNI if socket is an instance of SSLSocket'() {
+        given:
+        SSLSocket socket = SSLSocketFactory.default.createSocket()
+
+        when:
+        SocketStreamHelper.initialize(socket, getPrimary(), SocketSettings.builder().build(), sslSettings)
+
+        then:
+        socket.getSSLParameters().getServerNames() == [new SNIHostName(getPrimary().getHost())]
+
+        cleanup:
+        socket?.close()
+
+        where:
+        sslSettings << [SslSettings.builder().enabled(true).build(),
+                        SslSettings.builder().enabled(false).build()]
     }
 
     def 'should throw MongoInternalException is ssl is enabled and the socket is not an instance of SSLSocket'() {

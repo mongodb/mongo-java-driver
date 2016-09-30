@@ -21,6 +21,7 @@ import com.mongodb.MongoInternalException
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.SslSettings.builder
 
 
@@ -30,7 +31,7 @@ class SslSettingsSpecification extends Specification {
         !builder().build().enabled
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should enable'() {
         expect:
         builder().enabled(true).build().enabled
@@ -70,14 +71,14 @@ class SslSettingsSpecification extends Specification {
         !builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=false')).build().invalidHostNameAllowed
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should apply connection string with ssl'() {
         expect:
         builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).build().enabled
         !builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true')).build().invalidHostNameAllowed
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should apply connection string with ssl and sslInvalidHostNameAllowed'() {
         expect:
         builder().applyConnectionString(new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true'))
@@ -100,7 +101,7 @@ class SslSettingsSpecification extends Specification {
         builder().enabled(true).invalidHostNameAllowed(true).build().hashCode()
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'unequivalent settings should not be equal or have the same hash code'() {
         expect:
         builder().build() != builder().enabled(true).build()

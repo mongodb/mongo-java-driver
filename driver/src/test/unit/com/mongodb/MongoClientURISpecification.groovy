@@ -20,6 +20,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
@@ -123,7 +124,7 @@ class MongoClientURISpecification extends Specification {
                                                                                                          .withWTimeout(5, MILLISECONDS)
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should correctly parse URI options for #type'() {
         given:
         def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
@@ -248,7 +249,7 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 250
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should be equal to another MongoClientURI with the same string values'() {
         expect:
         uri1 == uri2
