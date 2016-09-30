@@ -30,6 +30,7 @@ import spock.lang.Specification
 import javax.net.SocketFactory
 import javax.net.ssl.SSLSocketFactory
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -214,7 +215,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should get socketFactory based on sslEnabled'() {
         when:
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
