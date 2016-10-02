@@ -20,8 +20,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
-import com.mongodb.connection.Cluster;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
@@ -29,19 +28,23 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
-import com.mongodb.connection.netty.NettyStreamFactoryFactory;
+import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
 import com.mongodb.management.JMXConnectionPoolListener;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
-import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -91,7 +94,7 @@ public final class MongoClients {
      * </p>
      * <p>
      * The connection string's stream type is then applied by setting the
-     * {@link com.mongodb.connection.StreamFactoryFactory} to an instance of {@link NettyStreamFactoryFactory},
+     * {@link com.mongodb.connection.StreamFactory} to an instance of {@link NettyStreamFactory},
      * </p>
      *
      * @param connectionString the settings
@@ -115,13 +118,13 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param settings the settings
+     * @param settings               the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 3.4
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation));
+        return create(settings, mongoDriverInformation, null);
     }
 
     /**
@@ -129,7 +132,7 @@ public final class MongoClients {
      *
      * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
      *
-     * @param connectionString the settings
+     * @param connectionString       the settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
@@ -153,15 +156,7 @@ public final class MongoClients {
                 .socketSettings(SocketSettings.builder()
                         .applyConnectionString(connectionString)
                         .build());
-        if (connectionString.getStreamType() != null) {
-            if (connectionString.getStreamType().toLowerCase().equals("netty")) {
-                builder.streamFactoryFactory(NettyStreamFactoryFactory.builder().build());
-            } else if (connectionString.getStreamType().toLowerCase().equals("nio2")) {
-                builder.streamFactoryFactory(new AsynchronousSocketChannelStreamFactoryFactory());
-            } else if (!connectionString.getStreamType().toLowerCase().equals("nio2")) {
-                throw new IllegalArgumentException(format("Unsupported stream type %s", connectionString.getStreamType()));
-            }
-        }
+
         if (connectionString.getReadPreference() != null) {
             builder.readPreference(connectionString.getReadPreference());
         }
@@ -174,8 +169,26 @@ public final class MongoClients {
         if (connectionString.getApplicationName() != null) {
             builder.applicationName(connectionString.getApplicationName());
         }
-        return create(builder.build(), mongoDriverInformation);
+        return create(builder.build(), mongoDriverInformation, connectionString.getStreamType());
     }
+
+    private static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
+                                      final String requestedStreamType) {
+        String streamType = getStreamType(requestedStreamType);
+        EventLoopGroup eventLoopGroup = getEventLoopGroupIfNecessary(settings.getStreamFactoryFactory(), streamType);
+        StreamFactory streamFactory = getStreamFactory(settings.getStreamFactoryFactory(), settings.getSocketSettings(),
+                settings.getSslSettings(), streamType, eventLoopGroup);
+        StreamFactory heartbeatStreamFactory = getStreamFactory(settings.getStreamFactoryFactory(), settings.getHeartbeatSocketSettings(),
+                settings.getSslSettings(), streamType, eventLoopGroup);
+        return new MongoClientImpl(settings, new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
+                settings.getConnectionPoolSettings(), streamFactory,
+                heartbeatStreamFactory,
+                settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
+                createCommandListener(settings.getCommandListeners()),
+                settings.getApplicationName(), mongoDriverInformation),
+                                          getEventLoopGroupCloser(eventLoopGroup));
+    }
+
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -203,23 +216,55 @@ public final class MongoClients {
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider()));
 
-    private static Cluster createCluster(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        StreamFactory streamFactory = getStreamFactory(settings);
-        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(settings);
-        return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
-                                                  settings.getConnectionPoolSettings(), streamFactory,
-                                                  heartbeatStreamFactory,
-                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
-                                                  createCommandListener(settings.getCommandListeners()),
-                                                  settings.getApplicationName(), mongoDriverInformation);
+    private static StreamFactory getStreamFactory(final StreamFactoryFactory streamFactoryFactory,
+                                                  final SocketSettings socketSettings, final SslSettings sslSettings,
+                                                  final String streamType, final EventLoopGroup eventLoopGroup) {
+        if (streamFactoryFactory != null) {
+            return streamFactoryFactory.create(socketSettings, sslSettings);
+        } else if (isNetty(streamType)) {
+            return new NettyStreamFactory(socketSettings, sslSettings, eventLoopGroup);
+        } else if (isNio2(streamType)) {
+            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+        } else {
+            throw new IllegalArgumentException("Unsupported stream type: " + streamType);
+        }
     }
 
-    private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {
-        return settings.getStreamFactoryFactory().create(settings.getHeartbeatSocketSettings(), settings.getSslSettings());
+    private static boolean isNetty(final String streamType) {
+        return streamType.toLowerCase().equals("netty");
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
-        return settings.getStreamFactoryFactory().create(settings.getSocketSettings(), settings.getSslSettings());
+    private static boolean isNio2(final String streamType) {
+        return streamType.toLowerCase().equals("nio2");
+    }
+
+    private static String getStreamType(final String requestedStreamType) {
+        if (requestedStreamType != null) {
+            return requestedStreamType;
+        } else {
+            return System.getProperty("org.mongodb.async.type", "nio2");
+        }
+    }
+
+    private static Closeable getEventLoopGroupCloser(final EventLoopGroup eventLoopGroup) {
+        if (eventLoopGroup == null) {
+            return null;
+        } else {
+            return new Closeable() {
+                @Override
+                public void close() throws IOException {
+                    eventLoopGroup.shutdownGracefully().awaitUninterruptibly();
+                }
+            };
+        }
+    }
+    private static EventLoopGroup getEventLoopGroupIfNecessary(final StreamFactoryFactory streamFactoryFactory,
+                                                                  final String streamType) {
+        if (isNetty(streamType) && streamFactoryFactory == null) {
+            return new NioEventLoopGroup();
+        } else {
+            return null;
+        }
     }
 
     private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {

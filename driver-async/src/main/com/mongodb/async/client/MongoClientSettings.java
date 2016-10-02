@@ -22,14 +22,12 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -95,7 +93,7 @@ public final class MongoClientSettings {
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClients.getDefaultCodecRegistry();
-        private StreamFactoryFactory streamFactoryFactory = createDefaultStreamFactoryFactory();
+        private StreamFactoryFactory streamFactoryFactory;
         private final List<CommandListener> commandListeners = new ArrayList<CommandListener>();
 
         private ClusterSettings clusterSettings;
@@ -325,18 +323,6 @@ public final class MongoClientSettings {
          */
         public MongoClientSettings build() {
             return new MongoClientSettings(this);
-        }
-
-        private static StreamFactoryFactory createDefaultStreamFactoryFactory() {
-            String streamType = System.getProperty("org.mongodb.async.type", "nio2");
-
-            if (streamType.equals("netty")) {
-                return NettyStreamFactoryFactory.builder().build();
-            } else if (streamType.equals("nio2")) {
-                return new AsynchronousSocketChannelStreamFactoryFactory();
-            } else {
-                throw new IllegalArgumentException("Unsupported stream type " + streamType);
-            }
         }
     }
 

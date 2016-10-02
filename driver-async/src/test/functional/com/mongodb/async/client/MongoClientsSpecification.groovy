@@ -22,13 +22,10 @@ import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.client.MongoDriverInformation
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
-import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import org.bson.Document
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
-import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.primary
@@ -91,29 +88,6 @@ class MongoClientsSpecification extends FunctionalSpecification {
         then:
         client.settings.sslSettings.enabled
         client.settings.sslSettings.invalidHostNameAllowed
-
-        cleanup:
-        client?.close()
-    }
-
-    def 'should apply connection string to netty stream type'() {
-        when:
-        def client = MongoClients.create('mongodb://localhost/?streamType=Netty')
-
-        then:
-        client.settings.streamFactoryFactory instanceof NettyStreamFactoryFactory
-
-        cleanup:
-        client?.close()
-    }
-
-    @IgnoreIf({ javaVersion < 1.7 || getSslSettings().isEnabled() })
-    def 'should apply connection string to nio2 stream type'() {
-        when:
-        def client = MongoClients.create('mongodb://localhost/?streamType=NIO2')
-
-        then:
-        client.settings.streamFactoryFactory instanceof AsynchronousSocketChannelStreamFactoryFactory
 
         cleanup:
         client?.close()
@@ -196,30 +170,6 @@ class MongoClientsSpecification extends FunctionalSpecification {
         uri                                 | applicationName
         'mongodb://localhost'               | null
         'mongodb://localhost/?appname=app1' | 'app1'
-    }
-
-    @Unroll
-    def 'should respect the streamType over the system properties'() {
-        given:
-        def asyncType = System.getProperty('org.mongodb.async.type', null)
-        System.setProperty('org.mongodb.async.type', systemType)
-
-        when:
-        def client = MongoClients.create(uri)
-
-        then:
-        client.settings.getStreamFactoryFactory().getClass() == streamFactoryFactoryClass
-
-        cleanup:
-        client?.close()
-        if (asyncType != null) {
-            System.setProperty('org.mongodb.async.type', asyncType)
-        }
-
-        where:
-        uri                                     |  systemType | streamFactoryFactoryClass
-        'mongodb://localhost/?streamType=nio2'  | 'netty'     | AsynchronousSocketChannelStreamFactoryFactory
-        'mongodb://localhost/?streamType=netty' | 'nio2'      | NettyStreamFactoryFactory
     }
 
     @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) || !isStandalone() })
