@@ -21,7 +21,6 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.ServerSettings
@@ -51,10 +50,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.socketSettings == SocketSettings.builder().build()
         options.heartbeatSocketSettings == SocketSettings.builder().build()
         options.serverSettings == ServerSettings.builder().build()
-
-        System.getProperty('org.mongodb.async.type', 'nio2') == 'netty' ?
-        options.streamFactoryFactory instanceof NettyStreamFactoryFactory :
-        options.streamFactoryFactory instanceof AsynchronousSocketChannelStreamFactoryFactory
+        options.streamFactoryFactory == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')

@@ -32,6 +32,9 @@ import com.mongodb.operation.AsyncWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
@@ -40,15 +43,22 @@ class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientSettings settings;
     private final AsyncOperationExecutor executor;
+    private final Closeable externalResourceCloser;
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster) {
-        this(settings, cluster, createOperationExecutor(settings, cluster));
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final Closeable externalResourceCloser) {
+        this(settings, cluster, createOperationExecutor(settings, cluster), externalResourceCloser);
     }
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor) {
+        this(settings, cluster, executor, null);
+    }
+
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor,
+                    final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.executor = notNull("executor", executor);
+        this.externalResourceCloser = externalResourceCloser;
     }
 
     @Override
@@ -60,6 +70,14 @@ class MongoClientImpl implements MongoClient {
     @Override
     public void close() {
         cluster.close();
+        if (externalResourceCloser != null) {
+            try {
+                externalResourceCloser.close();
+            } catch (IOException e) {
+                LOGGER.warn("Exception closing resource", e);
+            }
+        }
+
     }
 
     @Override

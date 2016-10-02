@@ -89,6 +89,22 @@ class MongoClientSpecification extends Specification {
                 WriteConcern.MAJORITY, ReadConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
+
+    def 'should cleanly close the external resource closer on close'() {
+        given:
+        def closed = false
+        def client = new MongoClientImpl(MongoClientSettings.builder().build(), Mock(Cluster), {
+            closed = true
+            throw new IOException()
+        })
+
+        when:
+        client.close()
+
+        then:
+        closed
+    }
+
     def 'default codec registry should contain all supported providers'() {
         given:
         def codecRegistry = MongoClients.getDefaultCodecRegistry()
