@@ -22,6 +22,7 @@ import com.mongodb.TagSet;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
@@ -39,6 +40,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -165,29 +167,110 @@ public class ServerDescriptionTest {
 
     @Test
     public void testObjectOverrides() throws UnknownHostException {
-        ServerDescription.Builder builder = builder()
-                                                             .address(new ServerAddress())
-                                                             .type(ServerType.SHARD_ROUTER)
-                                                             .tagSet(new TagSet(asList(new Tag("dc", "ny"))))
-                                                                     .setName("test")
-                                                                     .maxDocumentSize(100)
-                                                                     .roundTripTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
-                                                                     .primary("localhost:27017")
-                                                                     .canonicalAddress("localhost:27017")
-                                                                     .hosts(new HashSet<String>(asList("localhost:27017",
-                                                                                                       "localhost:27018")))
-                                                                     .passives(new HashSet<String>(asList("localhost:27019")))
-                                                                     .ok(true)
-                                                                     .state(CONNECTED)
-                                                                     .version(new ServerVersion(asList(2, 4, 1)))
-                                                                     .minWireVersion(1)
-                                                             .lastWriteDate(new Date())
-                                                             .maxWireVersion(2)
-                                                             .electionId(new ObjectId())
-                                                             .setVersion(new Integer(2));
-        assertEquals(builder.build(), builder.build());
-        assertEquals(builder.build().hashCode(), builder.build().hashCode());
-        assertTrue(builder.build().toString().startsWith("ServerDescription"));
+        ServerDescription.Builder builder = createBuilder();
+        ServerDescription description = builder.build();
+
+        assertEquals(description.hashCode(), builder.build().hashCode());
+        assertTrue(description.toString().startsWith("ServerDescription"));
+
+        assertEquals(description, description);
+
+        assertNotEquals(description, null);
+        assertNotEquals(description, "not a ServerDescription instance");
+        assertEquals(description, builder.build());
+
+        ServerDescription otherDescription = createBuilder().address(new ServerAddress("localhost:27018")).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().type(ServerType.STANDALONE).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().tagSet(null).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().setName("test2").build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().maxDocumentSize(200).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().primary("localhost:27018").build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().canonicalAddress("localhost:27018").build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().hosts(new HashSet<String>(asList("localhost:27018"))).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().arbiters(new HashSet<String>(asList("localhost:27018"))).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().passives(new HashSet<String>(asList("localhost:27018"))).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().ok(false).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().state(CONNECTING).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().version(new ServerVersion(asList(2, 6, 1))).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().minWireVersion(2).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().maxWireVersion(5).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().electionId(new ObjectId()).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().setVersion(new Integer(3)).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        // test exception state changes
+        assertNotEquals(createBuilder().exception(new IOException()).build(),
+                createBuilder().exception(new RuntimeException()).build());
+        assertNotEquals(createBuilder().exception(new IOException("message one")).build(),
+                createBuilder().exception(new IOException("message two")).build());
+
+        // different lastUpdateTime and lastWriteDate are considered not equal but equivalent state
+        otherDescription = createBuilder().lastUpdateTimeNanos(Long.MAX_VALUE).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().lastWriteDate(new Date()).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        // roundTripTime is considered equals and equivalent state
+        otherDescription = createBuilder().roundTripTime(62, TimeUnit.MILLISECONDS).build();
+        assertEquals(builder.build(), otherDescription);
+    }
+
+    private ServerDescription.Builder createBuilder() {
+        return builder().address(new ServerAddress())
+                       .type(ServerType.SHARD_ROUTER)
+                       .tagSet(new TagSet(asList(new Tag("dc", "ny"))))
+                       .setName("test")
+                       .maxDocumentSize(100)
+                       .roundTripTime(50000, TimeUnit.NANOSECONDS)
+                       .primary("localhost:27017")
+                       .canonicalAddress("localhost:27017")
+                       .hosts(new HashSet<String>(asList("localhost:27017", "localhost:27018")))
+                       .passives(new HashSet<String>(asList("localhost:27019")))
+                       .arbiters(new HashSet<String>(asList("localhost:27020")))
+                       .ok(true)
+                       .state(CONNECTED)
+                       .version(new ServerVersion(asList(2, 4, 1)))
+                       .minWireVersion(1)
+                       .lastWriteDate(new Date())
+                       .maxWireVersion(2)
+                       .electionId(new ObjectId("abcdabcdabcdabcdabcdabcd"))
+                       .setVersion(new Integer(2))
+                       .lastUpdateTimeNanos(1)
+                       .lastWriteDate(new Date(42))
+                       .roundTripTime(56, TimeUnit.MILLISECONDS);
     }
 
     @Test

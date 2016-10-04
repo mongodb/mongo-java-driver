@@ -104,11 +104,8 @@ class DefaultServerMonitor implements ServerMonitor {
             InternalConnection connection = null;
             try {
                 ServerDescription currentServerDescription = getConnectingServerDescription(null);
-                Throwable currentException = null;
                 while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
-                    Throwable previousException = currentException;
-                    currentException = null;
                     try {
                         if (connection == null) {
                             connection = internalConnectionFactory.create(serverId);
@@ -142,14 +139,14 @@ class DefaultServerMonitor implements ServerMonitor {
                         }
                     } catch (Throwable t) {
                         averageRoundTripTime.reset();
-                        currentException = t;
                         currentServerDescription = getConnectingServerDescription(t);
                     }
 
                     if (!isClosed) {
                         try {
-                            logStateChange(previousServerDescription, previousException, currentServerDescription, currentException);
-                            sendStateChangedEvent(previousServerDescription, currentServerDescription);
+                            logStateChange(previousServerDescription, currentServerDescription);
+                            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
+                                                                                                       currentServerDescription));
                         } catch (Throwable t) {
                             LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
                         }
@@ -191,23 +188,12 @@ class DefaultServerMonitor implements ServerMonitor {
             }
         }
 
-        private void sendStateChangedEvent(final ServerDescription previousServerDescription,
-                                           final ServerDescription currentServerDescription) {
-            if (stateHasChanged(previousServerDescription, currentServerDescription)) {
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
-                                                                                    currentServerDescription));
-            }
-        }
-
-        private void logStateChange(final ServerDescription previousServerDescription, final Throwable previousException,
-                                    final ServerDescription currentServerDescription, final Throwable currentException) {
-            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
-            // so this will not spam the logs too hard.
-            if (descriptionHasChanged(previousServerDescription, currentServerDescription)
-                || exceptionHasChanged(previousException, currentException)) {
-                if (currentException != null) {
+        private void logStateChange(final ServerDescription previousServerDescription,
+                                    final ServerDescription currentServerDescription) {
+            if (shouldLogStageChange(previousServerDescription, currentServerDescription)) {
+                if (currentServerDescription.getException() != null) {
                     LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
-                                currentException);
+                                currentServerDescription.getException());
                 } else {
                     LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
@@ -242,27 +228,67 @@ class DefaultServerMonitor implements ServerMonitor {
         }
     }
 
-    static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
-                                         final ServerDescription currentServerDescription) {
-        return !previousServerDescription.equals(currentServerDescription);
-    }
+    static boolean shouldLogStageChange(final ServerDescription previous, final ServerDescription current) {
 
-    static boolean stateHasChanged(final ServerDescription previousServerDescription, final ServerDescription currentServerDescription) {
-        return descriptionHasChanged(previousServerDescription, currentServerDescription)
-               || previousServerDescription.getRoundTripTimeNanos() != currentServerDescription.getRoundTripTimeNanos();
-    }
-
-    static boolean exceptionHasChanged(final Throwable previousException, final Throwable currentException) {
-        if (currentException == null) {
-            return previousException != null;
-        } else if (previousException == null) {
+        if (previous.isOk() != current.isOk()) {
             return true;
-        } else if (!currentException.getClass().equals(previousException.getClass())) {
-            return true;
-        } else if (currentException.getMessage() == null) {
-            return previousException.getMessage() != null;
-        } else {
-            return !currentException.getMessage().equals(previousException.getMessage());
         }
+        if (!previous.getAddress().equals(current.getAddress())) {
+            return true;
+        }
+        if (previous.getCanonicalAddress() != null
+                    ? !previous.getCanonicalAddress().equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
+            return true;
+        }
+        if (!previous.getHosts().equals(current.getHosts())) {
+            return true;
+        }
+        if (!previous.getArbiters().equals(current.getArbiters())) {
+            return true;
+        }
+        if (!previous.getPassives().equals(current.getPassives())) {
+            return true;
+        }
+        if (previous.getPrimary() != null ? !previous.getPrimary().equals(current.getPrimary()) : current.getPrimary() != null) {
+            return true;
+        }
+        if (previous.getSetName() != null ? !previous.getSetName().equals(current.getSetName()) : current.getSetName() != null) {
+            return true;
+        }
+        if (previous.getState() != current.getState()) {
+            return true;
+        }
+        if (!previous.getTagSet().equals(current.getTagSet())) {
+            return true;
+        }
+        if (previous.getType() != current.getType()) {
+            return true;
+        }
+        if (!previous.getVersion().equals(current.getVersion())) {
+            return true;
+        }
+        if (previous.getElectionId() != null
+                    ? !previous.getElectionId().equals(current.getElectionId()) : current.getElectionId() != null) {
+            return true;
+        }
+        if (previous.getSetVersion() != null
+                    ? !previous.getSetVersion().equals(current.getSetVersion()) : current.getSetVersion() != null) {
+            return true;
+        }
+
+        // Compare class equality and message as exceptions rarely override equals
+        Class<?> thisExceptionClass = previous.getException() != null ? previous.getException().getClass() : null;
+        Class<?> thatExceptionClass = current.getException() != null ? current.getException().getClass() : null;
+        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+            return true;
+        }
+
+        String thisExceptionMessage = previous.getException() != null ? previous.getException().getMessage() : null;
+        String thatExceptionMessage = current.getException() != null ? current.getException().getMessage() : null;
+        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+            return true;
+        }
+
+        return false;
     }
 }
