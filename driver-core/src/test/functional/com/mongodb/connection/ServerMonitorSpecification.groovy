@@ -16,24 +16,28 @@
 
 package com.mongodb.connection
 
-import com.mongodb.MongoException
 import com.mongodb.MongoSocketException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
+import com.mongodb.Tag
+import com.mongodb.TagSet
 import com.mongodb.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.types.ObjectId
 
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
-import static DefaultServerMonitor.exceptionHasChanged
-import static DefaultServerMonitor.stateHasChanged
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.DefaultServerMonitor.shouldLogStageChange
+import static com.mongodb.connection.ServerConnectionState.CONNECTED
+import static com.mongodb.connection.ServerConnectionState.CONNECTING
+import static com.mongodb.connection.ServerDescription.builder
+import static java.util.Arrays.asList
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
@@ -84,70 +88,121 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         newDescription.exception instanceof MongoSocketException
     }
 
-    def 'should report exception has changed when the current and previous are different'() {
+    def 'should log state change if significant properties have changed'() {
+        given:
+        ServerDescription.Builder builder = createBuilder();
+        ServerDescription description = builder.build();
+        ServerDescription otherDescription
+
         expect:
-        exceptionHasChanged(null, new NullPointerException())
-        exceptionHasChanged(new NullPointerException(), null)
-        exceptionHasChanged(new SocketException(), new SocketException('A message'))
-        exceptionHasChanged(new SocketException('A message'), new SocketException())
-        exceptionHasChanged(new SocketException('A message'), new MongoException('A message'))
-        exceptionHasChanged(new SocketException('A message'), new SocketException('A different message'))
+        !shouldLogStageChange(description, builder.build())
+
+        when:
+        otherDescription = createBuilder().address(new ServerAddress('localhost:27018')).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().type(ServerType.STANDALONE).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().tagSet(null).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().setName('test2').build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().primary('localhost:27018').build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().canonicalAddress('localhost:27018').build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().hosts(new HashSet<String>(asList('localhost:27018'))).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().arbiters(new HashSet<String>(asList('localhost:27018'))).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().passives(new HashSet<String>(asList('localhost:27018'))).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().ok(false).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().state(CONNECTING).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().version(new ServerVersion(asList(2, 6, 1))).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().electionId(new ObjectId()).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        when:
+        otherDescription = createBuilder().setVersion(3).build();
+
+        then:
+        shouldLogStageChange(description, otherDescription)
+
+        // test exception state changes
+        shouldLogStageChange(createBuilder().exception(new IOException()).build(),
+                createBuilder().exception(new RuntimeException()).build())
+        shouldLogStageChange(createBuilder().exception(new IOException('message one')).build(),
+                createBuilder().exception(new IOException('message two')).build())
     }
 
-    def 'should report exception has not changed when the current and previous are the same'() {
-        expect:
-        !exceptionHasChanged(null, null)
-        !exceptionHasChanged(new NullPointerException(), new NullPointerException())
-        !exceptionHasChanged(new MongoException('A message'), new MongoException('A message'))
-    }
-
-    def 'should report state has changed if descriptions are different'() {
-        expect:
-        stateHasChanged(ServerDescription.builder()
-                                         .type(ServerType.UNKNOWN)
-                                         .state(ServerConnectionState.CONNECTING)
-                                         .address(new ServerAddress())
-                                         .build(),
-                        ServerDescription.builder()
-                                         .type(ServerType.STANDALONE)
-                                         .state(ServerConnectionState.CONNECTED)
-                                         .address(new ServerAddress())
-                                         .roundTripTime(5, TimeUnit.MILLISECONDS)
-                                         .build());
-    }
-
-    def 'should report state has changed if latencies are different'() {
-        expect:
-        stateHasChanged(ServerDescription.builder()
-                                         .type(ServerType.STANDALONE)
-                                         .state(ServerConnectionState.CONNECTED)
-                                         .address(new ServerAddress())
-                                         .roundTripTime(5, TimeUnit.MILLISECONDS)
-                                         .build(),
-                        ServerDescription.builder()
-                                         .type(ServerType.STANDALONE)
-                                         .state(ServerConnectionState.CONNECTED)
-                                         .address(new ServerAddress())
-                                         .roundTripTime(6, TimeUnit.MILLISECONDS)
-                                         .build());
-    }
-
-    def 'should report state has not changed if descriptions and latencies are the same'() {
-        expect:
-        !stateHasChanged(ServerDescription.builder()
-                                          .type(ServerType.STANDALONE)
-                                          .state(ServerConnectionState.CONNECTED)
-                                          .address(new ServerAddress())
-                                          .roundTripTime(5, TimeUnit.MILLISECONDS)
-                                          .lastUpdateTimeNanos(42L)
-                                          .build(),
-                         ServerDescription.builder()
-                                          .type(ServerType.STANDALONE)
-                                          .state(ServerConnectionState.CONNECTED)
-                                          .address(new ServerAddress())
-                                          .roundTripTime(5, TimeUnit.MILLISECONDS)
-                                          .lastUpdateTimeNanos(42L)
-                                          .build());
+    private static ServerDescription.Builder createBuilder() {
+        builder().ok(true)
+                .state(CONNECTED)
+                .address(new ServerAddress())
+                .type(ServerType.SHARD_ROUTER)
+                .tagSet(new TagSet(asList(new Tag('dc', 'ny'))))
+                .setName('test')
+                .primary('localhost:27017')
+                .canonicalAddress('localhost:27017')
+                .hosts(new HashSet<String>(asList('localhost:27017', 'localhost:27018')))
+                .passives(new HashSet<String>(asList('localhost:27019')))
+                .arbiters(new HashSet<String>(asList('localhost:27020')))
+                .version(new ServerVersion(asList(2, 4, 1)))
+                .electionId(new ObjectId('abcdabcdabcdabcdabcdabcd'))
+                .setVersion(2)
     }
 
     def initializeServerMonitor(ServerAddress address) {
