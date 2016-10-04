@@ -16,6 +16,10 @@
 
 package org.bson;
 
+import org.bson.codecs.BsonArrayCodec;
+import org.bson.codecs.DecoderContext;
+import org.bson.json.JsonReader;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +50,20 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      */
     public BsonArray() {
         values = new ArrayList<BsonValue>();
+    }
+
+    /**
+     * Parses a string in MongoDB Extended JSON format to a {@code BsonArray}
+     *
+     * @param json the JSON string
+     * @return a corresponding {@code BsonArray} object
+     * @see org.bson.json.JsonReader
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
+     *
+     * @since 3.4
+     */
+    public static BsonArray parse(final String json) {
+        return new BsonArrayCodec().decode(new JsonReader(json), DecoderContext.builder().build());
     }
 
     /**
