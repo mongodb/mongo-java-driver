@@ -54,6 +54,21 @@ public final class Filters {
     }
 
     /**
+     * Creates a filter that matches all documents where the value of _id field equalss the specified value. Note that this does
+     * actually generate a $eq operator, as the query language doesn't require it.
+     *
+     * @param value     the value
+     * @param <TItem>   the value type
+     * @return the filter
+     * @mongodb.driver.manual reference/operator/query/eq $eq
+     *
+     * @since 3.4
+     */
+    public static <TItem> Bson eq(final TItem value) {
+        return eq("_id", value);
+    }
+
+    /**
      * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this does
      * actually generate a $eq operator, as the query language doesn't require it.
      *
