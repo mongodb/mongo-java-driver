@@ -46,31 +46,31 @@ class ReadPreferenceSpecification extends Specification {
     static final TAG_SET = new TagSet(new Tag('rack', '1'))
     static final TAG_SET_LIST = [TAG_SET]
 
-    def 'should have correct max staleness'() {
+    def 'should have correct max staleness and tag set list'() {
         given:
 
         expect:
-        ((TaggableReadPreference) readPreference).getMaxStaleness(MILLISECONDS) == maxStalenessMS
+        ((TaggableReadPreference) readPreference).getMaxStaleness(MILLISECONDS) == (Long) maxStalenessMS
         ((TaggableReadPreference) readPreference).getTagSetList() == tagSetList
 
         where:
-        readPreference                                               | maxStalenessMS | tagSetList
-        ReadPreference.primaryPreferred()                            | 0              | emptyList()
-        ReadPreference.secondary()                                   | 0              | emptyList()
-        ReadPreference.secondaryPreferred()                          | 0              | emptyList()
-        ReadPreference.nearest()                                     | 0              | emptyList()
-        ReadPreference.secondary(10, SECONDS)                        | 10000          | emptyList()
-        ReadPreference.secondaryPreferred(10, SECONDS)               | 10000          | emptyList()
-        ReadPreference.primaryPreferred(10, SECONDS)                 | 10000          | emptyList()
-        ReadPreference.nearest(10, SECONDS)                          | 10000          | emptyList()
-        ReadPreference.secondary(TAG_SET, 10, SECONDS)               | 10000          | TAG_SET_LIST
-        ReadPreference.secondaryPreferred(TAG_SET, 10, SECONDS)      | 10000          | TAG_SET_LIST
-        ReadPreference.primaryPreferred(TAG_SET, 10, SECONDS)        | 10000          | TAG_SET_LIST
-        ReadPreference.nearest(TAG_SET, 10, SECONDS)                 | 10000          | TAG_SET_LIST
-        ReadPreference.secondary(TAG_SET_LIST, 10, SECONDS)          | 10000          | TAG_SET_LIST
-        ReadPreference.secondaryPreferred(TAG_SET_LIST, 10, SECONDS) | 10000          | TAG_SET_LIST
-        ReadPreference.primaryPreferred(TAG_SET_LIST, 10, SECONDS)   | 10000          | TAG_SET_LIST
-        ReadPreference.nearest(TAG_SET_LIST, 10, SECONDS)            | 10000          | TAG_SET_LIST
+        readPreference                                                 | maxStalenessMS | tagSetList
+        ReadPreference.primaryPreferred()                              | null           | emptyList()
+        ReadPreference.secondary()                                     | null           | emptyList()
+        ReadPreference.secondaryPreferred()                            | null           | emptyList()
+        ReadPreference.nearest()                                       | null           | emptyList()
+        ReadPreference.secondary(10, SECONDS)                          | 10000          | emptyList()
+        ReadPreference.secondaryPreferred(10, SECONDS)                 | 10000          | emptyList()
+        ReadPreference.primaryPreferred(10, SECONDS)                   | 10000          | emptyList()
+        ReadPreference.nearest(10, SECONDS)                            | 10000          | emptyList()
+        ReadPreference.secondary(TAG_SET, 10, SECONDS)                 | 10000          | TAG_SET_LIST
+        ReadPreference.secondaryPreferred(TAG_SET, 10, SECONDS)        | 10000          | TAG_SET_LIST
+        ReadPreference.primaryPreferred(TAG_SET, 10, SECONDS)          | 10000          | TAG_SET_LIST
+        ReadPreference.nearest(TAG_SET, 10, SECONDS)                   | 10000          | TAG_SET_LIST
+        ReadPreference.secondary(TAG_SET_LIST, 10, SECONDS)            | 10000          | TAG_SET_LIST
+        ReadPreference.secondaryPreferred(TAG_SET_LIST, 10, SECONDS)   | 10000          | TAG_SET_LIST
+        ReadPreference.primaryPreferred(TAG_SET_LIST, 10, SECONDS)     | 10000          | TAG_SET_LIST
+        ReadPreference.nearest(TAG_SET_LIST, 10, SECONDS)              | 10000          | TAG_SET_LIST
     }
 
     def 'should throw if max staleness is negative'() {
@@ -134,16 +134,21 @@ class ReadPreferenceSpecification extends Specification {
         ReadPreference.nearest(tags) == ReadPreference.valueOf('nearest', tags)
     }
 
+    def 'should have correct valueOf with max staleness'() {
+        expect:
+        ReadPreference.secondary(10, SECONDS) == ReadPreference.valueOf('secondary', [], 10, SECONDS)
+    }
+
     def 'should convert read preference with max staleness to correct documents'() {
         expect:
         readPreference.toDocument() == document
 
         where:
-        readPreference                                  | document
-        ReadPreference.primaryPreferred(10, SECONDS)    | parse('{mode : "primaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
-        ReadPreference.secondary(10, SECONDS)           | parse('{mode : "secondary", maxStalenessMS : {$numberLong : "10000" }}')
-        ReadPreference.secondaryPreferred(10, SECONDS)  | parse('{mode : "secondaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
-        ReadPreference.nearest(10, SECONDS)             | parse('{mode : "nearest", maxStalenessMS : {$numberLong : "10000" }}')
+        readPreference                                 | document
+        ReadPreference.primaryPreferred(10, SECONDS)   | parse('{mode : "primaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.secondary(10, SECONDS)          | parse('{mode : "secondary", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.secondaryPreferred(10, SECONDS) | parse('{mode : "secondaryPreferred", maxStalenessMS : {$numberLong : "10000" }}')
+        ReadPreference.nearest(10, SECONDS)            | parse('{mode : "nearest", maxStalenessMS : {$numberLong : "10000" }}')
     }
 
     def 'should convert read preferences with a single tag set to correct documents'() {
@@ -151,12 +156,12 @@ class ReadPreferenceSpecification extends Specification {
         readPreference.toDocument() == document
 
         where:
-        readPreference                                                     | document
-        ReadPreference.primary()                                           | new BsonDocument('mode', new BsonString('primary'))
-        ReadPreference.primaryPreferred()                                  | new BsonDocument('mode', new BsonString('primaryPreferred'))
-        ReadPreference.secondary()                                         | new BsonDocument('mode', new BsonString('secondary'))
-        ReadPreference.secondaryPreferred()                                | new BsonDocument('mode', new BsonString('secondaryPreferred'))
-        ReadPreference.nearest()                                           | new BsonDocument('mode', new BsonString('nearest'))
+        readPreference                                                   | document
+        ReadPreference.primary()                                         | new BsonDocument('mode', new BsonString('primary'))
+        ReadPreference.primaryPreferred()                                | new BsonDocument('mode', new BsonString('primaryPreferred'))
+        ReadPreference.secondary()                                       | new BsonDocument('mode', new BsonString('secondary'))
+        ReadPreference.secondaryPreferred()                              | new BsonDocument('mode', new BsonString('secondaryPreferred'))
+        ReadPreference.nearest()                                         | new BsonDocument('mode', new BsonString('nearest'))
         ReadPreference.primaryPreferred(
                 new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('primaryPreferred'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
@@ -211,5 +216,18 @@ class ReadPreferenceSpecification extends Specification {
                  new TagSet([new Tag('dc', 'ca'), new Tag('rack', '2')])]) | new BsonDocument('mode', new BsonString('nearest'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1')),
                                                new BsonDocument('dc', new BsonString('ca')).append('rack', new BsonString('2'))]))
+    }
+
+    def 'different read preferences should have different hash codes'() {
+        expect:
+        first.hashCode() != second.hashCode()
+
+        where:
+        first                                                         | second
+        ReadPreference.primary()                                      | ReadPreference.secondary()
+        ReadPreference.secondary()                                    | ReadPreference.nearest()
+        ReadPreference.secondary()                                    | ReadPreference.secondary([new TagSet([new Tag('dc', 'ny')])])
+        ReadPreference.secondary([new TagSet([new Tag('dc', 'ny')])]) | ReadPreference.secondary([new TagSet([new Tag('dc', 'la')])])
+        ReadPreference.secondary()                                    | ReadPreference.secondary(1000, MILLISECONDS)
     }
 }

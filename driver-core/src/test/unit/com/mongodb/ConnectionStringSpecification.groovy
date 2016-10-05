@@ -316,6 +316,12 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/' +
                 '?readPreference=secondary' +
                 '&maxStalenessMS=1')                                     | secondary(1, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessMS=0')                                     | secondary(0, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessMS=-1')                                    | secondary()
     }
 
     @Unroll
@@ -379,6 +385,7 @@ class ConnectionStringSpecification extends Specification {
     def 'should be not equal to another ConnectionString with the different string values'() {
         expect:
         uri1 != uri2
+        uri1.hashCode() != uri2.hashCode()
 
         where:
         uri1                                                        | uri2

@@ -137,7 +137,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </li>
  * <li>{@code maxStalenessMS=ms}. The maximum staleness in milliseconds. For use with any non-primary read preference, the driver estimates
  * the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those secondaries
- * whose staleness is less than or equal to maxStalenessMS.  The default is 0, meaning there is no staleness check.
+ * whose staleness is less than or equal to maxStalenessMS.  Not providing the parameter or explicitly setting it to -1 indicates that
+ * there should be no max staleness check.
  * </li>
  * </ul>
  * <p>Authentication configuration:</p>
