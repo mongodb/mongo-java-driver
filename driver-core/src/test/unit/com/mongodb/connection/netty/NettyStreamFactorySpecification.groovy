@@ -31,7 +31,7 @@ import spock.lang.Specification
 class NettyStreamFactorySpecification extends Specification {
 
     private static final SOCKET_SETTINGS = SocketSettings.builder().keepAlive(true).build()
-    private static final SSL_SETTINGS = SslSettings.builder().enabled(true).build()
+    private static final SSL_SETTINGS = SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()
     private static final EVENT_LOOP_GROUP = new OioEventLoopGroup()
     private static final SOCKET_CHANNEL_CLASS = OioSocketChannel
     private static final ALLOCATOR = UnpooledByteBufAllocator.DEFAULT
