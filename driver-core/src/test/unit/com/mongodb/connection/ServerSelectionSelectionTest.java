@@ -224,10 +224,13 @@ public class ServerSelectionSelectionTest {
             ReadPreference readPreference;
             if (readPreferenceDefinition.getString("mode").getValue().equals("Primary")) {
                 readPreference = ReadPreference.valueOf("Primary");
-            } else {
+            } else if (readPreferenceDefinition.containsKey("maxStalenessMS")) {
                 readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
                         buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())),
-                        readPreferenceDefinition.getNumber("maxStalenessMS" , new BsonInt64(0)).longValue(), TimeUnit.MILLISECONDS);
+                        readPreferenceDefinition.getNumber("maxStalenessMS").longValue(), TimeUnit.MILLISECONDS);
+            } else {
+                readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
+                        buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())));
             }
             return new ReadPreferenceServerSelector(readPreference);
         }

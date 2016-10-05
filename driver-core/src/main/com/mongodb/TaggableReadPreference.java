@@ -40,16 +40,16 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
     private final List<TagSet> tagSetList = new ArrayList<TagSet>();
-    private final long maxStalenessMS;
+    private final Long maxStalenessMS;
 
     TaggableReadPreference() {
-        maxStalenessMS = 0;
+        this.maxStalenessMS = null;
     }
 
-    TaggableReadPreference(final List<TagSet> tagSetList, final long maxStalenessMS) {
+    TaggableReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
         notNull("tagSetList", tagSetList);
-        isTrueArgument("maxStaleness >= 0", maxStalenessMS >= 0);
-        this.maxStalenessMS = maxStalenessMS;
+        isTrueArgument("maxStaleness is null or >= 0", maxStaleness == null || maxStaleness >= 0);
+        this.maxStalenessMS = maxStaleness == null ? null : MILLISECONDS.convert(maxStaleness, timeUnit);
 
         for (final TagSet tagSet : tagSetList) {
             this.tagSetList.add(tagSet);
@@ -69,7 +69,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
             readPrefObject.put("tags", tagsListToBsonArray());
         }
 
-        if (maxStalenessMS != 0) {
+        if (maxStalenessMS != null) {
             readPrefObject.put("maxStalenessMS", new BsonInt64(maxStalenessMS));
         }
         return readPrefObject;
@@ -89,13 +89,16 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * Gets the maximum acceptable staleness of a secondary in order to be considered for read operations.
      *
      * @param timeUnit the time unit in which to return the value
-     * @return the maximum acceptable staleness in the given time unit. The default is 0, meaning there is no staleness check.
+     * @return the maximum acceptable staleness in the given time unit, or null if the value is not set
      *
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public long getMaxStaleness(final TimeUnit timeUnit) {
+    public Long getMaxStaleness(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
+        if (maxStalenessMS == null) {
+            return null;
+        }
         return timeUnit.convert(maxStalenessMS, TimeUnit.MILLISECONDS);
     }
 
@@ -104,7 +107,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return "ReadPreference{"
                        + "name=" + getName()
                        + (tagSetList.isEmpty() ? "" : ", tagSetList=" + tagSetList)
-                       + (maxStalenessMS == 0 ? "" : ", maxStalenessMS=" + maxStalenessMS)
+                       + (maxStalenessMS == null ? "" : ", maxStalenessMS=" + maxStalenessMS)
                        + '}';
     }
 
@@ -119,7 +122,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         TaggableReadPreference that = (TaggableReadPreference) o;
 
-        if (maxStalenessMS != that.maxStalenessMS) {
+        if (maxStalenessMS != null ? !maxStalenessMS.equals(that.maxStalenessMS) : that.maxStalenessMS != null) {
             return false;
         }
         if (!tagSetList.equals(that.tagSetList)) {
@@ -133,7 +136,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     public int hashCode() {
         int result = tagSetList.hashCode();
         result = 31 * result + getName().hashCode();
-        result = 31 * result + (int) (maxStalenessMS ^ (maxStalenessMS >>> 32));
+        result = 31 * result + (maxStalenessMS != null ? maxStalenessMS.hashCode() : 0);
         return result;
     }
 
@@ -154,7 +157,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     protected List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
                                                          final List<ServerDescription> servers) {
-        if (getMaxStaleness(MILLISECONDS) == 0) {
+        if (getMaxStaleness(MILLISECONDS) == null) {
             return servers;
         }
 
@@ -248,8 +251,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(final List<TagSet> tagSetList, final long maxStalenessMS) {
-            super(tagSetList, maxStalenessMS);
+        SecondaryReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+            super(tagSetList, maxStaleness, timeUnit);
         }
 
         @Override
@@ -283,8 +286,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(final List<TagSet> tagSetList, final long maxStalenessMS) {
-            super(tagSetList, maxStalenessMS);
+        SecondaryPreferredReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+            super(tagSetList, maxStaleness, timeUnit);
         }
 
         @Override
@@ -310,8 +313,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(final List<TagSet> tagSetList, final long maxStalenessMS) {
-            super(tagSetList, maxStalenessMS);
+        NearestReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+            super(tagSetList, maxStaleness, timeUnit);
         }
 
 
@@ -347,8 +350,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         PrimaryPreferredReadPreference() {
         }
 
-        PrimaryPreferredReadPreference(final List<TagSet> tagSetList, final long maxStalenessMS) {
-            super(tagSetList, maxStalenessMS);
+        PrimaryPreferredReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+            super(tagSetList, maxStaleness, timeUnit);
         }
 
         @Override
