@@ -140,6 +140,24 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
+    def 'should set flags for use power of two sizes'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .usePowerOf2Sizes(true)
+
+        when:
+        execute(operation, async)
+
+        then:
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
+            it -> it.getString('name').value == getCollectionName()
+        }.getDocument('options').getNumber('flags').intValue() == 1
+
+        where:
+        async << [true, false]
+    }
+
     def 'should create capped collection'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -148,7 +166,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
                 .autoIndex(false)
                 .maxDocuments(100)
                 .sizeInBytes(40 * 1024)
-                .usePowerOf2Sizes(true)
 
         when:
         execute(operation, async)
