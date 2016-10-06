@@ -29,6 +29,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -37,8 +38,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
@@ -200,7 +201,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * @return usePowerOf2Sizes became the default allocation strategy
      * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
+     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
+    @Deprecated
     public Boolean isUsePowerOf2Sizes() {
         return usePowerOf2Sizes;
     }
@@ -214,7 +217,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * @return this
      * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
+     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
+    @Deprecated
     public CreateCollectionOperation usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
@@ -414,7 +419,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             putIfNotZero(document, "max", maxDocuments);
         }
         if (usePowerOf2Sizes != null) {
-            document.put("usePowerOfTwoSizes", BsonBoolean.valueOf(usePowerOf2Sizes));
+            document.put("flags", new BsonInt32(1));
         }
         if (storageEngineOptions != null) {
             document.put("storageEngine", storageEngineOptions);
