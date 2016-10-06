@@ -163,11 +163,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         stats.getBoolean('capped')
         stats.getInteger('max') == 100
-        if (serverVersionAtLeast([2, 4, 0])) {
-            stats.getInteger('storageSize') == 40 * 1024
-        } else {
-            stats.getInteger('storageSize') >= 40 * 1024 && stats.getInteger('storageSize') <= 41 * 1024
-        }
+        stats.getInteger('storageSize') == 40 * 1024
 
         where:
         async << [true, false]
