@@ -180,7 +180,8 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         stats.getBoolean('capped')
         stats.getInteger('max') == 100
-        stats.getInteger('storageSize') == 40 * 1024
+        // Starting in 3.0, the size in bytes moved from storageSize to maxSize
+        stats.getInteger('maxSize') == 40 * 1024 || stats.getInteger('storageSize') == 40 * 1024
 
         where:
         async << [true, false]
