@@ -17,11 +17,14 @@
 package com.mongodb
 
 import com.mongodb.client.model.Collation
+import com.mongodb.client.model.DBCollectionFindOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.Fixture.getMongoClient
@@ -109,29 +112,15 @@ class DBCursorSpecification extends Specification {
 
     def 'find should create the correct FindOperation'() {
         given:
-        def dbObject = new BasicDBObject('_id', 1)
-        def executor = new TestOperationExecutor([Stub(BatchCursor) {
-            def count = 0
-            next() >> {
-                count++
-                [dbObject]
-            }
-            hasNext() >> {
-                count == 0
-            }
-            getServerCursor() >> {
-                null
-            }
-        }]);
+        def executor = new TestOperationExecutor([stubBatchCursor()]);
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
 
         when:
-        def results = cursor.toArray()
+        cursor.toArray()
 
         then:
-        results == [dbObject]
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                                                                 .readConcern(ReadConcern.MAJORITY)
                                                                 .filter(new BsonDocument())
@@ -139,35 +128,122 @@ class DBCursorSpecification extends Specification {
                                                                 .modifiers(new BsonDocument()))
     }
 
+
     def 'one should create the correct FindOperation'() {
         given:
-        def dbObject = new BasicDBObject('_id', 1)
-        def executor = new TestOperationExecutor([Stub(BatchCursor) {
-            def count = 0
-            next() >> {
-                count++
-                [dbObject]
-            }
-            hasNext() >> {
-                count == 0
-            }
-            getServerCursor() >> new ServerCursor(12L, new ServerAddress())
-        }]);
+        def executor = new TestOperationExecutor([stubBatchCursor()]);
         def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
         cursor.setReadConcern(ReadConcern.MAJORITY)
 
         when:
-        def result = cursor.one()
+        cursor.one()
 
         then:
-        result == dbObject
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                                                                 .readConcern(ReadConcern.MAJORITY)
                                                                 .limit(-1)
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
                                                                 .modifiers(new BsonDocument()))
+    }
+
+    def 'DBCollectionFindOptions should be used to create the expected operation'() {
+        given:
+        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def collation = Collation.builder().locale('en').build()
+        def cursorType = CursorType.NonTailable
+        def filter = new BasicDBObject()
+        def projection = BasicDBObject.parse('{a: 1, _id: 0}')
+        def sort = BasicDBObject.parse('{a: 1}')
+        def modifiers = BasicDBObject.parse('{$comment: 1}')
+        def bsonFilter = new BsonDocument()
+        def bsonModifiers = BsonDocument.parse(modifiers.toJson())
+        def bsonProjection = BsonDocument.parse(projection.toJson())
+        def bsonSort = BsonDocument.parse(sort.toJson())
+        def readConcern = ReadConcern.LOCAL
+        def readPreference = ReadPreference.nearest()
+        def findOptions = new DBCollectionFindOptions()
+                .batchSize(1)
+                .collation(collation)
+                .cursorType(cursorType)
+                .limit(1)
+                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
+                .maxTime(1, TimeUnit.MILLISECONDS)
+                .modifiers(modifiers)
+                .noCursorTimeout(true)
+                .oplogReplay(true)
+                .partial(true)
+                .projection(projection)
+                .readConcern(readConcern)
+                .readPreference(readPreference)
+                .skip(1)
+                .sort(sort)
+        def cursor = new DBCursor(collection, filter, findOptions)
+
+        when:
+        cursor.toArray()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .batchSize(1)
+                .collation(collation)
+                .cursorType(cursorType)
+                .filter(bsonFilter)
+                .limit(1)
+                .maxAwaitTime(1, TimeUnit.MILLISECONDS)
+                .maxTime(1, TimeUnit.MILLISECONDS)
+                .modifiers(bsonModifiers)
+                .noCursorTimeout(true)
+                .oplogReplay(true)
+                .partial(true)
+                .projection(bsonProjection)
+                .readConcern(readConcern)
+                .skip(1)
+                .sort(bsonSort)
+        )
+
+        executor.getReadPreference() == findOptions.getReadPreference()
+    }
+
+    def 'DBCursor options should override DBCollectionFindOptions'() {
+        given:
+        def executor = new TestOperationExecutor([stubBatchCursor()]);
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
+        def cursorType = CursorType.NonTailable
+        def readPreference = ReadPreference.primary()
+        def filter = new BasicDBObject()
+        def bsonFilter = new BsonDocument()
+        def findOptions = new DBCollectionFindOptions()
+                .cursorType(cursorType)
+                .noCursorTimeout(false)
+                .oplogReplay(false)
+                .partial(false)
+                .readPreference(readPreference)
+
+        def cursor = new DBCursor(collection, filter , findOptions)
+                .addOption(Bytes.QUERYOPTION_AWAITDATA)
+                .addOption(Bytes.QUERYOPTION_NOTIMEOUT)
+                .addOption(Bytes.QUERYOPTION_OPLOGREPLAY)
+                .addOption(Bytes.QUERYOPTION_PARTIAL)
+                .addOption(Bytes.QUERYOPTION_SLAVEOK)
+                .addOption(Bytes.QUERYOPTION_TAILABLE)
+
+        when:
+        cursor.toArray()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
+                .modifiers(new BsonDocument())
+                .cursorType(CursorType.TailableAwait)
+                .filter(bsonFilter)
+                .noCursorTimeout(true)
+                .oplogReplay(true)
+                .partial(true)
+        )
+
+        executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 
     def 'count should create the correct CountOperation'() {
@@ -200,5 +276,19 @@ class DBCursorSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
                                                                 .readConcern(ReadConcern.MAJORITY)
                                                                 .filter(new BsonDocument()))
+    }
+
+    private stubBatchCursor() {
+        Stub(BatchCursor) {
+            def count = 0
+            next() >> {
+                count++
+                [new BasicDBObject('_id', 1)]
+            }
+            hasNext() >> {
+                count == 0
+            }
+            getServerCursor() >> new ServerCursor(12L, new ServerAddress())
+        };
     }
 }

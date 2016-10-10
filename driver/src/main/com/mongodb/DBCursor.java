@@ -485,13 +485,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .batchSize(findOptions.getBatchSize())
                                                 .skip(findOptions.getSkip())
                                                 .limit(findOptions.getLimit())
+                                                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
                                                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                 .modifiers(collection.wrapAllowNull(findOptions.getModifiers()))
                                                 .projection(collection.wrapAllowNull(findOptions.getProjection()))
                                                 .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                                                .oplogReplay(findOptions.isOplogReplay())
-                                                .partial(findOptions.isPartial())
                                                 .collation(findOptions.getCollation());
 
         if ((this.options & Bytes.QUERYOPTION_TAILABLE) != 0) {
@@ -500,15 +498,23 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             } else {
                 operation.cursorType(CursorType.Tailable);
             }
+        } else {
+            operation.cursorType(findOptions.getCursorType());
         }
         if ((this.options & Bytes.QUERYOPTION_OPLOGREPLAY) != 0) {
             operation.oplogReplay(true);
+        } else {
+            operation.oplogReplay(findOptions.isOplogReplay());
         }
         if ((this.options & Bytes.QUERYOPTION_NOTIMEOUT) != 0) {
             operation.noCursorTimeout(true);
+        } else {
+            operation.noCursorTimeout(findOptions.isNoCursorTimeout());
         }
         if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
             operation.partial(true);
+        } else {
+            operation.partial(findOptions.isPartial());
         }
         return operation;
     }
