@@ -109,10 +109,11 @@ public class ServerAddress implements Serializable {
                 }
                 portToUse = Integer.parseInt(host.substring(portIdx + 2));
             }
-            hostToUse = host.substring(0, idx + 1);
+            hostToUse = host.substring(1, idx);
         } else {
             int idx = hostToUse.indexOf(":");
-            if (idx > 0) {
+            int lastIdx = hostToUse.lastIndexOf(":");
+            if (idx == lastIdx && idx > 0) {
                 if (port != defaultPort()) {
                     throw new IllegalArgumentException("can't specify port in construct and via host");
                 }
@@ -124,7 +125,6 @@ public class ServerAddress implements Serializable {
                 hostToUse = hostToUse.substring(0, idx).trim();
             }
         }
-
         this.host = hostToUse.toLowerCase();
         this.port = portToUse;
     }
