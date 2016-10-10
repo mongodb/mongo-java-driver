@@ -43,7 +43,7 @@ class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
 
     @Override
     public boolean hasNext() {
-        return !needsNewBatch() || batchCursor.hasNext();
+        return curBatch != null || batchCursor.hasNext();
     }
 
     @Override
@@ -52,22 +52,20 @@ class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
             throw new NoSuchElementException();
         }
 
-        if (needsNewBatch()) {
+        if (curBatch == null) {
             curBatch = batchCursor.next();
-            curPos = 0;
         }
 
-        return curBatch.get(curPos++);
+        return getNextInBatch();
     }
 
     @Override
     public T tryNext() {
-        if (needsNewBatch()) {
+        if (curBatch == null) {
             curBatch = batchCursor.tryNext();
-            curPos = 0;
         }
 
-        return curBatch == null ? null : curBatch.get(curPos++);
+        return curBatch == null ? null : getNextInBatch();
     }
 
     @Override
@@ -80,7 +78,14 @@ class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
         return batchCursor.getServerAddress();
     }
 
-    private boolean needsNewBatch() {
-        return curBatch == null || curPos == curBatch.size();
+    private T getNextInBatch() {
+        T nextInBatch = curBatch.get(curPos);
+        if (curPos < curBatch.size() - 1) {
+            curPos++;
+        } else {
+            curBatch = null;
+            curPos = 0;
+        }
+        return nextInBatch;
     }
 }
