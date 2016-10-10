@@ -29,6 +29,7 @@ import com.mongodb.WriteConcernResult
 import com.mongodb.WriteError
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.BulkWriteError
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
@@ -59,6 +60,7 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
 import com.mongodb.operation.DistinctOperation
@@ -334,6 +336,26 @@ class MongoCollectionSpecification extends Specification {
                 readConcern, writeConcern, executor, [new Document('$match', 1)]))
     }
 
+    def 'should validate the aggregation pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        collection.aggregate(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        def results = new FutureResultCallback()
+        collection.aggregate([null]).into([], results)
+        results.get()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should create MapReduceIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
@@ -417,6 +439,18 @@ class MongoCollectionSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        collection.bulkWrite(null, new FutureResultCallback<BulkWriteResult>())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.bulkWrite([null], new FutureResultCallback<BulkWriteResult>())
+
+        then:
+        thrown(IllegalArgumentException)
 
         when: 'a codec is missing its acceptable to immediately throw'
         collection.bulkWrite([new InsertOneModel(new Document('_id', 1))], new FutureResultCallback<BulkWriteResult>())
@@ -514,6 +548,25 @@ class MongoCollectionSpecification extends Specification {
                                                                  acknowledged(INSERT, 0, []),
                                                                  acknowledged(INSERT, 0, [])])
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
+    }
+
+    def 'should validate the insertMany data correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern,
+                Stub(AsyncOperationExecutor))
+        def callback = Stub(SingleResultCallback)
+
+        when:
+        collection.insertMany(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertMany([null], callback)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'deleteOne should use MixedBulkWriteOperation correctly'() {
@@ -1043,6 +1096,25 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect operation, isTheSameAs(expectedOperation)
         indexName == 'aIndex'
+    }
+
+    def 'should validate the createIndexes data correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern,
+                Stub(AsyncOperationExecutor))
+        def callback = Stub(SingleResultCallback)
+
+        when:
+        collection.createIndexes(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.createIndexes([null], callback)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should use ListIndexesOperations correctly'() {

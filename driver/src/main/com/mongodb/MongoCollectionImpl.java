@@ -251,10 +251,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     @SuppressWarnings("unchecked")
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests, final BulkWriteOptions options) {
+        notNull("requests", requests);
         List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
         for (WriteModel<? extends TDocument> writeModel : requests) {
             WriteRequest writeRequest;
-            if (writeModel instanceof InsertOneModel) {
+            if (writeModel == null) {
+                throw new IllegalArgumentException("requests can not contain a null value");
+            } else if (writeModel instanceof InsertOneModel) {
                 TDocument document = ((InsertOneModel<TDocument>) writeModel).getDocument();
                 if (getCodec() instanceof CollectibleCodec) {
                     document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
@@ -306,6 +309,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void insertOne(final TDocument document, final InsertOneOptions options) {
+        notNull("document", document);
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
             insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
@@ -320,8 +324,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+        notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (TDocument document : documents) {
+            if (document == null) {
+                throw new IllegalArgumentException("documents can not contain a null value");
+            }
             if (getCodec() instanceof CollectibleCodec) {
                 document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
@@ -453,9 +461,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public List<String> createIndexes(final List<IndexModel> indexes) {
         notNull("indexes", indexes);
-
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
         for (IndexModel model : indexes) {
+            if (model == null) {
+                throw new IllegalArgumentException("indexes can not contain a null value");
+            }
             indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
                          .name(model.getOptions().getName())
                          .background(model.getOptions().isBackground())

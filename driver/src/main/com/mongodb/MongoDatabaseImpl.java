@@ -210,8 +210,12 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
+        notNull("pipeline", pipeline);
         List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson obj : pipeline) {
+            if (obj == null) {
+                throw new IllegalArgumentException("pipeline can not contain a null value");
+            }
             bsonDocumentPipeline.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
         }
         return bsonDocumentPipeline;
