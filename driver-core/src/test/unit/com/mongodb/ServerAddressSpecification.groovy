@@ -24,8 +24,9 @@ class ServerAddressSpecification extends Specification {
     @Unroll
     def 'constructors should parse hostname and port correctly'() {
         expect:
-        address.getHost() == host;
-        address.getPort() == port;
+        address.getHost() == host
+        address.getPort() == port
+        address == new ServerAddress(host, port)
 
         where:
         address                                                 | host                           | port
@@ -37,10 +38,11 @@ class ServerAddressSpecification extends Specification {
         new ServerAddress('SOMEWHERE')                          | 'somewhere'                    | ServerAddress.defaultPort()
         new ServerAddress('somewhere:1000')                     | 'somewhere'                    | 1000
         new ServerAddress('somewhere', 1000)                    | 'somewhere'                    | 1000
-        new ServerAddress('[2010:836b:4179::836b:4179]')        | '[2010:836b:4179::836b:4179]'  | ServerAddress.defaultPort()
-        new ServerAddress('[2010:836B:4179::836B:4179]')        | '[2010:836b:4179::836b:4179]'  | ServerAddress.defaultPort()
-        new ServerAddress('[2010:836B:4179::836B:4179]:1000')   | '[2010:836b:4179::836b:4179]'  | 1000
-        new ServerAddress('[2010:836B:4179::836B:4179]', 1000)  | '[2010:836b:4179::836b:4179]'  | 1000
+        new ServerAddress('[2010:836B:4179::836B:4179]')        | '2010:836b:4179::836b:4179'    | ServerAddress.defaultPort()
+        new ServerAddress('[2010:836B:4179::836B:4179]:1000')   | '2010:836b:4179::836b:4179'    | 1000
+        new ServerAddress('[2010:836B:4179::836B:4179]', 1000)  | '2010:836b:4179::836b:4179'    | 1000
+        new ServerAddress('2010:836B:4179::836B:4179')          | '2010:836b:4179::836b:4179'    | ServerAddress.defaultPort()
+        new ServerAddress('2010:836B:4179::836B:4179', 1000)    | '2010:836b:4179::836b:4179'    | 1000
     }
 
     def 'ipv4 host with a port specified should throw when a port is also specified as an argument'() {

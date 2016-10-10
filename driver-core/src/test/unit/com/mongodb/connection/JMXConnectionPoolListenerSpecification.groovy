@@ -120,7 +120,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         ObjectName objectName = new ObjectName(beanName)
 
         then:
-        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=\"[::1]\",port=27017"
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=\"::1\",port=27017"
     }
 
     def 'should include the description in the object name if set'() {
