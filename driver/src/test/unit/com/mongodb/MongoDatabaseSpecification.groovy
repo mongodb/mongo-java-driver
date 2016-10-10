@@ -27,6 +27,7 @@ import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
+import com.mongodb.operation.OperationExecutor
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -258,6 +259,25 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+    }
+
+    def 'should validate the createView pipeline data correctly'() {
+        given:
+        def viewName = 'view1'
+        def viewOn = 'col1'
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, Stub(OperationExecutor))
+
+        when:
+        database.createView(viewName, viewOn, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.createView(viewName, viewOn, [null])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should pass the correct options to getCollection'() {

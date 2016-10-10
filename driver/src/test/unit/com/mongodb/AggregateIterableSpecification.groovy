@@ -148,6 +148,13 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         thrown(CodecConfigurationException)
+
+        when: 'pipeline contains null'
+        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                [null]).iterator()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should follow the MongoIterable interface as expected'() {

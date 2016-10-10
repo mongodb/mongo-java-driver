@@ -52,6 +52,7 @@ import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.ListIndexesOperation
 import com.mongodb.operation.MixedBulkWriteOperation
+import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.RenameCollectionOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -279,6 +280,24 @@ class MongoCollectionSpecification extends Specification {
                 readPreference, readConcern,  writeConcern, executor, [new Document('$match', 1)]))
     }
 
+    def 'should validate the aggregation pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        collection.aggregate(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.aggregate([null]).into([])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should create MapReduceIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
@@ -354,6 +373,18 @@ class MongoCollectionSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        collection.bulkWrite(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.bulkWrite([null])
+
+        then:
+        thrown(IllegalArgumentException)
 
         when: 'a codec is missing its acceptable to immediately throw'
         collection.bulkWrite([new InsertOneModel(new Document('_id', 1))])
@@ -438,6 +469,24 @@ class MongoCollectionSpecification extends Specification {
                                                                  acknowledged(INSERT, 0, []),
                                                                  acknowledged(INSERT, 0, [])])
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
+    }
+
+    def 'should validate the insertMany data correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern,
+                Stub(OperationExecutor))
+
+        when:
+        collection.insertMany(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertMany([null])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'deleteOne should use MixedBulkWriteOperation correctly'() {
@@ -906,6 +955,24 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect operation, isTheSameAs(expectedOperation)
         indexName == 'aIndex'
+    }
+
+    def 'should validate the createIndexes data correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern,
+                Stub(OperationExecutor))
+
+        when:
+        collection.createIndexes(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.createIndexes([null])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should use ListIndexesOperations correctly'() {

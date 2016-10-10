@@ -185,6 +185,9 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson obj : pipeline) {
+            if (obj == null) {
+                throw new IllegalArgumentException("pipeline can not contain a null value");
+            }
             aggregateList.add(obj.toBsonDocument(documentClass, codecRegistry));
         }
         return aggregateList;

@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -27,6 +28,7 @@ import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
+import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
@@ -281,6 +283,26 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+    }
+
+    def 'should validate the createView pipeline data correctly'() {
+        given:
+        def viewName = 'view1'
+        def viewOn = 'col1'
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, Stub(AsyncOperationExecutor))
+        def callback = Stub(SingleResultCallback)
+
+        when:
+        database.createView(viewName, viewOn, null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.createView(viewName, viewOn, [null], callback)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should pass the correct options to getCollection'() {

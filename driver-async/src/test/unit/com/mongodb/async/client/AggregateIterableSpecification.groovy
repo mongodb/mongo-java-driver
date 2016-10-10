@@ -304,6 +304,16 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        def results = new FutureResultCallback()
+        mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
+        mongoIterable.into(target, results)
+        results.get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }
