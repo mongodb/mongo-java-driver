@@ -124,7 +124,9 @@ public class CreateCollectionOptions {
      * @return true if the usePowerOf2Sizes allocation strategy is turned on for this collection
      * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
+     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
+    @Deprecated
     public Boolean isUsePowerOf2Sizes() {
         return usePowerOf2Sizes;
     }
@@ -136,7 +138,9 @@ public class CreateCollectionOptions {
      * @return this
      * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
+     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
+    @Deprecated
     public CreateCollectionOptions usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
