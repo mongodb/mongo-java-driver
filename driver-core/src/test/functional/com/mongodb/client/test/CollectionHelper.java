@@ -108,8 +108,7 @@ public final class CollectionHelper<T> {
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
                 .autoIndex(options.isAutoIndex())
-                .maxDocuments(options.getMaxDocuments())
-                .usePowerOf2Sizes(options.isUsePowerOf2Sizes());
+                .maxDocuments(options.getMaxDocuments());
 
         IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();
         if (indexOptionDefaults.getStorageEngine() != null) {

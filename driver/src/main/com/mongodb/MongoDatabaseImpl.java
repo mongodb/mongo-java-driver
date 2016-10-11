@@ -168,6 +168,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
