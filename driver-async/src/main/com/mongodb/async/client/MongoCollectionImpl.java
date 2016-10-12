@@ -270,7 +270,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             } else if (writeModel instanceof InsertOneModel) {
                 TDocument document = ((InsertOneModel<TDocument>) writeModel).getDocument();
                 if (getCodec() instanceof CollectibleCodec) {
-                    ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
+                    document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
                 }
                 writeRequest = new InsertRequest(documentToBsonDocument(document));
             } else if (writeModel instanceof ReplaceOneModel) {
@@ -322,7 +322,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public void insertOne(final TDocument document, final InsertOneOptions options, final SingleResultCallback<Void> callback) {
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
-            ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
+            insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
         }
         executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), options.getBypassDocumentValidation(),
                 new SingleResultCallback<BulkWriteResult>() {

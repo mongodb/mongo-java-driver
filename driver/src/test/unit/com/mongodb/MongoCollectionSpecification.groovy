@@ -20,6 +20,8 @@ import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.IndexRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
+import com.mongodb.client.ImmutableDocument
+import com.mongodb.client.ImmutableDocumentCodecProvider
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
@@ -78,8 +80,10 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 import static spock.util.matcher.HamcrestSupport.expect
 
+@SuppressWarnings('ClassSize')
 class MongoCollectionSpecification extends Specification {
 
     def namespace = new MongoNamespace('databaseName', 'collectionName')
@@ -1054,6 +1058,50 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(expectedOperation)
+    }
+
+    def 'should not expect to mutate the document when inserting'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        def customCodecRegistry = fromRegistries(codecRegistry, fromProviders(new ImmutableDocumentCodecProvider()))
+        def collection = new MongoCollectionImpl(namespace, ImmutableDocument, customCodecRegistry, readPreference, writeConcern,
+                readConcern, executor)
+        def document = new ImmutableDocument(['a': 1])
+
+        when:
+        collection.insertOne(document)
+
+        then:
+        !document.containsKey('_id')
+
+        when:
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
+        def request = operation.writeRequests.get(0) as InsertRequest
+
+        then:
+        request.getDocument().containsKey('_id')
+    }
+
+    def 'should not expect to mutate the document when bulk writing'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        def customCodecRegistry = fromRegistries(codecRegistry, fromProviders(new ImmutableDocumentCodecProvider()))
+        def collection = new MongoCollectionImpl(namespace, ImmutableDocument, customCodecRegistry, readPreference, writeConcern,
+                readConcern, executor)
+        def document = new ImmutableDocument(['a': 1])
+
+        when:
+        collection.bulkWrite([new InsertOneModel<ImmutableDocument>(document)])
+
+        then:
+        !document.containsKey('_id')
+
+        when:
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
+        def request = operation.writeRequests.get(0) as InsertRequest
+
+        then:
+        request.getDocument().containsKey('_id')
     }
 
 }
