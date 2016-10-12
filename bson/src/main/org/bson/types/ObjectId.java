@@ -29,6 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.bson.assertions.Assertions.isTrueArgument;
+import static org.bson.assertions.Assertions.notNull;
+
 /**
  * <p>A globally unique identifier for objects.</p>
  *
@@ -244,10 +247,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if array is null or not of length 12
      */
     public ObjectId(final byte[] bytes) {
-        // This null check allows the delegate constructor to throw the expected IllegalArgumentException.
-        // (ByteBuffer.wrap throws NullPointerException if bytes is null, which violates ObjectId's contract
-        // to callers.)
-        this(bytes != null ? ByteBuffer.wrap(bytes) : null);
+        this(ByteBuffer.wrap(notNull("bytes", bytes)));
     }
 
     /**
@@ -266,14 +266,11 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      *
      * @param buffer the ByteBuffer
      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
+     * @since 3.4
      */
     public ObjectId(final ByteBuffer buffer) {
-        if (buffer == null) {
-            throw new IllegalArgumentException();
-        }
-        if (buffer.remaining() < 12) {
-            throw new IllegalArgumentException("need 12 bytes");
-        }
+        notNull("buffer", buffer);
+        isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= 12);
 
         // Note: Cannot use ByteBuffer.getInt because it depends on tbe buffer's byte order
         // and ObjectId's are always in big-endian order.
@@ -317,14 +314,11 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
       *
       * @param buffer the ByteBuffer
       * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
+      * @since 3.4
       */
     public void putToByteBuffer(final ByteBuffer buffer) {
-        if (buffer == null) {
-            throw new IllegalArgumentException();
-        }
-        if (buffer.remaining() < 12) {
-            throw new IllegalArgumentException("need 12 bytes");
-        }
+        notNull("buffer", buffer);
+        isTrueArgument("buffer.remaining() >=12", buffer.remaining() >= 12);
 
         buffer.put(int3(timestamp));
         buffer.put(int2(timestamp));
