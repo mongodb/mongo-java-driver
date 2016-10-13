@@ -21,14 +21,13 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public final class ImmutableDocument implements Map<String, Object>, Serializable, Bson {
+public final class ImmutableDocument implements Map<String, Object>, Bson {
     private final Map<String, Object> immutableDocument;
 
     /**
