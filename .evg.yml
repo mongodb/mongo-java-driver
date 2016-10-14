@@ -2,14 +2,6 @@
 #      Java Driver Config for Evergreen #
 #########################################
 
-java_driver_variables:
-## Common download urls (merge in as hashes)
-  mongo_download_url_prefixes:
-    linux64: &mongo_url_linux64
-      mongo_url_prefix: "http://downloads.mongodb.org/linux/mongodb-linux-x86_64-"
-    ubuntu1604: &mongo_url_ubuntu1604
-      mongo_url_platform: "ubuntu1604-"
-      <<: *mongo_url_linux64
 
 #######################################
 #            Functions                #
@@ -20,53 +12,6 @@ functions:
       command: git.get_project
       params:
           directory: "mongo-java-driver"
-
-  "set topology standalone" :
-    command: expansions.update
-    params:
-      updates:
-        - key: "orchestration_file"
-          value: "basic.json"
-        - key: "topology_type"
-          value: "server"
-        - key: "mongodb_test_uri"
-          value: "mongodb://localhost:27017"
-        - key: "rs_enabled"
-          value: "false"
-
-
-  "set topology replica set" :
-    command: expansions.update
-    params:
-      updates:
-        - key: "orchestration_file"
-          value: "basic.json"
-        - key: "topology_type"
-          value: "replica_set"
-        - key: "mongodb_test_uri"
-          value: "mongodb://localhost:27017,localhost:27018"
-        - key: "rs_enabled"
-          value: "true"
-
-  "set topology sharded" :
-    command: expansions.update
-    params:
-      updates:
-        - key: "orchestration_file"
-          value: "basic.json"
-        - key: "topology_type"
-          value: "sharded_cluster"
-        - key: "mongodb_test_uri"
-          value: "mongodb://localhost:27017"
-        - key: "rs_enabled"
-          value: "false"
-
-  "set version latest" :
-    command: expansions.update
-    params:
-      updates:
-        - key: "mongo_url"
-          value: ${mongo_url_prefix}${mongo_url_platform|}latest.${mongo_url_extension|tgz}
 
   "fetch mongodb" :
     command: shell.exec
@@ -85,11 +30,25 @@ functions:
             cp -r mongodb /cygdrive/c/mongodb
         fi
 
+
+  "compile and analyze" :
+    command: shell.exec
+    params:
+      working_dir: "mongo-java-driver"
+      script: |
+        set -o verbose
+        set -o errexit
+
+        ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses
+
   "run tests" :
     command: shell.exec
     params:
       working_dir: "mongo-java-driver"
       script: |
+        set -o verbose
+        set -o errexit
+
         export ORCHESTRATION_FILE="orchestration_configs/${topology_type}s/${orchestration_file}"
 
         mkdir -p $(dirname "$ORCHESTRATION_FILE")
@@ -106,12 +65,17 @@ functions:
 
         ${start_mongo_orchestration}
         ${start_topology}
-        ./gradlew -Dorg.mongodb.test.uri=${mongodb_test_uri} -Prs.enabled=${rs_enabled} --stacktrace --info test
+
+
+        mongodb_test_uri="mongodb://${auth_uri_prefix}${hosts}"
+
+        ./gradlew -Dorg.mongodb.test.uri=$mongodb_test_uri --stacktrace --info test
 
   "attach junit results" :
     command: attach.xunit_results
     params:
       file: ./mongo-java-driver/*/build/test-results/TEST-*.xml
+
 
 #######################################
 #               Tasks                 #
@@ -121,47 +85,21 @@ tasks:
     - name: compileAndAnalyze
       commands:
         - func: "fetch source"
-        - command: git.apply_patch
-          params:
-              directory: "mongo-java-driver"
-        - command: shell.exec
-          params:
-              working_dir: "mongo-java-driver"
-              script: |
-                  ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses
-    - name: test-standalone
+        - func: "compile and analyze"
+    - name: test
+      depends_on:
+      - name: compileAndAnalyze
+        variant: compile
       commands:
         - func: "fetch source"
-        - command: git.apply_patch
-          params:
-              directory: "mongo-java-driver"
-        - func: "set topology standalone"
-        - func: "set version latest"
         - func: "fetch mongodb"
         - func: "run tests"
         - func: "attach junit results"
-    - name: test-replica-set
-      commands:
-        - func: "fetch source"
-        - command: git.apply_patch
-          params:
-              directory: "mongo-java-driver"
-        - func: "set topology replica set"
-        - func: "set version latest"
-        - func: "fetch mongodb"
-        - func: "run tests"
-        - func: "attach junit results"
-    - name: test-sharded
-      commands:
-        - func: "fetch source"
-        - command: git.apply_patch
-          params:
-              directory: "mongo-java-driver"
-        - func: "set topology sharded"
-        - func: "set version latest"
-        - func: "fetch mongodb"
-        - func: "run tests"
-        - func: "attach junit results"
+
+
+#######################################
+#              Scripts                #
+#######################################
 
 scripts:
   ## Scripts that are shared between buildvariants
@@ -190,29 +128,83 @@ scripts:
           ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.adminCommand({getCmdLineOpts:1}))' admin
           ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.isMaster())' admin
 
+
 #######################################
-#               Variants              #
+#               Axes                  #
+#######################################
+
+axes:
+  - id: mongodb_version
+    display_name: MongoDB Version
+    values:
+      - id: "3.4"
+        display_name: "3.4"
+        variables:
+          mongodb_full_version: "3.4.0-rc0"
+      - id: "3.2"
+        display_name: "3.2"
+        variables:
+          mongodb_full_version: "3.2.9"
+      - id: "3.0"
+        display_name: "3.0"
+        variables:
+          mongodb_full_version: "3.0.11"
+      - id: "2.6"
+        display_name: "2.6"
+        variables:
+          mongodb_full_version: "2.6.12"
+  - id: auth
+    display_name: Authentication
+    values:
+      - id: "enabled"
+        display_name: "Auth Enabled"
+        variables:
+          auth_uri_prefix: "bob:pwd123@"
+          orchestration_file: "auth.json"
+      - id: "disabled"
+        display_name: "Auth Disabled"
+        variables:
+          auth_uri_prefix: ""
+          orchestration_file: "basic.json"
+  - id: os
+    display_name: OS
+    values:
+      - id: ubuntu1604
+        display_name: Ubuntu 16.04
+        run_on: ubuntu1604-test
+        variables:
+          <<: *start_topology_command
+          <<: *mongo_orchestration_unix
+          mongo_url: "https://downloads.mongodb.org/linux/mongodb-linux-x86_64-${os}-${mongodb_full_version}.tgz"
+  - id: topology_type
+    display_name: Cluster Type
+    values:
+      - id: server
+        display_name: Standalone
+        variables:
+          hosts: "localhost:27017"
+      - id: replica_set
+        display_name: Replica Set
+        variables:
+          hosts: "localhost:27017,localhost:27018"
+      - id: sharded_cluster
+        display_name: Sharded
+        variables:
+          hosts: "localhost:27017"
+
+#######################################
+#             Variants                #
 #######################################
 
 buildvariants:
-- name: ubuntu-1604
-  display_name: "Ubuntu-1604"
-  expansions:
-    <<: *start_topology_command
-    <<: *mongo_url_ubuntu1604 # sets ${mongo_url_prefix}
-    <<: *mongo_orchestration_unix # sets start_topology and start_mongo_orchestration
-  run_on:
-    - ubuntu1604-test
-  tasks:
-  - name: compileAndAnalyze
-    run_on:
-    - ubuntu1604-build
-  - name: test-standalone
-    depends_on:
-     - name: compileAndAnalyze
-  - name: test-replica-set
-    depends_on:
-     - name: compileAndAnalyze
-  - name: test-sharded
-    depends_on:
-     - name: compileAndAnalyze
+  - name: compile
+    display_name: "Compile and Analyze"
+    tasks:
+    - name: compileAndAnalyze
+      run_on:
+      - ubuntu1604-test
+  - matrix_name: "test"
+    matrix_spec: {os: "*", topology_type: "*", mongodb_version: ["3.2", "3.4"], auth: "*"}
+    display_name: "${os} ${topology_type} ${mongodb_version} ${auth}"
+    tasks:
+    - name: test
