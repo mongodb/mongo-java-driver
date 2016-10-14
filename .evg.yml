@@ -141,18 +141,22 @@ axes:
         display_name: "3.4"
         variables:
           mongodb_full_version: "3.4.0-rc0"
+          ubuntu_os_download: "ubuntu1604"
       - id: "3.2"
         display_name: "3.2"
         variables:
           mongodb_full_version: "3.2.9"
+          ubuntu_os_download: "ubuntu1604"
       - id: "3.0"
         display_name: "3.0"
         variables:
-          mongodb_full_version: "3.0.11"
+          mongodb_full_version: "3.0.12"
+          ubuntu_os_download: "ubuntu1404"
       - id: "2.6"
         display_name: "2.6"
         variables:
           mongodb_full_version: "2.6.12"
+          ubuntu_os_download: "ubuntu1404"
   - id: auth
     display_name: Authentication
     values:
@@ -175,7 +179,7 @@ axes:
         variables:
           <<: *start_topology_command
           <<: *mongo_orchestration_unix
-          mongo_url: "https://downloads.mongodb.org/linux/mongodb-linux-x86_64-${os}-${mongodb_full_version}.tgz"
+          mongo_url: "http://downloads.mongodb.com/linux/mongodb-linux-x86_64-enterprise-${ubuntu_os_download}-${mongodb_full_version}.tgz"
   - id: topology_type
     display_name: Cluster Type
     values:
@@ -204,7 +208,7 @@ buildvariants:
       run_on:
       - ubuntu1604-test
   - matrix_name: "test"
-    matrix_spec: {os: "*", topology_type: "*", mongodb_version: ["3.2", "3.4"], auth: "*"}
+    matrix_spec: {os: "*", topology_type: "*", mongodb_version: "*", auth: "*"}
     display_name: "${os} ${topology_type} ${mongodb_version} ${auth}"
     tasks:
     - name: test
