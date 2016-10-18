@@ -53,19 +53,8 @@ functions:
 
         mkdir -p $(dirname "$ORCHESTRATION_FILE")
 
-        # Borrow MO config from the C driver
-        #
-        curl --location "https://raw.githubusercontent.com/mongodb/mongo-c-driver/master/orchestration_configs/${topology_type}s/${orchestration_file}" > "$ORCHESTRATION_FILE"
-        export ORCHESTRATION_URL="http://localhost:8889/v1/${topology_type}s"
-        export MONGO_ORCHESTRATION_HOME=/tmp/orchestration-home
-
-        if [ ! -d /tmp/orchestration-home ]; then
-           mkdir /tmp/orchestration-home
-        fi
-
         ${start_mongo_orchestration}
         ${start_topology}
-
 
         mongodb_test_uri="mongodb://${auth_uri_prefix}${hosts}"
 
@@ -76,8 +65,52 @@ functions:
     params:
       file: ./mongo-java-driver/*/build/test-results/TEST-*.xml
 
+  "upload mo artifacts":
+    - command: shell.exec
+      params:
+        working_dir: "mongo-java-driver"
+        script: |
+          set -o verbose
+          set -o errexit
 
-#######################################
+          [ -d MO ] && find MO -name mongo*.log | xargs tar czf mongodb-logs.tgz
+          [ -f mongodb-logs.tgz ] && tar ztvf mongodb-logs.tgz
+
+          [ -d MO ] && tar czf mongodb-orchestration-logs.tgz MO/*.log
+          [ -f mongodb-orchestration-logs.tgz ] && tar ztvf mongodb-orchestration-logs.tgz
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongo-java-driver/mongodb-logs.tgz
+        remote_file: mongo-java-driver/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-mongodb-logs.tgz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "mongodb-logs.tar.gz"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongo-java-driver/mongodb-orchestration-logs.tgz
+        remote_file: mongo-java-driver/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-mongodb-orchestration-logs.tgz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+        display_name: "mongodb-orchestration-logs.tgz"
+
+  "cleanup" :
+    command: shell.exec
+    params:
+      working_dir: "mongo-java-driver"
+      script: |
+        set -o errexit
+        export MONGO_ORCHESTRATION_HOME=$(pwd)"/MO"
+        export TMPDIR=$MONGO_ORCHESTRATION_HOME/db
+        mongo-orchestration stop
+
+
+#####################################
 #               Tasks                 #
 #######################################
 
@@ -95,6 +128,8 @@ tasks:
         - func: "fetch mongodb"
         - func: "run tests"
         - func: "attach junit results"
+        - func: "upload mo artifacts"
+        - func: "cleanup"
 
 
 #######################################
@@ -107,26 +142,30 @@ scripts:
     mongo_orchestration:
       unix: &mongo_orchestration_unix
         start_mongo_orchestration: |
-          trap 'set +o errexit; mongo-orchestration --pidfile /data/mo.pid stop;' EXIT
-          pidfile=/data/mo.pid
-          if [ -f $pidfile ]; then
-            echo "Existing pidfile $pidfile"
-            cat $pidfile
-            mongo-orchestration --pidfile /data/mo.pid stop;
-            rm -f $pidfile
-          fi
-          df -h
-          ls -la
-          echo "Starting Mongo Orchestration..."
+          echo "Starting MongoDB Orchestration..."
+
+          # Borrow MO config from the C driver
+          curl --location "https://raw.githubusercontent.com/mongodb/mongo-c-driver/master/orchestration_configs/${topology_type}s/${orchestration_file}" > "$ORCHESTRATION_FILE"
+          export ORCHESTRATION_URL="http://localhost:8889/v1/${topology_type}s"
+          export MONGO_ORCHESTRATION_HOME=$(pwd)"/MO"
+
+          rm -rf $MONGO_ORCHESTRATION_HOME
+          mkdir -p $MONGO_ORCHESTRATION_HOME/lib
+          mkdir -p $MONGO_ORCHESTRATION_HOME/db
+
           echo "{ \"releases\": { \"default\": \"`pwd`/mongodb/bin\" } }" > orchestration.config
-          TMPDIR=/data/db mongo-orchestration -f orchestration.config -e default start --socket-timeout-ms=60000 --bind=127.0.0.1  --enable-majority-read-concern --pidfile $pidfile
-          curl -s http://localhost:8889/
+          export TMPDIR=$MONGO_ORCHESTRATION_HOME/db
+          nohup mongo-orchestration -f orchestration.config -e default --socket-timeout-ms=60000 --bind=127.0.0.1  --enable-majority-read-concern start > $MONGO_ORCHESTRATION_HOME/out.log 2> $MONGO_ORCHESTRATION_HOME/err.log < /dev/null &
+
+          sleep 15
+          curl http://localhost:8889/ --silent --max-time 120 --fail
+          echo "MongoDB Orchestration started..."
+          sleep 5
       start_topology_command: &start_topology_command
         start_topology: |
-          curl -s --data @"$ORCHESTRATION_FILE" "$ORCHESTRATION_URL"
-          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.serverBuildInfo())' admin
-          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.adminCommand({getCmdLineOpts:1}))' admin
-          ./mongodb/bin/mongo $MONGO_SHELL_CONNECTION_FLAGS --eval 'printjson(db.isMaster())' admin
+          echo "Starting MongoDB cluster..."
+          curl --silent --data @"$ORCHESTRATION_FILE" "$ORCHESTRATION_URL" --max-time 300 --fail
+          echo "MongoDB cluster started..."
 
 
 #######################################
