@@ -38,9 +38,14 @@ public final class ServerHelper {
         DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address));
         DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
+        long startTime = System.currentTimeMillis();
         while (pool.getInUseCount() > 0) {
             try {
                 sleep(10);
+                if (System.currentTimeMillis() > startTime + ClusterFixture.TIMEOUT * 1000) {
+                    throw new MongoTimeoutException("Timed out waiting for pool in use count to drop to 0.  Now at: "
+                                                            + pool.getInUseCount());
+                }
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted", e);
             }
