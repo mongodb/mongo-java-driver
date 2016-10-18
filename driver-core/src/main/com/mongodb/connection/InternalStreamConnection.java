@@ -168,14 +168,16 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void close() {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(String.format("Closing connection %s", getId()));
+        // All but the first call is a no-op
+        if (!isClosed.getAndSet(true)) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(String.format("Closing connection %s", getId()));
+            }
+            if (stream != null) {
+                stream.close();
+            }
+            connectionListener.connectionClosed(new ConnectionClosedEvent(getId()));
         }
-        if (stream != null) {
-            stream.close();
-        }
-        isClosed.set(true);
-        connectionListener.connectionClosed(new ConnectionClosedEvent(getId()));
     }
 
     @Override

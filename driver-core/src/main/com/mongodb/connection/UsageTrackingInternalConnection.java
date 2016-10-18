@@ -23,7 +23,6 @@ import org.bson.ByteBuf;
 
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
@@ -34,7 +33,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
     private volatile long openedAt;
     private volatile long lastUsedAt;
     private final int generation;
-    private volatile InternalConnection wrapped;
+    private final InternalConnection wrapped;
 
     UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
         this.wrapped = wrapped;
@@ -45,7 +44,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void open() {
-        isTrue("open", wrapped != null);
         wrapped.open();
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
@@ -53,7 +51,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void openAsync(final SingleResultCallback<Void> callback) {
-        isTrue("open", wrapped != null);
         wrapped.openAsync(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
@@ -70,38 +67,32 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void close() {
-        isTrue("open", wrapped != null);
         wrapped.close();
-        wrapped = null;
     }
 
     @Override
     public boolean opened() {
-        isTrue("open", wrapped != null);
         return wrapped.opened();
     }
 
     @Override
     public boolean isClosed() {
-        return wrapped == null || wrapped.isClosed();
+        return wrapped.isClosed();
     }
 
     @Override
     public ByteBuf getBuffer(final int size) {
-        isTrue("open", wrapped != null);
         return wrapped.getBuffer(size);
     }
 
     @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        isTrue("open", wrapped != null);
         wrapped.sendMessage(byteBuffers, lastRequestId);
         lastUsedAt = System.currentTimeMillis();
     }
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo) {
-        isTrue("open", wrapped != null);
         ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
         lastUsedAt = System.currentTimeMillis();
         return responseBuffers;
@@ -109,7 +100,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        isTrue("open", wrapped != null);
         SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
@@ -122,7 +112,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("open", wrapped != null);
         SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
             @Override
             public void onResult(final ResponseBuffers result, final Throwable t) {
@@ -135,7 +124,6 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public ConnectionDescription getDescription() {
-        isTrue("open", wrapped != null);
         return wrapped.getDescription();
     }
 
