@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -372,7 +373,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private class PooledConnection implements InternalConnection {
-        private volatile UsageTrackingInternalConnection wrapped;
+        private final UsageTrackingInternalConnection wrapped;
+        private final AtomicBoolean isClosed = new AtomicBoolean();
 
         public PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -380,39 +382,39 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void open() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.open();
         }
 
         @Override
         public void openAsync(final SingleResultCallback<Void> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.openAsync(callback);
         }
 
         @Override
         public void close() {
-            if (wrapped != null) {
-                if (!closed) {
+            // All but the first call is a no-op
+            if (!isClosed.getAndSet(true)) {
+                if (!DefaultConnectionPool.this.closed) {
                     connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                     }
                 }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
-                wrapped = null;
             }
         }
 
         @Override
         public boolean opened() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             return wrapped.opened();
         }
 
         @Override
         public boolean isClosed() {
-            return wrapped == null || wrapped.isClosed();
+            return isClosed.get() || wrapped.isClosed();
         }
 
         @Override
@@ -422,7 +424,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             try {
                 wrapped.sendMessage(byteBuffers, lastRequestId);
             } catch (MongoException e) {
@@ -433,7 +435,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             try {
                 return wrapped.receiveMessage(responseTo);
             } catch (MongoException e) {
@@ -444,7 +446,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
@@ -458,7 +460,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
                 @Override
                 public void onResult(final ResponseBuffers result, final Throwable t) {
@@ -472,7 +474,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ConnectionDescription getDescription() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             return wrapped.getDescription();
         }
     }
