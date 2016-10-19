@@ -16,9 +16,12 @@
 
 package com.mongodb.connection
 
+import category.Slow
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
+import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ReadPreference
@@ -26,6 +29,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.selector.ReadPreferenceServerSelector
 import com.mongodb.selector.ServerAddressSelector
 import com.mongodb.selector.WritableServerSelector
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -83,7 +87,7 @@ class BaseClusterSpecification extends Specification {
         def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer])
-                        .serverSelectionTimeout(1, MILLISECONDS)
+                        .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
                         .build(),
                 factory)
 
@@ -98,7 +102,8 @@ class BaseClusterSpecification extends Specification {
 
         then:
         def e = thrown(MongoTimeoutException)
-        e.getMessage().startsWith('Timed out after 1 ms while waiting to connect. Client view of cluster state is {type=UNKNOWN')
+        e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting to connect. " +
+                'Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
                 'exception={com.mongodb.MongoInternalException: oops}}');
         e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
@@ -108,17 +113,105 @@ class BaseClusterSpecification extends Specification {
 
         then:
         e = thrown(MongoTimeoutException)
-        e.getMessage().startsWith('Timed out after 1 ms while waiting for a server that matches WritableServerSelector. ' +
-                'Client view of cluster state is {type=UNKNOWN')
+        e.getMessage().startsWith("Timed out after ${serverSelectionTimeoutMS} ms while waiting for a server " +
+                'that matches WritableServerSelector. Client view of cluster state is {type=UNKNOWN')
         e.getMessage().contains('{address=localhost:27017, type=UNKNOWN, state=CONNECTING, ' +
                 'exception={com.mongodb.MongoInternalException: oops}}');
         e.getMessage().contains('{address=localhost:27018, type=UNKNOWN, state=CONNECTING}');
+
+        where:
+        serverSelectionTimeoutMS << [1, 0]
     }
 
-    def 'should select server asynchronously'() {
+    def 'should select server'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .serverSelectionTimeout(serverSelectionTimeoutMS, SECONDS)
+                        .build(),
+                factory)
+        factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, allServers)
+        factory.sendNotification(thirdServer, REPLICA_SET_PRIMARY, allServers)
+
+        expect:
+        cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary())).description.address == thirdServer
+
+        cleanup:
+        cluster?.close()
+
+        where:
+        serverSelectionTimeoutMS << [30, 0, -1]
+    }
+
+    @Category(Slow)
+    def 'should wait indefinitely for a server until interrupted'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .serverSelectionTimeout(-1, SECONDS)
+                        .build(),
+                factory)
+
+        when:
+        def latch = new CountDownLatch(1)
+        def thread = new Thread({
+            try {
+                cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primary()))
+            } catch (MongoInterruptedException e) {
+                latch.countDown()
+            }
+        })
+        thread.start()
+        sleep(1000)
+        thread.interrupt()
+        latch.await(ClusterFixture.TIMEOUT, SECONDS)
+
+        then:
+        true
+
+        cleanup:
+        cluster?.close()
+    }
+
+    @Category(Slow)
+    def 'should wait indefinitely for a cluster description until interrupted'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .serverSelectionTimeout(-1, SECONDS)
+                        .build(),
+                factory)
+
+        when:
+        def latch = new CountDownLatch(1)
+        def thread = new Thread({
+            try {
+                cluster.getDescription()
+            } catch (MongoInterruptedException e) {
+                latch.countDown()
+            }
+        })
+        thread.start()
+        sleep(1000)
+        thread.interrupt()
+        latch.await(ClusterFixture.TIMEOUT, SECONDS)
+
+        then:
+        true
+
+        cleanup:
+        cluster?.close()
+    }
+
+    def 'should select server asynchronously when server is already available'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
                 factory)
@@ -129,6 +222,22 @@ class BaseClusterSpecification extends Specification {
 
         then:
         server.description.address == firstServer
+
+        cleanup:
+        cluster?.close()
+
+        where:
+        serverSelectionTimeoutMS << [30, 0, -1]
+    }
+
+    def 'should select server asynchronously when server is not yet available'() {
+        given:
+        def cluster = new MultiServerCluster(new ClusterId(),
+                builder().mode(MULTIPLE)
+                        .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
+                        .hosts([firstServer, secondServer, thirdServer])
+                        .build(),
+                factory)
 
         when:
         def secondServerLatch = selectServerAsync(cluster, secondServer)
@@ -144,6 +253,9 @@ class BaseClusterSpecification extends Specification {
 
         cleanup:
         cluster?.close()
+
+        where:
+        serverSelectionTimeoutMS << [30, -1]
     }
 
     def 'when selecting server asynchronously should send MongoClientException to callback if cluster is closed before success'() {
@@ -171,7 +283,7 @@ class BaseClusterSpecification extends Specification {
         def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
-                        .serverSelectionTimeout(100, MILLISECONDS)
+                        .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
                         .build(),
                 factory)
 
@@ -183,6 +295,10 @@ class BaseClusterSpecification extends Specification {
 
         cleanup:
         cluster?.close()
+
+
+        where:
+        serverSelectionTimeoutMS << [100, 0]
     }
 
     def 'when selecting server asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
