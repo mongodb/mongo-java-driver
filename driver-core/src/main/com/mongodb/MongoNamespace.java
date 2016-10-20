@@ -20,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Arrays.asList;
 
 /**
  * A MongoDB namespace, which includes a database name and collection name.
@@ -35,30 +36,66 @@ public final class MongoNamespace {
     private final String fullName;  // cache to avoid repeated string building
 
     /**
-     * Construct an instance.
+     * Check the validity of the given database name. A valid database name is non-null, non-empty, and does not contain any of the
+     * following strings: {@code " ", "."}. The server may impose additional restrictions on database names.
      *
-     * @param fullName the full namespace
+     * @param databaseName the database name
+     * @throws IllegalArgumentException if the database name is invalid
+     * @since 3.4
+     * @mongodb.driver.manual reference/limits/#naming-restrictions Naming Restrictions
      */
-    public MongoNamespace(final String fullName) {
-        notNull("fullName", fullName);
-        isTrueArgument("fullName is of form <db>.<collection>", isFullNameValid(fullName));
-
-
-        this.databaseName = getDatatabaseNameFromFullName(fullName);
-        this.collectionName = getCollectionNameFullName(fullName);
-        this.fullName = fullName;
+    public static void checkDatabaseNameValidity(final String databaseName) {
+        notNull("databaseName", databaseName);
+        isTrueArgument("databaseName is not empty", !databaseName.isEmpty());
+        for (String cur : asList(" ", ".")) {
+            isTrueArgument("databaseName does not contain '" + cur + "'", !databaseName.contains(cur));
+        }
     }
 
     /**
-     * Construct an instance.
+     * Check the validity of the given collection name.   A valid collection name is non-null and non-empty.  The server may impose
+     * additional restrictions on collection names.
      *
-     * @param databaseName the non-null database name
-     * @param collectionName the non-null collection name
+     * @param collectionName the collection name
+     * @throws IllegalArgumentException if the collection name is invalid
+     * @since 3.4
+     * @mongodb.driver.manual reference/limits/#naming-restrictions Naming Restrictions
+     */
+    public static void checkCollectionNameValidity(final String collectionName) {
+        notNull("collectionName", collectionName);
+        isTrueArgument("collectionName is not empty", !collectionName.isEmpty());
+    }
+
+    /**
+     * Construct an instance for the given full name.  The database name is the string preceding the first {@code "."} character.
+     *
+     * @param fullName the non-null full namespace
+     * @see #checkDatabaseNameValidity(String)
+     * @see #checkCollectionNameValidity(String)
+     */
+    public MongoNamespace(final String fullName) {
+        notNull("fullName", fullName);
+        this.fullName = fullName;
+        this.databaseName = getDatatabaseNameFromFullName(fullName);
+        this.collectionName = getCollectionNameFullName(fullName);
+        checkDatabaseNameValidity(databaseName);
+        checkCollectionNameValidity(collectionName);
+    }
+
+    /**
+     * Construct an instance from the given database name and collection name.
+     *
+     * @param databaseName   the valid database name
+     * @param collectionName the valid collection name
+     * @see #checkDatabaseNameValidity(String)
+     * @see #checkCollectionNameValidity(String)
      */
     public MongoNamespace(final String databaseName, final String collectionName) {
-        this.databaseName = notNull("databaseName", databaseName);
-        this.collectionName = notNull("collectionName", collectionName);
-        this.fullName = databaseName + "." + collectionName;
+        checkDatabaseNameValidity(databaseName);
+        checkCollectionNameValidity(collectionName);
+        this.databaseName = databaseName;
+        this.collectionName = collectionName;
+        this.fullName = databaseName + '.' + collectionName;
     }
 
     /**
@@ -126,29 +163,25 @@ public final class MongoNamespace {
         return result;
     }
 
-    private static boolean isFullNameValid(final String fullName) {
-        int firstDotIndex = fullName.indexOf(".");
-
-        if (firstDotIndex == -1) {
-            return false;
-        }
-        if (firstDotIndex == 0) {
-            return false;
-        }
-        if (fullName.charAt(fullName.length() - 1) == '.') {
-            return false;
-        }
-        if (fullName.charAt(firstDotIndex + 1) == '.') {
-            return false;
-        }
-        return true;
-    }
-
     private static String getCollectionNameFullName(final String namespace) {
-        return namespace.substring(namespace.indexOf('.') + 1);
+        if (namespace == null) {
+            return null;
+        }
+        int firstDot = namespace.indexOf('.');
+        if (firstDot == -1) {
+            return namespace;
+        }
+        return namespace.substring(firstDot + 1);
     }
 
     private static String getDatatabaseNameFromFullName(final String namespace) {
-        return namespace.substring(0, namespace.indexOf('.'));
+        if (namespace == null) {
+            return null;
+        }
+        int firstDot = namespace.indexOf('.');
+        if (firstDot == -1) {
+            return "";
+        }
+        return namespace.substring(0, firstDot);
     }
 }

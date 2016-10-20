@@ -396,6 +396,8 @@ public class MongoClient extends Mongo implements Closeable {
     /**
      * @param databaseName the name of the database to retrieve
      * @return a {@code MongoDatabase} representing the specified database
+     * @throws IllegalArgumentException if databaseName is invalid
+     * @see MongoNamespace#checkDatabaseNameValidity(String)
      */
     public MongoDatabase getDatabase(final String databaseName) {
         MongoClientOptions clientOptions = getMongoClientOptions();
