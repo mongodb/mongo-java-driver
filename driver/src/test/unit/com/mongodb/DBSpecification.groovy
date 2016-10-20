@@ -37,6 +37,14 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
 
+    def 'should throw IllegalArgumentException if name is invalid'() {
+        when:
+        new DB(getMongoClient(), 'a.b', new TestOperationExecutor())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should get and set read concern'() {
         when:
         def db = new DB(getMongoClient(), 'test', new TestOperationExecutor([]))

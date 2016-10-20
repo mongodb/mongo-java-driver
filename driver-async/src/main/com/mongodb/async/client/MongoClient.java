@@ -37,6 +37,8 @@ public interface MongoClient extends Closeable {
      *
      * @param name the name of the database
      * @return the database
+     * @throws IllegalArgumentException if databaseName is invalid
+     * @see com.mongodb.MongoNamespace#checkDatabaseNameValidity(String)
      */
     MongoDatabase getDatabase(String name);
 

@@ -116,6 +116,8 @@ public interface MongoDatabase {
      *
      * @param collectionName the name of the collection to return
      * @return the collection
+     * @throws IllegalArgumentException if collectionName is invalid
+     * @see com.mongodb.MongoNamespace#checkCollectionNameValidity(String)
      */
     MongoCollection<Document> getCollection(String collectionName);
 

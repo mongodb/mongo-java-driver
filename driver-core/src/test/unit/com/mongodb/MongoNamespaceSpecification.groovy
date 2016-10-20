@@ -19,28 +19,38 @@ package com.mongodb
 import spock.lang.Specification
 
 class MongoNamespaceSpecification extends Specification {
-    def 'null database name should throw IllegalArgumentException'() {
+    def 'invalid database name should throw IllegalArgumentException'() {
         when:
-        new MongoNamespace(null, 'test');
+        new MongoNamespace(databaseName, 'test');
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        MongoNamespace.checkDatabaseNameValidity(databaseName)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        databaseName << [null, '', 'a ', 'a.b' ]
     }
 
-    def 'null collection name should throw IllegalArgumentException'() {
+    def 'invalid collection name should throw IllegalArgumentException'() {
         when:
-        new MongoNamespace('test', null);
+        new MongoNamespace('test', collectionName);
 
         then:
         thrown(IllegalArgumentException)
-    }
 
-    def 'null full name should throw IllegalArgumentException'() {
         when:
-        new MongoNamespace(null)
+        MongoNamespace.checkCollectionNameValidity(collectionName)
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        collectionName << [null, '']
     }
 
     def 'invalid full name should throw IllegalArgumentException'() {
@@ -51,7 +61,7 @@ class MongoNamespaceSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         where:
-        fullName << ['db', '.db', 'db.', 'db..coll', 'db.coll.']
+        fullName << [null, '', 'db', '.db', 'db.', 'a .b']
     }
 
     def 'test getters'() {

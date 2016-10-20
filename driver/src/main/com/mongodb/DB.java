@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
 import static com.mongodb.MongoCredential.createMongoCRCredential;
+import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -81,9 +82,7 @@ public class DB {
     private volatile ReadConcern readConcern;
 
     DB(final Mongo mongo, final String name, final OperationExecutor executor) {
-        if (!isValidName(name)) {
-            throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
-        }
+        checkDatabaseNameValidity(name);
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
@@ -184,6 +183,8 @@ public class DB {
      *
      * @param name the name of the collection
      * @return the collection
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkCollectionNameValidity(String)
      */
     protected DBCollection doGetCollection(final String name) {
         return getCollection(name);
@@ -194,6 +195,8 @@ public class DB {
      *
      * @param name the name of the collection to return
      * @return the collection
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkCollectionNameValidity(String)
      */
     public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
@@ -738,10 +741,6 @@ public class DB {
 
     BufferProvider getBufferPool() {
         return getMongo().getBufferProvider();
-    }
-
-    private boolean isValidName(final String databaseName) {
-        return databaseName.length() != 0 && !databaseName.contains(" ");
     }
 
     private BsonDocument wrap(final DBObject document) {

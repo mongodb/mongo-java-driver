@@ -77,6 +77,7 @@ import static com.mongodb.AggregationOptions.OutputMode.CURSOR;
 import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
+import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -142,6 +143,7 @@ public class DBCollection {
      * @param database      the database to which this collections belongs to
      */
     DBCollection(final String name, final DB database, final OperationExecutor executor) {
+        checkCollectionNameValidity(name);
         this.name = name;
         this.database = database;
         this.executor = executor;

@@ -483,6 +483,8 @@ public class Mongo {
      *
      * @param dbName the name of the database to retrieve
      * @return a DB representing the specified database
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkDatabaseNameValidity(String)
      * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}
      */
     @Deprecated

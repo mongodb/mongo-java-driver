@@ -54,6 +54,25 @@ class MongoDatabaseSpecification extends Specification {
     def readConcern = ReadConcern.DEFAULT
     def collation = Collation.builder().locale('en').build()
 
+    def 'should throw IllegalArgumentException if name is invalid'() {
+        when:
+        new MongoDatabaseImpl('a.b', codecRegistry, readPreference, writeConcern, readConcern, new TestOperationExecutor([]))
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should throw IllegalArgumentException from getCollection if collectionName is invalid'() {
+        given:
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, new TestOperationExecutor([]))
+
+        when:
+        database.getCollection('')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should return the correct name from getName'() {
         given:
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern,

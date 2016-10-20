@@ -39,6 +39,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -51,6 +52,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                       final WriteConcern writeConcern, final ReadConcern readConcern, final AsyncOperationExecutor executor) {
+        checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
