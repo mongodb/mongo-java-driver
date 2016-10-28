@@ -158,8 +158,9 @@ For more information on collation, including the supported locales, refer to the
 [maximum staleness for secondary reads](https://github.com/mongodb/specifications/blob/master/source/max-staleness/max-staleness.rst)
 * Support for the
 [MongoDB handshake protocol](https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst).
-* Builders for [eight new aggregation pipeline stages]({{<docsref "release-notes/3.3-dev-series/#aggregation">}})
-* Helpers for creating [read-only views]({{<docsref "release-notes/3.3-dev-series/#views">}})
+* Builders for [eight new aggregation pipeline stages]({{<docsref "release-notes/3.4/#aggregation">}})
+* Helpers for creating [read-only views]({{<docsref "release-notes/3.4/#views">}})
+* Support for the [linearizable read concern](https://docs.mongodb.com/master/release-notes/3.4/#linearizable-read-concern)
 
 ### Support for JNDI
 
