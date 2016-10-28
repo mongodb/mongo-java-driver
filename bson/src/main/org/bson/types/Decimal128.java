@@ -26,9 +26,15 @@ import static java.math.MathContext.DECIMAL128;
 import static java.util.Arrays.asList;
 
 /**
- * A representation of a 128-bit decimal.
+ * A binary integer decimal representation of a 128-bit decimal value, supporting 34 decimal digits of significand and an exponent range
+ * of -6143 to +6144.
  *
  * @since 3.4
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst">BSON Decimal128
+ * specification</a>
+ * @see <a href="https://en.wikipedia.org/wiki/Binary_Integer_Decimal">binary integer decimal</a>
+ * @see <a href="https://en.wikipedia.org/wiki/Decimal128_floating-point_format">decimal128 floating-point format</a>
+ * @see <a href="http://ieeexplore.ieee.org/document/4610935/">754-2008 - IEEE Standard for Floating-Point Arithmetic</a>
  */
 public final class Decimal128 implements Serializable {
 
@@ -96,6 +102,10 @@ public final class Decimal128 implements Serializable {
      *
      * @param value the Decimal128 value represented as a String
      * @return the Decimal128 value representing the given String
+     * @throws NumberFormatException if the value is out of the Decimal128 range
+     * @see
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#from-string-representation">
+     *     From-String Specification</a>
      */
     public static Decimal128 parse(final String value) {
         String lowerCasedValue = value.toLowerCase();
@@ -140,6 +150,7 @@ public final class Decimal128 implements Serializable {
      * Constructs a Decimal128 value representing the given BigDecimal.
      *
      * @param value the Decimal128 value represented as a BigDecimal
+     * @throws NumberFormatException if the value is out of the Decimal128 range
      */
     public Decimal128(final BigDecimal value) {
         this(value, value.signum() == -1);
@@ -260,6 +271,8 @@ public final class Decimal128 implements Serializable {
      * Gets a BigDecimal that is equivalent to this Decimal128.
      *
      * @return a BigDecimal that is equivalent to this Decimal128
+     * @throws ArithmeticException if the Decimal128 value is NaN, Infinity, -Infinity, or -0, none of which can be represented as a
+     * BigDecimal
      */
     public BigDecimal bigDecimalValue() {
 
@@ -364,7 +377,7 @@ public final class Decimal128 implements Serializable {
     /**
      * Returns true if the encoded representation of this instance is the same as the encoded representation of {@code o}.
      * <p>
-     * One consiquence is that, whereas {@code Double.NaN != Double.NaN},
+     * One consequence is that, whereas {@code Double.NaN != Double.NaN},
      * {@code new Decimal128("NaN").equals(new Decimal128("NaN")} returns true.
      * </p>
      * <p>
@@ -403,6 +416,13 @@ public final class Decimal128 implements Serializable {
         return result;
     }
 
+    /**
+     * Returns the String representation of the Decimal128 value.
+     *
+     * @return the String representation
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/bson-decimal128/decimal128.rst#to-string-representation">
+     *     To-String Sprecification</a>
+     */
     @Override
     public String toString() {
         if (isNaN()) {
