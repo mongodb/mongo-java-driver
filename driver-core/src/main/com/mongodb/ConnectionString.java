@@ -106,9 +106,9 @@ import static java.util.Collections.singletonList;
  * <ul>
  * <li>{@code safe=true|false}
  * <ul>
- * <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
+ * <li>{@code true}: the driver ensures that all writes are acknowledged by the MongoDB server, or else throws an exception.
  * (see also {@code w} and {@code wtimeoutMS}).</li>
- * <li>{@code false}: the driver does not send a getLastError command after every update.</li>
+ * <li>{@code false}: the driver does not ensure that all writes are acknowledged by the MongoDB server.</li>
  * </ul>
  * </li>
  * <li>{@code journal=true|false}
@@ -119,14 +119,14 @@ import static java.util.Collections.singletonList;
  * </li>
  * <li>{@code w=wValue}
  * <ul>
- * <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
+ * <li>The driver adds { w : wValue } to all write commands. Implies {@code safe=true}.</li>
  * <li>wValue is typically a number, but can be any string in order to allow for specifications like
  * {@code "majority"}</li>
  * </ul>
  * </li>
  * <li>{@code wtimeoutMS=ms}
  * <ul>
- * <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li>
+ * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  * <li>Used in combination with {@code w}</li>
  * </ul>
  * </li>
