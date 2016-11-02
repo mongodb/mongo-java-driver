@@ -179,6 +179,21 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential.MONGODB_X509_MECHANISM == credential.getMechanism()
     }
 
+    def 'creating an X.509 Credential without a username should populate the correct fields'() {
+        given:
+        AuthenticationMechanism mechanism = AuthenticationMechanism.MONGODB_X509
+
+        when:
+        MongoCredential credential = MongoCredential.createMongoX509Credential()
+
+        then:
+        null == credential.getUserName()
+        '$external' == credential.getSource()
+        null == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.MONGODB_X509_MECHANISM == credential.getMechanism()
+    }
+
     def 'should get default value of mechanism property when there is no mapping'() {
         when:
         def credential = MongoCredential.createGSSAPICredential('user')

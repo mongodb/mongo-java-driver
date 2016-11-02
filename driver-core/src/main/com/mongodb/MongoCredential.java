@@ -195,6 +195,22 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the MongoDB X.509 protocol where the distinguished subject name of the client certificate
+     * acts as the userName.
+     * <p>
+     *     Available on MongoDB server versions &gt;= 3.4.
+     * </p>
+     * @return the credential
+     *
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
+     */
+    public static MongoCredential createMongoX509Credential() {
+        return new MongoCredential(MONGODB_X509, null, "$external", null);
+    }
+
+    /**
      * Creates a MongoCredential instance for the PLAIN SASL mechanism.
      *
      * @param userName the non-null user name
@@ -262,7 +278,7 @@ public final class MongoCredential {
      * @param password  the password
      */
     MongoCredential(final AuthenticationMechanism mechanism, final String userName, final String source, final char[] password) {
-        if (userName == null) {
+        if (mechanism != MONGODB_X509 && userName == null) {
             throw new IllegalArgumentException("username can not be null");
         }
 
@@ -279,7 +295,7 @@ public final class MongoCredential {
         }
 
         this.mechanism = mechanism;
-        this.userName = notNull("userName", userName);
+        this.userName = userName;
         this.source = notNull("source", source);
 
         this.password = password != null ? password.clone() : null;
