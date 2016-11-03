@@ -179,12 +179,12 @@ axes:
       - id: "3.4"
         display_name: "3.4"
         variables:
-          mongodb_full_version: "3.4.0-rc0"
+          mongodb_full_version: "3.4.0-rc2"
           ubuntu_os_download: "ubuntu1604"
       - id: "3.2"
         display_name: "3.2"
         variables:
-          mongodb_full_version: "3.2.9"
+          mongodb_full_version: "3.2.10"
           ubuntu_os_download: "ubuntu1604"
       - id: "3.0"
         display_name: "3.0"
