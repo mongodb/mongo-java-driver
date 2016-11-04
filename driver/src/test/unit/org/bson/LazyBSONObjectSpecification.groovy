@@ -17,6 +17,10 @@
 package org.bson
 
 import com.mongodb.BasicDBObject
+import com.mongodb.DBObjectCodec
+import com.mongodb.LazyDBCallback
+import com.mongodb.MongoClient
+import org.bson.codecs.DecoderContext
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -30,6 +34,11 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.regex.Pattern
+
+import static org.bson.BsonHelper.toBson
+import static org.bson.BsonHelper.valuesOfEveryType
+import static org.bson.BsonType.SYMBOL
+import static org.bson.BsonType.UNDEFINED
 
 @SuppressWarnings(['LineLength'])
 class LazyBSONObjectSpecification extends Specification {
@@ -91,6 +100,34 @@ class LazyBSONObjectSpecification extends Specification {
         Decimal128.parse('0E-6176')                                           | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
+    }
+
+    @Unroll
+    def 'should read value of #value'() {
+        given:
+        def bsonDocument = new BsonDocument('name', value)
+        def dbObject = new DBObjectCodec(MongoClient.defaultCodecRegistry)
+                .decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build())
+        def lazyBSONObject = new LazyBSONObject(toBson(bsonDocument).array(), new LazyDBCallback())
+
+        expect:
+        lazyBSONObject.keySet().contains('name')
+
+        when:
+        def expectedValue
+        if (value.bsonType == UNDEFINED) {
+            expectedValue = null
+        } else if (value.bsonType == SYMBOL) {
+            expectedValue = new Symbol(((BsonSymbol) value).getSymbol())
+        } else {
+            expectedValue = dbObject.get('name')
+        }
+
+        then:
+        expectedValue == lazyBSONObject.get('name')
+
+        where:
+        value << valuesOfEveryType()
     }
 
     def 'should have nested items as lazy'() {
