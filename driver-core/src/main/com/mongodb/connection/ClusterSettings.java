@@ -102,6 +102,7 @@ public final class ClusterSettings {
             }
             Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
             for (ServerAddress host : hosts) {
+                notNull("host", host);
                 hostsSet.add(new ServerAddress(host.getHost(), host.getPort()));
             }
             this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(hostsSet));

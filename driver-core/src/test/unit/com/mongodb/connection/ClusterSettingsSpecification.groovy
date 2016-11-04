@@ -213,6 +213,14 @@ class ClusterSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should throws if hosts list contains null value'() {
+        when:
+        ClusterSettings.builder().hosts([null]).build();
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should remove duplicate hosts'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress('server1'),
