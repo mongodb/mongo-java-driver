@@ -571,7 +571,7 @@ public class JsonWriterTest {
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "/a/m"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "/a/x"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "/a/s"),
-                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imxs"));
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imsx"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
@@ -613,7 +613,7 @@ public class JsonWriterTest {
                                                                                         + " \"$options\" : \"s\""
                                                                                         + " }"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"),
-                                                       "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
+                                                       "{ \"$regex\" : \"a\"," + " \"$options\" : \"imsx\" }"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));

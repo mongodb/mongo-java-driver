@@ -552,7 +552,7 @@ public class JsonReaderTest {
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
         BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
-        assertEquals("imxs", regex.getOptions());
+        assertEquals("imsx", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
 
     }
@@ -564,7 +564,7 @@ public class JsonReaderTest {
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
         BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
-        assertEquals("imxs", regex.getOptions());
+        assertEquals("imsx", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
         JsonWriterSettings settings = new JsonWriterSettings(JsonMode.STRICT);
 

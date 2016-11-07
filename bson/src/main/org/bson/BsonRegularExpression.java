@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import java.util.Arrays;
+
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -36,7 +38,7 @@ public final class BsonRegularExpression extends BsonValue {
      */
     public BsonRegularExpression(final String pattern, final String options) {
         this.pattern = notNull("pattern", pattern);
-        this.options = options == null ? "" : options;
+        this.options = options == null ? "" : sortOptionCharacters(options);
     }
 
     /**
@@ -45,7 +47,7 @@ public final class BsonRegularExpression extends BsonValue {
      * @param pattern the regular expression {@link java.util.regex.Pattern}
      */
     public BsonRegularExpression(final String pattern) {
-        this(pattern, "");
+        this(pattern, null);
     }
 
     @Override
@@ -105,5 +107,11 @@ public final class BsonRegularExpression extends BsonValue {
                + "pattern='" + pattern + '\''
                + ", options='" + options + '\''
                + '}';
+    }
+
+    private String sortOptionCharacters(final String options) {
+        char[] chars = options.toCharArray();
+        Arrays.sort(chars);
+        return new String(chars);
     }
 }
