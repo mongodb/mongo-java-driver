@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * be used and options.
  * <p>The format of the URI is:
  * <pre>
- *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+ *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database.collection][?options]]
  * </pre>
  * <ul>
  * <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection format.</li>
