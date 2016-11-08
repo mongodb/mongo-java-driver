@@ -184,6 +184,47 @@ class DescriptionHelperSpecification extends Specification {
                          .build()
     }
 
+    def 'server description should reflect ismaster result from secondary with idleWritePeriodMillis'() {
+        expect:
+        createServerDescription(new ServerAddress('localhost', 27018),
+                parse('''{
+                        "setName" : "replset",
+                        "ismaster" : false,
+                        "secondary" : true,
+                        "hosts" : [
+                        "localhost:27017",
+                        "localhost:27019",
+                        "localhost:27018"
+                        ],
+                        "arbiters" : [
+                        "localhost:27020"
+                        ],
+                        "me" : "localhost:27017",
+                        "maxBsonObjectSize" : 16777216,
+                        "maxMessageSizeBytes" : 48000000,
+                        "maxWriteBatchSize" : 1000,
+                        "localTime" : ISODate("2015-03-04T23:14:07.338Z"),
+                        "maxWireVersion" : 3,
+                        "minWireVersion" : 0,
+                        "idleWritePeriodMillis" : 9000,
+                        "ok" : 1
+                        }'''), serverVersion, roundTripTime) ==
+                ServerDescription.builder()
+                        .ok(true)
+                        .address(new ServerAddress('localhost', 27018))
+                        .state(ServerConnectionState.CONNECTED)
+                        .version(serverVersion)
+                        .maxWireVersion(3)
+                        .maxDocumentSize(16777216)
+                        .type(ServerType.REPLICA_SET_SECONDARY)
+                        .setName('replset')
+                        .canonicalAddress('localhost:27017')
+                        .hosts(['localhost:27017', 'localhost:27018', 'localhost:27019'] as Set)
+                        .arbiters(['localhost:27020'] as Set)
+                        .idleWritePeriodMillis(9000)
+                        .build()
+    }
+
     def 'server description should reflect ismaster result with lastWriteDate'() {
         expect:
         createServerDescription(new ServerAddress('localhost', 27018),

@@ -23,6 +23,7 @@ import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.types.ObjectId;
@@ -38,6 +39,7 @@ import java.util.Set;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerDescription.getDefaultIdleWritePeriodMillis;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
 import static com.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
@@ -85,6 +87,8 @@ final class DescriptionHelper {
                                 .setVersion(getSetVersion(isMasterResult))
                                 .lastWriteDate(getLastWriteDate(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
+                                .idleWritePeriodMillis(isMasterResult.getNumber("idleWritePeriodMillis",
+                                        new BsonInt64(getDefaultIdleWritePeriodMillis())).longValue())
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
     }
 

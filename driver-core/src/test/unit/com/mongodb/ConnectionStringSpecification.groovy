@@ -177,9 +177,9 @@ class ConnectionStringSpecification extends Specification {
         'has an unknown auth mechanism'             | 'mongodb://user:password@localhost/?authMechanism=postItNote'
         'invalid readConcern'                       | 'mongodb://localhost:27017/?readConcernLevel=pickThree'
         'contains tags but no mode'                 | 'mongodb://localhost:27017/?readPreferenceTags=dc:ny'
-        'contains max staleness but no mode'        | 'mongodb://localhost:27017/?maxStalenessMS=100'
+        'contains max staleness but no mode'        | 'mongodb://localhost:27017/?maxStalenessSeconds=100.5'
         'contains tags and primary mode'            | 'mongodb://localhost:27017/?readPreference=primary&readPreferenceTags=dc:ny'
-        'contains max staleness and primary mode'   | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessMS=100'
+        'contains max staleness and primary mode'   | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessSeconds=100.5'
     }
 
     def 'should have correct defaults for options'() {
@@ -312,16 +312,25 @@ class ConnectionStringSpecification extends Specification {
                                                                                                new TagSet()])
         new ConnectionString('mongodb://localhost/' +
                 '?readPreference=secondary' +
-                '&maxStalenessMS=120000')                                | secondary(120000, MILLISECONDS)
+                '&maxStalenessSeconds=120')                              | secondary(120000, MILLISECONDS)
         new ConnectionString('mongodb://localhost/' +
                 '?readPreference=secondary' +
-                '&maxStalenessMS=1')                                     | secondary(1, MILLISECONDS)
+                '&maxStalenessSeconds=10.5')                             | secondary(10500, MILLISECONDS)
         new ConnectionString('mongodb://localhost/' +
                 '?readPreference=secondary' +
-                '&maxStalenessMS=0')                                     | secondary(0, MILLISECONDS)
+                '&maxStalenessSeconds=10.5006')                          | secondary(10501, MILLISECONDS)
         new ConnectionString('mongodb://localhost/' +
                 '?readPreference=secondary' +
-                '&maxStalenessMS=-1')                                    | secondary()
+                '&maxStalenessSeconds=.0011')                            | secondary(1, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessSeconds=0')                                | secondary(0, MILLISECONDS)
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=secondary' +
+                '&maxStalenessSeconds=-1')                               | secondary()
+        new ConnectionString('mongodb://localhost/' +
+                '?readPreference=primary' +
+                '&maxStalenessSeconds=-1')                               | primary()
     }
 
     @Unroll

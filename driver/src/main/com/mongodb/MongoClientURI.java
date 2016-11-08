@@ -135,10 +135,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>Order matters when using multiple readPreferenceTags.</li>
  * </ul>
  * </li>
- * <li>{@code maxStalenessMS=ms}. The maximum staleness in milliseconds. For use with any non-primary read preference, the driver estimates
- * the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those secondaries
- * whose staleness is less than or equal to maxStalenessMS.  Not providing the parameter or explicitly setting it to -1 indicates that
- * there should be no max staleness check.
+ * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
+ * indicates that there should be no max staleness check.
  * </li>
  * </ul>
  * <p>Authentication configuration:</p>

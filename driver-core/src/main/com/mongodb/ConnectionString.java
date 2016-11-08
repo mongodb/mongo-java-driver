@@ -155,10 +155,10 @@ import static java.util.Collections.singletonList;
  * <li>Order matters when using multiple readPreferenceTags.</li>
  * </ul>
  * </li>
- * <li>{@code maxStalenessMS=ms}. The maximum staleness in milliseconds. For use with any non-primary read preference, the driver estimates
- * the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those secondaries
- * whose staleness is less than or equal to maxStalenessMS.  Not providing the parameter or explicitly setting it to -1 indicates that
- * there should be no max staleness check.
+ * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
+ * indicates that there should be no max staleness check.
  * </li>
  * </ul>
  * <p>Authentication configuration:</p>
@@ -340,7 +340,7 @@ public class ConnectionString {
 
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
-        READ_PREFERENCE_KEYS.add("maxstalenessms");
+        READ_PREFERENCE_KEYS.add("maxstalenessseconds");
 
         WRITE_CONCERN_KEYS.add("safe");
         WRITE_CONCERN_KEYS.add("w");
@@ -448,7 +448,7 @@ public class ConnectionString {
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
         List<TagSet> tagSetList = new ArrayList<TagSet>();
-        long maxStalenessMS = -1;
+        double maxStalenessSeconds = -1;
 
         for (final String key : READ_PREFERENCE_KEYS) {
             String value = getLastValue(optionsMap, key);
@@ -458,8 +458,8 @@ public class ConnectionString {
 
             if (key.equals("readpreference")) {
                 readPreferenceType = value;
-            } else if (key.equals("maxstalenessms")) {
-                 maxStalenessMS = Integer.parseInt(value);
+            } else if (key.equals("maxstalenessseconds")) {
+                 maxStalenessSeconds = Double.parseDouble(value);
             } else if (key.equals("readpreferencetags")) {
                 for (final String cur : optionsMap.get(key)) {
                     TagSet tagSet = getTags(cur.trim());
@@ -467,7 +467,7 @@ public class ConnectionString {
                 }
             }
         }
-        return buildReadPreference(readPreferenceType, tagSetList, maxStalenessMS);
+        return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
     }
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
@@ -601,16 +601,17 @@ public class ConnectionString {
     }
 
     private ReadPreference buildReadPreference(final String readPreferenceType,
-                                               final List<TagSet> tagSetList, final long maxStalenessMS) {
+                                               final List<TagSet> tagSetList, final double maxStalenessSeconds) {
         if (readPreferenceType != null) {
-            if (tagSetList.isEmpty() && maxStalenessMS == -1) {
+            if (tagSetList.isEmpty() && maxStalenessSeconds == -1) {
                 return ReadPreference.valueOf(readPreferenceType);
-            } else if (maxStalenessMS == -1) {
+            } else if (maxStalenessSeconds == -1) {
                return ReadPreference.valueOf(readPreferenceType, tagSetList);
             } else {
-                return ReadPreference.valueOf(readPreferenceType, tagSetList, maxStalenessMS, TimeUnit.MILLISECONDS);
+                return ReadPreference.valueOf(readPreferenceType, tagSetList,
+                        Math.round(maxStalenessSeconds * 1000), TimeUnit.MILLISECONDS);
             }
-        } else if (!(tagSetList.isEmpty() && maxStalenessMS == -1)) {
+        } else if (!(tagSetList.isEmpty() && maxStalenessSeconds == -1)) {
             throw new IllegalArgumentException("Read preference mode must be specified if "
                                                        + "either read preference tags or max staleness is specified");
         }

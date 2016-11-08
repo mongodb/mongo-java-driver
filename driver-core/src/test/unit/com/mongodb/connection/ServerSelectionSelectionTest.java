@@ -150,7 +150,9 @@ public class ServerSelectionSelectionTest {
     private ServerDescription buildServerDescription(final BsonDocument serverDescription) {
         ServerDescription.Builder builder = ServerDescription.builder();
         builder.address(new ServerAddress(serverDescription.getString("address").getValue()));
-        builder.type(getServerType(serverDescription.getString("type").getValue()));
+        ServerType serverType = getServerType(serverDescription.getString("type").getValue());
+        builder.ok(serverType != ServerType.UNKNOWN);
+        builder.type(serverType);
         if (serverDescription.containsKey("tags")) {
             builder.tagSet(buildTagSet(serverDescription.getDocument("tags")));
         }
@@ -166,10 +168,12 @@ public class ServerSelectionSelectionTest {
         } else {
             builder.lastUpdateTimeNanos(42L);
         }
+        if (serverDescription.containsKey("idleWritePeriodMillis")) {
+            builder.idleWritePeriodMillis(serverDescription.getNumber("idleWritePeriodMillis").longValue());
+        }
         if (serverDescription.containsKey("maxWireVersion")) {
             builder.maxWireVersion(serverDescription.getNumber("maxWireVersion").intValue());
         }
-        builder.ok(true);
         return builder.build();
     }
 
@@ -224,10 +228,10 @@ public class ServerSelectionSelectionTest {
             ReadPreference readPreference;
             if (readPreferenceDefinition.getString("mode").getValue().equals("Primary")) {
                 readPreference = ReadPreference.valueOf("Primary");
-            } else if (readPreferenceDefinition.containsKey("maxStalenessMS")) {
+            } else if (readPreferenceDefinition.containsKey("maxStalenessSeconds")) {
                 readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
                         buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())),
-                        readPreferenceDefinition.getNumber("maxStalenessMS").longValue(), TimeUnit.MILLISECONDS);
+                        Math.round(readPreferenceDefinition.getNumber("maxStalenessSeconds").doubleValue() * 1000), TimeUnit.MILLISECONDS);
             } else {
                 readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
                         buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())));

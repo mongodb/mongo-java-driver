@@ -97,6 +97,7 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getLastWriteDate());
         assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) > currentNanoTime);
+        assertEquals(10000, serverDescription.getIdleWritePeriodMillis());
         assertNull(serverDescription.getException());
     }
 
@@ -127,6 +128,7 @@ public class ServerDescriptionTest {
                                               .setVersion(new Integer(2))
                                               .lastWriteDate(new Date(1234L))
                                               .lastUpdateTimeNanos(40000L)
+                                              .idleWritePeriodMillis(9000)
                                               .exception(exception)
                                               .build();
 
@@ -162,6 +164,7 @@ public class ServerDescriptionTest {
         assertEquals(new Integer(2), serverDescription.getSetVersion());
         assertEquals(new Date(1234), serverDescription.getLastWriteDate());
         assertEquals(40000L, serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS));
+        assertEquals(9000, serverDescription.getIdleWritePeriodMillis());
         assertEquals(exception, serverDescription.getException());
     }
 
@@ -241,6 +244,9 @@ public class ServerDescriptionTest {
         assertNotEquals(builder.build(), otherDescription);
 
         otherDescription = createBuilder().lastWriteDate(new Date()).build();
+        assertNotEquals(builder.build(), otherDescription);
+
+        otherDescription = createBuilder().idleWritePeriodMillis(9000).build();
         assertNotEquals(builder.build(), otherDescription);
 
         // roundTripTime is considered equals and equivalent state
