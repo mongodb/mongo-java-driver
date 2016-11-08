@@ -1,34 +1,50 @@
 {
+    "heartbeatFrequencyMS": 500,
     "in_latency_window": [
         {
             "address": "a:27017",
             "avg_rtt_ms": 5,
-            "lastUpdateTime": 0,
+            "idleWritePeriodMillis": 9000,
+            "lastUpdateTime": 1,
             "lastWrite": {
                 "lastWriteDate": {
-                    "$numberLong": "1000001"
+                    "$numberLong": "1"
                 }
             },
             "maxWireVersion": 5,
-            "type": "RSPrimary"
+            "type": "RSSecondary"
         }
     ],
     "read_preference": {
-        "maxStalenessSeconds": 120,
-        "mode": "SecondaryPreferred"
+        "maxStalenessSeconds": 10,
+        "mode": "Nearest"
     },
     "suitable_servers": [
         {
             "address": "a:27017",
             "avg_rtt_ms": 5,
-            "lastUpdateTime": 0,
+            "idleWritePeriodMillis": 9000,
+            "lastUpdateTime": 1,
             "lastWrite": {
                 "lastWriteDate": {
-                    "$numberLong": "1000001"
+                    "$numberLong": "1"
                 }
             },
             "maxWireVersion": 5,
-            "type": "RSPrimary"
+            "type": "RSSecondary"
+        },
+        {
+            "address": "b:27017",
+            "avg_rtt_ms": 50,
+            "idleWritePeriodMillis": 11000,
+            "lastUpdateTime": 0,
+            "lastWrite": {
+                "lastWriteDate": {
+                    "$numberLong": "1"
+                }
+            },
+            "maxWireVersion": 5,
+            "type": "RSSecondary"
         }
     ],
     "topology_description": {
@@ -36,18 +52,20 @@
             {
                 "address": "a:27017",
                 "avg_rtt_ms": 5,
-                "lastUpdateTime": 0,
+                "idleWritePeriodMillis": 9000,
+                "lastUpdateTime": 1,
                 "lastWrite": {
                     "lastWriteDate": {
-                        "$numberLong": "1000001"
+                        "$numberLong": "1"
                     }
                 },
                 "maxWireVersion": 5,
-                "type": "RSPrimary"
+                "type": "RSSecondary"
             },
             {
                 "address": "b:27017",
-                "avg_rtt_ms": 5,
+                "avg_rtt_ms": 50,
+                "idleWritePeriodMillis": 11000,
                 "lastUpdateTime": 0,
                 "lastWrite": {
                     "lastWriteDate": {
@@ -58,6 +76,6 @@
                 "type": "RSSecondary"
             }
         ],
-        "type": "ReplicaSetWithPrimary"
+        "type": "ReplicaSetNoPrimary"
     }
 }

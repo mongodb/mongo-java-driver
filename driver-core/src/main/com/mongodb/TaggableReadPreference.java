@@ -20,9 +20,10 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
+import org.bson.BsonDouble;
 import org.bson.BsonString;
 
 import java.util.ArrayList;
@@ -32,7 +33,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Abstract class for all preference which can be combined with tags
@@ -70,7 +73,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         if (maxStalenessMS != null) {
-            readPrefObject.put("maxStalenessMS", new BsonInt64(maxStalenessMS));
+            readPrefObject.put("maxStalenessSeconds", new BsonDouble(maxStalenessMS / 1000.0));
         }
         return readPrefObject;
     }
@@ -175,8 +178,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         long heartbeatFrequencyMS = clusterDescription.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
 
-        if (getMaxStaleness(MILLISECONDS) < 2 * heartbeatFrequencyMS) {
-            throw new MongoConfigurationException("Max staleness must be at least twice the heartbeat frequency");
+        ServerDescription mostUpToDateServerDescription = getMostUpToDateServerDescription(clusterDescription);
+        if (mostUpToDateServerDescription != null
+                    && getMaxStaleness(MILLISECONDS) < heartbeatFrequencyMS + mostUpToDateServerDescription.getIdleWritePeriodMillis()) {
+            throw new MongoConfigurationException(format("Max staleness (%d ms) must be at least the heartbeat period (%d ms) "
+                                                                 + "plus the idle write period (%d ms)",
+                    getMaxStaleness(MILLISECONDS), heartbeatFrequencyMS, mostUpToDateServerDescription.getIdleWritePeriodMillis()));
         }
 
         List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
@@ -193,7 +200,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                     }
                 }
             }
-        } else {
+        } else   {
             ServerDescription mostUpdateToDateSecondary = findMostUpToDateSecondary(clusterDescription);
             for (ServerDescription cur : servers) {
                 if (mostUpdateToDateSecondary.getLastWriteDate().getTime() - cur.getLastWriteDate().getTime() + heartbeatFrequencyMS
@@ -204,6 +211,22 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         return freshServers;
+    }
+
+    private ServerDescription getMostUpToDateServerDescription(final ClusterDescription clusterDescription) {
+        ServerDescription mostUpToDateServerDescription = null;
+        for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+            if (cur.getType() == ServerType.REPLICA_SET_PRIMARY) {
+                mostUpToDateServerDescription = cur;
+                break;
+            } else if (cur.getType() == ServerType.REPLICA_SET_SECONDARY) {
+                if (mostUpToDateServerDescription == null
+                            || cur.getLastUpdateTime(NANOSECONDS) > mostUpToDateServerDescription.getLastUpdateTime(NANOSECONDS)) {
+                    mostUpToDateServerDescription = cur;
+                }
+            }
+        }
+        return mostUpToDateServerDescription;
     }
 
     private long getStalenessOfSecondaryRelativeToPrimary(final ServerDescription primary, final ServerDescription serverDescription,
@@ -237,7 +260,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private boolean serversAreAllThreeDotFour(final ClusterDescription clusterDescription) {
         for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-            if (cur.getMaxWireVersion() < 5) {
+            if (cur.isOk() && cur.getMaxWireVersion() < 5) {
                 return false;
             }
         }
