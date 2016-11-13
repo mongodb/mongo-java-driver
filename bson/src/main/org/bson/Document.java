@@ -201,8 +201,8 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      * Gets the value of the given key as a Boolean.
      *
      * @param key the key
-     * @return the value as a double, which may be null
-     * @throws java.lang.ClassCastException if the value is not an double
+     * @return the value as a Boolean, which may be null
+     * @throws java.lang.ClassCastException if the value is not an boolean
      */
     public Boolean getBoolean(final Object key) {
         return (Boolean) get(key);
@@ -213,8 +213,8 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      *
      * @param key          the key
      * @param defaultValue what to return if the value is null
-     * @return the value as a double, which may be null
-     * @throws java.lang.ClassCastException if the value is not an double
+     * @return the value as a primitive boolean
+     * @throws java.lang.ClassCastException if the value is not a boolean
      */
     public boolean getBoolean(final Object key, final boolean defaultValue) {
         Object value = get(key);
