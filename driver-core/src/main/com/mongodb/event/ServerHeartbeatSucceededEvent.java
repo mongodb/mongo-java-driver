@@ -21,7 +21,7 @@ import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -39,12 +39,12 @@ public final class ServerHeartbeatSucceededEvent {
      *
      * @param connectionId the non-null connectionId
      * @param reply the non-null reply to an isMaster command
-     * @param elapsedTimeNanos the positive elapsted time in nanoseconds
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      */
     public ServerHeartbeatSucceededEvent(final ConnectionId connectionId, final BsonDocument reply, final long elapsedTimeNanos) {
         this.connectionId = notNull("connectionId", connectionId);
         this.reply = notNull("reply", reply);
-        isTrue("elapsed time is positive", elapsedTimeNanos > 0);
+        isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
     }
 

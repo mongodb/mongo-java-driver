@@ -21,7 +21,7 @@ import com.mongodb.connection.ConnectionId;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -38,12 +38,12 @@ public final class ServerHeartbeatFailedEvent {
      * Construct an instance.
      *
      * @param connectionId the non-null connectionId
-     * @param elapsedTimeNanos the positive elapsed time in nanoseconds
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds
      * @param throwable the non-null exception that caused the failure
      */
     public ServerHeartbeatFailedEvent(final ConnectionId connectionId, final long elapsedTimeNanos, final Throwable throwable) {
         this.connectionId = notNull("connectionId", connectionId);
-        isTrue("elapsed time is positive", elapsedTimeNanos > 0);
+        isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
         this.throwable = notNull("throwable", throwable);
     }
