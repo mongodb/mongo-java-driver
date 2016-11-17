@@ -22,10 +22,12 @@ import org.junit.Test;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 public class MongoConstructorsTest {
 
@@ -52,11 +54,18 @@ public class MongoConstructorsTest {
     }
 
     @Test
-    @Ignore
-    public void shouldUseGivenServerAddress() throws UnknownHostException {
-        Mongo mongo = new MongoClient(new ServerAddress("localhost"));
+    public void shouldGetSeedList() throws UnknownHostException {
+        List<ServerAddress> seedList = Arrays.asList(new ServerAddress("localhost"), new ServerAddress("localhost:27018"));
+        Mongo mongo = new MongoClient(seedList);
         try {
-            assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+            assertEquals(seedList, mongo.getAllAddress());
+            try {
+                mongo.getAllAddress().add(new ServerAddress("localhost:27019"));
+                fail("Address list modification should be unsupported");
+            } catch (UnsupportedOperationException e) {
+                // all good
+            }
+
         } finally {
             mongo.close();
         }

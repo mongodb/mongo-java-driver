@@ -390,8 +390,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getAllAddress() {
-        //TODO It should return the address list without auto-discovered nodes. Not sure if it's required. Maybe users confused with name.
-        return getServerAddressList();
+        return cluster.getSettings().getHosts();
     }
 
     /**
