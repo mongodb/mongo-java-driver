@@ -18,6 +18,8 @@ import com.mongodb.connection.ConnectionDescription;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+
 /**
  * An event representing the failure of a MongoDB database command.
  *
@@ -33,12 +35,13 @@ public final class CommandFailedEvent extends CommandEvent {
      * @param requestId the requestId
      * @param connectionDescription the connection description
      * @param commandName the command name
-     * @param elapsedTimeNanos the elapsed time in nanoseconds for the operation to complete
+     * @param elapsedTimeNanos the non-negative elapsed time in nanoseconds for the operation to complete
      * @param throwable the throwable cause of the failure
      */
     public CommandFailedEvent(final int requestId, final ConnectionDescription connectionDescription, final String commandName,
                               final long elapsedTimeNanos, final Throwable throwable) {
         super(requestId, connectionDescription, commandName);
+        isTrueArgument("elapsed time is not negative", elapsedTimeNanos >= 0);
         this.elapsedTimeNanos = elapsedTimeNanos;
         this.throwable = throwable;
     }
