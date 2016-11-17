@@ -49,6 +49,19 @@ class BaseClusterSpecification extends Specification {
     private final List<ServerAddress> allServers = [firstServer, secondServer, thirdServer]
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
+    def 'should get cluster settings'() {
+        given:
+        def clusterSettings = builder().mode(MULTIPLE)
+                .hosts([firstServer, secondServer, thirdServer])
+                .serverSelectionTimeout(1, SECONDS)
+                .serverSelector(new ServerAddressSelector(firstServer))
+                .build()
+        def cluster = new MultiServerCluster(new ClusterId(), clusterSettings, factory)
+
+        expect:
+        cluster.getSettings() == clusterSettings
+    }
+
     def 'should compose server selector passed to selectServer with server selector in cluster settings'() {
         given:
         def cluster = new MultiServerCluster(new ClusterId(),

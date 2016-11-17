@@ -30,6 +30,14 @@ import java.io.Closeable;
 public interface Cluster extends Closeable{
 
     /**
+     * Gets the cluster settings with which this cluster was created.
+     *
+     * @return the cluster settings
+     * @since 3.4
+     */
+    ClusterSettings getSettings();
+
+    /**
      * Get the description of this cluster.  This method will not return normally until the cluster type is known.
      *
      * @return a ClusterDescription representing the current state of the cluster
