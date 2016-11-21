@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoSocketException
 import com.mongodb.ServerAddress
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.connection.Connection
@@ -81,5 +82,37 @@ class QueryBatchCursorSpecification extends Specification {
         0          | 0          | null
         2          | 0          | null
         0          | 100        | 100
+    }
+
+    def 'should handle exceptions when closing'() {
+        given:
+        def serverAddress = new ServerAddress()
+        def connection = Mock(Connection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([3, 2, 0])
+            }
+            _ * killCursor(_, _) >> { throw new MongoSocketException('No MongoD', serverAddress) }
+
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> { connection }
+        }
+        connectionSource.retain() >> connectionSource
+
+        def namespace = new MongoNamespace('test', 'QueryBatchCursorSpecification')
+        def firstBatch = new QueryResult(namespace, [], 42, serverAddress)
+        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+
+        when:
+        cursor.close()
+
+        then:
+        thrown(MongoSocketException)
+
+        when:
+        cursor.close()
+
+        then:
+        notThrown(Exception)
     }
 }

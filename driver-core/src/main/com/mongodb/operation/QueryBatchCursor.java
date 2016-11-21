@@ -141,18 +141,16 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     @Override
     public void close() {
-        if (closed) {
-            return;
-        }
-        try {
-            killCursor();
-        } finally {
-            if (connectionSource != null) {
-                connectionSource.release();
+        if (!closed) {
+            closed = true;
+            try {
+                killCursor();
+            } finally {
+                if (connectionSource != null) {
+                    connectionSource.release();
+                }
             }
         }
-
-        closed = true;
     }
 
     @Override
