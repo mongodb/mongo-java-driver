@@ -310,6 +310,22 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
                         new BsonDocument("e", new BsonInt32(3))))))));
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void shouldBeAbleToHandleNullValuesWhenUsingDistinct() {
+        collection.drop();
+        collection.insertMany(asList(new Document("id", "a"), new Document("id", "b"), new Document("id", null)));
+
+        List<String> distinctStrings = collection.distinct("id", String.class).into(new ArrayList<String>());
+        assertTrue(distinctStrings.containsAll(asList("a", "b", null)));
+
+        collection.drop();
+        collection.insertMany(asList(new Document("id", 1), new Document("id", 2), new Document("id", null)));
+
+        List<Integer> distinctInts = collection.distinct("id", Integer.class).into(new ArrayList<Integer>());
+        assertTrue(distinctInts.containsAll(asList(1, 2, null)));
+    }
+
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         MongoCollection<Document> collection = database.getCollection(getCollectionName()).withWriteConcern(WriteConcern.ACKNOWLEDGED);
         for (int i = 0; i < numberOfDocuments; i++) {
