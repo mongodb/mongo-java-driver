@@ -45,7 +45,12 @@ class CommandResultArrayCodec<T> extends BsonArrayCodec {
 
         List<T> list = new ArrayList<T>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(decoder.decode(reader, decoderContext));
+            if (reader.getCurrentBsonType() == BsonType.NULL) {
+                reader.readNull();
+                list.add(null);
+            } else {
+                list.add(decoder.decode(reader, decoderContext));
+            }
         }
         reader.readEndArray();
 
