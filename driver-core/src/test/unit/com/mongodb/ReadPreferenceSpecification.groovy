@@ -145,11 +145,11 @@ class ReadPreferenceSpecification extends Specification {
 
         where:
         readPreference                                 | document
-        ReadPreference.primaryPreferred(10, SECONDS)   | parse('{mode : "primaryPreferred", maxStalenessSeconds : 10.0 }}')
-        ReadPreference.secondary(10, SECONDS)          | parse('{mode : "secondary", maxStalenessSeconds : 10.0 }}')
-        ReadPreference.secondaryPreferred(10, SECONDS) | parse('{mode : "secondaryPreferred", maxStalenessSeconds : 10.0 }}')
-        ReadPreference.nearest(10, SECONDS)            | parse('{mode : "nearest", maxStalenessSeconds : 10.0 }}')
-        ReadPreference.nearest(10005, MILLISECONDS)    | parse('{mode : "nearest", maxStalenessSeconds : 10.005 }}')
+        ReadPreference.primaryPreferred(10, SECONDS)   | parse('{mode : "primaryPreferred", maxStalenessSeconds : {$numberLong : "10" }}}')
+        ReadPreference.secondary(10, SECONDS)          | parse('{mode : "secondary", maxStalenessSeconds : {$numberLong : "10" }}}')
+        ReadPreference.secondaryPreferred(10, SECONDS) | parse('{mode : "secondaryPreferred", maxStalenessSeconds : {$numberLong : "10" }}}')
+        ReadPreference.nearest(10, SECONDS)            | parse('{mode : "nearest", maxStalenessSeconds : {$numberLong : "10" }}}')
+        ReadPreference.nearest(10005, MILLISECONDS)    | parse('{mode : "nearest", maxStalenessSeconds : {$numberLong : "10" }}}')
     }
 
     def 'should convert read preferences with a single tag set to correct documents'() {

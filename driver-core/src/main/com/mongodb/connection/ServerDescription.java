@@ -49,7 +49,6 @@ public class ServerDescription {
     static final int MAX_DRIVER_WIRE_VERSION = 3;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
-    static final int DEFAULT_IDLE_WRITE_PERIOD_MILLIS = 10000;  // 10 seconds
 
     private final ServerAddress address;
 
@@ -74,7 +73,6 @@ public class ServerDescription {
     private final Integer setVersion;
     private final Date lastWriteDate;
     private final long lastUpdateTimeNanos;
-    private final long idleWritePeriodMillis;
 
     private final Throwable exception;
 
@@ -122,7 +120,6 @@ public class ServerDescription {
         private Integer setVersion;
         private Date lastWriteDate;
         private long lastUpdateTimeNanos = Time.nanoTime();
-        private long idleWritePeriodMillis = DEFAULT_IDLE_WRITE_PERIOD_MILLIS;
 
         private Throwable exception;
 
@@ -362,18 +359,6 @@ public class ServerDescription {
         }
 
         /**
-         * Sets the idle write period in milliseconds for this description. The default 10,000 (10 seconds).
-         *
-         * @param idleWritePeriodMillis the idle write period in milliseconds
-         * @return this
-         *
-         * @since 3.4
-         */
-        public Builder idleWritePeriodMillis(final long idleWritePeriodMillis) {
-            this.idleWritePeriodMillis = idleWritePeriodMillis;
-            return this;
-        }
-        /**
          * Sets the exception thrown while attempting to determine the server description.
          *
          * @param exception the exception
@@ -441,17 +426,6 @@ public class ServerDescription {
      */
     public static int getDefaultMaxWireVersion() {
         return 0;
-    }
-
-    /**
-     * Get the default idle write period in milliseconds
-     *
-     * @return the default idle write period in milliseconds
-     *
-     * @since 3.4
-     */
-    public static int getDefaultIdleWritePeriodMillis() {
-        return DEFAULT_IDLE_WRITE_PERIOD_MILLIS;
     }
 
     /**
@@ -707,16 +681,6 @@ public class ServerDescription {
     }
 
     /**
-     * Gets the idle write period in milliseconds for this description. The default 10,000 (10 seconds).
-     *
-     * @return the idle write period in milliseconds
-     * @since 3.4
-     */
-    public long getIdleWritePeriodMillis() {
-        return idleWritePeriodMillis;
-    }
-
-    /**
      * Gets the exception thrown while attempting to determine the server description.  This is useful for diagnostic purposed when
      * determining the root cause of a connectivity failure.
      *
@@ -802,10 +766,6 @@ public class ServerDescription {
             return false;
         }
 
-        if (idleWritePeriodMillis != that.idleWritePeriodMillis) {
-            return false;
-        }
-
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -838,7 +798,6 @@ public class ServerDescription {
         result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
         result = 31 * result + (lastWriteDate != null ? lastWriteDate.hashCode() : 0);
         result = 31 * result + (int) (lastUpdateTimeNanos ^ (lastUpdateTimeNanos >>> 32));
-        result = 31 * result + (int) (idleWritePeriodMillis ^ (idleWritePeriodMillis >>> 32));
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
@@ -877,7 +836,6 @@ public class ServerDescription {
                   + ", setVersion=" + setVersion
                   + ", lastWriteDate=" + lastWriteDate
                   + ", lastUpdateTimeNanos=" + lastUpdateTimeNanos
-                  + ", idleWritePeriodMillis=" + idleWritePeriodMillis
                 : "")
                + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
@@ -942,7 +900,6 @@ public class ServerDescription {
         setVersion = builder.setVersion;
         lastWriteDate = builder.lastWriteDate;
         lastUpdateTimeNanos = builder.lastUpdateTimeNanos;
-        idleWritePeriodMillis = builder.idleWritePeriodMillis;
         exception = builder.exception;
     }
 }

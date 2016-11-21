@@ -168,9 +168,6 @@ public class ServerSelectionSelectionTest {
         } else {
             builder.lastUpdateTimeNanos(42L);
         }
-        if (serverDescription.containsKey("idleWritePeriodMillis")) {
-            builder.idleWritePeriodMillis(serverDescription.getNumber("idleWritePeriodMillis").longValue());
-        }
         if (serverDescription.containsKey("maxWireVersion")) {
             builder.maxWireVersion(serverDescription.getNumber("maxWireVersion").intValue());
         }
