@@ -23,7 +23,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonDouble;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 
 import java.util.ArrayList;
@@ -36,12 +36,16 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Abstract class for all preference which can be combined with tags
  */
 @Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
+    private static final int SMALLEST_MAX_STALENESS_MS = 90000;
+    private static final int IDLE_WRITE_PERIOD_MS = 10000;
+
     private final List<TagSet> tagSetList = new ArrayList<TagSet>();
     private final Long maxStalenessMS;
 
@@ -73,7 +77,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         if (maxStalenessMS != null) {
-            readPrefObject.put("maxStalenessSeconds", new BsonDouble(maxStalenessMS / 1000.0));
+            readPrefObject.put("maxStalenessSeconds", new BsonInt64(MILLISECONDS.toSeconds(maxStalenessMS)));
         }
         return readPrefObject;
     }
@@ -90,12 +94,18 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Gets the maximum acceptable staleness of a secondary in order to be considered for read operations.
-     *
+     * <p>
+     * The maximum staleness feature is designed to prevent badly-lagging servers from being selected. The staleness estimate is imprecise
+     * and shouldn't be used to try to select "up-to-date" secondaries.
+     * </p>
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
      * @param timeUnit the time unit in which to return the value
      * @return the maximum acceptable staleness in the given time unit, or null if the value is not set
-     *
-     * @since 3.4
      * @mongodb.server.release 3.4
+     * @since 3.4
      */
     public Long getMaxStaleness(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -176,16 +186,22 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return servers;
         }
 
-        long heartbeatFrequencyMS = clusterDescription.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
-
-        ServerDescription mostUpToDateServerDescription = getMostUpToDateServerDescription(clusterDescription);
-        if (mostUpToDateServerDescription != null
-                    && getMaxStaleness(MILLISECONDS) < heartbeatFrequencyMS + mostUpToDateServerDescription.getIdleWritePeriodMillis()) {
-            throw new MongoConfigurationException(format("Max staleness (%d ms) must be at least the heartbeat period (%d ms) "
-                                                                 + "plus the idle write period (%d ms)",
-                    getMaxStaleness(MILLISECONDS), heartbeatFrequencyMS, mostUpToDateServerDescription.getIdleWritePeriodMillis()));
+        if (servers.isEmpty()) {
+            return servers;
         }
 
+        long heartbeatFrequencyMS = clusterDescription.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
+
+        if (getMaxStaleness(MILLISECONDS) < Math.max(SMALLEST_MAX_STALENESS_MS, heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS)) {
+            if (SMALLEST_MAX_STALENESS_MS > heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS){
+                throw new MongoConfigurationException(format("Max staleness (%d sec) must be at least 90 seconds",
+                        getMaxStaleness(SECONDS)));
+            } else {
+                throw new MongoConfigurationException(format("Max staleness (%d ms) must be at least the heartbeat period (%d ms) "
+                                                                     + "plus the idle write period (%d ms)",
+                        getMaxStaleness(MILLISECONDS), heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
+            }
+        }
         List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
 
         ServerDescription primary = findPrimary(clusterDescription);
@@ -200,7 +216,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                     }
                 }
             }
-        } else   {
+        } else {
             ServerDescription mostUpdateToDateSecondary = findMostUpToDateSecondary(clusterDescription);
             for (ServerDescription cur : servers) {
                 if (mostUpdateToDateSecondary.getLastWriteDate().getTime() - cur.getLastWriteDate().getTime() + heartbeatFrequencyMS
@@ -363,7 +379,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
                 }
             }
             return selectedServers;
-       }
+        }
     }
 
     /**
