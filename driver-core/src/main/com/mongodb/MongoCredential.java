@@ -408,7 +408,7 @@ public final class MongoCredential {
         if (!source.equals(that.source)) {
             return false;
         }
-        if (!userName.equals(that.userName)) {
+        if (userName != null ? !userName.equals(that.userName) : that.userName != null) {
             return false;
         }
         if (!mechanismProperties.equals(that.mechanismProperties)) {
@@ -421,7 +421,7 @@ public final class MongoCredential {
     @Override
     public int hashCode() {
         int result = mechanism != null ? mechanism.hashCode() : 0;
-        result = 31 * result + userName.hashCode();
+        result = 31 * result + (userName != null ? userName.hashCode() : 0);
         result = 31 * result + source.hashCode();
         result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
         result = 31 * result + mechanismProperties.hashCode();
