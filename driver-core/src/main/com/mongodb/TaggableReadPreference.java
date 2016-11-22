@@ -20,7 +20,6 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerType;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -35,7 +34,6 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -186,10 +184,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
             return servers;
         }
 
-        if (servers.isEmpty()) {
-            return servers;
-        }
-
         long heartbeatFrequencyMS = clusterDescription.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
 
         if (getMaxStaleness(MILLISECONDS) < Math.max(SMALLEST_MAX_STALENESS_MS, heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS)) {
@@ -227,22 +221,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         return freshServers;
-    }
-
-    private ServerDescription getMostUpToDateServerDescription(final ClusterDescription clusterDescription) {
-        ServerDescription mostUpToDateServerDescription = null;
-        for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-            if (cur.getType() == ServerType.REPLICA_SET_PRIMARY) {
-                mostUpToDateServerDescription = cur;
-                break;
-            } else if (cur.getType() == ServerType.REPLICA_SET_SECONDARY) {
-                if (mostUpToDateServerDescription == null
-                            || cur.getLastUpdateTime(NANOSECONDS) > mostUpToDateServerDescription.getLastUpdateTime(NANOSECONDS)) {
-                    mostUpToDateServerDescription = cur;
-                }
-            }
-        }
-        return mostUpToDateServerDescription;
     }
 
     private long getStalenessOfSecondaryRelativeToPrimary(final ServerDescription primary, final ServerDescription serverDescription,
