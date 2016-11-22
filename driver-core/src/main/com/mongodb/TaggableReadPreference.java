@@ -379,7 +379,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            List<ServerDescription> selectedServers = clusterDescription.getPrimaries();
+            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getPrimaries());
             if (selectedServers.isEmpty()) {
                 selectedServers = super.chooseForReplicaSet(clusterDescription);
             }
