@@ -280,4 +280,28 @@ class MongoCredentialSpecification extends Specification {
 
         !credentialOne.toString().contains(password)
     }
+
+    def 'testEqualsAndHashCode'() {
+        expect:
+        credential() == credential()
+        credential().hashCode() == credential().hashCode()
+
+        where:
+        credential << [
+            { MongoCredential.createCredential('user', 'database', 'pwd'.toCharArray()) },
+            { MongoCredential.createCredential('user', 'database', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoCRCredential('user', 'database', 'pwd'.toCharArray()) },
+            { MongoCredential.createMongoCRCredential('user', 'database', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createPlainCredential('user', '$external', 'pwd'.toCharArray()) },
+            { MongoCredential.createPlainCredential('user', '$external', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createScramSha1Credential('user', '$external', 'pwd'.toCharArray()) },
+            { MongoCredential.createScramSha1Credential('user', '$external', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createGSSAPICredential('user') },
+            { MongoCredential.createGSSAPICredential('user').withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoX509Credential('user') },
+            { MongoCredential.createMongoX509Credential('user').withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoX509Credential() },
+            { MongoCredential.createMongoX509Credential().withMechanismProperty('foo', 'bar') },
+        ]
+    }
 }
