@@ -95,6 +95,10 @@ public class CrudTest extends DatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
+            if (testDocument.containsKey("minServerVersion")
+                    && !serverAtLeastMinVersion(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument()});
@@ -121,5 +125,16 @@ public class CrudTest extends DatabaseTestCase {
             collectionToCompare = database.getCollection(expectedCollection.getString("name").getValue(), BsonDocument.class);
         }
         assertEquals(description, expectedCollection.getArray("data"), collectionToCompare.find().into(new BsonArray()));
+    }
+
+    private static boolean serverAtLeastMinVersion(final String minServerVersionString) {
+        List<Integer> versionList = new ArrayList<Integer>();
+        for (String s : minServerVersionString.split("\\.")) {
+            versionList.add(Integer.valueOf(s));
+        }
+        while (versionList.size() < 3) {
+            versionList.add(0);
+        }
+        return serverVersionAtLeast(versionList.subList(0, 3));
     }
 }

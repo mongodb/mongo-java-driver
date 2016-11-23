@@ -20,7 +20,13 @@ import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationAlternate;
+import com.mongodb.client.model.CollationCaseFirst;
+import com.mongodb.client.model.CollationMaxVariable;
+import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -122,7 +128,15 @@ public class JsonPoweredCrudTestHelper {
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
         }
-        return toResult(collection.aggregate(pipeline).batchSize(arguments.getNumber("batchSize").intValue()));
+
+        AggregateIterable<BsonDocument> iterable = collection.aggregate(pipeline);
+        if (arguments.containsKey("batchSize")) {
+            iterable.batchSize(arguments.getNumber("batchSize").intValue());
+        }
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        return toResult(iterable);
     }
 
     BsonDocument getCountResult(final BsonDocument arguments) {
@@ -133,43 +147,63 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("limit")) {
             options.limit(arguments.getNumber("limit").intValue());
         }
-
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
         return toResult((int) collection.count(arguments.getDocument("filter"), options));
     }
 
     BsonDocument getDistinctResult(final BsonDocument arguments) {
-        return toResult(collection.distinct(arguments.getString("fieldName").getValue(), BsonInt32.class)
-                                .filter(arguments.getDocument("filter")).into(new BsonArray()));
+        DistinctIterable<BsonValue> iterable = collection.distinct(arguments.getString("fieldName").getValue(), BsonValue.class);
+        if (arguments.containsKey("filter")) {
+            iterable.filter(arguments.getDocument("filter"));
+        }
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        return toResult(iterable.into(new BsonArray()));
     }
 
     BsonDocument getFindResult(final BsonDocument arguments) {
-        FindIterable<BsonDocument> findIterable = collection.find(arguments.getDocument("filter"));
+        FindIterable<BsonDocument> iterable = collection.find(arguments.getDocument("filter"));
         if (arguments.containsKey("skip")) {
-            findIterable.skip(arguments.getNumber("skip").intValue());
+            iterable.skip(arguments.getNumber("skip").intValue());
         }
         if (arguments.containsKey("limit")) {
-            findIterable.limit(arguments.getNumber("limit").intValue());
+            iterable.limit(arguments.getNumber("limit").intValue());
         }
         if (arguments.containsKey("batchSize")) {
-            findIterable.batchSize(arguments.getNumber("batchSize").intValue());
+            iterable.batchSize(arguments.getNumber("batchSize").intValue());
         }
         if (arguments.containsKey("sort")) {
-            findIterable.sort(arguments.getDocument("sort"));
+            iterable.sort(arguments.getDocument("sort"));
         }
         if (arguments.containsKey("modifiers")) {
-            findIterable.modifiers(arguments.getDocument("modifiers"));
+            iterable.modifiers(arguments.getDocument("modifiers"));
         }
-        return toResult(findIterable);
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        return toResult(iterable);
     }
 
     BsonDocument getDeleteManyResult(final BsonDocument arguments) {
+        DeleteOptions options = new DeleteOptions();
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
         return toResult("deletedCount",
-                        new BsonInt32((int) collection.deleteMany(arguments.getDocument("filter")).getDeletedCount()));
+                        new BsonInt32((int) collection.deleteMany(arguments.getDocument("filter"), options).getDeletedCount()));
     }
 
     BsonDocument getDeleteOneResult(final BsonDocument arguments) {
+        DeleteOptions options = new DeleteOptions();
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
+
         return toResult("deletedCount",
-                        new BsonInt32((int) collection.deleteOne(arguments.getDocument("filter")).getDeletedCount()));
+                        new BsonInt32((int) collection.deleteOne(arguments.getDocument("filter"), options).getDeletedCount()));
     }
 
     BsonDocument getFindOneAndDeleteResult(final BsonDocument arguments) {
@@ -179,6 +213,9 @@ public class JsonPoweredCrudTestHelper {
         }
         if (arguments.containsKey("sort")) {
             options.sort(arguments.getDocument("sort"));
+        }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult(collection.findOneAndDelete(arguments.getDocument("filter"), options));
     }
@@ -201,6 +238,9 @@ public class JsonPoweredCrudTestHelper {
             options.returnDocument(arguments.getString("returnDocument").getValue().equals("After") ? ReturnDocument.AFTER
                                                                                                     : ReturnDocument.BEFORE);
         }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
         return toResult(collection
                                 .findOneAndReplace(arguments.getDocument("filter"), arguments.getDocument("replacement"), options));
     }
@@ -219,6 +259,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("returnDocument")) {
             options.returnDocument(arguments.getString("returnDocument").getValue().equals("After") ? ReturnDocument.AFTER
                                                                                                     : ReturnDocument.BEFORE);
+        }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult(collection
                                 .findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"), options));
@@ -244,6 +287,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("upsert")) {
             options.upsert(arguments.getBoolean("upsert").getValue());
         }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
         return toResult(collection
                                 .replaceOne(arguments.getDocument("filter"), arguments.getDocument("replacement"), options));
     }
@@ -253,6 +299,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("upsert")) {
             options.upsert(arguments.getBoolean("upsert").getValue());
         }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
         return toResult(collection.updateMany(arguments.getDocument("filter"), arguments.getDocument("update"), options));
     }
 
@@ -260,6 +309,9 @@ public class JsonPoweredCrudTestHelper {
         UpdateOptions options = new UpdateOptions();
         if (arguments.containsKey("upsert")) {
             options.upsert(arguments.getBoolean("upsert").getValue());
+        }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult(collection.updateOne(arguments.getDocument("filter"), arguments.getDocument("update"), options));
     }
@@ -292,5 +344,40 @@ public class JsonPoweredCrudTestHelper {
                                                                             .ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE)
                                                                                               .getValue())));
 
+    }
+
+    Collation getCollation(final BsonDocument bsonCollation) {
+        Collation.Builder builder = Collation.builder();
+        if (bsonCollation.containsKey("locale")) {
+            builder.locale(bsonCollation.getString("locale").getValue());
+        }
+        if (bsonCollation.containsKey("caseLevel")) {
+            builder.caseLevel(bsonCollation.getBoolean("caseLevel").getValue());
+        }
+        if (bsonCollation.containsKey("caseFirst")) {
+            builder.collationCaseFirst(CollationCaseFirst.fromString(bsonCollation.getString("caseFirst").getValue()));
+        }
+        if (bsonCollation.containsKey("strength")) {
+            builder.collationStrength(CollationStrength.fromInt(bsonCollation.getInt32("strength").getValue()));
+        }
+        if (bsonCollation.containsKey("numericOrdering")) {
+            builder.numericOrdering(bsonCollation.getBoolean("numericOrdering").getValue());
+        }
+        if (bsonCollation.containsKey("strength")) {
+            builder.collationStrength(CollationStrength.fromInt(bsonCollation.getInt32("strength").getValue()));
+        }
+        if (bsonCollation.containsKey("alternate")) {
+            builder.collationAlternate(CollationAlternate.fromString(bsonCollation.getString("alternate").getValue()));
+        }
+        if (bsonCollation.containsKey("maxVariable")) {
+            builder.collationMaxVariable(CollationMaxVariable.fromString(bsonCollation.getString("maxVariable").getValue()));
+        }
+        if (bsonCollation.containsKey("normalization")) {
+            builder.normalization(bsonCollation.getBoolean("normalization").getValue());
+        }
+        if (bsonCollation.containsKey("backwards")) {
+            builder.backwards(bsonCollation.getBoolean("backwards").getValue());
+        }
+        return builder.build();
     }
 }
