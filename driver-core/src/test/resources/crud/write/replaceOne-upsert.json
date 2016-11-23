@@ -13,42 +13,21 @@
             "x": 33
         }
     ], 
+    "minServerVersion": "2.6", 
     "tests": [
         {
-            "description": "DeleteMany when many documents match", 
-            "operation": {
-                "arguments": {
-                    "filter": {
-                        "_id": {
-                            "$gt": 1
-                        }
-                    }
-                }, 
-                "name": "deleteMany"
-            }, 
-            "outcome": {
-                "collection": {
-                    "data": [
-                        {
-                            "_id": 1, 
-                            "x": 11
-                        }
-                    ]
-                }, 
-                "result": {
-                    "deletedCount": 2
-                }
-            }
-        }, 
-        {
-            "description": "DeleteMany when no document matches", 
+            "description": "ReplaceOne with upsert when no documents match without an id specified", 
             "operation": {
                 "arguments": {
                     "filter": {
                         "_id": 4
-                    }
+                    }, 
+                    "replacement": {
+                        "x": 1
+                    }, 
+                    "upsert": true
                 }, 
-                "name": "deleteMany"
+                "name": "replaceOne"
             }, 
             "outcome": {
                 "collection": {
@@ -64,11 +43,60 @@
                         {
                             "_id": 3, 
                             "x": 33
+                        }, 
+                        {
+                            "_id": 4, 
+                            "x": 1
                         }
                     ]
                 }, 
                 "result": {
-                    "deletedCount": 0
+                    "matchedCount": 0, 
+                    "modifiedCount": 0, 
+                    "upsertedId": 4
+                }
+            }
+        }, 
+        {
+            "description": "ReplaceOne with upsert when no documents match with an id specified", 
+            "operation": {
+                "arguments": {
+                    "filter": {
+                        "_id": 4
+                    }, 
+                    "replacement": {
+                        "_id": 4, 
+                        "x": 1
+                    }, 
+                    "upsert": true
+                }, 
+                "name": "replaceOne"
+            }, 
+            "outcome": {
+                "collection": {
+                    "data": [
+                        {
+                            "_id": 1, 
+                            "x": 11
+                        }, 
+                        {
+                            "_id": 2, 
+                            "x": 22
+                        }, 
+                        {
+                            "_id": 3, 
+                            "x": 33
+                        }, 
+                        {
+                            "_id": 4, 
+                            "x": 1
+                        }
+                    ]
+                }, 
+                "result": {
+                    "matchedCount": 0, 
+                    "modifiedCount": 0, 
+                    "upsertedId": 4
                 }
             }
         }
