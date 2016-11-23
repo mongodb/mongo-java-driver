@@ -57,40 +57,47 @@ public class BsonElement {
 
     @Override
     public int hashCode() {
-	final int prime = 31;
-	int result = 1;
-	result = prime * result + ((name == null) ? 0 : name.hashCode());
-	result = prime * result + ((value == null) ? 0 : value.hashCode());
-	return result;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
-	if (this == obj)
-		return true;
-	if (obj == null)
-		return false;
-	if (getClass() != obj.getClass())
-		return false;
-	BsonElement other = (BsonElement) obj;
-	if (name == null) {
-		if (other.name != null)
-			return false;
-	} else if (!name.equals(other.name))
-		return false;
-	if (value == null) {
-		if (other.value != null)
-			return false;
-	} else if (!value.equals(other.value))
-		return false;
-	return true;
+    public boolean equals(final Object o) {
+        if (this == o) {
+                return true;
+        }
+        if (o == null) {
+                return false;
+        }
+        if (getClass() != o.getClass()) {
+                return false;
+        }
+        BsonElement bosonElement = (BsonElement) o;
+        if (name == null) {
+                if (bosonElement.name != null) {
+                        return false;
+                }
+        } else if (!name.equals(bosonElement.name)) {
+                return false;
+        }
+        if (value == null) {
+                if (bosonElement.value != null) {
+                        return false;
+                }
+        } else if (!value.equals(bosonElement.value)) {
+                return false;
+        }
+        return true;
     }
 
     @Override
     public String toString() {
-	return "BsonElement{"
-		+ "name=" + name 
-		+ ", value=" + value 
-		+ "}";
+        return "BsonElement{"
+                + "name=" + name
+                + ", value=" + value
+                + "}";
     }
 }
