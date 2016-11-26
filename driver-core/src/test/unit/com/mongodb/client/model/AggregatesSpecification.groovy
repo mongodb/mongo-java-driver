@@ -69,7 +69,7 @@ class AggregatesSpecification extends Specification {
     def registry = fromProviders([new BsonValueCodecProvider(), new DocumentCodecProvider(), new ValueCodecProvider(),
                                   new GeoJsonCodecProvider()])
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
         expect:
         toBson(addFields(new Field('newField', null))) == parse('{$addFields: {newField: null}}')
@@ -170,7 +170,7 @@ class AggregatesSpecification extends Specification {
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $replaceRoot'() {
         expect:
         toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')

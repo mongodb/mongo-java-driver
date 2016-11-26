@@ -113,6 +113,10 @@ public final class ClusterFixture {
         return getConnectedServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
+    public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
+        return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
+    }
+
     public static Document getBuildInfo() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("buildInfo", new BsonInt32(1)), new DocumentCodec())
                 .execute(getBinding());
@@ -321,7 +325,7 @@ public final class ClusterFixture {
 
     public static void disableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        if (serverVersionAtLeast(asList(2, 6, 0)) && !isSharded()) {
+        if (serverVersionAtLeast(2, 6) && !isSharded()) {
             new CommandWriteOperation<BsonDocument>("admin",
                                                     new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
                                                                                                    "maxTimeAlwaysTimeOut")

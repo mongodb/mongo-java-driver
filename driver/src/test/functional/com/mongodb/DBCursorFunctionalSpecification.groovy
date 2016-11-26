@@ -23,7 +23,6 @@ import spock.lang.IgnoreIf
 import spock.lang.Subject
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -51,7 +50,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should use provided hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -69,7 +68,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should use provided hints for queries mongod > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -96,7 +95,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should use provided string hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -115,7 +114,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should use provided string hints for queries mongodb > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -153,11 +152,11 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
 
         then:
-        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == (serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1)
+        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == (serverVersionAtLeast(2, 6) ? 0 : 1)
         collection.find().hint('a_1').count() == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
@@ -165,7 +164,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         thrown(MongoException)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(2, 6) })
     def 'should ignore bad hints with mongod < 2.6'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
@@ -191,10 +190,10 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         def countWithHint = collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', 'x_1').count()
 
         then:
-        countWithHint == (serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1)
+        countWithHint == (serverVersionAtLeast(2, 6) ? 0 : 1)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should be able to use addSpecial with $explain'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -207,7 +206,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.next().get('cursor') == 'BtreeCursor a_1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should be able to use addSpecial with $explain mongod > 2.7'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -380,7 +379,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         dbCursor = collection.find().setCollation(caseInsensitiveCollation)
@@ -407,7 +406,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         exception.getMessage().startsWith('Collation not supported by server version:')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         when:
         def document = BasicDBObject.parse('{_id: 1, str: "foo"}')

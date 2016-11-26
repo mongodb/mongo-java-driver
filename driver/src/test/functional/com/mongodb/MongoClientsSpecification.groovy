@@ -26,7 +26,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getMongoClientURI
 
 class MongoClientsSpecification extends FunctionalSpecification {
-    @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) || !isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
     def 'application name should appear in the system.profile collection'() {
         given:
         def appName = 'appName1'

@@ -35,7 +35,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class CreateIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -90,7 +89,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create multiple indexes'() {
         given:
         def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
@@ -108,7 +107,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(2, 6) })
     def 'should fail to create multiple indexes with server that does not support createIndexesCommand'() {
         given:
         def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
@@ -157,7 +156,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should drop duplicates'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), x1, x1)
@@ -174,7 +173,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw when trying to build an invalid index'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(new BsonDocument())])
@@ -305,7 +304,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 4, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should be able to create a 2dSphereIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -316,13 +315,13 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [['field' :'2dsphere']]
-        if (serverVersionAtLeast(asList(2, 6, 0))) { getUserCreatedIndexes('2dsphereIndexVersion') == [2] }
+        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('2dsphereIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a 2dSphereIndex with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -339,7 +338,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 4, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should be able to create a textIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -361,7 +360,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 4, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should be able to create a textIndexVersion'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -372,13 +371,13 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes().size() == 1
-        if (serverVersionAtLeast(asList(2, 6, 0))) { getUserCreatedIndexes('textIndexVersion') == [2] }
+        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('textIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -394,7 +393,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))
@@ -413,7 +412,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should be able to create a partially filtered index'() {
         given:
         def partialFilterExpression = new Document('a', new Document('$gte', 10))
@@ -431,7 +430,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         def keys = new BsonDocument('field', new BsonInt32(1))
@@ -469,7 +468,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should be able to create an index with collation'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),

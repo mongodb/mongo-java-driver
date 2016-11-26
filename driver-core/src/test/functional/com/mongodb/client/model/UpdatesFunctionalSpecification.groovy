@@ -24,12 +24,12 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Updates.combine
 import static com.mongodb.client.model.Updates.currentDate
 import static com.mongodb.client.model.Updates.currentTimestamp
+import static com.mongodb.client.model.Updates.inc
 import static com.mongodb.client.model.Updates.max
 import static com.mongodb.client.model.Updates.min
 import static com.mongodb.client.model.Updates.mul
 import static com.mongodb.client.model.Updates.rename
 import static com.mongodb.client.model.Updates.set
-import static com.mongodb.client.model.Updates.inc
 import static com.mongodb.client.model.Updates.setOnInsert
 import static com.mongodb.client.model.Updates.unset
 
@@ -65,7 +65,7 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
         find() == [new Document('_id', 1).append('x', 5)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'setOnInsert'() {
         when:
         updateOne(setOnInsert('y', 5))
@@ -116,7 +116,7 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
         find() == [new Document('_id', 1).append('x', 14.4)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'mul'() {
         when:
         updateOne(mul('x', 5))
@@ -137,7 +137,7 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
         find() == [new Document('_id', 1).append('x', 87.5)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'min'() {
         when:
         updateOne(min('x', -1))
@@ -146,7 +146,7 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
         find() == [new Document('_id', 1).append('x', -1)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'max'() {
         when:
         updateOne(max('x', 5))
@@ -155,7 +155,7 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
         find() == [new Document('_id', 1).append('x', 5)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'currentDate'() {
         when:
         updateOne(currentDate('y'))
