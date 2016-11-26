@@ -51,25 +51,25 @@ class GeoFiltersFunctionalSpecification extends OperationFunctionalSpecification
         find(nearSphere('geo', 1.01d, 1.01d, 0.1d, 0.0d)) == [firstPoint, thirdPoint]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def '$geoWithin $box'() {
         expect:
         find(geoWithinBox('geo', 0d, 0d, 4d, 4d)) == [firstPoint, thirdPoint]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def '$geoWithin $polygon'() {
         expect:
         find(geoWithinPolygon('geo', [[0d, 0d], [0d, 4d], [4d, 4d], [4d, 0d]])) == [firstPoint, thirdPoint]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def '$geoWithin $center'() {
         expect:
         find(geoWithinCenter('geo', 2d, 2d, 4d)) == [firstPoint, thirdPoint]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def '$geoWithin $centerSphere'() {
         expect:
         find(geoWithinCenterSphere('geo', 2d, 2d, 4d)) == [firstPoint, secondPoint, thirdPoint]

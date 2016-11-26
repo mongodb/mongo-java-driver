@@ -44,7 +44,6 @@ import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -185,7 +184,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateCollectionWithTheSetCollation() {
-        assumeThat(serverVersionAtLeast(asList(3, 3, 10)), is(true));
+        assumeThat(serverVersionAtLeast(3, 4), is(true));
         // Given
         collection.drop();
         Collation collation = Collation.builder()
@@ -284,7 +283,7 @@ public class DBTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
         enableMaxTimeFailPoint();
         try {
             database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
@@ -390,7 +389,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
-        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)) || !isSharded());
+        assumeTrue(serverVersionAtLeast(2, 4) || !isSharded());
 
         // When
         CommandResult commandResult = database.command(new BasicDBObject("NotRealCommandName", 1));

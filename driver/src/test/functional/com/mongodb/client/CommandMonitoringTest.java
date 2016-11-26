@@ -176,7 +176,7 @@ public class CommandMonitoringTest {
     @Test
     public void shouldPassAllOutcomes() {
         // On server <= 2.4, insertMany generates an insert command for every document, so the test fails
-        assumeFalse(filename.startsWith("insertMany") && !serverVersionAtLeast(asList(2, 6, 0)));
+        assumeFalse(filename.startsWith("insertMany") && !serverVersionAtLeast(2, 6));
 
         executeOperation();
 

@@ -26,9 +26,8 @@ import static com.mongodb.client.model.Indexes.descending
 import static com.mongodb.client.model.Indexes.geo2d
 import static com.mongodb.client.model.Indexes.geo2dsphere
 import static com.mongodb.client.model.Indexes.geoHaystack
-import static com.mongodb.client.model.Indexes.text
 import static com.mongodb.client.model.Indexes.hashed
-import static java.util.Arrays.asList
+import static com.mongodb.client.model.Indexes.text
 import static org.bson.BsonDocument.parse
 
 class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
@@ -109,7 +108,7 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{x : "geoHaystack", b: -1}'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 4, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'text'() {
         when:
         getCollectionHelper().createIndex(text('x'))
@@ -118,7 +117,7 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{_fts: "text", _ftsx: 1}'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 4, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'hashed'() {
         when:
         getCollectionHelper().createIndex(hashed('x'))

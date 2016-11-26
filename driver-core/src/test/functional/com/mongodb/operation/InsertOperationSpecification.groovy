@@ -303,7 +303,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
         given:
         def op = new InsertOperation(getNamespace(), true,  UNACKNOWLEDGED, [new InsertRequest(new BsonDocument())])

@@ -24,7 +24,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.async.client.Fixture.getMongoClient
 import static com.mongodb.async.client.Fixture.isSharded
 import static com.mongodb.async.client.TestHelper.run
-import static java.util.Arrays.asList
 
 class SmokeTestSpecification extends FunctionalSpecification {
 
@@ -75,7 +74,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.distinct('id', String).&into, []) == ['a', 'b', 'c']
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should aggregate to collection'() {
         given:
         def mongoClient = getMongoClient()

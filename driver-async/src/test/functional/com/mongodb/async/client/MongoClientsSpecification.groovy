@@ -172,7 +172,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
         'mongodb://localhost/?appname=app1' | 'app1'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 3, 9]) || !isStandalone() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
     def 'application name should appear in the system.profile collection'() {
         given:
         def appName = 'appName1'

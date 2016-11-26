@@ -55,7 +55,6 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.async.client.Fixture.getDefaultDatabase;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -139,7 +138,7 @@ public class CrudTest extends DatabaseTestCase {
         if (filename.contains("insert")) {
             // We don't return any id's for insert commands
             return false;
-        } else if (!serverVersionAtLeast(asList(3, 0, 0))
+        } else if (!serverVersionAtLeast(3, 0)
                 && description.contains("when no documents match with upsert returning the document before modification")) {
             // Pre 3.0 versions of MongoDB return an empty document rather than a null
             return false;
@@ -228,7 +227,7 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private BsonDocument toResult(final MongoOperationUpdateResult operation) {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0))); // ModifiedCount is not accessible pre 2.6
+        assumeTrue(serverVersionAtLeast(2, 6)); // ModifiedCount is not accessible pre 2.6
 
         UpdateResult updateResult = operation.get();
         BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()))
@@ -249,7 +248,7 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private AggregateIterable<BsonDocument> getAggregateMongoOperation(final BsonDocument arguments) {
-        if (!serverVersionAtLeast(asList(2, 6, 0))) {
+        if (!serverVersionAtLeast(2, 6)) {
             assumeFalse(description.contains("$out"));
         }
 
@@ -361,7 +360,7 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private MongoOperationBsonDocument getFindOneAndReplaceMongoOperation(final BsonDocument arguments) {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0))); // in 2.4 the server can ignore the supplied _id and creates an ObjectID
+        assumeTrue(serverVersionAtLeast(2, 6)); // in 2.4 the server can ignore the supplied _id and creates an ObjectID
 
         return new MongoOperationBsonDocument() {
             @Override

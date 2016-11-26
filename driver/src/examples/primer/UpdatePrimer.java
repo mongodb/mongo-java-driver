@@ -31,7 +31,7 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateTopLevelFields() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
 
         // @begin: update-top-level-fields
         // @code: start
@@ -69,7 +69,7 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateMultipleDocuments() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
 
         // @begin: update-multiple-documents
         // @code: start
@@ -89,7 +89,7 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void replaceDocument() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
 
         // @begin: replace-document
         // @code: start

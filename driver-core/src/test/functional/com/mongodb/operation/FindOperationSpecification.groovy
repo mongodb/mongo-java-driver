@@ -66,7 +66,6 @@ import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -329,7 +328,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -445,7 +444,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def explainPlan = execute(operation, async)
 
         then:
-        if (serverVersionAtLeast(asList(3, 0, 0))) {
+        if (serverVersionAtLeast(3, 0)) {
             assertEquals(hint, getKeyPattern(explainPlan))
         } else {
             assertEquals(new BsonString('BtreeCursor a_1'), explainPlan.cursor)
@@ -470,7 +469,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         Document profileDocument = profileCollectionHelper.find().get(0)
-        if (serverVersionAtLeast(asList(3, 1, 8))) {
+        if (serverVersionAtLeast(3, 2)) {
             assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('comment'));
         } else {
             assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('$comment'));
@@ -487,7 +486,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should apply $showDiskLoc'() {
         given:
-        String fieldName = serverVersionAtLeast([3, 1, 8]) ? '$recordId' : '$diskLoc';
+        String fieldName = serverVersionAtLeast(3, 2) ? '$recordId' : '$diskLoc';
         collectionHelper.insertDocuments(new BsonDocument())
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -868,7 +867,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = BsonDocument.parse('{_id: 1, str: "foo"}')

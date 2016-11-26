@@ -33,7 +33,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -120,7 +119,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
@@ -210,7 +209,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         false     | 0                       | false
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should allow indexOptionDefaults'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -229,7 +228,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should allow validator'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -259,7 +258,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -292,7 +291,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should be able to create a collection with a collation'() {
         given:
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName()).collation(defaultCollation)

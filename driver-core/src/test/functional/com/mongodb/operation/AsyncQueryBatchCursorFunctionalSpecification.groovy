@@ -277,7 +277,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     }
     // 2.2 does not properly detect cursor not found, so ignoring
     @SuppressWarnings('BracesForTryCatchFinally')
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)

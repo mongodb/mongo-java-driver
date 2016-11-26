@@ -40,7 +40,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.gte
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -109,7 +108,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
@@ -124,7 +123,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to match then output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
@@ -140,7 +139,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         AggregateToCollectionOperation operation =
@@ -163,7 +162,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         AggregateToCollectionOperation operation =
@@ -183,7 +182,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -265,7 +264,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{_id: 1, str: "foo"}'))

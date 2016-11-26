@@ -33,7 +33,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
@@ -180,7 +179,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         indexes[0].name == '_id_'
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))

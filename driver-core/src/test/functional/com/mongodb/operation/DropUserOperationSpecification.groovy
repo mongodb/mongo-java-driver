@@ -27,7 +27,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.MongoCredential.createMongoCRCredential
-import static java.util.Arrays.asList
 
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
     def 'should delete user without error'() {
@@ -43,7 +42,7 @@ class DropUserOperationSpecification extends OperationFunctionalSpecification {
         notThrown(MongoException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw MongoCommandException on write concern error'() {
         given:
         def credential = createMongoCRCredential('userToDrop', databaseName, '123'.toCharArray())

@@ -323,7 +323,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         cluster?.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 8)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error when creating a user'() {
         given:
         def operation = new CreateUserOperation(credential, false, new WriteConcern(5))

@@ -46,7 +46,7 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+@IgnoreIf({ !serverVersionAtLeast(2, 6) })
 class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection;

@@ -34,7 +34,6 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static java.util.Arrays.asList
 
 class DeleteOperationSpecification extends OperationFunctionalSpecification {
 
@@ -75,7 +74,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         def operation = new DeleteOperation(getNamespace(), false, ACKNOWLEDGED, requests)
@@ -101,7 +100,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
@@ -118,7 +117,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def requests = [new DeleteRequest(BsonDocument.parse('{str: "FOO"}}')).collation(caseInsensitiveCollation)]

@@ -49,7 +49,6 @@ import org.junit.AssumptionViolatedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -120,7 +119,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getAggregateResult(final BsonDocument arguments) {
-        if (!serverVersionAtLeast(Arrays.asList(2, 6, 0))) {
+        if (!serverVersionAtLeast(2, 6)) {
             Assume.assumeFalse(description.contains("$out"));
         }
 
@@ -222,7 +221,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getFindOneAndReplaceResult(final BsonDocument arguments) {
         // in 2.4 the server can ignore the supplied _id and creates an ObjectID
-        Assume.assumeTrue(serverVersionAtLeast(Arrays.asList(2, 6, 0)));
+        Assume.assumeTrue(serverVersionAtLeast(2, 6));
 
         FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
         if (arguments.containsKey("projection")) {

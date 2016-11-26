@@ -53,7 +53,6 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.gte
-import static java.util.Arrays.asList
 
 class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {
 
@@ -720,7 +719,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ordered << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should throw if bypassDocumentValidation is set and write is unacknowledged'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -737,7 +736,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -753,7 +752,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, bypassDocumentValidation] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should honour the bypass validation flag for inserts'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
@@ -785,7 +784,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should honour the bypass validation flag for updates'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collection')
@@ -817,7 +816,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', 1), new Document('y', 1),
@@ -846,7 +845,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'), Document.parse('{str: "bar"}'))
@@ -896,6 +895,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     }
 
     private static Integer expectedModifiedCount(final int expectedCountForServersThatSupportIt) {
-        (serverVersionAtLeast([2, 6, 0])) ? expectedCountForServersThatSupportIt : null
+        (serverVersionAtLeast(2, 6)) ? expectedCountForServersThatSupportIt : null
     }
 }

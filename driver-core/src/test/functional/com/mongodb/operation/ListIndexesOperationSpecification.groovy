@@ -210,7 +210,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.getBatchSize() == 2
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)
@@ -229,7 +229,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)

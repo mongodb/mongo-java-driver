@@ -40,7 +40,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+@IgnoreIf({ !serverVersionAtLeast(2, 6) })
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
     @Shared

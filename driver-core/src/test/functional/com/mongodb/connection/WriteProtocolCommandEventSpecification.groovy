@@ -100,7 +100,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should deliver started and completed command events for split unacknowleded inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])

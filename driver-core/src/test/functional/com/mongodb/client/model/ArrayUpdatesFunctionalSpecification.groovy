@@ -91,7 +91,7 @@ class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecificati
 
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'push with each'() {
         when:
         updateOne(pushEach('x', [4, 4, 4, 5, 6], new PushOptions()))

@@ -61,7 +61,7 @@ class BitwiseUpdatesFunctionalSpecification extends OperationFunctionalSpecifica
         find() == [new Document('_id', 1).append('x', NUM | INT_MASK)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'integer bitwiseXor'() {
         when:
         updateOne(bitwiseXor('x', INT_MASK))
@@ -78,7 +78,7 @@ class BitwiseUpdatesFunctionalSpecification extends OperationFunctionalSpecifica
         find() == [new Document('_id', 1).append('x', NUM & LONG_MASK)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })     // a bug in the 2.4 server prevents this test from passing
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })     // a bug in the 2.4 server prevents this test from passing
     def 'long bitwiseOr'() {
         when:
         updateOne(bitwiseOr('x', LONG_MASK))
@@ -87,7 +87,7 @@ class BitwiseUpdatesFunctionalSpecification extends OperationFunctionalSpecifica
         find() == [new Document('_id', 1).append('x', NUM | LONG_MASK)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'long bitwiseXor'() {
         when:
         updateOne(bitwiseXor('x', LONG_MASK))

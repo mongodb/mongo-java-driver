@@ -29,7 +29,6 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class GroupOperationSpecification extends OperationFunctionalSpecification {
 
@@ -197,7 +196,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{str: "foo"}')

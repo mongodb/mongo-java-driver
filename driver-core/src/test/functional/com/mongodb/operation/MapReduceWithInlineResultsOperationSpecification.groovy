@@ -33,7 +33,6 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
@@ -226,7 +225,7 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')

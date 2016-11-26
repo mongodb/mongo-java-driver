@@ -256,7 +256,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         nextBatch.iterator().next().get('_id') == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 2, 0]) || isSharded() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
     @Category(Slow)
     def 'test maxTimeMS'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -316,7 +316,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     // 2.2 does not properly detect cursor not found, so ignoring
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -334,7 +334,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         connection?.release()
     }
 
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
     // 2.2 does not properly detect cursor not found, so ignoring
     @Category(Slow)
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
@@ -456,7 +456,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
     // 2.2 does not properly detect cursor not found, so ignoring
     @SuppressWarnings('BracesForTryCatchFinally')
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)

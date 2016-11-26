@@ -30,7 +30,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -276,7 +275,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeThat(serverVersionAtLeast(asList(3, 0, 0)), is(false));
+        assumeThat(serverVersionAtLeast(3, 0), is(false));
         insertTestData(collection, 100);
 
         DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();

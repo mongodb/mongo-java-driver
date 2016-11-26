@@ -32,7 +32,6 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.everyItem;
@@ -89,7 +88,7 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testMapReduceExecutionTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(asList(2, 6, 0)), is(true));
+        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         try {
             MapReduceCommand command = new MapReduceCommand(collection,
@@ -108,7 +107,7 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test
     public void testWriteConcern() {
         assumeThat(isDiscoverableReplicaSet(), is(true));
-        assumeTrue(serverVersionAtLeast(asList(3, 3, 8)));
+        assumeTrue(serverVersionAtLeast(3, 4));
         DBCollection collection = database.getCollection("testWriteConcernForMapReduce");
         collection.insert(new BasicDBObject("x", new String[]{"a", "b"}).append("s", 1));
         collection.setWriteConcern(new WriteConcern(5));

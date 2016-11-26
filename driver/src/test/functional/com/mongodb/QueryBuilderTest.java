@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -324,7 +323,7 @@ public class QueryBuilderTest extends DatabaseTestCase {
 
     @Test
     public void textTest() {
-        if (!serverVersionAtLeast(asList(2, 6, 0))) {
+        if (!serverVersionAtLeast(2, 6)) {
             return;
         }
 

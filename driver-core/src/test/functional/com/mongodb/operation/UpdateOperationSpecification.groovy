@@ -123,7 +123,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         then:
         result.wasAcknowledged()
         result.count == 1
-        result.upsertedId == (serverVersionAtLeast(asList(2, 6, 0)) ? new BsonInt32(1) : null)
+        result.upsertedId == (serverVersionAtLeast(2, 6) ? new BsonInt32(1) : null)
         !result.isUpdateOfExisting()
         getCollectionHelper().count(new Document('y', 2)) == 1
 
@@ -131,7 +131,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     @Category(Slow)
     def 'should allow update larger than 16MB'() {
         // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
@@ -223,7 +223,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw an exception when using an unsupported Collation'() {
         given:
         def operation = new UpdateOperation(getNamespace(), false, ACKNOWLEDGED, requests)
@@ -251,7 +251,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         ].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(Document.parse('{str: "foo"}'))
@@ -269,7 +269,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should throw if collation is set and write is unacknowledged'() {
         given:
         def requests = [new UpdateRequest(BsonDocument.parse('{str: "FOO"}}'), BsonDocument.parse('{$set: {str: "bar"}}'), UPDATE)

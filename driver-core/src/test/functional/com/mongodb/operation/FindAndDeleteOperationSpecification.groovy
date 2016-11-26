@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
@@ -124,7 +123,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 2, 0)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
@@ -216,7 +215,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         def document = Document.parse('{_id: 1, str: "foo"}')
