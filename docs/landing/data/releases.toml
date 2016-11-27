@@ -2,12 +2,12 @@ current = "3.4.0"
 
 [[versions]]
   version = "3.4.0"
+  status = "current"
   docs = "./3.4"
   api = "./3.4/javadoc"
 
 [[versions]]
   version = "3.3.0"
-  status = "current"
   docs = "./3.3"
   api = "http://api.mongodb.com/java/3.3"
 
