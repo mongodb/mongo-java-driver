@@ -125,7 +125,12 @@ public class JSONCallback extends BasicBSONCallback {
         } else if (b.containsField("$uuid")) {
             o = UUID.fromString((String) b.get("$uuid"));
         } else if (b.containsField("$binary")) {
-            int type = (Integer) b.get("$type");
+            int type;
+            if (b.get("$type") instanceof String) {
+                type = Integer.decode((String) b.get("$type"));
+            } else {
+                type = (Integer) b.get("$type");
+            }
             byte[] bytes = DatatypeConverter.parseBase64Binary((String) b.get("$binary"));
             o = new Binary((byte) type, bytes);
         } else if (b.containsField("$undefined") && b.get("$undefined").equals(true)) {
