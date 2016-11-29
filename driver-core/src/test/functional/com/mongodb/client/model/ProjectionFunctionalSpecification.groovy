@@ -99,7 +99,7 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
         find(slice('y', 1, 2)) == [aYSlice12]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'metaTextScore'() {
         expect:
         find(metaTextScore('score')) == [aWithScore]

@@ -209,7 +209,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should deliver start and completed command events with meta operators'() {
         given:
         def documents = [new BsonDocument('_id', new BsonInt32(1)),

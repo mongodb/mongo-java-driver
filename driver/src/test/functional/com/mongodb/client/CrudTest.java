@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
@@ -71,14 +70,14 @@ public class CrudTest extends DatabaseTestCase {
         // Server versions prior to 2.6 do not properly recognize non-ObjectId _id values for upserts, so skipping a test that relies on
         // that unless the server version is at least 2.6
         if (description.equals("ReplaceOne with upsert when no documents match without an id specified")){
-            Assume.assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+            Assume.assumeTrue(serverVersionAtLeast(2, 6));
         }
 
         BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
         if (checkResult()) {
-            if (!serverVersionAtLeast(asList(2, 6, 0))) {
+            if (!serverVersionAtLeast(2, 6)) {
                 if (expectedOutcome.isDocument("result")) {
                     expectedOutcome.getDocument("result").remove("modifiedCount");
                 }
@@ -95,6 +94,10 @@ public class CrudTest extends DatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
+            if (testDocument.containsKey("minServerVersion")
+                    && !serverAtLeastMinVersion(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument()});
@@ -107,7 +110,7 @@ public class CrudTest extends DatabaseTestCase {
         if (filename.contains("insert")) {
             // We don't return any id's for insert commands
             return false;
-        } else if (!serverVersionAtLeast(asList(3, 0, 0))
+        } else if (!serverVersionAtLeast(3, 0)
                 && description.contains("when no documents match with upsert returning the document before modification")) {
             // Pre 3.0 versions of MongoDB return an empty document rather than a null
             return false;
@@ -121,5 +124,16 @@ public class CrudTest extends DatabaseTestCase {
             collectionToCompare = database.getCollection(expectedCollection.getString("name").getValue(), BsonDocument.class);
         }
         assertEquals(description, expectedCollection.getArray("data"), collectionToCompare.find().into(new BsonArray()));
+    }
+
+    private static boolean serverAtLeastMinVersion(final String minServerVersionString) {
+        List<Integer> versionList = new ArrayList<Integer>();
+        for (String s : minServerVersionString.split("\\.")) {
+            versionList.add(Integer.valueOf(s));
+        }
+        while (versionList.size() < 3) {
+            versionList.add(0);
+        }
+        return serverVersionAtLeast(versionList.subList(0, 3));
     }
 }

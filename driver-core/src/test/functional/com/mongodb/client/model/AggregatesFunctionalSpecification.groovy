@@ -101,7 +101,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                             new Document('_id', 3).append('x', 3).append('c', 'c')]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 3, 10]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$project an exclusion'() {
         expect:
         aggregate([project(exclude('a', 'a1', 'z'))]) == [new Document('_id', 1).append('x', 1).append('y', 'a'),
@@ -135,7 +135,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                                   new Document('a', 6)]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$unwind with UnwindOptions'() {
         given:
         getCollectionHelper().drop()
@@ -183,7 +183,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                      new Document('_id', false).append('acc', [false])])
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def '$out'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
@@ -195,7 +195,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$stdDev'() {
         when:
         def results = aggregate([group(null, stdDevPop('stdDevPop', '$x'), stdDevSamp('stdDevSamp', '$x'))]).first()
@@ -207,14 +207,14 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         results.get('stdDevSamp') == 1.0
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$sample'() {
         expect:
         containsAny([a, b, c], aggregate([sample(1)]).first())
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def '$lookup'() {
         given:
         def fromCollectionName = 'lookupCollection'
@@ -242,7 +242,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$facet'() {
         given:
         def helper = getCollectionHelper()
@@ -294,7 +294,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$graphLookup'() {
         given:
         def fromCollectionName = 'contacts'
@@ -333,7 +333,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$graphLookup with options'() {
         given:
         def fromCollectionName = 'contacts'
@@ -374,7 +374,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucket'() {
         given:
         def helper = getCollectionHelper()
@@ -408,7 +408,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucketAuto'() {
         given:
         def helper = getCollectionHelper()
@@ -442,7 +442,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucketAuto with options'() {
         given:
         def helper = getCollectionHelper()
@@ -468,7 +468,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$count'() {
         given:
         def helper = getCollectionHelper()
@@ -503,7 +503,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 9)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$sortByCount'() {
         given:
         def helper = getCollectionHelper()
@@ -542,7 +542,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$addFields'() {
         given:
         def helper = getCollectionHelper()
@@ -616,7 +616,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper?.drop()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 11)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$replaceRoot'() {
         given:
         def helper = getCollectionHelper()

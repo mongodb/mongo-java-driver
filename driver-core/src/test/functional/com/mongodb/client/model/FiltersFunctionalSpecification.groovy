@@ -86,7 +86,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(ne('x', 1)) == [b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def '$not'() {
         expect:
         find(not(eq('x', 1))) == [b, c]
@@ -195,7 +195,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(size('a', 4)) == [b]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $bitsAllClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -206,7 +206,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllClear('bits', 35)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $bitsAllSet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 54}')
@@ -217,7 +217,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAllSet('bits', 50)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $bitsAnyClear'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 50}')
@@ -228,7 +228,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(bitsAnyClear('bits', 20)) == [bitDoc]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 10]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $bitsAnySet'() {
         when:
         def bitDoc = Document.parse('{_id: 1, bits: 20}')
@@ -245,7 +245,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(type('x', BsonType.ARRAY)) == []
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 7]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $type with a string type representation'() {
         expect:
         find(type('x', 'number')) == [a, b, c]
@@ -253,7 +253,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     }
 
     @SuppressWarnings('deprecated')
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should render $text'() {
         when:
         def textDocument = new Document('_id', 4).append('y', 'mongoDB for GIANT ideas')
@@ -265,7 +265,7 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(text('GIANT', new TextSearchOptions().language('english'))) == [textDocument]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([3, 1, 8]) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should render $text with 3.2 options'() {
         given:
         collectionHelper.drop()

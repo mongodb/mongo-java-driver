@@ -54,7 +54,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
@@ -112,7 +111,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         names.findAll { it.contains('$') }.isEmpty()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 0) })
     def 'should throw if filtering on name with something other than a string'() {
         given:
         def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
@@ -336,7 +335,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.getBatchSize() == 2
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -355,7 +354,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())

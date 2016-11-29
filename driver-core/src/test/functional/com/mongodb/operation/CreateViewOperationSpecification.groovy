@@ -33,11 +33,10 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class CreateViewOperationSpecification extends OperationFunctionalSpecification {
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should create view'() {
         given:
         def viewOn = getCollectionName();
@@ -70,7 +69,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 13)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should create view with collation'() {
         given:
         def viewOn = getCollectionName();
@@ -97,7 +96,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ serverVersionAtLeast(3, 4) })
     def 'should throw if server version is not 3.4 or greater'() {
         given:
         def operation = new CreateViewOperation(getDatabaseName(), getCollectionName() + '-view',
@@ -113,7 +112,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         def viewName = getCollectionName() + '-view'

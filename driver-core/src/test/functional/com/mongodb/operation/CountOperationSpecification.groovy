@@ -41,7 +41,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -108,7 +107,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         documents.size()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -126,7 +125,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -188,7 +187,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         createIndexOperation.execute(getBinding())
 
         then:
-        countOperation.execute(getBinding()) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
+        countOperation.execute(getBinding()) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
     }
 
     @Category(Async)
@@ -202,10 +201,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         executeAsync(createIndexOperation)
 
         then:
-        executeAsync(countOperation) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
+        executeAsync(countOperation) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -220,7 +219,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -234,7 +233,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         thrown(MongoException)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(2, 6) })
     def 'should ignore with bad hint with mongod < 2.6'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -249,7 +248,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ serverVersionAtLeast(2, 6) })
     def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -263,7 +262,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         notThrown(MongoException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) || isSharded() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })
     def 'should explain'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -277,7 +276,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) || isSharded() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })
     def 'should explain asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -365,7 +364,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         async << [false, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 3, 10)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
         getCollectionHelper().insertDocuments(BsonDocument.parse('{str: "foo"}'))
