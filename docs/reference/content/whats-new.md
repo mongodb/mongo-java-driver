@@ -17,7 +17,7 @@ This release includes full support for the upcoming MongoDB 3.4 server release. 
 import org.bson.types.Decimal128;
 ```
 
-The [Decimal128]({{<docsref "release-notes/3.3-dev-series/#decimal-type">}}) format supports numbers with up to 34 decimal digits
+The [Decimal128]({{<docsref "release-notes/3.4/#decimal-type">}}) format supports numbers with up to 34 decimal digits
 (i.e. significant digits) and an exponent range of −6143 to +6144.
 
 To create a `Decimal128` number, you can use
@@ -47,10 +47,10 @@ To create a `Decimal128` number, you can use
 import com.mongodb.client.model.Collation;
 ```
 
-[Collation]({{<docsref "release-notes/3.3-dev-series-collation/">}}) allows users to specify language-specific rules for string
+[Collation]({{<docsref "reference/collation/">}}) allows users to specify language-specific rules for string
 comparison. 
 Use the [`Collation.builder()`] ({{<apiref "com/mongodb/client/model/Collation.html">}}) 
-to create the `Collation` object. For example, the following example creates a `Collation` object with Primary level of comparison and [locale]({{<docsref "release-notes/3.3-dev-series-collation/#supported-languages-and-locales">}}) ``fr``.
+to create the `Collation` object. For example, the following example creates a `Collation` object with Primary level of comparison and [locale]({{<docsref "reference/collation-locales-defaults/#supported-languages-and-locales">}}) ``fr``.
 
 ```java
 Collation.builder().collationStrength(CollationStrength.PRIMARY).locale("fr").build()));
@@ -150,7 +150,7 @@ collection.bulkWrite(Arrays.asList(
   
 
 For more information on collation, including the supported locales, refer to the
-[manual]({{<docsref "release-notes/3.3-dev-series-collation/">}}).
+[manual]({{<docsref "reference/collation/">}}).
 
 ### Other MongoDB 3.4 features
 
