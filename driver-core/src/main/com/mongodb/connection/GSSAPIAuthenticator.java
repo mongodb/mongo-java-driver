@@ -65,6 +65,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
             Map<String, Object> saslClientProperties = getCredential().getMechanismProperty(JAVA_SASL_CLIENT_PROPERTIES_KEY, null);
             if (saslClientProperties == null) {
                 saslClientProperties = new HashMap<String, Object>();
+                saslClientProperties.put(Sasl.MAX_BUFFER, "0");
                 saslClientProperties.put(Sasl.CREDENTIALS, getGSSCredential(credential.getUserName()));
             }
 
