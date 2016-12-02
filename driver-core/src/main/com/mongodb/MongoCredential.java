@@ -104,17 +104,29 @@ public final class MongoCredential {
      */
     public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
 
-    /*
-     * Mechanism property key for overriding the SasClient properties for GSSAPI authentication.
+    /**
+     * Mechanism property key for overriding the SaslClient properties for GSSAPI authentication.
+     *
+     * The value of this property must be a {@code Map<String, Object>}.  In most cases there is no need to set this mechanism property.
+     * But if an application does:
+     * <ul>
+     * <li>Generally it must set the {@link javax.security.sasl.Sasl#CREDENTIALS} property to an instance of
+     * {@link org.ietf.jgss.GSSCredential}.</li>
+     * <li>It's recommended that it set the {@link javax.security.sasl.Sasl#MAX_BUFFER} property to "0" to ensure compatibility with all
+     * versions of MongoDB.</li>
+     * </ul>
      *
      * @see #createGSSAPICredential(String)
      * @see #withMechanismProperty(String, Object)
+     * @see javax.security.sasl.Sasl
+     * @see javax.security.sasl.Sasl#CREDENTIALS
+     * @see javax.security.sasl.Sasl#MAX_BUFFER
      * @since 3.3
      */
     public static final String JAVA_SASL_CLIENT_PROPERTIES_KEY = "JAVA_SASL_CLIENT_PROPERTIES";
 
-    /*
-     * Mechanism property key for overriding the {@link javax.security.Subject} under which GSSAPI authentication executes.
+    /**
+     * Mechanism property key for overriding the {@link javax.security.auth.Subject} under which GSSAPI authentication executes.
      *
      * @see #createGSSAPICredential(String)
      * @see #withMechanismProperty(String, Object)
