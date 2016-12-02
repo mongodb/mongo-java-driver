@@ -140,7 +140,7 @@ CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepr
                                MongoClient.getDefaultCodecRegistry());
 
 // globally
-MongoClientSettings clientSettings = MongoClients.create("mongodb://localhost").ggetSettings();
+MongoClientSettings clientSettings = MongoClients.create("mongodb://localhost").getSettings();
 newClientSettings = MongoClientSettings.builder(clientSettings).codecRegistry(codecRegistry).build();
 MongoClient client = MongoClients.create(newClientSettings);
  
