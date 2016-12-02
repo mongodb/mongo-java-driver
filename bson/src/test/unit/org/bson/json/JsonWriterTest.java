@@ -329,6 +329,28 @@ public class JsonWriterTest {
             assertEquals(expected, stringWriter.toString());
         }
     }
+    
+    @Test
+    public void testInt64SimpleType() {
+        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
+                                            new TestData<Long>(0L, "0"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "2147483647"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
+                                            new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
+
+        for (final TestData<Long> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SIMPLE_TYPE));
+            writer.writeStartDocument();
+            writer.writeInt64("l", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"l\" : " + cur.expected + " }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
 
     @Test
     public void testDecimal128SShell() {
@@ -478,6 +500,22 @@ public class JsonWriterTest {
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
+            writer.writeStartDocument();
+            writer.writeDateTime("date", cur.value.getTime());
+            writer.writeEndDocument();
+            String expected = "{ \"date\" : " + cur.expected + " }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+    
+    @Test
+    public void testDateTimeSimpleType() {
+        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "0"),
+                                            new TestData<Date>(new Date(Long.MAX_VALUE), "9223372036854775807"),
+                                            new TestData<Date>(new Date(Long.MIN_VALUE), "-9223372036854775808"));
+        for (final TestData<Date> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SIMPLE_TYPE));
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
