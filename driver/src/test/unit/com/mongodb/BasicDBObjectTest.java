@@ -63,6 +63,9 @@ public class BasicDBObjectTest {
 
         assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
                      doc.toJson(new JsonWriterSettings(JsonMode.SHELL), getDefaultCodecRegistry().get(BasicDBObject.class)));
+
+		doc = new BasicDBObject("_id", new ObjectId("5522d5d12cf8fb556a991f45")).append("x", new BasicDBObject("z", Double.NaN));
+		assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"x\" : { \"z\" : \"NaN\" } }", doc.toJson());
     }
 
     @Test
