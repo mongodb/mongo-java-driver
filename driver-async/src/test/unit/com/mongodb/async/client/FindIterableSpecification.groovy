@@ -24,6 +24,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
@@ -49,6 +50,7 @@ class FindIterableSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected findOperation'() {
         given:
@@ -70,6 +72,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(false)
                 .noCursorTimeout(false)
                 .partial(false)
+                .collation(null)
         def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
                                                 new Document('filter', 1), findOptions)
 
@@ -109,6 +112,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
+                .collation(collation)
                 .into([]) { result, t -> }
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -129,6 +133,7 @@ class FindIterableSpecification extends Specification {
                 .noCursorTimeout(true)
                 .partial(true)
                 .slaveOk(true)
+                .collation(collation)
         )
     }
 

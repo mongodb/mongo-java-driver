@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
@@ -330,6 +331,42 @@ public class JsonWriterTest {
     }
 
     @Test
+    public void testDecimal128SShell() {
+        List<TestData<Decimal128>> tests = asList(
+                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+
+
+        for (final TestData<Decimal128> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
+            writer.writeStartDocument();
+            writer.writeDecimal128("d", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"d\" : NumberDecimal(\"" + cur.expected + "\") }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
+    @Test
+    public void testDecimal128Strict() {
+        List<TestData<Decimal128>> tests = asList(
+                new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
+                new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
+
+
+        for (final TestData<Decimal128> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));
+            writer.writeStartDocument();
+            writer.writeDecimal128("d", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"d\" : { \"$numberDecimal\" : \"" + cur.expected + "\" } }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
+    @Test
     public void testEmbeddedDocument() {
         writer.writeStartDocument();
         writer.writeStartDocument("doc");
@@ -372,16 +409,16 @@ public class JsonWriterTest {
     public void testBinaryStrict() {
         List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
                                                                    "{ \"$binary\" : \"\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1}),
                                                                    "{ \"$binary\" : \"AQ==\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}),
                                                                    "{ \"$binary\" : \"AQI=\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
-                                                                   + "\"$type\" : \"0\" }"),
+                                                                   + "\"$type\" : \"00\" }"),
                                               new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
                                                                    + "\"$type\" : \"80\" }"));
@@ -534,7 +571,7 @@ public class JsonWriterTest {
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "/a/m"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "/a/x"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "/a/s"),
-                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imxs"));
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imsx"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
@@ -576,7 +613,7 @@ public class JsonWriterTest {
                                                                                         + " \"$options\" : \"s\""
                                                                                         + " }"),
                        new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"),
-                                                       "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
+                                                       "{ \"$regex\" : \"a\"," + " \"$options\" : \"imsx\" }"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));

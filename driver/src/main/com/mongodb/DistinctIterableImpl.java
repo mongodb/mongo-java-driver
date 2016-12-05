@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -42,6 +43,7 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
 
     private Bson filter;
     private long maxTimeMS;
+    private Collation collation;
 
 
     DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
@@ -78,6 +80,12 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
     }
 
     @Override
+    public DistinctIterable<TResult> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    @Override
     public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
@@ -106,7 +114,8 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
         DistinctOperation<TResult> operation = new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .readConcern(readConcern);
+                .readConcern(readConcern)
+                .collation(collation);
         return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 }

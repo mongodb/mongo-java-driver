@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,19 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
-
 /**
  * An adapter for cluster listener implementations, for clients that want to listen for a subset of cluster events.  Extend this class to
  * listen for cluster events and override the methods of interest.
+ *
+ * @since 3.3
  */
-@Beta
 public abstract class ClusterListenerAdapter implements ClusterListener {
     @Override
-    public void clusterOpened(final ClusterEvent event) {
+    public void clusterOpening(final ClusterOpeningEvent event) {
     }
 
     @Override
-    public void clusterClosed(final ClusterEvent event) {
+    public void clusterClosed(final ClusterClosedEvent event) {
     }
 
     @Override

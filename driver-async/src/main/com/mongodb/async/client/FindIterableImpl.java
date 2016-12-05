@@ -24,6 +24,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.FindOperation;
@@ -97,6 +98,12 @@ class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> batchSize(final int batchSize) {
         findOptions.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> collation(final Collation collation) {
+        findOptions.collation(collation);
         return this;
     }
 
@@ -197,7 +204,8 @@ class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
                .oplogReplay(findOptions.isOplogReplay())
                .partial(findOptions.isPartial())
                .slaveOk(readPreference.isSlaveOk())
-               .readConcern(readConcern);
+               .readConcern(readConcern)
+               .collation(findOptions.getCollation());
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

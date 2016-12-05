@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,10 @@ class ReadConcernLevelSpecification extends Specification {
         readConcernLevel.getValue() == expectedString
 
         where:
-        readConcernLevel             | expectedString
-        ReadConcernLevel.LOCAL       | 'local'
-        ReadConcernLevel.MAJORITY    | 'majority'
+        readConcernLevel              | expectedString
+        ReadConcernLevel.LOCAL        | 'local'
+        ReadConcernLevel.MAJORITY     | 'majority'
+        ReadConcernLevel.LINEARIZABLE | 'linearizable'
     }
 
     def 'should support valid string representations'() {
@@ -35,7 +36,7 @@ class ReadConcernLevelSpecification extends Specification {
         ReadConcernLevel.fromString(readConcernLevel) instanceof ReadConcernLevel
 
         where:
-        readConcernLevel << ['local', 'majority', 'LOCAL', 'MAJORITY']
+        readConcernLevel << ['local', 'majority', 'linearizable', 'LOCAL', 'MAJORITY', 'LINEARIZABLE']
     }
 
     def 'should throw an illegal Argument exception for invalid values'() {

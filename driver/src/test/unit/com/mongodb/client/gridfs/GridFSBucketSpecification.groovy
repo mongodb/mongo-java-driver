@@ -27,7 +27,7 @@ import com.mongodb.client.FindIterable
 import com.mongodb.client.ListIndexesIterable
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoCursor
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
@@ -38,7 +38,6 @@ import org.bson.BsonDocument
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.types.Binary
 import org.bson.types.ObjectId
@@ -55,9 +54,10 @@ import static spock.util.matcher.HamcrestSupport.expect
 class GridFSBucketSpecification extends Specification {
 
     def readConcern = ReadConcern.DEFAULT
+    def registry = MongoClient.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', MongoClient.getDefaultCodecRegistry(), primary(), WriteConcern.ACKNOWLEDGED, readConcern, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, readConcern, executor)
     }
 
     def 'should return the correct bucket name'() {
@@ -171,7 +171,7 @@ class GridFSBucketSpecification extends Specification {
         def stream = gridFSBucket.openUploadStream('filename')
 
         then:
-        expect stream, isTheSameAs(new GridFSUploadStreamImpl(filesCollection, chunksCollection, stream.getFileId(), 'filename',
+        expect stream, isTheSameAs(new GridFSUploadStreamImpl(filesCollection, chunksCollection, stream.getId(), 'filename',
                 255, null), ['md5', 'closeLock'])
     }
 
@@ -188,6 +188,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.uploadFromStream('filename', inputStream)
 
         then: 'index check'
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
@@ -214,6 +215,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.uploadFromStream('filename', inputStream)
 
         then: 'index check'
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
@@ -248,6 +250,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.uploadFromStream('filename', inputStream)
 
         then: 'index check'
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
@@ -283,7 +286,6 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * findIterable.filter(_) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -312,7 +314,6 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> fileInfo
         1 * chunksCollection.find(_) >> findIterable
         1 * findIterable.sort(_) >> findIterable
@@ -346,7 +347,6 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> fileInfo
         1 * chunksCollection.find(_) >> findIterable
         1 * findIterable.sort(_) >> findIterable
@@ -377,13 +377,12 @@ class GridFSBucketSpecification extends Specification {
         def outputStream = new ByteArrayOutputStream(10)
 
         when:
-        gridFSBucket.downloadToStreamByName(filename, outputStream)
+        gridFSBucket.downloadToStream(filename, outputStream)
         outputStream.close()
 
         then:
         1 * findIterable.filter(new Document('filename', filename)) >> findIterable
         1 * findIterable.sort(_) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -414,7 +413,6 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> null
 
         then:
@@ -436,13 +434,12 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
-        def stream = gridFSBucket.openDownloadStreamByName(filename, new GridFSDownloadByNameOptions().revision(version))
+        def stream = gridFSBucket.openDownloadStream(filename, new GridFSDownloadOptions().revision(version))
 
         then:
         1 * findIterable.filter(new Document('filename', filename)) >> findIterable
         1 * findIterable.skip(skip) >> findIterable
         1 * findIterable.sort(new Document('uploadDate', sortOrder)) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -479,14 +476,14 @@ class GridFSBucketSpecification extends Specification {
         def executor = new TestOperationExecutor([Stub(BatchCursor), Stub(BatchCursor)])
         def database = databaseWithExecutor(executor)
         def gridFSBucket = new GridFSBucketImpl(database)
-        def decoder = new DocumentCodec()
+        def decoder = registry.get(GridFSFile)
 
         when:
         gridFSBucket.find().iterator()
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<Document>(new MongoNamespace('test.fs.files'), decoder)
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
                 .filter(new BsonDocument()))
 
         when:
@@ -496,7 +493,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == secondary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<Document>(new MongoNamespace('test.fs.files'), decoder)
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
                 .readConcern(readConcern).filter(filter).slaveOk(true))
     }
 
@@ -507,14 +504,13 @@ class GridFSBucketSpecification extends Specification {
         def chunksCollection = Stub(MongoCollection)
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         when:
-        gridFSBucket.openDownloadStreamByName('filename')
+        gridFSBucket.openDownloadStream('filename')
 
         then:
         1 * filesCollection.find() >> findIterable
         1 * findIterable.filter(new Document('filename', 'filename')) >> findIterable
         1 * findIterable.skip(0) >> findIterable
         1 * findIterable.sort(new Document('uploadDate', -1)) >> findIterable
-        1 * findIterable.map(_) >> findIterable
         1 * findIterable.first() >> null
 
         then:
@@ -533,6 +529,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.openUploadStream('filename')
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
@@ -568,6 +565,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.openUploadStream('filename')
 
         then:
+        1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
         1 * filesCollection.find() >> findIterable
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
@@ -631,18 +629,27 @@ class GridFSBucketSpecification extends Specification {
 
     def 'should rename a file'() {
         given:
-        def fileId = new ObjectId()
+        def id = new ObjectId()
+        def fileId = new BsonObjectId(id)
         def filesCollection = Mock(MongoCollection)
         def newFilename = 'newFilename'
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, Stub(MongoCollection))
 
         when:
+        gridFSBucket.rename(id, newFilename)
+
+        then:
+        1 * filesCollection.updateOne(new BsonDocument('_id', fileId),
+                new BsonDocument('$set',
+                        new BsonDocument('filename', new BsonString(newFilename)))) >> new UpdateResult.UnacknowledgedUpdateResult()
+
+        when:
         gridFSBucket.rename(fileId, newFilename)
 
         then:
-        1 * filesCollection.updateOne(new Document('_id', fileId),
-                new Document('$set',
-                        new Document('filename', newFilename))) >> new UpdateResult.UnacknowledgedUpdateResult()
+        1 * filesCollection.updateOne(new BsonDocument('_id', fileId),
+                new BsonDocument('$set',
+                        new BsonDocument('filename', new BsonString(newFilename)))) >> new UpdateResult.UnacknowledgedUpdateResult()
     }
 
     def 'should throw an exception renaming non existent file'() {

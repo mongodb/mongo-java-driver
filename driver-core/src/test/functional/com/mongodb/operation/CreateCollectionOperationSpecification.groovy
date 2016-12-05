@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoServerException
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernException
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
@@ -27,13 +28,11 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -52,6 +51,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.getValidator() == null
         operation.getValidationLevel() == null
         operation.getValidationAction() == null
+        operation.getCollation() == null
     }
 
     def 'should set optional values correctly'(){
@@ -72,6 +72,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
             .validator(validator)
             .validationLevel(ValidationLevel.MODERATE)
             .validationAction(ValidationAction.WARN)
+            .collation(defaultCollation)
 
         then:
         operation.isCapped()
@@ -84,6 +85,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.getValidator() == validator
         operation.getValidationLevel() == ValidationLevel.MODERATE
         operation.getValidationAction() == ValidationAction.WARN
+        operation.getCollation() == defaultCollation
     }
 
     def 'should create a collection'() {
@@ -91,39 +93,33 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), getCollectionName()).execute(getBinding())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        execute(operation, async)
 
         then:
         collectionNameExists(getCollectionName())
-    }
 
-    @Category(Async)
-    def 'should create a collection asynchronously'() {
-        given:
-        assert !collectionNameExists(getCollectionName())
-
-        when:
-        executeAsync(new CreateCollectionOperation(getDatabaseName(), getCollectionName()))
-
-        then:
-        collectionNameExists(getCollectionName())
+        where:
+        async << [true, false]
     }
 
     def 'should error when creating a collection that already exists'() {
         given:
         assert !collectionNameExists(getCollectionName())
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-        operation.execute(getBinding())
+        execute(operation, async)
 
         when:
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(MongoServerException)
-        !collectionNameExists('nonExistingCollection')
+
+        where:
+        async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 0, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should pass through storage engine options'() {
         given:
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
@@ -132,41 +128,46 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
                                               .append('mmapv1', new BsonDocument()))
 
         when:
-        operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
             it -> it.getString('name').value == getCollectionName()
         }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should error when creating a collection that already exists asynchronously'() {
+    def 'should set flags for use power of two sizes'() {
         given:
         assert !collectionNameExists(getCollectionName())
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-        operation.execute(getBinding())
+                .usePowerOf2Sizes(true)
 
         when:
-        executeAsync(operation)
+        execute(operation, async)
 
         then:
-        thrown(MongoServerException)
-        !collectionNameExists('nonExistingCollection')
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
+            it -> it.getString('name').value == getCollectionName()
+        }.getDocument('options').getNumber('flags').intValue() == 1
+
+        where:
+        async << [true, false]
     }
 
     def 'should create capped collection'() {
         given:
         assert !collectionNameExists(getCollectionName())
-
-        when:
-        new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
                 .capped(true)
                 .autoIndex(false)
                 .maxDocuments(100)
                 .sizeInBytes(40 * 1024)
-                .usePowerOf2Sizes(true)
-                .execute(getBinding())
+
+        when:
+        execute(operation, async)
 
         then:
         collectionNameExists(getCollectionName())
@@ -178,41 +179,67 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         stats.getBoolean('capped')
         stats.getInteger('max') == 100
-        if (serverVersionAtLeast([2, 4, 0])) {
-            stats.getInteger('storageSize') == 40 * 1024
-        } else {
-            stats.getInteger('storageSize') >= 40 * 1024 && stats.getInteger('storageSize') <= 41 * 1024
-        }
+        // Starting in 3.0, the size in bytes moved from storageSize to maxSize
+        stats.getInteger('maxSize') == 40 * 1024 || stats.getInteger('storageSize') == 40 * 1024
+
+        where:
+        async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    def 'should create collection in respect to the autoIndex option'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .autoIndex(autoIndex)
+
+        when:
+        execute(operation, async)
+
+        then:
+        new CommandWriteOperation<Document>(getDatabaseName(),
+                new BsonDocument('collStats', new BsonString(getCollectionName())),
+                new DocumentCodec()).execute(getBinding())
+                .getInteger('nindexes') == expectedNumberOfIndexes
+
+        where:
+        autoIndex | expectedNumberOfIndexes | async
+        true      | 1                       | true
+        true      | 1                       | false
+        false     | 0                       | true
+        false     | 0                       | false
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should allow indexOptionDefaults'() {
         given:
         assert !collectionNameExists(getCollectionName())
         def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { mmapv1 : {} }}')
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .indexOptionDefaults(indexOptionDefaults)
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-                .indexOptionDefaults(indexOptionDefaults)
-                .execute(getBinding())
+        execute(operation, async)
 
         then:
         getCollectionInfo(getCollectionName()).get('options').get('indexOptionDefaults') == indexOptionDefaults
+
+        where:
+        async << [true, false]
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should allow validator'() {
         given:
         assert !collectionNameExists(getCollectionName())
         def validator = BsonDocument.parse('{ level: { $gte : 10 }}')
-
-        when:
-        new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
                 .validator(validator)
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.ERROR)
-                .execute(getBinding())
+
+        when:
+        execute(operation, async)
 
         then:
         def options = getCollectionInfo(getCollectionName()).get('options')
@@ -226,6 +253,58 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         WriteConcernException writeConcernException = thrown()
         writeConcernException.getErrorCode() == 121
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName(), new WriteConcern(5))
+
+        when:
+        execute(operation, async)
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should throw an exception when passing an unsupported collation'() {
+        given:
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName()).collation(defaultCollation)
+
+        when:
+        testOperationThrows(operation, [3, 2, 0], async)
+
+        then:
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
+
+        where:
+        async << [false, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    def 'should be able to create a collection with a collation'() {
+        given:
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName()).collation(defaultCollation)
+
+        when:
+        execute(operation, async)
+        def collectionCollation = getCollectionInfo(getCollectionName()).get('options').get('collation')
+
+        then:
+        defaultCollation.asDocument().each { assert collectionCollation.get(it.key) == it.value }
+
+        where:
+        async << [true, false]
     }
 
     def getCollectionInfo(String collectionName) {

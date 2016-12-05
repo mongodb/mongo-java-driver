@@ -25,6 +25,7 @@ import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
@@ -91,6 +92,11 @@ class UpdateCommandMessage extends BaseWriteCommandMessage {
             }
             if (update.isUpsert()) {
                 writer.writeBoolean("upsert", update.isUpsert());
+            }
+            if (update.getCollation() != null) {
+                writer.writeName("collation");
+                BsonDocument collation = update.getCollation().asDocument();
+                getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
             }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();

@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
@@ -42,6 +43,7 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final FindOptions findOptions;
+
     private Bson filter;
 
     FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
@@ -93,6 +95,12 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     @Override
     public FindIterable<TResult> batchSize(final int batchSize) {
         findOptions.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> collation(final Collation collation) {
+        findOptions.collation(collation);
         return this;
     }
 
@@ -183,7 +191,8 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
                    .slaveOk(readPreference.isSlaveOk())
-                   .readConcern(readConcern);
+                   .readConcern(readConcern)
+                   .collation(findOptions.getCollation());
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

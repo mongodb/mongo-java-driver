@@ -53,6 +53,7 @@ public class ServerAddressSelector implements ServerSelector {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getByServerAddress(serverAddress) != null) {
             return Arrays.asList(clusterDescription.getByServerAddress(serverAddress));

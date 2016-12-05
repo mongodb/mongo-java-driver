@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.CodeWScope
+import org.bson.types.Decimal128
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -90,6 +91,7 @@ class BasicBSONDecoderSpecification extends Specification {
         ['i4': Long.MAX_VALUE]                                   | [17, 0, 0, 0, 18, 105, 52, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
         ['k1': new MinKey()]                                     | [9, 0, 0, 0, -1, 107, 49, 0, 0]
         ['k2': new MaxKey()]                                     | [9, 0, 0, 0, 127, 107, 50, 0, 0]
+        ['f': Decimal128.parse('0E-6176')]                       | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
     }
@@ -120,22 +122,23 @@ class BasicBSONDecoderSpecification extends Specification {
         1 * callback.objectDone()
 
         where:
-        method         | args                                              || bytes
-        'gotDouble'    | ['d1', -1.01d]                                    || [17, 0, 0, 0, 1, 100, 49, 0, 41, 92, -113, -62, -11, 40, -16, -65, 0]
-        'gotString'    | ['s2', 'danke']                                   || [19, 0, 0, 0, 2, 115, 50, 0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 0]
-        'gotBinary'    | ['b2', 0, [102, 111, 111] as byte[]]              || [17, 0, 0, 0, 5, 98, 50, 0, 3, 0, 0, 0, 0, 102, 111, 111, 0]
-        'gotObjectId'  | ['_id', new ObjectId('50d3332018c6a1d8d1662b61')] || [22, 0, 0, 0, 7, 95, 105, 100, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102, 43, 97, 0]
-        'gotBoolean'   | ['b1', true]                                      || [10, 0, 0, 0, 8, 98, 49, 0, 1, 0]
-        'gotDate'      | ['d', 582163200]                                  || [16, 0, 0, 0, 9, 100, 0, 0, 27, -77, 34, 0, 0, 0, 0, 0]
-        'gotNull'      | ['n']                                             || [8, 0, 0, 0, 10, 110, 0, 0]
-        'gotRegex'     | ['r', '[a]*', 'i']                                || [15, 0, 0, 0, 11, 114, 0, 91, 97, 93, 42, 0, 105, 0, 0]
-        'gotCode'      | ['js1', 'var i = 0']                              || [24, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
-        'gotSymbol'    | ['s', 'c']                                        || [14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0]
-        'gotInt'       | ['i1', -12]                                       || [13, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 0]
-        'gotLong'      | ['i4', Long.MAX_VALUE]                            || [17, 0, 0, 0, 18, 105, 52, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
-        'gotTimestamp' | ['t', 123999401, 44332]                           || [16, 0, 0, 0, 17, 116, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0]
-        'gotMinKey'    | ['k1']                                            || [9, 0, 0, 0, -1, 107, 49, 0, 0]
-        'gotMaxKey'    | ['k2']                                            || [9, 0, 0, 0, 127, 107, 50, 0, 0]
+        method          | args                                              || bytes
+        'gotDouble'     | ['d1', -1.01d]                                    || [17, 0, 0, 0, 1, 100, 49, 0, 41, 92, -113, -62, -11, 40, -16, -65, 0]
+        'gotString'     | ['s2', 'danke']                                   || [19, 0, 0, 0, 2, 115, 50, 0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 0]
+        'gotBinary'     | ['b2', 0, [102, 111, 111] as byte[]]              || [17, 0, 0, 0, 5, 98, 50, 0, 3, 0, 0, 0, 0, 102, 111, 111, 0]
+        'gotObjectId'   | ['_id', new ObjectId('50d3332018c6a1d8d1662b61')] || [22, 0, 0, 0, 7, 95, 105, 100, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102, 43, 97, 0]
+        'gotBoolean'    | ['b1', true]                                      || [10, 0, 0, 0, 8, 98, 49, 0, 1, 0]
+        'gotDate'       | ['d', 582163200]                                  || [16, 0, 0, 0, 9, 100, 0, 0, 27, -77, 34, 0, 0, 0, 0, 0]
+        'gotNull'       | ['n']                                             || [8, 0, 0, 0, 10, 110, 0, 0]
+        'gotRegex'      | ['r', '[a]*', 'i']                                || [15, 0, 0, 0, 11, 114, 0, 91, 97, 93, 42, 0, 105, 0, 0]
+        'gotCode'       | ['js1', 'var i = 0']                              || [24, 0, 0, 0, 13, 106, 115, 49, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
+        'gotSymbol'     | ['s', 'c']                                        || [14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0]
+        'gotInt'        | ['i1', -12]                                       || [13, 0, 0, 0, 16, 105, 49, 0, -12, -1, -1, -1, 0]
+        'gotLong'       | ['i4', Long.MAX_VALUE]                            || [17, 0, 0, 0, 18, 105, 52, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
+        'gotTimestamp'  | ['t', 123999401, 44332]                           || [16, 0, 0, 0, 17, 116, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0]
+        'gotMinKey'     | ['k1']                                            || [9, 0, 0, 0, -1, 107, 49, 0, 0]
+        'gotMaxKey'     | ['k2']                                            || [9, 0, 0, 0, 127, 107, 50, 0, 0]
+        'gotDecimal128' | ['f',  Decimal128.parse('0E-6176')]               || [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         //gotDBRef
         //arrayStart

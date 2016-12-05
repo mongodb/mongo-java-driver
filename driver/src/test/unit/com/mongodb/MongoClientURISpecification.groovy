@@ -20,6 +20,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
@@ -123,10 +124,23 @@ class MongoClientURISpecification extends Specification {
                                                                                                          .withWTimeout(5, MILLISECONDS)
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
-    @Unroll
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should correctly parse URI options for #type'() {
-        expect:
+        given:
+        def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
+                + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
+                + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
+                + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary&'
+                + 'sslInvalidHostNameAllowed=true&'
+                + 'serverSelectionTimeoutMS=25000&'
+                + 'localThresholdMS=30&'
+                + 'heartbeatFrequencyMS=20000&'
+                + 'appName=app1')
+
+        when:
+        def options = uri.getOptions()
+
+        then:
         options.getWriteConcern() == new WriteConcern(1, 2500, true)
         options.getReadPreference() == ReadPreference.secondary()
         options.getConnectionsPerHost() == 10
@@ -139,24 +153,11 @@ class MongoClientURISpecification extends Specification {
         options.getConnectTimeout() == 2500
         options.getRequiredReplicaSetName() == 'test'
         options.isSslEnabled()
-
-        where:
-        options <<
-        [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
-                                    + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
-                                    + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                    + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary').getOptions(),
-         new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
-                                    + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
-                                    + 'connectTimeoutMS=2500;socketTimeoutMS=5500;ssl=true;'
-                                    + 'safe=false;w=1;wtimeout=2500;fsync=true;readPreference=secondary').getOptions(),
-         new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
-                                    + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
-                                    + 'connectTimeoutMS=2500;'
-                                    + 'socketTimeoutMS=5500&'
-                                    + 'safe=false&w=1;wtimeout=2500;fsync=true&ssl=true;readPreference=secondary').getOptions()]
-        //for documentation, i.e. the Unroll description for each type
-        type << ['amp', 'semi', 'mixed']
+        options.isSslInvalidHostNameAllowed()
+        options.getServerSelectionTimeout() == 25000
+        options.getLocalThreshold() == 30
+        options.getHeartbeatFrequency() == 20000
+        options.getApplicationName() == 'app1'
     }
 
     def 'should have correct defaults for options'() {
@@ -248,7 +249,7 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 250
     }
 
-    @IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should be equal to another MongoClientURI with the same string values'() {
         expect:
         uri1 == uri2

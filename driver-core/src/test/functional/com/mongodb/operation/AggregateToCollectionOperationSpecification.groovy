@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,40 +16,30 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.WriteBinding
+import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
-import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
-import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.gte
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -77,6 +67,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getPipeline() == pipeline
         operation.getBypassDocumentValidation() == null
+        operation.getWriteConcern() == null
+        operation.getCollation() == null
     }
 
     def 'should set optional values correctly'(){
@@ -84,15 +76,18 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
         when:
-        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline, WriteConcern.MAJORITY)
                 .allowDiskUse(true)
                 .maxTime(10, MILLISECONDS)
                 .bypassDocumentValidation(true)
+                .collation(defaultCollation)
 
         then:
         operation.getAllowDiskUse()
         operation.getMaxTime(MILLISECONDS) == 10
         operation.getBypassDocumentValidation() == true
+        operation.getWriteConcern() == WriteConcern.MAJORITY
+        operation.getCollation() == defaultCollation
     }
 
     def 'should not accept an empty pipeline'() {
@@ -113,60 +108,38 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.execute(getBinding());
+        execute(operation, async);
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
-    def 'should be able to output to a collection asynchronously'() {
-        when:
-        AggregateToCollectionOperation operation =
-                new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        executeAsync(operation);
-
-        then:
-        getCollectionHelper(aggregateCollectionNamespace).count() == 3
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to match then output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.execute(getBinding());
+        execute(operation, async);
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
-    def 'should be able to match then output to a collection asynchronously'() {
-        when:
-        AggregateToCollectionOperation operation =
-                new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        executeAsync(operation);
-
-        then:
-        getCollectionHelper(aggregateCollectionNamespace).count() == 1
-    }
-
-
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         AggregateToCollectionOperation operation =
@@ -177,37 +150,39 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         enableMaxTimeFailPoint()
 
         when:
-        operation.execute(getBinding())
+        execute(operation, async);
 
         then:
         thrown(MongoExecutionTimeoutException)
 
         cleanup:
         disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
-    def 'should throw execution timeout exception from executeAsync'() {
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error'() {
         given:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-                        .maxTime(1, SECONDS)
-        enableMaxTimeFailPoint()
+                        [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
+                        new WriteConcern(5))
 
         when:
-        executeAsync(operation)
+        async ? executeAsync(operation) : operation.execute(getBinding())
 
         then:
-        thrown(MongoExecutionTimeoutException)
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 100
+        ex.writeResult.wasAcknowledged()
 
-        cleanup:
-        disableMaxTimeFailPoint()
+        where:
+        async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
@@ -217,155 +192,94 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         when:
         def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')])
-        operation.execute(getBinding())
+        execute(operation, async);
 
         then:
         thrown(MongoCommandException)
 
         when:
-        operation.bypassDocumentValidation(false).execute(getBinding())
+        execute(operation.bypassDocumentValidation(false), async)
 
         then:
         thrown(MongoCommandException)
 
         when:
-        operation.bypassDocumentValidation(true).execute(getBinding())
+        execute(operation.bypassDocumentValidation(true), async)
 
         then:
         notThrown(MongoCommandException)
 
         cleanup:
         collectionOutHelper?.drop()
-    }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(3, 1, 8)) })
-    def 'should support bypassDocumentValidation asynchronously'() {
-        given:
-        def collectionOutHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'collectionOut'))
-        collectionOutHelper.create('collectionOut', new CreateCollectionOptions().validationOptions(
-                new ValidationOptions().validator(gte('level', 10))))
-        getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
-
-        when:
-        def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')])
-        executeAsync(operation)
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        executeAsync(operation.bypassDocumentValidation(false))
-
-        then:
-        thrown(MongoCommandException)
-
-        when:
-        executeAsync(operation.bypassDocumentValidation(true))
-
-        then:
-        notThrown(MongoCommandException)
-
-        cleanup:
-        collectionOutHelper?.drop()
+        where:
+        async << [true, false]
     }
 
     def 'should create the expected command'() {
-        given:
-        def connection = Mock(Connection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-        def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> connectionSource
-        }
-
+        when:
         def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
-        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline, WriteConcern.MAJORITY).bypassDocumentValidation(true)
         def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
 
-        when:
-        operation.execute(writeBinding)
-
-        then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _)
-        1 * connection.release()
-
-        when:
-        operation.allowDiskUse(true)
-                .maxTime(10, MILLISECONDS)
-                .bypassDocumentValidation(true)
-
-        expectedCommand.append('maxTimeMS', new BsonInt64(10))
-                .append('allowDiskUse', new BsonBoolean(true))
-
         if (includeBypassValidation) {
-            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
+            expectedCommand.put('bypassDocumentValidation', BsonBoolean.TRUE)
         }
-        operation.execute(writeBinding)
+        if (includeWriteConcern) {
+            expectedCommand.append('writeConcern', new BsonDocument('w', new BsonString('majority')))
+        }
+        if (includeCollation) {
+            operation.collation(defaultCollation)
+            expectedCommand.append('collation', defaultCollation.asDocument())
+        }
 
         then:
-        1 * connection.command(getNamespace().getDatabaseName(), expectedCommand, _, _, _)
-        1 * connection.release()
+        testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'))
 
         where:
-        serverVersion                    | includeBypassValidation
-        new ServerVersion([3, 2, 0])    | true
-        new ServerVersion([3, 0, 0])    | false
+        serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async
+        [3, 4, 0]     | true                    | true                | true             | true
+        [3, 4, 0]     | true                    | true                | true             | false
+        [3, 2, 0]     | true                    | false               | false            | true
+        [3, 2, 0]     | true                    | false               | false            | false
+        [3, 0, 0]     | false                   | false               | false            | true
+        [3, 0, 0]     | false                   | false               | false            | false
+
     }
 
-    def 'should create the expected command asynchronously'() {
+    def 'should throw an exception when passing an unsupported collation'() {
         given:
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> serverVersion
-            }
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-        }
         def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
-        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
-        def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
-                .append('pipeline', new BsonArray(pipeline))
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline).collation(defaultCollation)
 
         when:
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
+        testOperationThrows(operation, [3, 2, 0], async)
 
         then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(null, null) }
-        1 * connection.release()
-
-        when:
-        operation.allowDiskUse(true)
-                .maxTime(10, MILLISECONDS)
-                .bypassDocumentValidation(true)
-
-        expectedCommand.append('maxTimeMS', new BsonInt64(10))
-                .append('allowDiskUse', new BsonBoolean(true))
-
-        if (includeBypassValidation) {
-            expectedCommand.append('bypassDocumentValidation', BsonBoolean.TRUE)
-        }
-
-        operation.executeAsync(writeBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.commandAsync(getNamespace().getDatabaseName(), expectedCommand, _, _, _, _) >> { it[5].onResult(null, null) }
-        1 * connection.release()
+        def exception = thrown(IllegalArgumentException)
+        exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        serverVersion                   | includeBypassValidation
-        new ServerVersion([3, 2, 0])    | true
-        new ServerVersion([3, 0, 0])    | false
+        async << [false, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    def 'should support collation'() {
+        given:
+        getCollectionHelper().insertDocuments(BsonDocument.parse('{_id: 1, str: "foo"}'))
+        def pipeline = [BsonDocument.parse('{$match: {str: "FOO"}}'),
+                        new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline).collation(defaultCollation)
+                .collation(caseInsensitiveCollation)
+
+        when:
+        execute(operation, async)
+
+        then:
+        getCollectionHelper(aggregateCollectionNamespace).count() == 1
+
+        where:
+        async << [true, false]
+    }
 }

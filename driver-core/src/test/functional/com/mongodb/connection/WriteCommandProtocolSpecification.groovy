@@ -40,7 +40,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+@IgnoreIf({ !serverVersionAtLeast(2, 6) })
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
     @Shared
@@ -48,7 +48,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), new NoOpConnectionListener())
+                getCredentialList(), new NoOpConnectionListener(), null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

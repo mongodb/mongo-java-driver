@@ -23,6 +23,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
@@ -41,7 +42,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -58,6 +60,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private long limit;
     private long maxTimeMS;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
+    private Collation collation;
 
     /**
      * Construct a new instance.
@@ -201,12 +204,35 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     */
+    public CountOperation collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public Long execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnection<Long>() {
             @Override
             public Long call(final Connection connection) {
-                checkValidReadConcern(connection, readConcern);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
                         connection, transformer());
             }
@@ -218,11 +244,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<Long> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
-                    final SingleResultCallback<Long> wrappedCallback = releasingCallback(errorHandlingCallback(callback), connection);
-                    checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
+                    final SingleResultCallback<Long> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {
@@ -282,6 +309,9 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
         if (!readConcern.isServerDefault()) {
             document.put("readConcern", readConcern.asDocument());
+        }
+        if (collation != null) {
+            document.put("collation", collation.asDocument());
         }
         return document;
     }

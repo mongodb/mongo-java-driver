@@ -17,15 +17,13 @@
 package com.mongodb.async.client
 
 import com.mongodb.MongoNamespace
-import com.mongodb.async.FutureResultCallback
 import org.bson.Document
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.async.client.Fixture.getMongoClient
 import static com.mongodb.async.client.Fixture.isSharded
-import static java.util.Arrays.asList
-import static java.util.concurrent.TimeUnit.SECONDS
+import static com.mongodb.async.client.TestHelper.run
 
 class SmokeTestSpecification extends FunctionalSpecification {
 
@@ -76,7 +74,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.distinct('id', String).&into, []) == ['a', 'b', 'c']
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should aggregate to collection'() {
         given:
         def mongoClient = getMongoClient()
@@ -179,12 +177,4 @@ class SmokeTestSpecification extends FunctionalSpecification {
         !run(database.listCollectionNames().&into, []).contains(collectionName)
         run(database.listCollectionNames().&into, []).contains(newCollectionName)
     }
-
-    def run(operation, ... args) {
-        def futureResultCallback = new FutureResultCallback()
-        def opArgs = (args != null) ? args : []
-        operation.call(*opArgs + futureResultCallback)
-        futureResultCallback.get(60, SECONDS)
-    }
-
 }

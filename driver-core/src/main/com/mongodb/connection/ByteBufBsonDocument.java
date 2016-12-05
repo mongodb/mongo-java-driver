@@ -20,6 +20,7 @@ package com.mongodb.connection;
 
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
+import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.ByteBuf;
@@ -118,37 +119,37 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
 
     @Override
     public boolean isEmpty() {
-        BsonBinaryReader bsonReader = createReader();
-        try {
-            bsonReader.readStartDocument();
-            if (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<Boolean>() {
+            @Override
+            public Boolean find(final BsonReader bsonReader) {
                 return false;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
-        }
 
-        return true;
+            @Override
+            public Boolean notFound() {
+                return true;
+            }
+        });
     }
 
     @Override
     public int size() {
-        int size = 0;
-        BsonBinaryReader bsonReader = createReader();
-        try {
-            bsonReader.readStartDocument();
-            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<Integer>() {
+            private int size;
+
+            @Override
+            public Integer find(final BsonReader bsonReader) {
                 size++;
                 bsonReader.readName();
                 bsonReader.skipValue();
+                return null;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
-        }
 
-        return size;
+            @Override
+            public Integer notFound() {
+                return size;
+            }
+        });
     }
 
     @Override
@@ -172,40 +173,40 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
             throw new IllegalArgumentException("key can not be null");
         }
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
-            bsonReader.readStartDocument();
-            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<Boolean>() {
+            @Override
+            public Boolean find(final BsonReader bsonReader) {
                 if (bsonReader.readName().equals(key)) {
                     return true;
                 }
                 bsonReader.skipValue();
+                return null;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
-        }
 
-        return false;
+            @Override
+            public Boolean notFound() {
+                return false;
+            }
+        });
     }
 
     @Override
     public boolean containsValue(final Object value) {
-        BsonBinaryReader bsonReader = createReader();
-        try {
-            bsonReader.readStartDocument();
-            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<Boolean>() {
+            @Override
+            public Boolean find(final BsonReader bsonReader) {
                 bsonReader.skipName();
                 if (deserializeBsonValue(bsonReader).equals(value)) {
                     return true;
                 }
+                return null;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
-        }
 
-        return false;
+            @Override
+            public Boolean notFound() {
+                return false;
+            }
+        });
     }
 
     @Override
@@ -214,21 +215,21 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
             throw new IllegalArgumentException("key can not be null");
         }
 
-        BsonBinaryReader bsonReader = createReader();
-        try {
-            bsonReader.readStartDocument();
-            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+        return findInDocument(new Finder<BsonValue>() {
+            @Override
+            public BsonValue find(final BsonReader bsonReader) {
                 if (bsonReader.readName().equals(key)) {
                     return deserializeBsonValue(bsonReader);
                 }
                 bsonReader.skipValue();
+                return null;
             }
-            bsonReader.readEndDocument();
-        } finally {
-            bsonReader.close();
-        }
 
-        return null;
+            @Override
+            public BsonValue notFound() {
+                return null;
+            }
+        });
     }
 
     @Override
@@ -240,9 +241,15 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
     public String toJson(final JsonWriterSettings settings) {
         StringWriter stringWriter = new StringWriter();
         JsonWriter jsonWriter = new JsonWriter(stringWriter, settings);
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(byteBuf));
-        jsonWriter.pipe(reader);
-        return stringWriter.toString();
+        ByteBuf duplicate = byteBuf.duplicate();
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(duplicate));
+        try {
+            jsonWriter.pipe(reader);
+            return stringWriter.toString();
+        } finally {
+            duplicate.release();
+            reader.close();
+        }
     }
 
     /**
@@ -251,18 +258,42 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
      * @return the first key in this document, or null if the document is empty
      */
     public String getFirstKey() {
-        BsonBinaryReader bsonReader = createReader();
+        return findInDocument(new Finder<String>() {
+            @Override
+            public String find(final BsonReader bsonReader) {
+                return bsonReader.readName();
+            }
+
+            @Override
+            public String notFound() {
+                return null;
+            }
+        });
+    }
+
+    private interface Finder<T> {
+        T find(BsonReader bsonReader);
+        T notFound();
+    }
+
+    private <T> T findInDocument(final Finder<T> finder) {
+        ByteBuf duplicateByteBuf = byteBuf.duplicate();
+        BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
         try {
             bsonReader.readStartDocument();
             while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                return bsonReader.readName();
+                T found = finder.find(bsonReader);
+                if (found != null) {
+                    return found;
+                }
             }
             bsonReader.readEndDocument();
         } finally {
+            duplicateByteBuf.release();
             bsonReader.close();
         }
 
-        return null;
+        return finder.notFound();
     }
 
     @Override
@@ -287,19 +318,17 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
     }
 
     private BsonDocument toBsonDocument() {
-        BsonBinaryReader bsonReader = createReader();
+        ByteBuf duplicateByteBuf = byteBuf.duplicate();
+        BsonBinaryReader bsonReader = new BsonBinaryReader(new ByteBufferBsonInput(duplicateByteBuf));
         try {
             return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
         } finally {
+            duplicateByteBuf.release();
             bsonReader.close();
         }
     }
 
-    private BsonBinaryReader createReader() {
-        return new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()));
-    }
-
-    private BsonValue deserializeBsonValue(final BsonBinaryReader bsonReader) {
+    private BsonValue deserializeBsonValue(final BsonReader bsonReader) {
         return REGISTRY.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
     }
 

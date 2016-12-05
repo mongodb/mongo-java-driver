@@ -16,6 +16,8 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
+
 /**
  * Base class for the three numeric BSON types.  This class mirrors the functionality provided by {@code java.lang.Number}.
  *
@@ -42,4 +44,12 @@ public abstract class BsonNumber extends BsonValue {
      * @return the numeric value represented by this object after conversion to type {@code double}.
      */
     public abstract double doubleValue();
+
+    /**
+     * Returns the value of the specified number as a {@code Decimal128}, which may involve rounding.
+     *
+     * @return the numeric value represented by this object after conversion to type {@code Decimal128}.
+     * @since 3.4
+     */
+    public abstract Decimal128 decimal128Value();
 }

@@ -51,8 +51,8 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      */
     public ReplaceOneModel(final Bson filter, final T replacement, final UpdateOptions options) {
         this.filter = notNull("filter", filter);
-        this.replacement = notNull("replacement", replacement);
         this.options = notNull("options", options);
+        this.replacement = notNull("replacement", replacement);
     }
 
     /**

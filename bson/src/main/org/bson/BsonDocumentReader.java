@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 MongoDB, Inc.
+ * Copyright 2014-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -55,6 +56,11 @@ public class BsonDocumentReader extends AbstractBsonReader {
     @Override
     protected byte doPeekBinarySubType() {
         return currentValue.asBinary().getType();
+    }
+
+    @Override
+    protected int doPeekBinarySize() {
+        return currentValue.asBinary().getData().length;
     }
 
     @Override
@@ -101,6 +107,11 @@ public class BsonDocumentReader extends AbstractBsonReader {
     @Override
     protected long doReadInt64() {
         return currentValue.asInt64().getValue();
+    }
+
+    @Override
+    public Decimal128 doReadDecimal128() {
+        return currentValue.asDecimal128().getValue();
     }
 
     @Override

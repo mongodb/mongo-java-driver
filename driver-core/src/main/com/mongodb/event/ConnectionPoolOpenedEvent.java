@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,30 +20,50 @@ import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * An event signifying the opening of a connection pool.
  */
 @Beta
-public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
+public final class ConnectionPoolOpenedEvent {
+    private final ServerId serverId;
     private final ConnectionPoolSettings settings;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param serverId      the server identifier
-     * @param settings      the connection pool settings
+     * @param serverId the server id
+     * @param settings the connection pool settings
      */
     public ConnectionPoolOpenedEvent(final ServerId serverId, final ConnectionPoolSettings settings) {
-        super(serverId);
-        this.settings = settings;
+        this.serverId = notNull("serverId", serverId);
+        this.settings = notNull("settings", settings);
     }
 
     /**
-     * Gets the settings for this connection pool.
+     * Gets the server id
      *
-     * @return the settings
+     * @return the server id
+     */
+    public ServerId getServerId() {
+        return serverId;
+    }
+
+    /**
+     * Gets the connection pool settings.
+     *
+     * @return the connection pool setttings.
      */
     public ConnectionPoolSettings getSettings() {
         return settings;
+    }
+
+    @Override
+    public String toString() {
+        return "ConnectionPoolOpenedEvent{"
+                       + "serverId=" + serverId
+                       + "settings=" + settings
+                       + '}';
     }
 }

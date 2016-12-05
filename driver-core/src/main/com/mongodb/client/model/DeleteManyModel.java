@@ -30,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class DeleteManyModel<T> extends WriteModel<T> {
     private final Bson filter;
+    private final DeleteOptions options;
 
     /**
      * Construct a new instance.
@@ -37,7 +38,20 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
      * @param filter a document describing the query filter, which may not be null.
      */
     public DeleteManyModel(final Bson filter) {
+        this(filter, new DeleteOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param options the options to apply
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public DeleteManyModel(final Bson filter, final DeleteOptions options) {
         this.filter = notNull("filter", filter);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -47,5 +61,15 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
      */
     public Bson getFilter() {
         return filter;
+    }
+
+    /**
+     * Gets the options to apply.
+     *
+     * @return the options
+     * @since 3.4
+     */
+    public DeleteOptions getOptions() {
+        return options;
     }
 }

@@ -25,6 +25,7 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -45,7 +46,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -67,6 +69,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     private BsonDocument filter;
     private long maxTimeMS;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
+    private Collation collation;
 
     /**
      * Construct an instance.
@@ -150,12 +153,37 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         return this;
     }
 
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public DistinctOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcern(connection, readConcern);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
                         connection, transformer(source, connection));
             }
@@ -167,22 +195,24 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = releasingCallback(
-                            errorHandlingCallback(callback), source, connection);
-                    checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
-                        @Override
-                        public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                                        createCommandDecoder(),
-                                        connection, asyncTransformer(connection.getDescription()), wrappedCallback);
-                            }
-                        }
+                            errHandlingCallback, source, connection);
+                    validateReadConcernAndCollation(source, connection, readConcern, collation,
+                            new AsyncCallableWithConnectionAndSource() {
+                                @Override
+                                public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                                    if (t != null) {
+                                        wrappedCallback.onResult(null, t);
+                                    } else {
+                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                                createCommandDecoder(),
+                                                connection, asyncTransformer(connection.getDescription()), wrappedCallback);
+                                    }
+                                }
                     });
                 }
             }
@@ -219,13 +249,16 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     private BsonDocument getCommand() {
-        BsonDocument cmd = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
-        cmd.put("key", new BsonString(fieldName));
-        putIfNotNull(cmd, "query", filter);
-        putIfNotZero(cmd, "maxTimeMS", maxTimeMS);
+        BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+        commandDocument.put("key", new BsonString(fieldName));
+        putIfNotNull(commandDocument, "query", filter);
+        putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);
         if (!readConcern.isServerDefault()) {
-            cmd.put("readConcern", readConcern.asDocument());
+            commandDocument.put("readConcern", readConcern.asDocument());
         }
-        return cmd;
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        return commandDocument;
     }
 }

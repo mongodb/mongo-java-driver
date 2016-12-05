@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 MongoDB, Inc.
+ * Copyright 2014-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,17 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CollationAlternate
+import com.mongodb.client.model.CollationCaseFirst
+import com.mongodb.client.model.CollationMaxVariable
+import com.mongodb.client.model.CollationStrength
+import com.mongodb.client.model.DBCreateViewOptions
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.operation.CreateCollectionOperation
+import com.mongodb.operation.CreateViewOperation
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import spock.lang.Specification
@@ -28,6 +36,14 @@ import static com.mongodb.Fixture.getMongoClient
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
+
+    def 'should throw IllegalArgumentException if name is invalid'() {
+        when:
+        new DB(getMongoClient(), 'a.b', new TestOperationExecutor())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 
     def 'should get and set read concern'() {
         when:
@@ -61,7 +77,7 @@ class DBSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as CreateCollectionOperation
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest'))
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()))
 
         when:
         def options = new BasicDBObject()
@@ -75,20 +91,72 @@ class DBSpecification extends Specification {
                 .append('validationLevel', ValidationLevel.MODERATE.getValue())
                 .append('validationAction', ValidationAction.WARN.getValue())
 
+
         db.createCollection('ctest', options)
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest')
-                                              .sizeInBytes(100000)
-                                              .maxDocuments(2000)
-                                              .capped(true)
-                                              .autoIndex(true)
-                                              .storageEngineOptions(BsonDocument.parse('{ wiredTiger: {}}'))
-                                              .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}'))
-                                              .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
-                                              .validationLevel(ValidationLevel.MODERATE)
-                                              .validationAction(ValidationAction.WARN))
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
+                .sizeInBytes(100000)
+                .maxDocuments(2000)
+                .capped(true)
+                .autoIndex(true)
+                .storageEngineOptions(BsonDocument.parse('{ wiredTiger: {}}'))
+                .indexOptionDefaults(BsonDocument.parse('{storageEngine: { mmapv1: {}}}'))
+                .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
+                .validationLevel(ValidationLevel.MODERATE)
+                .validationAction(ValidationAction.WARN))
+
+        when:
+        def collation = Collation.builder()
+                .locale('en')
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build()
+
+        db.createCollection('ctest', new BasicDBObject('collation', BasicDBObject.parse(collation.asDocument().toJson())))
+        operation = executor.getWriteOperation() as CreateCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
+    }
+
+    def 'should execute CreateViewOperation'() {
+        given:
+        def mongo = Stub(Mongo)
+        mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        def executor = new TestOperationExecutor([1L, 2L, 3L])
+
+        def databaseName = 'test'
+        def viewName = 'view1'
+        def viewOn = 'collection1'
+        def pipeline = [new BasicDBObject('$match', new BasicDBObject('x', true))]
+        def writeConcern = WriteConcern.JOURNALED
+        def collation = Collation.builder().locale('en').build()
+
+        def db = new DB(mongo, databaseName, executor)
+        db.setWriteConcern(writeConcern)
+
+        when:
+        db.createView(viewName, viewOn, pipeline)
+
+        then:
+        def operation = executor.getWriteOperation() as CreateViewOperation
+        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+
+        when:
+        db.createView(viewName, viewOn, pipeline, new DBCreateViewOptions().collation(collation))
+        operation = executor.getWriteOperation() as CreateViewOperation
+
+        then:
+        expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
     }
 
 

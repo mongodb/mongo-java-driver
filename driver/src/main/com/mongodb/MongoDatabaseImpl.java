@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
@@ -32,7 +34,11 @@ import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.mongodb.MongoClient.getDefaultCodecRegistry;
+import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -45,6 +51,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                       final WriteConcern writeConcern, final ReadConcern readConcern, final OperationExecutor executor) {
+        checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
@@ -133,7 +140,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public void drop() {
-        executor.execute(new DropDatabaseOperation(name));
+        executor.execute(new DropDatabaseOperation(name, getWriteConcern()));
     }
 
     @Override
@@ -163,8 +170,10 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
-        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName)
+        CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
+                .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
                 .autoIndex(createCollectionOptions.isAutoIndex())
@@ -187,6 +196,31 @@ class MongoDatabaseImpl implements MongoDatabase {
             operation.validationAction(validationOptions.getValidationAction());
         }
         executor.execute(operation);
+    }
+
+    @Override
+    public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline) {
+        createView(viewName, viewOn, pipeline, new CreateViewOptions());
+    }
+
+    @Override
+    public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
+                           final CreateViewOptions createViewOptions) {
+        notNull("createViewOptions", createViewOptions);
+        executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
+                .collation(createViewOptions.getCollation()));
+    }
+
+    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
+        notNull("pipeline", pipeline);
+        List<BsonDocument> bsonDocumentPipeline = new ArrayList<BsonDocument>(pipeline.size());
+        for (Bson obj : pipeline) {
+            if (obj == null) {
+                throw new IllegalArgumentException("pipeline can not contain a null value");
+            }
+            bsonDocumentPipeline.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
+        }
+        return bsonDocumentPipeline;
     }
 
     private BsonDocument toBsonDocument(final Bson document) {

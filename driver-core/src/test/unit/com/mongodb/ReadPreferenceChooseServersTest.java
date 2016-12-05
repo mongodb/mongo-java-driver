@@ -104,21 +104,31 @@ public class ReadPreferenceChooseServersTest {
 
     @Test
     public void testSecondaryReadPreference() {
+        TaggableReadPreference pref = (TaggableReadPreference) ReadPreference.secondary();
+        List<ServerDescription> candidates = pref.choose(set);
+        assertEquals(2, candidates.size());
+        assertTrue(candidates.contains(secondary));
+        assertTrue(candidates.contains(otherSecondary));
+
         List<TagSet> tagSetList = asList(new TagSet(new Tag("foo", "1")), new TagSet(new Tag("bar", "2")));
-        TaggableReadPreference pref = ReadPreference.secondary(tagSetList);
+        pref = ReadPreference.secondary(tagSetList);
         assertEquals(tagSetList, pref.getTagSetList());
 
         pref = ReadPreference.secondary(new TagSet(new Tag("baz", "1")));
         assertTrue(pref.choose(set).isEmpty());
 
         pref = ReadPreference.secondary(new TagSet(new Tag("baz", "2")));
-        assertTrue(pref.choose(set).get(0).equals(secondary));
+        candidates = pref.choose(set);
+        assertEquals(1, candidates.size());
+        assertTrue(candidates.contains(secondary));
 
         pref = ReadPreference.secondary(new TagSet(new Tag("unknown", "1")));
         assertTrue(pref.choose(set).isEmpty());
 
         pref = ReadPreference.secondary(asList(new TagSet(new Tag("unknown", "1")), new TagSet(new Tag("baz", "2"))));
-        assertTrue(pref.choose(set).get(0).equals(secondary));
+        candidates = pref.choose(set);
+        assertEquals(1, candidates.size());
+        assertTrue(candidates.contains(secondary));
     }
 
     @Test
@@ -143,14 +153,16 @@ public class ReadPreferenceChooseServersTest {
     @Test
     public void testSecondaryPreferredMode() {
         ReadPreference pref = ReadPreference.secondary(new TagSet(new Tag("baz", "2")));
-        assertTrue(pref.choose(set).get(0).equals(secondary));
+        List<ServerDescription> candidates = pref.choose(set);
+        assertEquals(1, candidates.size());
+        assertTrue(candidates.contains(secondary));
 
         // test that the primary is returned if no secondaries match the tag
         pref = ReadPreference.secondaryPreferred(new TagSet(new Tag("unknown", "2")));
         assertTrue(pref.choose(set).get(0).equals(primary));
 
         pref = ReadPreference.secondaryPreferred();
-        List<ServerDescription> candidates = pref.choose(set);
+        candidates = pref.choose(set);
         assertEquals(2, candidates.size());
         assertTrue(candidates.contains(secondary));
         assertTrue(candidates.contains(otherSecondary));

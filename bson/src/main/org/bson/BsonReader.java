@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 /**
@@ -50,6 +51,15 @@ public interface BsonReader {
      * @see #mark()
      */
     byte peekBinarySubType();
+
+    /**
+     * Peeks the size of the binary data that the reader is positioned at.  This operation is not permitted if the mark is already set.
+     *
+     * @return the size of the binary data
+     * @see #mark()
+     * @since 3.4
+     */
+    int peekBinarySize();
 
     /**
      * Reads a BSON Binary data element from the reader.
@@ -150,6 +160,23 @@ public interface BsonReader {
      * @return An Int64.
      */
     long readInt64(String name);
+
+    /**
+     * Reads a BSON Decimal128 from the reader.
+     *
+     * @return A Decimal128
+     * @since 3.4
+     */
+    Decimal128 readDecimal128();
+
+    /**
+     * Reads a BSON Decimal128 element from the reader.
+     *
+     * @param name The name of the element.
+     * @return A Decimal128
+     * @since 3.4
+     */
+    Decimal128 readDecimal128(String name);
 
     /**
      * Reads a BSON JavaScript from the reader.

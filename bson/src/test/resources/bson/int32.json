@@ -1,35 +1,38 @@
 {
-    "description": "Int32 type", 
-    "documents": [
+    "description": "Int32 type",
+    "bson_type": "0x10",
+    "test_key": "i",
+    "valid": [
         {
-            "decoded": {
-                "i": -2147483648
-            }, 
-            "encoded": "0C0000001069000000008000"
-        }, 
+            "description": "MinValue",
+            "bson": "0C0000001069000000008000",
+            "extjson": "{\"i\" : -2147483648}"
+        },
         {
-            "decoded": {
-                "i": 2147483647
-            }, 
-            "encoded": "0C000000106900FFFFFF7F00"
-        }, 
+            "description": "MaxValue",
+            "bson": "0C000000106900FFFFFF7F00",
+            "extjson": "{\"i\" : 2147483647}"
+        },
         {
-            "decoded": {
-                "i": -1
-            }, 
-            "encoded": "0C000000106900FFFFFFFF00"
-        }, 
+            "description": "-1",
+            "bson": "0C000000106900FFFFFFFF00",
+            "extjson": "{\"i\" : -1}"
+        },
         {
-            "decoded": {
-                "i": 0
-            }, 
-            "encoded": "0C0000001069000000000000"
-        }, 
+            "description": "0",
+            "bson": "0C0000001069000000000000",
+            "extjson": "{\"i\" : 0}"
+        },
         {
-            "decoded": {
-                "i": 1
-            }, 
-            "encoded": "0C0000001069000100000000"
+            "description": "1",
+            "bson": "0C0000001069000100000000",
+            "extjson": "{\"i\" : 1}"
+        }
+    ],
+    "decodeErrors": [
+        {
+            "description": "Bad int32 field length",
+            "bson": "090000001061000500"
         }
     ]
 }

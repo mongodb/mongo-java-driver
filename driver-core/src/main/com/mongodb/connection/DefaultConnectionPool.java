@@ -26,11 +26,15 @@ import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ConnectionEvent;
-import com.mongodb.event.ConnectionPoolEvent;
+import com.mongodb.event.ConnectionAddedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueEvent;
+import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
+import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
+import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
@@ -40,6 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -90,7 +95,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw createWaitQueueFullException();
             }
             try {
-                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
                 PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
                 if (!pooledConnection.opened()) {
                     try {
@@ -107,7 +112,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
                 return pooledConnection;
             } finally {
-                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
             }
         } finally {
             waitQueueSize.decrementAndGet();
@@ -120,7 +125,7 @@ class DefaultConnectionPool implements ConnectionPool {
             LOGGER.trace(String.format("Asynchronously getting a connection from the pool for server %s", serverId));
         }
 
-        final SingleResultCallback<InternalConnection> wrappedCallback = errorHandlingCallback(callback);
+        final SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         PooledConnection connection = null;
 
         try {
@@ -137,7 +142,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 LOGGER.trace(String.format("Asynchronously opening pooled connection %s to server %s",
                                            connection.getDescription().getConnectionId(), serverId));
             }
-            openAsync(connection, wrappedCallback);
+            openAsync(connection, errHandlingCallback);
         } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
             waitQueueSize.decrementAndGet();
             if (LOGGER.isTraceEnabled()) {
@@ -147,22 +152,22 @@ class DefaultConnectionPool implements ConnectionPool {
             callback.onResult(null, createWaitQueueFullException());
         } else {
             final long startTimeMillis = System.currentTimeMillis();
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
             getAsyncGetter().submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         if (getRemainingWaitTime() <= 0) {
-                            wrappedCallback.onResult(null, createTimeoutException());
+                            errHandlingCallback.onResult(null, createTimeoutException());
                         } else {
                             PooledConnection connection = getPooledConnection(getRemainingWaitTime(), MILLISECONDS);
-                            openAsync(connection, wrappedCallback);
+                            openAsync(connection, errHandlingCallback);
                         }
                     } catch (Throwable t) {
-                        wrappedCallback.onResult(null, t);
+                        errHandlingCallback.onResult(null, t);
                     } finally {
                         waitQueueSize.decrementAndGet();
-                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(serverId, currentThread().getId()));
+                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
                     }
                 }
 
@@ -236,7 +241,7 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             shutdownAsyncGetter();
             closed = true;
-            connectionPoolListener.connectionPoolClosed(new ConnectionPoolEvent(serverId));
+            connectionPoolListener.connectionPoolClosed(new ConnectionPoolClosedEvent(serverId));
         }
     }
 
@@ -255,7 +260,7 @@ class DefaultConnectionPool implements ConnectionPool {
             pool.release(internalConnection, true);
             internalConnection = pool.get(timeout, timeUnit);
         }
-        connectionPoolListener.connectionCheckedOut(new ConnectionEvent(internalConnection.getDescription().getConnectionId()));
+        connectionPoolListener.connectionCheckedOut(new ConnectionCheckedOutEvent(internalConnection.getDescription().getConnectionId()));
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
         }
@@ -368,7 +373,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private class PooledConnection implements InternalConnection {
-        private volatile UsageTrackingInternalConnection wrapped;
+        private final UsageTrackingInternalConnection wrapped;
+        private final AtomicBoolean isClosed = new AtomicBoolean();
 
         public PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -376,39 +382,39 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void open() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.open();
         }
 
         @Override
         public void openAsync(final SingleResultCallback<Void> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.openAsync(callback);
         }
 
         @Override
         public void close() {
-            if (wrapped != null) {
-                if (!closed) {
-                    connectionPoolListener.connectionCheckedIn(new ConnectionEvent(getId(wrapped)));
+            // All but the first call is a no-op
+            if (!isClosed.getAndSet(true)) {
+                if (!DefaultConnectionPool.this.closed) {
+                    connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
                     if (LOGGER.isTraceEnabled()) {
                         LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                     }
                 }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
-                wrapped = null;
             }
         }
 
         @Override
         public boolean opened() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             return wrapped.opened();
         }
 
         @Override
         public boolean isClosed() {
-            return wrapped == null || wrapped.isClosed();
+            return isClosed.get() || wrapped.isClosed();
         }
 
         @Override
@@ -418,7 +424,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             try {
                 wrapped.sendMessage(byteBuffers, lastRequestId);
             } catch (MongoException e) {
@@ -429,7 +435,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             try {
                 return wrapped.receiveMessage(responseTo);
             } catch (MongoException e) {
@@ -440,7 +446,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.sendMessageAsync(byteBuffers, lastRequestId, new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
@@ -454,7 +460,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             wrapped.receiveMessageAsync(responseTo, new SingleResultCallback<ResponseBuffers>() {
                 @Override
                 public void onResult(final ResponseBuffers result, final Throwable t) {
@@ -468,7 +474,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public ConnectionDescription getDescription() {
-            isTrue("open", wrapped != null);
+            isTrue("open", !isClosed.get());
             return wrapped.getDescription();
         }
     }
@@ -487,14 +493,14 @@ class DefaultConnectionPool implements ConnectionPool {
             if (initialize) {
                 internalConnection.open();
             }
-            connectionPoolListener.connectionAdded(new ConnectionEvent(getId(internalConnection)));
+            connectionPoolListener.connectionAdded(new ConnectionAddedEvent(getId(internalConnection)));
             return internalConnection;
         }
 
         @Override
         public void close(final UsageTrackingInternalConnection connection) {
             if (!closed) {
-                connectionPoolListener.connectionRemoved(new ConnectionEvent(getId(connection)));
+                connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection)));
             }
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),

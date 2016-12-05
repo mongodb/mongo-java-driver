@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,11 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -101,12 +104,17 @@ public final class ClusterFixture {
         return getCluster().getDescription().getType() == clusterType;
     }
 
+    @SuppressWarnings("deprecation")
     public static ServerVersion getServerVersion() {
         return getCluster().getDescription().getAny().get(0).getVersion();
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
         return getConnectedServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+    }
+
+    public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
+        return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
     }
 
     public static Document getBuildInfo() {
@@ -137,6 +145,7 @@ public final class ClusterFixture {
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
+    @SuppressWarnings("deprecation")
     private static ServerVersion getConnectedServerVersion() {
         ClusterDescription clusterDescription = getCluster().getDescription();
         int retries = 0;
@@ -155,11 +164,23 @@ public final class ClusterFixture {
         return clusterDescription.getAny().get(0).getVersion();
     }
 
+    public static boolean isNotAtLeastJava7() {
+        return javaVersionStartsWith("1.6");
+    }
+
+    public static boolean isNotAtLeastJava8() {
+        return isNotAtLeastJava7() || javaVersionStartsWith("1.7");
+    }
+
+    private static boolean javaVersionStartsWith(final String versionPrefix) {
+        return System.getProperty("java.version").startsWith(versionPrefix + ".");
+    }
+
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(getDefaultDatabaseName()).execute(getBinding());
+                new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding());
                 cluster.close();
             }
         }
@@ -261,6 +282,7 @@ public final class ClusterFixture {
         return builder.build();
     }
 
+    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() throws InterruptedException {
         List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {
@@ -303,7 +325,7 @@ public final class ClusterFixture {
 
     public static void disableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        if (serverVersionAtLeast(asList(2, 6, 0)) && !isSharded()) {
+        if (serverVersionAtLeast(2, 6) && !isSharded()) {
             new CommandWriteOperation<BsonDocument>("admin",
                                                     new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
                                                                                                    "maxTimeAlwaysTimeOut")
@@ -312,6 +334,22 @@ public final class ClusterFixture {
                                                     new BsonDocumentCodec())
             .execute(getBinding());
         }
+    }
+
+    public static <T> T executeSync(final WriteOperation<T> op) throws Throwable {
+        return executeSync(op, getBinding());
+    }
+
+    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+        return op.execute(binding);
+    }
+
+    public static <T> T executeSync(final ReadOperation<T> op) throws Throwable {
+        return executeSync(op, getBinding());
+    }
+
+    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+        return op.execute(binding);
     }
 
     public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
@@ -373,6 +411,27 @@ public final class ClusterFixture {
                     }
             }
         });
+    }
+
+    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
+        final List<T> results = new ArrayList<T>();
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+        loopCursor(batchCursor, new Block<T>() {
+            @Override
+            public void apply(final T t) {
+                results.add(t);
+            }
+        }, futureResultCallback);
+        futureResultCallback.get(TIMEOUT, SECONDS);
+        return results;
+    }
+
+    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) throws Throwable {
+        List<T> results = new ArrayList<T>();
+        while (batchCursor.hasNext()) {
+            results.addAll(batchCursor.next());
+        }
+        return results;
     }
 
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {

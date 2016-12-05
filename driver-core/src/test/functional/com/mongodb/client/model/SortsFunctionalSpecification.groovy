@@ -64,7 +64,7 @@ class SortsFunctionalSpecification extends OperationFunctionalSpecification {
         find(descending('x', 'y')) == [c, a, b]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'metaTextScore'() {
         expect:
         find(metaTextScore('score'), new Document('score', new Document('$meta', 'textScore')))*.containsKey('score')

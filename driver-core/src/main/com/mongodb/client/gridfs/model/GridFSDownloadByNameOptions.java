@@ -22,7 +22,9 @@ package com.mongodb.client.gridfs.model;
  * <p>Controls the selection of the revision to download</p>
  *
  * @since 3.1
+ * @deprecated use {@link GridFSDownloadOptions} instead.
  */
+@Deprecated
 public final class GridFSDownloadByNameOptions {
     private int revision;
 

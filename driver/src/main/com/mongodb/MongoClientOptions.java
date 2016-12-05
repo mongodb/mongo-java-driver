@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,15 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerMonitorListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +51,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Immutable
 public class MongoClientOptions {
 
+    private static final SocketFactory DEFAULT_SSL_SOCKET_FACTORY = SSLSocketFactory.getDefault();
+    private static final SocketFactory DEFAULT_SOCKET_FACTORY = SocketFactory.getDefault();
+
     private final String description;
+    private final String applicationName;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
@@ -84,9 +92,13 @@ public class MongoClientOptions {
     private final SocketSettings heartbeatSocketSettings;
     private final SslSettings sslSettings;
     private final List<CommandListener> commandListeners;
+    private final List<ClusterListener> clusterListeners;
+    private final List<ServerListener> serverListeners;
+    private final List<ServerMonitorListener> serverMonitorListeners;
 
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
+        applicationName = builder.applicationName;
         minConnectionsPerHost = builder.minConnectionsPerHost;
         maxConnectionsPerHost = builder.maxConnectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
@@ -115,6 +127,9 @@ public class MongoClientOptions {
         socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
         commandListeners = builder.commandListeners;
+        clusterListeners = builder.clusterListeners;
+        serverListeners = builder.serverListeners;
+        serverMonitorListeners = builder.serverMonitorListeners;
 
         connectionPoolSettings = ConnectionPoolSettings.builder()
                                                        .minSize(getMinConnectionsPerHost())
@@ -136,10 +151,19 @@ public class MongoClientOptions {
                                                 .readTimeout(getHeartbeatSocketTimeout(), MILLISECONDS)
                                                 .keepAlive(isSocketKeepAlive())
                                                 .build();
-        serverSettings = ServerSettings.builder()
-                                       .heartbeatFrequency(getHeartbeatFrequency(), MILLISECONDS)
-                                       .minHeartbeatFrequency(getMinHeartbeatFrequency(), MILLISECONDS)
-                                       .build();
+
+        ServerSettings.Builder serverSettingsBuilder = ServerSettings.builder()
+                                                               .heartbeatFrequency(getHeartbeatFrequency(), MILLISECONDS)
+                                                               .minHeartbeatFrequency(getMinHeartbeatFrequency(), MILLISECONDS);
+
+        for (ServerListener cur : serverListeners) {
+            serverSettingsBuilder.addServerListener(cur);
+        }
+        for (ServerMonitorListener cur : serverMonitorListeners) {
+            serverSettingsBuilder.addServerMonitorListener(cur);
+        }
+
+        serverSettings = serverSettingsBuilder.build();
 
         try {
             sslSettings = SslSettings.builder()
@@ -184,6 +208,20 @@ public class MongoClientOptions {
      */
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Gets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+     * the application to the server, for use in server logs, slow query logs, and profile collection.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the application name, which may be null
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public String getApplicationName() {
+        return applicationName;
     }
 
     /**
@@ -292,7 +330,7 @@ public class MongoClientOptions {
      *
      * <p>Default is 0 and means no timeout.</p>
      *
-     * @return the socket timeout
+     * @return the socket timeout, in milliseconds
      */
     public int getSocketTimeout() {
         return socketTimeout;
@@ -486,9 +524,37 @@ public class MongoClientOptions {
     }
 
     /**
-     * Override the decoder factory.
+     * Gets the list of added {@code ClusterListener}. The default is an empty list.
      *
-     * <p>Default is for the standard Mongo Java driver configuration.</p>
+     * @return the unmodifiable list of cluster listeners
+     * @since 3.3
+     */
+    public List<ClusterListener> getClusterListeners() {
+        return Collections.unmodifiableList(clusterListeners);
+    }
+
+    /**
+     * Gets the list of added {@code ServerListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of server listeners
+     * @since 3.3
+     */
+    public List<ServerListener> getServerListeners() {
+        return Collections.unmodifiableList(serverListeners);
+    }
+
+    /**
+     * Gets the list of added {@code ServerMonitorListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of server monitor listeners
+     * @since 3.3
+     */
+    public List<ServerMonitorListener> getServerMonitorListeners() {
+        return Collections.unmodifiableList(serverMonitorListeners);
+    }
+
+    /**
+     * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
      *
      * @return the decoder factory
      */
@@ -527,7 +593,13 @@ public class MongoClientOptions {
      * @return the socket factory
      */
     public SocketFactory getSocketFactory() {
-        return socketFactory;
+        if (socketFactory != null) {
+            return socketFactory;
+        } else if (getSslSettings().isEnabled()) {
+            return DEFAULT_SSL_SOCKET_FACTORY;
+        } else {
+            return DEFAULT_SOCKET_FACTORY;
+        }
     }
 
     /**
@@ -641,6 +713,9 @@ public class MongoClientOptions {
         if (description != null ? !description.equals(that.description) : that.description != null) {
             return false;
         }
+        if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
+            return false;
+        }
         if (!readPreference.equals(that.readPreference)) {
             return false;
         }
@@ -656,11 +731,20 @@ public class MongoClientOptions {
         if (!commandListeners.equals(that.commandListeners)) {
             return false;
         }
+        if (!clusterListeners.equals(that.clusterListeners)) {
+            return false;
+        }
+        if (!serverListeners.equals(that.serverListeners)) {
+            return false;
+        }
+        if (!serverMonitorListeners.equals(that.serverMonitorListeners)) {
+            return false;
+        }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
                                            : that.requiredReplicaSetName != null) {
             return false;
         }
-        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) {
+        if (socketFactory != null ? !socketFactory.equals(that.socketFactory) : that.socketFactory != null) {
             return false;
         }
 
@@ -670,11 +754,15 @@ public class MongoClientOptions {
     @Override
     public int hashCode() {
         int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + commandListeners.hashCode();
+        result = 31 * result + clusterListeners.hashCode();
+        result = 31 * result + serverListeners.hashCode();
+        result = 31 * result + serverMonitorListeners.hashCode();
         result = 31 * result + minConnectionsPerHost;
         result = 31 * result + maxConnectionsPerHost;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
@@ -697,7 +785,7 @@ public class MongoClientOptions {
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
-        result = 31 * result + socketFactory.getClass().hashCode();
+        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         return result;
     }
 
@@ -705,11 +793,15 @@ public class MongoClientOptions {
     public String toString() {
         return "MongoClientOptions{"
                + "description='" + description + '\''
+               + ", applicationName='" + applicationName + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
                + ", commandListeners=" + commandListeners
+               + ", clusterListeners=" + clusterListeners
+               + ", serverListeners=" + serverListeners
+               + ", serverMonitorListeners=" + serverMonitorListeners
                + ", minConnectionsPerHost=" + minConnectionsPerHost
                + ", maxConnectionsPerHost=" + maxConnectionsPerHost
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
@@ -748,11 +840,15 @@ public class MongoClientOptions {
     @NotThreadSafe
     public static class Builder {
         private String description;
+        private String applicationName;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
         private final List<CommandListener> commandListeners = new ArrayList<CommandListener>();
+        private final List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
+        private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
+        private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
 
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
@@ -777,7 +873,7 @@ public class MongoClientOptions {
         private String requiredReplicaSetName;
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
-        private SocketFactory socketFactory = SocketFactory.getDefault();
+        private SocketFactory socketFactory;
         private boolean cursorFinalizerEnabled = true;
 
         /**
@@ -798,6 +894,7 @@ public class MongoClientOptions {
          */
         public Builder(final MongoClientOptions options) {
             description = options.getDescription();
+            applicationName = options.getApplicationName();
             minConnectionsPerHost = options.getMinConnectionsPerHost();
             maxConnectionsPerHost = options.getConnectionsPerHost();
             threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
@@ -823,9 +920,12 @@ public class MongoClientOptions {
             requiredReplicaSetName = options.getRequiredReplicaSetName();
             dbDecoderFactory = options.getDbDecoderFactory();
             dbEncoderFactory = options.getDbEncoderFactory();
-            socketFactory = options.getSocketFactory();
+            socketFactory = options.socketFactory;
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
             commandListeners.addAll(options.getCommandListeners());
+            clusterListeners.addAll(options.getClusterListeners());
+            serverListeners.addAll(options.getServerListeners());
+            serverMonitorListeners.addAll(options.getServerMonitorListeners());
         }
 
         /**
@@ -837,6 +937,26 @@ public class MongoClientOptions {
          */
         public Builder description(final String description) {
             this.description = description;
+            return this;
+        }
+
+        /**
+         * Sets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
+         * the application to the server, for use in server logs, slow query logs, and profile collection.
+         *
+         * @param applicationName the logical name of the application using this MongoClient.  It may be null.
+         *                        The UTF-8 encoding may not exceed 128 bytes.
+         * @return {@code this}
+         * @see #getApplicationName()
+         * @since 3.4
+         * @mongodb.server.release 3.4
+         */
+        public Builder applicationName(final String applicationName) {
+            if (applicationName != null) {
+                isTrueArgument("applicationName UTF-8 encoding length <= 128",
+                        applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
+            }
+            this.applicationName = applicationName;
             return this;
         }
 
@@ -890,7 +1010,7 @@ public class MongoClientOptions {
          * <p> A value of 0 means that it will timeout immediately if no server is available.  A negative value means to wait
          * indefinitely.</p>
          *
-         * @param serverSelectionTimeout the server selection timeout
+         * @param serverSelectionTimeout the server selection timeout, in milliseconds
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getServerSelectionTimeout()
          */
@@ -902,7 +1022,7 @@ public class MongoClientOptions {
         /**
          * Sets the maximum time that a thread will block waiting for a connection.
          *
-         * @param maxWaitTime the maximum wait time
+         * @param maxWaitTime the maximum wait time, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getMaxWaitTime()
          */
@@ -914,9 +1034,9 @@ public class MongoClientOptions {
         /**
          * Sets the maximum idle time for a pooled connection.
          *
-         * @param maxConnectionIdleTime the maximum idle time
+         * @param maxConnectionIdleTime the maximum idle time, in milliseconds, which must be &gt; 0
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
+         * @throws IllegalArgumentException if {@code maxConnectionIdleTime <= 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
@@ -928,9 +1048,9 @@ public class MongoClientOptions {
         /**
          * Sets the maximum life time for a pooled connection.
          *
-         * @param maxConnectionLifeTime the maximum life time
+         * @param maxConnectionLifeTime the maximum life time, in milliseconds, which must be &gt; 0
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
+         * @throws IllegalArgumentException if {@code maxConnectionLifeTime <= 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
@@ -943,7 +1063,8 @@ public class MongoClientOptions {
         /**
          * Sets the connection timeout.
          *
-         * @param connectTimeout the connection timeout
+         * @param connectTimeout the connection timeout, in milliseconds, which must be &gt; 0
+         * @throws IllegalArgumentException if {@code connectTimeout <= 0}
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getConnectTimeout()
          */
@@ -956,7 +1077,7 @@ public class MongoClientOptions {
         /**
          * Sets the socket timeout.
          *
-         * @param socketTimeout the socket timeout
+         * @param socketTimeout the socket timeout, in milliseconds
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
@@ -978,17 +1099,23 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether to use SSL.  Setting this to true will also set the socketFactory to {@code SSLSocketFactory.getDefault()} and
-         * setting it to false will set the socketFactory to {@code SocketFactory.getDefault()}
+         * Sets whether to use SSL.
+         *
+         * <p>If the socketFactory is unset, setting this to true will also set the socketFactory to
+         * {@link SSLSocketFactory#getDefault()} and setting it to false will set the socketFactory to
+         * {@link SocketFactory#getDefault()}</p>
+         *
+         * <p>If the socket factory is set and sslEnabled is also set, the socket factory must create instances of
+         * {@link javax.net.ssl.SSLSocket}. Otherwise, MongoClient will refuse to connect.</p>
          *
          * @param sslEnabled set to true if using SSL
          * @return {@code this}
          * @see MongoClientOptions#isSslEnabled()
+         * @see MongoClientOptions#getSocketFactory()
          * @since 3.0
          */
         public Builder sslEnabled(final boolean sslEnabled) {
             this.sslEnabled = sslEnabled;
-            this.socketFactory(sslEnabled ? SSLSocketFactory.getDefault() : SocketFactory.getDefault());
             return this;
         }
 
@@ -1064,7 +1191,7 @@ public class MongoClientOptions {
         /**
          * Adds the given command listener.
          *
-         * @param commandListener the command listener
+         * @param commandListener the non-null command listener
          * @return this
          * @since 3.1
          */
@@ -1075,6 +1202,46 @@ public class MongoClientOptions {
         }
 
         /**
+         * Adds the given cluster listener.
+         *
+         * @param clusterListener the non-null cluster listener
+         * @return this
+         * @since 3.3
+         */
+        public Builder addClusterListener(final ClusterListener clusterListener) {
+            notNull("clusterListener", clusterListener);
+            clusterListeners.add(clusterListener);
+            return this;
+        }
+
+        /**
+         * Adds the given server listener.
+         *
+         * @param serverListener the non-null server listener
+         * @return this
+         * @since 3.3
+         */
+        public Builder addServerListener(final ServerListener serverListener) {
+            notNull("serverListener", serverListener);
+            serverListeners.add(serverListener);
+            return this;
+        }
+
+        /**
+         * Adds the given server monitro listener.
+         *
+         * @param serverMonitorListener the non-null server monitor listener
+         * @return this
+         * @since 3.3
+         */
+        public Builder addServerMonitorListener(final ServerMonitorListener serverMonitorListener) {
+            notNull("serverMonitorListener", serverMonitorListener);
+            serverMonitorListeners.add(serverMonitorListener);
+            return this;
+        }
+
+
+        /**
          * Sets the socket factory.
          *
          * @param socketFactory the socket factory
@@ -1082,9 +1249,6 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getSocketFactory()
          */
         public Builder socketFactory(final SocketFactory socketFactory) {
-            if (socketFactory == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
             this.socketFactory = socketFactory;
             return this;
         }
@@ -1150,6 +1314,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds, which must be &gt; 0
          * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatFrequency is not &gt; 0
          * @see MongoClientOptions#getHeartbeatFrequency()
          * @since 2.12
          */
@@ -1165,6 +1330,7 @@ public class MongoClientOptions {
          *
          * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
+         * @throws IllegalArgumentException if {@code minHeartbeatFrequency <= 0}
          * @see MongoClientOptions#getMinHeartbeatFrequency()
          * @since 2.13
          */
@@ -1177,7 +1343,7 @@ public class MongoClientOptions {
         /**
          * Sets the connect timeout for connections used for the cluster heartbeat.
          *
-         * @param connectTimeout the connection timeout
+         * @param connectTimeout the connection timeout, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatConnectTimeout()
          * @since 2.12
@@ -1190,7 +1356,7 @@ public class MongoClientOptions {
         /**
          * Sets the socket timeout for connections used for the cluster heartbeat.
          *
-         * @param socketTimeout the socket timeout
+         * @param socketTimeout the socket timeout, in milliseconds
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatSocketTimeout()
          * @since 2.12
@@ -1203,9 +1369,9 @@ public class MongoClientOptions {
         /**
          * Sets the local threshold.
          *
-         * @param localThreshold the acceptable latency difference, in milliseconds
+         * @param localThreshold the acceptable latency difference, in milliseconds, which must be &gt;= 0
          * @return {@code this}
-         * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
+         * @throws IllegalArgumentException if {@code localThreshold < 0}
          * @see com.mongodb.MongoClientOptions#getLocalThreshold()
          * @since 2.13.0
          */

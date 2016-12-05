@@ -57,8 +57,8 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.bypassDocumentValidationNotSupported;
-import static com.mongodb.operation.OperationHelper.getBypassDocumentValidationException;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
@@ -168,10 +168,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
-                if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    throw getBypassDocumentValidationException();
-                }
-
+                validateWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                        writeConcern);
                 BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
                                                                                            ordered, writeConcern);
                 for (Run run : getRunGenerator(connection.getDescription())) {
@@ -194,18 +192,30 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
-        final SingleResultCallback<BulkWriteResult> wrappedCallback = errorHandlingCallback(callback);
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+
+                final SingleResultCallback<BulkWriteResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+
                 if (t != null) {
-                    wrappedCallback.onResult(null, t);
-                } else if (bypassDocumentValidationNotSupported(bypassDocumentValidation, writeConcern, connection.getDescription())) {
-                    releasingCallback(wrappedCallback, connection).onResult(null, getBypassDocumentValidationException());
+                    errHandlingCallback.onResult(null, t);
                 } else {
-                    Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
-                    executeRunsAsync(runs, connection, new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
-                                                                                  writeConcern), wrappedCallback);
+                    validateWriteRequests(connection, bypassDocumentValidation, writeRequests,
+                            writeConcern, new AsyncCallableWithConnection() {
+                                @Override
+                                public void call(final AsyncConnection connection, final Throwable t) {
+                                    if (t != null) {
+                                        releasingCallback(errHandlingCallback, connection).onResult(null, t);
+                                    } else {
+                                        Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
+                                        executeRunsAsync(runs, connection,
+                                                new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered,
+                                                        writeConcern),
+                                                errHandlingCallback);
+                                    }
+                                }
+                            });
                 }
             }
         });
@@ -645,9 +655,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (shouldUseWriteCommands(connection.getDescription())) {
                     return executeWriteCommandProtocol();
                 } else {
-                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
-                                                                                                         .getServerAddress(),
-                                                                                               ordered, writeConcern);
+                    BulkWriteBatchCombiner bulkWriteBatchCombiner =
+                            new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered, writeConcern);
                     for (int i = 0; i < runWrites.size(); i++) {
                         IndexMap indexMap = IndexMap.create(i, 1);
                         indexMap = indexMap.add(0, i);

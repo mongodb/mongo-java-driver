@@ -24,28 +24,41 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.connection.Cluster;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 class MongoClientImpl implements MongoClient {
+    private static final Logger LOGGER = Loggers.getLogger("client");
     private final Cluster cluster;
     private final MongoClientSettings settings;
     private final AsyncOperationExecutor executor;
+    private final Closeable externalResourceCloser;
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster) {
-        this(settings, cluster, createOperationExecutor(settings, cluster));
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final Closeable externalResourceCloser) {
+        this(settings, cluster, createOperationExecutor(settings, cluster), externalResourceCloser);
     }
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor) {
+        this(settings, cluster, executor, null);
+    }
+
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor,
+                    final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.executor = notNull("executor", executor);
+        this.externalResourceCloser = externalResourceCloser;
     }
 
     @Override
@@ -57,6 +70,14 @@ class MongoClientImpl implements MongoClient {
     @Override
     public void close() {
         cluster.close();
+        if (externalResourceCloser != null) {
+            try {
+                externalResourceCloser.close();
+            } catch (IOException e) {
+                LOGGER.warn("Exception closing resource", e);
+            }
+        }
+
     }
 
     @Override
@@ -97,13 +118,13 @@ class MongoClientImpl implements MongoClient {
                 notNull("operation", operation);
                 notNull("readPreference", readPreference);
                 notNull("callback", callback);
-                final SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
+                final SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 final AsyncReadBinding binding = getReadWriteBinding(readPreference, cluster);
                 operation.executeAsync(binding, new SingleResultCallback<T>() {
                     @Override
                     public void onResult(final T result, final Throwable t) {
                         try {
-                            wrappedCallback.onResult(result, t);
+                            errHandlingCallback.onResult(result, t);
                         } finally {
                             binding.release();
                         }
@@ -120,7 +141,7 @@ class MongoClientImpl implements MongoClient {
                     @Override
                     public void onResult(final T result, final Throwable t) {
                         try {
-                            errorHandlingCallback(callback).onResult(result, t);
+                            errorHandlingCallback(callback, LOGGER).onResult(result, t);
                         } finally {
                             binding.release();
                         }

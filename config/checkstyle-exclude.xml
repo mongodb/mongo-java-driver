@@ -37,12 +37,15 @@
 
     <!--Do not check The GridFSTour -->
     <suppress checks="Regexp" files="GridFSTour"/>
+    <suppress checks="MethodLength" files="GridFSTour"/>
 
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
 
     <suppress checks="ParameterNumber" files="Connection"/>
     <suppress checks="ParameterNumber" files="DefaultServer"/>
+    <suppress checks="ParameterNumber" files="DefaultClusterFactory"/>
+    <suppress checks="ParameterNumber" files="DefaultClusterableServerFactory"/>
 
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>
@@ -60,6 +63,7 @@
     <suppress checks="ConstantName" files="JSONCallback"/>
     <suppress checks="ConstantName" files="Mongo"/>
     <suppress checks="ConstantName" files="ReflectionDBObject"/>
+    <suppress checks="ConstantName" files="Decimal128"/>  <!-- For NaN -->
 
     <suppress checks="JavadocMethod" files="BasicDBObject"/>
 

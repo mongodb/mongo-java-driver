@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 /**
@@ -134,6 +135,16 @@ public interface BSONCallback {
      * @param value the field's value
      */
     void gotDouble(String name, double value);
+
+    /**
+     * Called when reading a field with a {@link org.bson.BsonType#DECIMAL128} value.
+     *
+     * @param name the field name
+     * @param value the Decimal128 field value
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    void gotDecimal128(String name, Decimal128 value);
 
     /**
      * Called when reading a field with a {@link org.bson.BsonType#INT32} value.

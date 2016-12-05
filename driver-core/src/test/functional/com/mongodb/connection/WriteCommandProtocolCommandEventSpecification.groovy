@@ -46,14 +46,14 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+@IgnoreIf({ !serverVersionAtLeast(2, 6) })
 class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection;
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                         getCredentialList(), new NoOpConnectionListener())
+                getCredentialList(), new NoOpConnectionListener(), null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

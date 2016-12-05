@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.nio.ByteBuffer;
@@ -108,7 +109,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
                     return BsonType.END_OF_DOCUMENT;
                 default:
                     throw new BsonSerializationException(format("BSONType EndOfDocument is not valid when ContextType is %s.",
-                                                                getContext().getContextType()));
+                            getContext().getContextType()));
             }
         } else {
             switch (getContext().getContextType()) {
@@ -135,7 +136,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
         byte type = bsonInput.readByte();
 
         if (type == BsonBinarySubType.OLD_BINARY.getValue()) {
-            bsonInput.readInt32();
+            int repeatedNumBytes = bsonInput.readInt32();
+            if (repeatedNumBytes != numBytes - 4) {
+                throw new BsonSerializationException("Binary sub type OldBinary has inconsistent sizes");
+            }
             numBytes -= 4;
         }
         byte[] bytes = new byte[numBytes];
@@ -153,10 +157,18 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
+    protected int doPeekBinarySize() {
+        mark();
+        int size = readSize();
+        reset();
+        return size;
+    }
+
+    @Override
     protected boolean doReadBoolean() {
         byte booleanByte = bsonInput.readByte();
         if (booleanByte != 0 && booleanByte != 1) {
-           throw new BsonSerializationException(format("Expected a boolean value but found %d", booleanByte));
+            throw new BsonSerializationException(format("Expected a boolean value but found %d", booleanByte));
         }
         return booleanByte == 0x1;
     }
@@ -179,6 +191,13 @@ public class BsonBinaryReader extends AbstractBsonReader {
     @Override
     protected long doReadInt64() {
         return bsonInput.readInt64();
+    }
+
+    @Override
+    public Decimal128 doReadDecimal128() {
+        long low = bsonInput.readInt64();
+        long high = bsonInput.readInt64();
+        return Decimal128.fromIEEE754BIDEncoding(high, low);
     }
 
     @Override
@@ -252,7 +271,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     @Override
     protected void doReadStartDocument() {
         BsonContextType contextType = (getState() == State.SCOPE_DOCUMENT)
-                                      ? BsonContextType.SCOPE_DOCUMENT : BsonContextType.DOCUMENT;
+                ? BsonContextType.SCOPE_DOCUMENT : BsonContextType.DOCUMENT;
         int startPosition = bsonInput.getPosition(); // position of size field
         int size = readSize();
         setContext(new Context(getContext(), contextType, startPosition, size));
@@ -310,6 +329,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
             case INT64:
                 skip = 8;
                 break;
+            case DECIMAL128:
+                skip = 16;
+                break;
             case JAVASCRIPT:
                 skip = readSize();
                 break;
@@ -345,6 +367,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
             case UNDEFINED:
                 skip = 0;
                 break;
+            case DB_POINTER:
+                skip = readSize() + 12;   // String followed by ObjectId
+                break;
             default:
                 throw new BSONException("Unexpected BSON type: " + getCurrentBsonType());
         }
@@ -368,7 +393,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     @Override
     public void mark() {
         if (mark != null) {
-             throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
+            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
         }
         mark = new Mark();
     }

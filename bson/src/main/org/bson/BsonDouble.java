@@ -16,6 +16,10 @@
 
 package org.bson;
 
+import org.bson.types.Decimal128;
+
+import java.math.BigDecimal;
+
 /**
  * A representation of the BSON Double type.
  *
@@ -61,6 +65,18 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble> {
     @Override
     public long longValue() {
         return (long) value;
+    }
+
+    @Override
+    public Decimal128 decimal128Value() {
+        if (Double.isNaN(value)) {
+            return Decimal128.NaN;
+        }
+        if (Double.isInfinite(value)) {
+            return value > 0 ? Decimal128.POSITIVE_INFINITY : Decimal128.NEGATIVE_INFINITY;
+        }
+
+        return new Decimal128(new BigDecimal(value));
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
@@ -24,6 +26,8 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateUserOperation;
+import com.mongodb.operation.CreateViewOperation;
+import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.OperationExecutor;
@@ -43,8 +47,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.mongodb.DBCollection.createWriteConcernException;
 import static com.mongodb.MongoCredential.createMongoCRCredential;
+import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -75,9 +82,7 @@ public class DB {
     private volatile ReadConcern readConcern;
 
     DB(final Mongo mongo, final String name, final OperationExecutor executor) {
-        if (!isValidName(name)) {
-            throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
-        }
+        checkDatabaseNameValidity(name);
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
@@ -178,6 +183,8 @@ public class DB {
      *
      * @param name the name of the collection
      * @return the collection
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkCollectionNameValidity(String)
      */
     protected DBCollection doGetCollection(final String name) {
         return getCollection(name);
@@ -188,6 +195,8 @@ public class DB {
      *
      * @param name the name of the collection to return
      * @return the collection
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkCollectionNameValidity(String)
      */
     public DBCollection getCollection(final String name) {
         DBCollection collection = collectionCache.get(name);
@@ -213,7 +222,11 @@ public class DB {
      * @mongodb.driver.manual reference/command/dropDatabase/ Drop Database
      */
     public void dropDatabase() {
-        executeCommand(new BsonDocument("dropDatabase", new BsonInt32(1)));
+        try {
+            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern()));
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -274,16 +287,70 @@ public class DB {
      * @param collectionName the name of the collection to return
      * @param options        options
      * @return the collection
-     * @throws MongoException if there's a failure
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
      * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         if (options != null) {
-            executor.execute(getCreateCollectionOperation(collectionName, options));
+            try {
+                executor.execute(getCreateCollectionOperation(collectionName, options));
+            } catch (MongoWriteConcernException e) {
+                throw createWriteConcernException(e);
+            }
         }
         return getCollection(collectionName);
     }
 
+    /**
+     * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @return the view as a DBCollection
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    public DBCollection createView(final String viewName, final String viewOn, final List<? extends DBObject> pipeline) {
+        return createView(viewName, viewOn, pipeline, new DBCreateViewOptions());
+    }
+
+    /**
+     * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @param options  the options for creating the view
+     * @return the view as a DBCollection
+     * @throws MongoCommandException if the server is unable to create the collection
+     * @throws WriteConcernException if the {@code WriteConcern} specified on this {@code DB} could not be satisfied
+     * @throws MongoException for all other failures
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    public DBCollection createView(final String viewName, final String viewOn, final List<? extends DBObject> pipeline,
+                                   final DBCreateViewOptions options) {
+        try {
+            notNull("options", options);
+            DBCollection view = getCollection(viewName);
+            executor.execute(new CreateViewOperation(name, viewName, viewOn, view.preparePipeline(pipeline), writeConcern)
+                                     .collation(options.getCollation()));
+            return view;
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
+    }
+
+
+    @SuppressWarnings("deprecation")
     private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
             throw new IllegalArgumentException("'size' should be Number");
@@ -354,9 +421,10 @@ public class DB {
         if (options.get("validationAction") != null) {
             validationAction = ValidationAction.fromString((String) options.get("validationAction"));
         }
-
-        return new CreateCollectionOperation(getName(), collectionName)
+        Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
+        return new CreateCollectionOperation(getName(), collectionName, getWriteConcern())
                    .capped(capped)
+                   .collation(collation)
                    .sizeInBytes(sizeInBytes)
                    .autoIndex(autoIndex)
                    .maxDocuments(maxDocuments)
@@ -566,12 +634,16 @@ public class DB {
                 throw e;
             }
         }
-        if (userExists) {
-            executor.execute(new UpdateUserOperation(credential, readOnly));
-            return new WriteResult(1, true, null);
-        } else {
-            executor.execute(new CreateUserOperation(credential, readOnly));
-            return new WriteResult(1, false, null);
+        try {
+            if (userExists) {
+                executor.execute(new UpdateUserOperation(credential, readOnly, getWriteConcern()));
+                return new WriteResult(1, true, null);
+            } else {
+                executor.execute(new CreateUserOperation(credential, readOnly, getWriteConcern()));
+                return new WriteResult(1, false, null);
+            }
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
         }
     }
 
@@ -586,8 +658,12 @@ public class DB {
      */
     @Deprecated
     public WriteResult removeUser(final String userName) {
-        executor.execute(new DropUserOperation(getName(), userName));
-        return new WriteResult(1, true, null);
+        try {
+            executor.execute(new DropUserOperation(getName(), userName, getWriteConcern()));
+            return new WriteResult(1, true, null);
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -665,10 +741,6 @@ public class DB {
 
     BufferProvider getBufferPool() {
         return getMongo().getBufferProvider();
-    }
-
-    private boolean isValidName(final String databaseName) {
-        return databaseName.length() != 0 && !databaseName.contains(" ");
     }
 
     private BsonDocument wrap(final DBObject document) {

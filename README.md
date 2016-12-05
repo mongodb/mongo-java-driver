@@ -4,7 +4,7 @@ Release notes are available [here](https://github.com/mongodb/mongo-java-driver/
 
 ## API Documentation:
 
-Javadoc for all major and minor releases is available [here](http://api.mongodb.org/java/).
+Javadoc for all major and minor releases is available [here](http://api.mongodb.com/java/).
 
 ## Support / Feedback
 
@@ -114,7 +114,8 @@ $ cd mongo-java-driver
 $ ./gradlew check
 ```
 
-The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands).
+The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
+command-line parameter.
 
 
 ### Build status:

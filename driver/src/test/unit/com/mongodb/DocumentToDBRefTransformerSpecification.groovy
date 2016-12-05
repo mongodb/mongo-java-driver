@@ -42,12 +42,20 @@ class DocumentToDBRefTransformerSpecification extends Specification {
                 new Document('$id', 'bar')]
     }
 
-    def 'should transform a Document that does had both $ref and $id fields to a DBRef'() {
+    def 'should transform a Document that has both $ref and $id fields to a DBRef'() {
         when:
         def doc = new Document('$ref', 'foo').append('$id', 1)
 
         then:
         transformer.transform(doc) == new DBRef('foo', 1)
+    }
+
+    def 'should transform a Document that has $ref and $id and $db fields to a DBRef'() {
+        when:
+        def doc = new Document('$ref', 'foo').append('$id', 1).append('$db', 'mydb')
+
+        then:
+        transformer.transform(doc) == new DBRef('mydb', 'foo', 1)
     }
 
     def 'should be equal to another instance'() {

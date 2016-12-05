@@ -57,7 +57,7 @@ public final class BsonField {
 
     @Override
     public String toString() {
-        return "BsonField{"
+        return "Field{"
                + "name='" + name + '\''
                + ", value=" + value
                + '}';

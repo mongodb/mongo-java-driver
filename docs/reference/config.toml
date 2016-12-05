@@ -1,4 +1,4 @@
-baseurl = "/mongo-java-driver/3.2"
+baseurl = "/mongo-java-driver/3.4"
 languageCode = "en-us"
 title = "MongoDB Java Driver"
 theme = "mongodb"
@@ -14,7 +14,7 @@ canonifyurls = false
     pre = "<i class='fa fa-file-text-o'></i>"
     weight = 90
     identifier = "apiDocs"
-    url = "http://api.mongodb.org/java/3.2"
+    url = "/javadoc"
 
 [[menu.main]]
     name = "Source Code"

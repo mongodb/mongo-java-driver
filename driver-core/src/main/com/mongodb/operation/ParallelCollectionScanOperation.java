@@ -46,7 +46,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -61,7 +62,8 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.server.release 2.6
  * @since 3.0
  */
-public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatchCursor<T>>>,
+public class
+ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatchCursor<T>>>,
                                                            ReadOperation<List<BatchCursor<T>>> {
     private final MongoNamespace namespace;
     private final int numCursors;
@@ -144,7 +146,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         return withConnection(binding, new CallableWithConnectionAndSource<List<BatchCursor<T>>>() {
             @Override
             public List<BatchCursor<T>> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcern(connection, readConcern);
+                validateReadConcern(connection, readConcern);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
                                                      transformer(source));
@@ -157,12 +159,13 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<List<AsyncBatchCursor<T>>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<List<AsyncBatchCursor<T>>> wrappedCallback = releasingCallback(
-                            errorHandlingCallback(callback), source, connection);
-                    checkValidReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
+                            errHandlingCallback, source, connection);
+                    validateReadConcern(source, connection, readConcern, new AsyncCallableWithConnectionAndSource() {
                         @Override
                         public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

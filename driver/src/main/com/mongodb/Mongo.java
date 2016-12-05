@@ -23,6 +23,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -32,8 +33,9 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
-import com.mongodb.event.CommandListenerMulticaster;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
@@ -208,16 +210,18 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
-     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     * <p>Creates an instance based on a list of replica set members or mongos servers. For a replica set it will discover all members.
+     * For a list with a single seed, the driver will still discover all members of the replica set.  For a direct
+     * connection to a replica set member, with no discovery, use the {@link #Mongo(ServerAddress)} constructor instead.</p>
      *
-     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
-     * fail over to the next server if the closest is down.</p>
+     * <p>When there is more than one server to choose from based on the type of request (read or write) and the read preference (if it's a
+     * read request), the driver will randomly select a server to send a request. This applies to both replica sets and sharded clusters.
+     * The servers to randomly select from are further limited by the local threshold.  See
+     * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @see com.mongodb.ServerAddress
+     * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
     @Deprecated
@@ -226,17 +230,20 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
-     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     * <p>Creates an instance based on a list of replica set members or mongos servers. For a replica set it will discover all members.
+     * For a list with a single seed, the driver will still discover all members of the replica set.  For a direct
+     * connection to a replica set member, with no discovery, use the {@link #Mongo(ServerAddress, MongoClientOptions)} constructor
+     * instead.</p>
      *
-     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
-     * fail over to the next server if the closest is down.</p>
+     * <p>When there is more than one server to choose from based on the type of request (read or write) and the read preference (if it's a
+     * read request), the driver will randomly select a server to send a request. This applies to both replica sets and sharded clusters.
+     * The servers to randomly select from are further limited by the local threshold.  See
+     * {@link MongoClientOptions#getLocalThreshold()}</p>
      *
-     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
-     *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
-     * @param options for configuring this Mongo instance
-     * @see com.mongodb.ServerAddress
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param options the options
+     * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
     @Deprecated
@@ -278,17 +285,30 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(serverAddress, credentialsList, options), options, credentialsList);
+        this(serverAddress, credentialsList, options, null);
+    }
+
+    Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+          final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(serverAddress, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
-        this(createCluster(seedList, credentialsList, options), options, credentialsList);
+        this(seedList, credentialsList, options, null);
+    }
+
+    Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options,
+          final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(seedList, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
     Mongo(final MongoClientURI mongoURI) {
-        this(createCluster(mongoURI),
-             mongoURI.getOptions(),
-             mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
+        this(mongoURI, null);
+    }
+
+    Mongo(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
+        this(createCluster(mongoURI, mongoDriverInformation), mongoURI.getOptions(),
+                mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
@@ -370,8 +390,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getAllAddress() {
-        //TODO It should return the address list without auto-discovered nodes. Not sure if it's required. Maybe users confused with name.
-        return getServerAddressList();
+        return cluster.getSettings().getHosts();
     }
 
     /**
@@ -382,7 +401,7 @@ public class Mongo {
      */
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (final ServerDescription cur : getClusterDescription().getAll()) {
+        for (final ServerDescription cur : getClusterDescription().getServerDescriptions()) {
             serverAddresses.add(cur.getAddress());
         }
         return serverAddresses;
@@ -397,6 +416,7 @@ public class Mongo {
      *
      * @return the address
      */
+    @SuppressWarnings("deprecation")
     public ServerAddress getAddress() {
         ClusterDescription description = getClusterDescription();
         if (description.getPrimaries().isEmpty()) {
@@ -462,6 +482,8 @@ public class Mongo {
      *
      * @param dbName the name of the database to retrieve
      * @return a DB representing the specified database
+     * @throws IllegalArgumentException if the name is invalid
+     * @see MongoNamespace#checkDatabaseNameValidity(String)
      * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}
      */
     @Deprecated
@@ -648,6 +670,7 @@ public class Mongo {
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException if there's a failure
      */
+    @SuppressWarnings("deprecation")
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
@@ -669,7 +692,7 @@ public class Mongo {
                                  .build();
     }
 
-    private static Cluster createCluster(final MongoClientURI mongoURI) {
+    private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? asList(mongoURI.getCredentials())
@@ -678,30 +701,30 @@ public class Mongo {
         if (mongoURI.getHosts().size() == 1) {
             return createCluster(new ServerAddress(mongoURI.getHosts().get(0)),
                                  credentialList,
-                                 mongoURI.getOptions());
+                                 mongoURI.getOptions(), null);
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
             for (final String host : mongoURI.getHosts()) {
                 seedList.add(new ServerAddress(host));
             }
-            return createCluster(seedList, credentialList, mongoURI.getOptions());
+            return createCluster(seedList, credentialList, mongoURI.getOptions(), mongoDriverInformation);
         }
     }
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
-                                         final List<MongoCredential> credentialsList, final MongoClientOptions options) {
+                                         final List<MongoCredential> credentialsList, final MongoClientOptions options,
+                                         final MongoDriverInformation mongoDriverInformation) {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
-                                            .build(),
-                             credentialsList, options);
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
+                             credentialsList, options, mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options) {
+                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
         return createCluster(ClusterSettings.builder()
                                             .mode(getSingleServerClusterMode(options))
                                             .hosts(asList(serverAddress))
@@ -709,14 +732,16 @@ public class Mongo {
                                             .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                                             .serverSelector(createServerSelector(options))
                                             .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize())
-                                            .build(),
-                             credentialsList, options);
+                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
+                             credentialsList, options, mongoDriverInformation);
     }
 
-    private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options) {
-        return new DefaultClusterFactory().create(settings,
+    private static Cluster createCluster(final ClusterSettings.Builder settingsBuilder, final List<MongoCredential> credentialsList,
+                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
+        for (ClusterListener cur : options.getClusterListeners()) {
+            settingsBuilder.addClusterListener(cur);
+        }
+        return new DefaultClusterFactory().create(settingsBuilder.build(),
                                                   options.getServerSettings(),
                                                   options.getConnectionPoolSettings(),
                                                   new SocketStreamFactory(options.getSocketSettings(),
@@ -725,9 +750,11 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSslSettings(),
                                                                           options.getSocketFactory()),
-                                                  credentialsList,
-                                                  null, new JMXConnectionPoolListener(), null,
-                                                  createCommandListener(options.getCommandListeners()));
+                                                  credentialsList, null,
+                                                  new JMXConnectionPoolListener(), null,
+                                                  createCommandListener(options.getCommandListeners()),
+                                                  options.getApplicationName(),
+                                                  mongoDriverInformation);
     }
 
     private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {
@@ -737,7 +764,7 @@ public class Mongo {
             case 1:
                 return commandListeners.get(0);
             default:
-                return new CommandListenerMulticaster(commandListeners);
+                return new CommandEventMulticaster(commandListeners);
         }
     }
 

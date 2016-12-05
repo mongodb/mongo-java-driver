@@ -22,8 +22,6 @@ interface ServerMonitor {
 
     void connect();
 
-    void invalidate();
-
     void close();
 
 }

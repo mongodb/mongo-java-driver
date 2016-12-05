@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BsonInput;
 import org.bson.io.BsonOutput;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
 import java.util.Stack;
@@ -207,6 +208,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
+    protected void doWriteDecimal128(final Decimal128 value) {
+        bsonOutput.writeByte(BsonType.DECIMAL128.getValue());
+        writeCurrentName();
+        bsonOutput.writeInt64(value.getLow());
+        bsonOutput.writeInt64(value.getHigh());
+    }
+
+    @Override
     protected void doWriteJavaScript(final String value) {
         bsonOutput.writeByte(BsonType.JAVASCRIPT.getValue());
         writeCurrentName();
@@ -364,8 +373,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     private void backpatchSize() {
         int size = bsonOutput.getPosition() - getContext().startPosition;
         if (size > maxDocumentSizeStack.peek()) {
-            throw new BsonSerializationException(format("Size %d is larger than MaxDocumentSize %d.", size,
-                                                        binaryWriterSettings.getMaxDocumentSize()));
+            throw new BsonSerializationException(format("Document size of %d is larger than maximum of %d.", size,
+                    maxDocumentSizeStack.peek()));
         }
         bsonOutput.writeInt32(bsonOutput.getPosition() - size, size);
     }

@@ -1,6 +1,6 @@
 # Update versions in config.toml as well
 githubRepo = "mongo-java-driver"
 githubBranch = "master"
-currentVersion = "3.2"
+currentVersion = "3.4"
 highlightTheme = "idea.css"
-apiUrl = "http://api.mongodb.org/java/3.2/"
+apiUrl = "/javadoc"

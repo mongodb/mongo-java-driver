@@ -16,9 +16,13 @@
 
 package com.mongodb.connection
 
+import category.Slow
 import org.bson.BsonSerializationException
 import org.bson.types.ObjectId
+import org.junit.experimental.categories.Category
 import spock.lang.Specification
+
+import java.security.SecureRandom
 
 class ByteBufferBsonOutputSpecification extends Specification {
     def 'constructor should throw if buffer provider is null'() {
@@ -274,7 +278,7 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.writeInt32(1023, 0x1020304)
 
         then:
-        getBytes(bsonOutput)[1023..1026] == [4, 3, 2, 1] as byte[]
+        getBytes(bsonOutput)[1023..1026] as byte[] == [4, 3, 2, 1] as byte[]
         bsonOutput.position == 1032
         bsonOutput.size == 1032
     }
@@ -322,10 +326,35 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.writeInt32(0x1020304)
 
         then:
-        getBytes(bsonOutput)[0..1022] == bytes
-        getBytes(bsonOutput)[1023..1026] == [4, 3, 2, 1] as byte[]
+        getBytes(bsonOutput)[0..1022] as byte[] == bytes
+        getBytes(bsonOutput)[1023..1026] as byte[] == [4, 3, 2, 1] as byte[]
         bsonOutput.position == 1027
         bsonOutput.size == 1027
+    }
+
+    @Category(Slow)
+    def 'should grow to maximum allowed size of byte buffer'() {
+        given:
+        def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        def bytes = new byte[0x2000000]
+        def random = new SecureRandom()
+        random.nextBytes(bytes)
+
+        when:
+        bsonOutput.writeBytes(bytes)
+
+        then:
+        bsonOutput.size == 0x2000000
+        bsonOutput.getByteBuffers()*.capacity() ==
+                [1 << 10, 1 << 11, 1 << 12, 1 << 13, 1 << 14, 1 << 15, 1 << 16, 1 << 17, 1 << 18, 1 << 19,
+                 1 << 20, 1 << 21, 1 << 22, 1 << 23, 1 << 24, 1 << 24]
+
+        when:
+        def stream = new ByteArrayOutputStream(bsonOutput.size)
+        bsonOutput.pipe(stream)
+
+        then:
+        Arrays.equals(bytes, stream.toByteArray())   // faster than using Groovy's == implementation
     }
 
     def 'should pipe'() {

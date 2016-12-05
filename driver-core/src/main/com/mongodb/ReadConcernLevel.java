@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,28 +20,38 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
 /**
- * The readConcern option allows clients to choose a level of isolation for their reads.
- *
- * The WiredTiger storage engine, introduces the readConcern option for replica sets and replica set shards.  Allowing clients to choose a
- * level of isolation for their reads.
+ * A read concern level allows clients to choose a level of isolation for their reads.
  *
  * @mongodb.server.release 3.2
- * @mongodb.driver.manual reference/readConcern/ Read Concern
+ * @mongodb.driver.manual reference/read-concern/#read-concern-levels Read Concern Levels
  * @since 3.2
  */
 public enum ReadConcernLevel {
 
     /**
-     * Return the node's most recent copy of data. Provides no guarantee that the data has been written to a majority of the nodes.
+     * The local read concern level.
      */
     LOCAL("local"),
 
     /**
-     * Return the node's most recent copy of the data confirmed as having been written to a majority of the nodes.
+     * The majority read concern level.
      */
-    MAJORITY("majority");
+    MAJORITY("majority"),
+
+    /**
+     * The linearizable read concern level.
+     *
+     * <p>
+     * This read concern level is only compatible with {@link ReadPreference#primary()}.
+     * </p>
+     *
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    LINEARIZABLE("linearizable");
 
     private final String value;
+
     ReadConcernLevel(final String readConcernLevel) {
         this.value = readConcernLevel;
     }

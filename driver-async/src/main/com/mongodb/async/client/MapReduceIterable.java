@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import org.bson.conversions.Bson;
 
@@ -174,10 +175,23 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
     MapReduceIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
 
     /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    MapReduceIterable<TResult> collation(Collation collation);
+
+    /**
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
      * non-inline result.
      *
      * @param callback the callback, which is called when the aggregation completes
+     * @throws IllegalStateException if a collection name to write the results to has not been specified
+     * @see #collectionName(String)
      * @mongodb.driver.manual aggregation/ Aggregation
      */
     void toCollection(SingleResultCallback<Void> callback);

@@ -46,7 +46,7 @@ class DBObjectCodecSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def dbObjectCodec = new DBObjectCodec(codecRegistry)
 
-    def 'should encode and decode UUID as Binary'() {
+    def 'should encode and decode UUID as UUID'() {
         given:
         def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
         def doc = new BasicDBObject('uuid', uuid)
@@ -64,7 +64,25 @@ class DBObjectCodecSpecification extends Specification {
         decodedUuid.get('uuid') == uuid
     }
 
-    def 'should encode and decode UUID as Binary with alternate UUID Codec'() {
+    def 'should decode a malformed UUID binary as Binary'() {
+        given:
+        def doc = new BasicDBObject('uuid', malformedBinaryUuid)
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc, EncoderContext.builder().build())
+
+        when:
+        def decodedMalformedUuid = dbObjectCodec.decode(new BsonDocumentReader(bsonDoc), DecoderContext.builder().build())
+
+        then:
+        decodedMalformedUuid.get('uuid') == malformedBinaryUuid
+
+        where:
+        malformedBinaryUuid << [new Binary(BsonBinarySubType.UUID_LEGACY,
+                [8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10, 9, 8] as byte[]),
+                                new Binary(BsonBinarySubType.UUID_STANDARD,
+                                        [8, 7, 6, 5, 4, 3, 2, 1, 16, 15, 14, 13, 12, 11, 10] as byte[])]
+    }
+
+    def 'should encode and decode UUID as UUID with alternate UUID Codec'() {
         given:
         def codecWithAlternateUUIDCodec = new DBObjectCodec(fromRegistries(fromCodecs(new UuidCodec(STANDARD)), codecRegistry))
         def uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')

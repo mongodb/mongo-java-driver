@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,11 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ServerHeartbeatFailedEvent;
+import com.mongodb.event.ServerHeartbeatStartedEvent;
+import com.mongodb.event.ServerHeartbeatSucceededEvent;
+import com.mongodb.event.ServerMonitorEventMulticaster;
+import com.mongodb.event.ServerMonitorListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -27,7 +32,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -42,12 +46,13 @@ class DefaultServerMonitor implements ServerMonitor {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final ServerId serverId;
+    private final ServerMonitorListener serverMonitorListener;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
     private final ServerSettings settings;
-    private volatile ServerMonitorRunnable monitor;
-    private volatile Thread monitorThread;
+    private final ServerMonitorRunnable monitor;
+    private final Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
@@ -57,10 +62,15 @@ class DefaultServerMonitor implements ServerMonitor {
                          final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
         this.settings = settings;
         this.serverId = serverId;
+        this.serverMonitorListener = settings.getServerMonitorListeners().isEmpty()
+                                             ? new NoOpServerMonitorListener()
+                                             : new ServerMonitorEventMulticaster(settings.getServerMonitorListeners());
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
-        monitorThread = createMonitorThread();
+        monitor = new ServerMonitorRunnable();
+        monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
+        monitorThread.setDaemon(true);
         isClosed = false;
     }
 
@@ -80,35 +90,13 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     @Override
-    public void invalidate() {
-        isTrue("open", !isClosed);
-        monitor.close();
-        monitorThread.interrupt();
-        monitorThread = createMonitorThread();
-        monitorThread.start();
-    }
-
-    @Override
     public void close() {
-        monitor.close();
-        monitorThread.interrupt();
         isClosed = true;
-    }
-
-    Thread createMonitorThread() {
-        monitor = new ServerMonitorRunnable();
-        Thread monitorThread = new Thread(monitor, "cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
-        monitorThread.setDaemon(true);
-        return monitorThread;
+        monitorThread.interrupt();
     }
 
     class ServerMonitorRunnable implements Runnable {
-        private volatile boolean monitorIsClosed;
         private final ExponentiallyWeightedMovingAverage averageRoundTripTime = new ExponentiallyWeightedMovingAverage(0.2);
-
-        public void close() {
-            monitorIsClosed = true;
-        }
 
         @Override
         @SuppressWarnings("unchecked")
@@ -116,11 +104,8 @@ class DefaultServerMonitor implements ServerMonitor {
             InternalConnection connection = null;
             try {
                 ServerDescription currentServerDescription = getConnectingServerDescription(null);
-                Throwable currentException = null;
-                while (!monitorIsClosed) {
+                while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
-                    Throwable previousException = currentException;
-                    currentException = null;
                     try {
                         if (connection == null) {
                             connection = internalConnectionFactory.create(serverId);
@@ -154,14 +139,14 @@ class DefaultServerMonitor implements ServerMonitor {
                         }
                     } catch (Throwable t) {
                         averageRoundTripTime.reset();
-                        currentException = t;
                         currentServerDescription = getConnectingServerDescription(t);
                     }
 
-                    if (!monitorIsClosed) {
+                    if (!isClosed) {
                         try {
-                            logStateChange(previousServerDescription, previousException, currentServerDescription, currentException);
-                            sendStateChangedEvent(previousServerDescription, currentServerDescription);
+                            logStateChange(previousServerDescription, currentServerDescription);
+                            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
+                                                                                                       currentServerDescription));
                         } catch (Throwable t) {
                             LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
                         }
@@ -183,31 +168,32 @@ class DefaultServerMonitor implements ServerMonitor {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
             }
+            serverMonitorListener.serverHearbeatStarted(new ServerHeartbeatStartedEvent(connection.getDescription().getConnectionId()));
+
             long start = System.nanoTime();
-            BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
-            averageRoundTripTime.addSample(System.nanoTime() - start);
+            try {
+                BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+                long elapsedTimeNanos = System.nanoTime() - start;
+                averageRoundTripTime.addSample(elapsedTimeNanos);
 
-            return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
-                                           averageRoundTripTime.getAverage());
-        }
+                serverMonitorListener.serverHeartbeatSucceeded(
+                        new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult, elapsedTimeNanos));
 
-        private void sendStateChangedEvent(final ServerDescription previousServerDescription,
-                                           final ServerDescription currentServerDescription) {
-            if (stateHasChanged(previousServerDescription, currentServerDescription)) {
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
-                                                                                    currentServerDescription));
+                return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
+                                               averageRoundTripTime.getAverage());
+            } catch (RuntimeException e) {
+                serverMonitorListener.serverHeartbeatFailed(
+                        new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start, e));
+                throw e;
             }
         }
 
-        private void logStateChange(final ServerDescription previousServerDescription, final Throwable previousException,
-                                    final ServerDescription currentServerDescription, final Throwable currentException) {
-            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
-            // so this will not spam the logs too hard.
-            if (descriptionHasChanged(previousServerDescription, currentServerDescription)
-                || exceptionHasChanged(previousException, currentException)) {
-                if (currentException != null) {
+        private void logStateChange(final ServerDescription previousServerDescription,
+                                    final ServerDescription currentServerDescription) {
+            if (shouldLogStageChange(previousServerDescription, currentServerDescription)) {
+                if (currentServerDescription.getException() != null) {
                     LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
-                                currentException);
+                                currentServerDescription.getException());
                 } else {
                     LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
@@ -242,27 +228,67 @@ class DefaultServerMonitor implements ServerMonitor {
         }
     }
 
-    static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
-                                         final ServerDescription currentServerDescription) {
-        return !previousServerDescription.equals(currentServerDescription);
-    }
+    static boolean shouldLogStageChange(final ServerDescription previous, final ServerDescription current) {
 
-    static boolean stateHasChanged(final ServerDescription previousServerDescription, final ServerDescription currentServerDescription) {
-        return descriptionHasChanged(previousServerDescription, currentServerDescription)
-               || previousServerDescription.getRoundTripTimeNanos() != currentServerDescription.getRoundTripTimeNanos();
-    }
-
-    static boolean exceptionHasChanged(final Throwable previousException, final Throwable currentException) {
-        if (currentException == null) {
-            return previousException != null;
-        } else if (previousException == null) {
+        if (previous.isOk() != current.isOk()) {
             return true;
-        } else if (!currentException.getClass().equals(previousException.getClass())) {
-            return true;
-        } else if (currentException.getMessage() == null) {
-            return previousException.getMessage() != null;
-        } else {
-            return !currentException.getMessage().equals(previousException.getMessage());
         }
+        if (!previous.getAddress().equals(current.getAddress())) {
+            return true;
+        }
+        if (previous.getCanonicalAddress() != null
+                    ? !previous.getCanonicalAddress().equals(current.getCanonicalAddress()) : current.getCanonicalAddress() != null) {
+            return true;
+        }
+        if (!previous.getHosts().equals(current.getHosts())) {
+            return true;
+        }
+        if (!previous.getArbiters().equals(current.getArbiters())) {
+            return true;
+        }
+        if (!previous.getPassives().equals(current.getPassives())) {
+            return true;
+        }
+        if (previous.getPrimary() != null ? !previous.getPrimary().equals(current.getPrimary()) : current.getPrimary() != null) {
+            return true;
+        }
+        if (previous.getSetName() != null ? !previous.getSetName().equals(current.getSetName()) : current.getSetName() != null) {
+            return true;
+        }
+        if (previous.getState() != current.getState()) {
+            return true;
+        }
+        if (!previous.getTagSet().equals(current.getTagSet())) {
+            return true;
+        }
+        if (previous.getType() != current.getType()) {
+            return true;
+        }
+        if (!previous.getVersion().equals(current.getVersion())) {
+            return true;
+        }
+        if (previous.getElectionId() != null
+                    ? !previous.getElectionId().equals(current.getElectionId()) : current.getElectionId() != null) {
+            return true;
+        }
+        if (previous.getSetVersion() != null
+                    ? !previous.getSetVersion().equals(current.getSetVersion()) : current.getSetVersion() != null) {
+            return true;
+        }
+
+        // Compare class equality and message as exceptions rarely override equals
+        Class<?> thisExceptionClass = previous.getException() != null ? previous.getException().getClass() : null;
+        Class<?> thatExceptionClass = current.getException() != null ? current.getException().getClass() : null;
+        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+            return true;
+        }
+
+        String thisExceptionMessage = previous.getException() != null ? previous.getException().getMessage() : null;
+        String thatExceptionMessage = current.getException() != null ? current.getException().getMessage() : null;
+        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -83,12 +83,14 @@ public final class GridFSFile {
         this.chunkSize = notNull("chunkSize", chunkSize);
         this.uploadDate = notNull("uploadDate", uploadDate);
         this.md5 = notNull("md5", md5);
-        this.metadata = metadata;
+        this.metadata = metadata != null && metadata.isEmpty() ? null : metadata;
         this.extraElements = extraElements;
     }
 
     /**
      * The {@link ObjectId} for this file.
+     *
+     * Throws a MongoGridFSException if the file id is not an ObjectId.
      *
      * @return the id for this file.
      */

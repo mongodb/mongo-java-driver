@@ -24,6 +24,8 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -36,6 +38,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 
 @SuppressWarnings("deprecation")  // because this class implements deprecated methods
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final InternalConnection wrapped;
     private final ProtocolExecutor protocolExecutor;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -287,11 +290,11 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     }
 
     private <T> void executeProtocolAsync(final Protocol<T> protocol, final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> wrappedCallback = errorHandlingCallback(callback);
+        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
-            protocolExecutor.executeAsync(protocol, this.wrapped, wrappedCallback);
+            protocolExecutor.executeAsync(protocol, this.wrapped, errHandlingCallback);
         } catch (Throwable t) {
-            wrappedCallback.onResult(null, t);
+            errHandlingCallback.onResult(null, t);
         }
     }
 }

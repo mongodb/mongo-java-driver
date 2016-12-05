@@ -17,7 +17,16 @@
 package com.mongodb;
 
 import category.ReplicaSet;
+import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.CollationAlternate;
+import com.mongodb.client.model.CollationCaseFirst;
+import com.mongodb.client.model.CollationMaxVariable;
+import com.mongodb.client.model.CollationStrength;
+import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.UserExistsOperation;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -32,9 +41,9 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
+import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -173,6 +182,47 @@ public class DBTest extends DatabaseTestCase {
         database.createCollection(collectionName, creationOptions);
     }
 
+    @Test
+    public void shouldCreateCollectionWithTheSetCollation() {
+        assumeThat(serverVersionAtLeast(3, 4), is(true));
+        // Given
+        collection.drop();
+        Collation collation = Collation.builder()
+                .locale("en")
+                .caseLevel(true)
+                .collationCaseFirst(CollationCaseFirst.OFF)
+                .collationStrength(CollationStrength.IDENTICAL)
+                .numericOrdering(true)
+                .collationAlternate(CollationAlternate.SHIFTED)
+                .collationMaxVariable(CollationMaxVariable.SPACE)
+                .backwards(true)
+                .build();
+
+        DBObject options = BasicDBObject.parse("{ collation: { locale: 'en', caseLevel: true, caseFirst: 'off', strength: 5,"
+                + "numericOrdering: true, alternate: 'shifted',  maxVariable: 'space', backwards: true }}");
+
+        // When
+        database.createCollection(collectionName, options);
+        BsonDocument collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
+
+        // Then
+        BsonDocument collationDocument = collation.asDocument();
+        for (String key: collationDocument.keySet()) {
+            assertEquals(collationDocument.get(key), collectionCollation.get(key));
+        }
+
+        // When - collation set on the database
+        database.getCollection(collectionName).drop();
+        database.createCollection(collectionName, new BasicDBObject("collation", BasicDBObject.parse(collation.asDocument().toJson())));
+        collectionCollation = getCollectionInfo(collectionName).getDocument("options").getDocument("collation");
+
+        // Then
+        collationDocument = collation.asDocument();
+        for (String key: collationDocument.keySet()) {
+            assertEquals(collationDocument.get(key), collectionCollation.get(key));
+        }
+    }
+
     @Test(expected = DuplicateKeyException.class)
     public void shouldGetDuplicateKeyException() {
         DBObject doc = new BasicDBObject("_id", 1);
@@ -233,7 +283,7 @@ public class DBTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
         enableMaxTimeFailPoint();
         try {
             database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
@@ -339,7 +389,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
-        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)) || !isSharded());
+        assumeTrue(serverVersionAtLeast(2, 4) || !isSharded());
 
         // When
         CommandResult commandResult = database.command(new BasicDBObject("NotRealCommandName", 1));
@@ -396,5 +446,10 @@ public class DBTest extends DatabaseTestCase {
         // Then
         assertThat(commandResult.ok(), is(true));
         assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
+    }
+
+    BsonDocument getCollectionInfo(final String collectionName) {
+        return new ListCollectionsOperation<BsonDocument>(getDefaultDatabaseName(), new BsonDocumentCodec())
+                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
     }
 }

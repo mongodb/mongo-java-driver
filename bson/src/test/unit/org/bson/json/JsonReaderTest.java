@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.bson.BsonDbPointer;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -34,6 +35,7 @@ import java.util.Locale;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 
 public class JsonReaderTest {
@@ -333,6 +335,84 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testDecimal128StringConstructor() {
+        String json = "NumberDecimal(\"314E-2\")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(Decimal128.parse("314E-2"), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128Int32Constructor() {
+        String json = "NumberDecimal(" + Integer.MAX_VALUE + ")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(new Decimal128(Integer.MAX_VALUE), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128Int64Constructor() {
+        String json = "NumberDecimal(" + Long.MAX_VALUE + ")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(new Decimal128(Long.MAX_VALUE), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128DoubleConstructor() {
+        String json = "NumberDecimal(" + 1.0 + ")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(Decimal128.parse("1"), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128BooleanConstructor() {
+        String json = "NumberDecimal(true)";
+        bsonReader = new JsonReader(json);
+        try {
+            bsonReader.readBsonType();
+            fail("Should fail to parse NumberDecimal constructor with a string");
+        } catch (JsonParseException e) {
+            // all good
+        }
+    }
+
+    @Test
+    public void testDecimal128WithNew() {
+        String json = "new NumberDecimal(\"314E-2\")";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(Decimal128.parse("314E-2"), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128ExtendedJson() {
+        String json = "{\"$numberDecimal\":\"314E-2\"}";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.DECIMAL128, bsonReader.readBsonType());
+        assertEquals(Decimal128.parse("314E-2"), bsonReader.readDecimal128());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testDecimal128ExtendedJsonWithBoolean() {
+        String json = "{\"$numberDecimal\": true}";
+        bsonReader = new JsonReader(json);
+        try {
+            bsonReader.readBsonType();
+            fail("Should fail to parse NumberDecimal constructor with a string");
+        } catch (JsonParseException e) {
+            // all good
+        }
+    }
+
+    @Test
     public void testJavaScript() {
         String json = "{ \"$code\" : \"function f() { return 1; }\" }";
         bsonReader = new JsonReader(json);
@@ -472,7 +552,7 @@ public class JsonReaderTest {
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
         BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
-        assertEquals("imxs", regex.getOptions());
+        assertEquals("imsx", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
 
     }
@@ -484,7 +564,7 @@ public class JsonReaderTest {
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
         BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
-        assertEquals("imxs", regex.getOptions());
+        assertEquals("imsx", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
         JsonWriterSettings settings = new JsonWriterSettings(JsonMode.STRICT);
 
@@ -549,6 +629,19 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testTimestampStrictWithOutOfOrderFields() {
+        String json = "{ \"$timestamp\" : { \"i\" : 1, \"t\" : 1234 } }";
+        bsonReader = new JsonReader(json);
+
+        try {
+            bsonReader.readBsonType();
+            fail("Should have failed to read timestamp with fields not in expected order");
+        } catch (JsonParseException e) {
+            // all good
+        }
+    }
+
+    @Test
     public void testTimestampShell() {
         String json = "Timestamp(1234, 1)";
         bsonReader = new JsonReader(json);
@@ -590,7 +683,6 @@ public class JsonReaderTest {
         bsonReader.readBinaryData();
     }
 
-    //TODO Together with next text this is just an indicator that our behavior is not very correct.
     @Test(expected = JsonParseException.class)
     public void testEndOfFile0() {
         String json = "{";
@@ -600,13 +692,13 @@ public class JsonReaderTest {
         bsonReader.readBsonType();
     }
 
-    @Test
+    @Test(expected = JsonParseException.class)
     public void testEndOfFile1() {
         String json = "{ test : ";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.DOCUMENT, bsonReader.readBsonType());
         bsonReader.readStartDocument();
-        assertEquals(BsonType.END_OF_DOCUMENT, bsonReader.readBsonType());
+        bsonReader.readBsonType();
     }
 
     @Test

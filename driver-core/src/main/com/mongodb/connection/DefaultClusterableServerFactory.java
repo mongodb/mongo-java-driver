@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.CommandListener;
+import com.mongodb.event.ServerListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -35,6 +38,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionListener connectionListener;
     private final StreamFactory heartbeatStreamFactory;
     private final CommandListener commandListener;
+    private final String applicationName;
+    private final MongoDriverInformation mongoDriverInformation;
 
     public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
@@ -42,7 +47,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final StreamFactory heartbeatStreamFactory,
                                            final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener,
-                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener) {
+                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener,
+                                           final String applicationName, final MongoDriverInformation mongoDriverInformation) {
         this.clusterId = clusterId;
         this.clusterSettings = clusterSettings;
         this.settings = settings;
@@ -53,23 +59,26 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         this.connectionListener = connectionListener;
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.commandListener = commandListener;
+        this.applicationName = applicationName;
+        this.mongoDriverInformation = mongoDriverInformation;
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress) {
+    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
-                                                                  new InternalStreamConnectionFactory(streamFactory,
-                                                                                                      credentialList,
-                                                                                                      connectionListener),
-                                                                  connectionPoolSettings, connectionPoolListener);
+                new InternalStreamConnectionFactory(streamFactory, credentialList, connectionListener, applicationName,
+                        mongoDriverInformation), connectionPoolSettings, connectionPoolListener);
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), settings,
-                                            new InternalStreamConnectionFactory(heartbeatStreamFactory,
-                                                                                credentialList,
-                                                                                connectionListener),
-                                            connectionPool);
-        return new DefaultServer(serverAddress, clusterSettings.getMode(), connectionPool, new DefaultConnectionFactory(),
-                                 serverMonitorFactory, commandListener);
+                    new InternalStreamConnectionFactory(heartbeatStreamFactory, credentialList, connectionListener, applicationName,
+                            mongoDriverInformation), connectionPool);
+        List<ServerListener> serverListeners = new ArrayList<ServerListener>();
+        if (serverListener != null) {
+            serverListeners.add(serverListener);
+        }
+        serverListeners.addAll(settings.getServerListeners());
+        return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
+                new DefaultConnectionFactory(), serverMonitorFactory, serverListeners, commandListener);
     }
 
     @Override

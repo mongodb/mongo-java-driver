@@ -18,11 +18,11 @@ package com.mongodb.operation
 
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
+import com.mongodb.client.model.Collation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
-
 
 class UpdateRequestSpecification extends Specification {
 
@@ -30,7 +30,6 @@ class UpdateRequestSpecification extends Specification {
         expect:
         new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).getType() == WriteRequest.Type.UPDATE
         new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE).getType() == WriteRequest.Type.REPLACE
-
     }
 
     def 'should throw if type is not update or replace'() {
@@ -74,7 +73,6 @@ class UpdateRequestSpecification extends Specification {
         then:
         updateRequest.filter == filter
         updateRequest.update == update
-
     }
 
     def 'multi property should default to true'() {
@@ -107,4 +105,15 @@ class UpdateRequestSpecification extends Specification {
         new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).upsert(true).isUpsert()
     }
 
+    def 'should set collation property'() {
+        when:
+        def collation = Collation.builder().locale('en').build()
+
+        then:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), type).collation(null).getCollation() == null
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), type).collation(collation).getCollation() == collation
+
+        where:
+        type << [WriteRequest.Type.UPDATE, WriteRequest.Type.REPLACE]
+    }
 }

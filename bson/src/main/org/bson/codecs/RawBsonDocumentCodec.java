@@ -16,7 +16,6 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONException;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
@@ -24,9 +23,6 @@ import org.bson.BsonWriter;
 import org.bson.RawBsonDocument;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer. It assumes that it
@@ -54,36 +50,20 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public RawBsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        BasicOutputBuffer buffer = new BasicOutputBuffer(0);
         BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
         try {
             writer.pipe(reader);
-            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBsonOutput()
-                                                                                                                      .getSize());
-            buffer.pipe(byteArrayOutputStream);
-            return new RawBsonDocument(byteArrayOutputStream.getInternalBytes());
-        } catch (IOException e) {
-            // impossible with a byte array output stream
-            throw new BSONException("impossible", e);
+            return new RawBsonDocument(buffer.getInternalBuffer(), 0, buffer.getPosition());
         } finally {
             writer.close();
+            buffer.close();
         }
     }
 
     @Override
     public Class<RawBsonDocument> getEncoderClass() {
         return RawBsonDocument.class;
-    }
-
-    // Just so we don't have to copy the buffer
-    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
-        BufferExposingByteArrayOutputStream(final int size) {
-            super(size);
-        }
-
-        byte[] getInternalBytes() {
-            return buf;
-        }
     }
 }
 

@@ -24,6 +24,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -49,7 +50,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.checkValidReadConcern;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -80,6 +82,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     private boolean verbose;
     private long maxTimeMS;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
+    private Collation collation;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute.
@@ -96,6 +99,26 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     * @since 3.4
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     * @since 3.4
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
     }
 
     /**
@@ -273,6 +296,31 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public MapReduceWithInlineResultsOperation<T> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
@@ -333,7 +381,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                checkValidReadConcern(connection, readConcern);
+                validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
                                                      connection, transformer(source, connection));
@@ -346,12 +394,13 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
                 if (t != null) {
-                    errorHandlingCallback(callback).onResult(null, t);
+                    errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<MapReduceAsyncBatchCursor<T>> wrappedCallback = releasingCallback(
-                            errorHandlingCallback(callback), connection);
-                    checkValidReadConcern(connection, readConcern, new AsyncCallableWithConnection() {
+                            errHandlingCallback, connection);
+                    validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {
@@ -430,6 +479,9 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         putIfTrue(commandDocument, "jsMode", isJsMode());
         if (!readConcern.isServerDefault()) {
             commandDocument.put("readConcern", readConcern.asDocument());
+        }
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
         }
         return commandDocument;
     }

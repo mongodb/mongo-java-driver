@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
@@ -48,6 +50,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
+    private final WriteConcern writeConcern;
     private final CodecRegistry codecRegistry;
     private final AsyncOperationExecutor executor;
     private final List<? extends Bson> pipeline;
@@ -57,16 +60,18 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private long maxTimeMS;
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
+                          final WriteConcern writeConcern, final AsyncOperationExecutor executor, final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
     }
@@ -102,12 +107,13 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
 
         if (outCollection == null) {
-            throw new IllegalArgumentException("The last stage of the aggregation pipeline must be $out");
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
         }
 
-        executor.execute(new AggregateToCollectionOperation(namespace, aggregateList)
+        executor.execute(new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .allowDiskUse(allowDiskUse), callback);
+                .allowDiskUse(allowDiskUse)
+                .collation(collation), callback);
     }
 
     @Override
@@ -147,18 +153,25 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         return this;
     }
 
+    @Override
+    public AggregateIterable<TResult> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList();
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
-                    .bypassDocumentValidation(bypassDocumentValidation);
+                    .bypassDocumentValidation(bypassDocumentValidation)
+                    .collation(collation);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, primary(), readConcern,
-                    executor, new BsonDocument(), new FindOptions());
+                    executor, new BsonDocument(), new FindOptions().collation(collation));
             if (batchSize != null) {
                 delegated.batchSize(batchSize);
             }
@@ -169,7 +182,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
                     .useCursor(useCursor)
-                    .readConcern(readConcern),
+                    .readConcern(readConcern)
+                    .collation(collation),
                     readPreference,
                     executor);
         }
@@ -182,6 +196,9 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private List<BsonDocument> createBsonDocumentList() {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson document : pipeline) {
+            if (document == null) {
+                throw new IllegalArgumentException("pipeline can not contain a null value");
+            }
             aggregateList.add(document.toBsonDocument(documentClass, codecRegistry));
         }
         return aggregateList;

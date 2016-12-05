@@ -143,7 +143,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testAggregationToACollection() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
+        assumeTrue(serverVersionAtLeast(2, 6));
 
         // given
         List<Document> documents = asList(new Document("_id", 1), new Document("_id", 2));
@@ -166,7 +166,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testDBRefEncodingAndDecoding() {
         // given
-        Document doc = new Document("_id", 1).append("ref", new DBRef("foo", 5));
+        Document doc = new Document("_id", 1)
+                               .append("ref", new DBRef("foo", 5))
+                               .append("refWithDB", new DBRef("db", "foo", 5));
+
 
         // when
         collection.insertOne(doc);

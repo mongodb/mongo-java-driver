@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,40 @@
 
 package com.mongodb.internal
 
+import com.mongodb.ServerAddress
 import com.mongodb.internal.connection.SslHelper
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLParameters
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 
-@IgnoreIf({ System.getProperty('java.version').startsWith('1.6.') })
+@IgnoreIf({ isNotAtLeastJava7() })
 class SslHelperSpecification extends Specification {
     def 'should enable HTTPS host name verification'() {
+        given:
+        def sslParameters = new SSLParameters()
+
         when:
-        def sllParameters = SslHelper.enableHostNameVerification(new SSLParameters())
+        SslHelper.enableHostNameVerification(sslParameters)
 
         then:
-        sllParameters.getEndpointIdentificationAlgorithm() == 'HTTPS'
+        sslParameters.getEndpointIdentificationAlgorithm() == 'HTTPS'
+    }
+
+    @IgnoreIf({ isNotAtLeastJava8() })
+    def 'should enable server name indicator'() {
+        given:
+        def serverName = 'server.me'
+        def sslParameters = new SSLParameters()
+
+        when:
+        SslHelper.enableSni(new ServerAddress(serverName), sslParameters)
+
+        then:
+        sslParameters.getServerNames() == [new SNIHostName(serverName)]
     }
 }

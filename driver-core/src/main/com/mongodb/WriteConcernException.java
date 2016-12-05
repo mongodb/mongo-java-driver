@@ -50,7 +50,7 @@ public class WriteConcernException extends MongoServerException {
     }
 
     /**
-     * For internal use only: extract the error code from the response to a getlasterror command.
+     * For internal use only: extract the error code from the response to a write command.
      * @param response the response
      * @return the code, or -1 if there is none
      */
@@ -63,7 +63,7 @@ public class WriteConcernException extends MongoServerException {
             }
         }
 
-        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
+        // mongos may return a list of documents representing write command responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
         if (!response.containsKey("code") && response.containsKey("errObjects")) {
             for (BsonValue curErrorDocument : response.getArray("errObjects")) {
@@ -76,7 +76,7 @@ public class WriteConcernException extends MongoServerException {
     }
 
     /**
-     * For internal use only: extract the error message from the response to a getlasterror command.
+     * For internal use only: extract the error message from the response to a write command.
      *
      * @param response the response
      * @return the error message

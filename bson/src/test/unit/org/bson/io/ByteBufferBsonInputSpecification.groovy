@@ -396,4 +396,15 @@ class ByteBufferBsonInputSpecification extends Specification {
         then:
         thrown(BsonSerializationException)
     }
+
+    def 'should throw BsonSerializationException if a one-byte BSON string is not null-terminated'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([2, 0, 0, 0, 1, 3] as byte[])))
+
+        when:
+        stream.readString()
+
+        then:
+        thrown(BsonSerializationException)
+    }
 }

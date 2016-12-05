@@ -104,17 +104,29 @@ public final class MongoCredential {
      */
     public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
 
-    /*
-     * Mechanism property key for overriding the SasClient properties for GSSAPI authentication.
+    /**
+     * Mechanism property key for overriding the SaslClient properties for GSSAPI authentication.
+     *
+     * The value of this property must be a {@code Map<String, Object>}.  In most cases there is no need to set this mechanism property.
+     * But if an application does:
+     * <ul>
+     * <li>Generally it must set the {@link javax.security.sasl.Sasl#CREDENTIALS} property to an instance of
+     * {@link org.ietf.jgss.GSSCredential}.</li>
+     * <li>It's recommended that it set the {@link javax.security.sasl.Sasl#MAX_BUFFER} property to "0" to ensure compatibility with all
+     * versions of MongoDB.</li>
+     * </ul>
      *
      * @see #createGSSAPICredential(String)
      * @see #withMechanismProperty(String, Object)
+     * @see javax.security.sasl.Sasl
+     * @see javax.security.sasl.Sasl#CREDENTIALS
+     * @see javax.security.sasl.Sasl#MAX_BUFFER
      * @since 3.3
      */
     public static final String JAVA_SASL_CLIENT_PROPERTIES_KEY = "JAVA_SASL_CLIENT_PROPERTIES";
 
-    /*
-     * Mechanism property key for overriding the {@link javax.security.Subject} under which GSSAPI authentication executes.
+    /**
+     * Mechanism property key for overriding the {@link javax.security.auth.Subject} under which GSSAPI authentication executes.
      *
      * @see #createGSSAPICredential(String)
      * @see #withMechanismProperty(String, Object)
@@ -195,6 +207,22 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a MongoCredential instance for the MongoDB X.509 protocol where the distinguished subject name of the client certificate
+     * acts as the userName.
+     * <p>
+     *     Available on MongoDB server versions &gt;= 3.4.
+     * </p>
+     * @return the credential
+     *
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
+     */
+    public static MongoCredential createMongoX509Credential() {
+        return new MongoCredential(MONGODB_X509, null, "$external", null);
+    }
+
+    /**
      * Creates a MongoCredential instance for the PLAIN SASL mechanism.
      *
      * @param userName the non-null user name
@@ -262,7 +290,7 @@ public final class MongoCredential {
      * @param password  the password
      */
     MongoCredential(final AuthenticationMechanism mechanism, final String userName, final String source, final char[] password) {
-        if (userName == null) {
+        if (mechanism != MONGODB_X509 && userName == null) {
             throw new IllegalArgumentException("username can not be null");
         }
 
@@ -279,7 +307,7 @@ public final class MongoCredential {
         }
 
         this.mechanism = mechanism;
-        this.userName = notNull("userName", userName);
+        this.userName = userName;
         this.source = notNull("source", source);
 
         this.password = password != null ? password.clone() : null;
@@ -392,7 +420,7 @@ public final class MongoCredential {
         if (!source.equals(that.source)) {
             return false;
         }
-        if (!userName.equals(that.userName)) {
+        if (userName != null ? !userName.equals(that.userName) : that.userName != null) {
             return false;
         }
         if (!mechanismProperties.equals(that.mechanismProperties)) {
@@ -405,7 +433,7 @@ public final class MongoCredential {
     @Override
     public int hashCode() {
         int result = mechanism != null ? mechanism.hashCode() : 0;
-        result = 31 * result + userName.hashCode();
+        result = 31 * result + (userName != null ? userName.hashCode() : 0);
         result = 31 * result + source.hashCode();
         result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
         result = 31 * result + mechanismProperties.hashCode();

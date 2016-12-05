@@ -29,8 +29,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
- *  A factory for sort specifications.   A convenient way to use this class is to statically import all of its methods, which allows
- *  usage like:
+ * A factory for sort specifications.   A convenient way to use this class is to statically import all of its methods, which allows
+ * usage like:
  *
  * <blockquote><pre>
  *    collection.find().sort(orderBy(ascending("x", "y"), descending("z")))
@@ -118,19 +118,7 @@ public final class Sorts {
      */
     public static Bson orderBy(final List<Bson> sorts) {
         notNull("sorts", sorts);
-        return new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                BsonDocument combinedDocument = new BsonDocument();
-                for (Bson sort : sorts) {
-                    BsonDocument sortDocument = sort.toBsonDocument(documentClass, codecRegistry);
-                    for (String key : sortDocument.keySet()) {
-                        combinedDocument.append(key, sortDocument.get(key));
-                    }
-                }
-                return combinedDocument;
-            }
-        };
+        return new CompoundSort(sorts);
     }
 
     private static Bson orderBy(final List<String> fieldNames, final BsonValue value) {
@@ -139,5 +127,32 @@ public final class Sorts {
             document.append(fieldName, value);
         }
         return document;
+    }
+
+    private static final class CompoundSort implements Bson {
+        private final List<Bson> sorts;
+
+        private CompoundSort(final List<Bson> sorts) {
+            this.sorts = sorts;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocument combinedDocument = new BsonDocument();
+            for (Bson sort : sorts) {
+                BsonDocument sortDocument = sort.toBsonDocument(documentClass, codecRegistry);
+                for (String key : sortDocument.keySet()) {
+                    combinedDocument.append(key, sortDocument.get(key));
+                }
+            }
+            return combinedDocument;
+        }
+
+        @Override
+        public String toString() {
+            return "Compound Sort{"
+                           + "sorts=" + sorts
+                           + '}';
+        }
     }
 }

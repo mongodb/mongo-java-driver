@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.CursorType;
+import com.mongodb.client.model.Collation;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -153,4 +154,15 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      */
     @Override
     FindIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    FindIterable<TResult> collation(Collation collation);
 }

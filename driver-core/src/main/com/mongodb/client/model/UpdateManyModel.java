@@ -40,7 +40,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators.
+     *               operators.
      */
     public UpdateManyModel(final Bson filter, final Bson update) {
         this(filter, update, new UpdateOptions());
@@ -63,7 +63,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
     /**
      * Gets the query filter.
      *
-     * @return the query filtert
+     * @return the query filter
      */
     public Bson getFilter() {
         return filter;

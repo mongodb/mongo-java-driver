@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
@@ -42,6 +43,7 @@ class FindIterableSpecification extends Specification {
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
     def namespace = new MongoNamespace('db', 'coll')
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected findOperation'() {
         given:
@@ -97,6 +99,7 @@ class FindIterableSpecification extends Specification {
                 .oplogReplay(true)
                 .noCursorTimeout(true)
                 .partial(true)
+                .collation(collation)
                 .iterator()
 
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -117,6 +120,7 @@ class FindIterableSpecification extends Specification {
                 .noCursorTimeout(true)
                 .partial(true)
                 .slaveOk(true)
+                .collation(collation)
         )
     }
 

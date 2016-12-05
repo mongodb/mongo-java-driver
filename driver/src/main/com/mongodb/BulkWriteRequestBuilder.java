@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.client.model.Collation;
 import org.bson.codecs.Encoder;
 
 /**
@@ -32,6 +33,7 @@ public class BulkWriteRequestBuilder {
     private final DBObject query;
     private final Encoder<DBObject> codec;
     private final Encoder<DBObject> replacementCodec;
+    private Collation collation;
 
     BulkWriteRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final Encoder<DBObject> queryCodec,
                             final Encoder<DBObject> replacementCodec) {
@@ -42,17 +44,41 @@ public class BulkWriteRequestBuilder {
     }
 
     /**
+     * Returns the collation
+     *
+     * @return the collation
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation
+     *
+     * @param collation the collation
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public BulkWriteRequestBuilder collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    /**
      * Adds a request to remove all documents in the collection that match the query with which this builder was created.
      */
     public void remove() {
-        bulkWriteOperation.addRequest(new RemoveRequest(query, true, codec));
+        bulkWriteOperation.addRequest(new RemoveRequest(query, true, codec, collation));
     }
 
     /**
      * Adds a request to remove one document in the collection that matches the query with which this builder was created.
      */
     public void removeOne() {
-        bulkWriteOperation.addRequest(new RemoveRequest(query, false, codec));
+        bulkWriteOperation.addRequest(new RemoveRequest(query, false, codec, collation));
     }
 
     /**
@@ -62,7 +88,7 @@ public class BulkWriteRequestBuilder {
      *                 update operators.
      */
     public void replaceOne(final DBObject document) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).replaceOne(document);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).replaceOne(document);
     }
 
     /**
@@ -71,7 +97,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).update(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).update(update);
     }
 
     /**
@@ -80,7 +106,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).updateOne(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).updateOne(update);
     }
 
     /**
@@ -90,6 +116,6 @@ public class BulkWriteRequestBuilder {
      * @mongodb.driver.manual tutorial/modify-documents/#upsert-option Upsert
      */
     public BulkUpdateRequestBuilder upsert() {
-        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec);
+        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec, collation);
     }
 }

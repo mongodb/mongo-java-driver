@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.authentication;
 
-import com.mongodb.MongoInternalException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -24,8 +23,8 @@ import org.bson.BsonString;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+
+import static com.mongodb.internal.HexUtils.hexMD5;
 
 /**
  * Utility class for working with MongoDB native authentication.
@@ -76,43 +75,6 @@ public final class NativeAuthenticationHelper {
 
     public static BsonDocument getNonceCommand() {
         return new BsonDocument("getnonce", new BsonInt32(1));
-    }
-
-
-    /**
-     * Produce hex representation of the MD5 digest of a byte array
-     *
-     * @param data bytes to digest
-     * @return hex string of the MD5 digest
-     */
-    static String hexMD5(final byte[] data) {
-
-        try {
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-
-            md5.reset();
-            md5.update(data);
-            byte[] digest = md5.digest();
-
-            return toHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new MongoInternalException("Error - this implementation of Java doesn't support MD5.", e);
-        }
-    }
-
-    static String toHex(final byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-
-        for (final byte aByte : bytes) {
-            String s = Integer.toHexString(0xff & aByte);
-
-            if (s.length() < 2) {
-                sb.append("0");
-            }
-            sb.append(s);
-        }
-
-        return sb.toString();
     }
 
     private NativeAuthenticationHelper() {

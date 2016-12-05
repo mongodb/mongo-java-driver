@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * be used and options.
  * <p>The format of the URI is:
  * <pre>
- *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+ *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database.collection][?options]]
  * </pre>
  * <ul>
  * <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection format.</li>
@@ -44,6 +44,18 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * <p>The following options are supported (case insensitive):</p>
  *
+ * <p>Server Selection Configuration:</p>
+ * <ul>
+ * <li>{@code serverSelectionTimeoutMS=ms}: How long the driver will wait for server selection to succeed before throwing an exception.</li>
+ * <li>{@code localThresholdMS=ms}: When choosing among multiple MongoDB servers to send a request, the driver will only
+ * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+ * threshold.</li>
+ * </ul>
+ * <p>Server Monitoring Configuration:</p>
+ * <ul>
+ * <li>{@code heartbeatFrequencyMS=ms}: The frequency that the driver will attempt to determine the current state of each server in the
+ * cluster.</li>
+ * </ul>
  * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
@@ -53,6 +65,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * </ul>
@@ -71,9 +84,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <ul>
  *  <li>{@code safe=true|false}
  *      <ul>
- *          <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
+ *          <li>{@code true}: the driver ensures that all writes are acknowledged by the MongoDB server, or else throws an exception.
  * (see also {@code w} and {@code wtimeoutMS}).</li>
- *          <li>{@code false}: the driver does not send a getLastError command after every update.</li>
+ *          <li>{@code false}: the driver does not ensure that all writes are acknowledged by the MongoDB server.</li>
  *      </ul>
  *  </li>
  * <li>{@code journal=true|false}
@@ -84,14 +97,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </li>
  *  <li>{@code w=wValue}
  *      <ul>
- *          <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
+ *          <li>The driver adds { w : wValue } to all write commands. Implies {@code safe=true}.</li>
  *          <li>wValue is typically a number, but can be any string in order to allow for specifications like
  * {@code "majority"}</li>
  *      </ul>
  *  </li>
  *  <li>{@code wtimeoutMS=ms}
  *      <ul>
- *          <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li>
+ *          <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
  *          <li>Used in combination with {@code w}</li>
  *      </ul>
  *  </li>
@@ -122,6 +135,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>Order matters when using multiple readPreferenceTags.</li>
  * </ul>
  * </li>
+ * <li>{@code maxStalenessSeconds=seconds}. The maximum staleness in seconds. For use with any non-primary read preference, the driver
+ * estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses, and selects only those
+ * secondaries whose staleness is less than or equal to maxStalenessSeconds.  Not providing the parameter or explicitly setting it to -1
+ * indicates that there should be no max staleness check.  The maximum staleness feature is designed to prevent badly-lagging servers from
+ * being selected. The staleness estimate is imprecise and shouldn't be used to try to select "up-to-date" secondaries.  The minimum value
+ * is either 90 seconds, or the heartbeat frequency plus 10 seconds, whichever is greatest.
+ * </li>
  * </ul>
  * <p>Authentication configuration:</p>
  * <ul>
@@ -136,6 +156,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
  * </li>
+ * </ul>
+ * <p>Server Handshake configuration:</p>
+ * <ul>
+ * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
+ * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
  * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
@@ -291,6 +316,21 @@ public class MongoClientURI {
         }
         if (proxied.getSslEnabled() != null) {
             builder.sslEnabled(proxied.getSslEnabled());
+        }
+        if (proxied.getSslInvalidHostnameAllowed() != null) {
+            builder.sslInvalidHostNameAllowed(proxied.getSslInvalidHostnameAllowed());
+        }
+        if (proxied.getServerSelectionTimeout() != null) {
+            builder.serverSelectionTimeout(proxied.getServerSelectionTimeout());
+        }
+        if (proxied.getLocalThreshold() != null) {
+            builder.localThreshold(proxied.getLocalThreshold());
+        }
+        if (proxied.getHeartbeatFrequency() != null) {
+            builder.heartbeatFrequency(proxied.getHeartbeatFrequency());
+        }
+        if (proxied.getApplicationName() != null) {
+            builder.applicationName(proxied.getApplicationName());
         }
 
         return builder.build();

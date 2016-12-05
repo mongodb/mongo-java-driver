@@ -179,6 +179,21 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential.MONGODB_X509_MECHANISM == credential.getMechanism()
     }
 
+    def 'creating an X.509 Credential without a username should populate the correct fields'() {
+        given:
+        AuthenticationMechanism mechanism = AuthenticationMechanism.MONGODB_X509
+
+        when:
+        MongoCredential credential = MongoCredential.createMongoX509Credential()
+
+        then:
+        null == credential.getUserName()
+        '$external' == credential.getSource()
+        null == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.MONGODB_X509_MECHANISM == credential.getMechanism()
+    }
+
     def 'should get default value of mechanism property when there is no mapping'() {
         when:
         def credential = MongoCredential.createGSSAPICredential('user')
@@ -264,5 +279,29 @@ class MongoCredentialSpecification extends Specification {
         credentialOne.hashCode() != credentialTwo.hashCode()
 
         !credentialOne.toString().contains(password)
+    }
+
+    def 'testEqualsAndHashCode'() {
+        expect:
+        credential() == credential()
+        credential().hashCode() == credential().hashCode()
+
+        where:
+        credential << [
+            { MongoCredential.createCredential('user', 'database', 'pwd'.toCharArray()) },
+            { MongoCredential.createCredential('user', 'database', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoCRCredential('user', 'database', 'pwd'.toCharArray()) },
+            { MongoCredential.createMongoCRCredential('user', 'database', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createPlainCredential('user', '$external', 'pwd'.toCharArray()) },
+            { MongoCredential.createPlainCredential('user', '$external', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createScramSha1Credential('user', '$external', 'pwd'.toCharArray()) },
+            { MongoCredential.createScramSha1Credential('user', '$external', 'pwd'.toCharArray()).withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createGSSAPICredential('user') },
+            { MongoCredential.createGSSAPICredential('user').withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoX509Credential('user') },
+            { MongoCredential.createMongoX509Credential('user').withMechanismProperty('foo', 'bar') },
+            { MongoCredential.createMongoX509Credential() },
+            { MongoCredential.createMongoX509Credential().withMechanismProperty('foo', 'bar') },
+        ]
     }
 }

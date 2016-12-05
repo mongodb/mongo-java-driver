@@ -22,6 +22,7 @@ import com.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Subject
 
+@SuppressWarnings('deprecation')
 class ReplicaSetStatusSpecification extends Specification {
     private final ClusterDescription clusterDescription = Mock();
     private final Cluster cluster = Mock();

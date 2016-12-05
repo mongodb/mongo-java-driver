@@ -44,6 +44,7 @@ public class IndexOptions {
     private Double bucketSize;
     private Bson storageEngine;
     private Bson partialFilterExpression;
+    private Collation collation;
 
     /**
      * Create the index in the background
@@ -421,6 +422,31 @@ public class IndexOptions {
      */
     public IndexOptions partialFilterExpression(final Bson partialFilterExpression) {
         this.partialFilterExpression = partialFilterExpression;
+        return this;
+    }
+
+    /**
+     * Returns the collation options
+     *
+     * @return the collation options
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public Collation getCollation() {
+        return collation;
+    }
+
+    /**
+     * Sets the collation options
+     *
+     * <p>A null value represents the server default.</p>
+     * @param collation the collation options to use
+     * @return this
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     */
+    public IndexOptions collation(final Collation collation) {
+        this.collation = collation;
         return this;
     }
 }

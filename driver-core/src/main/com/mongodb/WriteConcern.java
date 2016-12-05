@@ -426,7 +426,7 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Returns whether "getlasterror" should be called (w &gt; 0)
+     * Returns true if this write concern indicates that write operations must be acknowledged.
      *
      * @return whether this write concern will result in an an acknowledged write
      * @deprecated Prefer {@link #isAcknowledged()}

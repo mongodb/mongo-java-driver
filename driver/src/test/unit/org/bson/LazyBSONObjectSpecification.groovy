@@ -17,10 +17,15 @@
 package org.bson
 
 import com.mongodb.BasicDBObject
+import com.mongodb.DBObjectCodec
+import com.mongodb.LazyDBCallback
+import com.mongodb.MongoClient
+import org.bson.codecs.DecoderContext
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.CodeWScope
+import org.bson.types.Decimal128
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -29,6 +34,11 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.regex.Pattern
+
+import static org.bson.BsonHelper.toBson
+import static org.bson.BsonHelper.valuesOfEveryType
+import static org.bson.BsonType.SYMBOL
+import static org.bson.BsonType.UNDEFINED
 
 @SuppressWarnings(['LineLength'])
 class LazyBSONObjectSpecification extends Specification {
@@ -64,6 +74,10 @@ class LazyBSONObjectSpecification extends Specification {
         [1, 2, 3] as int[]                                                    | [34, 0, 0, 0, 4, 102, 0, 26, 0, 0, 0, 16, 48, 0, 1, 0, 0, 0, 16, 49, 0, 2, 0, 0, 0, 16, 50, 0, 3, 0, 0, 0, 0, 0]
         [[]]                                                                  | [21, 0, 0, 0, 4, 102, 0, 13, 0, 0, 0, 4, 48, 0, 5, 0, 0, 0, 0, 0, 0]
         new Binary((byte) 0x01, (byte[]) [115, 116, 11])                      | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 1, 115, 116, 11, 0]
+        new Binary((byte) 0x03, (byte[]) [115, 116, 11])                      | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 3, 115, 116, 11, 0]
+        new Binary((byte) 0x04, (byte[]) [115, 116, 11])                      | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 4, 115, 116, 11, 0]
+        UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09')               | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 3, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
+        UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')               | [29, 0, 0, 0, 5, 102, 0, 16, 0, 0, 0, 4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0]
         [13, 12] as byte[]                                                    | [15, 0, 0, 0, 5, 102, 0, 2, 0, 0, 0, 0, 13, 12, 0]
         [102, 111, 111] as byte[]                                             | [16, 0, 0, 0, 5, 102, 0, 3, 0, 0, 0, 0, 102, 111, 111, 0]
         new ObjectId('50d3332018c6a1d8d1662b61')                              | [20, 0, 0, 0, 7, 102, 0, 80, -45, 51, 32, 24, -58, -95, -40, -47, 102, 43, 97, 0]
@@ -83,8 +97,37 @@ class LazyBSONObjectSpecification extends Specification {
         Long.MAX_VALUE                                                        | [16, 0, 0, 0, 18, 102, 0, -1, -1, -1, -1, -1, -1, -1, 127, 0]
         new MinKey()                                                          | [8, 0, 0, 0, -1, 102, 0, 0]
         new MaxKey()                                                          | [8, 0, 0, 0, 127, 102, 0, 0]
+        Decimal128.parse('0E-6176')                                           | [24, 0, 0, 0, 19, 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
         type = BsonType.findByValue(bytes[4])
+    }
+
+    @Unroll
+    def 'should read value of #value'() {
+        given:
+        def bsonDocument = new BsonDocument('name', value)
+        def dbObject = new DBObjectCodec(MongoClient.defaultCodecRegistry)
+                .decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build())
+        def lazyBSONObject = new LazyBSONObject(toBson(bsonDocument).array(), new LazyDBCallback())
+
+        expect:
+        lazyBSONObject.keySet().contains('name')
+
+        when:
+        def expectedValue
+        if (value.bsonType == UNDEFINED) {
+            expectedValue = null
+        } else if (value.bsonType == SYMBOL) {
+            expectedValue = new Symbol(((BsonSymbol) value).getSymbol())
+        } else {
+            expectedValue = dbObject.get('name')
+        }
+
+        then:
+        expectedValue == lazyBSONObject.get('name')
+
+        where:
+        value << valuesOfEveryType()
     }
 
     def 'should have nested items as lazy'() {
@@ -150,18 +193,28 @@ class LazyBSONObjectSpecification extends Specification {
         ]
 
         when:
-        LazyBSONObject bsonObject1 = new LazyBSONObject(bytes, new LazyBSONCallback())
-        LazyBSONObject bsonObject2 = new LazyBSONObject(bytes, new LazyBSONCallback())
-        LazyBSONObject bsonObject3 = new LazyBSONObject(bytes, 7, new LazyBSONCallback())
-        LazyBSONObject bsonObject4 = new LazyBSONObject(bytes, 24, new LazyBSONCallback())
-
+        def bsonObject1 = new LazyBSONObject(bytes, new LazyBSONCallback())
+        def bsonObject2 = new LazyBSONObject(bytes, new LazyBSONCallback())
+        def bsonObject3 = new LazyBSONObject(bytes, 7, new LazyBSONCallback())
+        def bsonObject4 = new LazyBSONObject(bytes, 24, new LazyBSONCallback())
+        def bsonObject5 = new LazyBSONObject([14, 0, 0, 0, 2, 120, 0, 2, 0, 0, 0, 121, 0, 0] as byte[], new LazyBSONCallback())
+        def bsonObject6 = new LazyBSONObject([5, 0, 0, 0, 0] as byte[], new LazyBSONCallback())
 
         then:
-        bsonObject1 == bsonObject2
-        bsonObject3 == bsonObject4
-        bsonObject1 != bsonObject3
-        bsonObject4 == new LazyBSONObject([14, 0, 0, 0, 2, 120, 0, 2, 0, 0, 0, 121, 0, 0] as byte[], new LazyBSONCallback())
-        bsonObject1 != new LazyBSONObject([] as byte[], new LazyBSONCallback())
+        bsonObject1.equals(bsonObject1)
+        !bsonObject1.equals(null)
+        !bsonObject1.equals('not equal')
+        bsonObject1.equals(bsonObject2)
+        bsonObject3.equals(bsonObject4)
+        !bsonObject1.equals(bsonObject3)
+        bsonObject4.equals(bsonObject5)
+        !bsonObject1.equals(bsonObject6)
+
+        bsonObject1.hashCode() == bsonObject2.hashCode()
+        bsonObject3.hashCode() == bsonObject4.hashCode()
+        bsonObject1.hashCode() != bsonObject3.hashCode()
+        bsonObject4.hashCode() == bsonObject5.hashCode()
+        bsonObject1.hashCode() != bsonObject6.hashCode()
     }
 
     def 'should return the size of a document'() {
@@ -203,14 +256,67 @@ class LazyBSONObjectSpecification extends Specification {
     def 'should implement Map.entrySet()'() {
         given:
         byte[] bytes = [16, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 8, 98, 0, 1, 0]
-
-        when:
         LazyBSONObject document = new LazyBSONObject(bytes, new LazyBSONCallback())
 
+        when:
+        def entrySet = document.entrySet()
+
         then:
-        document.entrySet().size() == 2
-        document.entrySet().find { it.value == 1 } != null
-        document.entrySet().find { it.value == true } != null
+        entrySet.size() == 2
+        !entrySet.isEmpty()
+        entrySet.contains(new AbstractMap.SimpleImmutableEntry('a', 1))
+        !entrySet.contains(new AbstractMap.SimpleImmutableEntry('a', 2))
+        entrySet.containsAll([new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)])
+        !entrySet.containsAll([new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', false)])
+        entrySet.toArray() == [new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)].toArray()
+        entrySet.toArray(new Map.Entry[2]) ==
+                [new AbstractMap.SimpleImmutableEntry('a', 1), new AbstractMap.SimpleImmutableEntry('b', true)].toArray()
+
+        when:
+        def iterator = entrySet.iterator()
+
+        then:
+        iterator.hasNext()
+        iterator.next() == new AbstractMap.SimpleImmutableEntry('a', 1)
+        iterator.hasNext()
+        iterator.next() == new AbstractMap.SimpleImmutableEntry('b', true)
+        !iterator.hasNext()
+
+        when:
+        entrySet.add(new AbstractMap.SimpleImmutableEntry('key', null))
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.addAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.clear()
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.remove(new AbstractMap.SimpleImmutableEntry('key', null))
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.removeAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        entrySet.retainAll([new AbstractMap.SimpleImmutableEntry('key', null)])
+
+        then:
+        thrown(UnsupportedOperationException)
     }
 
     def 'should throw on modification'() {

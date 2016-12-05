@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2015-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
@@ -43,6 +44,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private final Class<TResult> resultClass;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
+    private final WriteConcern writeConcern;
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final List<? extends Bson> pipeline;
@@ -52,18 +54,31 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private long maxTimeMS;
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
+    private Collation collation;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final OperationExecutor executor, final List<? extends Bson> pipeline) {
+                          final WriteConcern writeConcern, final OperationExecutor executor, final List<? extends Bson> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.readConcern = notNull("readConcern", readConcern);
+        this.writeConcern = notNull("writeConcern", writeConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
+    }
+
+    @Override
+    public void toCollection() {
+        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
+
+        if (getOutCollection(aggregateList) == null) {
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
+        }
+
+        executor.execute(createAggregateToCollectionOperation(aggregateList));
     }
 
     @Override
@@ -98,6 +113,12 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     }
 
     @Override
+    public AggregateIterable<TResult> collation(final Collation collation) {
+        this.collation = collation;
+        return this;
+    }
+
+    @Override
     public MongoCursor<TResult> iterator() {
         return execute().iterator();
     }
@@ -125,17 +146,13 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
 
-        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+        BsonValue outCollection = getOutCollection(aggregateList);
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
-                    .maxTime(maxTimeMS, MILLISECONDS)
-                    .allowDiskUse(allowDiskUse)
-                    .bypassDocumentValidation(bypassDocumentValidation);
-            executor.execute(operation);
+            executor.execute(createAggregateToCollectionOperation(aggregateList));
             FindIterable<TResult> findOperation = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, readPreference, readConcern, executor,
-                    new BsonDocument(), new FindOptions());
+                    new BsonDocument(), new FindOptions().collation(collation));
             if (batchSize != null) {
                 findOperation.batchSize(batchSize);
             }
@@ -146,14 +163,31 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
                     .useCursor(useCursor)
-                    .readConcern(readConcern),
+                    .readConcern(readConcern)
+                    .collation(collation),
                     readPreference, executor);
         }
+    }
+
+
+    private BsonValue getOutCollection(final List<BsonDocument> aggregateList) {
+        return aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+    }
+
+    private AggregateToCollectionOperation createAggregateToCollectionOperation(final List<BsonDocument> aggregateList) {
+        return new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
+                        .maxTime(maxTimeMS, MILLISECONDS)
+                        .allowDiskUse(allowDiskUse)
+                        .bypassDocumentValidation(bypassDocumentValidation)
+                        .collation(collation);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson obj : pipeline) {
+            if (obj == null) {
+                throw new IllegalArgumentException("pipeline can not contain a null value");
+            }
             aggregateList.add(obj.toBsonDocument(documentClass, codecRegistry));
         }
         return aggregateList;

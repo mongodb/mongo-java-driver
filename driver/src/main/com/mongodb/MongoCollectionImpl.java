@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2016 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -133,7 +134,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
-        return new MongoCollectionImpl<NewTDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, readConcern, executor);
+        return new MongoCollectionImpl<NewTDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, readConcern,
+                executor);
     }
 
     @Override
@@ -176,7 +178,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                        .filter(toBsonDocument(filter))
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
-                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                       .collation(options.getCollation());
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
@@ -225,7 +228,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, pipeline);
+                readConcern, writeConcern, executor, pipeline);
     }
 
     @Override
@@ -237,7 +240,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, mapFunction, reduceFunction);
+                readConcern, writeConcern, executor, mapFunction, reduceFunction);
     }
 
     @Override
@@ -248,10 +251,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     @SuppressWarnings("unchecked")
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests, final BulkWriteOptions options) {
+        notNull("requests", requests);
         List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
         for (WriteModel<? extends TDocument> writeModel : requests) {
             WriteRequest writeRequest;
-            if (writeModel instanceof InsertOneModel) {
+            if (writeModel == null) {
+                throw new IllegalArgumentException("requests can not contain a null value");
+            } else if (writeModel instanceof InsertOneModel) {
                 TDocument document = ((InsertOneModel<TDocument>) writeModel).getDocument();
                 if (getCodec() instanceof CollectibleCodec) {
                     document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
@@ -262,29 +268,33 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()), documentToBsonDocument(replaceOneModel
                                                                                                                      .getReplacement()),
                                                  WriteRequest.Type.REPLACE)
-                                   .upsert(replaceOneModel.getOptions().isUpsert());
+                                   .upsert(replaceOneModel.getOptions().isUpsert())
+                                   .collation(replaceOneModel.getOptions().getCollation());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                    .multi(false)
-                                   .upsert(updateOneModel.getOptions().isUpsert());
+                                   .upsert(updateOneModel.getOptions().isUpsert())
+                                   .collation(updateOneModel.getOptions().getCollation());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                    .multi(true)
-                                   .upsert(updateManyModel.getOptions().isUpsert());
+                                   .upsert(updateManyModel.getOptions().isUpsert())
+                                   .collation(updateManyModel.getOptions().getCollation());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false);
+                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false)
+                        .collation(deleteOneModel.getOptions().getCollation());
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true);
+                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true)
+                        .collation(deleteManyModel.getOptions().getCollation());
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
-
             writeRequests.add(writeRequest);
         }
 
@@ -299,6 +309,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void insertOne(final TDocument document, final InsertOneOptions options) {
+        notNull("document", document);
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
             insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
@@ -313,8 +324,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+        notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (TDocument document : documents) {
+            if (document == null) {
+                throw new IllegalArgumentException("documents can not contain a null value");
+            }
             if (getCodec() instanceof CollectibleCodec) {
                 document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
@@ -326,12 +341,22 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public DeleteResult deleteOne(final Bson filter) {
-        return delete(filter, false);
+        return deleteOne(filter, new DeleteOptions());
+    }
+
+    @Override
+    public DeleteResult deleteOne(final Bson filter, final DeleteOptions options) {
+        return delete(filter, options, false);
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter) {
-        return delete(filter, true);
+        return deleteMany(filter, new DeleteOptions());
+    }
+
+    @Override
+    public DeleteResult deleteMany(final Bson filter, final DeleteOptions options) {
+        return delete(filter, options, true);
     }
 
     @Override
@@ -342,7 +367,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
         return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
-                WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()), updateOptions.getBypassDocumentValidation()));
+                WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()).collation(updateOptions.getCollation()),
+                updateOptions.getBypassDocumentValidation()));
     }
 
     @Override
@@ -376,7 +402,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS));
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .collation(options.getCollation()));
     }
 
     @Override
@@ -394,7 +421,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                 .upsert(options.isUpsert())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .collation(options.getCollation()));
     }
 
     @Override
@@ -411,12 +439,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
                 .upsert(options.isUpsert())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .collation(options.getCollation()));
     }
 
     @Override
     public void drop() {
-        executor.execute(new DropCollectionOperation(namespace));
+        executor.execute(new DropCollectionOperation(namespace, writeConcern));
     }
 
     @Override
@@ -432,9 +461,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public List<String> createIndexes(final List<IndexModel> indexes) {
         notNull("indexes", indexes);
-
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
         for (IndexModel model : indexes) {
+            if (model == null) {
+                throw new IllegalArgumentException("indexes can not contain a null value");
+            }
             indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
                          .name(model.getOptions().getName())
                          .background(model.getOptions().isBackground())
@@ -452,9 +483,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          .max(model.getOptions().getMax())
                          .bucketSize(model.getOptions().getBucketSize())
                          .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
-                         .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression())));
+                         .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
+                         .collation(model.getOptions().getCollation())
+            );
         }
-        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests);
+        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
         executor.execute(createIndexesOperation);
         return createIndexesOperation.getIndexNames();
     }
@@ -471,12 +504,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void dropIndex(final String indexName) {
-        executor.execute(new DropIndexOperation(namespace, indexName));
+        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern));
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry)));
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern));
     }
 
     @Override
@@ -491,12 +524,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace)
+        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
                              .dropTarget(renameCollectionOptions.isDropTarget()));
     }
 
-    private DeleteResult delete(final Bson filter, final boolean multi) {
-        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi), null);
+    private DeleteResult delete(final Bson filter, final DeleteOptions deleteOptions, final boolean multi) {
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi)
+                .collation(deleteOptions.getCollation()), null);
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
         } else {
@@ -506,7 +540,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private UpdateResult update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi) {
         return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
-                WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi), updateOptions.getBypassDocumentValidation()));
+                WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi).collation(updateOptions.getCollation()),
+                updateOptions.getBypassDocumentValidation()));
     }
 
 

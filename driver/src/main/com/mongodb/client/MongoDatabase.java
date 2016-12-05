@@ -21,9 +21,12 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.CreateViewOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+
+import java.util.List;
 
 /**
  * The MongoDatabase interface.
@@ -113,6 +116,8 @@ public interface MongoDatabase {
      *
      * @param collectionName the name of the collection to return
      * @return the collection
+     * @throws IllegalArgumentException if collectionName is invalid
+     * @see com.mongodb.MongoNamespace#checkCollectionNameValidity(String)
      */
     MongoCollection<Document> getCollection(String collectionName);
 
@@ -167,7 +172,7 @@ public interface MongoDatabase {
     /**
      * Drops this database.
      *
-     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
+     * @mongodb.driver.manual reference/command/dropDatabase/#dbcmd.dropDatabase Drop database
      */
     void drop();
 
@@ -200,7 +205,7 @@ public interface MongoDatabase {
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName);
 
@@ -209,8 +214,32 @@ public interface MongoDatabase {
      *
      * @param collectionName          the name for the new collection to create
      * @param createCollectionOptions various options for creating the collection
-     * @mongodb.driver.manual reference/commands/create Create Command
+     * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName, CreateCollectionOptions createCollectionOptions);
 
+    /**
+     * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createView(String viewName, String viewOn, List<? extends Bson> pipeline);
+
+    /**
+     * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
+     *
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @param createViewOptions various options for creating the view
+     * @since 3.4
+     * @mongodb.server.release 3.4
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createView(String viewName, String viewOn, List<? extends Bson> pipeline, CreateViewOptions createViewOptions);
 }

@@ -29,9 +29,7 @@ import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonReader;
-import org.bson.json.JsonWriter;
 
-import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -82,7 +80,7 @@ final class MessageHelper {
         return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
     }
 
-    public static String decodeCommandAsJson(final BsonInput bsonInput) {
+    public static BsonDocument decodeCommand(final BsonInput bsonInput) {
         bsonInput.readInt32(); // length
         bsonInput.readInt32(); //requestId
         bsonInput.readInt32(); //responseTo
@@ -93,12 +91,11 @@ final class MessageHelper {
         bsonInput.readInt32(); // numToReturn
 
         BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
-        BsonDocumentCodec codec = new BsonDocumentCodec();
-        BsonDocument document = codec.decode(reader, DecoderContext.builder().build());
-        StringWriter writer = new StringWriter();
-        JsonWriter jsonWriter = new JsonWriter(writer);
-        codec.encode(jsonWriter, document, EncoderContext.builder().build());
-        return writer.toString();
+        return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
+    }
+
+    public static String decodeCommandAsJson(final BsonInput bsonInput) {
+        return decodeCommand(bsonInput).toJson();
     }
 
     private static ByteBuf encodeJson(final String json) {

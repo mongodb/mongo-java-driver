@@ -56,7 +56,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                         getCredentialList(), new NoOpConnectionListener())
+                getCredentialList(), new NoOpConnectionListener(), null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
@@ -100,7 +100,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast([2, 4, 0]) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should deliver started and completed command events for split unacknowleded inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])

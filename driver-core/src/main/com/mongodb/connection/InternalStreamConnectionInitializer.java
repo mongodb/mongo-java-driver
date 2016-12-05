@@ -31,9 +31,11 @@ import static com.mongodb.connection.DescriptionHelper.createConnectionDescripti
 
 class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
     private final List<Authenticator> authenticators;
+    private final BsonDocument clientMetadataDocument;
 
-    InternalStreamConnectionInitializer(final List<Authenticator> authenticators) {
+    InternalStreamConnectionInitializer(final List<Authenticator> authenticators, final BsonDocument clientMetadataDocument) {
         this.authenticators = notNull("authenticators", authenticators);
+        this.clientMetadataDocument = clientMetadataDocument;
     }
 
     @Override
@@ -80,9 +82,17 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
     }
 
     private ConnectionDescription initializeConnectionDescription(final InternalConnection internalConnection) {
-        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection);
+        BsonDocument isMasterResult = executeCommand("admin", createIsMasterCommand(), internalConnection);
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
         return createConnectionDescription(internalConnection.getDescription().getConnectionId(), isMasterResult, buildInfoResult);
+    }
+
+    private BsonDocument createIsMasterCommand() {
+        BsonDocument isMasterCommandDocument = new BsonDocument("ismaster", new BsonInt32(1));
+        if (clientMetadataDocument != null) {
+            isMasterCommandDocument.append("client", clientMetadataDocument);
+        }
+        return isMasterCommandDocument;
     }
 
     private ConnectionDescription completeConnectionDescriptionInitialization(final InternalConnection internalConnection,
@@ -103,7 +113,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
 
     private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
                                                       final SingleResultCallback<ConnectionDescription> callback) {
-        executeCommandAsync("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection,
+        executeCommandAsync("admin", createIsMasterCommand(), internalConnection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
                                 public void onResult(final BsonDocument isMasterResult, final Throwable t) {

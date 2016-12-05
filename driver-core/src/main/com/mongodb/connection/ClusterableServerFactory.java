@@ -17,9 +17,10 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.event.ServerListener;
 
 interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress);
+    ClusterableServer create(ServerAddress serverAddress, final ServerListener serverListener);
 
     ServerSettings getSettings();
 }

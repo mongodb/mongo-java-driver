@@ -16,13 +16,23 @@
 
 package com.mongodb;
 
+import com.mongodb.TaggableReadPreference.NearestReadPreference;
+import com.mongodb.TaggableReadPreference.PrimaryPreferredReadPreference;
+import com.mongodb.TaggableReadPreference.SecondaryPreferredReadPreference;
+import com.mongodb.TaggableReadPreference.SecondaryReadPreference;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A class that represents preferred replica set members to which a query or command can be sent.
@@ -62,7 +72,23 @@ public abstract class ReadPreference {
      * @param clusterDescription the cluster description
      * @return a list of matching server descriptions, which may be empty but may not be null
      */
-    public abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
+    public final List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+        switch (clusterDescription.getType()) {
+            case REPLICA_SET:
+                return chooseForReplicaSet(clusterDescription);
+            case SHARDED:
+            case STANDALONE:
+                return chooseForNonReplicaSet(clusterDescription);
+            case UNKNOWN:
+                return Collections.emptyList();
+            default:
+                throw new UnsupportedOperationException("Unsupported cluster type: " + clusterDescription.getType());
+        }
+    }
+
+    protected abstract List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription);
+
+    protected abstract List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription);
 
     /**
      * Gets a read preference that forces read to the primary.
@@ -110,6 +136,77 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary.
+     *
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads primary if available.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static ReadPreference primaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
+        return new PrimaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary that is less stale than the given maximum.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static ReadPreference secondary(final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary that is less stale than the given maximumm if one is available,
+     * otherwise to the primary.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>     *
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary if available, otherwise from primary.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static ReadPreference secondaryPreferred(final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryPreferredReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a primary or a secondary that is less stale than the given maximum.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads nearest
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static ReadPreference nearest(final long maxStaleness, final TimeUnit timeUnit) {
+        return new NearestReadPreference(Collections.<TagSet>emptyList(), maxStaleness, timeUnit);
+    }
+
+    /**
      * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with the given set of tags.
      *
      * @param tagSet the set of tags to limit the list of secondaries to.
@@ -117,7 +214,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference primaryPreferred(final TagSet tagSet) {
-        return new TaggableReadPreference.PrimaryPreferredReadPreference(tagSet);
+        return new PrimaryPreferredReadPreference(singletonList(tagSet), null, MILLISECONDS);
     }
 
     /**
@@ -128,7 +225,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference secondary(final TagSet tagSet) {
-        return new TaggableReadPreference.SecondaryReadPreference(tagSet);
+        return new SecondaryReadPreference(singletonList(tagSet), null, MILLISECONDS);
     }
 
     /**
@@ -139,7 +236,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference secondaryPreferred(final TagSet tagSet) {
-        return new TaggableReadPreference.SecondaryPreferredReadPreference(tagSet);
+        return new SecondaryPreferredReadPreference(singletonList(tagSet), null, MILLISECONDS);
     }
 
     /**
@@ -150,8 +247,95 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference nearest(final TagSet tagSet) {
-        return new TaggableReadPreference.NearestReadPreference(tagSet);
+        return new NearestReadPreference(singletonList(tagSet), null, MILLISECONDS);
     }
+
+    /**
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with the given set of tags
+     * that is less stale than the given maximum.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSet the set of tags to limit the list of secondaries to.
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.\
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference primaryPreferred(final TagSet tagSet,
+                                                          final long maxStaleness, final TimeUnit timeUnit) {
+        return new PrimaryPreferredReadPreference(singletonList(tagSet), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary with the given set of tags that is less stale than the given maximum.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSet the set of tags to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary respective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference secondary(final TagSet tagSet,
+                                                   final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryReadPreference(singletonList(tagSet), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary with the given set of tags that is less stale than the given maximum,
+     * or the primary is none are available.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>     *
+     * @param tagSet the set of tags to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference secondaryPreferred(final TagSet tagSet,
+                                                            final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryPreferredReadPreference(singletonList(tagSet), maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to the primary or a secondary with the given set of tags that is less stale than the
+     * given maximum.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSet the set of tags to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads nearest node respective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference nearest(final TagSet tagSet,
+                                                 final long maxStaleness, final TimeUnit timeUnit) {
+        return new NearestReadPreference(singletonList(tagSet), maxStaleness, timeUnit);
+    }
+
 
     /**
      * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with one of the given sets of tags.
@@ -163,7 +347,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference primaryPreferred(final List<TagSet> tagSetList) {
-        return new TaggableReadPreference.PrimaryPreferredReadPreference(tagSetList);
+        return new PrimaryPreferredReadPreference(tagSetList, null, MILLISECONDS);
     }
 
     /**
@@ -176,7 +360,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference secondary(final List<TagSet> tagSetList) {
-        return new TaggableReadPreference.SecondaryReadPreference(tagSetList);
+        return new SecondaryReadPreference(tagSetList, null, MILLISECONDS);
     }
 
     /**
@@ -189,7 +373,7 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference secondaryPreferred(final List<TagSet> tagSetList) {
-        return new TaggableReadPreference.SecondaryPreferredReadPreference(tagSetList);
+        return new SecondaryPreferredReadPreference(tagSetList, null, MILLISECONDS);
     }
 
     /**
@@ -202,7 +386,115 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference nearest(final List<TagSet> tagSetList) {
-        return new TaggableReadPreference.NearestReadPreference(tagSetList);
+        return new NearestReadPreference(tagSetList, null, MILLISECONDS);
+    }
+
+    /**
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with one of the given sets of tags
+     * that is less stale than the given maximum.
+     *
+     * <p>
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or failing if no secondary can be found that matches any of the tag sets in the list.
+     * </p>
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference primaryPreferred(final List<TagSet> tagSetList,
+                                                          final long maxStaleness, final TimeUnit timeUnit) {
+        return new PrimaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary with one of the given sets of tags that is less stale than
+     * the given maximum.
+     *
+     * <p>
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or failing if no secondary can be found that matches any of the tag sets in the list.
+     * </p>
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary respective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference secondary(final List<TagSet> tagSetList,
+                                                   final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryReadPreference(tagSetList, maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to a secondary with one of the given sets of tags that is less stale than
+     * the given maximum.
+     *
+     * <p>
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or the primary if none are available.
+     * </p>
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference secondaryPreferred(final List<TagSet> tagSetList,
+                                                            final long maxStaleness, final TimeUnit timeUnit) {
+        return new SecondaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
+    }
+
+    /**
+     * Gets a read preference that forces reads to the primary or a secondary with one of the given sets of tags that is less stale than
+     * the given maximum.
+     *
+     * <p>
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or the primary if none are available.
+     * </p>
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return ReadPreference which reads nearest node respective of tags.
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference nearest(final List<TagSet> tagSetList,
+                                                 final long maxStaleness, final TimeUnit timeUnit) {
+        return new NearestReadPreference(tagSetList, maxStaleness, timeUnit);
     }
 
     /**
@@ -246,27 +538,54 @@ public abstract class ReadPreference {
      * @since 2.13
      */
     public static TaggableReadPreference valueOf(final String name, final List<TagSet> tagSetList) {
-        if (name == null) {
-            throw new IllegalArgumentException("Name cannot be null");
-        }
+        return valueOf(name, tagSetList, null, MILLISECONDS);
+    }
+
+    /**
+     * Creates a taggable read preference from the given read preference name, list of tag sets, and max allowable staleness of secondaries.
+     *
+     * <p>
+     * The driver estimates the staleness of each secondary, based on lastWriteDate values provided in server isMaster responses,
+     * and selects only those secondaries whose staleness is less than or equal to maxStaleness.
+     * </p>
+     *
+     * @param name the name of the read preference
+     * @param tagSetList the list of tag sets
+     * @param maxStaleness the max allowable staleness of secondaries. The minimum value is either 90 seconds, or the heartbeat frequency
+     *                     plus 10 seconds, whichever is greatest.
+     * @param timeUnit the time unit of maxStaleness
+     * @return the taggable read preference
+     * @since 3.4
+     * @see TaggableReadPreference#getMaxStaleness(TimeUnit)
+     */
+    public static TaggableReadPreference valueOf(final String name, final List<TagSet> tagSetList, final long maxStaleness,
+                                                 final TimeUnit timeUnit) {
+        return valueOf(name, tagSetList, (Long) maxStaleness, timeUnit);
+    }
+
+    private static TaggableReadPreference valueOf(final String name, final List<TagSet> tagSetList, final Long maxStaleness,
+                                                  final TimeUnit timeUnit) {
+        notNull("name", name);
+        notNull("tagSetList", tagSetList);
+        notNull("timeUnit", timeUnit);
 
         String nameToCheck = name.toLowerCase();
 
         if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
-            throw new IllegalArgumentException("Primary read preference can not also specify tag sets");
+            throw new IllegalArgumentException("Primary read preference can not also specify tag sets or max staleness");
         }
 
         if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryReadPreference(tagSetList);
+            return new SecondaryReadPreference(tagSetList, maxStaleness, timeUnit);
         }
         if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryPreferredReadPreference(tagSetList);
+            return new SecondaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
         }
         if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.PrimaryPreferredReadPreference(tagSetList);
+            return new PrimaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
         }
         if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
-            return new TaggableReadPreference.NearestReadPreference(tagSetList);
+            return new NearestReadPreference(tagSetList, maxStaleness, timeUnit);
         }
 
         throw new IllegalArgumentException("No match for read preference of " + name);
@@ -299,12 +618,20 @@ public abstract class ReadPreference {
             return getName().hashCode();
         }
 
-        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+        public BsonDocument toDocument() {
+            return new BsonDocument("mode", new BsonString(getName()));
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             return clusterDescription.getPrimaries();
         }
 
-        public BsonDocument toDocument() {
-            return new BsonDocument("mode", new BsonString(getName()));
+        @Override
+        @SuppressWarnings("deprecation")
+        protected List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription) {
+            return clusterDescription.getAny();
         }
 
         @Override
@@ -321,9 +648,9 @@ public abstract class ReadPreference {
 
     static {
         PRIMARY = new PrimaryReadPreference();
-        SECONDARY = new TaggableReadPreference.SecondaryReadPreference();
-        SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
-        PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
-        NEAREST = new TaggableReadPreference.NearestReadPreference();
+        SECONDARY = new SecondaryReadPreference();
+        SECONDARY_PREFERRED = new SecondaryPreferredReadPreference();
+        PRIMARY_PREFERRED = new PrimaryPreferredReadPreference();
+        NEAREST = new NearestReadPreference();
    }
 }

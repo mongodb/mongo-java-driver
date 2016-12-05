@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.client.model.Collation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.DistinctOperation
 import org.bson.BsonDocument
@@ -40,6 +41,7 @@ class DistinctIterableSpecification extends Specification {
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT
+    def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected DistinctOperation'() {
         given:
@@ -54,18 +56,18 @@ class DistinctIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec()).filter(new BsonDocument()));
+        expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
+                .filter(new BsonDocument()));
         readPreference == secondary()
 
         when: 'overriding initial options'
-        distinctIterable.filter(new Document('field', 1)).maxTime(999, MILLISECONDS).batchSize(99).iterator()
+        distinctIterable.filter(new Document('field', 1)).maxTime(999, MILLISECONDS).batchSize(99).collation(collation).iterator()
 
         operation = executor.getReadOperation() as DistinctOperation<Document>
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument('field', new BsonInt32(1)))
-                .maxTime(999, MILLISECONDS))
+                .filter(new BsonDocument('field', new BsonInt32(1))).maxTime(999, MILLISECONDS).collation(collation))
     }
 
     def 'should handle exceptions correctly'() {
