@@ -91,6 +91,10 @@ public class JSONCallbackTest {
         Binary parsedBinary = (Binary) JSON.parse(("{ \"$binary\" : \"YWJjZA==\", \"$type\" : 0 }"));
         assertEquals(0, parsedBinary.getType());
         assertArrayEquals(new byte[]{97, 98, 99, 100}, parsedBinary.getData());
+
+        Binary parsedBinaryWithHexType = (Binary) JSON.parse(("{ \"$binary\" : \"YWJjZA==\", \"$type\" : \"80\" }"));
+        assertEquals((byte) 128, parsedBinaryWithHexType.getType());
+        assertArrayEquals(new byte[]{97, 98, 99, 100}, parsedBinaryWithHexType.getData());
     }
 
     @Test
