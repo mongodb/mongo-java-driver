@@ -19,8 +19,6 @@ package com.mongodb.util;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import org.bson.BSON;
-import org.bson.BSONCallback;
-import org.bson.BasicBSONObject;
 import org.bson.BsonUndefined;
 import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
@@ -29,7 +27,6 @@ import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
-import javax.xml.bind.DatatypeConverter;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
