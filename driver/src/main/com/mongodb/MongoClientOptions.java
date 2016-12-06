@@ -266,8 +266,8 @@ public class MongoClientOptions {
      * <p>Gets the server selection timeout in milliseconds, which defines how long the driver will wait for server selection to
      * succeed before throwing an exception.</p>
      *
-     * <p>Default is 30,000 milliseconds. A value of 0 means that it will timeout immediately if no server is available.  A negative value means to
-     * wait indefinitely.</p>
+     * <p>Default is 30,000 milliseconds. A value of 0 means that it will timeout immediately if no server is available.  A negative value
+     * means to wait indefinitely.</p>
      *
      * @return the server selection timeout in milliseconds.
      */
