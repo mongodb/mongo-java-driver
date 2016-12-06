@@ -143,12 +143,12 @@ public class JSONCallbackTest {
         assertEquals(number, Decimal128.parse("314E-2"));
     }
 
-    private Object objectDoneTestHelper(String jsonString, String rootName) {
+    private Object objectDoneTestHelper(final String jsonString, final String rootName) {
         JSONParser jsonParser = new JSONParser(jsonString);
         BSONCallback callback = jsonParser._callback;
         callback.objectStart();
         jsonParser.parseObject(rootName);
-        return ((BasicBSONObject)((BasicBSONObject) callback.get()).get(rootName)).get(rootName);
+        return ((BasicBSONObject) ((BasicBSONObject) callback.get()).get(rootName)).get(rootName);
     }
 
     @Test
@@ -156,7 +156,7 @@ public class JSONCallbackTest {
         String rootName = "testObj";
         String binaryString = "H4sIAAAAAA";
         int type = 0;
-        String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":" + type + "}}";
+        final String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":" + type + "}}";
 
         Object o1 = objectDoneTestHelper(jsonString, rootName);
 
@@ -172,7 +172,7 @@ public class JSONCallbackTest {
         String rootName = "testObj";
         String binaryString = "H4sIAAAAAA";
         String typeHex = "00";
-        String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":\"" + typeHex + "\"}}";
+        final String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":\"" + typeHex + "\"}}";
 
         Object o1 = objectDoneTestHelper(jsonString, rootName);
 
