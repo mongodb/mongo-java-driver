@@ -266,8 +266,8 @@ public class MongoClientOptions {
      * <p>Gets the server selection timeout in milliseconds, which defines how long the driver will wait for server selection to
      * succeed before throwing an exception.</p>
      *
-     * <p>Default is 30,000. A value of 0 means that it will timeout immediately if no server is available.  A negative value means to
-     * wait indefinitely.</p>
+     * <p>Default is 30,000 milliseconds. A value of 0 means that it will timeout immediately if no server is available.  A negative value
+     * means to wait indefinitely.</p>
      *
      * @return the server selection timeout in milliseconds.
      */
@@ -278,7 +278,7 @@ public class MongoClientOptions {
     /**
      * <p>The maximum wait time in milliseconds that a thread may wait for a connection to become available.</p>
      *
-     * <p>Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
+     * <p>Default is 120,000 milliseconds. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
      *
      * @return the maximum wait time.
      */
@@ -289,6 +289,8 @@ public class MongoClientOptions {
     /**
      * The maximum idle time of a pooled connection.  A zero value indicates no limit to the idle time.  A pooled connection that has
      * exceeded its idle time will be closed and replaced when necessary by a new connection.
+     *
+     * <p>Default is 0, indicating no limit to the idle time.</p>
      *
      * @return the maximum idle time, in milliseconds
      * @since 2.12
@@ -301,6 +303,8 @@ public class MongoClientOptions {
      * The maximum life time of a pooled connection.  A zero value indicates no limit to the life time.  A pooled connection that has
      * exceeded its life time will be closed and replaced when necessary by a new connection.
      *
+     * <p>Default is 0, indicating no limit to the life time.</p>
+     *
      * @return the maximum life time, in milliseconds
      * @since 2.12
      */
@@ -312,7 +316,7 @@ public class MongoClientOptions {
      * <p>The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
      * {@link java.net.Socket#connect(java.net.SocketAddress, int) }</p>
      *
-     * <p>Default is 10,000.</p>
+     * <p>Default is 10,000 milliseconds.</p>
      *
      * @return the socket connect timeout
      */
@@ -336,7 +340,7 @@ public class MongoClientOptions {
      * <p>This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
      * java.net.Socket#setKeepAlive(boolean)}</p>
      *
-     * <p>Default is false.</p>
+     * <p>Default is {@code false}.</p>
      *
      * @return whether keep-alive is enabled on each socket
      */
@@ -346,7 +350,9 @@ public class MongoClientOptions {
 
     /**
      * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
-     * cluster. The default value is 10,000 milliseconds.
+     * cluster.
+     *
+     * <p>Default is 10,000 milliseconds.</p>
      *
      * @return the heartbeat frequency, in milliseconds
      * @since 2.12
@@ -357,7 +363,9 @@ public class MongoClientOptions {
 
     /**
      * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-     * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 500 milliseconds.
+     * it will wait at least this long since the previous check to avoid wasted effort.
+     *
+     * <p>Default is 500 milliseconds.</p>
      *
      * @return the minimum heartbeat frequency, in milliseconds
      * @since 2.13
@@ -369,7 +377,7 @@ public class MongoClientOptions {
     /**
      * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>
      *
-     * <p>The default value is 20,000 milliseconds.</p>
+     * <p>Default is 20,000 milliseconds.</p>
      *
      * @return the heartbeat connect timeout, in milliseconds
      * @since 2.12
@@ -379,7 +387,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     * Gets the socket timeout for connections used for the cluster heartbeat.
+     *
+     * <p>Default is 20,000 milliseconds.</p>
      *
      * @return the heartbeat socket timeout, in milliseconds
      * @since 2.12
@@ -399,7 +409,7 @@ public class MongoClientOptions {
      * server1 or server2 (randomly selecting between the two).
      * </p>
      *
-     * <p> The default value is 15 milliseconds.</p>
+     * <p>Default is 15 milliseconds.</p>
      *
      * @return the local threshold, in milliseconds
      * @since 2.13.0
@@ -426,7 +436,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Whether to use SSL. The default is {@code false}.
+     * Whether to use SSL.
+     *
+     * <p>Default is {@code false}.</p>
      *
      * @return true if SSL should be used
      * @since 3.0
@@ -436,9 +448,11 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns whether invalid host names should be allowed if SSL is enabled.  Defaults to false.  Take care before setting this to
+     * Returns whether invalid host names should be allowed if SSL is enabled.  Take care before setting this to
      * true, as it makes the application susceptible to man-in-the-middle attacks.  Note that host name verification currently requires
      * Java 7, so if your application is using SSL and must run on Java 6, this property must be set to {@code true}.
+     *
+     * <p>Default is {@code false}.</p>
      *
      * @return true if invalid host names are allowed.
      */
@@ -498,7 +512,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the list of added {@code CommandListener}. The default is an empty list.
+     * Gets the list of added {@code CommandListener}.
+     *
+     * <p>Default is an empty list.</p>
      *
      * @return the unmodifiable list of command listeners
      * @since 3.1
@@ -538,7 +554,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
+     * Override the decoder factory.
+     *
+     * <p>Default is for the standard Mongo Java driver configuration.</p>
      *
      * @return the decoder factory
      */
@@ -547,7 +565,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Override the encoder factory. Default is for the standard Mongo Java driver configuration.
+     * Override the encoder factory.
+     *
+     * <p>Default is for the standard Mongo Java driver configuration.</p>
      *
      * @return the encoder factory
      */
@@ -559,7 +579,7 @@ public class MongoClientOptions {
      * <p>Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
      * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.</p>
      *
-     * <p> Default is false. </p>
+     * <p>Default is {@code false}.</p>
      *
      * @return true if JMX beans should always be MBeans
      */
