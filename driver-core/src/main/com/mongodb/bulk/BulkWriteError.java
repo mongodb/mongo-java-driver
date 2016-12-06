@@ -69,8 +69,8 @@ public class BulkWriteError extends WriteError {
 
     @Override
     public int hashCode() {
-        int result = index;
-        result = 31 * super.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + index;
         return result;
     }
 
