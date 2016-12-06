@@ -266,7 +266,7 @@ public class MongoClientOptions {
      * <p>Gets the server selection timeout in milliseconds, which defines how long the driver will wait for server selection to
      * succeed before throwing an exception.</p>
      *
-     * <p>Default is 30,000. A value of 0 means that it will timeout immediately if no server is available.  A negative value means to
+     * <p>Default is 30,000 milliseconds. A value of 0 means that it will timeout immediately if no server is available.  A negative value means to
      * wait indefinitely.</p>
      *
      * @return the server selection timeout in milliseconds.
@@ -278,7 +278,7 @@ public class MongoClientOptions {
     /**
      * <p>The maximum wait time in milliseconds that a thread may wait for a connection to become available.</p>
      *
-     * <p>Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
+     * <p>Default is 120,000 milliseconds. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
      *
      * @return the maximum wait time.
      */
@@ -290,7 +290,7 @@ public class MongoClientOptions {
      * The maximum idle time of a pooled connection.  A zero value indicates no limit to the idle time.  A pooled connection that has
      * exceeded its idle time will be closed and replaced when necessary by a new connection.
      *
-     * <p>Default is 0.</p>
+     * <p>Default is 0, indicating no limit to the idle time.</p>
      *
      * @return the maximum idle time, in milliseconds
      * @since 2.12
@@ -303,7 +303,7 @@ public class MongoClientOptions {
      * The maximum life time of a pooled connection.  A zero value indicates no limit to the life time.  A pooled connection that has
      * exceeded its life time will be closed and replaced when necessary by a new connection.
      *
-     * <p>Default is 0.</p>
+     * <p>Default is 0, indicating no limit to the life time.</p>
      *
      * @return the maximum life time, in milliseconds
      * @since 2.12
@@ -316,7 +316,7 @@ public class MongoClientOptions {
      * <p>The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
      * {@link java.net.Socket#connect(java.net.SocketAddress, int) }</p>
      *
-     * <p>Default is 10,000.</p>
+     * <p>Default is 10,000 milliseconds.</p>
      *
      * @return the socket connect timeout
      */
@@ -352,7 +352,7 @@ public class MongoClientOptions {
      * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
      * cluster.
      *
-     * <p>Default is 10,000.</p>
+     * <p>Default is 10,000 milliseconds.</p>
      *
      * @return the heartbeat frequency, in milliseconds
      * @since 2.12
@@ -365,7 +365,7 @@ public class MongoClientOptions {
      * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
      * it will wait at least this long since the previous check to avoid wasted effort.
      *
-     * <p>Default is 500.</p>
+     * <p>Default is 500 milliseconds.</p>
      *
      * @return the minimum heartbeat frequency, in milliseconds
      * @since 2.13
@@ -377,7 +377,7 @@ public class MongoClientOptions {
     /**
      * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>
      *
-     * <p>Default is 20,000.</p>
+     * <p>Default is 20,000 milliseconds.</p>
      *
      * @return the heartbeat connect timeout, in milliseconds
      * @since 2.12
@@ -389,7 +389,7 @@ public class MongoClientOptions {
     /**
      * Gets the socket timeout for connections used for the cluster heartbeat.
      *
-     * <p>Default is 20,000.</p>
+     * <p>Default is 20,000 milliseconds.</p>
      *
      * @return the heartbeat socket timeout, in milliseconds
      * @since 2.12
@@ -409,7 +409,7 @@ public class MongoClientOptions {
      * server1 or server2 (randomly selecting between the two).
      * </p>
      *
-     * <p>Default is 15.</p>
+     * <p>Default is 15 milliseconds.</p>
      *
      * @return the local threshold, in milliseconds
      * @since 2.13.0
@@ -554,7 +554,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Override the decoder factory. Default is for the standard Mongo Java driver configuration.
+     * Override the decoder factory.
+     *
+     * <p>Default is for the standard Mongo Java driver configuration.</p>
      *
      * @return the decoder factory
      */
