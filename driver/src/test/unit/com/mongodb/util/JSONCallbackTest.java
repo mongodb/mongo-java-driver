@@ -94,6 +94,10 @@ public class JSONCallbackTest {
         Binary parsedBinary = (Binary) JSON.parse(("{ \"$binary\" : \"YWJjZA==\", \"$type\" : 0 }"));
         assertEquals(0, parsedBinary.getType());
         assertArrayEquals(new byte[]{97, 98, 99, 100}, parsedBinary.getData());
+
+        Binary parsedBinaryWithHexType = (Binary) JSON.parse(("{ \"$binary\" : \"YWJjZA==\", \"$type\" : \"80\" }"));
+        assertEquals(128, parsedBinaryWithHexType.getType());
+        assertArrayEquals(new byte[]{97, 98, 99, 100}, parsedBinaryWithHexType.getData());
     }
 
     @Test
@@ -141,46 +145,5 @@ public class JSONCallbackTest {
     public void numberDecimalParsing() {
         Decimal128 number = (Decimal128) JSON.parse(("{\"$numberDecimal\" : \"314E-2\"}"));
         assertEquals(number, Decimal128.parse("314E-2"));
-    }
-
-    private Object objectDoneTestHelper(final String jsonString, final String rootName) {
-        JSONParser jsonParser = new JSONParser(jsonString);
-        BSONCallback callback = jsonParser._callback;
-        callback.objectStart();
-        jsonParser.parseObject(rootName);
-        return ((BasicBSONObject) ((BasicBSONObject) callback.get()).get(rootName)).get(rootName);
-    }
-
-    @Test
-    public void objectDoneIntTypeTest() throws Exception {
-        String rootName = "testObj";
-        String binaryString = "H4sIAAAAAA";
-        int type = 0;
-        final String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":" + type + "}}";
-
-        Object o1 = objectDoneTestHelper(jsonString, rootName);
-
-        byte[] bytes = DatatypeConverter.parseBase64Binary(binaryString);
-        Object o2 = new Binary((byte) type, bytes);
-
-        assertEquals(o1, o2);
-
-    }
-
-    @Test
-    public void objectDoneHexTypeTest() throws Exception {
-        String rootName = "testObj";
-        String binaryString = "H4sIAAAAAA";
-        String typeHex = "00";
-        final String jsonString = "{\"" + rootName + "\":{\"$binary\":\"" + binaryString + "\",\"$type\":\"" + typeHex + "\"}}";
-
-        Object o1 = objectDoneTestHelper(jsonString, rootName);
-
-        int type = Integer.decode(typeHex);
-        byte[] bytes = DatatypeConverter.parseBase64Binary(binaryString);
-        Object o2 = new Binary((byte) type, bytes);
-
-        assertEquals(o1, o2);
-
     }
 }
