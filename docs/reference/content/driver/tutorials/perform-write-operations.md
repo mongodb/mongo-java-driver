@@ -212,7 +212,7 @@ See also [Update a Document](#update-a-single-document).
 With the [`replaceOne`]({{< apiref "com/mongodb/client/MongoCollection.html#replaceOne-org.bson.conversions.Bson-TDocument-">}}), you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```java
-results = collection.replaceOne(
+collection.replaceOne(
                 eq("name", "Orange Patisserie and Gelateria"),
                 new Document("stars", 5)
                         .append("contact", "TBD")
