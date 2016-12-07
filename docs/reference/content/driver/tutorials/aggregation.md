@@ -27,6 +27,8 @@ The [aggregation pipeline]({{<docsref "/core/aggregation-pipeline">}}) is a fram
      import com.mongodb.client.model.Accumulators;
      import com.mongodb.client.model.Projections;
      import com.mongodb.client.model.Filters;
+     
+     import org.bson.Document;
      ```
 
 - Include the following code which the examples in the tutorials will use to print the results of the aggregation:
