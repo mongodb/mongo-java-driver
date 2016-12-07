@@ -39,12 +39,16 @@ You can also specify the connection string via the [`ConnectionString`]({{< apir
 To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) , set the ``sslEnabled`` property to ``true``, and the stream factory to [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
 
 ```java
+
+EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
+
+
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
                         .clusterSettings(ClusterSettings.builder()
                                           .hosts(Arrays.asList(new ServerAddress()))
                                           .build())
                         .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                                          .build())
+                                          .eventLoopGroup(eventLoopGroup).build())
                         .sslSettings(SslSettings.builder()
                                           .enabled(true)
                                           .build())
@@ -75,6 +79,9 @@ If your application must run on Java 6, or for some other reason you need
 to disable host name verification, you must explicitly indicate this using the `invalidHostNameAllowed` property:
 
 ```java
+
+EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
+
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
                                                  .clusterSettings(ClusterSettings.builder()
                                                                           .hosts(Arrays.asList(new ServerAddress()))
@@ -83,7 +90,8 @@ MongoClient client = MongoClients.create(MongoClientSettings.builder()
                                                                        .enabled(true)
                                                                        .invalidHostNameAllowed(true)
                                                                        .build())
-                                                  .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
+                                                  .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                                                                            .eventLoopGroup(eventLoopGroup).build())
                                                   .build());
 ```
 

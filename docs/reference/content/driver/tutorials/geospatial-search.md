@@ -19,6 +19,7 @@ To support geospatial queries, MongoDB provides various geospatial indexes as we
 - Include the following import statements:
 
      ```java
+     import com.mongodb.Block;
      import com.mongodb.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;

@@ -19,6 +19,19 @@ To support geospatial queries, MongoDB provides various geospatial indexes as we
 
 - Include the following import statements:
 
+```java
+import com.mongodb.Block;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.geojson.Point;
+import com.mongodb.client.model.geojson.Position;
+import org.bson.Document;
+```
 
 
 - Include the following callback code which the examples in the tutorials will use:
