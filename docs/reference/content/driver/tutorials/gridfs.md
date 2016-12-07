@@ -28,10 +28,12 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.*;
 import com.mongodb.client.gridfs.model.*;
-
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
+import static com.mongodb.client.model.Filters.eq;
 ```
 
 ## Connect to a MongoDB Deployment
@@ -95,7 +97,7 @@ try {
 
     ObjectId fileId = gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options);
 } catch (FileNotFoundException e){
-    System.out.println(e.getMessage());
+   // handle exception
 }
 ```
 
@@ -109,17 +111,19 @@ The following example uploads into a `GridFSBucket` via the returned `GridFSUplo
 
 ```java
 try {
-    GridFSUploadStream uploadStream = gridFSBucketFiles.openUploadStream("mongodb-tutorial-2", options);
+    GridFSUploadOptions options = new GridFSUploadOptions()
+                       .chunkSizeBytes(358400)
+                       .metadata(new Document("type", "presentation"));
+
+    GridFSUploadStream uploadStream = gridFSFilesBucket.openUploadStream("mongodb-tutorial-2", options);
     byte[] data = Files.readAllBytes(new File("/tmp/MongoDB-manual-master.pdf").toPath());
 
     uploadStream.write(data);
     uploadStream.close();
-    System.out.println("The fileId of the uploaded file is: " + uploadStream.getFileId().toHexString());
+    System.out.println("The fileId of the uploaded file is: " + uploadStream.getObjectId().toHexString());
 
-} catch (FileNotFoundException e1){
-    System.out.println(e1.getMessage());
-} catch(IOException e2){
-    System.out.println(e2.getMessage());
+} catch(IOException e){
+    // handle exception
 }
 ```
 
@@ -162,10 +166,17 @@ following example downloads a file by its file `_id` into the provided
 `OutputStream`:
 
 ```java
-FileOutputStream streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.pdf");
-gridFSBucket.downloadToStream(fileId, streamToDownloadTo);
-streamToDownloadTo.close();
-System.out.println(streamToDownloadTo.toString());
+ObjectId fileId; //The id of a file uploaded to GridFS, initialize to valid file id 
+
+try {
+    FileOutputStream streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.pdf");
+    gridFSBucket.downloadToStream(fileId, streamToDownloadTo);
+    streamToDownloadTo.close();
+    System.out.println(streamToDownloadTo.toString());
+} catch (IOException e) {
+    // handle exception
+}
+
 ```
 
 If you don't know the `_id` of the file but know the filename, then you can pass the filename to the [`downloadToStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#downloadToStream-java.lang.String-java.io.OutputStream-com.mongodb.client.gridfs.model.GridFSDownloadOptions-" >}}) method. By default, it will download the latest version of the file. Use the [`GridFSDownloadOptions`]({{< apiref "com/mongodb/client/gridfs/model/GridFSDownloadOptions.html" >}}) to configure which version to download.
@@ -173,10 +184,15 @@ If you don't know the `_id` of the file but know the filename, then you can pass
 The following example downloads the original version of the file named "mongodb-tutorial" into the `OutputStream`:
 
 ```java
-FileOutputStream streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.pdf");
-GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions().revision(0);
-gridFSBucket.downloadToStream("mongodb-tutorial", streamToDownloadTo, downloadOptions);
-streamToDownloadTo.close();   
+try {
+    FileOutputStream streamToDownloadTo = new FileOutputStream("/tmp/mongodb-tutorial.pdf");
+    GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions().revision(0);
+    gridFSBucket.downloadToStream("mongodb-tutorial", streamToDownloadTo, downloadOptions);
+    streamToDownloadTo.close();
+} catch (IOException e) {
+   // handle exception
+}
+
 ```
 
 ### OpenDownloadStream
@@ -187,6 +203,8 @@ The [`openDownloadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.ht
 The following example reads from the `GridFSBucket` via the returned `InputStream`:
 
 ```java
+ObjectId fileId; //The id of a file uploaded to GridFS, initialize to valid file id 
+
 GridFSDownloadStream downloadStream = gridFSBucket.openDownloadStream(fileId);
 int fileLength = (int) downloadStream.getGridFSFile().getLength();
 byte[] bytesToWriteTo = new byte[fileLength];
@@ -217,6 +235,8 @@ If you should need to rename a file, then use the [`rename`]({{< apiref "com/mon
 The following example renames a file to "mongodbTutorial":
 
 ```java
+ObjectId fileId; //ObjectId of a file uploaded to GridFS
+
 gridFSBucket.rename(fileId, "mongodbTutorial");
 ```
 
@@ -233,5 +253,7 @@ To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "com/mong
 The following example deletes a file from the `GridFSBucket`:
 
 ```java
+ObjectId fileId; //ObjectId of a file uploaded to GridFS
+
 gridFSBucket.delete(fileId);
 ```

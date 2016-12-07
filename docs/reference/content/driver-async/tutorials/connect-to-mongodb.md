@@ -113,7 +113,7 @@ MongoDB will auto-discover the primary and the secondaries.
 
       ```java
       MongoClient mongoClient = MongoClients.create(
-                  ConnectionString("mongodb://host1:27017,host2:27017,host3:27017"));
+            new ConnectionString("mongodb://host1:27017,host2:27017,host3:27017"));
       ```
 
   - Specify at least one member of the replica set and the replica set name:
