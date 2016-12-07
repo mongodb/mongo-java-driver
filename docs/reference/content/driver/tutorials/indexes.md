@@ -31,7 +31,7 @@ MongoDB only creates an index if an index of the same specification does not alr
      import com.mongodb.client.MongoCollection;
      import org.bson.Document;
 
-     import com.mongodb.client.model.Indexes.;
+     import com.mongodb.client.model.Indexes;
      import com.mongodb.client.model.IndexOptions;
      import com.mongodb.client.model.Filters;
      ```
