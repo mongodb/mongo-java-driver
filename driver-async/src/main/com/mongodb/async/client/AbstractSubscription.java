@@ -62,7 +62,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     @Override
     public void request(final long n) {
         if (n < 1) {
-            throw new IllegalArgumentException("Number requested cannot be negative: " + n);
+            throw new IllegalArgumentException("Number requested must be > 0: " + n);
         }
 
         boolean requestData = false;
