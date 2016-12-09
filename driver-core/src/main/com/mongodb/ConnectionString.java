@@ -30,11 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.AuthenticationMechanism.GSSAPI;
-import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
-import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
-import static com.mongodb.AuthenticationMechanism.PLAIN;
-import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -474,10 +469,6 @@ public class ConnectionString {
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
                                               final char[] password) {
-        if (userName == null) {
-            return null;
-        }
-
         AuthenticationMechanism mechanism = null;
         String authSource = (database == null) ? "admin" : database;
         String gssapiServiceName = null;
@@ -501,28 +492,38 @@ public class ConnectionString {
             }
         }
 
-        MongoCredential credential;
-        if (mechanism == GSSAPI) {
-            credential = MongoCredential.createGSSAPICredential(userName);
-            if (gssapiServiceName != null) {
-                credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+
+        MongoCredential credential = null;
+        if (mechanism != null) {
+            switch (mechanism) {
+                case GSSAPI:
+                    credential = MongoCredential.createGSSAPICredential(userName);
+                    if (gssapiServiceName != null) {
+                        credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+                    }
+                    break;
+                case PLAIN:
+                    credential = MongoCredential.createPlainCredential(userName, authSource, password);
+                    break;
+                case MONGODB_CR:
+                    credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
+                    break;
+                case MONGODB_X509:
+                    credential = MongoCredential.createMongoX509Credential(userName);
+                    break;
+                case SCRAM_SHA_1:
+                    credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
+                                                                           + "'%s' is not a supported authentication mechanism",
+                            mechanism));
             }
-        } else if (mechanism == PLAIN) {
-            credential = MongoCredential.createPlainCredential(userName, authSource, password);
-        } else if (mechanism == MONGODB_CR) {
-            credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
-        } else if (mechanism == MONGODB_X509) {
-            credential = MongoCredential.createMongoX509Credential(userName);
-        } else if (mechanism == SCRAM_SHA_1) {
-            credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
-        } else if (mechanism == null) {
+        } else if (userName != null) {
             credential = MongoCredential.createCredential(userName, authSource, password);
-        } else {
-            throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
-                    + "'%s' is not a supported authentication mechanism", mechanism));
         }
 
-        if (authMechanismProperties != null) {
+        if (credential != null && authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
                 String[] mechanismPropertyKeyValue = part.split(":");
                 if (mechanismPropertyKeyValue.length != 2) {

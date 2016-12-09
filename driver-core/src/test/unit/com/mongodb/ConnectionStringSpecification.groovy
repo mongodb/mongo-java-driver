@@ -181,6 +181,10 @@ class ConnectionStringSpecification extends Specification {
         'contains tags and primary mode'            | 'mongodb://localhost:27017/?readPreference=primary&readPreferenceTags=dc:ny'
         'contains max staleness and primary mode'   | 'mongodb://localhost:27017/?readPreference=primary&maxStalenessSeconds=100'
         'contains non-integral max staleness'       | 'mongodb://localhost:27017/?readPreference=secondary&maxStalenessSeconds=100.0'
+        'contains GSSAPI mechanism with no user'    | 'mongodb://localhost:27017/?authMechanism=GSSAPI'
+        'contains SCRAM mechanism with no user'     | 'mongodb://localhost:27017/?authMechanism=SCRAM-SHA-1'
+        'contains MONGODB mechanism with no user'   | 'mongodb://localhost:27017/?authMechanism=MONGODB-CR'
+        'contains PLAIN mechanism with no user'     | 'mongodb://localhost:27017/?authMechanism=PLAIN'
     }
 
     def 'should have correct defaults for options'() {
@@ -228,6 +232,8 @@ class ConnectionStringSpecification extends Specification {
                            'authMechanism=PLAIN')             | asList(createPlainCredential('jeff', 'admin', '123'.toCharArray()))
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential('jeff'))
+        new ConnectionString('mongodb://localhost/?' +
+                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential())
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI' +
                            '&gssapiServiceName=foo')          | asList(createGSSAPICredential('jeff')
@@ -251,6 +257,18 @@ class ConnectionStringSpecification extends Specification {
                                                                           .withMechanismProperty('SERVICE_NAME', 'foo')
                                                                           .withMechanismProperty('CANONICALIZE_HOST_NAME', true)
                                                                           .withMechanismProperty('SERVICE_REALM', 'AWESOME'))
+    }
+
+    def 'should ignore authSource if there is no credential'() {
+        expect:
+        new ConnectionString('mongodb://localhost/?authSource=test').credentialList == []
+
+    }
+
+    def 'should ignore authMechanismProperties if there is no credential'() {
+        expect:
+        new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credentialList == []
+
     }
 
     @Unroll
