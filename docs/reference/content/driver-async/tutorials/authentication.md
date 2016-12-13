@@ -157,9 +157,11 @@ MongoCredential credential = MongoCredential.createMongoX509Credential(user);
 ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
-                                  .build();
+                .clusterSettings(clusterSettings)
+                .credentialList(Arrays.asList(credential))
+                .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
+                .sslSettings(SslSettings.builder().enabled(true).build())
+                .build();
 MongoClient mongoClient = MongoClients.create(settings);
 ```
 
@@ -168,7 +170,7 @@ Or use a `ConnectionString` instance that explicitly specifies the
 
 ```java
 MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://subjectName@host1/?authMechanism=MONGODB-X509"));
+            "mongodb://subjectName@host1/?authMechanism=MONGODB-X509&streamType=netty&ssl=true"));
 ```
 
 See the MongoDB server
@@ -202,7 +204,7 @@ Or use a `ConnectionString` that explicitly specifies the
 
 ```java
 MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://username%40MYREALM.com@host1/?authMechanism=GSSAPI"));
+            "mongodb://username%40MYREALM.ME@host1/?authMechanism=GSSAPI"));
 ```
 
 {{% note %}}

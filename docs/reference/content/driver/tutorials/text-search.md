@@ -21,6 +21,7 @@ The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/mo
 - Include the following import statements:
 
      ```java
+     import com.mongodb.Block;
      import com.mongodb.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
@@ -29,6 +30,7 @@ The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/mo
      import com.mongodb.client.model.Filters;
      import com.mongodb.client.model.Sorts;
      import com.mongodb.client.model.TextSearchOptions;
+     import com.mongodb.client.model.Projections;
      import org.bson.Document;
      ```
 

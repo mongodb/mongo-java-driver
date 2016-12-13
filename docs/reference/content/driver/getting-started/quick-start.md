@@ -32,6 +32,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoCollection;
 
 import org.bson.Document;
+import java.util.Arrays;
+import com.mongodb.Block;
 
 import com.mongodb.client.MongoCursor;
 import static com.mongodb.client.model.Filters.*;
@@ -355,8 +357,6 @@ The following example increments the value of ``i`` by ``100`` for all documents
 ```java
 UpdateResult updateResult = collection.updateMany(lt("i", 100), inc("i", 100));
 System.out.println(updateResult.getModifiedCount());
-
-UpdateResult updateResult = collection.updateMany(lt("i", 100), new Document("$inc", new Document("i", 100))); System.out.println(updateResult.getModifiedCount());
 
 ```
 

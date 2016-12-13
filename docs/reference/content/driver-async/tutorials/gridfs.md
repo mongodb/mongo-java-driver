@@ -59,7 +59,7 @@ import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.
 import com.mongodb.async.SingleResultCallback;
 
 import com.mongodb.Block;
-
+import static com.mongodb.client.model.Filters.eq;
 import java.nio.charset.StandardCharsets;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -269,6 +269,8 @@ If you should need to rename a file, then use the [`rename`]({{< apiref "com/mon
 The following example renames a file to "mongodbTutorial":
 
 ```java
+ObjectId fileId; // The id of a file uploaded to GridFS, initialize to valid file id 
+...
 gridFSBucket.rename(fileId, "mongodbTutorial", new SingleResultCallback<Void>() {
     @Override
     public void onResult(final Void result, final Throwable t) {
@@ -290,6 +292,8 @@ To delete a file from the `GridFSBucket` use the [`delete`]({{< apiref "com/mong
 The following example deletes a file from the `GridFSBucket`:
 
 ```java
+ObjectId fileId; // The id of a file uploaded to GridFS, initialize to valid file id 
+...
 gridFSBucket.delete(fileId, new SingleResultCallback<Void>() {
     @Override
     public void onResult(final Void result, final Throwable t) {

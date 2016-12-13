@@ -25,25 +25,25 @@ operations:
 ```java
 // 1. Ordered bulk operation - order is guaranteed
 collection.bulkWrite(
-  Arrays.asList(new InsertOneModel<>(new Document("_id", 4)),
-                new InsertOneModel<>(new Document("_id", 5)),
-                new InsertOneModel<>(new Document("_id", 6)),
-                new UpdateOneModel<>(new Document("_id", 1),
+  Arrays.asList(new InsertOneModel<Document>(new Document("_id", 4)),
+                new InsertOneModel<Document>(new Document("_id", 5)),
+                new InsertOneModel<Document>(new Document("_id", 6)),
+                new UpdateOneModel<Document>(new Document("_id", 1),
                                      new Document("$set", new Document("x", 2))),
-                new DeleteOneModel<>(new Document("_id", 2)),
-                new ReplaceOneModel<>(new Document("_id", 3),
+                new DeleteOneModel<Document>(new Document("_id", 2)),
+                new ReplaceOneModel<Document>(new Document("_id", 3),
                                       new Document("_id", 3).append("x", 4))));
 
 
  // 2. Unordered bulk operation - no guarantee of order of operation
 collection.bulkWrite(
-  Arrays.asList(new InsertOneModel<>(new Document("_id", 4)),
-                new InsertOneModel<>(new Document("_id", 5)),
-                new InsertOneModel<>(new Document("_id", 6)),
-                new UpdateOneModel<>(new Document("_id", 1),
+  Arrays.asList(new InsertOneModel<Document>(new Document("_id", 4)),
+                new InsertOneModel<Document>(new Document("_id", 5)),
+                new InsertOneModel<Document>(new Document("_id", 6)),
+                new UpdateOneModel<Document>(new Document("_id", 1),
                                      new Document("$set", new Document("x", 2))),
-                new DeleteOneModel<>(new Document("_id", 2)),
-                new ReplaceOneModel<>(new Document("_id", 3),
+                new DeleteOneModel<Document>(new Document("_id", 2)),
+                new ReplaceOneModel<Document>(new Document("_id", 3),
                                       new Document("_id", 3).append("x", 4))),
   new BulkWriteOptions().ordered(false));
 ```
