@@ -487,7 +487,7 @@ public class ConnectionString {
                 authSource = value;
             } else if (key.equals("gssapiservicename")) {
                 gssapiServiceName = value;
-            } else if (key.endsWith("authmechanismproperties")) {
+            } else if (key.equals("authmechanismproperties")) {
                 authMechanismProperties = value;
             }
         }
