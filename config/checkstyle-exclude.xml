@@ -24,6 +24,13 @@
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="QuickTour"/>
 
+    <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/][^\\/]*\.java"/>
+    <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/]client[\\/][^\\/]*\.java"/>
+    <suppress checks="JavadocPackage" files="com[\\/]mongodb[\\/]client[\\/]model[\\/][^\\/]*\.java"/>
+    <suppress checks="JavadocPackage" files="org[\\/]bson[\\/][^\\/]*\.java"/>
+    <suppress checks="JavadocPackage" files="org[\\/]bson[\\/]io[\\/][^\\/]*\.java"/>
+    <suppress checks="JavadocPackage" files="org[\\/]bson[\\/]types[\\/][^\\/]*\.java"/>
+
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
 
     <!--Do not check primer classes -->
