@@ -28,7 +28,7 @@ The configuration of the `MongoClientFactory` differs depending on the applicati
 
         <module xmlns="urn:jboss:module:1.3" name="org.mongodb">
            <resources>
-               <resource-root path="mongo-java-driver-3.4.0.jar"/>
+               <resource-root path="mongo-java-driver-3.4.1.jar"/>
            </resources>
            <dependencies>
                <module name="javax.api"/>
@@ -40,7 +40,7 @@ The configuration of the `MongoClientFactory` differs depending on the applicati
 
 4. Add a binding to JBoss's naming subsystem configuration that references the above module, the `MongoClientFactory` class, and the
 connection string for the MongoDB cluster.
-
+                 
         <subsystem xmlns="urn:jboss:domain:naming:2.0">
             <bindings>
                 <object-factory name="java:global/MyMongoClient" module="org.mongodb" class="com.mongodb.client.jndi.MongoClientFactory">
