@@ -188,7 +188,7 @@ public final class Indexes {
      * @return the compound index specification
      * @mongodb.driver.manual core/index-compound compoundIndex
      */
-    public static Bson compoundIndex(final List<Bson> indexes) {
+    public static Bson compoundIndex(final List<? extends Bson> indexes) {
         notNull("indexes", indexes);
         return new Bson() {
             @Override

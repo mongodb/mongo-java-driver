@@ -57,7 +57,7 @@ public final class Updates {
      * @param updates the list of updates
      * @return a combined update
      */
-    public static Bson combine(final List<Bson> updates) {
+    public static Bson combine(final List<? extends Bson> updates) {
         notNull("updates", updates);
         return new CompositeUpdate(updates);
     }
@@ -591,9 +591,9 @@ public final class Updates {
     }
 
     private static class CompositeUpdate implements Bson {
-        private final List<Bson> updates;
+        private final List<? extends Bson> updates;
 
-        public CompositeUpdate(final List<Bson> updates) {
+        public CompositeUpdate(final List<? extends Bson> updates) {
             this.updates = updates;
         }
 
