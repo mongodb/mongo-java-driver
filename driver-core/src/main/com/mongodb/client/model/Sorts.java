@@ -116,7 +116,7 @@ public final class Sorts {
      * @param sorts the sort specifications
      * @return the combined sort specification
      */
-    public static Bson orderBy(final List<Bson> sorts) {
+    public static Bson orderBy(final List<? extends Bson> sorts) {
         notNull("sorts", sorts);
         return new CompoundSort(sorts);
     }
@@ -130,9 +130,9 @@ public final class Sorts {
     }
 
     private static final class CompoundSort implements Bson {
-        private final List<Bson> sorts;
+        private final List<? extends Bson> sorts;
 
-        private CompoundSort(final List<Bson> sorts) {
+        private CompoundSort(final List<? extends Bson> sorts) {
             this.sorts = sorts;
         }
 

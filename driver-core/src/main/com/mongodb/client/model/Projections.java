@@ -187,15 +187,15 @@ public final class Projections {
      * @return the combined projection
      * @mongodb.driver.manual
      */
-    public static Bson fields(final List<Bson> projections) {
+    public static Bson fields(final List<? extends Bson> projections) {
         notNull("sorts", projections);
         return new FieldsProjection(projections);
     }
 
     private static class FieldsProjection implements Bson {
-        private final List<Bson> projections;
+        private final List<? extends Bson> projections;
 
-        public FieldsProjection(final List<Bson> projections) {
+        public FieldsProjection(final List<? extends Bson> projections) {
             this.projections = projections;
         }
 
