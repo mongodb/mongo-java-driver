@@ -69,6 +69,21 @@ class IterableCodecSpecification extends Specification {
         iterable == [1, 2, 3, null]
     }
 
+    def 'should decode a BSON array of arrays to an Iterable of Iterables'() {
+        given:
+        def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap())
+        def reader = new BsonDocumentReader(parse('{array : [[1, 2], [3, 4, 5]]}'))
+
+        when:
+        reader.readStartDocument()
+        reader.readName('array')
+        def iterable = codec.decode(reader, DecoderContext.builder().build())
+        reader.readEndDocument()
+
+        then:
+        iterable == [[1, 2], [3, 4, 5]]
+    }
+
     def 'should use provided transformer'() {
         given:
         def codec = new IterableCodec(REGISTRY, new BsonTypeClassMap(), { Object from ->
