@@ -18,8 +18,10 @@
 package org.bson.codecs;
 
 import org.bson.BsonType;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import static java.lang.String.format;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -28,6 +30,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 3.3
  */
 public class BsonTypeCodecMap {
+    private final BsonTypeClassMap bsonTypeClassMap;
     private final Codec<?>[] codecs = new Codec<?>[256];
 
     /**
@@ -36,12 +39,16 @@ public class BsonTypeCodecMap {
      * @param codecRegistry the non-null CodecRegistry
      */
     public BsonTypeCodecMap(final BsonTypeClassMap bsonTypeClassMap, final CodecRegistry codecRegistry) {
-        notNull("bsonTypeClassMap", bsonTypeClassMap);
+        this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
         notNull("codecRegistry", codecRegistry);
         for (BsonType cur : bsonTypeClassMap.keys()) {
             Class<?> clazz = bsonTypeClassMap.get(cur);
             if (clazz != null) {
-                codecs[cur.getValue()] = codecRegistry.get(clazz);
+                try {
+                    codecs[cur.getValue()] = codecRegistry.get(clazz);
+                } catch (CodecConfigurationException e) {
+                    // delay reporting this until the codec is actually requested
+                }
             }
         }
     }
@@ -53,6 +60,15 @@ public class BsonTypeCodecMap {
      * @return the non-null Codec
      */
     public Codec<?> get(final BsonType bsonType) {
-        return codecs[bsonType.getValue()];
+        Codec<?> codec = codecs[bsonType.getValue()];
+        if (codec == null) {
+            Class<?> clazz = bsonTypeClassMap.get(bsonType);
+            if (clazz == null) {
+                throw new CodecConfigurationException(format("No class mapped for BSON type %s.", bsonType));
+            } else {
+                throw new CodecConfigurationException(format("Can't find a codec for %s.", clazz));
+            }
+        }
+        return codec;
     }
 }
