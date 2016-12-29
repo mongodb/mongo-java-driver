@@ -24,6 +24,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * A provider for a DBObjectCodec.
@@ -58,7 +59,7 @@ public class DBObjectCodecProvider implements CodecProvider {
             return (Codec<T>) new BSONTimestampCodec();
         }
 
-        if (DBObject.class.isAssignableFrom(clazz)) {
+        if (DBObject.class.isAssignableFrom(clazz) && !List.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new DBObjectCodec(registry, bsonTypeClassMap);
         }
 
