@@ -344,7 +344,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         public List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getAny());
+            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getAnyPrimaryOrSecondary());
             if (!getTagSetList().isEmpty()) {
                 ClusterDescription nonStaleClusterDescription = copyClusterDescription(clusterDescription, selectedServers);
                 selectedServers = Collections.emptyList();

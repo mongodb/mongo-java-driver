@@ -53,8 +53,24 @@
                     "data_center": "nyc"
                 }, 
                 "type": "RSSecondary"
+            },
+            {
+                "address": "d:27017",
+                "avg_rtt_ms": 5,
+                "tags": {
+                    "data_center": "nyc"
+                },
+                "type": "RSArbiter"
+            },
+            {
+                "address": "e:27017",
+                "avg_rtt_ms": 5,
+                "tags": {
+                    "data_center": "nyc"
+                },
+                "type": "RSGhost"
             }
-        ], 
+        ],
         "type": "ReplicaSetNoPrimary"
     }
 }
