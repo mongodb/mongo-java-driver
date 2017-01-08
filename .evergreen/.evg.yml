@@ -401,347 +401,32 @@ tasks:
 
     # Compile / check build variant
     - name: static-analysis
-      tags: ["releng"]
       commands:
         - func: "exec script"
           vars:
             file: ".evergreen/compile.sh"
         - func: "upload build"
 
-# }}}
-
-
-# Standard test tasks {{{
-    - name: "test-latest-replicaset"
-      depends_on:
-        - variant: "static-checks" 
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "latest"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-latest-sharded"
+    - name: "test"
       depends_on:
         - variant: "static-checks"
           name: "static-analysis"
       commands:
         - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "latest"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
         - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-latest-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "latest"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.4-replicaset"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.4"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.4-sharded"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.4"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.4-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.4"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.2-replicaset"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.2"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.2-sharded"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.2"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.2-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.2"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-    - name: "test-3.0-replicaset"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.0"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-3.0-sharded"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.0"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-    - name: "test-3.0-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "3.0"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-2.6-replicaset"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.6"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-2.6-sharded"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.6"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-2.6-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.6"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-    - name: "test-2.4-replicaset"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.4"
-            TOPOLOGY: "replica_set"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-
-    - name: "test-2.4-sharded"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.4"
-            TOPOLOGY: "sharded_cluster"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-    - name: "test-2.4-standalone"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
-      commands:
-        - func: "bootstrap mongo-orchestration"
-          vars:
-            VERSION: "2.4"
-            TOPOLOGY: "server"
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-        - func: "run tests"
-          vars:
-            AUTH: ${AUTH}
-            SSL: ${SSL}
-            JDK: ${JDK}
-
-# }}}
-
 
 axes:
-  - id: versions
+  - id: version
     display_name: MongoDB Version
     values:
       - id: "latest"
         display_name: "latest"
         variables:
            VERSION: "latest"
+      - id: "3.4"
+        display_name: "3.4"
+        variables:
+           VERSION: "3.4"
       - id: "3.2"
         display_name: "3.2"
         variables:
@@ -763,59 +448,59 @@ axes:
   - id: os
     display_name: OS
     values:
-      - id: rhel62 
+      - id: "rhel62"
         display_name: "RHEL 6.2"
         run_on: rhel62-test
 
   - id: topology
     display_name: Topology
     values:
-      - id: standalone
+      - id: "standalone"
         display_name: Standalone
         variables:
            TOPOLOGY: "server"
-      - id: replicaset
+      - id: "replicaset"
         display_name: Replica Set
         variables:
            TOPOLOGY: "replica_set"
-      - id: sharded-cluster
+      - id: "sharded-cluster"
         display_name: Sharded Cluster
         variables:
            TOPOLOGY: "sharded_cluster"
   - id: auth
     display_name: Authentication
     values:
-      - id: auth
+      - id: "auth"
         display_name: Auth
         variables:
            AUTH: "auth"
-      - id: noauth
+      - id: "noauth"
         display_name: NoAuth
         variables:
            AUTH: "noauth"
   - id: ssl
     display_name: SSL
     values:
-      - id: ssl
+      - id: "ssl"
         display_name: SSL
         variables:
            SSL: "ssl"
-      - id: nossl
+      - id: "nossl"
         display_name: NoSSL
         variables:
            SSL: "nossl"
   - id: jdk 
     display_name: JDK
     values:
-      - id: jdk8 
+      - id: "jdk8"
         display_name: JDK8 
         variables:
            JDK: "jdk8"
-      - id: jdk7 
+      - id: "jdk7"
         display_name: JDK7 
         variables:
            JDK: "jdk7"
-      - id: jdk6
+      - id: "jdk6"
         display_name: JDK6
         variables:
            JDK: "jdk6"
@@ -830,26 +515,16 @@ buildvariants:
   tasks:
     - name: "static-analysis"
 
-
-- matrix_name: "tests-all"
-  matrix_spec: {"os": "*", auth: "*", ssl: "*", jdk: "*" }
-  display_name: "${os} ${auth} ${ssl} ${jdk}"
+- matrix_name: "tests-jdk6"
+  matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+  exclude_spec: { version: "2.4", ssl: "ssl", jdk: "*", auth: "*", topology: "*", os: "*" }
+  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tasks:
-     - name: "test-latest-replicaset"
-     - name: "test-latest-sharded"
-     - name: "test-latest-standalone"
-     - name: "test-3.4-replicaset"
-     - name: "test-3.4-sharded"
-     - name: "test-3.4-standalone"
-     - name: "test-3.2-replicaset"
-     - name: "test-3.2-sharded"
-     - name: "test-3.2-standalone"
-     - name: "test-3.0-replicaset"
-     - name: "test-3.0-sharded"
-     - name: "test-3.0-standalone"
-     - name: "test-2.6-replicaset"
-     - name: "test-2.6-sharded"
-     - name: "test-2.6-standalone"
-     - name: "test-2.4-replicaset"
-     - name: "test-2.4-sharded"
-     - name: "test-2.4-standalone"
+     - name: "test"
+
+- matrix_name: "tests-jdk-other"
+  matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "latest", topology: "standalone", os: "rhel62" }
+  exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
+  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tasks:
+     - name: "test"
