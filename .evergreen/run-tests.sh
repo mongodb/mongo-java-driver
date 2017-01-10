@@ -38,7 +38,7 @@ provision_ssl () {
     openssl pkcs12 -CAfile ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -export -in ${DRIVERS_TOOLS}/.evergreen/x509gen/client.pem -out client.pkc -password pass:bithere
   fi
   if [ ! -f mongo-truststore ]; then
-    echo "y" | ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file .evergreen/ca.pem -keystore mongo-truststore -storepass hithere
+    echo "y" | ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass hithere
   fi
 
   # We add extra gradle arguments for SSL
