@@ -33,8 +33,6 @@ import org.bson.types.ObjectId
 import org.bson.types.Symbol
 import spock.lang.Specification
 
-import java.time.Instant
-
 class BsonTypeClassMapSpecification extends Specification {
     def 'should have defaults for all BSON types'() {
         when:
@@ -65,9 +63,9 @@ class BsonTypeClassMapSpecification extends Specification {
 
     def 'should obey replacements'() {
         when:
-        def map = new BsonTypeClassMap([(BsonType.DATE_TIME): Instant])
+        def map = new BsonTypeClassMap([(BsonType.DATE_TIME): java.sql.Date])
 
         then:
-        map.get(BsonType.DATE_TIME) == Instant
+        map.get(BsonType.DATE_TIME) == java.sql.Date
     }
 }
