@@ -60,7 +60,7 @@ provision_ssl () {
 # Provision the correct connection string and set up SSL if needed
 if [ "$TOPOLOGY" == "sharded_cluster" ]; then
 
-     if [ "$AUTH" != "noauth" ]; then
+     if [ "$AUTH" = "auth" ]; then
        export MONGODB_URI="mongodb://bob:pwd123@localhost:27017/?authSource=admin"
      else
        export MONGODB_URI="mongodb://localhost:27017"
