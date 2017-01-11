@@ -338,7 +338,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -360,7 +360,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),

@@ -68,7 +68,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
 
     def setup() {
         getCollectionHelper().insertDocuments(a, b, c)
-        getCollectionHelper().createIndex(new Document('y', 'text'))
     }
 
     def 'find'(Bson filter) {
@@ -255,6 +254,9 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     @SuppressWarnings('deprecated')
     @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should render $text'() {
+        given:
+        getCollectionHelper().createIndex(new Document('y', 'text'))
+
         when:
         def textDocument = new Document('_id', 4).append('y', 'mongoDB for GIANT ideas')
         collectionHelper.insertDocuments(textDocument)

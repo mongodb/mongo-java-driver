@@ -52,7 +52,6 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
 
     def setup() {
         getCollectionHelper().insertDocuments(a)
-        getCollectionHelper().createIndex(new Document('y', 'text'))
     }
 
     def 'find'(Bson projection) {
@@ -101,6 +100,9 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
 
     @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'metaTextScore'() {
+        given:
+        getCollectionHelper().createIndex(new Document('y', 'text'))
+
         expect:
         find(metaTextScore('score')) == [aWithScore]
     }

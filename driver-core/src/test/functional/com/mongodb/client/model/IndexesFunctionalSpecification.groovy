@@ -108,7 +108,7 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{x : "geoHaystack", b: -1}'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'text'() {
         when:
         getCollectionHelper().createIndex(text('x'))
