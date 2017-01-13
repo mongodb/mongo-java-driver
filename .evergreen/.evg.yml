@@ -216,6 +216,14 @@ functions:
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} JDK="${JDK}" .evergreen/run-tests.sh
 
+  "publish snapshot":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USER=${sonatype_username} NEXUS_PWD=${sonatype_password} SIGNING_PWD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+
   "cleanup":
     - command: shell.exec
       params:
@@ -309,6 +317,13 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+
+    - name: publish-snapshot
+      depends_on:
+        - variant: ".tests-variant"
+          name: "test"
+      commands:
+        - func: "publish snapshot"
 
 axes:
   - id: version
@@ -412,6 +427,7 @@ buildvariants:
   matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
   exclude_spec: { version: "2.4", ssl: "ssl", jdk: "*", auth: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
   tasks:
      - name: "test"
 
@@ -419,5 +435,13 @@ buildvariants:
   matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "latest", topology: "standalone", os: "rhel62" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
   tasks:
      - name: "test"
+
+- name: publish-snapshot
+  display_name: "Publish Snapshot"
+  run_on:
+    - rhel62-test
+  tasks:
+    - name: "publish-snapshot"
