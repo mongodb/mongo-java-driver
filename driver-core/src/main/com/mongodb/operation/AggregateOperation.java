@@ -50,10 +50,11 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -317,7 +318,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     }
 
     private boolean isInline(final ConnectionDescription description) {
-        return (useCursor != null && !useCursor) || !serverIsAtLeastVersionTwoDotSix(description);
+        return !serverIsAtLeastVersionThreeDotSix(description)
+                       && ((useCursor != null && !useCursor) || !serverIsAtLeastVersionTwoDotSix(description));
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
@@ -326,7 +328,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
-        if ((useCursor == null || useCursor) && serverIsAtLeastVersionTwoDotSix(description)) {
+        if (!isInline(description)) {
             BsonDocument cursor = new BsonDocument();
             if (batchSize != null) {
                 cursor.put("batchSize", new BsonInt32(batchSize));
@@ -347,7 +349,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     }
 
     String getFieldNameWithResults(final ConnectionDescription description) {
-        return ((useCursor == null || useCursor) && serverIsAtLeastVersionTwoDotSix(description)) ? FIRST_BATCH : RESULT;
+        return (isInline(description)) ? RESULT : FIRST_BATCH;
     }
 
     @SuppressWarnings("unchecked")

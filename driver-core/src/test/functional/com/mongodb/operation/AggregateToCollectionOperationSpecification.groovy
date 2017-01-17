@@ -233,18 +233,23 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
             operation.collation(defaultCollation)
             expectedCommand.append('collation', defaultCollation.asDocument())
         }
+        if (useCursor) {
+            expectedCommand.append('cursor', new BsonDocument())
+        }
 
         then:
         testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'))
 
         where:
-        serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async
-        [3, 4, 0]     | true                    | true                | true             | true
-        [3, 4, 0]     | true                    | true                | true             | false
-        [3, 2, 0]     | true                    | false               | false            | true
-        [3, 2, 0]     | true                    | false               | false            | false
-        [3, 0, 0]     | false                   | false               | false            | true
-        [3, 0, 0]     | false                   | false               | false            | false
+        serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async  | useCursor
+        [3, 6, 0]     | true                    | true                | true             | true   | true
+        [3, 6, 0]     | true                    | true                | true             | false  | true
+        [3, 4, 0]     | true                    | true                | true             | true   | false
+        [3, 4, 0]     | true                    | true                | true             | false  | false
+        [3, 2, 0]     | true                    | false               | false            | true   | false
+        [3, 2, 0]     | true                    | false               | false            | false  | false
+        [3, 0, 0]     | false                   | false               | false            | true   | false
+        [3, 0, 0]     | false                   | false               | false            | false  | false
 
     }
 

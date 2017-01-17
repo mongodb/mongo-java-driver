@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.AggregationOptions.OutputMode.CURSOR;
-import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
@@ -1377,7 +1376,7 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final List<? extends DBObject> pipeline, final ReadPreference readPreference) {
-        Cursor cursor = aggregate(pipeline, AggregationOptions.builder().outputMode(INLINE).build(), readPreference, false);
+        Cursor cursor = aggregate(pipeline, AggregationOptions.builder().build(), readPreference, false);
 
         if (cursor == null) {
             return new AggregationOutput(Collections.<DBObject>emptyList());

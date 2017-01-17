@@ -629,7 +629,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false))
+                collection.getDefaultDBObjectCodec()).useCursor(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -637,7 +637,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.MAJORITY))
+                collection.getDefaultDBObjectCodec()).useCursor(true).readConcern(ReadConcern.MAJORITY))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -645,7 +645,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(collation))
+                collection.getDefaultDBObjectCodec()).useCursor(true).readConcern(ReadConcern.LOCAL).collation(collation))
     }
 
     def 'aggregate should create the correct AggregateToCollectionOperation'() {
