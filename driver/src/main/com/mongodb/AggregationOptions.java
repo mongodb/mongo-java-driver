@@ -89,7 +89,7 @@ public class AggregationOptions {
     /**
      * The mode of output for this configuration.
      *
-     * @return whether the output will be inline or via a cursor
+     * @return whether the output will be inline or via a cursor, which defaults to {@link OutputMode#CURSOR}
      * @see OutputMode
      */
     public OutputMode getOutputMode() {
@@ -161,7 +161,7 @@ public class AggregationOptions {
     public static class Builder {
         private Integer batchSize;
         private Boolean allowDiskUse;
-        private OutputMode outputMode = OutputMode.INLINE;
+        private OutputMode outputMode = OutputMode.CURSOR;
         private long maxTimeMS;
         private Boolean bypassDocumentValidation;
         private Collation collation;
@@ -197,7 +197,7 @@ public class AggregationOptions {
         /**
          * The mode of output for this configuration.
          *
-         * @param mode an {@code OutputMode} that defines how to output the results of the aggregation
+         * @param mode an {@code OutputMode} that defines how to output the results of the aggregation.
          * @return {@code this} so calls can be chained
          * @see OutputMode
          */
