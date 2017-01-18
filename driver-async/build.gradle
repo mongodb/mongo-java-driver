@@ -40,7 +40,7 @@ clirr {
 
 tasks.withType(Checkstyle) {
     // needed so the Javadoc checks can find the code in other modules
-    classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
+    classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output)
 }
 
 modifyPom {

@@ -73,6 +73,13 @@ configure(subprojects.findAll { it.name != 'util' }) {
         project.hasProperty(propertyName) && project.property(propertyName).toBoolean()
     }
 
+    tasks.withType(Checkstyle) {
+        reports {
+            xml.enabled true
+            html.enabled true
+        }
+    }
+
     javadoc {
         exclude "**/com/mongodb/**/internal/**"
 
@@ -234,7 +241,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     /* Code quality */
 
     checkstyle {
-        toolVersion = "6.2"
+        toolVersion = "7.4"
         configFile = new File(configDir, 'checkstyle.xml')
         configProperties.checkstyleConfigDir = configDir
     }
@@ -271,7 +278,7 @@ task docs(type: Javadoc) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '2.14.1'
 }
 
 gradle.buildFinished { BuildResult result ->
