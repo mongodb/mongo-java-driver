@@ -428,7 +428,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk-other"
-  matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "latest", topology: "standalone", os: "rhel62" }
+  matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "3.4", topology: "standalone", os: "rhel62" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
