@@ -216,6 +216,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} JDK="${JDK}" .evergreen/run-tests.sh
 
+  "run plain auth test":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          JDK="jdk8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
+
   "publish snapshot":
     - command: shell.exec
       type: test
@@ -317,6 +326,13 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+
+    - name: "plain-auth-test"
+      depends_on:
+        - variant: "static-checks"
+          name: "static-analysis"
+      commands:
+        - func: "run plain auth test"
 
     - name: publish-snapshot
       depends_on:
@@ -434,6 +450,13 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
      - name: "test"
+
+- name: plain-auth-test
+  display_name: "PLAIN (LDAP) Auth test"
+  run_on:
+    - rhel62-test
+  tasks:
+    - name: "plain-auth-test"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
