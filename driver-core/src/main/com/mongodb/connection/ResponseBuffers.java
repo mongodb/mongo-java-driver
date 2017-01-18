@@ -25,13 +25,7 @@ class ResponseBuffers implements Closeable {
     private final ByteBuf bodyByteBuffer;
     private volatile boolean isClosed;
 
-    /**
-     * Construct an instance.
-     *
-     * @param replyHeader the reply header
-     * @param bodyByteBuffer a byte buffer containing the message body
-     */
-    public ResponseBuffers(final ReplyHeader replyHeader, final ByteBuf bodyByteBuffer) {
+    ResponseBuffers(final ReplyHeader replyHeader, final ByteBuf bodyByteBuffer) {
         this.replyHeader = replyHeader;
         this.bodyByteBuffer = bodyByteBuffer;
     }

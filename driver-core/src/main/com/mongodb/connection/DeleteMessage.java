@@ -30,15 +30,7 @@ import java.util.List;
 class DeleteMessage extends RequestMessage {
     private final List<DeleteRequest> deleteRequests;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection name
-     * @param deletes        the list of delete requests
-     * @param settings       the message settings
-     */
-    public DeleteMessage(final String collectionName, final List<DeleteRequest> deletes,
-                         final MessageSettings settings) {
+    DeleteMessage(final String collectionName, final List<DeleteRequest> deletes, final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
         this.deleteRequests = deletes;
     }

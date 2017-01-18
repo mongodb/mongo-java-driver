@@ -31,7 +31,7 @@ class DBDecoderAdapter implements Decoder<DBObject> {
     private final DBCollection collection;
     private final BufferProvider bufferProvider;
 
-    public DBDecoderAdapter(final DBDecoder decoder, final DBCollection collection, final BufferProvider bufferProvider) {
+    DBDecoderAdapter(final DBDecoder decoder, final DBCollection collection, final BufferProvider bufferProvider) {
         this.decoder = decoder;
         this.collection = collection;
         this.bufferProvider = bufferProvider;

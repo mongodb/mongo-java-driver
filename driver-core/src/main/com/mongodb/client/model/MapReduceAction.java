@@ -49,7 +49,7 @@ public enum MapReduceAction {
 
     private final String value;
 
-    private MapReduceAction(final String value) {
+    MapReduceAction(final String value) {
         this.value = value;
     }
 

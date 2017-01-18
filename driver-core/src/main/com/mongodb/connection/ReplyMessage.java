@@ -39,14 +39,7 @@ class ReplyMessage<T> {
     private final ReplyHeader replyHeader;
     private final List<T> documents;
 
-    /**
-     * Construct an instance.
-     *
-     * @param responseBuffers the response buffers containing the reply
-     * @param decoder the decoder for the result documents
-     * @param requestId the expected request id that this is a reply to
-     */
-    public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
+    ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
         this(responseBuffers.getReplyHeader(), requestId);
 
         if (replyHeader.getNumberReturned() > 0) {

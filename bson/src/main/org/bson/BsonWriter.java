@@ -151,7 +151,7 @@ public interface BsonWriter {
      * @param value The Decimal128 value.
      * @since 3.4
      */
-    void writeDecimal128(final Decimal128 value);
+    void writeDecimal128(Decimal128 value);
 
     /**
      * Writes a BSON Decimal128 element to the writer.

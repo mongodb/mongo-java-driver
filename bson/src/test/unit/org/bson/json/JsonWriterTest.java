@@ -48,7 +48,7 @@ public class JsonWriterTest {
         private final T value;
         private final String expected;
 
-        public TestData(final T value, final String expected) {
+        TestData(final T value, final String expected) {
             this.value = value;
             this.expected = expected;
         }
@@ -274,8 +274,7 @@ public class JsonWriterTest {
     public void testInt64Shell() {
         List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "NumberLong(\"-9223372036854775808\")"),
                 new TestData<Long>(Integer.MIN_VALUE - 1L, "NumberLong(\"-2147483649\")"),
-                new TestData<Long>(Integer.MIN_VALUE + 0L, "NumberLong(-2147483648)")
-                ,
+                new TestData<Long>(Integer.MIN_VALUE + 0L, "NumberLong(-2147483648)"),
                 new TestData<Long>(0L, "NumberLong(0)"),
                 new TestData<Long>(Integer.MAX_VALUE + 0L, "NumberLong(2147483647)"),
                 new TestData<Long>(Integer.MAX_VALUE + 1L, "NumberLong(\"2147483648\")"),

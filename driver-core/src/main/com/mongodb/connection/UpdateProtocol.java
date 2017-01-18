@@ -44,16 +44,8 @@ class UpdateProtocol extends WriteProtocol {
 
     private final List<UpdateRequest> updates;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the delete are ordered
-     * @param writeConcern the write concern to apply
-     * @param updates      the updates
-     */
-    public UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<UpdateRequest> updates) {
+    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                   final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);
         this.updates = updates;
     }

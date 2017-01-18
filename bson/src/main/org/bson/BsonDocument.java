@@ -860,7 +860,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
 
         private final byte[] bytes;
 
-        public SerializationProxy(final BsonDocument document) {
+        SerializationProxy(final BsonDocument document) {
             BasicOutputBuffer buffer = new BasicOutputBuffer();
             new BsonDocumentCodec().encode(new BsonBinaryWriter(buffer), document, EncoderContext.builder().build());
             this.bytes = new byte[buffer.size()];

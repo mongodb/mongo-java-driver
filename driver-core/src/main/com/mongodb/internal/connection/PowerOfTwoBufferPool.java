@@ -111,7 +111,7 @@ public class PowerOfTwoBufferPool implements BufferProvider {
 
     private class PooledByteBufNIO extends ByteBufNIO {
 
-        public PooledByteBufNIO(final ByteBuffer buf) {
+        PooledByteBufNIO(final ByteBuffer buf) {
             super(buf);
         }
 

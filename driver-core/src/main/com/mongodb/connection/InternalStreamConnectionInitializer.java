@@ -177,7 +177,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
         private final SingleResultCallback<Void> callback;
         private final AtomicInteger currentAuthenticatorIndex = new AtomicInteger(-1);
 
-        public CompoundAuthenticator(final InternalConnection internalConnection, final ConnectionDescription connectionDescription,
+        CompoundAuthenticator(final InternalConnection internalConnection, final ConnectionDescription connectionDescription,
                                      final SingleResultCallback<Void> callback) {
             this.internalConnection = internalConnection;
             this.connectionDescription = connectionDescription;

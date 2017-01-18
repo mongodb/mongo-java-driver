@@ -31,29 +31,12 @@ class CommandMessage extends RequestMessage {
     private final BsonDocument command;
     private final FieldNameValidator validator;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection to execute the command in
-     * @param command        the command
-     * @param slaveOk        if querying of non-primary replica set members is allowed
-     * @param settings       the message settings
-     */
-    public CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk, final MessageSettings settings) {
+    CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk, final MessageSettings settings) {
         this(collectionName, command, slaveOk, new NoOpFieldNameValidator(), settings);
     }
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection to execute the command in
-     * @param command        the command
-     * @param slaveOk        if querying of non-primary replica set members is allowed
-     * @param validator      the field name validator
-     * @param settings       the message settings
-     */
-    public CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk,
-                          final FieldNameValidator validator, final MessageSettings settings) {
+    CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk,
+                   final FieldNameValidator validator, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
         this.slaveOk = slaveOk;
         this.command = command;

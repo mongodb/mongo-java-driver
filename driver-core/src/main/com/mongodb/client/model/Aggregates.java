@@ -425,7 +425,7 @@ public final class Aggregates {
         private final String name;
         private final Bson value;
 
-        public SimplePipelineStage(final String name, final Bson value) {
+        SimplePipelineStage(final String name, final Bson value) {
             this.name = name;
             this.value = value;
         }

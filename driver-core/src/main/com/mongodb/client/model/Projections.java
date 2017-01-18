@@ -195,7 +195,7 @@ public final class Projections {
     private static class FieldsProjection implements Bson {
         private final List<? extends Bson> projections;
 
-        public FieldsProjection(final List<? extends Bson> projections) {
+        FieldsProjection(final List<? extends Bson> projections) {
             this.projections = projections;
         }
 
@@ -225,7 +225,7 @@ public final class Projections {
         private final String fieldName;
         private final Bson filter;
 
-        public ElemMatchFilterProjection(final String fieldName, final Bson filter) {
+        ElemMatchFilterProjection(final String fieldName, final Bson filter) {
             this.fieldName = fieldName;
             this.filter = filter;
         }

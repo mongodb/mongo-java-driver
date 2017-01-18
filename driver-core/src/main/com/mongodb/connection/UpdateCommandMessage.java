@@ -43,16 +43,7 @@ import java.util.Map;
 class UpdateCommandMessage extends BaseWriteCommandMessage {
     private final List<UpdateRequest> updates;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace the namespace
-     * @param ordered whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param settings the message settings
-     * @param updates the list of update requests
-     */
-    public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+    UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                 final Boolean bypassDocumentValidation, final MessageSettings settings, final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern, bypassDocumentValidation, settings);
         this.updates = updates;

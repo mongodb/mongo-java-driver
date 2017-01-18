@@ -40,17 +40,8 @@ class InsertCommandProtocol extends WriteCommandProtocol {
 
     private final List<InsertRequest> insertRequests;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace                 the namespace
-     * @param ordered                   whether the inserts are ordered
-     * @param writeConcern              the write concern
-     * @param bypassDocumentValidation  the bypass documentation validation flag
-     * @param insertRequests            the list of inserts
-     */
-    public InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final Boolean bypassDocumentValidation, final List<InsertRequest> insertRequests) {
+    InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                          final Boolean bypassDocumentValidation, final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern, bypassDocumentValidation);
         this.insertRequests = insertRequests;
     }

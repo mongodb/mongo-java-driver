@@ -26,7 +26,7 @@ class Concrete {
     private final double d;
     private final long date;
 
-    public Concrete(final String str, final int i, final long l, final double d, final long date) {
+    Concrete(final String str, final int i, final long l, final double d, final long date) {
         this.str = str;
         this.i = i;
         this.l = l;
@@ -34,7 +34,7 @@ class Concrete {
         this.date = date;
     }
 
-    public Concrete(final ObjectId id, final String str, final int i, final long l, final double d, final long date) {
+    Concrete(final ObjectId id, final String str, final int i, final long l, final double d, final long date) {
         this(str, i, l, d, date);
         this.id = id;
     }

@@ -44,7 +44,7 @@ class TestInternalConnection implements InternalConnection {
     private boolean opened;
     private boolean closed;
 
-    public TestInternalConnection(final ServerId serverId) {
+    TestInternalConnection(final ServerId serverId) {
         this.description = new ConnectionDescription(serverId);
         this.bufferProvider = new SimpleBufferProvider();
 

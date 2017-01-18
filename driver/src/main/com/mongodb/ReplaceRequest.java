@@ -28,7 +28,7 @@ class ReplaceRequest extends WriteRequest {
     private final Encoder<DBObject> replacementCodec;
     private final Collation collation;
 
-    public ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final Encoder<DBObject> codec,
+    ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final Encoder<DBObject> codec,
                           final Encoder<DBObject> replacementCodec, final Collation collation) {
         this.query = query;
         this.document = document;

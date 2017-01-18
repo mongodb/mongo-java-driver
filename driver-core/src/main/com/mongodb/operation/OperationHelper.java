@@ -448,7 +448,7 @@ final class OperationHelper {
 
     private static class AsyncCallableWithConnectionCallback implements SingleResultCallback<AsyncConnectionSource> {
         private final AsyncCallableWithConnection callable;
-        public AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable) {
+        AsyncCallableWithConnectionCallback(final AsyncCallableWithConnection callable) {
             this.callable = callable;
         }
         @Override
@@ -487,7 +487,7 @@ final class OperationHelper {
     private static class AsyncCallableWithConnectionAndSourceCallback implements SingleResultCallback<AsyncConnectionSource> {
         private final AsyncCallableWithConnectionAndSource callable;
 
-        public AsyncCallableWithConnectionAndSourceCallback(final AsyncCallableWithConnectionAndSource callable) {
+        AsyncCallableWithConnectionAndSourceCallback(final AsyncCallableWithConnectionAndSource callable) {
             this.callable = callable;
         }
 

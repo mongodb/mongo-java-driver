@@ -72,7 +72,7 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
     }
 
     private class AsyncSingleConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
-        public AsyncSingleConnectionSource() {
+        AsyncSingleConnectionSource() {
             AsyncSingleConnectionReadBinding.this.retain();
         }
 

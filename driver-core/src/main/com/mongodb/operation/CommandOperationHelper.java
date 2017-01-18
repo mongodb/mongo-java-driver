@@ -431,12 +431,9 @@ final class CommandOperationHelper {
         private final CommandTransformer<D, R> transformer;
         private final SingleResultCallback<R> callback;
 
-        public CommandProtocolExecutingCallback(final String database, final BsonDocument command,
-                                                final FieldNameValidator fieldNameValidator,
-                                                final Decoder<D> decoder,
-                                                final ReadPreference readPreference,
-                                                final CommandTransformer<D, R> transformer,
-                                                final SingleResultCallback<R> callback) {
+        CommandProtocolExecutingCallback(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                                         final Decoder<D> decoder, final ReadPreference readPreference,
+                                         final CommandTransformer<D, R> transformer, final SingleResultCallback<R> callback) {
             this.database = database;
             this.command = command;
             this.fieldNameValidator = fieldNameValidator;

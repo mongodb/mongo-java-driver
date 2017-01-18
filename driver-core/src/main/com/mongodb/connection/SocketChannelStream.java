@@ -37,8 +37,8 @@ class SocketChannelStream implements Stream {
     private volatile SocketChannel socketChannel;
     private volatile boolean isClosed;
 
-    public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
-                               final BufferProvider bufferProvider) {
+    SocketChannelStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
+                        final BufferProvider bufferProvider) {
         this.address = notNull("address", address);
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);

@@ -275,7 +275,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         private final int maxBatchCount;
         private final Boolean bypassDocumentValidation;
 
-        public OrderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
+        OrderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
             this.maxBatchCount = connectionDescription.getMaxBatchCount();
             this.bypassDocumentValidation = bypassDocumentValidation;
         }
@@ -324,7 +324,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         private final int maxBatchCount;
         private final Boolean bypassDocumentValidation;
 
-        public UnorderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
+        UnorderedRunGenerator(final ConnectionDescription connectionDescription, final Boolean bypassDocumentValidation) {
             this.maxBatchCount = connectionDescription.getMaxBatchCount();
             this.bypassDocumentValidation = bypassDocumentValidation;
         }

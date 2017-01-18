@@ -25,7 +25,7 @@ import java.util.Map;
 final class MapOfCodecsProvider implements CodecProvider {
     private final Map<Class<?>, Codec<?>> codecsMap = new HashMap<Class<?>, Codec<?>>();
 
-    public MapOfCodecsProvider(final List<? extends Codec<?>> codecsList) {
+    MapOfCodecsProvider(final List<? extends Codec<?>> codecsList) {
        for (Codec<?> codec : codecsList) {
            codecsMap.put(codec.getEncoderClass(), codec);
        }

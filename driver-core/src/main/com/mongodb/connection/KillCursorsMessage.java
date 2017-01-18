@@ -30,12 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 class KillCursorsMessage extends RequestMessage {
     private final List<Long> cursors;
 
-    /**
-     * Construct an instance.
-     *
-     * @param cursors the list of cursors to kill
-     */
-    public KillCursorsMessage(final List<Long> cursors) {
+    KillCursorsMessage(final List<Long> cursors) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
         this.cursors = notNull("cursors", cursors);
     }

@@ -20,7 +20,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.event.ServerListener;
 
 interface ClusterableServerFactory {
-    ClusterableServer create(ServerAddress serverAddress, final ServerListener serverListener);
+    ClusterableServer create(ServerAddress serverAddress, ServerListener serverListener);
 
     ServerSettings getSettings();
 }

@@ -27,7 +27,7 @@ class RemoveRequest extends WriteRequest {
     private final Encoder<DBObject> codec;
     private final Collation collation;
 
-    public RemoveRequest(final DBObject query, final boolean multi, final Encoder<DBObject> codec, final Collation collation) {
+    RemoveRequest(final DBObject query, final boolean multi, final Encoder<DBObject> codec, final Collation collation) {
         this.query = query;
         this.multi = multi;
         this.codec = codec;

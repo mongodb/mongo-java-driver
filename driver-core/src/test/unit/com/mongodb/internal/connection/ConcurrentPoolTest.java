@@ -242,7 +242,7 @@ public class ConcurrentPoolTest {
         private boolean shouldPrune;
         private final boolean initialized;
 
-        public TestCloseable(final boolean initialize) {
+        TestCloseable(final boolean initialize) {
             this.initialized = initialize;
         }
 

@@ -52,13 +52,9 @@ class DefaultServer implements ClusterableServer {
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final ServerId serverId,
-                         final ClusterConnectionMode clusterConnectionMode,
-                         final ConnectionPool connectionPool,
-                         final ConnectionFactory connectionFactory,
-                         final ServerMonitorFactory serverMonitorFactory,
-                         final List<ServerListener> serverListeners,
-                         final CommandListener commandListener) {
+    DefaultServer(final ServerId serverId, final ClusterConnectionMode clusterConnectionMode, final ConnectionPool connectionPool,
+                  final ConnectionFactory connectionFactory, final ServerMonitorFactory serverMonitorFactory,
+                  final List<ServerListener> serverListeners, final CommandListener commandListener) {
         notNull("serverListeners", serverListeners);
         serverListener = serverListeners.isEmpty() ? new NoOpServerListener() : new ServerEventMulticaster(serverListeners);
 

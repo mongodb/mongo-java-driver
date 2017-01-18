@@ -27,7 +27,7 @@ class LazyCodec<T> implements Codec<T> {
     private final Class<T> clazz;
     private volatile Codec<T> wrapped;
 
-    public LazyCodec(final CodecRegistry registry, final Class<T> clazz) {
+    LazyCodec(final CodecRegistry registry, final Class<T> clazz) {
         this.registry = registry;
         this.clazz = clazz;
     }

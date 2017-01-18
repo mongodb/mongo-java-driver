@@ -43,19 +43,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 class InsertCommandMessage extends BaseWriteCommandMessage {
     private final List<InsertRequest> insertRequestList;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace                 the namespace
-     * @param ordered                   whether the inserts are ordered
-     * @param writeConcern              the write concern
-     * @param bypassDocumentValidation  the bypass documentation validation flag
-     * @param settings                  the message settings
-     * @param insertRequestList         the list of inserts
-     */
-    public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final Boolean bypassDocumentValidation, final MessageSettings settings,
-                                final List<InsertRequest> insertRequestList) {
+    InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                         final Boolean bypassDocumentValidation, final MessageSettings settings,
+                         final List<InsertRequest> insertRequestList) {
         super(namespace, ordered, writeConcern, bypassDocumentValidation, settings);
         this.insertRequestList = notNull("insertRequestList", insertRequestList);
     }

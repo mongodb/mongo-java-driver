@@ -53,13 +53,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     private long maxTimeMS;
     private Collation collation;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace the database and collection namespace for the operation.
-     * @param pipeline the aggregation pipeline.
-     */
-    public AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
+    AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
     }

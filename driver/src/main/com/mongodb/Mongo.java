@@ -893,7 +893,7 @@ public class Mongo {
         private final ServerCursor serverCursor;
         private final MongoNamespace namespace;
 
-        public ServerCursorAndNamespace(final ServerCursor serverCursor, final MongoNamespace namespace) {
+        ServerCursorAndNamespace(final ServerCursor serverCursor, final MongoNamespace namespace) {
             this.serverCursor = serverCursor;
             this.namespace = namespace;
         }

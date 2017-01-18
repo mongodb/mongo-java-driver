@@ -41,14 +41,12 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final String applicationName;
     private final MongoDriverInformation mongoDriverInformation;
 
-    public DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
-                                           final ConnectionPoolSettings connectionPoolSettings,
-                                           final StreamFactory streamFactory,
-                                           final StreamFactory heartbeatStreamFactory,
-                                           final List<MongoCredential> credentialList,
-                                           final ConnectionListener connectionListener,
-                                           final ConnectionPoolListener connectionPoolListener, final CommandListener commandListener,
-                                           final String applicationName, final MongoDriverInformation mongoDriverInformation) {
+    DefaultClusterableServerFactory(final ClusterId clusterId, final ClusterSettings clusterSettings, final ServerSettings settings,
+                                    final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
+                                    final StreamFactory heartbeatStreamFactory, final List<MongoCredential> credentialList,
+                                    final ConnectionListener connectionListener, final ConnectionPoolListener connectionPoolListener,
+                                    final CommandListener commandListener, final String applicationName,
+                                    final MongoDriverInformation mongoDriverInformation) {
         this.clusterId = clusterId;
         this.clusterSettings = clusterSettings;
         this.settings = settings;

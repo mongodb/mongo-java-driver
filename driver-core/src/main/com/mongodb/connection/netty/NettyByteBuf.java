@@ -26,11 +26,11 @@ final class NettyByteBuf implements ByteBuf {
     private io.netty.buffer.ByteBuf proxied;
     private boolean isWriting = true;
 
-    public NettyByteBuf(final io.netty.buffer.ByteBuf proxied) {
+    NettyByteBuf(final io.netty.buffer.ByteBuf proxied) {
         this.proxied = proxied;
     }
 
-    public NettyByteBuf(final io.netty.buffer.ByteBuf proxied, final boolean isWriting) {
+    NettyByteBuf(final io.netty.buffer.ByteBuf proxied, final boolean isWriting) {
         this(proxied);
         this.isWriting = isWriting;
     }

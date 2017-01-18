@@ -193,7 +193,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      * @param value the {@code Decimal128} value to write
      * @since 3.4
      */
-    protected abstract void doWriteDecimal128(final Decimal128 value);
+    protected abstract void doWriteDecimal128(Decimal128 value);
 
     /**
      * Handles the logic of writing a JavaScript function

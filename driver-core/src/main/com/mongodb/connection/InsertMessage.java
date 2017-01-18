@@ -37,17 +37,8 @@ class InsertMessage extends RequestMessage {
     private final WriteConcern writeConcern;
     private final List<InsertRequest> insertRequestList;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName    the full name of the collection
-     * @param ordered           whether the inserts are ordered
-     * @param writeConcern      the write concern
-     * @param insertRequestList the list of insert requests
-     * @param settings          the message settings
-     */
-    public InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
-                         final List<InsertRequest> insertRequestList, final MessageSettings settings) {
+    InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
+                  final List<InsertRequest> insertRequestList, final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
         this.ordered = ordered;
         this.writeConcern = writeConcern;

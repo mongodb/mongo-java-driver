@@ -90,7 +90,7 @@ public abstract class UpdateResult {
         private final Long modifiedCount;
         private final BsonValue upsertedId;
 
-        public AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
+        AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
             this.matchedCount = matchedCount;
             this.modifiedCount = modifiedCount;
             this.upsertedId = upsertedId;

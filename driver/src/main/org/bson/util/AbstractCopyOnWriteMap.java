@@ -459,7 +459,7 @@ abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements Conc
     private static class UnmodifiableIterator<T> implements Iterator<T> {
         private final Iterator<T> delegate;
 
-        public UnmodifiableIterator(final Iterator<T> delegate) {
+        UnmodifiableIterator(final Iterator<T> delegate) {
             this.delegate = delegate;
         }
 

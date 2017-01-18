@@ -40,17 +40,8 @@ class UpdateCommandProtocol extends WriteCommandProtocol {
 
     private final List<UpdateRequest> updates;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace                 the namespace
-     * @param ordered                   whether the inserts are ordered
-     * @param writeConcern              the write concern
-     * @param bypassDocumentValidation  the bypass documentation validation flag
-     * @param updates                   the list of updates
-     */
-    public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
+    UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                          final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern, bypassDocumentValidation);
         this.updates = notNull("update", updates);
     }

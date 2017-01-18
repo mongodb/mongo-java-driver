@@ -29,8 +29,8 @@ class FlatteningSingleResultCallbackSubscription<TResult> extends AbstractSubscr
     private boolean completed;
     /* protected by `this` */
 
-    public FlatteningSingleResultCallbackSubscription(final Block<SingleResultCallback<List<TResult>>> block,
-                                                      final Observer<? super TResult> observer) {
+    FlatteningSingleResultCallbackSubscription(final Block<SingleResultCallback<List<TResult>>> block,
+                                               final Observer<? super TResult> observer) {
         super(observer);
         this.block = block;
         observer.onSubscribe(this);

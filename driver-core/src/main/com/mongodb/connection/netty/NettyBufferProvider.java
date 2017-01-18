@@ -25,11 +25,11 @@ final class NettyBufferProvider implements BufferProvider {
 
     private final ByteBufAllocator allocator;
 
-    public NettyBufferProvider() {
+    NettyBufferProvider() {
         allocator = PooledByteBufAllocator.DEFAULT;
     }
 
-    public NettyBufferProvider(final ByteBufAllocator allocator) {
+    NettyBufferProvider(final ByteBufAllocator allocator) {
         this.allocator = allocator;
     }
 

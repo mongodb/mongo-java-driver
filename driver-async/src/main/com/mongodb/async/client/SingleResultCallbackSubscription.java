@@ -27,8 +27,7 @@ class SingleResultCallbackSubscription<TResult> extends AbstractSubscription<TRe
     private boolean completed;
     /* protected by `this` */
 
-    public SingleResultCallbackSubscription(final Block<SingleResultCallback<TResult>> block,
-                                            final Observer<? super TResult> observer) {
+    SingleResultCallbackSubscription(final Block<SingleResultCallback<TResult>> block, final Observer<? super TResult> observer) {
         super(observer);
         this.block = block;
         observer.onSubscribe(this);

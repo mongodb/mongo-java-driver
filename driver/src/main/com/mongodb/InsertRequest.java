@@ -23,7 +23,7 @@ class InsertRequest extends WriteRequest {
     private final DBObject document;
     private final Encoder<DBObject> codec;
 
-    public InsertRequest(final DBObject document, final Encoder<DBObject> codec) {
+    InsertRequest(final DBObject document, final Encoder<DBObject> codec) {
         this.document = document;
         this.codec = codec;
     }

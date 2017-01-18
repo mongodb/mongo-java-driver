@@ -43,16 +43,8 @@ class DeleteProtocol extends WriteProtocol {
 
     private final List<DeleteRequest> deletes;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the delete are ordered
-     * @param writeConcern the write concern to apply
-     * @param deletes      the deletes
-     */
-    public DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<DeleteRequest> deletes) {
+    DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                   final List<DeleteRequest> deletes) {
         super(namespace, ordered, writeConcern);
         this.deletes = deletes;
     }

@@ -27,14 +27,7 @@ class GetMoreMessage extends RequestMessage {
     private final long cursorId;
     private final int numberToReturn;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection name
-     * @param cursorId       the cursor id
-     * @param numberToReturn the number of documents to return
-     */
-    public GetMoreMessage(final String collectionName, final long cursorId, final int numberToReturn) {
+    GetMoreMessage(final String collectionName, final long cursorId, final int numberToReturn) {
         super(collectionName, OpCode.OP_GETMORE, MessageSettings.builder().build());
         this.cursorId = cursorId;
         this.numberToReturn = numberToReturn;

@@ -45,7 +45,7 @@ public class ConcurrentPool<T> implements Pool<T> {
      * @param <T>
      */
     public interface ItemFactory<T> {
-        T create(final boolean initialize);
+        T create(boolean initialize);
 
         void close(T t);
 

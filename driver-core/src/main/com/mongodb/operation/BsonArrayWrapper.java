@@ -31,12 +31,7 @@ class BsonArrayWrapper<T> extends BsonArray {
 
     private final List<T> wrappedArray;
 
-    /**
-     * Construct a new instance with the given array and encoder for the document.
-     *
-     * @param wrappedArray the wrapped array
-     */
-    public BsonArrayWrapper(final List<T> wrappedArray) {
+    BsonArrayWrapper(final List<T> wrappedArray) {
         this.wrappedArray = notNull("wrappedArray", wrappedArray);
     }
 

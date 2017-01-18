@@ -41,9 +41,8 @@ class SocketStream implements Stream {
     private volatile InputStream inputStream;
     private volatile boolean isClosed;
 
-    public SocketStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
-                        final SocketFactory socketFactory,
-                        final BufferProvider bufferProvider) {
+    SocketStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
+                 final SocketFactory socketFactory, final BufferProvider bufferProvider) {
         this.address = notNull("address", address);
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);

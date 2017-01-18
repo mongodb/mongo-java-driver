@@ -352,7 +352,7 @@ public final class RawBsonDocument extends BsonDocument {
 
         private final byte[] bytes;
 
-        public SerializationProxy(final byte[] bytes, final int offset, final int length) {
+        SerializationProxy(final byte[] bytes, final int offset, final int length) {
             if (bytes.length == length) {
                 this.bytes = bytes;
             } else {

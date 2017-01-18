@@ -893,7 +893,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private static class ExplainResultCallback implements SingleResultCallback<AsyncBatchCursor<BsonDocument>> {
         private final SingleResultCallback<BsonDocument> callback;
 
-        public ExplainResultCallback(final SingleResultCallback<BsonDocument> callback) {
+        ExplainResultCallback(final SingleResultCallback<BsonDocument> callback) {
             this.callback = callback;
         }
 

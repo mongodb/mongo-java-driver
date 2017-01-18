@@ -40,17 +40,8 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
     private final WriteConcern writeConcern;
     private final Boolean bypassDocumentValidation;
 
-    /**
-     * Construct an instance.
-     *
-     * @param writeNamespace           the namespace
-     * @param ordered                  whether the writes are ordered
-     * @param writeConcern             the write concern
-     * @param bypassDocumentValidation the bypass documentation validation flag
-     * @param settings                 the message settings
-     */
-    public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Boolean bypassDocumentValidation, final MessageSettings settings) {
+    BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
+                            final Boolean bypassDocumentValidation, final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OpCode.OP_QUERY, settings);
 
         this.writeNamespace = writeNamespace;
@@ -164,8 +155,7 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
      * @param writer               the writer
      * @return the next message to encode, if this one overflowed.  This may be null, which indicates that we're done
      */
-    protected abstract BaseWriteCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
-                                                              final BsonBinaryWriter writer);
+    protected abstract BaseWriteCommandMessage writeTheWrites(BsonOutput bsonOutput, int commandStartPosition, BsonBinaryWriter writer);
 
     boolean exceedsLimits(final int batchLength, final int batchItemCount) {
         return (exceedsBatchLengthLimit(batchLength, batchItemCount) || exceedsBatchItemCountLimit(batchItemCount));

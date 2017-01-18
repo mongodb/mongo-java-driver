@@ -35,5 +35,5 @@ public interface Bson {
      * @param <TDocument> the type of the document class
      * @return the BsonDocument
      */
-    <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry);
+    <TDocument> BsonDocument toBsonDocument(Class<TDocument> documentClass, CodecRegistry codecRegistry);
 }

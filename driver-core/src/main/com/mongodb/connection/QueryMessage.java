@@ -29,19 +29,8 @@ class QueryMessage extends BaseQueryMessage {
     private final BsonDocument queryDocument;
     private final BsonDocument fields;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection name
-     * @param skip           the number of documents to skip
-     * @param numberToReturn the number to return
-     * @param queryDocument  the query document
-     * @param fields         the fields to return in the result documents
-     * @param settings       the message settings
-     */
-    public QueryMessage(final String collectionName, final int skip,
-                        final int numberToReturn, final BsonDocument queryDocument,
-                        final BsonDocument fields, final MessageSettings settings) {
+    QueryMessage(final String collectionName, final int skip, final int numberToReturn, final BsonDocument queryDocument,
+                 final BsonDocument fields, final MessageSettings settings) {
         super(collectionName, skip, numberToReturn, settings);
         this.queryDocument = queryDocument;
         this.fields = fields;

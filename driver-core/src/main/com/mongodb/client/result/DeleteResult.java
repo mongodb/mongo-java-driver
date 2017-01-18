@@ -62,7 +62,7 @@ public abstract class DeleteResult {
     private static class AcknowledgedDeleteResult extends DeleteResult {
         private final long deletedCount;
 
-        public AcknowledgedDeleteResult(final long deletedCount) {
+        AcknowledgedDeleteResult(final long deletedCount) {
             this.deletedCount = deletedCount;
         }
 

@@ -48,13 +48,7 @@ class KillCursorProtocol implements Protocol<Void> {
     private final List<Long> cursors;
     private CommandListener commandListener;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace  the namespace in which all the cursors live
-     * @param cursors the list of cursors to kill
-     */
-    public KillCursorProtocol(final MongoNamespace namespace, final List<Long> cursors) {
+    KillCursorProtocol(final MongoNamespace namespace, final List<Long> cursors) {
         this.namespace = namespace;
         this.cursors = cursors;
     }

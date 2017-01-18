@@ -24,7 +24,7 @@ class DBEncoderFactoryAdapter implements Encoder<DBObject> {
 
     private final DBEncoderFactory encoderFactory;
 
-    public DBEncoderFactoryAdapter(final DBEncoderFactory encoderFactory) {
+    DBEncoderFactoryAdapter(final DBEncoderFactory encoderFactory) {
         this.encoderFactory = encoderFactory;
     }
 

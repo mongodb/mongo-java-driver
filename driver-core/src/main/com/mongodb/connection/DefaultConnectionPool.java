@@ -69,9 +69,8 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ServerId serverId;
     private volatile boolean closed;
 
-    public DefaultConnectionPool(final ServerId serverId,
-                                 final InternalConnectionFactory internalConnectionFactory, final ConnectionPoolSettings settings,
-                                 final ConnectionPoolListener connectionPoolListener) {
+    DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
+                          final ConnectionPoolSettings settings, final ConnectionPoolListener connectionPoolListener) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory
@@ -376,7 +375,7 @@ class DefaultConnectionPool implements ConnectionPool {
         private final UsageTrackingInternalConnection wrapped;
         private final AtomicBoolean isClosed = new AtomicBoolean();
 
-        public PooledConnection(final UsageTrackingInternalConnection wrapped) {
+        PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
         }
 
@@ -482,7 +481,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private class UsageTrackingInternalConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingInternalConnection> {
         private final InternalConnectionFactory internalConnectionFactory;
 
-        public UsageTrackingInternalConnectionItemFactory(final InternalConnectionFactory internalConnectionFactory) {
+        UsageTrackingInternalConnectionItemFactory(final InternalConnectionFactory internalConnectionFactory) {
             this.internalConnectionFactory = internalConnectionFactory;
         }
 

@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.async.SingleResultCallback;
 
 interface ProtocolExecutor {
-    <T> T execute(final Protocol<T> protocol, InternalConnection connection);
+    <T> T execute(Protocol<T> protocol, InternalConnection connection);
 
-    <T> void executeAsync(final Protocol<T> protocol, InternalConnection connection, SingleResultCallback<T> callback);
+    <T> void executeAsync(Protocol<T> protocol, InternalConnection connection, SingleResultCallback<T> callback);
 }
