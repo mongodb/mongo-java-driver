@@ -23,7 +23,7 @@ class SimpleExpression<TExpression> implements Bson {
     private final String name;
     private final TExpression expression;
 
-    public SimpleExpression(final String name, final TExpression expression) {
+    SimpleExpression(final String name, final TExpression expression) {
         this.name = name;
         this.expression = expression;
     }

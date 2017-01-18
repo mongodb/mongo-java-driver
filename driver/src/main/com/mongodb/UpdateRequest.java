@@ -28,8 +28,8 @@ class UpdateRequest extends WriteRequest {
     private final Encoder<DBObject> codec;
     private final Collation collation;
 
-    public UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
-                         final Encoder<DBObject> codec, final Collation collation) {
+    UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
+                  final Encoder<DBObject> codec, final Collation collation) {
         this.query = query;
         this.update = update;
         this.multi = multi;

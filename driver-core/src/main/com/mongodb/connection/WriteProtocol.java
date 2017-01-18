@@ -54,14 +54,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     private final WriteConcern writeConcern;
     private CommandListener commandListener;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the inserts are ordered
-     * @param writeConcern the write concern
-     */
-    public WriteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
+    WriteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
@@ -142,8 +135,8 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         return writeConcern.isAcknowledged() ? writeConcernResult : WriteConcernResult.unacknowledged();
     }
 
-    protected abstract void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                                                 final WriteConcernResult writeConcernResult, final BsonDocument response);
+    protected abstract void appendToWriteCommandResponseDocument(RequestMessage curMessage, RequestMessage nextMessage,
+                                                                 WriteConcernResult writeConcernResult, BsonDocument response);
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
@@ -346,9 +339,9 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         private final InternalConnection connection;
         private final long startTimeNanos;
 
-        public WriteResultCallback(final SingleResultCallback<WriteConcernResult> callback, final Decoder<BsonDocument> decoder,
-                                   final RequestMessage message, final RequestMessage nextMessage,
-                                   final long requestId, final InternalConnection connection, final long startTimeNanos) {
+        WriteResultCallback(final SingleResultCallback<WriteConcernResult> callback, final Decoder<BsonDocument> decoder,
+                            final RequestMessage message, final RequestMessage nextMessage, final long requestId,
+                            final InternalConnection connection, final long startTimeNanos) {
             super(decoder, requestId, connection.getDescription().getServerAddress());
             this.callback = callback;
             this.message = message;

@@ -216,11 +216,11 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         private ObjectId id = new ObjectId();
         private final String name;
 
-        public Person(final String name) {
+        Person(final String name) {
             this.name = name;
         }
 
-        public Person(final ObjectId id, final String name) {
+        Person(final ObjectId id, final String name) {
             this.id = id;
             this.name = name;
         }

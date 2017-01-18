@@ -27,7 +27,7 @@ class JsonToken {
     private final Object value;
     private final JsonTokenType type;
 
-    public JsonToken(final JsonTokenType type, final Object value) {
+    JsonToken(final JsonTokenType type, final Object value) {
         this.value = value;
         this.type = type;
     }

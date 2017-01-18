@@ -76,24 +76,11 @@ abstract class RequestMessage {
         return REQUEST_ID.get();
     }
 
-    /**
-     * Construct an instance without a collection name
-     *
-     * @param opCode   the op code of the message
-     * @param settings the message settings
-     */
-    public RequestMessage(final OpCode opCode, final MessageSettings settings) {
+    RequestMessage(final OpCode opCode, final MessageSettings settings) {
         this(null, opCode, settings);
     }
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection name
-     * @param opCode         the op code of the message
-     * @param settings       the message settings
-     */
-    public RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
+    RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         this.collectionName = collectionName;
         this.settings = settings;
         id = REQUEST_ID.getAndIncrement();
@@ -181,7 +168,7 @@ abstract class RequestMessage {
      * @param messageStartPosition the start position of the message
      * @return the next message to encode, if the contents of this message need to overflow into the next
      */
-    protected abstract RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition);
+    protected abstract RequestMessage encodeMessageBody(BsonOutput bsonOutput, int messageStartPosition);
 
     /**
      * Encode the message body to the given output.
@@ -190,7 +177,7 @@ abstract class RequestMessage {
      * @param messageStartPosition the start position of the message
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, int messageStartPosition);
 
     /**
      * Appends a document to the message.

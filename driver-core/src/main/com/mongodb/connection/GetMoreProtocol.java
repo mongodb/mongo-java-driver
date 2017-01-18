@@ -57,15 +57,7 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private final int numberToReturn;
     private CommandListener commandListener;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace      the namespace
-     * @param cursorId       the cursor id
-     * @param numberToReturn the number of documents to return
-     * @param resultDecoder  the decoder for the result documents.
-     */
-    public GetMoreProtocol(final MongoNamespace namespace, final long cursorId, final int numberToReturn, final Decoder<T> resultDecoder) {
+    GetMoreProtocol(final MongoNamespace namespace, final long cursorId, final int numberToReturn, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.cursorId = cursorId;
         this.numberToReturn = numberToReturn;
@@ -207,9 +199,9 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         private final CommandListener commandListener;
         private final long startTimeNanos;
 
-        public GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback,
-                                     final long cursorId, final GetMoreMessage message, final ConnectionDescription connectionDescription,
-                                     final CommandListener commandListener, final long startTimeNanos) {
+        GetMoreResultCallback(final SingleResultCallback<QueryResult<T>> callback, final long cursorId, final GetMoreMessage message,
+                              final ConnectionDescription connectionDescription, final CommandListener commandListener,
+                              final long startTimeNanos) {
             super(message.getId(), connectionDescription.getServerAddress());
             this.callback = callback;
             this.cursorId = cursorId;

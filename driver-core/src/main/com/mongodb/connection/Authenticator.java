@@ -30,8 +30,8 @@ abstract class Authenticator {
         return credential;
     }
 
-    abstract void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription);
+    abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription);
 
-    abstract void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+    abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
                                     SingleResultCallback<Void> callback);
 }

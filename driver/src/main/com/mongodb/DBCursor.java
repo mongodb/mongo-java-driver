@@ -948,7 +948,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return null;
     }
 
-    private static enum IteratorOrArray {
+    private enum IteratorOrArray {
         ITERATOR,
         ARRAY
     }

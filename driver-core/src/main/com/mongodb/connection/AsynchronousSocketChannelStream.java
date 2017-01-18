@@ -180,7 +180,7 @@ final class AsynchronousSocketChannelStream implements Stream {
 
         private class WriteCompletionHandler extends BaseCompletionHandler<Void, Integer, Object> {
 
-            public WriteCompletionHandler(final AsyncCompletionHandler<Void> handler) {
+            WriteCompletionHandler(final AsyncCompletionHandler<Void> handler) {
                 super(handler);
             }
 
@@ -236,7 +236,7 @@ final class AsynchronousSocketChannelStream implements Stream {
     }
 
     private class OpenCompletionHandler extends BaseCompletionHandler<Void, Void, Object> {
-        public OpenCompletionHandler(final AsyncCompletionHandler<Void> handler) {
+        OpenCompletionHandler(final AsyncCompletionHandler<Void> handler) {
             super(handler);
         }
 
@@ -264,7 +264,7 @@ final class AsynchronousSocketChannelStream implements Stream {
     private abstract static class BaseCompletionHandler<T, V, A> implements CompletionHandler<V, A> {
         private final AtomicReference<AsyncCompletionHandler<T>> handlerReference;
 
-        public BaseCompletionHandler(final AsyncCompletionHandler<T> handler) {
+        BaseCompletionHandler(final AsyncCompletionHandler<T> handler) {
             this.handlerReference = new AtomicReference<AsyncCompletionHandler<T>>(handler);
         }
 

@@ -29,7 +29,7 @@ class MappingIterable<T, U> implements MongoIterable<U> {
     private final MongoIterable<T> iterable;
     private final Function<T, U> mapper;
 
-    public MappingIterable(final MongoIterable<T> iterable, final Function<T, U> mapper) {
+    MappingIterable(final MongoIterable<T> iterable, final Function<T, U> mapper) {
         this.iterable = notNull("iterable", iterable);
         this.mapper = notNull("mapper", mapper);
     }

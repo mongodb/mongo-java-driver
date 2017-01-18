@@ -27,11 +27,7 @@ final class ChangeEvent<T> {
     private final T previousValue;
     private final T newValue;
 
-    /**
-     * @param previousValue the value before the change
-     * @param newValue the value after the change
-     */
-    public ChangeEvent(final T previousValue, final T newValue) {
+    ChangeEvent(final T previousValue, final T newValue) {
         this.previousValue = notNull("oldValue", previousValue);
         this.newValue = notNull("newValue", newValue);
     }

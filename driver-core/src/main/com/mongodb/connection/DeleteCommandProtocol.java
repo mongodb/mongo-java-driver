@@ -41,16 +41,8 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
 
     private final List<DeleteRequest> deleteRequests;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace    the namespace
-     * @param ordered      whether the inserts are ordered
-     * @param writeConcern the write concern
-     * @param deletes      the list of deletes
-     */
-    public DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<DeleteRequest> deletes) {
+    DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                          final List<DeleteRequest> deletes) {
         super(namespace, ordered, writeConcern, null);
         this.deleteRequests = notNull("removes", deletes);
     }

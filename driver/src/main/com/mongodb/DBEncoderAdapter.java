@@ -31,7 +31,7 @@ class DBEncoderAdapter implements Encoder<DBObject> {
 
     private final DBEncoder encoder;
 
-    public DBEncoderAdapter(final DBEncoder encoder) {
+    DBEncoderAdapter(final DBEncoder encoder) {
         this.encoder = notNull("encoder", encoder);
     }
 

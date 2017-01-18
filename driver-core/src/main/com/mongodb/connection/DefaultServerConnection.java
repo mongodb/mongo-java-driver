@@ -43,8 +43,8 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     private final ProtocolExecutor protocolExecutor;
     private final ClusterConnectionMode clusterConnectionMode;
 
-    public DefaultServerConnection(final InternalConnection wrapped, final ProtocolExecutor protocolExecutor,
-                                   final ClusterConnectionMode clusterConnectionMode) {
+    DefaultServerConnection(final InternalConnection wrapped, final ProtocolExecutor protocolExecutor,
+                            final ClusterConnectionMode clusterConnectionMode) {
         this.wrapped = wrapped;
         this.protocolExecutor = protocolExecutor;
         this.clusterConnectionMode = clusterConnectionMode;

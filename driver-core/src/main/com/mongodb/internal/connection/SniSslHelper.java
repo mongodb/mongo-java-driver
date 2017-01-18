@@ -29,5 +29,5 @@ interface SniSslHelper {
      * @param address       the server address
      * @param sslParameters the SSL parameters
      */
-    void enableSni(final ServerAddress address, final SSLParameters sslParameters);
+    void enableSni(ServerAddress address, SSLParameters sslParameters);
 }

@@ -129,17 +129,11 @@ class JSONParser {
     int pos = 0;
     final BSONCallback _callback;
 
-    /**
-     * Create a new parser.
-     */
-    public JSONParser(final String s) {
+    JSONParser(final String s) {
         this(s, null);
     }
 
-    /**
-     * Create a new parser.
-     */
-    public JSONParser(final String s, final BSONCallback callback) {
+    JSONParser(final String s, final BSONCallback callback) {
         this.s = s;
         _callback = (callback == null) ? new JSONCallback() : callback;
     }

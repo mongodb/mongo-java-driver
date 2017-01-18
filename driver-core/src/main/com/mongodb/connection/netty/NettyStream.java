@@ -77,9 +77,8 @@ final class NettyStream implements Stream {
     private volatile PendingReader pendingReader;
     private volatile Throwable pendingException;
 
-    public NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
-                       final EventLoopGroup workerGroup, final Class<? extends SocketChannel> socketChannelClass,
-                       final ByteBufAllocator allocator) {
+    NettyStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings, final EventLoopGroup workerGroup,
+                final Class<? extends SocketChannel> socketChannelClass, final ByteBufAllocator allocator) {
         this.address = address;
         this.settings = settings;
         this.sslSettings = sslSettings;
@@ -341,7 +340,7 @@ final class NettyStream implements Stream {
         private volatile T t;
         private volatile Throwable throwable;
 
-        public FutureAsyncCompletionHandler() {
+        FutureAsyncCompletionHandler() {
         }
 
         @Override

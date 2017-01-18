@@ -903,7 +903,7 @@ public final class Filters {
     private static class AndFilter implements Bson {
         private final Iterable<Bson> filters;
 
-        public AndFilter(final Iterable<Bson> filters) {
+        AndFilter(final Iterable<Bson> filters) {
             this.filters = notNull("filters", filters);
         }
 
@@ -995,7 +995,7 @@ public final class Filters {
         private final Operator operator;
         private final Iterable<Bson> filters;
 
-        public OrNorFilter(final Operator operator, final Iterable<Bson> filters) {
+        OrNorFilter(final Operator operator, final Iterable<Bson> filters) {
             this.operator = notNull("operator", operator);
             this.filters = notNull("filters", filters);
         }
@@ -1064,7 +1064,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        public SimpleEncodingFilter(final String fieldName, final TItem value) {
+        SimpleEncodingFilter(final String fieldName, final TItem value) {
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
         }
@@ -1093,7 +1093,7 @@ public final class Filters {
     private static class NotFilter implements Bson {
         private final Bson filter;
 
-        public NotFilter(final Bson filter) {
+        NotFilter(final Bson filter) {
             this.filter = notNull("filter", filter);
         }
 
@@ -1136,12 +1136,12 @@ public final class Filters {
         private final Double maxDistance;
         private final Double minDistance;
 
-        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry) {
+        GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry) {
             this(operatorName, fieldName, geometry, null, null);
         }
 
-        public GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry,
-                                      final Double maxDistance, final Double minDistance) {
+        GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry,
+                               final Double maxDistance, final Double minDistance) {
             this.operatorName = operatorName;
             this.fieldName = notNull("fieldName", fieldName);
             this.geometry = notNull("geometry", geometry);
@@ -1188,7 +1188,7 @@ public final class Filters {
         private final String search;
         private final TextSearchOptions textSearchOptions;
 
-        public TextFilter(final String search, final TextSearchOptions textSearchOptions) {
+        TextFilter(final String search, final TextSearchOptions textSearchOptions) {
             this.search = search;
             this.textSearchOptions = textSearchOptions;
         }

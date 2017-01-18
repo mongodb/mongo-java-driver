@@ -29,7 +29,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
     private final ReflectionDBObject.JavaWrapper wrapper;
 
-    public DBCollectionObjectFactory() {
+    DBCollectionObjectFactory() {
         this(Collections.<List<String>, Class<? extends DBObject>>emptyMap(), null);
     }
 

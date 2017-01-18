@@ -69,15 +69,8 @@ class CommandProtocol<T> implements Protocol<T> {
     private CommandListener commandListener;
     private volatile String commandName;
 
-    /**
-     * Construct an instance.
-     * @param database             the database
-     * @param command              the command
-     * @param fieldNameValidator   the field name validator to apply tot the command
-     * @param commandResultDecoder the decoder to use to decode the command result
-     */
-    public CommandProtocol(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
-                           final Decoder<T> commandResultDecoder) {
+    CommandProtocol(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                    final Decoder<T> commandResultDecoder) {
         notNull("database", database);
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);

@@ -22,7 +22,7 @@ class JsonBuffer {
     private int position;
     private boolean eof;
 
-    public JsonBuffer(final String buffer) {
+    JsonBuffer(final String buffer) {
         this.buffer = buffer;
     }
 

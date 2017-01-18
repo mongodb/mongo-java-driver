@@ -517,7 +517,7 @@ class InternalStreamConnection implements InternalConnection {
     private class ResponseHeaderCallback implements SingleResultCallback<ByteBuf> {
         private final SingleResultCallback<ResponseBuffers> callback;
 
-        public ResponseHeaderCallback(final SingleResultCallback<ResponseBuffers> callback) {
+        ResponseHeaderCallback(final SingleResultCallback<ResponseBuffers> callback) {
             this.callback = callback;
         }
 
@@ -568,7 +568,7 @@ class InternalStreamConnection implements InternalConnection {
         private class ResponseBodyCallback implements SingleResultCallback<ByteBuf> {
             private final ReplyHeader replyHeader;
 
-            public ResponseBodyCallback(final ReplyHeader replyHeader) {
+            ResponseBodyCallback(final ReplyHeader replyHeader) {
                 this.replyHeader = replyHeader;
             }
 
@@ -642,7 +642,7 @@ class InternalStreamConnection implements InternalConnection {
 
         private final ConnectionListener wrapped;
 
-        public ErrorHandlingConnectionListener(final ConnectionListener wrapped) {
+        ErrorHandlingConnectionListener(final ConnectionListener wrapped) {
             this.wrapped = wrapped;
         }
 

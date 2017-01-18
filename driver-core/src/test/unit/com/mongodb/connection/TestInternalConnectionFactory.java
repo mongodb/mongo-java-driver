@@ -40,12 +40,12 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         return createdConnections.size();
     }
 
-    public static class TestInternalConnection implements InternalConnection {
+    static class TestInternalConnection implements InternalConnection {
         private final ServerId serverId;
         private boolean closed;
         private boolean opened;
 
-        public TestInternalConnection(final ServerId serverId) {
+        TestInternalConnection(final ServerId serverId) {
             this.serverId = serverId;
         }
 

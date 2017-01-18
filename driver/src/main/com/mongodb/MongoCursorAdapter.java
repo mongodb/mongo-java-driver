@@ -22,7 +22,7 @@ import com.mongodb.client.MongoCursor;
 class MongoCursorAdapter implements Cursor {
     private final MongoCursor<DBObject> cursor;
 
-    public MongoCursorAdapter(final MongoCursor<DBObject> cursor) {
+    MongoCursorAdapter(final MongoCursor<DBObject> cursor) {
         this.cursor = cursor;
     }
 

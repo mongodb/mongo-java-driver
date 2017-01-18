@@ -45,12 +45,7 @@ class ReplyHeader {
     private final int startingFrom;
     private final int numberReturned;
 
-    /**
-     * Creates a new {@code ReplyHeader}, populated with values from the {@code headerInputBuffer}.
-     *
-     * @param header the {@code InputBuffer} containing the reply from the MongoDB server.
-     */
-    public ReplyHeader(final BsonInput header, final int maxMessageLength) {
+    ReplyHeader(final BsonInput header, final int maxMessageLength) {
         messageLength = header.readInt32();
         requestId = header.readInt32();
         responseTo = header.readInt32();

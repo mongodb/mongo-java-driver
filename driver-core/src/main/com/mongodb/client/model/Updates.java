@@ -424,7 +424,7 @@ public final class Updates {
         private final TItem value;
         private final String operator;
 
-        public SimpleUpdate(final String fieldName, final TItem value, final String operator) {
+        SimpleUpdate(final String fieldName, final TItem value, final String operator) {
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
             this.operator = operator;
@@ -462,7 +462,7 @@ public final class Updates {
         private final List<TItem> values;
         private final String operator;
 
-        public WithEachUpdate(final String fieldName, final List<TItem> values, final String operator) {
+        WithEachUpdate(final String fieldName, final List<TItem> values, final String operator) {
             this.fieldName = notNull("fieldName", fieldName);
             this.values = notNull("values", values);
             this.operator = operator;
@@ -520,7 +520,7 @@ public final class Updates {
 
         private final PushOptions options;
 
-        public PushUpdate(final String fieldName, final List<TItem> values, final PushOptions options) {
+        PushUpdate(final String fieldName, final List<TItem> values, final PushOptions options) {
             super(fieldName, values, "$push");
             this.options = notNull("options", options);
         }
@@ -552,7 +552,7 @@ public final class Updates {
         private final String fieldName;
         private final List<TItem> values;
 
-        public PullAllUpdate(final String fieldName, final List<TItem> values) {
+        PullAllUpdate(final String fieldName, final List<TItem> values) {
             this.fieldName = notNull("fieldName", fieldName);
             this.values = notNull("values", values);
         }
@@ -593,7 +593,7 @@ public final class Updates {
     private static class CompositeUpdate implements Bson {
         private final List<? extends Bson> updates;
 
-        public CompositeUpdate(final List<? extends Bson> updates) {
+        CompositeUpdate(final List<? extends Bson> updates) {
             this.updates = updates;
         }
 

@@ -64,8 +64,8 @@ public class ServerSelectionSelectionTest {
     public ServerSelectionSelectionTest(final String description, final BsonDocument definition) {
         this.description = description;
         this.definition = definition;
-        this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS" , new BsonInt64(10000)).longValue();
-        this.error = definition.getBoolean("error" , BsonBoolean.FALSE).getValue();
+        this.heartbeatFrequencyMS = definition.getNumber("heartbeatFrequencyMS", new BsonInt64(10000)).longValue();
+        this.error = definition.getBoolean("error", BsonBoolean.FALSE).getValue();
         this.clusterDescription = buildClusterDescription(definition.getDocument("topology_description"));
     }
 
@@ -75,7 +75,7 @@ public class ServerSelectionSelectionTest {
         assumeTrue(!description.equals("max-staleness/server_selection/ReplicaSetWithPrimary/MaxStalenessWithModePrimary.json"));
 
         ServerSelector serverSelector = null;
-        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers" , new BsonArray()));
+        List<ServerDescription> suitableServers = buildServerDescriptions(definition.getArray("suitable_servers", new BsonArray()));
         List<ServerDescription> selectedServers = null;
         try {
             serverSelector = getServerSelector();
@@ -217,7 +217,7 @@ public class ServerSelectionSelectionTest {
     }
 
     private ServerSelector getServerSelector() {
-        if (definition.getString("operation" , new BsonString("read")).getValue().equals("write")) {
+        if (definition.getString("operation", new BsonString("read")).getValue().equals("write")) {
             return new WritableServerSelector();
         } else {
             BsonDocument readPreferenceDefinition = definition.getDocument("read_preference");
@@ -226,11 +226,11 @@ public class ServerSelectionSelectionTest {
                 readPreference = ReadPreference.valueOf("Primary");
             } else if (readPreferenceDefinition.containsKey("maxStalenessSeconds")) {
                 readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
-                        buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())),
+                        buildTagSets(readPreferenceDefinition.getArray("tag_sets", new BsonArray())),
                         Math.round(readPreferenceDefinition.getNumber("maxStalenessSeconds").doubleValue() * 1000), TimeUnit.MILLISECONDS);
             } else {
                 readPreference = ReadPreference.valueOf(readPreferenceDefinition.getString("mode", new BsonString("Primary")).getValue(),
-                        buildTagSets(readPreferenceDefinition.getArray("tag_sets" , new BsonArray())));
+                        buildTagSets(readPreferenceDefinition.getArray("tag_sets", new BsonArray())));
             }
             return new ReadPreferenceServerSelector(readPreference);
         }

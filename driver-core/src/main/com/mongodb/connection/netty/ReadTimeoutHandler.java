@@ -35,7 +35,7 @@ final class ReadTimeoutHandler extends ChannelInboundHandlerAdapter {
     private final long readTimeout;
     private volatile ScheduledFuture<?> timeout;
 
-    public ReadTimeoutHandler(final long readTimeout) {
+    ReadTimeoutHandler(final long readTimeout) {
         isTrueArgument("readTimeout must be greater than zero.", readTimeout > 0);
         this.readTimeout = readTimeout;
     }

@@ -206,7 +206,7 @@ class BSONCallbackAdapter extends AbstractBsonWriter {
         private String code;
         private String name;
 
-        public Context(final Context parentContext, final BsonContextType contextType) {
+        Context(final Context parentContext, final BsonContextType contextType) {
             super(parentContext, contextType);
         }
 

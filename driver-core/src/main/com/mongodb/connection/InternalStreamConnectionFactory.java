@@ -33,9 +33,9 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final BsonDocument clientMetadataDocument;
     private final List<Authenticator> authenticators;
 
-    public InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
-                                           final ConnectionListener connectionListener, final String applicationName,
-                                           final MongoDriverInformation mongoDriverInformation) {
+    InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
+                                    final ConnectionListener connectionListener, final String applicationName,
+                                    final MongoDriverInformation mongoDriverInformation) {
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.connectionListener = notNull("connectionListener", connectionListener);
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);

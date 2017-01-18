@@ -29,7 +29,7 @@ import static com.mongodb.internal.authentication.NativeAuthenticationHelper.get
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.getNonceCommand;
 
 class NativeAuthenticator extends Authenticator {
-    public NativeAuthenticator(final MongoCredential credential) {
+    NativeAuthenticator(final MongoCredential credential) {
         super(credential);
     }
 

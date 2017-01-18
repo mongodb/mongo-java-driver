@@ -26,7 +26,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     private final MongoIterable<U> iterable;
     private final Function<U, V> mapper;
 
-    public MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
+    MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
         this.iterable = iterable;
         this.mapper = mapper;
     }

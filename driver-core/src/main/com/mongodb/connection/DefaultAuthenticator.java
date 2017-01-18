@@ -22,7 +22,7 @@ import com.mongodb.async.SingleResultCallback;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
 class DefaultAuthenticator extends Authenticator {
-    public DefaultAuthenticator(final MongoCredential credential) {
+    DefaultAuthenticator(final MongoCredential credential) {
         super(credential);
         isTrueArgument("unspecified authentication mechanism", credential.getAuthenticationMechanism() == null);
     }

@@ -210,12 +210,12 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     private class Context extends AbstractBsonWriter.Context {
         private BsonValue container;
 
-        public Context(final BsonValue container, final BsonContextType contextType, final Context parent) {
+        Context(final BsonValue container, final BsonContextType contextType, final Context parent) {
             super(parent, contextType);
             this.container = container;
         }
 
-        public Context() {
+        Context() {
             super(null, BsonContextType.TOP_LEVEL);
         }
 

@@ -33,7 +33,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
 
     private final ConcurrentLinkedQueue<TResult> resultsQueue = new ConcurrentLinkedQueue<TResult>();
 
-    public AbstractSubscription(final Observer<? super TResult> observer) {
+    AbstractSubscription(final Observer<? super TResult> observer) {
         this.observer = observer;
     }
 

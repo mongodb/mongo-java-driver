@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 final class GridFSFindIterableImpl implements GridFSFindIterable {
     private final FindIterable<GridFSFile> underlying;
 
-    public GridFSFindIterableImpl(final FindIterable<GridFSFile> underlying) {
+    GridFSFindIterableImpl(final FindIterable<GridFSFile> underlying) {
         this.underlying = underlying;
     }
 

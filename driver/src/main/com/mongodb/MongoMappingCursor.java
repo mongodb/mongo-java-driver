@@ -24,7 +24,7 @@ class MongoMappingCursor<T, U> implements MongoCursor<U> {
     private final MongoCursor<T> proxied;
     private final Function<T, U> mapper;
 
-    public MongoMappingCursor(final MongoCursor<T> proxied, final Function<T, U> mapper) {
+    MongoMappingCursor(final MongoCursor<T> proxied, final Function<T, U> mapper) {
         this.proxied = notNull("proxied", proxied);
         this.mapper = notNull("mapper", mapper);
     }

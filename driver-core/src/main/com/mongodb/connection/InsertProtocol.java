@@ -42,16 +42,8 @@ class InsertProtocol extends WriteProtocol {
 
     private final List<InsertRequest> insertRequestList;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param namespace         the namespace
-     * @param ordered           whether the inserts are ordered
-     * @param writeConcern      the write concern
-     * @param insertRequestList the list of documents to insert
-     */
-    public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<InsertRequest> insertRequestList) {
+    InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                   final List<InsertRequest> insertRequestList) {
         super(namespace, ordered, writeConcern);
         this.insertRequestList = insertRequestList;
     }

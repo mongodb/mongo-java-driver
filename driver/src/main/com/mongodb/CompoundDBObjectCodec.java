@@ -29,12 +29,12 @@ class CompoundDBObjectCodec implements Codec<DBObject> {
     private final Encoder<DBObject> encoder;
     private final Decoder<DBObject> decoder;
 
-    public CompoundDBObjectCodec(final Encoder<DBObject> encoder, final Decoder<DBObject> decoder) {
+    CompoundDBObjectCodec(final Encoder<DBObject> encoder, final Decoder<DBObject> decoder) {
         this.encoder = encoder;
         this.decoder = decoder;
     }
 
-    public CompoundDBObjectCodec(final Codec<DBObject> codec) {
+    CompoundDBObjectCodec(final Codec<DBObject> codec) {
         this(codec, codec);
     }
 

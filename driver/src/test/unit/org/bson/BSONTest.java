@@ -355,7 +355,7 @@ public class BSONTest {
         private final int minute;
         private final int second;
 
-        public TestDate(final int year, final int month, final int date, final int hour, final int minute, final int second) {
+        TestDate(final int year, final int month, final int date, final int hour, final int minute, final int second) {
             this.year = year;
             this.month = month;
             this.date = date;

@@ -73,19 +73,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private boolean partial;
     private CommandListener commandListener;
 
-    /**
-     * Construct an instance.
-     *
-     * @param namespace      the namespace
-     * @param skip           the number of documents to skip
-     * @param numberToReturn the number to return
-     * @param queryDocument  the query document
-     * @param fields         the fields to return in the result documents
-     * @param resultDecoder  the decoder for the result documents
-     */
-    public QueryProtocol(final MongoNamespace namespace, final int skip,
-                         final int numberToReturn, final BsonDocument queryDocument,
-                         final BsonDocument fields, final Decoder<T> resultDecoder) {
+    QueryProtocol(final MongoNamespace namespace, final int skip, final int numberToReturn, final BsonDocument queryDocument,
+                  final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.skip = skip;
         this.withLimitAndBatchSize = false;
@@ -97,8 +86,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         this.resultDecoder = resultDecoder;
     }
 
-    public QueryProtocol(final MongoNamespace namespace, final int skip, final int limit, final int batchSize,
-                         final BsonDocument queryDocument, final BsonDocument fields, final Decoder<T> resultDecoder) {
+    QueryProtocol(final MongoNamespace namespace, final int skip, final int limit, final int batchSize,
+                  final BsonDocument queryDocument, final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.skip = skip;
         this.withLimitAndBatchSize = true;
@@ -510,9 +499,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         private final QueryMessage message;
         private final boolean isExplainEvent;
 
-        public QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final int requestId, final long startTimeNanos,
-                                   final QueryMessage message, final boolean isExplainEvent,
-                                   final ConnectionDescription connectionDescription) {
+        QueryResultCallback(final SingleResultCallback<QueryResult<T>> callback, final int requestId, final long startTimeNanos,
+                            final QueryMessage message, final boolean isExplainEvent, final ConnectionDescription connectionDescription) {
             super(requestId, connectionDescription.getServerAddress());
             this.callback = callback;
             this.startTimeNanos = startTimeNanos;

@@ -107,7 +107,7 @@ abstract class SaslAuthenticator extends Authenticator {
 
     public abstract String getMechanismName();
 
-    protected abstract SaslClient createSaslClient(final ServerAddress serverAddress);
+    protected abstract SaslClient createSaslClient(ServerAddress serverAddress);
 
     private Subject getSubject() {
         return getCredential().<Subject>getMechanismProperty(JAVA_SUBJECT_KEY, null);
@@ -171,7 +171,7 @@ abstract class SaslAuthenticator extends Authenticator {
         private final InternalConnection connection;
         private final SingleResultCallback<Void> callback;
 
-        public Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
+        Continuator(final SaslClient saslClient, final BsonDocument saslStartDocument, final InternalConnection connection,
                            final SingleResultCallback<Void> callback) {
             this.saslClient = saslClient;
             this.saslStartDocument = saslStartDocument;

@@ -36,7 +36,7 @@ class TestConnection implements Connection, AsyncConnection {
     private final ProtocolExecutor executor;
     private Protocol enqueuedProtocol;
 
-    public TestConnection(final InternalConnection internalConnection, final ProtocolExecutor executor) {
+    TestConnection(final InternalConnection internalConnection, final ProtocolExecutor executor) {
         this.internalConnection = internalConnection;
         this.executor = executor;
     }

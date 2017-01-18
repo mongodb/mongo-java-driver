@@ -23,7 +23,7 @@ class TestServerMonitor implements ServerMonitor {
     private ServerDescription currentDescription;
     private ChangeListener<ServerDescription> serverStateListener;
 
-    public TestServerMonitor(final ServerId serverId) {
+    TestServerMonitor(final ServerId serverId) {
         currentDescription = ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).build();
     }
 

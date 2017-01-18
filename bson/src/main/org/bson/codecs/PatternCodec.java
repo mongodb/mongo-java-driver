@@ -94,7 +94,7 @@ public class PatternCodec implements Codec<Pattern> {
 
     private static final int GLOBAL_FLAG = 256;
 
-    private static enum RegexFlag {
+    private enum RegexFlag {
         CANON_EQ(Pattern.CANON_EQ, 'c', "Pattern.CANON_EQ"),
         UNIX_LINES(Pattern.UNIX_LINES, 'd', "Pattern.UNIX_LINES"),
         GLOBAL(GLOBAL_FLAG, 'g', null),

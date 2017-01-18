@@ -27,7 +27,7 @@ class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
     private List<T> curBatch;
     private int curPos;
 
-    public MongoBatchCursorAdapter(final BatchCursor<T> batchCursor) {
+    MongoBatchCursorAdapter(final BatchCursor<T> batchCursor) {
         this.batchCursor = batchCursor;
     }
 

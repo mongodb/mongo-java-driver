@@ -34,14 +34,7 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 class UpdateMessage extends RequestMessage {
     private final List<UpdateRequest> updates;
 
-    /**
-     * Construct an instance.
-     *
-     * @param collectionName the collection name
-     * @param updates the list of update requests
-     * @param settings the message settings
-     */
-    public UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {
+    UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
         this.updates = updates;
     }

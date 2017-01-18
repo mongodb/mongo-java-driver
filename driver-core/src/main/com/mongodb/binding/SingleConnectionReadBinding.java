@@ -73,7 +73,7 @@ public class SingleConnectionReadBinding extends AbstractReferenceCounted implem
 
     private class SingleConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
 
-        public SingleConnectionSource() {
+        SingleConnectionSource() {
             SingleConnectionReadBinding.this.retain();
         }
 

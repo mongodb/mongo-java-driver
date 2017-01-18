@@ -46,8 +46,8 @@ class DeleteCommandMessage extends BaseWriteCommandMessage {
      * @param settings the message settings
      * @param deletes the list of delete requests
      */
-    public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final MessageSettings settings, final List<DeleteRequest> deletes) {
+    DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                         final MessageSettings settings, final List<DeleteRequest> deletes) {
         super(namespace, ordered, writeConcern, null, settings);
         this.deletes = deletes;
     }

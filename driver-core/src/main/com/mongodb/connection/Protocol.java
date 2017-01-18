@@ -31,7 +31,7 @@ interface Protocol<T> {
      * @param connection the connection to execute the protocol on
      * @return the response from execution of the protocol
      */
-    T execute(final InternalConnection connection);
+    T execute(InternalConnection connection);
 
     /**
      * Execute the protocol asynchronously.
@@ -39,7 +39,7 @@ interface Protocol<T> {
      * @param connection the connection to execute the protocol on
      * @param callback   the callback that is passed the result of the execution
      */
-    void executeAsync(final InternalConnection connection, SingleResultCallback<T> callback);
+    void executeAsync(InternalConnection connection, SingleResultCallback<T> callback);
 
     void setCommandListener(CommandListener commandListener);
 }

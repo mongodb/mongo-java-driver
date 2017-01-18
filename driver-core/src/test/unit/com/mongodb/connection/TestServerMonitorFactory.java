@@ -21,7 +21,7 @@ class TestServerMonitorFactory implements ServerMonitorFactory {
 
     private final TestServerMonitor monitor;
 
-    public TestServerMonitorFactory(final ServerId serverId) {
+    TestServerMonitorFactory(final ServerId serverId) {
         this.monitor = new TestServerMonitor(serverId);
     }
 

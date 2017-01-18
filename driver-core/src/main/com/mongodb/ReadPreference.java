@@ -86,9 +86,9 @@ public abstract class ReadPreference {
         }
     }
 
-    protected abstract List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription);
+    protected abstract List<ServerDescription> chooseForNonReplicaSet(ClusterDescription clusterDescription);
 
-    protected abstract List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription);
+    protected abstract List<ServerDescription> chooseForReplicaSet(ClusterDescription clusterDescription);
 
     /**
      * Gets a read preference that forces read to the primary.

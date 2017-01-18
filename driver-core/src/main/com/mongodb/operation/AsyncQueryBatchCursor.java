@@ -236,7 +236,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         private final AsyncConnection connection;
         private final SingleResultCallback<List<T>> callback;
 
-        public CommandResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
+        CommandResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
             this.callback = errorHandlingCallback(callback, LOGGER);
         }
@@ -262,7 +262,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         private final AsyncConnection connection;
         private final SingleResultCallback<List<T>> callback;
 
-        public QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
+        QueryResultSingleResultCallback(final AsyncConnection connection, final SingleResultCallback<List<T>> callback) {
             this.connection = connection;
             this.callback = errorHandlingCallback(callback, LOGGER);
         }

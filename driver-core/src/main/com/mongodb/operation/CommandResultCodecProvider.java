@@ -53,13 +53,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
     private final Decoder<P> payloadDecoder;
     private final String fieldContainingPayload;
 
-    /**
-     * Construct a new instance. with the default codec for each BSON type.
-     *
-     * @param payloadDecoder the specific decoder to use on the field.
-     * @param fieldContainingPayload the field name to be decoded with the payloadDecoder.
-     */
-    public CommandResultCodecProvider(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
+    CommandResultCodecProvider(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
         this.payloadDecoder = payloadDecoder;
         this.fieldContainingPayload = fieldContainingPayload;
         addCodecs();
