@@ -229,9 +229,11 @@ functions:
     - command: shell.exec
       type: test
       params:
+        silent: true
         working_dir: "src"
         script: |
-          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USER=${sonatype_username} NEXUS_PWD=${sonatype_password} SIGNING_PWD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} NEXUS_USERNAME=${nexus_username} NEXUS_PASSWORD=${nexus_password} SIGNING_PASSWORD=${signing_password} SIGNING_KEY_ID=${signing_keyId} RING_FILE_GPG_BASE64=${ring_file_gpg_base64} .evergreen/publish.sh
 
   "cleanup":
     - command: shell.exec
