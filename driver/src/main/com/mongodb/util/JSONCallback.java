@@ -41,7 +41,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -87,15 +89,21 @@ public class JSONCallback extends BasicBSONCallback {
             if (b.get("$date") instanceof Number) {
                 o = new Date(((Number) b.get("$date")).longValue());
             } else {
-                SimpleDateFormat format = new SimpleDateFormat(_msDateFormat);
-                format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
-                o = format.parse(b.get("$date").toString(), new ParsePosition(0));
-
-                if (o == null) {
-                    // try older format with no ms
-                    format = new SimpleDateFormat(_secDateFormat);
+                try {
+                    SimpleDateFormat format = new SimpleDateFormat(_msDateFormat);
                     format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
                     o = format.parse(b.get("$date").toString(), new ParsePosition(0));
+
+                    if (o == null) {
+                        // try older format with no ms
+                        format = new SimpleDateFormat(_secDateFormat);
+                        format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
+                        o = format.parse(b.get("$date").toString(), new ParsePosition(0));
+                    }
+
+                // fallback for java 1.6 where there is no 'X' pattern letter for timezone available
+                } catch (IllegalArgumentException ex) {
+                    o = fallbackDateParse(b.get("$date").toString());
                 }
             }
         } else if (b.containsField("$regex")) {
@@ -145,8 +153,42 @@ public class JSONCallback extends BasicBSONCallback {
         return o;
     }
 
+    protected Date fallbackDateParse(final String parsedDate) {
+        Matcher tz = Pattern.compile(_timezonePostfixRegex).matcher(parsedDate);
+        Date resultDate = null;
+
+        if (tz.find()) {
+            String matchedTimezone = tz.group();
+            SimpleDateFormat format = new SimpleDateFormat(_msNoTzDateFormat);
+
+            GregorianCalendar calendar;
+            if (matchedTimezone.equals("Z")) {
+                calendar = new GregorianCalendar(new SimpleTimeZone(0, "GMT"));
+            } else {
+                matchedTimezone = matchedTimezone.replace(":", "");
+                calendar = new GregorianCalendar(TimeZone.getTimeZone("GMT" + matchedTimezone));
+            }
+
+            format.setCalendar(calendar);
+            resultDate = format.parse(parsedDate, new ParsePosition(0));
+
+            if (resultDate == null) {
+                format = new SimpleDateFormat(_secNoTzDateFormat);
+                format.setCalendar(calendar);
+                resultDate = format.parse(parsedDate, new ParsePosition(0));
+            }
+        }
+
+        return resultDate;
+    }
+
     private boolean _lastArray = false;
 
-    public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String _msDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+    public static final String _secDateFormat = "yyyy-MM-dd'T'HH:mm:ssX";
+
+    public static final String _msNoTzDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    public static final String _secNoTzDateFormat = "yyyy-MM-dd'T'HH:mm:ss";
+    public static final String _timezonePostfixRegex = "(Z$)|([+-]\\d\\d:?\\d\\d$)|([+-]\\d\\d$)";
+
 }

@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class JSONCallbackTest {
 
@@ -62,6 +63,38 @@ public class JSONCallbackTest {
         parsedDate = (Date) JSON.parse("{ \"$date\" : \"" + format.format(rightNow) + "\"}");
         assertEquals(0, parsedDate.compareTo(format.parse(format.format(rightNow), new ParsePosition(0))));
 
+    }
+
+    private static final String[] TIMEZONED_DATES = {
+            "2000-01-01T00:00:00.000Z",
+            "2000-01-01T00:00:00.000+0000",
+            "2000-01-01T00:00:00.000+0100",
+            "2000-01-01T00:00:00.000-0100",
+            "2000-01-01T00:00:00.000+01",
+            "2000-01-01T00:00:00.000-01",
+            "2000-01-01T00:00:00Z",
+            "2000-01-01T00:00:00+0000",
+            "2000-01-01T00:00:00+0100",
+            "2000-01-01T00:00:00-0100",
+            "2000-01-01T00:00:00+01",
+            "2000-01-01T00:00:00-01"
+    };
+
+    @Test
+    public void timezonedDateParsing() {
+        for (String date : TIMEZONED_DATES) {
+            Date parsedDate = (Date) JSON.parse("{ \"$date\" : \"" + date + "\"}");
+            assertNotNull("Failed to parse date: " + date, parsedDate);
+        }
+    }
+
+    @Test
+    public void timezoneJava16FallbackDateParsing() {
+        JSONCallback callbackUnderTest = new JSONCallback();
+        for (String date : TIMEZONED_DATES) {
+            Date parsedDate = callbackUnderTest.fallbackDateParse(date);
+            assertNotNull(parsedDate);
+        }
     }
 
     @Test
