@@ -1182,6 +1182,9 @@ public class DBCollection {
                 .map(new Function<BsonValue, Object>() {
             @Override
             public Object apply(final BsonValue bsonValue) {
+                if (bsonValue == null) {
+                    return null;
+                }
                 BsonDocument document = new BsonDocument("value", bsonValue);
                 DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
                 return obj.get("value");
