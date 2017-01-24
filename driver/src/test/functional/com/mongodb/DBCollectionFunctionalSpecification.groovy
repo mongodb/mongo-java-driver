@@ -338,18 +338,17 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should return distinct values of differing types '() {
         given:
         collection.drop()
-        def documents = [~['id' :'a'], ~['id' : 1],
+        def documents = [~['id' : null], ~['id' :'a'], ~['id' : 1],
                          ~['id' : ~['b': 'c']],  ~['id' : ~['list': [2, 'd', ~['e': 3]]]]]
 
         collection.insert(documents)
-        assert collection.count() == 4;
 
         when:
         List distinctValues = collection.distinct('id')
 
         then:
-        distinctValues.size() == 4
-        that distinctValues, contains('a', 1, ~['b': 'c'], ~['list': [2, 'd', ~['e': 3]]])
+        distinctValues.size() == 5
+        that distinctValues, contains(null, 'a', 1, ~['b': 'c'], ~['list': [2, 'd', ~['e': 3]]])
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
