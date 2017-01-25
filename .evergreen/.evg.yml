@@ -128,7 +128,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          [ -f ${PROJECT_DIRECTORY}/${file} ] && sh ${PROJECT_DIRECTORY}/${file} || echo "${PROJECT_DIRECTORY}/${file} not available, skipping"
+          ${PROJECT_DIRECTORY}/${file}
 
   "upload mo artifacts":
     - command: shell.exec
