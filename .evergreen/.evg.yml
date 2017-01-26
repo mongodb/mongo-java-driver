@@ -220,10 +220,21 @@ functions:
     - command: shell.exec
       type: test
       params:
+        silent: true
         working_dir: "src"
         script: |
-          ${PREPARE_SHELL}
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           JDK="jdk8" MONGODB_URI="${plain_auth_mongodb_uri}" .evergreen/run-plain-auth-test.sh
+
+  "run gssapi auth test":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
 
   "publish snapshot":
     - command: shell.exec
@@ -336,10 +347,21 @@ tasks:
       commands:
         - func: "run plain auth test"
 
+    - name: "gssapi-auth-test"
+      depends_on:
+        - variant: "static-checks"
+          name: "static-analysis"
+      commands:
+        - func: "run gssapi auth test"
+
     - name: publish-snapshot
       depends_on:
         - variant: ".tests-variant"
           name: "test"
+        - variant: ".test-gssapi-variant"
+          name: "gssapi-auth-test"
+        - variant: "plain-auth-test"
+          name: "plain-auth-test"
       commands:
         - func: "publish snapshot"
 
@@ -452,6 +474,13 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
      - name: "test"
+
+- matrix_name: "test-gssapi"
+  matrix_spec: { jdk: "*", os: "rhel62" }
+  display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
+  tags: ["test-gssapi-variant"]
+  tasks:
+     - name: "gssapi-auth-test"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
