@@ -23,6 +23,8 @@ echo "Running GSSAPI authentication tests"
 
 echo ${KEYTAB_BASE64} | base64 -d > ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab
 
+trap "rm ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab; exit" EXIT HUP
+
 cat << EOF > .evergreen/java.login.drivers.config
 com.sun.security.jgss.krb5.initiate {
     com.sun.security.auth.module.Krb5LoginModule required
