@@ -10,6 +10,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 echo ${RING_FILE_GPG_BASE64} | base64 -d > ${PROJECT_DIRECTORY}/secring.gpg
 
+trap "rm ${PROJECT_DIRECTORY}/secring.gpg; exit" EXIT HUP
+
 echo "Publishing snapshot with jdk8"
 
 export JAVA_HOME="/opt/java/jdk8"
