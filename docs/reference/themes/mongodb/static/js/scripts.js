@@ -45,7 +45,7 @@ jQuery(document).ready(function() {
     });
     jQuery('.body table').addClass('table').addClass('table-striped');
     var siteInput = $('#search input[name="site"]');
-    if (siteInput.val().substring(0, 4) != "http") {
+    if (siteInput.val().indexOf(window.location.hostname) < 0) {
         siteInput.attr("value", window.location.hostname + siteInput.val());
     }
     jQuery("#search form").submit(function() {
