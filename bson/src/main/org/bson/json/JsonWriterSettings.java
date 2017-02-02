@@ -91,6 +91,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * Create a builder for JsonWriterSettings, which are immutable.
      *
      * @return a Builder instance
+     * @since 3.5
      */
     public static Builder builder() {
         return new Builder();
@@ -333,7 +334,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Null values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonNull> getNullConverter() {
         return nullConverter;
@@ -343,7 +344,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON String values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<String> getStringConverter() {
         return stringConverter;
@@ -353,7 +354,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Binary values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonBinary> getBinaryConverter() {
         return binaryConverter;
@@ -363,7 +364,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Boolean values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Boolean> getBooleanConverter() {
         return booleanConverter;
@@ -373,7 +374,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON DateTime values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Long> getDateTimeConverter() {
         return dateTimeConverter;
@@ -383,7 +384,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Double values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Double> getDoubleConverter() {
         return doubleConverter;
@@ -393,7 +394,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Int32 values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Integer> getInt32Converter() {
         return int32Converter;
@@ -403,7 +404,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Int64 values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Long> getInt64Converter() {
         return int64Converter;
@@ -413,7 +414,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Decimal128 values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<Decimal128> getDecimal128Converter() {
         return decimal128Converter;
@@ -423,7 +424,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON ObjectId values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<ObjectId> getObjectIdConverter() {
         return objectIdConverter;
@@ -433,7 +434,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON RegularExpression values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonRegularExpression> getRegularExpressionConverter() {
         return regularExpressionConverter;
@@ -443,7 +444,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Timestamp values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonTimestamp> getTimestampConverter() {
         return timestampConverter;
@@ -453,7 +454,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Symbol values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<String> getSymbolConverter() {
         return symbolConverter;
@@ -463,7 +464,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON MinKey values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonMinKey> getMinKeyConverter() {
         return minKeyConverter;
@@ -473,7 +474,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON MaxKey values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonMaxKey> getMaxKeyConverter() {
         return maxKeyConverter;
@@ -483,7 +484,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON Undefined values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<BsonUndefined> getUndefinedConverter() {
         return undefinedConverter;
@@ -493,7 +494,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * A converter from BSON JavaScript values to JSON.
      *
      * @return this
-     * @since 3.4
+     * @since 3.5
      */
     public Converter<String> getJavaScriptConverter() {
         return javaScriptConverter;
@@ -502,7 +503,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
     /**
      * A builder for JsonWriterSettings
      *
-     * @since 3.4
+     * @since 3.5
      */
     public static final class Builder {
         private boolean indent;
