@@ -96,6 +96,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     }
 
     @Override
+    @Deprecated
     public AggregateIterable<TResult> useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
         return this;
@@ -159,6 +160,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         return this;
     }
 
+    @SuppressWarnings("deprecation")
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList();
         BsonValue outCollection = getAggregateOutCollection(aggregateList);
