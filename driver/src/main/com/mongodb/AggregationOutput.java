@@ -23,7 +23,10 @@ import java.util.List;
  *
  * @mongodb.server.release 2.2
  * @mongodb.driver.manual aggregation/ Aggregation
+ * @deprecated Replace with use of aggregate methods in {@link DBCollection} that return instances of {@link Cursor}.
+ * @see DBCollection#aggregate(List, AggregationOptions)
  */
+@Deprecated
 public class AggregationOutput {
     private final List<DBObject> results;
 

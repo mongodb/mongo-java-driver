@@ -56,7 +56,11 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
+     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
+     * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
+     * command.
      */
+    @Deprecated
     AggregateIterable<TResult> useCursor(Boolean useCursor);
 
     /**

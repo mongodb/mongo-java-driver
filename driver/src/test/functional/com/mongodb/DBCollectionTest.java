@@ -1354,6 +1354,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testBypassDocumentValidationForAggregateDollarOut() {
         assumeThat(serverVersionAtLeast(2, 6), is(true));
 

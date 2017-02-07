@@ -1342,7 +1342,7 @@ public class DBCollection {
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
-     * @deprecated Use {@link com.mongodb.DBCollection#aggregate(java.util.List)} instead
+     * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
      */
     @Deprecated
     @SuppressWarnings("unchecked")
@@ -1360,7 +1360,9 @@ public class DBCollection {
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
+     * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
      */
+    @Deprecated
     public AggregationOutput aggregate(final List<? extends DBObject> pipeline) {
         return aggregate(pipeline, getReadPreference());
     }
@@ -1373,7 +1375,9 @@ public class DBCollection {
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.server.release 2.2
+     * @deprecated Use {@link #aggregate(List, AggregationOptions, ReadPreference)} )} instead
      */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final List<? extends DBObject> pipeline, final ReadPreference readPreference) {
         Cursor cursor = aggregate(pipeline, AggregationOptions.builder().build(), readPreference, false);
