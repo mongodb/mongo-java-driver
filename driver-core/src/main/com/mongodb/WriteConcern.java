@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *  <li> 0: Don't wait for acknowledgement from the server </li>
  *  <li> 1: Wait for acknowledgement, but don't wait for secondaries to replicate</li>
  *  <li> &gt;=2: Wait for one or more secondaries to also acknowledge </li>
- *  <li> "majority": Wait for a majority of secondaries to also acknowledge </li>
+ *  <li> "majority": Wait for a majority of data bearing nodes to acknowledge </li>
  *  <li> "&lt;tag set name&gt;": Wait for one or more secondaries to also acknowledge based on a tag set name</li>
  * </ul>
  * <p>{@code wtimeout} - how long to wait for secondaries to acknowledge before failing</p>
