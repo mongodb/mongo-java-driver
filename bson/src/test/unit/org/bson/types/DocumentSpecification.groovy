@@ -39,8 +39,11 @@ class DocumentSpecification extends Specification {
         then:
         doc.getInteger('int') == 1;
         doc.getLong('long') == 2L;
+        doc.getLong('longNoVal', 42L) == 42L;
         doc.getDouble('double') == 3.0d;
+        doc.getDouble('doubleNoVal', 3.1d) == 3.1d;
         doc.getString('string') == 'hi';
+        doc.getString('stringNoVal', 'defVal') == 'defVal';
         doc.getBoolean('boolean');
         doc.getObjectId('objectId') == objectId;
         doc.getDate('date') == date;

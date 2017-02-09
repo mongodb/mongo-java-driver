@@ -176,6 +176,19 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     }
 
     /**
+     * Gets the value of the given key as a Long.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as an Long, which may be null
+     * @throws java.lang.ClassCastException if the value is not an Long
+     */
+    public Long getLong(final Object key, final Long defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Long) value;
+    }
+
+    /**
      * Gets the value of the given key as a Double.
      *
      * @param key the key
@@ -187,6 +200,19 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     }
 
     /**
+     * Gets the value of the given key as a Double.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as an Double, which may be null
+     * @throws java.lang.ClassCastException if the value is not an Double
+     */
+    public Double getDouble(final Object key, final Double defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (Double) value;
+    }
+
+    /**
      * Gets the value of the given key as a String.
      *
      * @param key the key
@@ -195,6 +221,19 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     public String getString(final Object key) {
         return (String) get(key);
+    }
+
+    /**
+     * Gets the value of the given key as a String.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as an String, which may be null
+     * @throws java.lang.ClassCastException if the value is not an String
+     */
+    public String getString(final Object key, final String defaultValue) {
+        Object value = get(key);
+        return value == null ? defaultValue : (String) value;
     }
 
     /**
