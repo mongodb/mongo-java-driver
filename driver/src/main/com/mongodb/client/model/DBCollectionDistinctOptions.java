@@ -21,7 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 
 /**
- * The options for a count operation.
+ * The options for a distinct operation.
  *
  * @since 3.4
  * @mongodb.driver.manual reference/command/count/ Count
