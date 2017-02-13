@@ -28,6 +28,7 @@ import com.mongodb.connection.Connection;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -50,6 +51,7 @@ public class InsertOperation extends BaseWriteOperation {
                            final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern);
         this.insertRequests = notNull("insertRequests", insertRequests);
+        isTrueArgument("insertRequests not empty", !insertRequests.isEmpty());
     }
 
     /**
