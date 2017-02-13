@@ -40,6 +40,14 @@ import static java.util.Arrays.asList
 
 class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
+    def 'should throw IllegalArgumentException for empty list of requests'() {
+        when:
+        new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, [])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should update nothing if no documents match'() {
         given:
         def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,

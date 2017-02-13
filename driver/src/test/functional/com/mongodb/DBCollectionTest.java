@@ -116,6 +116,16 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void insertEmptyListShouldThrowIllegalArgumentException() {
+        try {
+            collection.insert(Collections.<DBObject>emptyList());
+            fail("Should throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+           // empty
+        }
+    }
+
+    @Test
     public void testInsert() {
         WriteResult res = collection.insert(new BasicDBObject("_id", 1).append("x", 2));
         assertNotNull(res);

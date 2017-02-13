@@ -37,6 +37,14 @@ import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 
 class DeleteOperationSpecification extends OperationFunctionalSpecification {
 
+    def 'should throw IllegalArgumentException for empty list of requests'() {
+        when:
+        new DeleteOperation(getNamespace(), true, ACKNOWLEDGED, [])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should remove a document'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))

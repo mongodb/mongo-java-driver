@@ -28,6 +28,7 @@ import com.mongodb.connection.Connection;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.validateWriteRequestCollations;
@@ -52,6 +53,7 @@ public class DeleteOperation extends BaseWriteOperation {
                            final List<DeleteRequest> deleteRequests) {
         super(namespace, ordered, writeConcern);
         this.deleteRequests = notNull("removes", deleteRequests);
+        isTrueArgument("deleteRequests not empty", !deleteRequests.isEmpty());
     }
 
     /**

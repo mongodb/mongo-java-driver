@@ -56,6 +56,14 @@ import static com.mongodb.client.model.Filters.gte
 
 class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {
 
+    def 'should throw IllegalArgumentException for empty list of requests'() {
+        when:
+        new MixedBulkWriteOperation(getNamespace(), [], true, ACKNOWLEDGED)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should have the expected passed values'() {
         when:
         def operation = new MixedBulkWriteOperation(getNamespace(), requests, ordered, writeConcern)

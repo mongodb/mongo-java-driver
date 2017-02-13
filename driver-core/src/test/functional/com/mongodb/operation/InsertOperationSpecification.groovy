@@ -41,6 +41,15 @@ import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static java.util.Arrays.asList
 
 class InsertOperationSpecification extends OperationFunctionalSpecification {
+
+    def 'should throw IllegalArgumentException for empty list of requests'() {
+        when:
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should return correct result'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
