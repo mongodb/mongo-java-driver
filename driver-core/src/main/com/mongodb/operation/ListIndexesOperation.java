@@ -206,7 +206,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
     }
 
     private AsyncBatchCursor<T> emptyAsyncCursor(final AsyncConnectionSource source) {
-        return createEmptyAsyncBatchCursor(namespace, decoder, source.getServerDescription().getAddress(), batchSize);
+        return createEmptyAsyncBatchCursor(namespace, source.getServerDescription().getAddress());
     }
 
     private BsonDocument asQueryDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {

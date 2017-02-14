@@ -243,7 +243,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
                 QueryResult<T> queryResult = createQueryResult(result, connectionDescription);
-                return new AsyncQueryBatchCursor<T>(queryResult, 0, 0, null);
+                return new AsyncSingleBatchQueryCursor<T>(queryResult);
             }
         };
     }

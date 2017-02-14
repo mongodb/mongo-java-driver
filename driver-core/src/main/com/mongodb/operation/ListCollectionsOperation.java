@@ -238,7 +238,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
     }
 
     private AsyncBatchCursor<T> emptyAsyncCursor(final AsyncConnectionSource source) {
-        return createEmptyAsyncBatchCursor(createNamespace(), decoder, source.getServerDescription().getAddress(), batchSize);
+        return createEmptyAsyncBatchCursor(createNamespace(), source.getServerDescription().getAddress());
     }
 
     private MongoNamespace createNamespace() {

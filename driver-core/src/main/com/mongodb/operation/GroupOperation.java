@@ -309,7 +309,7 @@ public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>
         return new CommandTransformer<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
             public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
-                return new AsyncQueryBatchCursor<T>(createQueryResult(result, connection.getDescription()), 0, 0, decoder);
+                return new AsyncSingleBatchQueryCursor<T>(createQueryResult(result, connection.getDescription()));
             }
         };
     }
