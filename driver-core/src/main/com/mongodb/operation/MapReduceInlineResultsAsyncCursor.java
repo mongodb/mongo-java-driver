@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.connection.QueryResult;
-import org.bson.codecs.Decoder;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned
@@ -26,12 +25,12 @@ import org.bson.codecs.Decoder;
  * @param <T> the operations result type.
  * @since 3.0
  */
-class MapReduceInlineResultsAsyncCursor<T> extends AsyncQueryBatchCursor<T> implements MapReduceAsyncBatchCursor<T> {
+class MapReduceInlineResultsAsyncCursor<T> extends AsyncSingleBatchQueryCursor<T> implements MapReduceAsyncBatchCursor<T> {
 
     private final MapReduceStatistics statistics;
 
-    MapReduceInlineResultsAsyncCursor(final QueryResult<T> queryResult, final Decoder<T> decoder, final MapReduceStatistics statistics) {
-        super(queryResult, 0, 0, decoder);
+    MapReduceInlineResultsAsyncCursor(final QueryResult<T> queryResult, final MapReduceStatistics statistics) {
+        super(queryResult);
         this.statistics = statistics;
     }
 

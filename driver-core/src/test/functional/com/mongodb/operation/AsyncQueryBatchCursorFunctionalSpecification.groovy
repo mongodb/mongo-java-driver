@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
+import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -86,7 +87,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
     private void cleanupConnectionAndSource() {
         connection?.release()
-        connectionSource?.release();
+        connectionSource?.release()
         waitForLastRelease(connectionSource.getServerDescription().getAddress(), getAsyncCluster())
         waitForRelease(connectionSource, 0)
     }
@@ -177,10 +178,10 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         connectionSource.count == 1
 
         when:
-        cursor.next { }
+        nextBatch()
 
         then:
-        thrown(IllegalStateException)
+        thrown(MongoException)
     }
 
     def 'should close when not exhausted'() {
@@ -287,7 +288,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
         def latch = new CountDownLatch(1)
         def connection = getConnection(connectionSource)
-        def serverCursor = cursor.serverCursor
+        def serverCursor = cursor.cursor.get()
         connection.killCursorAsync(getNamespace(), asList(serverCursor.id), new SingleResultCallback<Void>() {
             @Override
             void onResult(final Void result, final Throwable t) {
