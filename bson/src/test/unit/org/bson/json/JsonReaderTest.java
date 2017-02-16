@@ -781,6 +781,19 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testBinDataQuoted() {
+        String json = "{ \"a\" : BinData(3, \"AQIDBA==\") }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readStartDocument();
+        assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+        BsonBinary binary = bsonReader.readBinaryData();
+        assertEquals(3, binary.getType());
+        assertArrayEquals(new byte[]{1, 2, 3, 4}, binary.getData());
+        bsonReader.readEndDocument();
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
     public void testDateWithNumbers() {
         String json = "new Date(1988, 06, 13 , 22 , 1)";
         bsonReader = new JsonReader(json);
