@@ -1420,6 +1420,7 @@ public class DBCollection {
         return aggregate(pipeline, options, readPreference, true);
     }
 
+    @SuppressWarnings("deprecation")
     private Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
                              final boolean returnCursorForOutCollection) {
         if (options == null) {
