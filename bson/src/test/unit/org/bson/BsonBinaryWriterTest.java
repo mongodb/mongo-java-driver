@@ -282,10 +282,6 @@ public class BsonBinaryWriterTest {
 
         writer.writeEndDocument();
 
-        for (final byte b : buffer.toByteArray()) {
-            System.out.print(b + ", ");
-        }
-
         byte[] expectedValues = {17, 0, 0, 0, 127, 107, 49, 0, -1, 107, 50, 0, 127, 107, 51, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
     }
