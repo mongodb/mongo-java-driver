@@ -42,7 +42,7 @@ public class AggregationOptions {
     /**
      * Enumeration to define where the results of the aggregation will be output.
      * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
+     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
     @Deprecated
@@ -96,7 +96,7 @@ public class AggregationOptions {
      * @return whether the output will be inline or via a cursor, which defaults to {@link OutputMode#CURSOR}
      * @see OutputMode
      * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
+     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
     @Deprecated
@@ -209,8 +209,8 @@ public class AggregationOptions {
          * @return {@code this} so calls can be chained
          * @see OutputMode
          * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-         * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-         * command.
+         * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the
+         * aggregate command.
          */
         @Deprecated
         public Builder outputMode(final OutputMode mode) {

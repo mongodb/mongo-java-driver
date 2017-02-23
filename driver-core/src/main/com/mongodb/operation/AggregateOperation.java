@@ -182,7 +182,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
+     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
     @Deprecated
@@ -198,7 +198,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (>= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
+     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
     @Deprecated

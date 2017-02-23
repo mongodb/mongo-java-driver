@@ -73,7 +73,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.AggregationOptions.OutputMode.CURSOR;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
@@ -1453,7 +1452,7 @@ public class DBCollection {
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
-                    .useCursor(options.getOutputMode() == CURSOR)
+                    .useCursor(options.getOutputMode() == com.mongodb.AggregationOptions.OutputMode.CURSOR)
                     .collation(options.getCollation());
             BatchCursor<DBObject> cursor = executor.execute(operation, readPreference);
             return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
