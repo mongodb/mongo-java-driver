@@ -73,7 +73,7 @@ enum JsonTokenType {
     INT32,
 
     /**
-     * And Int64 token.
+     * An Int64 token.
      */
     INT64,
 

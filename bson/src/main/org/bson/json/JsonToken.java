@@ -37,6 +37,13 @@ class JsonToken {
     }
 
     public <T> T getValue(final Class<T> clazz) {
+        if (Integer.class == clazz) {
+            if (value instanceof Integer) {
+                return clazz.cast(value);
+            } else if (value instanceof String) {
+                return clazz.cast(Integer.valueOf((String) value));
+            }
+        }
         if (Long.class == clazz) {
             if (value instanceof Integer) {
                 return clazz.cast(((Integer) value).longValue());
