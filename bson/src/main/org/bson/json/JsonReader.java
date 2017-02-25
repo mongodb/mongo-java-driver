@@ -962,10 +962,19 @@ public class JsonReader extends AbstractBsonReader {
     private BsonRegularExpression visitRegularExpressionExtendedJson() {
         verifyToken(":");
         JsonToken patternToken = popToken();
-        if (patternToken.getType() != JsonTokenType.STRING) {
-            throw new JsonParseException("JSON reader expected a string but found '%s'.", patternToken.getValue());
-        }
+        String pattern;
         String options = "";
+
+        if (patternToken.getType() == JsonTokenType.REGULAR_EXPRESSION) {
+            BsonRegularExpression regularExpression = patternToken.getValue(BsonRegularExpression.class);
+            pattern = regularExpression.getPattern();
+            options = regularExpression.getOptions();
+        } else if (patternToken.getType() == JsonTokenType.STRING) {
+            pattern = patternToken.getValue(String.class);
+        } else {
+            throw new JsonParseException("JSON reader expected a string or a regular expression but found '%s'.", patternToken.getValue());
+        }
+
         JsonToken commaToken = popToken();
         if (commaToken.getType() == JsonTokenType.COMMA) {
             verifyString("$options");
@@ -979,7 +988,7 @@ public class JsonReader extends AbstractBsonReader {
             pushToken(commaToken);
         }
         verifyToken("}");
-        return new BsonRegularExpression(patternToken.getValue(String.class), options);
+        return new BsonRegularExpression(pattern, options);
     }
 
     private String visitSymbolExtendedJson() {
