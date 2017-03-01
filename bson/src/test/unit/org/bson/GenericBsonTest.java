@@ -22,6 +22,8 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -36,12 +38,16 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
 @RunWith(Parameterized.class)
@@ -51,6 +57,13 @@ public class GenericBsonTest {
         VALID,
         PARSE_ERROR
     }
+
+    private final Set<String> testsToSkip = new HashSet<String>(Arrays.asList(
+            "Document that resembles extended JSON, but with extra keys",    // JsonReader does not support extra keys
+            "Document that resembles extended JSON, but with missing keys",  // JsonReader does not support missing keys
+            "DBpointer with opposite key order",                             // JsonReader does not support out of order keys
+            "DBpointer with extra keys"                                      // JsonReader does not support extra keys
+            ));
 
     private final BsonDocument testDefinition;
     private final BsonDocument testCase;
@@ -65,6 +78,7 @@ public class GenericBsonTest {
 
     @Test
     public void shouldPassAllOutcomes() {
+        assumeTrue(!testsToSkip.contains(testCase.getString("description").getValue()));
         switch (testCaseType) {
             case VALID:
                 runValid();
@@ -85,25 +99,18 @@ public class GenericBsonTest {
         String description = testCase.getString("description").getValue();
         boolean lossy = testCase.getBoolean("lossy", new BsonBoolean(false)).getValue();
 
-        // JsonWriter uses Double.toString(double), which represents exponents with a capital E.
-        // The tests expect a lowercase e.
-        // This hack changes the canonical JSON to use a capital E
-        if (testDefinition.getString("description").getValue().startsWith("Double")) {
-            canonicalJson = canonicalJson.replace("e", "E");
-        }
-
         BsonDocument decodedDocument = decodeToDocument(bsonHex, description);
 
         // B -> B
         assertEquals(format("Failed to create expected BSON for document with description '%s'", description),
                 canonicalBsonHex, encodeToHex(decodedDocument));
 
+        JsonWriterSettings jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
+
         // B -> E
         if (!canonicalJson.isEmpty()) {
-            if (!isDateTimeTest()) {
-                assertEquals(format("Failed to create expected JSON for document with description '%s'", description),
-                        stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedDocument.toJson()));
-            }
+            assertEquals(format("Failed to create expected JSON for document with description '%s'", description),
+                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedDocument.toJson(jsonWriterSettings)));
         }
 
         if (!canonicalBsonHex.equals(bsonHex)) {
@@ -113,17 +120,15 @@ public class GenericBsonTest {
                     canonicalBsonHex, encodeToHex(decodedCanonicalDocument));
             // B -> E
             assertEquals(format("Failed to create expected JSON for canonical document with description '%s'", description),
-                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedCanonicalDocument.toJson()));
+                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedCanonicalDocument.toJson(jsonWriterSettings)));
         }
 
         if (!json.isEmpty()) {
             BsonDocument parsedDocument = BsonDocument.parse(json);
             // E -> E
-            if (!isDateTimeTest()) {
-                assertEquals(format("Failed to parse expected JSON for document with description '%s'", description),
-                        stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedDocument.toJson()));
+            assertEquals(format("Failed to parse expected JSON for document with description '%s'", description),
+                    stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedDocument.toJson(jsonWriterSettings)));
 
-            }
             if (!lossy) {
                 // E -> B
                 assertEquals(format("Failed to create expected BsonDocument for parsed canonical JSON document with description '%s'",
@@ -133,27 +138,19 @@ public class GenericBsonTest {
 
             }
             if (!canonicalJson.equals(json)) {
-                if (!isDateTimeTest()) {
-                    BsonDocument parsedCanonicalDocument = BsonDocument.parse(canonicalJson);
-                    // E -> E
-                    assertEquals(format("Failed to create expected JSON for parsed canonical JSON document with description '%s'",
-                            description), stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedCanonicalDocument.toJson()));
-                    if (!lossy) {
-                        // E -> B
-                        assertEquals(format("Failed to create expected BsonDocument for parsed canonical JSON document "
-                                                    + "with description '%s'", description), decodedDocument, parsedCanonicalDocument);
-                        assertEquals(format("Failed to create expected BSON for parsed canonical JSON document with description '%s'",
-                                description), bsonHex, encodeToHex(parsedDocument));
-                    }
+                BsonDocument parsedCanonicalDocument = BsonDocument.parse(canonicalJson);
+                // E -> E
+                assertEquals(format("Failed to create expected JSON for parsed canonical JSON document with description '%s'",
+                        description), stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedCanonicalDocument.toJson(jsonWriterSettings)));
+                if (!lossy) {
+                    // E -> B
+                    assertEquals(format("Failed to create expected BsonDocument for parsed canonical JSON document "
+                                                + "with description '%s'", description), decodedDocument, parsedCanonicalDocument);
+                    assertEquals(format("Failed to create expected BSON for parsed canonical JSON document with description '%s'",
+                            description), bsonHex, encodeToHex(parsedDocument));
                 }
             }
         }
-    }
-
-    // TODO: Currently ignoring extended JSON for DateTime as the driver is out of compliance due to need to preserve backwards
-    // compatibility.  Once the extended JSON specification is approved we can revisit this.
-    private boolean isDateTimeTest() {
-        return testDefinition.getString("description").getValue().startsWith("DateTime");
     }
 
     // The corpus escapes all non-ascii characters, but JSONWriter does not.  This method converts the Unicode escape sequence into its

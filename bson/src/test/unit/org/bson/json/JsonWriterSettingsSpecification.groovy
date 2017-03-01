@@ -105,17 +105,41 @@ class JsonWriterSettingsSpecification extends Specification {
 
     }
 
-    def 'should use extended json converters for strict mode'() {
+    def 'should use legacy extended json converters for strict mode'() {
         when:
         def settings = JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build()
 
         then:
         settings.binaryConverter.class == ExtendedJsonBinaryConverter
         settings.booleanConverter.class == JsonBooleanConverter
-        settings.dateTimeConverter.class == ExtendedJsonDateTimeConverter
+        settings.dateTimeConverter.class == LegacyExtendedJsonDateTimeConverter
         settings.decimal128Converter.class == ExtendedJsonDecimal128Converter
         settings.doubleConverter.class == JsonDoubleConverter
         settings.int32Converter.class == JsonInt32Converter
+        settings.int64Converter.class == ExtendedJsonInt64Converter
+        settings.javaScriptConverter.class == JsonJavaScriptConverter
+        settings.maxKeyConverter.class == ExtendedJsonMaxKeyConverter
+        settings.minKeyConverter.class == ExtendedJsonMinKeyConverter
+        settings.nullConverter.class == JsonNullConverter
+        settings.objectIdConverter.class == ExtendedJsonObjectIdConverter
+        settings.regularExpressionConverter.class == ExtendedJsonRegularExpressionConverter
+        settings.stringConverter.class == JsonStringConverter
+        settings.symbolConverter.class == JsonSymbolConverter
+        settings.timestampConverter.class == LegacyExtendedJsonTimestampConverter
+        settings.undefinedConverter.class == ExtendedJsonUndefinedConverter
+    }
+
+    def 'should use extended json converters for extended json mode'() {
+        when:
+        def settings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()
+
+        then:
+        settings.binaryConverter.class == ExtendedJsonBinaryConverter
+        settings.booleanConverter.class == JsonBooleanConverter
+        settings.dateTimeConverter.class == ExtendedJsonDateTimeConverter
+        settings.decimal128Converter.class == ExtendedJsonDecimal128Converter
+        settings.doubleConverter.class == ExtendedJsonDoubleConverter
+        settings.int32Converter.class == ExtendedJsonInt32Converter
         settings.int64Converter.class == ExtendedJsonInt64Converter
         settings.javaScriptConverter.class == JsonJavaScriptConverter
         settings.maxKeyConverter.class == ExtendedJsonMaxKeyConverter

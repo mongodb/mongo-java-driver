@@ -6,8 +6,14 @@
         {
             "description": "Timestamp: (123456789, 42)",
             "bson": "100000001161002A00000015CD5B0700",
-            "extjson": "{\"a\" : {\"$timestamp\" : {\"t\" : 123456789, \"i\" : 42}}}"
+            "extjson": "{\"a\" : {\"$timestamp\" : \"530242871224172586\"}}"
+        },
+        {
+            "description": "Timestamp with high-order bit set on both seconds and increment: (4294967295, 4294967295)",
+            "bson": "10000000116100FFFFFFFFFFFFFFFF00",
+            "extjson": "{\"a\" : {\"$timestamp\" : \"18446744073709551615\"}}"
         }
+
     ],
     "decodeErrors": [
         {

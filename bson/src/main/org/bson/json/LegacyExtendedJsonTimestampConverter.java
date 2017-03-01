@@ -17,12 +17,16 @@
 
 package org.bson.json;
 
-class ExtendedJsonInt64Converter implements Converter<Long> {
+import org.bson.BsonTimestamp;
+
+class LegacyExtendedJsonTimestampConverter implements Converter<BsonTimestamp> {
     @Override
-    public void convert(final Long value, final StrictJsonWriter writer) {
+    public void convert(final BsonTimestamp value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeName("$numberLong");
-        writer.writeString(Long.toString(value));
+        writer.writeStartObject("$timestamp");
+        writer.writeNumber("t", Integer.toString(value.getTime()));
+        writer.writeNumber("i", Integer.toString(value.getInc()));
+        writer.writeEndObject();
         writer.writeEndObject();
     }
 }

@@ -19,14 +19,12 @@ package org.bson.json;
 
 import org.bson.types.Decimal128;
 
-import static java.lang.String.format;
-
 class ExtendedJsonDecimal128Converter implements Converter<Decimal128> {
     @Override
     public void convert(final Decimal128 value, final StrictJsonWriter writer) {
         writer.writeStartObject();
         writer.writeName("$numberDecimal");
-        writer.writeString(format("%s", value.toString()));
+        writer.writeString(value.toString());
         writer.writeEndObject();
     }
 }
