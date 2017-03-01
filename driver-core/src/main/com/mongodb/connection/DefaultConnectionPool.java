@@ -56,7 +56,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
-    private static final DaemonThreadFactory THREAD_FACTORY = new DaemonThreadFactory();
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
@@ -77,7 +76,7 @@ class DefaultConnectionPool implements ConnectionPool {
         = new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
         maintenanceTask = createMaintenanceTask();
-        sizeMaintenanceTimer = createTimer();
+        sizeMaintenanceTimer = createMaintenanceTimer();
         this.connectionPoolListener = notNull("connectionPoolListener", connectionPoolListener);
         connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, settings));
     }
@@ -214,7 +213,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private synchronized ExecutorService getAsyncGetter() {
         if (asyncGetter == null) {
-            asyncGetter = Executors.newSingleThreadExecutor(THREAD_FACTORY);
+            asyncGetter = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
         }
         return asyncGetter;
     }
@@ -311,11 +310,11 @@ class DefaultConnectionPool implements ConnectionPool {
         return newMaintenanceTask;
     }
 
-    private ExecutorService createTimer() {
+    private ExecutorService createMaintenanceTimer() {
         if (maintenanceTask == null) {
             return null;
         } else {
-            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
+            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"));
             newTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
                                          settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
             return newTimer;

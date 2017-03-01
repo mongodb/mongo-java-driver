@@ -849,7 +849,7 @@ public class Mongo {
     }
 
     private ExecutorService createCursorCleaningService() {
-        ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
+        ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("CleanCursors"));
         newTimer.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
