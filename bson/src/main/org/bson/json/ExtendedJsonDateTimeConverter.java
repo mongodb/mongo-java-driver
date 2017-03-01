@@ -21,7 +21,9 @@ class ExtendedJsonDateTimeConverter implements Converter<Long> {
     @Override
     public void convert(final Long value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeNumber("$date", Long.toString(value));
+        writer.writeStartObject("$date");
+        writer.writeString("$numberLong", Long.toString(value));
+        writer.writeEndObject();
         writer.writeEndObject();
     }
 

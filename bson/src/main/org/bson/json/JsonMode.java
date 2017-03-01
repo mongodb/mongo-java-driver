@@ -21,18 +21,28 @@ package org.bson.json;
  *
  * @see JsonWriter
  * @since 3.0
- * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
  */
 public enum JsonMode {
 
     /**
      * Strict mode representations of BSON types conform to the <a href="http://www.json.org">JSON RFC spec</a>.
+     *
+     * @deprecated  The format generated with this mode is no longer considered standard for MongoDB tools.
      */
+    @Deprecated
     STRICT,
 
     /**
      * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually
      * produces when showing query results.
      */
-    SHELL
+    SHELL,
+
+    /**
+     * Standard extended JSON representation.
+     *
+     * @since 3.5
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/extended-json.rst">Extended JSON Specification</a>
+     */
+    EXTENDED
 }

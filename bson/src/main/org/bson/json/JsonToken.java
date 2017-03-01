@@ -43,6 +43,14 @@ class JsonToken {
             } else if (value instanceof String) {
                 return clazz.cast(Long.valueOf((String) value));
             }
+        } else if (Integer.class == clazz) {
+            if (value instanceof String) {
+                return clazz.cast(Integer.valueOf((String) value));
+            }
+        } else if (Double.class == clazz) {
+            if (value instanceof String) {
+                return clazz.cast(Double.valueOf((String) value));
+            }
         } else if (Decimal128.class == clazz) {
             if (value instanceof Integer) {
                 return clazz.cast(new Decimal128((Integer) value));

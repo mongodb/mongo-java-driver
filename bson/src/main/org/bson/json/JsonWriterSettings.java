@@ -41,7 +41,9 @@ public class JsonWriterSettings extends BsonWriterSettings {
     private static final JsonStringConverter JSON_STRING_CONVERTER = new JsonStringConverter();
     private static final JsonBooleanConverter JSON_BOOLEAN_CONVERTER = new JsonBooleanConverter();
     private static final JsonDoubleConverter JSON_DOUBLE_CONVERTER = new JsonDoubleConverter();
+    private static final ExtendedJsonDoubleConverter EXTENDED_JSON_DOUBLE_CONVERTER = new ExtendedJsonDoubleConverter();
     private static final JsonInt32Converter JSON_INT_32_CONVERTER = new JsonInt32Converter();
+    private static final ExtendedJsonInt32Converter EXTENDED_JSON_INT_32_CONVERTER = new ExtendedJsonInt32Converter();
     private static final JsonSymbolConverter JSON_SYMBOL_CONVERTER = new JsonSymbolConverter();
     private static final ExtendedJsonMinKeyConverter EXTENDED_JSON_MIN_KEY_CONVERTER = new ExtendedJsonMinKeyConverter();
     private static final ShellMinKeyConverter SHELL_MIN_KEY_CONVERTER = new ShellMinKeyConverter();
@@ -49,6 +51,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
     private static final ShellMaxKeyConverter SHELL_MAX_KEY_CONVERTER = new ShellMaxKeyConverter();
     private static final ExtendedJsonUndefinedConverter EXTENDED_JSON_UNDEFINED_CONVERTER = new ExtendedJsonUndefinedConverter();
     private static final ShellUndefinedConverter SHELL_UNDEFINED_CONVERTER = new ShellUndefinedConverter();
+    private static final LegacyExtendedJsonDateTimeConverter LEGACY_EXTENDED_JSON_DATE_TIME_CONVERTER =
+            new LegacyExtendedJsonDateTimeConverter();
     private static final ExtendedJsonDateTimeConverter EXTENDED_JSON_DATE_TIME_CONVERTER = new ExtendedJsonDateTimeConverter();
     private static final ShellDateTimeConverter SHELL_DATE_TIME_CONVERTER = new ShellDateTimeConverter();
     private static final ExtendedJsonBinaryConverter EXTENDED_JSON_BINARY_CONVERTER = new ExtendedJsonBinaryConverter();
@@ -59,6 +63,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
     private static final ShellDecimal128Converter SHELL_DECIMAL_128_CONVERTER = new ShellDecimal128Converter();
     private static final ExtendedJsonObjectIdConverter EXTENDED_JSON_OBJECT_ID_CONVERTER = new ExtendedJsonObjectIdConverter();
     private static final ShellObjectIdConverter SHELL_OBJECT_ID_CONVERTER = new ShellObjectIdConverter();
+    private static final LegacyExtendedJsonTimestampConverter LEGACY_EXTENDED_JSON_TIMESTAMP_CONVERTER =
+            new LegacyExtendedJsonTimestampConverter();
     private static final ExtendedJsonTimestampConverter EXTENDED_JSON_TIMESTAMP_CONVERTER = new ExtendedJsonTimestampConverter();
     private static final ShellTimestampConverter SHELL_TIMESTAMP_CONVERTER = new ShellTimestampConverter();
     private static final ExtendedJsonRegularExpressionConverter EXTENDED_JSON_REGULAR_EXPRESSION_CONVERTER =
@@ -164,6 +170,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
         this(builder().outputMode(outputMode).indent(true).indentCharacters(indentCharacters).newLineCharacters(newLineCharacters));
     }
 
+    @SuppressWarnings("deprecation")
     private JsonWriterSettings(final Builder builder) {
         indent = builder.indent;
         newLineCharacters = builder.newLineCharacters != null ? builder.newLineCharacters : System.getProperty("line.separator");
@@ -190,13 +197,18 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.doubleConverter != null) {
             doubleConverter = builder.doubleConverter;
+        } else if (outputMode == JsonMode.EXTENDED) {
+            doubleConverter = EXTENDED_JSON_DOUBLE_CONVERTER;
         } else {
             doubleConverter = JSON_DOUBLE_CONVERTER;
         }
 
         if (builder.int32Converter != null) {
             int32Converter = builder.int32Converter;
-        } else {
+        } else if (outputMode == JsonMode.EXTENDED) {
+            int32Converter = EXTENDED_JSON_INT_32_CONVERTER;
+        }
+        else {
             int32Converter = JSON_INT_32_CONVERTER;
         }
 
@@ -214,7 +226,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.minKeyConverter != null) {
             minKeyConverter = builder.minKeyConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             minKeyConverter = EXTENDED_JSON_MIN_KEY_CONVERTER;
         } else {
             minKeyConverter = SHELL_MIN_KEY_CONVERTER;
@@ -222,7 +234,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.maxKeyConverter != null) {
             maxKeyConverter = builder.maxKeyConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             maxKeyConverter = EXTENDED_JSON_MAX_KEY_CONVERTER;
         } else {
             maxKeyConverter = SHELL_MAX_KEY_CONVERTER;
@@ -230,7 +242,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.undefinedConverter != null) {
             undefinedConverter = builder.undefinedConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             undefinedConverter = EXTENDED_JSON_UNDEFINED_CONVERTER;
         } else {
             undefinedConverter = SHELL_UNDEFINED_CONVERTER;
@@ -239,6 +251,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
         if (builder.dateTimeConverter != null) {
             dateTimeConverter = builder.dateTimeConverter;
         } else if (outputMode == JsonMode.STRICT) {
+            dateTimeConverter = LEGACY_EXTENDED_JSON_DATE_TIME_CONVERTER;
+        } else if (outputMode == JsonMode.EXTENDED) {
             dateTimeConverter = EXTENDED_JSON_DATE_TIME_CONVERTER;
         } else {
             dateTimeConverter = SHELL_DATE_TIME_CONVERTER;
@@ -246,7 +260,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.binaryConverter != null) {
             binaryConverter = builder.binaryConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             binaryConverter = EXTENDED_JSON_BINARY_CONVERTER;
         } else {
             binaryConverter = SHELL_BINARY_CONVERTER;
@@ -254,7 +268,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.int64Converter != null) {
             int64Converter = builder.int64Converter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             int64Converter = EXTENDED_JSON_INT_64_CONVERTER;
         } else {
             int64Converter = SHELL_INT_64_CONVERTER;
@@ -262,7 +276,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.decimal128Converter != null) {
             decimal128Converter = builder.decimal128Converter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             decimal128Converter = EXTENDED_JSON_DECIMAL_128_CONVERTER;
         } else {
             decimal128Converter = SHELL_DECIMAL_128_CONVERTER;
@@ -270,7 +284,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.objectIdConverter != null) {
             objectIdConverter = builder.objectIdConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             objectIdConverter = EXTENDED_JSON_OBJECT_ID_CONVERTER;
         } else {
             objectIdConverter = SHELL_OBJECT_ID_CONVERTER;
@@ -279,6 +293,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
         if (builder.timestampConverter != null) {
             timestampConverter = builder.timestampConverter;
         } else if (outputMode == JsonMode.STRICT) {
+            timestampConverter = LEGACY_EXTENDED_JSON_TIMESTAMP_CONVERTER;
+        } else if (outputMode == JsonMode.EXTENDED) {
             timestampConverter = EXTENDED_JSON_TIMESTAMP_CONVERTER;
         } else {
             timestampConverter = SHELL_TIMESTAMP_CONVERTER;
@@ -286,7 +302,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
         if (builder.regularExpressionConverter != null) {
             regularExpressionConverter = builder.regularExpressionConverter;
-        } else if (outputMode == JsonMode.STRICT) {
+        } else if (outputMode == JsonMode.STRICT || outputMode == JsonMode.EXTENDED) {
             regularExpressionConverter = EXTENDED_JSON_REGULAR_EXPRESSION_CONVERTER;
         } else {
             regularExpressionConverter = SHELL_REGULAR_EXPRESSION_CONVERTER;
@@ -505,6 +521,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      *
      * @since 3.5
      */
+    @SuppressWarnings("deprecation")
     public static final class Builder {
         private boolean indent;
         private String newLineCharacters = System.getProperty("line.separator");

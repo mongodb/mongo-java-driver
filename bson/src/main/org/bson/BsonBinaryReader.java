@@ -252,9 +252,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     @Override
     protected BsonTimestamp doReadTimestamp() {
-        int increment = bsonInput.readInt32();
-        int time = bsonInput.readInt32();
-        return new BsonTimestamp(time, increment);
+        return new BsonTimestamp(bsonInput.readInt64());
     }
 
     @Override

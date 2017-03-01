@@ -17,12 +17,12 @@
 
 package org.bson.json;
 
-class ExtendedJsonInt64Converter implements Converter<Long> {
+class ExtendedJsonInt32Converter implements Converter<Integer> {
     @Override
-    public void convert(final Long value, final StrictJsonWriter writer) {
+    public void convert(final Integer value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeName("$numberLong");
-        writer.writeString(Long.toString(value));
+        writer.writeName("$numberInt");
+        writer.writeString(Integer.toString(value));
         writer.writeEndObject();
     }
 }

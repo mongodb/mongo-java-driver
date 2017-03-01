@@ -291,6 +291,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testInt64Strict() {
         List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
                 new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
@@ -330,6 +331,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testDecimal128Strict() {
         List<TestData<Decimal128>> tests = asList(
                 new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
@@ -361,6 +363,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testBinaryStrict() {
         List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
                                                                    "{ \"$binary\" : \"\", "
@@ -408,6 +411,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testDateTimeStrict() {
         List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{ \"$date\" : 0 }"),
                 new TestData<Date>(new Date(Long.MAX_VALUE), "{ \"$date\" : 9223372036854775807 }"),
@@ -560,6 +564,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testRegularExpressionStrict() {
         List<TestData<BsonRegularExpression>> tests;
         tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""), "{ \"$regex\" : \"\", "
@@ -631,6 +636,7 @@ public class JsonWriterTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testUndefinedStrict() {
         writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
         writer.writeStartDocument();

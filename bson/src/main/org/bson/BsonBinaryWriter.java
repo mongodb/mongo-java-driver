@@ -282,8 +282,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     public void doWriteTimestamp(final BsonTimestamp value) {
         bsonOutput.writeByte(BsonType.TIMESTAMP.getValue());
         writeCurrentName();
-        bsonOutput.writeInt32(value.getInc());
-        bsonOutput.writeInt32(value.getTime());
+        bsonOutput.writeInt64(value.getValue());
     }
 
     @Override
