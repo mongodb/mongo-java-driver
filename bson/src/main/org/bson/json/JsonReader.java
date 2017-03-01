@@ -581,67 +581,74 @@ public class JsonReader extends AbstractBsonReader {
         JsonTokenType type = nameToken.getType();
 
         if (type == JsonTokenType.STRING || type == JsonTokenType.UNQUOTED_STRING) {
-            if ("$binary".equals(value)) {
-                currentValue = visitBinDataExtendedJson();
-                setCurrentBsonType(BsonType.BINARY);
-                return;
-            } else if ("$code".equals(value)) {
-                visitJavaScriptExtendedJson();
-                return;
-            } else if ("$date".equals(value)) {
-                currentValue = visitDateTimeExtendedJson();
-                setCurrentBsonType(BsonType.DATE_TIME);
-                return;
-            } else if ("$maxKey".equals(value)) {
-                currentValue = visitMaxKeyExtendedJson();
-                setCurrentBsonType(BsonType.MAX_KEY);
-                return;
-            } else if ("$minKey".equals(value)) {
-                currentValue = visitMinKeyExtendedJson();
-                setCurrentBsonType(BsonType.MIN_KEY);
-                return;
-            } else if ("$oid".equals(value)) {
-                currentValue = visitObjectIdExtendedJson();
-                setCurrentBsonType(BsonType.OBJECT_ID);
-                return;
-            } else if ("$regex".equals(value)) {
-                currentValue = visitRegularExpressionExtendedJson();
-                setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
-                return;
-            } else if ("$symbol".equals(value)) {
-                currentValue = visitSymbolExtendedJson();
-                setCurrentBsonType(BsonType.SYMBOL);
-                return;
-            } else if ("$timestamp".equals(value)) {
-                currentValue = visitTimestampExtendedJson();
-                setCurrentBsonType(BsonType.TIMESTAMP);
-                return;
-            } else if ("$undefined".equals(value)) {
-                currentValue = visitUndefinedExtendedJson();
-                setCurrentBsonType(BsonType.UNDEFINED);
-                return;
-            } else if ("$numberLong".equals(value)) {
-                currentValue = visitNumberLongExtendedJson();
-                setCurrentBsonType(BsonType.INT64);
-                return;
-            } else if ("$numberInt".equals(value)) {
-                currentValue = visitNumberIntExtendedJson();
-                setCurrentBsonType(BsonType.INT32);
-                return;
-            } else if ("$numberDouble".equals(value)) {
-                currentValue = visitNumberDoubleExtendedJson();
-                setCurrentBsonType(BsonType.DOUBLE);
-                return;
-            } else if ("$numberDecimal".equals(value)) {
-                currentValue = visitNumberDecimalExtendedJson();
-                setCurrentBsonType(BsonType.DECIMAL128);
-                return;
-            } else if ("$dbPointer".equals(value)) {
-                currentValue = visitDbPointerExtendedJson();
-                setCurrentBsonType(BsonType.DB_POINTER);
-                return;
+            Mark extendedJsonMark = new Mark();
+
+            try {
+                if ("$binary".equals(value)) {
+                    currentValue = visitBinDataExtendedJson();
+                    setCurrentBsonType(BsonType.BINARY);
+                    return;
+                } else if ("$code".equals(value)) {
+                    visitJavaScriptExtendedJson();
+                    return;
+                } else if ("$date".equals(value)) {
+                    currentValue = visitDateTimeExtendedJson();
+                    setCurrentBsonType(BsonType.DATE_TIME);
+                    return;
+                } else if ("$maxKey".equals(value)) {
+                    currentValue = visitMaxKeyExtendedJson();
+                    setCurrentBsonType(BsonType.MAX_KEY);
+                    return;
+                } else if ("$minKey".equals(value)) {
+                    currentValue = visitMinKeyExtendedJson();
+                    setCurrentBsonType(BsonType.MIN_KEY);
+                    return;
+                } else if ("$oid".equals(value)) {
+                    currentValue = visitObjectIdExtendedJson();
+                    setCurrentBsonType(BsonType.OBJECT_ID);
+                    return;
+                } else if ("$regex".equals(value)) {
+                    currentValue = visitRegularExpressionExtendedJson();
+                    setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
+                    return;
+                } else if ("$symbol".equals(value)) {
+                    currentValue = visitSymbolExtendedJson();
+                    setCurrentBsonType(BsonType.SYMBOL);
+                    return;
+                } else if ("$timestamp".equals(value)) {
+                    currentValue = visitTimestampExtendedJson();
+                    setCurrentBsonType(BsonType.TIMESTAMP);
+                    return;
+                } else if ("$undefined".equals(value)) {
+                    currentValue = visitUndefinedExtendedJson();
+                    setCurrentBsonType(BsonType.UNDEFINED);
+                    return;
+                } else if ("$numberLong".equals(value)) {
+                    currentValue = visitNumberLongExtendedJson();
+                    setCurrentBsonType(BsonType.INT64);
+                    return;
+                } else if ("$numberInt".equals(value)) {
+                    currentValue = visitNumberIntExtendedJson();
+                    setCurrentBsonType(BsonType.INT32);
+                    return;
+                } else if ("$numberDouble".equals(value)) {
+                    currentValue = visitNumberDoubleExtendedJson();
+                    setCurrentBsonType(BsonType.DOUBLE);
+                    return;
+                } else if ("$numberDecimal".equals(value)) {
+                    currentValue = visitNumberDecimalExtendedJson();
+                    setCurrentBsonType(BsonType.DECIMAL128);
+                    return;
+                } else if ("$dbPointer".equals(value)) {
+                    currentValue = visitDbPointerExtendedJson();
+                    setCurrentBsonType(BsonType.DB_POINTER);
+                    return;
+                }
+            } catch (JsonParseException e) {
+                extendedJsonMark.reset();
             }
         }
+
         pushToken(nameToken);
         setCurrentBsonType(BsonType.DOCUMENT);
     }
@@ -980,11 +987,7 @@ public class JsonReader extends AbstractBsonReader {
                 return valueToken.getValue(Long.class);
             } else if (valueToken.getType() == JsonTokenType.STRING) {
                 String dateTimeString = valueToken.getValue(String.class);
-                try {
-                    value = DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
-                } catch (IllegalArgumentException e) {
-                    throw new JsonParseException("JSON reader expected an ISO-8601 date time string but found '%s'.", dateTimeString);
-                }
+                value = DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
             } else {
                 throw new JsonParseException("JSON reader expected an integer or string but found '%s'.", valueToken.getValue());
             }
