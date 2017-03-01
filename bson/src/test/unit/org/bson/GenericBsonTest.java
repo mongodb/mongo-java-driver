@@ -59,8 +59,6 @@ public class GenericBsonTest {
     }
 
     private final Set<String> testsToSkip = new HashSet<String>(Arrays.asList(
-            "Document that resembles extended JSON, but with extra keys",    // JsonReader does not support extra keys
-            "Document that resembles extended JSON, but with missing keys",  // JsonReader does not support missing keys
             "DBpointer with opposite key order",                             // JsonReader does not support out of order keys
             "DBpointer with extra keys"                                      // JsonReader does not support extra keys
             ));
