@@ -54,7 +54,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of _id field equalss the specified value. Note that this does
+     * Creates a filter that matches all documents where the value of _id field equals the specified value. Note that this doesn't
      * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param value     the value
@@ -69,7 +69,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this does
+     * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this doesn't
      * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param fieldName the field name
