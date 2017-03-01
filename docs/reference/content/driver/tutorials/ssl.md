@@ -12,8 +12,8 @@ title = "TLS/SSL"
 
 The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK. You can
-configure the driver to use TLS/SSL either with [`MongoClientURI`]({{<apiref "com.mongodb.MongoClientURI">}}) or with
-[`MongoClientOptions`]({{<apiref "com.mongodb.MongoClientOptions">}}).
+configure the driver to use TLS/SSL either with [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}) or with
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
 ## Specify TLS/SSL via `MongoClientURI`
 
@@ -21,7 +21,7 @@ configure the driver to use TLS/SSL either with [`MongoClientURI`]({{<apiref "co
 import com.mongodb.MongoClientURI;
 ```
 
-To specify TLS/SSL with [`MongoClientURI`]({{<apiref "com.mongodb.MongoClientURI">}}), specify `ssl=true` as part of the connection
+To specify TLS/SSL with [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}), specify `ssl=true` as part of the connection
 string, as in:
 
 ```java
@@ -35,7 +35,7 @@ MongoClient mongoClient = new MongoClient(uri);
 import com.mongodb.MongoClientOptions;
 ```
 
-To specify TLS/SSL with with [`MongoClientOptions`]({{<apiref "com.mongodb.MongoClientOptions">}}), set the ``sslEnabled`` property to ``true``, as in:
+To specify TLS/SSL with with [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the ``sslEnabled`` property to ``true``, as in:
 
 ```java
  MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
@@ -52,7 +52,7 @@ to the `javax.net.SSLParameters` class.
 
 If your application must run on Java 6, or for some other reason you
 need to disable hostname verification, you must explicitly indicate
-this in [`MongoClientOptions`]({{<apiref "com.mongodb.MongoClientOptions">}}) using the `sslInvalidHostNameAllowed`
+this in [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}) using the `sslInvalidHostNameAllowed`
 property:
 
 ```java
