@@ -86,7 +86,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * connectionPoolOpened(_)
         }
         def connectionListener = Mock(ConnectionListener){
-            (1.._) * connectionClosed(_)
+            (1.._) * connectionOpened(_)
         }
 
         def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
@@ -128,7 +128,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * connectionPoolOpened(_)
         }
         def connectionListener = Mock(ConnectionListener){
-            (1.._) * connectionClosed(_)
+            (1.._) * connectionOpened(_)
         }
         def clusterListenerTwo = Mock(ClusterListener) {
             1 * clusterOpening(_)
@@ -147,7 +147,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
             (1.._) * connectionPoolOpened(_)
         }
         def connectionListenerTwo = Mock(ConnectionListener){
-            (1.._) * connectionClosed(_)
+            (1.._) * connectionOpened(_)
         }
 
         def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
