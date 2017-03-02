@@ -33,7 +33,14 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
-import com.mongodb.event.*;
+
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.CommandEventMulticaster;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.ConnectionEventMulticaster;
+import com.mongodb.event.ConnectionListener;
+import com.mongodb.event.ConnectionPoolEventMulticaster;
+import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
@@ -47,7 +54,12 @@ import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonBoolean;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;

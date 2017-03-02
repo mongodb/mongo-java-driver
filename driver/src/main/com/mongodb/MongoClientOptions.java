@@ -22,7 +22,13 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.event.*;
+
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.ConnectionListener;
+import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.event.ServerListener;
+import com.mongodb.event.ServerMonitorListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
