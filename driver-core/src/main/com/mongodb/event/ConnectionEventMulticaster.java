@@ -18,7 +18,6 @@ package com.mongodb.event;
 
 import com.mongodb.annotations.Beta;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,10 +33,18 @@ import static java.util.Collections.newSetFromMap;
 public final class ConnectionEventMulticaster implements ConnectionListener {
     private final Set<ConnectionListener> connectionListeners = newSetFromMap(new ConcurrentHashMap<ConnectionListener, Boolean>());
 
+    /**
+     * Default Constructor
+     */
     public ConnectionEventMulticaster() {
 
     }
 
+    /**
+      * Creates multicaster from a collection of connection listeners
+      *
+      * @param connectionListeners list of connection listeners
+      */
     public ConnectionEventMulticaster(final List<ConnectionListener> connectionListeners) {
         notNull("connectionListeners", connectionListeners);
         isTrue("All ConnectionListener instances are non-null", !connectionListeners.contains(null));

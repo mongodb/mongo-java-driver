@@ -34,10 +34,18 @@ public final class ConnectionPoolEventMulticaster implements ConnectionPoolListe
     private final Set<ConnectionPoolListener> connectionPoolListeners
         = newSetFromMap(new ConcurrentHashMap<ConnectionPoolListener, Boolean>());
 
+    /**
+     * Default Constructor
+     */
     public ConnectionPoolEventMulticaster() {
 
     }
 
+    /**
+     * Creates multicaster from a collection of connection pool listeners
+     *
+     * @param connectionPoolListeners list of connection pool listeners
+     */
     public ConnectionPoolEventMulticaster(final List<ConnectionPoolListener> connectionPoolListeners) {
         notNull("connectionPoolListeners", connectionPoolListeners);
         isTrue("All ConnectionPoolListener instances are non-null", !connectionPoolListeners.contains(null));
