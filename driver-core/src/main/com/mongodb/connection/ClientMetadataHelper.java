@@ -109,7 +109,7 @@ final class ClientMetadataHelper {
 
         try {
             CodeSource codeSource = InternalStreamConnectionInitializer.class.getProtectionDomain().getCodeSource();
-            if (codeSource != null) {
+            if (codeSource != null && codeSource.getLocation() != null) {
                 String path = codeSource.getLocation().getPath();
                 URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
                 if (jarUrl != null) {
