@@ -705,7 +705,18 @@ public class JsonReaderTest {
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         BsonBinary binary = bsonReader.readBinaryData();
-        assertEquals(0, binary.getType());
+        assertEquals(BsonBinarySubType.BINARY.getValue(), binary.getType());
+        assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testBinaryWithNumericType() {
+        String json = "{ \"$binary\" : \"AQID\", \"$type\" : 0 }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+        BsonBinary binary = bsonReader.readBinaryData();
+        assertEquals(BsonBinarySubType.BINARY.getValue(), binary.getType());
         assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
@@ -713,6 +724,17 @@ public class JsonReaderTest {
     @Test
     public void testUserDefinedBinary() {
         String json = "{ \"$binary\" : \"AQID\", \"$type\" : \"80\" }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.BINARY, bsonReader.readBsonType());
+        BsonBinary binary = bsonReader.readBinaryData();
+        assertEquals(BsonBinarySubType.USER_DEFINED.getValue(), binary.getType());
+        assertArrayEquals(new byte[]{1, 2, 3}, binary.getData());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testUserDefinedBinaryWithNumericType() {
+        String json = "{ \"$binary\" : \"AQID\", \"$type\" : 128 }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         BsonBinary binary = bsonReader.readBinaryData();
