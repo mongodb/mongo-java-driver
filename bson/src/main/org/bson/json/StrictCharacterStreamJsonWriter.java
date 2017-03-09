@@ -270,7 +270,8 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     private void writeStringHelper(final String str) {
         write('"');
-        for (final char c : str.toCharArray()) {
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
             switch (c) {
                 case '"':
                     write("\\\"");
