@@ -900,12 +900,17 @@ public class JsonReader extends AbstractBsonReader {
         verifyString("$type");
         verifyToken(":");
         JsonToken subTypeToken = popToken();
-        if (subTypeToken.getType() != JsonTokenType.STRING) {
-            throw new JsonParseException("JSON reader expected a string but found '%s'.", subTypeToken.getValue());
+        if (subTypeToken.getType() != JsonTokenType.STRING && subTypeToken.getType() != JsonTokenType.INT32) {
+            throw new JsonParseException("JSON reader expected a string or number but found '%s'.", subTypeToken.getValue());
         }
         verifyToken("}");
 
-        byte subType = (byte) Integer.parseInt(subTypeToken.getValue(String.class), 16);
+        byte subType;
+        if (subTypeToken.getType() == JsonTokenType.STRING) {
+            subType = (byte) Integer.parseInt(subTypeToken.getValue(String.class), 16);
+        } else {
+            subType = subTypeToken.getValue(Integer.class).byteValue();
+        }
 
         for (final BsonBinarySubType st : BsonBinarySubType.values()) {
             if (st.getValue() == subType) {
