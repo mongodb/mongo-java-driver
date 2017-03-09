@@ -71,7 +71,7 @@ collection.find().into(new ArrayList<Document>(),
 ### CodecRegistry
 
 An overload of the `getCollection` method allows clients to specify a different class for representing BSON documents.  For example, 
-users my wish to use the type-safe [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) with the CRUD API:
+users may wish to use the type-safe [`BsonDocument`]({{< apiref "org/bson/BsonDocument" >}}) with the CRUD API:
 
 ```java
 // Pass BsonDocument.class as the second argument
