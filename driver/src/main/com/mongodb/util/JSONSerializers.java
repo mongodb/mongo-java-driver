@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,15 @@ import java.util.regex.Pattern;
 
 /**
  * Defines static methods for getting {@code ObjectSerializer} instances that produce various flavors of JSON.
+ *
+ * @see org.bson.json.JsonReader
+ * @see org.bson.json.JsonWriter
+ * @see com.mongodb.BasicDBObject#toJson()
+ * @see com.mongodb.BasicDBObject#parse(String)
+ *
+ * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
+@Deprecated
 public class JSONSerializers {
 
     private JSONSerializers() {

@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import com.mongodb.util.JSON;
 import org.bson.types.BasicBSONList;
 
 /**
@@ -34,8 +33,9 @@ public class BasicDBList extends BasicBSONList implements DBObject {
      * @return JSON serialization
      */
     @Override
+    @SuppressWarnings("deprecation")
     public String toString() {
-        return JSON.serialize(this);
+        return com.mongodb.util.JSON.serialize(this);
     }
 
     @Override

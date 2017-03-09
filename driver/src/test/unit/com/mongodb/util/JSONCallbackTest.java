@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@SuppressWarnings("deprecation")
 public class JSONCallbackTest {
 
     @Test

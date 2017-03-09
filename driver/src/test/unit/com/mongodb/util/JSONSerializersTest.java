@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
+@SuppressWarnings("deprecation")
 public class JSONSerializersTest {
 
     @Test

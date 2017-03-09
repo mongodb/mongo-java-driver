@@ -46,7 +46,10 @@ import java.util.regex.Pattern;
 
 /**
  * Converts JSON to DBObjects and vice versa.
+ *
+ * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
+@Deprecated
 public class JSONCallback extends BasicBSONCallback {
 
     @Override

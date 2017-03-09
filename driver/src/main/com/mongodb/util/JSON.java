@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-// JSON.java
-
 package com.mongodb.util;
 
 import org.bson.BSONCallback;
 
 /**
  * Helper methods for JSON serialization and de-serialization
+ *
+ * @see org.bson.json.JsonReader
+ * @see org.bson.json.JsonWriter
+ * @see com.mongodb.BasicDBObject#toJson()
+ * @see com.mongodb.BasicDBObject#parse(String)
+ *
+ * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
+@Deprecated
 public class JSON {
 
     /**
@@ -133,6 +139,7 @@ class JSONParser {
         this(s, null);
     }
 
+    @SuppressWarnings("deprecation")
     JSONParser(final String s, final BSONCallback callback) {
         this.s = s;
         _callback = (callback == null) ? new JSONCallback() : callback;
