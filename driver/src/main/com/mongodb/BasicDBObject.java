@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -192,8 +191,9 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      *
      * @return JSON serialization
      */
+    @SuppressWarnings("deprecation")
     public String toString() {
-        return JSON.serialize(this);
+        return com.mongodb.util.JSON.serialize(this);
     }
 
     /**

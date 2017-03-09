@@ -19,7 +19,6 @@ package com.mongodb.gridfs;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import com.mongodb.util.JSON;
 import org.bson.BSONObject;
 
 import java.util.Collections;
@@ -277,8 +276,9 @@ public abstract class GridFSFile implements DBObject {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public String toString() {
-        return JSON.serialize(this);
+        return com.mongodb.util.JSON.serialize(this);
     }
 
     /**
