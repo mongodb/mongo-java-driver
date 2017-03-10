@@ -29,7 +29,9 @@ import org.junit.Test;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -308,15 +310,6 @@ public class JsonReaderTest {
     }
 
     @Test
-    public void testNumberLong() {
-        String json = "NumberLong(123)";
-        bsonReader = new JsonReader(json);
-        assertEquals(BsonType.INT64, bsonReader.readBsonType());
-        assertEquals(123, bsonReader.readInt64());
-        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-    }
-
-    @Test
     public void testNumberLongExtendedJson() {
         String json = "{\"$numberLong\":\"123\"}";
         bsonReader = new JsonReader(json);
@@ -326,12 +319,33 @@ public class JsonReaderTest {
     }
 
     @Test
-    public void testNumberLongWithNew() {
-        String json = "new NumberLong(123)";
-        bsonReader = new JsonReader(json);
-        assertEquals(BsonType.INT64, bsonReader.readBsonType());
-        assertEquals(123, bsonReader.readInt64());
-        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    public void testNumberLong() {
+        List<String> jsonTexts = Arrays.asList(
+                "NumberLong(123)",
+                "NumberLong(\"123\")",
+                "new NumberLong(123)",
+                "new NumberLong(\"123\")");
+        for (String json : jsonTexts) {
+            bsonReader = new JsonReader(json);
+            assertEquals(BsonType.INT64, bsonReader.readBsonType());
+            assertEquals(123, bsonReader.readInt64());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+        }
+    }
+
+    @Test
+    public void testNumberInt() {
+        List<String> jsonTexts = Arrays.asList(
+                "NumberInt(123)",
+                "NumberInt(\"123\")",
+                "new NumberInt(123)",
+                "new NumberInt(\"123\")");
+        for (String json : jsonTexts) {
+            bsonReader = new JsonReader(json);
+            assertEquals(BsonType.INT32, bsonReader.readBsonType());
+            assertEquals(123, bsonReader.readInt32());
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+        }
     }
 
     @Test

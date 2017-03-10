@@ -197,6 +197,9 @@ public class JsonReader extends AbstractBsonReader {
                 } else if ("ISODate".equals(value)) {
                     setCurrentBsonType(BsonType.DATE_TIME);
                     currentValue = visitISODateTimeConstructor();
+                } else if ("NumberInt".equals(value)) {
+                    setCurrentBsonType(BsonType.INT32);
+                    currentValue = visitNumberIntConstructor();
                 } else if ("NumberLong".equals(value)) {
                     setCurrentBsonType(BsonType.INT64);
                     currentValue = visitNumberLongConstructor();
@@ -539,6 +542,9 @@ public class JsonReader extends AbstractBsonReader {
         } else if ("ISODate".equals(value)) {
             currentValue = visitISODateTimeConstructor();
             setCurrentBsonType(BsonType.DATE_TIME);
+        } else if ("NumberInt".equals(value)) {
+            currentValue = visitNumberIntConstructor();
+            setCurrentBsonType(BsonType.INT32);
         } else if ("NumberLong".equals(value)) {
             currentValue = visitNumberLongConstructor();
             setCurrentBsonType(BsonType.INT64);
@@ -740,6 +746,21 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken(JsonTokenType.RIGHT_PAREN);
         return new BsonDbPointer(namespaceToken.getValue(String.class), new ObjectId(idToken.getValue(String.class)));
+    }
+
+    private int visitNumberIntConstructor() {
+        verifyToken(JsonTokenType.LEFT_PAREN);
+        JsonToken valueToken = popToken();
+        int value;
+        if (valueToken.getType() == JsonTokenType.INT32) {
+            value = valueToken.getValue(Integer.class);
+        } else if (valueToken.getType() == JsonTokenType.STRING) {
+            value = Integer.parseInt(valueToken.getValue(String.class));
+        } else {
+            throw new JsonParseException("JSON reader expected an integer or a string but found '%s'.", valueToken.getValue());
+        }
+        verifyToken(JsonTokenType.RIGHT_PAREN);
+        return value;
     }
 
     private long visitNumberLongConstructor() {
