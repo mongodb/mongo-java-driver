@@ -103,9 +103,14 @@ public class JsonPoweredCrudTestHelper {
         if (updateResult.isModifiedCountAvailable()) {
             resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
         }
-        if (updateResult.getUpsertedId() != null) {
+        // If the upsertedId is an ObjectId that means it came from the server and can't be verified.
+        // This check is to handle the "ReplaceOne with upsert when no documents match without an id specified" test
+        // in replaceOne-pre_2.6
+        if (updateResult.getUpsertedId() != null && !updateResult.getUpsertedId().isObjectId()) {
             resultDoc.append("upsertedId", updateResult.getUpsertedId());
         }
+        resultDoc.append("upsertedCount", updateResult.getUpsertedId() == null ? new BsonInt32(0) : new BsonInt32(1));
+
         return toResult(resultDoc);
     }
 
@@ -267,8 +272,9 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getInsertOneResult(final BsonDocument arguments) {
-        collection.insertOne(arguments.getDocument("document"));
-        return toResult((BsonValue) null);
+        BsonDocument document = arguments.getDocument("document");
+        collection.insertOne(document);
+        return toResult(new BsonDocument("insertedId", document.get("_id")));
     }
 
     BsonDocument getInsertManyResult(final BsonDocument arguments) {
@@ -278,7 +284,11 @@ public class JsonPoweredCrudTestHelper {
         }
         collection.insertMany(documents,
                               new InsertManyOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()));
-        return toResult((BsonValue) null);
+        BsonArray insertedIds = new BsonArray();
+        for (BsonDocument document : documents) {
+            insertedIds.add(document.get("_id"));
+        }
+        return toResult(new BsonDocument("insertedIds", insertedIds));
     }
 
     BsonDocument getReplaceOneResult(final BsonDocument arguments) {

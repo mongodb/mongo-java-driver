@@ -19,7 +19,6 @@ package com.mongodb.client;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +32,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.junit.Assert.assertEquals;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
@@ -67,23 +67,11 @@ public class CrudTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        // Server versions prior to 2.6 do not properly recognize non-ObjectId _id values for upserts, so skipping a test that relies on
-        // that unless the server version is at least 2.6
-        if (description.equals("ReplaceOne with upsert when no documents match without an id specified")){
-            Assume.assumeTrue(serverVersionAtLeast(2, 6));
-        }
-
         BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
-        if (checkResult()) {
-            if (!serverVersionAtLeast(2, 6)) {
-                if (expectedOutcome.isDocument("result")) {
-                    expectedOutcome.getDocument("result").remove("modifiedCount");
-                }
-            }
-            assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
-        }
+        assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
+
         if (expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
         }
@@ -95,7 +83,11 @@ public class CrudTest extends DatabaseTestCase {
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
             if (testDocument.containsKey("minServerVersion")
-                    && !serverAtLeastMinVersion(testDocument.getString("minServerVersion").getValue())) {
+                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
+            if (testDocument.containsKey("maxServerVersion")
+                        && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
                 continue;
             }
             for (BsonValue test: testDocument.getArray("tests")) {
@@ -106,34 +98,11 @@ public class CrudTest extends DatabaseTestCase {
         return data;
     }
 
-    private boolean checkResult() {
-        if (filename.contains("insert")) {
-            // We don't return any id's for insert commands
-            return false;
-        } else if (!serverVersionAtLeast(3, 0)
-                && description.contains("when no documents match with upsert returning the document before modification")) {
-            // Pre 3.0 versions of MongoDB return an empty document rather than a null
-            return false;
-        }
-        return true;
-    }
-
     private void assertCollectionEquals(final BsonDocument expectedCollection) {
         MongoCollection<BsonDocument> collectionToCompare = collection;
         if (expectedCollection.containsKey("name")) {
             collectionToCompare = database.getCollection(expectedCollection.getString("name").getValue(), BsonDocument.class);
         }
         assertEquals(description, expectedCollection.getArray("data"), collectionToCompare.find().into(new BsonArray()));
-    }
-
-    private static boolean serverAtLeastMinVersion(final String minServerVersionString) {
-        List<Integer> versionList = new ArrayList<Integer>();
-        for (String s : minServerVersionString.split("\\.")) {
-            versionList.add(Integer.valueOf(s));
-        }
-        while (versionList.size() < 3) {
-            versionList.add(0);
-        }
-        return serverVersionAtLeast(versionList.subList(0, 3));
     }
 }

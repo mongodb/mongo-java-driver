@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
@@ -53,11 +54,10 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.async.client.Fixture.getDefaultDatabase;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -98,9 +98,8 @@ public class CrudTest extends DatabaseTestCase {
         BsonDocument outcome = getOperationMongoOperations(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
-        if (checkResult()) {
-            assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
-        }
+        assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
+
         if (expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
         }
@@ -112,7 +111,11 @@ public class CrudTest extends DatabaseTestCase {
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             if (testDocument.containsKey("minServerVersion")
-                    && !serverAtLeastMinVersion(testDocument.getString("minServerVersion").getValue())) {
+                        && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
+            if (testDocument.containsKey("maxServerVersion")
+                        && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
                 continue;
             }
             for (BsonValue test : testDocument.getArray("tests")) {
@@ -121,29 +124,6 @@ public class CrudTest extends DatabaseTestCase {
             }
         }
         return data;
-    }
-
-    private static boolean serverAtLeastMinVersion(final String minServerVersionString) {
-        List<Integer> versionList = new ArrayList<Integer>();
-        for (String s : minServerVersionString.split("\\.")) {
-            versionList.add(Integer.valueOf(s));
-        }
-        while (versionList.size() < 3) {
-            versionList.add(0);
-        }
-        return serverVersionAtLeast(versionList.subList(0, 3));
-    }
-
-    private boolean checkResult() {
-        if (filename.contains("insert")) {
-            // We don't return any id's for insert commands
-            return false;
-        } else if (!serverVersionAtLeast(3, 0)
-                && description.contains("when no documents match with upsert returning the document before modification")) {
-            // Pre 3.0 versions of MongoDB return an empty document rather than a null
-            return false;
-        }
-        return true;
     }
 
     private void assertCollectionEquals(final BsonDocument expectedCollection) {
@@ -194,6 +174,10 @@ public class CrudTest extends DatabaseTestCase {
             return toResult((MongoOperationUpdateResult) result);
         } else if (result instanceof MongoOperationDeleteResult) {
             return toResult((MongoOperationDeleteResult) result);
+        } else if (result instanceof MongoOperationInsertOneResult) {
+            return toResult((MongoOperationInsertOneResult) result);
+        } else if (result instanceof MongoOperationInsertManyResult) {
+            return toResult((MongoOperationInsertManyResult) result);
         } else if (result instanceof DistinctIterable<?>) {
             return toResult((DistinctIterable<BsonInt32>) result);
         } else if (result instanceof MongoIterable<?>) {
@@ -227,14 +211,18 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private BsonDocument toResult(final MongoOperationUpdateResult operation) {
-        assumeTrue(serverVersionAtLeast(2, 6)); // ModifiedCount is not accessible pre 2.6
-
         UpdateResult updateResult = operation.get();
-        BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()))
-                .append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
-        if (updateResult.getUpsertedId() != null) {
+        BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()));
+        if (updateResult.isModifiedCountAvailable()) {
+            resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
+        }
+        // If the upsertedId is an ObjectId that means it came from the server and can't be verified.
+        // This check is to handle the "ReplaceOne with upsert when no documents match without an id specified" test
+        // in replaceOne-pre_2.6
+        if (updateResult.getUpsertedId() != null && !updateResult.getUpsertedId().isObjectId()) {
             resultDoc.append("upsertedId", updateResult.getUpsertedId());
         }
+        resultDoc.append("upsertedCount", updateResult.getUpsertedId() == null ? new BsonInt32(0) : new BsonInt32(1));
         return toResult(resultDoc);
     }
 
@@ -243,15 +231,21 @@ public class CrudTest extends DatabaseTestCase {
         return toResult(new BsonDocument("deletedCount", new BsonInt32((int) deleteResult.getDeletedCount())));
     }
 
+    private BsonDocument toResult(final MongoOperationInsertOneResult operation) {
+        InsertOneResult insertOneResult = operation.get();
+        return toResult(new BsonDocument("insertedId", insertOneResult.id));
+    }
+
+    private BsonDocument toResult(final MongoOperationInsertManyResult operation) {
+        InsertManyResult insertManyResult = operation.get();
+        return toResult(new BsonDocument("insertedIds", insertManyResult.ids));
+    }
+
     private BsonDocument toResult(final BsonValue results) {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
     }
 
     private AggregateIterable<BsonDocument> getAggregateMongoOperation(final BsonDocument arguments) {
-        if (!serverVersionAtLeast(2, 6)) {
-            assumeFalse(description.contains("$out"));
-        }
-
         List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
@@ -360,8 +354,6 @@ public class CrudTest extends DatabaseTestCase {
     }
 
     private MongoOperationBsonDocument getFindOneAndReplaceMongoOperation(final BsonDocument arguments) {
-        assumeTrue(serverVersionAtLeast(2, 6)); // in 2.4 the server can ignore the supplied _id and creates an ObjectID
-
         return new MongoOperationBsonDocument() {
             @Override
             public void execute() {
@@ -414,24 +406,48 @@ public class CrudTest extends DatabaseTestCase {
         };
     }
 
-    private MongoOperationVoid getInsertOneMongoOperation(final BsonDocument arguments) {
-        return new MongoOperationVoid() {
+    private MongoOperationInsertOneResult getInsertOneMongoOperation(final BsonDocument arguments) {
+        return new MongoOperationInsertOneResult() {
             @Override
             public void execute() {
-                collection.insertOne(arguments.getDocument("document"), getCallback());
+                final BsonDocument document = arguments.getDocument("document");
+                collection.insertOne(document, new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        if (t != null) {
+                            getCallback().onResult(null, t);
+                        } else {
+                            getCallback().onResult(new InsertOneResult(document.get("_id")), null);
+                        }
+
+                    }
+                });
             }
         };
     }
 
-    private MongoOperationVoid getInsertManyMongoOperation(final BsonDocument arguments) {
-        return new MongoOperationVoid() {
+    private MongoOperationInsertManyResult getInsertManyMongoOperation(final BsonDocument arguments) {
+        return new MongoOperationInsertManyResult() {
             @Override
             public void execute() {
-                List<BsonDocument> documents = new ArrayList<BsonDocument>();
+                final List<BsonDocument> documents = new ArrayList<BsonDocument>();
                 for (BsonValue document : arguments.getArray("documents")) {
                     documents.add(document.asDocument());
                 }
-                collection.insertMany(documents, getCallback());
+                collection.insertMany(documents, new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        if (t != null) {
+                            getCallback().onResult(null, t);
+                        } else {
+                            BsonArray insertedIds = new BsonArray();
+                            for (BsonDocument document : documents) {
+                                insertedIds.add(document.get("_id"));
+                            }
+                            getCallback().onResult(new InsertManyResult(insertedIds), null);
+                        }
+                    }
+                });
             }
         };
     }
@@ -536,4 +552,25 @@ public class CrudTest extends DatabaseTestCase {
     abstract class MongoOperationVoid extends MongoOperation<Void> {
     }
 
+    abstract class MongoOperationInsertOneResult extends MongoOperation<InsertOneResult> {
+    }
+
+    abstract class MongoOperationInsertManyResult extends MongoOperation<InsertManyResult> {
+    }
+
+    private final class InsertOneResult {
+        private BsonValue id;
+
+        private InsertOneResult(final BsonValue id) {
+            this.id = id;
+        }
+    }
+
+    private final class InsertManyResult {
+        private BsonArray ids;
+
+        private InsertManyResult(final BsonArray ids) {
+            this.ids = ids;
+        }
+    }
 }

@@ -52,7 +52,8 @@
                 }, 
                 "result": {
                     "matchedCount": 0, 
-                    "modifiedCount": 0, 
+                    "modifiedCount": 0,
+                    "upsertedCount": 1,
                     "upsertedId": 4
                 }
             }
@@ -95,7 +96,8 @@
                 }, 
                 "result": {
                     "matchedCount": 0, 
-                    "modifiedCount": 0, 
+                    "modifiedCount": 0,
+                    "upsertedCount": 1,
                     "upsertedId": 4
                 }
             }
