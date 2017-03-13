@@ -117,6 +117,25 @@ public final class ClusterFixture {
         return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
     }
 
+    public static boolean serverVersionLessThan(final String versionString) {
+        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
+    }
+
+    public static boolean serverVersionGreaterThan(final String versionString) {
+        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
+    }
+
+    private static List<Integer> getVersionList(final String versionString) {
+        List<Integer> versionList = new ArrayList<Integer>();
+        for (String s : versionString.split("\\.")) {
+            versionList.add(Integer.valueOf(s));
+        }
+        while (versionList.size() < 3) {
+            versionList.add(0);
+        }
+        return versionList;
+    }
+
     public static Document getBuildInfo() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("buildInfo", new BsonInt32(1)), new DocumentCodec())
                 .execute(getBinding());
@@ -146,7 +165,7 @@ public final class ClusterFixture {
     }
 
     @SuppressWarnings("deprecation")
-    private static ServerVersion getConnectedServerVersion() {
+    public static ServerVersion getConnectedServerVersion() {
         ClusterDescription clusterDescription = getCluster().getDescription();
         int retries = 0;
         while (clusterDescription.getAny().isEmpty() && retries <= 3) {
