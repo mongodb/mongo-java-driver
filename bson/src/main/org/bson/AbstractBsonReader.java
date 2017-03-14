@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -773,12 +773,13 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
                 throw new BSONException(format("Unexpected ContextType %s.", getContext().getContextType()));
         }
     }
-    protected class Mark {
-        private State state;
-        private Context parentContext;
-        private BsonContextType contextType;
-        private BsonType currentBsonType;
-        private String currentName;
+
+    protected class Mark implements BsonReaderMark {
+        private final State state;
+        private final Context parentContext;
+        private final BsonContextType contextType;
+        private final BsonType currentBsonType;
+        private final String currentName;
 
         protected Context getParentContext() {
             return parentContext;
@@ -796,7 +797,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
             currentName = AbstractBsonReader.this.currentName;
         }
 
-        protected void reset() {
+        public void reset() {
             AbstractBsonReader.this.state = state;
             AbstractBsonReader.this.currentBsonType = currentBsonType;
             AbstractBsonReader.this.currentName = currentName;

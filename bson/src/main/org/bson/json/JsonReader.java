@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
+import org.bson.BsonReaderMark;
 import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -1156,12 +1157,18 @@ public class JsonReader extends AbstractBsonReader {
         return new BsonDbPointer(refToken.getValue(String.class), oid);
     }
 
+    @Deprecated
     @Override
     public void mark() {
         if (mark != null) {
             throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
         }
         mark = new Mark();
+    }
+
+    @Override
+    public BsonReaderMark getMark() {
+        return new Mark();
     }
 
     @Override
@@ -1179,9 +1186,9 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     protected class Mark extends AbstractBsonReader.Mark {
-        private JsonToken pushedToken;
-        private Object currentValue;
-        private int position;
+        private final JsonToken pushedToken;
+        private final Object currentValue;
+        private final int position;
 
         protected Mark() {
             super();
@@ -1190,7 +1197,7 @@ public class JsonReader extends AbstractBsonReader {
             position = JsonReader.this.scanner.getBufferPosition();
         }
 
-        protected void reset() {
+        public void reset() {
             super.reset();
             JsonReader.this.pushedToken = pushedToken;
             JsonReader.this.currentValue = currentValue;

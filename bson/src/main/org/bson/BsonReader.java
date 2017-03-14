@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -384,8 +384,18 @@ public interface BsonReader {
      * Creates a bookmark in the BsonReader's input
      *
      * The previous mark must be cleared before creating a new one
+     * @deprecated Use {@link #getMark()} instead
      */
+    @Deprecated
     void mark();
+
+    /**
+     * Gets a mark representing the current state of the reader.
+     *
+     * @return the mark
+     * @since 3.5
+     */
+    BsonReaderMark getMark();
 
     /**
      * Go back to the state at the last mark and removes the mark
