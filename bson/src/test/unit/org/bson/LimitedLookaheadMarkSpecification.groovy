@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2008-2014 MongoDB, Inc.
+ *  * Copyright (c) 2008-2017 MongoDB, Inc.
  *  *
  *  * Licensed under the Apache License, Version 2.0 (the "License");
  *  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.bson.json.JsonWriter
 import spock.lang.Specification
 
 @SuppressWarnings('UnnecessaryObjectReferences')
+@SuppressWarnings('deprecation')
 class LimitedLookaheadMarkSpecification extends Specification {
 
     def 'should throw if mark without resetting previous mark'(BsonWriter writer) {
@@ -220,6 +221,190 @@ class LimitedLookaheadMarkSpecification extends Specification {
         reader.readEndArray()
         // reset in out-document * 2
         reader.reset()
+        reader.readEndArray()
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 5
+        reader.readEndDocument()
+        reader.readNull()
+        reader.readEndArray()
+        reader.readName() == 'document'
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 6
+        reader.readEndDocument()
+        reader.readEndDocument()
+
+        where:
+        writer << [
+                new BsonDocumentWriter(new BsonDocument()),
+                new BsonBinaryWriter(new BasicOutputBuffer()),
+                new JsonWriter(new StringWriter())
+        ]
+    }
+
+    def 'Lookahead should work at various states with Mark'(BsonWriter writer) {
+        given:
+        writer.with {
+            writeStartDocument()
+            writeInt64('int64', 52L)
+            writeStartArray('array')
+            writeInt32(1)
+            writeInt64(2L)
+            writeStartArray()
+            writeInt32(3)
+            writeInt32(4)
+            writeEndArray()
+            writeStartDocument()
+            writeInt32('a', 5)
+            writeEndDocument()
+            writeNull()
+            writeEndArray()
+            writeStartDocument('document')
+            writeInt32('a', 6)
+            writeEndDocument()
+            writeEndDocument()
+        }
+
+
+        when:
+        BsonReader reader
+        BsonReaderMark mark
+        if (writer instanceof BsonDocumentWriter) {
+            reader = new BsonDocumentReader(writer.document)
+        } else if (writer instanceof BsonBinaryWriter) {
+            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
+        } else if (writer instanceof JsonWriter) {
+            reader = new JsonReader(writer.writer.toString())
+        }
+
+        reader.readStartDocument()
+        // mark beginning of document * 1
+        mark = reader.getMark()
+
+        then:
+        reader.readName() == 'int64'
+        reader.readInt64() == 52L
+        reader.readStartArray()
+
+        when:
+        // reset to beginning of document * 2
+        mark.reset()
+        // mark beginning of document * 2
+        mark = reader.getMark()
+
+        then:
+        reader.readName() == 'int64'
+        reader.readInt64() == 52L
+
+        when:
+        // reset to beginning of document * 3
+        mark.reset()
+        // mark beginning of document * 3
+        mark = reader.getMark()
+
+        then:
+        reader.readName() == 'int64'
+        reader.readInt64() == 52L
+        reader.readName() == 'array'
+        reader.readStartArray()
+        reader.readInt32() == 1
+        reader.readInt64() == 2
+        reader.readStartArray()
+        reader.readInt32() == 3
+        reader.readInt32() == 4
+        reader.readEndArray()
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 5
+        reader.readEndDocument()
+        reader.readNull()
+        reader.readEndArray()
+        reader.readName() == 'document'
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 6
+        reader.readEndDocument()
+        reader.readEndDocument()
+
+        when:
+        // read entire document, reset to beginning
+        mark.reset()
+
+        then:
+        reader.readName() == 'int64'
+        reader.readInt64() == 52L
+        reader.readName() == 'array'
+
+        when:
+        // mark in outer-document * 1
+        mark = reader.getMark()
+
+        then:
+        reader.readStartArray()
+        reader.readInt32() == 1
+        reader.readInt64() == 2
+        reader.readStartArray()
+
+        when:
+        // reset in sub-document * 1
+        mark.reset()
+        // mark in outer-document * 2
+        mark = reader.getMark()
+
+        then:
+        reader.readStartArray()
+        reader.readInt32() == 1
+        reader.readInt64() == 2
+        reader.readStartArray()
+        reader.readInt32() == 3
+
+        when:
+        // reset in sub-document * 2
+        mark.reset()
+
+        then:
+        reader.readStartArray()
+        reader.readInt32() == 1
+        reader.readInt64() == 2
+        reader.readStartArray()
+        reader.readInt32() == 3
+        reader.readInt32() == 4
+
+        when:
+        // mark in sub-document * 1
+        mark = reader.getMark()
+
+        then:
+        reader.readEndArray()
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 5
+        reader.readEndDocument()
+        reader.readNull()
+        reader.readEndArray()
+
+        when:
+        // reset in outer-document * 1
+        mark.reset()
+        // mark in sub-document * 2
+        mark = reader.getMark()
+
+        then:
+        reader.readEndArray()
+        reader.readStartDocument()
+        reader.readName() == 'a'
+        reader.readInt32() == 5
+        reader.readEndDocument()
+        reader.readNull()
+        reader.readEndArray()
+
+        when:
+        // reset in out-document * 2
+        mark.reset()
+
+        then:
         reader.readEndArray()
         reader.readStartDocument()
         reader.readName() == 'a'

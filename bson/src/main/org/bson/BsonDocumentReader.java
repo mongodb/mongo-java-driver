@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 MongoDB, Inc.
+ * Copyright 2014-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,12 +235,18 @@ public class BsonDocumentReader extends AbstractBsonReader {
         return getCurrentBsonType();
     }
 
+    @Deprecated
     @Override
     public void mark() {
         if (mark != null) {
             throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
         }
         mark = new Mark();
+    }
+
+    @Override
+    public BsonReaderMark getMark() {
+        return new Mark();
     }
 
     @Override
@@ -257,8 +263,8 @@ public class BsonDocumentReader extends AbstractBsonReader {
         return (Context) super.getContext();
     }
     protected class Mark extends AbstractBsonReader.Mark {
-        private BsonValue currentValue;
-        private Context context;
+        private final BsonValue currentValue;
+        private final Context context;
 
         protected Mark() {
             super();
@@ -267,7 +273,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
             context.mark();
         }
 
-        protected void reset() {
+        public void reset() {
             super.reset();
             BsonDocumentReader.this.currentValue = currentValue;
             BsonDocumentReader.this.setContext(context);

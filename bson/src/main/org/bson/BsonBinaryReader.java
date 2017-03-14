@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2016 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -388,12 +388,19 @@ public class BsonBinaryReader extends AbstractBsonReader {
     protected Context getContext() {
         return (Context) super.getContext();
     }
+
+    @Deprecated
     @Override
     public void mark() {
         if (mark != null) {
             throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
         }
         mark = new Mark();
+    }
+
+    @Override
+    public BsonReaderMark getMark() {
+        return new Mark();
     }
 
     @Override
@@ -416,7 +423,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
             BsonBinaryReader.this.bsonInput.mark(Integer.MAX_VALUE);
         }
 
-        protected void reset() {
+        public void reset() {
             super.reset();
             BsonBinaryReader.this.bsonInput.reset();
             BsonBinaryReader.this.setContext(new Context((Context) getParentContext(), getContextType(), startPosition, size));
