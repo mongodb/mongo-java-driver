@@ -102,6 +102,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     javadoc {
         exclude "**/com/mongodb/**/internal/**"
+        exclude "**/org/bson/**/internal/**"
 
         dependsOn project(':util').compileJava //We need taglets to be compiled
         options.author = true

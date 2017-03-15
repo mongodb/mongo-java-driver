@@ -18,12 +18,13 @@
 package org.bson.json;
 
 import org.bson.BsonTimestamp;
+import org.bson.internal.UnsignedLongs;
 
 class ExtendedJsonTimestampConverter implements Converter<BsonTimestamp> {
     @Override
     public void convert(final BsonTimestamp value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeString("$timestamp", Long.toUnsignedString(value.getValue()));
+        writer.writeString("$timestamp", UnsignedLongs.toString(value.getValue()));
         writer.writeEndObject();
     }
 }

@@ -29,6 +29,7 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
 import org.bson.BsonReaderMark;
+import org.bson.internal.UnsignedLongs;
 import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -1032,7 +1033,7 @@ public class JsonReader extends AbstractBsonReader {
         verifyToken(JsonTokenType.COLON);
         JsonToken nextToken = popToken();
         if (nextToken.getType() == JsonTokenType.STRING) {
-            BsonTimestamp value = new BsonTimestamp(Long.parseUnsignedLong(nextToken.getValue(String.class)));
+            BsonTimestamp value = new BsonTimestamp(UnsignedLongs.parse(nextToken.getValue(String.class)));
             verifyToken(JsonTokenType.END_OBJECT);
             return value;
         } else if (nextToken.getType() == JsonTokenType.BEGIN_OBJECT) {
