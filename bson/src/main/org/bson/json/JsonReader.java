@@ -987,7 +987,11 @@ public class JsonReader extends AbstractBsonReader {
                 return valueToken.getValue(Long.class);
             } else if (valueToken.getType() == JsonTokenType.STRING) {
                 String dateTimeString = valueToken.getValue(String.class);
-                value = DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
+                try {
+                    value = DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
+                } catch (IllegalArgumentException e) {
+                    throw new JsonParseException("Failed to parse string as a date", e);
+                }
             } else {
                 throw new JsonParseException("JSON reader expected an integer or string but found '%s'.", valueToken.getValue());
             }
