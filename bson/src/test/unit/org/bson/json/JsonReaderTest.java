@@ -164,18 +164,18 @@ public class JsonReaderTest {
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInvalidDateTimeISOString1() {
-        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626+02:0000\" }";
-        bsonReader = new JsonReader(json);
-        bsonReader.readBsonType();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidDateTimeISOString2() {
-        String json = "{ \"$date\" : \"2015-04-16T16:55:57.626Z invalid string\" }";
-        bsonReader = new JsonReader(json);
-        bsonReader.readBsonType();
+        List<String> invalidDates = Arrays.asList(
+                "2015-04-16T16:55:57.626+02:0000",
+                "2015-04-16T16:55:57.626Z invalid string");
+        for (String invalidDate : invalidDates) {
+            String json = "{ \"$date\" : \"" + invalidDate + "\" }";
+            bsonReader = new JsonReader(json);
+            bsonReader.readStartDocument();
+            assertEquals(invalidDate, bsonReader.readString("$date"));
+            bsonReader.readEndDocument();
+        }
     }
 
     @Test
@@ -326,13 +326,13 @@ public class JsonReaderTest {
         }
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void testNumberLongExtendedJsonNonParseableLongValue() {
         String json = "{\"$numberLong\": \"foo\"}";
         bsonReader = new JsonReader(json);
-        assertEquals(BsonType.INT64, bsonReader.readBsonType());
-        assertEquals(123, bsonReader.readInt64());
-        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+        bsonReader.readStartDocument();
+        assertEquals("foo", bsonReader.readString("$numberLong"));
+        bsonReader.readEndDocument();
     }
 
     @Test
