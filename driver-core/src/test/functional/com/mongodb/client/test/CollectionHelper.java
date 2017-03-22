@@ -58,6 +58,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.executeAsync;
@@ -129,10 +130,7 @@ public final class CollectionHelper<T> {
 
     @SuppressWarnings("unchecked")
     public void insertDocuments(final BsonDocument... documents) {
-        for (BsonDocument document : documents) {
-            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                asList(new InsertRequest(document))).execute(getBinding());
-        }
+        insertDocuments(Arrays.asList(documents));
     }
 
     @SuppressWarnings("unchecked")
@@ -148,10 +146,11 @@ public final class CollectionHelper<T> {
 
     @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern, final WriteBinding binding) {
+        List<InsertRequest> insertRequests = new ArrayList<InsertRequest>(documents.size());
         for (BsonDocument document : documents) {
-            new InsertOperation(namespace, true, writeConcern,
-                                singletonList(new InsertRequest(document))).execute(binding);
+            insertRequests.add(new InsertRequest(document));
         }
+        new InsertOperation(namespace, true, writeConcern, insertRequests).execute(binding);
     }
 
     public void insertDocuments(final Document... documents) {
