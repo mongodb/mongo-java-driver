@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,8 +315,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         seen == 1
     }
 
-    // 2.2 does not properly detect cursor not found, so ignoring
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ isSharded() })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -334,8 +333,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         connection?.release()
     }
 
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
-    // 2.2 does not properly detect cursor not found, so ignoring
+    @IgnoreIf({ isSharded() })
     @Category(Slow)
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         given:
@@ -454,9 +452,8 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         thrown(NoSuchElementException)
     }
 
-    // 2.2 does not properly detect cursor not found, so ignoring
     @SuppressWarnings('BracesForTryCatchFinally')
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ isSharded() })
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
@@ -177,7 +179,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                     if (t != null) {
                         connectionSource.release();
                     } else {
-                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor, null);
+                        killCursorAsynchronouslyAndReleaseConnectionAndSource(connection, localCursor);
                     }
                 }
             });
@@ -189,25 +191,38 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private void killCursor(final AsyncConnection connection) {
         ServerCursor localCursor = cursor.getAndSet(null);
         if (localCursor != null) {
-            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection.retain(), localCursor, null);
+            killCursorAsynchronouslyAndReleaseConnectionAndSource(connection.retain(), localCursor);
         } else {
             connectionSource.release();
         }
     }
 
-    private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor,
-                                                                       final SingleResultCallback<List<T>> callback) {
-        connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                connection.release();
-                connectionSource.release();
-                if (callback != null) {
-                    callback.onResult(null, null);
+    private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
+        if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), false,
+                    new NoOpFieldNameValidator(), new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
+                        @Override
+                        public void onResult(final BsonDocument result, final Throwable t) {
+                            connection.release();
+                            connectionSource.release();
+                        }
+                    });
+        } else {
+            connection.killCursorAsync(namespace, singletonList(localCursor.getId()), new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    connection.release();
+                    connectionSource.release();
                 }
-            }
-        });
+            });
+        }
     }
+
+    private BsonDocument asKillCursorsCommandDocument(final ServerCursor localCursor) {
+        return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+                       .append("cursors", new BsonArray(singletonList(new BsonInt64(localCursor.getId()))));
+    }
+
 
     private void handleGetMoreQueryResult(final AsyncConnection connection, final SingleResultCallback<List<T>> callback,
                                           final QueryResult<T> result) {

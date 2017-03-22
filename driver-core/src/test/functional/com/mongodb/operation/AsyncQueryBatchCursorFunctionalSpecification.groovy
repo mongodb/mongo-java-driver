@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
@@ -28,6 +29,7 @@ import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
@@ -49,7 +51,6 @@ import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.connection.ServerHelper.waitForRelease
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
@@ -276,9 +277,26 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         nextBatch().size() == 1
         !nextBatch()
     }
-    // 2.2 does not properly detect cursor not found, so ignoring
+
+    @IgnoreIf({ isSharded() })
+    def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
+        given:
+        def firstBatch = executeQuery(5)
+
+        cursor = new AsyncQueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+
+        when:
+        while (connection.getCount() > 1) {
+            Thread.sleep(5)
+        }
+        makeAdditionalGetMoreCall(firstBatch.cursor, connection)
+
+        then:
+        thrown(MongoCursorNotFoundException)
+    }
+
     @SuppressWarnings('BracesForTryCatchFinally')
-    @IgnoreIf({ isSharded() && !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ isSharded() })
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)
@@ -372,5 +390,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                                   new DocumentCodec(), futureResultCallback);
             futureResultCallback.get(60, SECONDS);
         }
+    }
+
+    private void makeAdditionalGetMoreCall(ServerCursor serverCursor, Connection connection) {
+        connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
     }
 }

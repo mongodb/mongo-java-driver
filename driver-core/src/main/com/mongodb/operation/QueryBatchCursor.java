@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
@@ -270,8 +272,18 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private void killCursor(final Connection connection) {
         if (serverCursor != null) {
             notNull("connection", connection);
-            connection.killCursor(namespace, singletonList(serverCursor.getId()));
+            if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), false,
+                        new NoOpFieldNameValidator(), new BsonDocumentCodec());
+            } else {
+                connection.killCursor(namespace, singletonList(serverCursor.getId()));
+            }
             serverCursor = null;
         }
+    }
+
+    private BsonDocument asKillCursorsCommandDocument() {
+        return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+                       .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
     }
 }
