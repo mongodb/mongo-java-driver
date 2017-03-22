@@ -18,7 +18,12 @@
         <exclude name="ComparisonWithSelf"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/braces.xml'/>
-    <ruleset-ref path='rulesets/concurrency.xml'/>
+    <ruleset-ref path='rulesets/concurrency.xml'>
+        <rule-config name='BusyWait'>
+            <property name='doNotApplyToFileNames' value='AsyncQueryBatchCursorFunctionalSpecification.groovy'/>
+        </rule-config>
+
+    </ruleset-ref>
     <ruleset-ref path='rulesets/convention.xml'>
         <rule-config name='NoDef'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
