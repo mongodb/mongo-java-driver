@@ -6,6 +6,7 @@ title = "Codec and CodecRegistry"
   weight = 40
   pre = "<i class='fa'></i>"
 +++
+This file really fails to get the point across.  It would be greatly improved if the writers of this doucmentation would provide a simple example that connects the dots for the 99% use case.  As a user I want to use the Mongo Java 3.0 API to save and retrieve jackson annotated pojos to a collection.  How hard can it be with this new API.  Is it the intent to make things confusing and encourage people to write MORE boilerplate code?
 
 ## Codec and CodecRegistry
 
