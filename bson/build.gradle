@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories { jcenter() }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+    }
+}
+
 apply plugin: 'osgi'
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'org.kordamp.gradle.clirr'
 
 def configDir = new File(rootDir, 'config')
@@ -33,7 +42,11 @@ jar {
                     'javax.xml.bind.*',
                     'org.slf4j;resolution:=optional'
     }
-}
+    from(zipTree("build/libs/bson-${project.version}-all.jar")) {
+        exclude('META-INF/')
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}.dependsOn('shadowJar')
 
 modifyPom {
     project {
@@ -41,4 +54,15 @@ modifyPom {
         description 'The BSON library'
         url 'http://bsonspec.org'
     }
+}
+
+dependencies {
+    compile 'com.fasterxml:classmate:1.2.0'
+}
+
+shadowJar {
+    dependencies {
+        include(dependency('com.fasterxml:classmate:1.2.0'))
+    }
+    relocate 'com.fasterxml.classmate', 'com.mongodb.classmate'
 }
