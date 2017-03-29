@@ -8,6 +8,7 @@ title = "CRUD Operations"
   pre = "<i class='fa'></i>"
 +++
 
+This document is intended to cover the 1% use cases that you will probably never encounter.  For the 99% use case which involves simply doing crud operations on Pojos, this document is pretty useless.  Good luck with the new API!!
 
 ## CRUD
 
