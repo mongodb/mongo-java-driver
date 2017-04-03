@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,12 @@ class StringRangeSet implements Set<String> {
         if (!(o instanceof String)) {
             return false;
         }
-        int i = Integer.parseInt((String) o);
-        return i >= 0 && i < size();
+        try {
+            int i = Integer.parseInt((String) o);
+            return i >= 0 && i < size();
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override
