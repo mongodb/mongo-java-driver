@@ -108,4 +108,16 @@
     <suppress checks="RegexpSingleline" files="Immutable"/>
     <suppress checks="RegexpSingleline" files="NotThreadSafe"/>
     <suppress checks="RegexpSingleline" files="ThreadSafe"/>
+
+    <!-- Pojo test entities -->
+    <suppress checks="ConstantName" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]entities[\\/].*"/>
+    <suppress checks="VisibilityModifier" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]entities[\\/].*"/>
+    <suppress checks="ParameterNumber" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]entities[\\/].*"/>
+
+    <!-- Pojo test bench -->
+    <suppress checks="MemberName" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
+    <suppress checks="MethodName" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
+    <suppress checks="ParameterName" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
+    <suppress checks="Regexp" files=".*org[\\/]bson[\\/]codecs[\\/]pojo[\\/]bench[\\/].*"/>
+
 </suppressions>
