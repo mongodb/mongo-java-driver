@@ -32,4 +32,15 @@ public class BsonInvalidOperationException extends BSONException {
     public BsonInvalidOperationException(final String message) {
         super(message);
     }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param t       the throwable cause.
+     * @since 3.5
+     */
+    public BsonInvalidOperationException(final String message, final Throwable t) {
+        super(message, t);
+    }
 }

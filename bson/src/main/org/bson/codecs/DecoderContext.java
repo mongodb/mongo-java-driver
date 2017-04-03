@@ -16,13 +16,25 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonReader;
+
 /**
- * The context for decoding values to BSON.  Currently this is a placeholder, as there is nothing needed yet.
+ * The context for decoding values to BSON.
  *
  * @see org.bson.codecs.Decoder
  * @since 3.0
  */
 public final class DecoderContext {
+    private static final DecoderContext DEFAULT_CONTEXT = DecoderContext.builder().build();
+    private final boolean checkedDiscriminator;
+
+    /**
+     * @return true if the discriminator has been checked
+     */
+    public boolean hasCheckedDiscriminator() {
+        return checkedDiscriminator;
+    }
+
     /**
      * Create a builder.
      *
@@ -39,6 +51,26 @@ public final class DecoderContext {
         private Builder() {
         }
 
+        private boolean checkedDiscriminator;
+
+        /**
+         * @return true if the discriminator has been checked
+         */
+        public boolean hasCheckedDiscriminator() {
+            return checkedDiscriminator;
+        }
+
+        /**
+         * Sets the checkedDiscriminator
+         *
+         * @param checkedDiscriminator the checkedDiscriminator
+         * @return this
+         */
+        public Builder checkedDiscriminator(final boolean checkedDiscriminator) {
+            this.checkedDiscriminator = checkedDiscriminator;
+            return this;
+        }
+
         /**
          * Build an instance of {@code DecoderContext}.
          * @return the decoder context
@@ -48,6 +80,20 @@ public final class DecoderContext {
         }
     }
 
+    /**
+     * Creates a child context and then deserializes using the reader.
+     *
+     * @param decoder the decoder to decode with
+     * @param reader the reader to decode to
+     * @param <T> the type of the decoder
+     * @return the decoded value
+     * @since 3.5
+     */
+    public <T> T decodeWithChildContext(final Decoder<T> decoder, final BsonReader reader) {
+        return decoder.decode(reader, DEFAULT_CONTEXT);
+    }
+
     private DecoderContext(final Builder builder) {
+        this.checkedDiscriminator = builder.hasCheckedDiscriminator();
     }
 }

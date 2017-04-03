@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+
+import static java.lang.String.format;
 
 /**
  * Encodes and decodes {@code Byte} objects.
@@ -32,7 +35,11 @@ public class ByteCodec implements Codec<Byte> {
 
     @Override
     public Byte decode(final BsonReader reader, final DecoderContext decoderContext) {
-        throw new UnsupportedOperationException();
+        int value = reader.readInt32();
+        if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+            throw new BsonInvalidOperationException(format("%s can not be converted into a Byte.", value));
+        }
+        return (byte) value;
     }
 
     @Override

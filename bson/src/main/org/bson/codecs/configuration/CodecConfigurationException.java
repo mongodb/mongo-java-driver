@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,5 +33,16 @@ public class CodecConfigurationException extends RuntimeException {
      */
     public CodecConfigurationException(final String msg) {
         super(msg);
+    }
+
+    /**
+     * Construct a new instance and wraps a cause
+     *
+     * @param message the message
+     * @param cause   the underlying cause
+     * @since 3.5
+     */
+    public CodecConfigurationException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 }
