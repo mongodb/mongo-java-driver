@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,15 @@ class StringRangeSetSpecification extends Specification {
         then:
         !stringSet.contains(0)
         !stringSet.containsAll([0, 1, 2])
+    }
+
+    def 'should not contain strings that do not parse as integers'() {
+        when:
+        def stringSet = new StringRangeSet(5)
+
+        then:
+        !stringSet.contains('foo')
+        !stringSet.containsAll(['foo', 'bar', 'baz'])
     }
 
     def 'set should be ordered string representations of the range'() {
