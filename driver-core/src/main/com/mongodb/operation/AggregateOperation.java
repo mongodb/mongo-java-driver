@@ -40,6 +40,7 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +68,9 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  */
 public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String RESULT = "result";
+    private static final String CURSOR = "cursor";
     private static final String FIRST_BATCH = "firstBatch";
+    private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
 
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
@@ -264,7 +267,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 validateReadConcernAndCollation(connection, readConcern, collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                        CommandResultDocumentCodec.create(decoder, getFieldNameWithResults(connection.getDescription())),
+                        CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                         connection, transformer(source, connection));
             }
         });
@@ -290,8 +293,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                                     } else {
                                         executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
                                                 getCommand(connection.getDescription()),
-                                                CommandResultDocumentCodec.create(decoder,
-                                                        getFieldNameWithResults(connection.getDescription())),
+                                                CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                                                 connection, asyncTransformer(source, connection), wrappedCallback);
                                     }
                                 }
@@ -341,7 +343,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
             if (batchSize != null) {
                 cursor.put("batchSize", new BsonInt32(batchSize));
             }
-            commandDocument.put("cursor", cursor);
+            commandDocument.put(CURSOR, cursor);
         }
         if (allowDiskUse != null) {
             commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
@@ -356,17 +358,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return commandDocument;
     }
 
-    String getFieldNameWithResults(final ConnectionDescription description) {
-        return (isInline(description)) ? RESULT : FIRST_BATCH;
-    }
-
-    @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        if (isInline(description)) {
+        if (!isInline(description) || result.containsKey(CURSOR)) {
+            return cursorDocumentToQueryResult(result.getDocument(CURSOR), description.getServerAddress());
+        } else {
             return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result, RESULT), 0L,
                                       description.getServerAddress());
-        } else {
-            return cursorDocumentToQueryResult(result.getDocument("cursor"), description.getServerAddress());
         }
     }
 

@@ -27,26 +27,33 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Collections;
+import java.util.List;
+
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     private final Decoder<T> payloadDecoder;
-    private final String fieldContainingPayload;
+    private final List<String> fieldsContainingPayload;
 
-    CommandResultDocumentCodec(final CodecRegistry registry, final Decoder<T> payloadDecoder, final String fieldContainingPayload) {
+    CommandResultDocumentCodec(final CodecRegistry registry, final Decoder<T> payloadDecoder, final List<String> fieldsContainingPayload) {
         super(registry);
         this.payloadDecoder = payloadDecoder;
-        this.fieldContainingPayload = fieldContainingPayload;
+        this.fieldsContainingPayload = fieldsContainingPayload;
     }
 
     static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final String fieldContainingPayload) {
-        CodecRegistry registry = fromProviders(new CommandResultCodecProvider<P>(decoder, fieldContainingPayload));
+        return create(decoder, Collections.singletonList(fieldContainingPayload));
+    }
+
+    static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final List<String> fieldsContainingPayload) {
+        CodecRegistry registry = fromProviders(new CommandResultCodecProvider<P>(decoder, fieldsContainingPayload));
         return registry.get(BsonDocument.class);
     }
 
     @Override
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
-        if (reader.getCurrentName().equals(fieldContainingPayload)) {
+        if (fieldsContainingPayload.contains(reader.getCurrentName())) {
             if (reader.getCurrentBsonType() == BsonType.DOCUMENT) {
                 return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader, decoderContext), null);
             } else if (reader.getCurrentBsonType() == BsonType.ARRAY) {

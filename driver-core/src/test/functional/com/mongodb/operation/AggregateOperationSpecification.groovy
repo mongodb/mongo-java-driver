@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
 import com.mongodb.client.model.Collation
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerVersion
@@ -40,6 +41,7 @@ import static com.mongodb.ClusterFixture.collectCursorResults
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -174,6 +176,32 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         results.size() == 3
         results.containsAll(['Pete', 'Sam'])
+
+        where:
+        [async, useCursor] << [[true, false], useCursorOptions()].combinations()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    def 'should be able to aggregate on a view'() {
+        given:
+        def viewSuffix = '-view'
+        def viewName = getCollectionName() + viewSuffix
+        def viewNamespace = new MongoNamespace(getDatabaseName(), viewName)
+        new CreateViewOperation(getDatabaseName(), viewName, getCollectionName(), [], WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding(getCluster()))
+
+        when:
+        AggregateOperation operation = new AggregateOperation<Document>(viewNamespace, [], new DocumentCodec())
+                .useCursor(useCursor)
+        def batchCursor = execute(operation, async)
+        def results = collectCursorResults(batchCursor)*.getString('name')
+
+        then:
+        results.size() == 3
+        results.containsAll(['Pete', 'Sam'])
+
+        cleanup:
+        new DropCollectionOperation(viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
 
         where:
         [async, useCursor] << [[true, false], useCursorOptions()].combinations()
