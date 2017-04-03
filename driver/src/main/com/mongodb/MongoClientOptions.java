@@ -1036,9 +1036,10 @@ public class MongoClientOptions {
         /**
          * Sets the maximum idle time for a pooled connection.
          *
-         * @param maxConnectionIdleTime the maximum idle time, in milliseconds, which must be &gt; 0
+         * @param maxConnectionIdleTime the maximum idle time, in milliseconds, which must be &gt;= 0.
+         *                              A zero value indicates no limit to the life time.
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code maxConnectionIdleTime <= 0}
+         * @throws IllegalArgumentException if {@code maxConnectionIdleTime < 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
@@ -1050,9 +1051,10 @@ public class MongoClientOptions {
         /**
          * Sets the maximum life time for a pooled connection.
          *
-         * @param maxConnectionLifeTime the maximum life time, in milliseconds, which must be &gt; 0
+         * @param maxConnectionLifeTime the maximum life time, in milliseconds, which must be &gt;= 0.
+         *                              A zero value indicates no limit to the life time.
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code maxConnectionLifeTime <= 0}
+         * @throws IllegalArgumentException if {@code maxConnectionLifeTime < 0}
          * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
