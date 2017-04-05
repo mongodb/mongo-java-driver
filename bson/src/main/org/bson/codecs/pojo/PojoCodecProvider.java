@@ -67,7 +67,7 @@ public final class PojoCodecProvider implements CodecProvider {
     @SuppressWarnings("unchecked")
     <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
         ClassModel<T> classModel = (ClassModel<T>) classModels.get(clazz);
-        if (classModel != null || (packages.contains(clazz.getPackage().getName()))) {
+        if (classModel != null || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             if (classModel == null) {
                 classModel = createClassModel(clazz, conventions);
             }
