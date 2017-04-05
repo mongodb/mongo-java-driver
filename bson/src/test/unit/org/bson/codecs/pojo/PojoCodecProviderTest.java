@@ -39,6 +39,14 @@ public final class PojoCodecProviderTest extends PojoTestCase {
     }
 
     @Test
+    public void testPackageLessClasses() {
+        PojoCodecProvider provider = PojoCodecProvider.builder().build();
+        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
+        Codec<Byte> codec = provider.get(byte.class, registry);
+        assertNull(codec);
+    }
+
+    @Test
     public void testRegisterClassModel() {
         ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).build();
         PojoCodecProvider provider = PojoCodecProvider.builder().register(classModel).build();
