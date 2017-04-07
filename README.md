@@ -115,12 +115,17 @@ $ ./gradlew check
 ```
 
 The test suite requires mongod to be running with [`enableTestCommands`](http://docs.mongodb.org/manual/reference/parameters/#param.enableTestCommands), which may be set with the `--setParameter enableTestCommands=1`
-command-line parameter.
+command-line parameter:
+```
+$ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend --fork --setParameter enableTestCommands=1
+```
 
+If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
+the number of available file descriptors prior to starting mongod as described in [https://docs.mongodb.com/manual/reference/ulimit/](https://docs.mongodb.com/manual/reference/ulimit/)
 
 ### Build status:
 
-[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver) | [![Build Status](https://jenkins.10gen.com/job/mongo-java-driver-3.x/badge/icon)](https://jenkins.10gen.com/job/mongo-java-driver/)
+[![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver)
 
 ## Maintainers
 
@@ -141,6 +146,5 @@ YourKit is supporting this open source project with its [YourKit Java Profiler](
 
 JetBrains is supporting this open source project with:
 
-[![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)]
-(http://www.jetbrains.com/idea/)
+[![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/)
 
