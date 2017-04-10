@@ -239,7 +239,7 @@ abstract class PojoTestCase {
         return new ConventionModel("id", child, null);
     }
 
-    ShapeModelCircle getShapeModelCirce() {
+    ShapeModelCircle getShapeModelCircle() {
         return new ShapeModelCircle("orange", 4.2);
     }
 

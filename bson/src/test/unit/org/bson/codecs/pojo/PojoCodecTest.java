@@ -18,18 +18,19 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
-import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
-import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.FieldReusingClassTypeParameter;
 import org.bson.codecs.pojo.entities.FieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
+import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
 import org.bson.codecs.pojo.entities.NestedGenericHolderFieldWithMultipleTypeParamsModel;
@@ -62,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
@@ -121,7 +123,7 @@ public final class PojoCodecTest extends PojoTestCase {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(ShapeModelAbstract.class,
                 ShapeModelCircle.class, ShapeModelRectangle.class, ShapeHolderModel.class);
 
-        roundTrip(builder, new ShapeHolderModel(getShapeModelCirce()),
+        roundTrip(builder, new ShapeHolderModel(getShapeModelCircle()),
                 "{'shape': {'_t': 'ShapeModelCircle', 'color': 'orange', 'radius': 4.2}}");
 
         roundTrip(builder, new ShapeHolderModel(getShapeModelRectangle()),
@@ -132,7 +134,7 @@ public final class PojoCodecTest extends PojoTestCase {
     public void testInheritedDiscriminatorAnnotation() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(ShapeModelCircle.class, ShapeModelRectangle.class);
 
-        roundTrip(builder, getShapeModelCirce(),
+        roundTrip(builder, getShapeModelCircle(),
                 "{'_t': 'ShapeModelCircle', 'color': 'orange', 'radius': 4.2}");
 
         roundTrip(builder, getShapeModelRectangle(),
@@ -162,6 +164,16 @@ public final class PojoCodecTest extends PojoTestCase {
                 "{ 'nested':{ 'field1':{ '$numberLong':'1' }, 'field2':[" + SIMPLE_MODEL_JSON + "], "
                         + "'field3':'field3', 'field4':42, 'field5':'field5', 'field6':[" + SIMPLE_MODEL_JSON + ", "
                         + SIMPLE_MODEL_JSON + "], 'field7':{ '$numberLong':'2' }, 'field8':'field8' } }");
+    }
+
+    @Test
+    public void testMultipleBoundsModel() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MultipleBoundsModel.class);
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("key", "value");
+        List<Integer> list = asList(1, 2, 3);
+        roundTrip(builder, new MultipleBoundsModel(map, list, 2.2),
+                "{'level1' : 2.2, 'level2': [1, 2, 3], 'level3': {key: 'value'}}");
     }
 
     @Test

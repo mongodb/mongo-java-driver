@@ -16,16 +16,6 @@
 
 package org.bson.codecs.pojo;
 
-import com.fasterxml.classmate.AnnotationConfiguration;
-import com.fasterxml.classmate.AnnotationInclusion;
-import com.fasterxml.classmate.MemberResolver;
-import com.fasterxml.classmate.ResolvedType;
-import com.fasterxml.classmate.ResolvedTypeWithMembers;
-import com.fasterxml.classmate.TypeBindings;
-import com.fasterxml.classmate.TypeResolver;
-import com.fasterxml.classmate.members.RawConstructor;
-import com.fasterxml.classmate.members.ResolvedField;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -33,12 +23,15 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.lang.String.format;
+import static java.lang.reflect.Modifier.isStatic;
+import static java.lang.reflect.Modifier.isTransient;
 import static java.util.Arrays.asList;
 import static java.util.Collections.reverse;
 import static org.bson.assertions.Assertions.notNull;
@@ -48,93 +41,106 @@ final class PojoBuilderHelper {
     @SuppressWarnings("unchecked")
     static <T> void configureClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
         classModelBuilder.type(notNull("clazz", clazz));
-        if (clazz.equals(Object.class)) {
-            return;
-        }
 
         ArrayList<Annotation> annotations = new ArrayList<Annotation>();
-        Class<?> type = clazz;
-        while (type != null) {
-            for (Annotation annotation : type.getDeclaredAnnotations()) {
-                annotations.add(annotation);
+        Set<String> fieldNames = new HashSet<String>();
+        Map<String, TypeParameterMap> fieldTypeParameterMap = new HashMap<String, TypeParameterMap>();
+        Class<? super T> currentClass = clazz;
+
+        TypeData<?> parentClassTypeData = null;
+        while (currentClass.getSuperclass() != null) {
+            annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
+
+            List<String> genericTypeNames = new ArrayList<String>();
+            for (TypeVariable<? extends Class<? super T>> classTypeVariable : currentClass.getTypeParameters()) {
+                genericTypeNames.add(classTypeVariable.getName());
             }
-            type = type.getSuperclass();
+
+            for (Field field : currentClass.getDeclaredFields()) {
+                if (!fieldNames.add(field.getName()) || isTransient(field.getModifiers()) || isStatic(field.getModifiers())) {
+                    continue;
+                }
+                TypeParameterMap typeParameterMap = getTypeParameterMap(genericTypeNames, field);
+                fieldTypeParameterMap.put(field.getName(), typeParameterMap);
+
+                FieldModelBuilder<?> fieldModelBuilder = getFieldBuilder(field, field.getType());
+                if (parentClassTypeData != null) {
+                    specializeFieldModelBuilder(fieldModelBuilder, typeParameterMap, parentClassTypeData.getTypeParameters());
+                }
+
+                classModelBuilder.addField(fieldModelBuilder);
+                field.setAccessible(true);
+            }
+
+            parentClassTypeData = getTypeData(currentClass.getGenericSuperclass(), currentClass);
+            currentClass = currentClass.getSuperclass();
         }
+
         reverse(annotations);
         classModelBuilder.annotations(annotations);
-
-        TypeResolver resolver = new TypeResolver();
-        MemberResolver memberResolver = new MemberResolver(resolver);
-        ResolvedType resolved = resolver.resolve(clazz);
-
-        ResolvedTypeWithMembers resolvedType = memberResolver.resolve(resolved,
-                new AnnotationConfiguration.StdConfiguration(AnnotationInclusion.INCLUDE_AND_INHERIT_IF_INHERITED), null);
-
-        List<String> genericTypeNames = new ArrayList<String>();
-        for (TypeVariable<Class<T>> classTypeVariable : clazz.getTypeParameters()) {
-            genericTypeNames.add(classTypeVariable.getName());
-        }
-
-        List<ResolvedField> resolvedFields = new ArrayList<ResolvedField>(asList(resolvedType.getMemberFields()));
-
-        Map<String, TypeParameterMap> fieldTypeParameterMap = new HashMap<String, TypeParameterMap>();
-        for (final ResolvedField resolvedField : resolvedFields) {
-            if (resolvedField.isTransient()) {
-                continue;
-            }
-            String name = resolvedField.getName();
-            fieldTypeParameterMap.put(name, getTypeParameterMap(genericTypeNames, resolvedField));
-            classModelBuilder.addField(getFieldBuilder(resolvedField.getRawMember(), resolvedField.getType().getErasedType(),
-                    resolvedField.getType()));
-            resolvedField.getRawMember().setAccessible(true);
-        }
-
+        classModelBuilder.fieldNameToTypeParameterMap(fieldTypeParameterMap);
 
         Constructor<T> noArgsConstructor = null;
-        for (RawConstructor rawConstructor : resolved.getConstructors()) {
-            Constructor<T> constructor = (Constructor<T>) rawConstructor.getRawMember();
+        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
             if (constructor.getParameterTypes().length == 0) {
-                noArgsConstructor = constructor;
+                noArgsConstructor = (Constructor<T>) constructor;
                 noArgsConstructor.setAccessible(true);
             }
         }
-
-        classModelBuilder
-                .fieldNameToTypeParameterMap(fieldTypeParameterMap)
-                .instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(clazz.getSimpleName(), noArgsConstructor));
+        classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(clazz.getSimpleName(), noArgsConstructor));
     }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T> TypeData<T> getTypeData(final Type genericType, final Class<T> clazz) {
+        TypeData.Builder<T> builder = TypeData.builder(clazz);
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) genericType;
+            for (Type argType : pType.getActualTypeArguments()) {
+                getNestedTypeData(builder, argType);
+            }
+        }
+        return builder.build();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <T> void getNestedTypeData(final TypeData.Builder<T> builder, final Type type) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
+            TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
+            for (Type argType : pType.getActualTypeArguments()) {
+                getNestedTypeData(paramBuilder, argType);
+            }
+            builder.addTypeParameter(paramBuilder.build());
+        } else if (type instanceof TypeVariable) {
+            builder.addTypeParameter(TypeData.builder(Object.class).build());
+        } else if (type instanceof Class) {
+            builder.addTypeParameter(TypeData.builder((Class) type).build());
+        }
+    }
+
+    private static <T> FieldModelBuilder<T> getFieldBuilder(final Field field, final Class<T> clazz) {
+        return FieldModel.<T>builder(field);
+    }
+
 
     @SuppressWarnings("unchecked")
     static <T> FieldModelBuilder<T> configureFieldModelBuilder(final FieldModelBuilder<T> builder, final Field field) {
         return builder
                 .fieldName(field.getName())
                 .documentFieldName(field.getName())
-                .typeData((TypeData<T>) getFieldTypeDataFromClass(field.getType()))
+                .typeData((TypeData<T>) getTypeData(field.getGenericType(), field.getType()))
                 .annotations(asList(field.getDeclaredAnnotations()))
                 .fieldSerialization(new FieldModelSerializationImpl<T>())
                 .fieldAccessor(new FieldAccessorImpl<T>(field, field.getName()));
     }
 
-    private static <T> FieldModelBuilder<T> getFieldBuilder(final Field field, final Class<T> clazz, final ResolvedType resolvedType) {
-        return FieldModel.<T>builder(field).typeData(getFieldTypeData(TypeData.builder(clazz), resolvedType));
-    }
-
-    private static <T> TypeData<T> getFieldTypeData(final TypeData.Builder<T> builder, final ResolvedType resolvedType) {
-        TypeBindings bindings = resolvedType.getTypeBindings();
-        for (int i = 0; i < bindings.getTypeParameters().size(); i++) {
-            ResolvedType boundType = bindings.getBoundType(i);
-            builder.addTypeParameter(getFieldTypeData(TypeData.builder(boundType.getErasedType()), boundType));
-        }
-        return builder.build();
-    }
-
-    private static TypeParameterMap getTypeParameterMap(final List<String> genericTypeNames, final ResolvedField resolvedField) {
-        int classParamIndex = genericTypeNames.indexOf(resolvedField.getRawMember().getGenericType().toString());
+    private static TypeParameterMap getTypeParameterMap(final List<String> genericTypeNames, final Field field) {
+        int classParamIndex = genericTypeNames.indexOf(field.getGenericType().toString());
         TypeParameterMap.Builder builder = TypeParameterMap.builder();
         if (classParamIndex != -1) {
             builder.addIndex(classParamIndex);
-        } else if (classParamIndex == -1 && !resolvedField.getType().getTypeBindings().getTypeParameters().isEmpty()) {
-            Type type = resolvedField.getRawMember().getGenericType();
+        } else {
+            Type type = field.getGenericType();
             if (type instanceof ParameterizedType) {
                 ParameterizedType pt = (ParameterizedType) type;
                 for (int i = 0; i < pt.getActualTypeArguments().length; i++) {
@@ -149,15 +155,30 @@ final class PojoBuilderHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> TypeData<T> getFieldTypeDataFromClass(final Class<T> type) {
-        TypeData.Builder<T> builder = TypeData.builder(type);
-        if (Collection.class.isAssignableFrom(type)) {
-            builder.addTypeParameter(TypeData.builder(Object.class).build());
-        } else if (Map.class.isAssignableFrom(type)) {
-            builder.addTypeParameter(TypeData.builder(String.class).build());
-            builder.addTypeParameter(TypeData.builder(Object.class).build());
+    private static <V> void specializeFieldModelBuilder(final FieldModelBuilder<V> fieldModelBuilder,
+                                                        final TypeParameterMap typeParameterMap,
+                                                        final List<TypeData<?>> fieldTypeParameters) {
+        if (typeParameterMap.hasTypeParameters() && !fieldTypeParameters.isEmpty()) {
+            TypeData<V> specializedFieldType = fieldModelBuilder.getTypeData();
+            Map<Integer, Integer> fieldToClassParamIndexMap = typeParameterMap.getFieldToClassParamIndexMap();
+            Integer classTypeParamRepresentsWholeField = fieldToClassParamIndexMap.get(-1);
+            if (classTypeParamRepresentsWholeField != null) {
+                specializedFieldType = (TypeData<V>) fieldTypeParameters.get(classTypeParamRepresentsWholeField);
+            } else {
+                TypeData.Builder<V> builder = TypeData.builder(fieldModelBuilder.getTypeData().getType());
+                List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>(fieldModelBuilder.getTypeData().getTypeParameters());
+                for (int i = 0; i < typeParameters.size(); i++) {
+                    for (Map.Entry<Integer, Integer> mapping : fieldToClassParamIndexMap.entrySet()) {
+                        if (mapping.getKey().equals(i)) {
+                            typeParameters.set(i, fieldTypeParameters.get(mapping.getValue()));
+                        }
+                    }
+                }
+                builder.addTypeParameters(typeParameters);
+                specializedFieldType = builder.build();
+            }
+            fieldModelBuilder.typeData(specializedFieldType);
         }
-        return builder.build();
     }
 
     static <V> V stateNotNull(final String property, final V value) {
@@ -169,5 +190,4 @@ final class PojoBuilderHelper {
 
     private PojoBuilderHelper() {
     }
-
 }

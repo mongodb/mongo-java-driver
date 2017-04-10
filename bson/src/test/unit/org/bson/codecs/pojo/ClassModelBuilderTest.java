@@ -69,6 +69,21 @@ public final class ClassModelBuilderTest {
     }
 
     @Test
+    public void testCanReflectObjectClass() {
+        Class<Object> clazz = Object.class;
+        ClassModelBuilder<Object> builder = ClassModel.builder(clazz);
+
+        assertEquals(0, builder.getFields().size());
+        assertTrue(builder.getFieldNameToTypeParameterMap().isEmpty());
+        assertEquals(2, builder.getConventions().size());
+        assertTrue(builder.getAnnotations().isEmpty());
+        assertEquals(clazz, builder.getType());
+        assertNull(builder.getIdField());
+        assertFalse(builder.isDiscriminatorEnabled());
+        assertNull(builder.getDiscriminator());
+    }
+
+    @Test
     public void testMappedBoundedClasses() {
         ClassModelBuilder<? extends UpperBoundsModel> builder = ClassModel.builder(UpperBoundsModel.class);
         assertEquals(Number.class, builder.getField("myGenericField").getTypeData().getType());
