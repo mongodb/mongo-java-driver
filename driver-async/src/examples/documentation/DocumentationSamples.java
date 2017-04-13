@@ -149,7 +149,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
                 insertManyLatch.countDown();
             }
         });
-        insertLatch.await(10, TimeUnit.SECONDS);
+        insertManyLatch.await(10, TimeUnit.SECONDS);
         // End Example 3
 
         final CountDownLatch check2 = new CountDownLatch(1);
