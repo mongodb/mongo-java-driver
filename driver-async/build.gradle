@@ -43,6 +43,16 @@ tasks.withType(Checkstyle) {
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output)
 }
 
+jar {
+    manifest {
+        instruction 'Build-Version', getGitVersion()
+        instruction 'Import-Package',
+                'org.bson.*',
+                'com.mongodb.*',
+                'io.netty.*;resolution:=optional'
+    }
+}
+
 modifyPom {
     project {
         name 'MongoDB Asynchronous Driver'
