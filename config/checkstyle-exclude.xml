@@ -40,6 +40,9 @@
     <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
     <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
 
+    <!--Do not check documentation tests classes -->
+    <suppress checks="Javadoc*" files=".*documentation.*"/>
+
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
 
