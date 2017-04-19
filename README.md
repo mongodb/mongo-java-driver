@@ -31,8 +31,7 @@ case in our issue management tool, JIRA:
 Bug reports in JIRA for the driver and the Core Server (i.e. SERVER) project are **public**.
 
 If you’ve identified a security vulnerability in a driver or any other
-MongoDB project, please report it according to the [instructions here]
-(http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+MongoDB project, please report it according to the [instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
 
 ## Versioning
 
