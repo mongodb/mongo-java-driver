@@ -80,7 +80,7 @@ public final class ConventionsTest {
     @SuppressWarnings("unchecked")
     public void testClassAndFieldConventionDoesNotOverwrite() {
         ClassModelBuilder<SimpleModel> builder = ClassModel.builder(SimpleModel.class)
-                .discriminatorEnabled(true)
+                .enableDiscriminator(true)
                 .discriminatorKey("_cls")
                 .discriminator("Simples")
                 .conventions(singletonList(CLASS_AND_FIELD_CONVENTION))

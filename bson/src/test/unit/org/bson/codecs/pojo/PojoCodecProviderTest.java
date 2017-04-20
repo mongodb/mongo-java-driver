@@ -75,7 +75,7 @@ public final class PojoCodecProviderTest extends PojoTestCase {
 
     @Test
     public void testRegisterClassModelPreferredOverClass() {
-        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).discriminatorEnabled(false).build();
+        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(false).build();
         PojoCodecProvider provider = PojoCodecProvider.builder().register(SimpleModel.class).register(classModel).build();
         CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
 

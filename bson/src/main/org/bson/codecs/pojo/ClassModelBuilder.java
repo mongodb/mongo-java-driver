@@ -168,10 +168,10 @@ public class ClassModelBuilder<T> {
     /**
      * Enables or disables the use of a discriminator when serializing
      *
-     * @param discriminatorEnabled the discriminatorEnabled value
+     * @param discriminatorEnabled true to enable the use of a discriminator
      * @return this
      */
-    public ClassModelBuilder<T> discriminatorEnabled(final boolean discriminatorEnabled) {
+    public ClassModelBuilder<T> enableDiscriminator(final boolean discriminatorEnabled) {
         this.discriminatorEnabled = discriminatorEnabled;
         return this;
     }
@@ -179,7 +179,7 @@ public class ClassModelBuilder<T> {
     /**
      * @return true if a discriminator should be used when serializing, otherwise false
      */
-    public Boolean isDiscriminatorEnabled() {
+    public Boolean useDiscriminator() {
         return discriminatorEnabled;
     }
 

@@ -64,7 +64,7 @@ public final class ClassModelBuilderTest {
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
         assertNull(builder.getIdField());
-        assertFalse(builder.isDiscriminatorEnabled());
+        assertFalse(builder.useDiscriminator());
         assertNull(builder.getDiscriminator());
     }
 
@@ -79,7 +79,7 @@ public final class ClassModelBuilderTest {
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
         assertNull(builder.getIdField());
-        assertFalse(builder.isDiscriminatorEnabled());
+        assertFalse(builder.useDiscriminator());
         assertNull(builder.getDiscriminator());
     }
 
@@ -120,7 +120,7 @@ public final class ClassModelBuilderTest {
                 .conventions(TEST_CONVENTIONS)
                 .discriminatorKey("_cls")
                 .discriminator("myColl")
-                .discriminatorEnabled(true)
+                .enableDiscriminator(true)
                 .idField("myIntegerField")
                 .instanceCreatorFactory(TEST_INSTANCE_CREATOR_FACTORY);
 
@@ -128,7 +128,7 @@ public final class ClassModelBuilderTest {
         assertEquals(TEST_CONVENTIONS, builder.getConventions());
         assertEquals("myIntegerField", builder.getIdField());
         assertEquals(SimpleGenericsModel.class, builder.getType());
-        assertTrue(builder.isDiscriminatorEnabled());
+        assertTrue(builder.useDiscriminator());
         assertEquals("_cls", builder.getDiscriminatorKey());
         assertEquals("myColl", builder.getDiscriminator());
         assertEquals(TEST_INSTANCE_CREATOR_FACTORY, builder.getInstanceCreatorFactory());
