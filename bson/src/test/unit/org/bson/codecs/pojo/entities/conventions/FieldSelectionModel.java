@@ -22,4 +22,7 @@ public final class FieldSelectionModel {
     private final int myFinalField = 10;
     private transient int myTransientField = 10;
     private int myIntField = 10;
+
+    public FieldSelectionModel() {
+    }
 }

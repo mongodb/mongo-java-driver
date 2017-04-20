@@ -23,6 +23,7 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.FieldSelectionModel;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -150,6 +151,15 @@ public final class ClassModelTest {
 
         fieldModel = classModel.getFieldModel("child");
         assertTrue(fieldModel.useDiscriminator());
+    }
+
+    @Test
+    public void testFieldSelection() {
+        ClassModel<?> classModel = ClassModel.builder(FieldSelectionModel.class).build();
+
+        assertEquals(2, classModel.getFieldModels().size());
+        assertEquals("myFinalField", classModel.getFieldModels().get(0).getFieldName());
+        assertEquals("myIntField", classModel.getFieldModels().get(1).getFieldName());
     }
 
 }
