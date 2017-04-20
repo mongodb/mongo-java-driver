@@ -984,7 +984,7 @@ public class JsonReader extends AbstractBsonReader {
             verifyToken(JsonTokenType.END_OBJECT);
         } else {
             if (valueToken.getType() == JsonTokenType.INT32 || valueToken.getType() == JsonTokenType.INT64) {
-                return valueToken.getValue(Long.class);
+                value = valueToken.getValue(Long.class);
             } else if (valueToken.getType() == JsonTokenType.STRING) {
                 String dateTimeString = valueToken.getValue(String.class);
                 try {
