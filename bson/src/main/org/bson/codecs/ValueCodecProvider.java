@@ -80,6 +80,7 @@ public class ValueCodecProvider implements CodecProvider {
         addCodec(new MaxKeyCodec());
         addCodec(new CodeCodec());
         addCodec(new Decimal128Codec());
+        addCodec(new BigDecimalCodec());
         addCodec(new ObjectIdCodec());
         addCodec(new CharacterCodec());
         addCodec(new StringCodec());
