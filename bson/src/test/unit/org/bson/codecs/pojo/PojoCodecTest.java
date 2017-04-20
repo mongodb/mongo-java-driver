@@ -53,6 +53,7 @@ import org.bson.codecs.pojo.entities.ShapeModelRectangle;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -139,6 +140,13 @@ public final class PojoCodecTest extends PojoTestCase {
 
         roundTrip(builder, getShapeModelRectangle(),
                 "{'_t': 'ShapeModelRectangle', 'color': 'green', 'width': 22.1, 'height': 105.0}");
+    }
+
+    @Test
+    public void testUpperBoundsConcreteModel() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(UpperBoundsConcreteModel.class);
+        roundTrip(builder, new UpperBoundsConcreteModel(1L),
+                "{'myGenericField': {'$numberLong': '1'}}");
     }
 
     @Test
