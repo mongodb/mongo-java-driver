@@ -147,6 +147,16 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testNestedDateTimeStrict() {
+        String json = "{d1 : { \"$date\" : 0 }, d2 : { \"$date\" : 1 } }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readStartDocument();
+        assertEquals(0L, bsonReader.readDateTime("d1"));
+        assertEquals(1L, bsonReader.readDateTime("d2"));
+        bsonReader.readEndDocument();
+    }
+
+    @Test
     public void testDateTimeISOString() {
         String json = "{ \"$date\" : \"2015-04-16T14:55:57.626Z\" }";
         bsonReader = new JsonReader(json);
