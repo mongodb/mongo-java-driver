@@ -316,7 +316,7 @@ public final class PojoCodecTest extends PojoTestCase {
                         if (classModelBuilder.getField("customId") != null) {
                             classModelBuilder.idField("customId");
                         }
-                        classModelBuilder.discriminatorEnabled(true);
+                        classModelBuilder.enableDiscriminator(true);
                         classModelBuilder.discriminatorKey("_cls");
                         classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName()
                                 .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
@@ -431,7 +431,7 @@ public final class PojoCodecTest extends PojoTestCase {
 
     @Test(expected = CodecConfigurationException.class)
     public void testDataUnknownClass() {
-        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).discriminatorEnabled(true).build();
+        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(true).build();
         decodingShouldFail(getCodec(PojoCodecProvider.builder().register(classModel), SimpleModel.class), "{'_t': 'FakeModel'}");
     }
 

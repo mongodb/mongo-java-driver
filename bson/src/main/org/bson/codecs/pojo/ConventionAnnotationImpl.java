@@ -50,7 +50,7 @@ final class ConventionAnnotationImpl implements Convention {
             if (!name.equals("")) {
                 classModelBuilder.discriminator(name);
             }
-            classModelBuilder.discriminatorEnabled(true);
+            classModelBuilder.enableDiscriminator(true);
         }
     }
 
