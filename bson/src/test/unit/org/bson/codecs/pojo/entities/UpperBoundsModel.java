@@ -18,4 +18,34 @@ package org.bson.codecs.pojo.entities;
 
 public class UpperBoundsModel<T extends Number> {
     private T myGenericField;
+
+    public UpperBoundsModel() {
+    }
+
+    public UpperBoundsModel(final T myGenericField) {
+        this.myGenericField = myGenericField;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        UpperBoundsModel<?> that = (UpperBoundsModel<?>) o;
+
+        if (myGenericField != null ? !myGenericField.equals(that.myGenericField) : that.myGenericField != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return myGenericField != null ? myGenericField.hashCode() : 0;
+    }
 }

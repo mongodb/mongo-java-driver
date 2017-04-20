@@ -23,7 +23,7 @@ import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
-import org.bson.codecs.pojo.entities.UpperBoundsSubClassModel;
+import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -88,7 +88,7 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<? extends UpperBoundsModel> builder = ClassModel.builder(UpperBoundsModel.class);
         assertEquals(Number.class, builder.getField("myGenericField").getTypeData().getType());
 
-        builder = ClassModel.builder(UpperBoundsSubClassModel.class);
+        builder = ClassModel.builder(UpperBoundsConcreteModel.class);
         assertEquals(Long.class, builder.getField("myGenericField").getTypeData().getType());
     }
 
