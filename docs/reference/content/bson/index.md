@@ -17,4 +17,5 @@ The BSON library comprehensively supports [BSON](http://www.bsonspec.org), the d
  of BSON documents
 - [Codec and CodecRegistry]({{< relref "codecs.md" >}}): Documentation of the driver's `Codec` API, an abstraction for producing and 
 consuming  BSON document representations using the stream-based readers and writers
+- [POJOs({{< relref "pojos.md" >}}): Documentation of the driver's POJO support. 
 - [Extended JSON]({{< relref "extended-json.md" >}}): Documentation of the driver's support for MongoDB Extended JSON
