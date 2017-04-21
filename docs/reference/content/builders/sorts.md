@@ -16,7 +16,7 @@ any method that expects sort criteria.
 For brevity, you may choose to import the methods of the `Sorts` class statically:
 
 ```java
-import com.mongodb.client.model.Sorts.*;
+import static com.mongodb.client.model.Sorts.*;
 ```
   
 All the examples below assume this static import.
