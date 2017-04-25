@@ -30,6 +30,7 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -106,11 +107,9 @@ final class ClientMetadataHelper {
 
     private static String getDriverVersion() {
         String driverVersion = "unknown";
-
-        try {
-            CodeSource codeSource = InternalStreamConnectionInitializer.class.getProtectionDomain().getCodeSource();
-            if (codeSource != null && codeSource.getLocation() != null) {
-                String path = codeSource.getLocation().getPath();
+        String path = getCodeSourcePath();
+        if (path != null) {
+            try {
                 URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
                 if (jarUrl != null) {
                     JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
@@ -120,14 +119,28 @@ final class ClientMetadataHelper {
                         driverVersion = version;
                     }
                 }
+            } catch (IOException e) {
+                // do nothing
             }
-        } catch (SecurityException e) {
-            // do nothing
-        } catch (IOException e) {
-            // do nothing
         }
         return driverVersion;
     }
+
+    private static String getCodeSourcePath() {
+        String path = null;
+        ProtectionDomain protectionDomain = InternalStreamConnectionInitializer.class.getProtectionDomain();
+        if (protectionDomain != null) {
+            CodeSource codeSource = protectionDomain.getCodeSource();
+            if (codeSource != null) {
+                URL location = codeSource.getLocation();
+                if (location != null) {
+                    path = location.getPath();
+                }
+            }
+        }
+        return path;
+    }
+
     static BsonDocument createClientMetadataDocument(final String applicationName) {
         return createClientMetadataDocument(applicationName, null);
     }
