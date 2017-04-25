@@ -174,7 +174,7 @@ public class MongoClientOptions {
             // The error message from SslSettings needs to be translated to make sense for users of MongoClientOptions
             throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
                                              + "must run on Java 6, you must set the MongoClientOptions.sslInvalidHostNameAllowed "
-                                             + "property to false");
+                                             + "property to true");
         }
     }
 

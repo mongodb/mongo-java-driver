@@ -121,12 +121,10 @@ public class SslSettings {
     SslSettings(final Builder builder) {
         enabled = builder.enabled;
         invalidHostNameAllowed = builder.invalidHostNameAllowed;
-        if (enabled && !invalidHostNameAllowed) {
-            if (System.getProperty("java.version").startsWith("1.6.")) {
-                throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
-                                                 + "must run on Java 6, you must set the SslSettings.invalidHostNameAllowed property to "
-                                                 + "false");
-            }
+        if (enabled && !invalidHostNameAllowed && System.getProperty("java.version").startsWith("1.6.")) {
+            throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
+                                             + "must run on Java 6, you must set the SslSettings.invalidHostNameAllowed property to "
+                                             + "true");
         }
     }
 
