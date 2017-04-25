@@ -14,12 +14,16 @@
 
 package com.mongodb.client.model.geojson.codecs;
 
+import com.mongodb.client.model.geojson.CoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecConfigurationException;
+
+import static com.mongodb.client.model.geojson.codecs.GeometryDecoderHelper.decodeCoordinateReferenceSystem;
 
 /**
  * Codec for a GeoJson Coordinate Reference System of type name.
@@ -47,6 +51,10 @@ public class NamedCoordinateReferenceSystemCodec implements Codec<NamedCoordinat
 
     @Override
     public NamedCoordinateReferenceSystem decode(final BsonReader reader, final DecoderContext decoderContext) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        CoordinateReferenceSystem crs = decodeCoordinateReferenceSystem(reader);
+        if (crs == null || !(crs instanceof NamedCoordinateReferenceSystem)) {
+            throw new CodecConfigurationException("Invalid NamedCoordinateReferenceSystem.");
+        }
+        return (NamedCoordinateReferenceSystem) crs;
     }
 }

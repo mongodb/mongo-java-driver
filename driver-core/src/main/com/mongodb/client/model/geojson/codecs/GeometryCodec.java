@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +16,22 @@
 
 package com.mongodb.client.model.geojson.codecs;
 
-import com.mongodb.client.model.geojson.LineString;
+import com.mongodb.client.model.geojson.Geometry;
 import org.bson.codecs.configuration.CodecRegistry;
 
 /**
- * A Codec for a GeoJSON LineString.
+ * A Codec for a GeoJSON Geometry.
  *
- * @since 3.1
+ * @since 3.5
  */
-public class LineStringCodec extends AbstractGeometryCodec<LineString> {
+public final class GeometryCodec extends AbstractGeometryCodec<Geometry> {
 
     /**
      * Construct a new instance
+     *
      * @param registry the CodecRegistry
      */
-    public LineStringCodec(final CodecRegistry registry) {
-        super(registry, LineString.class);
+    public GeometryCodec(final CodecRegistry registry) {
+        super(registry, Geometry.class);
     }
 }
