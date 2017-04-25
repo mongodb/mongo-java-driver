@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
@@ -35,20 +36,49 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/fsyncUnlock/ fsyncUnlock command
  * @since 3.2
  */
-public class FsyncUnlockOperation implements WriteOperation<BsonDocument> {
+public class FsyncUnlockOperation implements WriteOperation<BsonDocument>, ReadOperation<BsonDocument> {
+    private static final BsonDocument FSYNC_UNLOCK_COMMAND = new BsonDocument("fsyncUnlock", new BsonInt32(1));
+
+    /**
+     * Unlocks the MongoDB server, allowing write operations to go through.
+     *
+     * @param binding the binding to execute in the context of
+     * @return the result of the operation
+     * @deprecated use {@link #execute(ReadBinding)} instead.
+     */
+    @Deprecated
     @Override
     public BsonDocument execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<BsonDocument>() {
             @Override
             public BsonDocument call(final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    return executeWrappedCommandProtocol(binding, "admin", new BsonDocument("fsyncUnlock", new BsonInt32(1)), connection);
+                    return executeWrappedCommandProtocol(binding, "admin", FSYNC_UNLOCK_COMMAND, connection);
                 } else {
-                    return connection.query(new MongoNamespace("admin", "$cmd.sys.unlock"), new BsonDocument(), null, 0, 1, 0,
-                                           false, false, false, false, false, false,
-                                           new BsonDocumentCodec()).getResults().get(0);
+                    return queryUnlock(connection);
                 }
             }
         });
     }
+
+    @Override
+    public BsonDocument execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnection<BsonDocument>() {
+            @Override
+            public BsonDocument call(final Connection connection) {
+                if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
+                    return executeWrappedCommandProtocol(binding, "admin", FSYNC_UNLOCK_COMMAND, connection);
+                } else {
+                    return queryUnlock(connection);
+                }
+            }
+        });
+    }
+
+    private BsonDocument queryUnlock(final Connection connection) {
+        return connection.query(new MongoNamespace("admin", "$cmd.sys.unlock"), new BsonDocument(), null, 0, 1, 0,
+                false, false, false, false, false, false,
+                new BsonDocumentCodec()).getResults().get(0);
+    }
+
 }

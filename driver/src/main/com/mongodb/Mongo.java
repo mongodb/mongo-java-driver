@@ -641,7 +641,7 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
-        return DBObjects.toDBObject(execute(new FsyncUnlockOperation()));
+        return DBObjects.toDBObject(execute(new FsyncUnlockOperation(), readPreference));
     }
 
     /**
