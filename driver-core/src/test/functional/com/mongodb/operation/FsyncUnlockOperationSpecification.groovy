@@ -16,6 +16,7 @@
 
 package com.mongodb.operation
 
+import com.mongodb.binding.ReadBinding
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -36,7 +37,7 @@ class FsyncUnlockOperationSpecification extends Specification {
                 .execute(getBinding())
 
         when:
-        def result = new FsyncUnlockOperation().execute(getBinding())
+        def result = new FsyncUnlockOperation().execute(getBinding() as ReadBinding)
 
         then:
         result

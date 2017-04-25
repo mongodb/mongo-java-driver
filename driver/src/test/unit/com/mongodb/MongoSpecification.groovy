@@ -102,8 +102,8 @@ class MongoSpecification extends Specification {
         }
         mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
             getDB('admin') >> db
-            execute(_, _) >> new BsonDocument('fsyncLock', BsonBoolean.TRUE)
-            execute(_) >> new BsonDocument('ok', new BsonInt32(1))
+            1 * execute(_, _) >> new BsonDocument('fsyncLock', BsonBoolean.TRUE)
+            1 * execute(_, _) >> new BsonDocument('ok', new BsonInt32(1))
         }
 
         when:
