@@ -17,6 +17,8 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
@@ -63,7 +65,7 @@ abstract class SaslAuthenticator extends Authenticator {
                         res = sendSaslContinue(conversationId, response, connection);
                     }
                 } catch (Exception e) {
-                    throw wrapInMongoSecurityException(e);
+                    throw wrapException(e);
                 } finally {
                     disposeOfSaslClient(saslClient);
                 }
@@ -86,7 +88,7 @@ abstract class SaslAuthenticator extends Authenticator {
                             @Override
                             public void onResult(final BsonDocument result, final Throwable t) {
                                 if (t != null) {
-                                    callback.onResult(null, wrapInMongoSecurityException(t));
+                                    callback.onResult(null, wrapException(t));
                                 } else if (result.getBoolean("done").getValue()) {
                                     callback.onResult(null, null);
                                 } else {
@@ -95,7 +97,7 @@ abstract class SaslAuthenticator extends Authenticator {
                             }
                         });
                     } catch (SaslException e) {
-                        throw wrapInMongoSecurityException(e);
+                        throw wrapException(e);
                     }
                     return null;
                 }
@@ -151,10 +153,14 @@ abstract class SaslAuthenticator extends Authenticator {
         }
     }
 
-    private MongoSecurityException wrapInMongoSecurityException(final Throwable t) {
-        return t instanceof MongoSecurityException
-                ? (MongoSecurityException) t
-                : new MongoSecurityException(getCredential(), "Exception authenticating " + getCredential(), t);
+    private MongoException wrapException(final Throwable t) {
+        if (t instanceof MongoInterruptedException) {
+            return (MongoInterruptedException) t;
+        } else if (t instanceof MongoSecurityException) {
+            return (MongoSecurityException) t;
+        } else {
+            return new MongoSecurityException(getCredential(), "Exception authenticating " + getCredential(), t);
+        }
     }
 
     void doAsSubject(final java.security.PrivilegedAction<Void> action) {
@@ -182,7 +188,7 @@ abstract class SaslAuthenticator extends Authenticator {
         @Override
         public void onResult(final BsonDocument result, final Throwable t) {
             if (t != null) {
-                callback.onResult(null, wrapInMongoSecurityException(t));
+                callback.onResult(null, wrapException(t));
                 disposeOfSaslClient(saslClient);
             } else if (result.getBoolean("done").getValue()) {
                 callback.onResult(null, null);
@@ -205,7 +211,7 @@ abstract class SaslAuthenticator extends Authenticator {
                             sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
                                     saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection, Continuator.this);
                         } catch (SaslException e) {
-                            throw wrapInMongoSecurityException(e);
+                            throw wrapException(e);
                         }
                         return null;
                     }
