@@ -16,11 +16,19 @@ package com.mongodb.client.model.geojson.codecs
 
 import com.mongodb.client.model.geojson.GeometryCollection
 import com.mongodb.client.model.geojson.LineString
+import com.mongodb.client.model.geojson.MultiLineString
+import com.mongodb.client.model.geojson.MultiPoint
+import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.client.model.geojson.Point
+import com.mongodb.client.model.geojson.Polygon
+import com.mongodb.client.model.geojson.PolygonCoordinates
 import com.mongodb.client.model.geojson.Position
 import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
 
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
@@ -33,37 +41,146 @@ class GeometryCollectionCodecSpecification extends Specification {
     def writer = new BsonDocumentWriter(new BsonDocument())
     def context = EncoderContext.builder().build()
 
-    def 'should encode'() {
-        given:
-        def geometryCollection = new GeometryCollection([new Point(new Position(100d, 0d)),
-                                                         new LineString([new Position(101d, 0d), new Position(102d, 1d)])])
+    def 'should accept empty geometries'() {
+        def geometryCollection = new GeometryCollection([])
 
         when:
         codec.encode(writer, geometryCollection, context)
 
         then:
-        writer.document == parse('{ type: "GeometryCollection",' +
-                                 '    geometries: [' +
-                                 '      { type: "Point", coordinates: [100.0, 0.0]},' +
-                                 '      { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}' +
-                                 '    ]}')
+        writer.document == parse('{ type: "GeometryCollection", geometries: []}')
+
+        when:
+        def decodedGeometryCollection = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        geometryCollection == decodedGeometryCollection
     }
 
-    def 'should encode with coordinate reference system'() {
+    def 'should round trip'() {
         given:
-        def geometryCollection = new GeometryCollection(EPSG_4326_STRICT_WINDING,
-                                                        [new Point(new Position(100d, 0d)),
-                                                         new LineString([new Position(101d, 0d), new Position(102d, 1d)])])
+        def geometryCollection = new GeometryCollection([
+                new LineString([new Position(101d, 0d), new Position(102d, 1d)]),
+                new MultiLineString([[new Position([1.0d, 1.0d]), new Position([2.0d, 2.0d]), new Position([3.0d, 4.0d])],
+                                     [new Position([2.0d, 3.0d]), new Position([3.0d, 2.0d]), new Position([4.0d, 4.0d])]]),
+                new Point(new Position(100d, 0d)),
+                new MultiPoint([new Position([40.0d, 18.0d]), new Position([40.0d, 19.0d]), new Position([41.0d, 19.0d])]),
+                new Polygon([new Position([40.0d, 18.0d]), new Position([40.0d, 19.0d]), new Position([41.0d, 19.0d]),
+                             new Position([40.0d, 18.0d])]),
+                new MultiPolygon([new PolygonCoordinates([new Position(102.0, 2.0), new Position(103.0, 2.0),
+                                                          new Position(103.0, 3.0), new Position(102.0, 3.0),
+                                                          new Position(102.0, 2.0)]),
+                                  new PolygonCoordinates([new Position(100.0, 0.0), new Position(101.0, 0.0),
+                                                          new Position(101.0, 1.0), new Position(100.0, 1.0),
+                                                          new Position(100.0, 0.0)],
+                                          [new Position(100.2, 0.2), new Position(100.8, 0.2),
+                                           new Position(100.8, 0.8), new Position(100.2, 0.8),
+                                           new Position(100.2, 0.2)])]),
+                new GeometryCollection([new Point(new Position(100d, 0d)),
+                                        new LineString([new Position(101d, 0d), new Position(102d, 1d)])])
+        ])
 
         when:
         codec.encode(writer, geometryCollection, context)
 
         then:
-        writer.document == parse('{ type: "GeometryCollection",' +
-                                 '    geometries: [' +
-                                 '      { type: "Point", coordinates: [100.0, 0.0]},' +
-                                 '      { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}, ' +
-                                 '    ]' +
-                                 "   crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}")
+        writer.document == parse('''{ type: "GeometryCollection", geometries: [
+                {type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]},
+                {type: "MultiLineString", coordinates: [[[1.0, 1.0], [2.0, 2.0], [3.0, 4.0]], [[2.0, 3.0], [3.0, 2.0], [4.0, 4.0]]]},
+                {type: "Point", coordinates: [100.0, 0.0]},
+                {type: "MultiPoint", coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0]]},
+                {type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]},
+                {type: "MultiPolygon", coordinates: [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                                                     [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                                                     [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]]},
+                { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [100.0, 0.0]},
+                    { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}]}
+         ]}''')
+
+
+        when:
+        def decodedGeometryCollection = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        geometryCollection == decodedGeometryCollection
+    }
+
+    def 'should round trip with coordinate reference system'() {
+        given:
+        def geometryCollection = new GeometryCollection(EPSG_4326_STRICT_WINDING, [
+                new LineString([new Position(101d, 0d), new Position(102d, 1d)]),
+                new MultiLineString([[new Position([1.0d, 1.0d]), new Position([2.0d, 2.0d]), new Position([3.0d, 4.0d])],
+                                     [new Position([2.0d, 3.0d]), new Position([3.0d, 2.0d]), new Position([4.0d, 4.0d])]]),
+                new Point(new Position(100d, 0d)),
+                new MultiPoint([new Position([40.0d, 18.0d]), new Position([40.0d, 19.0d]), new Position([41.0d, 19.0d])]),
+                new Polygon([new Position([40.0d, 18.0d]), new Position([40.0d, 19.0d]), new Position([41.0d, 19.0d]),
+                             new Position([40.0d, 18.0d])]),
+                new MultiPolygon([new PolygonCoordinates([new Position(102.0, 2.0), new Position(103.0, 2.0),
+                                                          new Position(103.0, 3.0), new Position(102.0, 3.0),
+                                                          new Position(102.0, 2.0)]),
+                                  new PolygonCoordinates([new Position(100.0, 0.0), new Position(101.0, 0.0),
+                                                          new Position(101.0, 1.0), new Position(100.0, 1.0),
+                                                          new Position(100.0, 0.0)],
+                                          [new Position(100.2, 0.2), new Position(100.8, 0.2),
+                                           new Position(100.8, 0.8), new Position(100.2, 0.8),
+                                           new Position(100.2, 0.2)])]),
+                new GeometryCollection([new Point(new Position(100d, 0d)),
+                                        new LineString([new Position(101d, 0d), new Position(102d, 1d)])])
+        ])
+
+        when:
+        codec.encode(writer, geometryCollection, context)
+
+        then:
+        writer.document == parse("""{ type: "GeometryCollection", geometries: [
+                {type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]},
+                {type: "MultiLineString", coordinates: [[[1.0, 1.0], [2.0, 2.0], [3.0, 4.0]], [[2.0, 3.0], [3.0, 2.0], [4.0, 4.0]]]},
+                {type: "Point", coordinates: [100.0, 0.0]},
+                {type: "MultiPoint", coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0]]},
+                {type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]},
+                {type: "MultiPolygon", coordinates: [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+                                                     [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+                                                     [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]]},
+                { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [100.0, 0.0]},
+                    { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}]}],
+            crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}""")
+
+        when:
+        def decodedGeometryCollection = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        geometryCollection == decodedGeometryCollection
+    }
+
+    def 'should throw when decoding invalid documents'() {
+        when:
+        codec.decode(new BsonDocumentReader(parse(invalidJson)), DecoderContext.builder().build())
+
+        then:
+        thrown(CodecConfigurationException)
+
+        where:
+        invalidJson << [
+                '{ type: "GeometryCollect"}',
+                '''{ geometries: [{ type: "Point", coordinates: [100.0, 0.0]},
+                                  { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}]}''',
+                '''{ type: "GeometryCollect",
+                     geometries: [{ type: "Point", coordinates: [100.0, 0.0]},
+                                  { type: "LineString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}]}''',
+                '''{ type: "GeometryCollection", geometries: [[]]}''',
+                '''{ type: "GeometryCollect",
+                     geometries: [{ type: "Paint", coordinates: [100.0, 0.0]},
+                                  { type: "LaneString", coordinates: [ [101.0, 0.0], [102.0, 1.0] ]}]}''',
+                '''{ type: "GeometryCollect",
+                     geometries: [{ coordinates: [100.0, 0.0]}]}''',
+                "{type: 'GeometryCollection', crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}",
+                '''{ type: "GeometryCollection",
+                     geometries: [{ type: "Point", coordinates: [100.0, 0.0]}],
+                     crs : {type: "something"}}''',
+                '''{ type: "GeometryCollection",
+                     geometries: [{ type: "Point", coordinates: [100.0, 0.0]}],
+                     crs : {type: "link", properties: {href: "http://example.com/crs/42"}}}''',
+                '''{ type: "GeometryCollection", geometries: [], abc: 123}'''
+        ]
     }
 }

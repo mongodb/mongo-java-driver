@@ -20,8 +20,11 @@ import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.PolygonCoordinates
 import com.mongodb.client.model.geojson.Position
 import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
 
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
@@ -34,7 +37,7 @@ class PolygonCodecSpecification extends Specification {
     def writer = new BsonDocumentWriter(new BsonDocument())
     def context = EncoderContext.builder().build()
 
-    def 'should encode'() {
+    def 'should round trip'() {
         given:
         def polygon = new Polygon([new Position([40.0d, 18.0d]),
                                    new Position([40.0d, 19.0d]),
@@ -45,10 +48,17 @@ class PolygonCodecSpecification extends Specification {
         codec.encode(writer, polygon, context)
 
         then:
-        writer.document == parse('{type: \'Polygon\', coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}')
+        writer.document == parse('{type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}')
+
+        when:
+        def decodedPolygon = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        polygon == decodedPolygon
+
     }
 
-    def 'should encode with coordinate reference system'() {
+    def 'should round trip with coordinate reference system'() {
         given:
         def polygon = new Polygon(EPSG_4326_STRICT_WINDING,
                                   new PolygonCoordinates([new Position([40.0d, 20.0d]),
@@ -60,13 +70,17 @@ class PolygonCodecSpecification extends Specification {
         codec.encode(writer, polygon, context)
 
         then:
-        writer.document == parse('{type: \'Polygon\', ' +
-                                 'coordinates: [' +
-                                 '[[40.0, 20.0], [40.0, 40.0], [20.0, 40.0], [40.0, 20.0]]],' +
-                                 "crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}")
+        writer.document == parse("""{type: 'Polygon', coordinates: [[[40.0, 20.0], [40.0, 40.0], [20.0, 40.0], [40.0, 20.0]]],
+                                     crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}""")
+
+        when:
+        def decodedPolygon = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        polygon == decodedPolygon
     }
 
-    def 'should encode with holes'() {
+    def 'should round trip with holes'() {
         given:
         def polygon = new Polygon([new Position([40.0d, 20.0d]),
                                    new Position([40.0d, 40.0d]),
@@ -75,17 +89,49 @@ class PolygonCodecSpecification extends Specification {
                                   [new Position([30.0d, 25.0d]),
                                    new Position([30.0d, 35.0d]),
                                    new Position([25.0d, 25.0d]),
-                                   new Position([30.0d, 25.0d])])
+                                   new Position([30.0d, 25.0d])],
+                                  [new Position([36.0d, 37.0d]),
+                                   new Position([36.0d, 37.0d]),
+                                   new Position([37.0d, 37.0d]),
+                                   new Position([36.0d, 37.0d])])
 
         when:
         codec.encode(writer, polygon, context)
 
         then:
-        writer.document == parse('{type: \'Polygon\', ' +
-                                 'coordinates: [' +
-                                 '[[40.0, 20.0], [40.0, 40.0], [20.0, 40.0], [40.0, 20.0]],' +
-                                 '[[30.0, 25.0], [30.0, 35.0], [25.0, 25.0], [30.0, 25.0]]' +
-                                 ']}')
+        writer.document == parse('''{type: 'Polygon', coordinates:
+            [[[40.0, 20.0], [40.0, 40.0], [20.0, 40.0], [40.0, 20.0]],
+             [[30.0, 25.0], [30.0, 35.0], [25.0, 25.0], [30.0, 25.0]],
+             [[36.0, 37.0], [36.0, 37.0], [37.0, 37.0], [36.0, 37.0]]]}''')
+
+        when:
+        def decodedPolygon = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        polygon == decodedPolygon
     }
 
+    def 'should throw when decoding invalid documents'() {
+        when:
+        codec.decode(new BsonDocumentReader(parse(invalidJson)), DecoderContext.builder().build())
+
+        then:
+        thrown(CodecConfigurationException)
+
+        where:
+        invalidJson << [
+                '{type: "Polygon"}',
+                '{coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}',
+                '{type: "Polygot", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}',
+                '{type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0]]]}',
+                '{type: "Polygon", coordinates: []}',
+                '{type: "Polygon", coordinates: [[]]}',
+                '{type: "Polygon", coordinates: [[[]]]}',
+                "{type: 'Polygon', crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}",
+                '{type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]], crs : {type: "something"}}',
+                '''{type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]],
+                    crs : {type: "link", properties: {href: "http://example.com/crs/42"}}}''',
+                '{type: "Polygon", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]], abc: 123}'
+        ]
+    }
 }

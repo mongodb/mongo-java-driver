@@ -17,52 +17,21 @@
 package com.mongodb.client.model.geojson.codecs;
 
 import com.mongodb.client.model.geojson.Point;
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.model.geojson.codecs.GeometryCodecHelper.encodeGeometry;
-import static com.mongodb.client.model.geojson.codecs.GeometryCodecHelper.encodePosition;
 
 /**
  * A Codec for a GeoJSON point.
  *
  * @since 3.1
  */
-public class PointCodec implements Codec<Point> {
-    private final CodecRegistry registry;
+public class PointCodec extends AbstractGeometryCodec<Point> {
 
     /**
-     * Constructs a new instance.
+     * Constructs an instance.
      *
      * @param registry the registry
      */
     public PointCodec(final CodecRegistry registry) {
-        this.registry = notNull("registry", registry);
-    }
-
-    @Override
-    public void encode(final BsonWriter writer, final Point value, final EncoderContext encoderContext) {
-        encodeGeometry(writer, value, encoderContext, registry, new Runnable() {
-            @Override
-            @SuppressWarnings({"unchecked", "rawtypes"})
-            public void run() {
-                encodePosition(writer, value.getPosition());
-            }
-        });
-    }
-
-    @Override
-    public Class<Point> getEncoderClass() {
-        return Point.class;
-    }
-
-    @Override
-    public Point decode(final BsonReader reader, final DecoderContext decoderContext) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        super(registry, Point.class);
     }
 }

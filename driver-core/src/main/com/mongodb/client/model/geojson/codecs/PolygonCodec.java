@@ -17,24 +17,14 @@
 package com.mongodb.client.model.geojson.codecs;
 
 import com.mongodb.client.model.geojson.Polygon;
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.model.geojson.codecs.GeometryCodecHelper.encodeGeometry;
-import static com.mongodb.client.model.geojson.codecs.GeometryCodecHelper.encodePolygonCoordinates;
 
 /**
  * A Codec for a GeoJSON polygon.
  *
  * @since 3.1
  */
-public class PolygonCodec implements Codec<Polygon> {
-    private final CodecRegistry registry;
+public class PolygonCodec extends AbstractGeometryCodec<Polygon> {
 
     /**
      * Constructs an instance.
@@ -42,27 +32,6 @@ public class PolygonCodec implements Codec<Polygon> {
      * @param registry the registry
      */
     public PolygonCodec(final CodecRegistry registry) {
-        this.registry = notNull("registry", registry);
-    }
-
-    @Override
-    public void encode(final BsonWriter writer, final Polygon value, final EncoderContext encoderContext) {
-        encodeGeometry(writer, value, encoderContext, registry, new Runnable() {
-            @Override
-            @SuppressWarnings({"unchecked", "rawtypes"})
-            public void run() {
-                encodePolygonCoordinates(writer, value.getCoordinates());
-            }
-        });
-    }
-
-    @Override
-    public Class<Polygon> getEncoderClass() {
-        return Polygon.class;
-    }
-
-    @Override
-    public Polygon decode(final BsonReader reader, final DecoderContext decoderContext) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        super(registry, Polygon.class);
     }
 }

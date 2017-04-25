@@ -17,8 +17,11 @@ package com.mongodb.client.model.geojson.codecs
 import com.mongodb.client.model.geojson.LineString
 import com.mongodb.client.model.geojson.Position
 import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
 
 import static com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
@@ -31,33 +34,68 @@ class LineStringCodecSpecification extends Specification {
     def writer = new BsonDocumentWriter(new BsonDocument())
     def context = EncoderContext.builder().build()
 
-    def 'should encode'() {
+    def 'should round trip'() {
         given:
-        def polygon = new LineString([new Position([40.0d, 18.0d]),
-                                      new Position([40.0d, 19.0d]),
-                                      new Position([41.0d, 19.0d])])
+        def lineString = new LineString([new Position([40.0d, 18.0d]),
+                                         new Position([40.0d, 19.0d]),
+                                         new Position([41.0d, 19.0d])])
 
         when:
-        codec.encode(writer, polygon, context)
+        codec.encode(writer, lineString, context)
 
         then:
-        writer.document == parse('{type: \'LineString\', coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0]]}')
+        writer.document == parse('{type: "LineString", coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0]]}')
+
+        when:
+        def decodedLineString = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        lineString == decodedLineString
     }
 
-    def 'should encode with coordinate reference system'() {
+    def 'should round trip with coordinate reference system'() {
         given:
-        def polygon = new LineString(EPSG_4326_STRICT_WINDING,
-                                     [new Position([40.0d, 20.0d]),
-                                      new Position([40.0d, 40.0d]),
-                                      new Position([20.0d, 40.0d])])
+        def lineString = new LineString(EPSG_4326_STRICT_WINDING,
+                                        [new Position([40.0d, 20.0d]),
+                                         new Position([40.0d, 40.0d]),
+                                         new Position([20.0d, 40.0d])])
 
         when:
-        codec.encode(writer, polygon, context)
+        codec.encode(writer, lineString, context)
 
         then:
-        writer.document == parse('{type: \'LineString\', ' +
-                                 'coordinates: ' +
-                                 '[[40.0, 20.0], [40.0, 40.0], [20.0, 40.0]],' +
-                                 "crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}")
+        writer.document == parse("""{type: "LineString",
+                                 coordinates: [[40.0, 20.0], [40.0, 40.0], [20.0, 40.0]]
+                                 crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}""")
+
+        when:
+        def decodedLineString = codec.decode(new BsonDocumentReader(writer.document), DecoderContext.builder().build())
+
+        then:
+        lineString == decodedLineString
+    }
+
+    def 'should throw when decoding invalid documents'() {
+        when:
+        codec.decode(new BsonDocumentReader(parse(invalidJson)), DecoderContext.builder().build())
+
+        then:
+        thrown(CodecConfigurationException)
+
+        where:
+        invalidJson << [
+                '{type: "lineString"}',
+                '{coordinates: [[40.0, 18.0], [40.0, 19.0]]}',
+                '{type: "lineStr", coordinates: [[40.0, 18.0], [40.0, 19.0]]}',
+                '{type: "lineString", coordinates: [40.0, 18.0]}',
+                '{type: "lineString", coordinates: []}',
+                '{type: "lineString", coordinates: [[]]}',
+                '{type: "lineString", coordinates: [[[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]]]}',
+                "{type: 'lineString', crs : {type: 'name', properties : {name : '$EPSG_4326_STRICT_WINDING.name'}}}",
+                '{type: "lineString", coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]], crs : {type: "something"}}',
+                '''{type: "lineString", coordinates: [[40.0, 18.0], [40.0, 19.0], [41.0, 19.0], [40.0, 18.0]],
+                    crs : {type: "link", properties: {href: "http://example.com/crs/42"}}}''',
+                '{type: "lineString", coordinates: [[40.0, 18.0], [40.0, 19.0]], abc: 123}'
+        ]
     }
 }
