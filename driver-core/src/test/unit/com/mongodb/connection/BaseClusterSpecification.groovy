@@ -257,18 +257,16 @@ class BaseClusterSpecification extends Specification {
         def thirdServerLatch = selectServerAsync(cluster, thirdServer)
         factory.sendNotification(secondServer, REPLICA_SET_SECONDARY, allServers)
         factory.sendNotification(thirdServer, REPLICA_SET_SECONDARY, allServers)
-        secondServerLatch.latch.await()
-        thirdServerLatch.latch.await()
 
         then:
-        secondServerLatch.server.description.address == secondServer
-        thirdServerLatch.server.description.address == thirdServer
+        secondServerLatch.get().description.address == secondServer
+        thirdServerLatch.get().description.address == thirdServer
 
         cleanup:
         cluster?.close()
 
         where:
-        serverSelectionTimeoutMS << [30, -1]
+        serverSelectionTimeoutMS << [500, -1]
     }
 
     def 'when selecting server asynchronously should send MongoClientException to callback if cluster is closed before success'() {
