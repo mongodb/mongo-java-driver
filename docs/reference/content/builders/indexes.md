@@ -16,7 +16,7 @@ methods.
 For brevity, you may choose to import the methods of the `Indexes` class statically:
 
 ```java
-import com.mongodb.client.model.Indexes.*;
+import static com.mongodb.client.model.Indexes.*;
 ```
 
 All the examples below assume this static import.

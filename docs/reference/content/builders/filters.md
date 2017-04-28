@@ -16,7 +16,7 @@ any method that expects a query filter.
 For brevity, you may choose to import the methods of the `Filters` class statically:
 
 ```java
-import com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.*;
 ```
   
 All the examples below assume this static import.
