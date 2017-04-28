@@ -25,6 +25,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
 import java.util.ArrayList;
@@ -33,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
@@ -173,8 +172,8 @@ final class PojoCodec<T> implements Codec<T> {
                 throw new CodecConfigurationException(format("Failed to decode '%s'. %s", name, e.getMessage()), e);
             }
         } else {
-            if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(format("Found field not present in the ClassModel: %s", name));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Found field not present in the ClassModel: %s", name));
             }
             reader.skipValue();
         }
