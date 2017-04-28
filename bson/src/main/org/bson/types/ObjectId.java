@@ -16,6 +16,7 @@
 
 package org.bson.types;
 
+import org.bson.diagnostics.Logger;
 import org.bson.diagnostics.Loggers;
 
 import java.io.Serializable;
@@ -26,8 +27,6 @@ import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
@@ -519,7 +518,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
         } catch (Throwable t) {
             // exception sometimes happens with IBM JVM, use random
             machinePiece = (new SecureRandom().nextInt());
-            LOGGER.log(Level.WARNING, "Failed to get machine identifier from network interface, using random number instead", t);
+            LOGGER.warn("Failed to get machine identifier from network interface, using random number instead", t);
         }
         machinePiece = machinePiece & LOW_ORDER_THREE_BYTES;
         return machinePiece;
@@ -539,7 +538,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
         } catch (Throwable t) {
             processId = (short) new SecureRandom().nextInt();
-            LOGGER.log(Level.WARNING, "Failed to get process identifier from JMX, using random number instead", t);
+            LOGGER.warn("Failed to get process identifier from JMX, using random number instead", t);
         }
 
         return processId;
