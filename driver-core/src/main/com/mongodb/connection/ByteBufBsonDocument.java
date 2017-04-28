@@ -75,7 +75,8 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
     }
 
     static List<ByteBufBsonDocument> create(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
-        CompositeByteBuf outputByteBuf = new CompositeByteBuf(bsonOutput.getByteBuffers());
+        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
+        CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
         outputByteBuf.position(startPosition);
         List<ByteBufBsonDocument> documents = new ArrayList<ByteBufBsonDocument>();
         int curDocumentStartPosition = startPosition;
@@ -88,7 +89,9 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
             curDocumentStartPosition += documentSizeInBytes;
             outputByteBuf.position(outputByteBuf.position() + documentSizeInBytes - 4);
         }
-
+        for (ByteBuf byteBuffer : duplicateByteBuffers) {
+            byteBuffer.release();
+        }
         return documents;
     }
 

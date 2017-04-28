@@ -41,7 +41,7 @@ class CompositeByteBuf implements ByteBuf {
 
         int offset = 0;
         for (ByteBuf cur : buffers) {
-            Component component = new Component(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN), offset);
+            Component component = new Component(cur.asReadOnly().order(ByteOrder.LITTLE_ENDIAN), offset);
             components.add(component);
             offset = component.endOffset;
         }
