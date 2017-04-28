@@ -17,7 +17,7 @@ pipeline operators]({{< docsref "reference/operator/aggregation/" >}}).  Each me
 For brevity, you may choose to import the methods of the `Aggregates` class statically:
 
 ```java
-import com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Aggregates.*;
 ```
 
 All the examples below assume this static import.

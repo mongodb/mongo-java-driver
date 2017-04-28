@@ -16,7 +16,7 @@ any method that expects an update.
 For brevity, you may choose to import the methods of the `Updates` class statically:
 
 ```java
-import com.mongodb.client.model.Updates.*;
+import static com.mongodb.client.model.Updates.*;
 ```
   
 All the examples below assume this static import.
