@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.DBRefCodecProvider;
+import com.mongodb.DocumentToDBRefTransformer;
 import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
@@ -214,10 +216,11 @@ public final class MongoClients {
 
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
             fromProviders(asList(new ValueCodecProvider(),
-                    new DocumentCodecProvider(),
                     new BsonValueCodecProvider(),
-                    new IterableCodecProvider(),
-                    new MapCodecProvider(),
+                    new DBRefCodecProvider(),
+                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
+                    new IterableCodecProvider(new DocumentToDBRefTransformer()),
+                    new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider()));
 

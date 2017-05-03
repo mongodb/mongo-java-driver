@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 
 package com.mongodb
 
-import org.bson.BSONDecoder
-import org.bson.BasicBSONDecoder
-import org.bson.io.BasicOutputBuffer
-import org.bson.io.OutputBuffer
 import spock.lang.Specification
 
 class DBRefSpecification extends Specification {
@@ -60,10 +56,10 @@ class DBRefSpecification extends Specification {
 
     def 'equivalent instances should be equal and have the same hash code'() {
         given:
-        DBRef referenceA = new DBRef('foo.bar', 4);
-        DBRef referenceB = new DBRef('foo.bar', 4);
-        DBRef referenceC = new DBRef('mydb', 'foo.bar', 4);
-        DBRef referenceD = new DBRef('mydb', 'foo.bar', 4);
+        DBRef referenceA = new DBRef('foo.bar', 4)
+        DBRef referenceB = new DBRef('foo.bar', 4)
+        DBRef referenceC = new DBRef('mydb', 'foo.bar', 4)
+        DBRef referenceD = new DBRef('mydb', 'foo.bar', 4)
 
         expect:
         referenceA.equals(referenceA)
@@ -75,11 +71,11 @@ class DBRefSpecification extends Specification {
 
     def 'non-equivalent instances should not be equal and have different hash codes'() {
         given:
-        DBRef referenceA = new DBRef('foo.bar', 4);
-        DBRef referenceB = new DBRef('foo.baz', 4);
-        DBRef referenceC = new DBRef('foo.bar', 5);
-        DBRef referenceD = new DBRef('mydb', 'foo.bar', 4);
-        DBRef referenceE = new DBRef('yourdb', 'foo.bar', 4);
+        DBRef referenceA = new DBRef('foo.bar', 4)
+        DBRef referenceB = new DBRef('foo.baz', 4)
+        DBRef referenceC = new DBRef('foo.bar', 5)
+        DBRef referenceD = new DBRef('mydb', 'foo.bar', 4)
+        DBRef referenceE = new DBRef('yourdb', 'foo.bar', 4)
 
         expect:
         !referenceA.equals(null)
@@ -100,55 +96,17 @@ class DBRefSpecification extends Specification {
         new DBRef('mydb', 'foo.bar', 4).toString() == '{ "$ref" : "foo.bar", "$id" : "4, "$db" : "mydb" }'
     }
 
-    def 'should encode and decode DBRefs'() {
-        given:
-        DBRef reference = new DBRef('coll', 'hello world');
-        DBObject document = new BasicDBObject('!', reference);
-        OutputBuffer buffer = new BasicOutputBuffer();
-
-        when:
-        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document);
-        DefaultDBCallback callback = new DefaultDBCallback(null);
-        BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode(buffer.toByteArray(), callback);
-        DBRef decoded = ((DBObject) callback.get()).get('!');
-
-        then:
-        decoded.databaseName == null
-        decoded.collectionName == 'coll'
-        decoded.id == 'hello world'
-    }
-
-    def 'should encode and decode DBRefs with a database name'() {
-        given:
-        DBRef reference = new DBRef('db', 'coll', 'hello world');
-        DBObject document = new BasicDBObject('!', reference);
-        OutputBuffer buffer = new BasicOutputBuffer();
-
-        when:
-        DefaultDBEncoder.FACTORY.create().writeObject(buffer, document);
-        DefaultDBCallback callback = new DefaultDBCallback(null);
-        BSONDecoder decoder = new BasicBSONDecoder();
-        decoder.decode(buffer.toByteArray(), callback);
-        DBRef decoded = ((DBObject) callback.get()).get('!');
-
-        then:
-        decoded.databaseName == 'db'
-        decoded.collectionName == 'coll'
-        decoded.id == 'hello world'
-    }
-
     def 'testSerialization'() throws Exception {
         given:
-        DBRef originalDBRef = new DBRef('col', 42);
+        DBRef originalDBRef = new DBRef('col', 42)
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)
 
         when:
-        objectOutputStream.writeObject(originalDBRef);
-        ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(outputStream.toByteArray()));
-        DBRef deserializedDBRef = (DBRef) objectInputStream.readObject();
+        objectOutputStream.writeObject(originalDBRef)
+        ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(outputStream.toByteArray()))
+        DBRef deserializedDBRef = (DBRef) objectInputStream.readObject()
 
         then:
         originalDBRef == deserializedDBRef
