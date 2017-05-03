@@ -35,6 +35,7 @@ import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -216,6 +217,7 @@ public final class MongoClients {
                     new DocumentCodecProvider(),
                     new BsonValueCodecProvider(),
                     new IterableCodecProvider(),
+                    new MapCodecProvider(),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider()));
 

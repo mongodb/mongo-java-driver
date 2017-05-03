@@ -1210,7 +1210,7 @@ class MongoCollectionSpecification extends Specification {
     def 'should not expect to mutate the document when inserting'() {
         given:
         def executor = new TestOperationExecutor([null])
-        def customCodecRegistry = fromRegistries(codecRegistry, fromProviders(new ImmutableDocumentCodecProvider()))
+        def customCodecRegistry = fromRegistries(fromProviders(new ImmutableDocumentCodecProvider()), codecRegistry)
         def collection = new MongoCollectionImpl(namespace, ImmutableDocument, customCodecRegistry, readPreference, writeConcern,
                 readConcern, executor)
         def document = new ImmutableDocument(['a': 1])
@@ -1234,7 +1234,7 @@ class MongoCollectionSpecification extends Specification {
     def 'should not expect to mutate the document when bulk writing'() {
         given:
         def executor = new TestOperationExecutor([null])
-        def customCodecRegistry = fromRegistries(codecRegistry, fromProviders(new ImmutableDocumentCodecProvider()))
+        def customCodecRegistry = fromRegistries(fromProviders(new ImmutableDocumentCodecProvider()), codecRegistry)
         def collection = new MongoCollectionImpl(namespace, ImmutableDocument, customCodecRegistry, readPreference, writeConcern,
                 readConcern, executor)
         def document = new ImmutableDocument(['a': 1])
