@@ -85,10 +85,10 @@ public class MongoClient extends Mongo implements Closeable {
 
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
             fromProviders(asList(new ValueCodecProvider(),
-                    new DBRefCodecProvider(),
-                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
-                    new DBObjectCodecProvider(),
                     new BsonValueCodecProvider(),
+                    new DBRefCodecProvider(),
+                    new DBObjectCodecProvider(),
+                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
                     new IterableCodecProvider(new DocumentToDBRefTransformer()),
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),

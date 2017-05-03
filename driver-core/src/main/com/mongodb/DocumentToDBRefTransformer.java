@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,14 @@ package com.mongodb;
 import org.bson.Document;
 import org.bson.Transformer;
 
-final class DocumentToDBRefTransformer implements Transformer {
+/**
+ * A Document to DBRef Transformer.
+ *
+ * Can be used with any {@link org.bson.codecs.Codec} that takes a {@link Transformer}.
+ *
+ * @since 3.5
+ */
+public final class DocumentToDBRefTransformer implements Transformer {
     @Override
     public Object transform(final Object value) {
         if (value instanceof Document) {
