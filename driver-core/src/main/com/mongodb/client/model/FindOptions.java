@@ -45,6 +45,14 @@ public final class FindOptions {
     private boolean oplogReplay;
     private boolean partial;
     private Collation collation;
+    private String comment;
+    private Bson hint;
+    private Bson max;
+    private Bson min;
+    private long maxScan;
+    private boolean returnKey;
+    private boolean showRecordId;
+    private boolean snapshot;
 
     /**
      * Construct a new instance.
@@ -69,6 +77,14 @@ public final class FindOptions {
         noCursorTimeout = from.noCursorTimeout;
         oplogReplay = from.oplogReplay;
         partial = from.partial;
+        comment = from.comment;
+        hint = from.hint;
+        max = from.max;
+        min = from.min;
+        maxScan = from.maxScan;
+        returnKey = from.returnKey;
+        showRecordId = from.showRecordId;
+        snapshot = from.snapshot;
     }
 
     /**
@@ -94,9 +110,9 @@ public final class FindOptions {
     }
 
     /**
-     * Gets the number of documents to skip.  The default is 0.
+     * Gets the number of documents to skip. The default is 0.
      *
-     * @return the number of documents to skip, which may be null
+     * @return the number of documents to skip
      * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public int getSkip() {
@@ -209,7 +225,9 @@ public final class FindOptions {
      *
      * @return the query modifiers, which may be null
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
+     * @deprecated use the individual modifier methods instead.
      */
+    @Deprecated
     public Bson getModifiers() {
         return modifiers;
     }
@@ -220,7 +238,9 @@ public final class FindOptions {
      * @param modifiers the query modifiers to apply, which may be null.
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
+     * @deprecated use the individual modifier methods instead.
      */
+    @Deprecated
     public FindOptions modifiers(final Bson modifiers) {
         this.modifiers = modifiers;
         return this;
@@ -378,21 +398,219 @@ public final class FindOptions {
         return this;
     }
 
+    /**
+     * Returns the comment to send with the query. The default is not to include a comment with the query.
+     *
+     * @return the comment
+     * @since 3.5
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment to the query. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.5
+     */
+    public Bson getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions hint(final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Returns the exclusive upper bound for a specific index. By default there is no max bound.
+     *
+     * @return the max
+     * @since 3.5
+     */
+    public Bson getMax() {
+        return max;
+    }
+
+    /**
+     * Sets the exclusive upper bound for a specific index. A null value means no max is set.
+     *
+     * @param max the max
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions max(final Bson max) {
+        this.max = max;
+        return this;
+    }
+
+    /**
+     * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
+     *
+     * @return the min
+     * @since 3.5
+     */
+    public Bson getMin() {
+        return min;
+    }
+
+    /**
+     * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
+     *
+     * @param min the min
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions min(final Bson min) {
+        this.min = min;
+        return this;
+    }
+
+    /**
+     * Returns the maximum number of documents or index keys to scan when executing the query.
+     *
+     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
+     *
+     * @return the maxScan
+     * @since 3.5
+     */
+    public long getMaxScan() {
+        return maxScan;
+    }
+
+    /**
+     * Sets the maximum number of documents or index keys to scan when executing the query.
+     *
+     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
+     *
+     * @param maxScan the maxScan
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions maxScan(final long maxScan) {
+        this.maxScan = maxScan;
+        return this;
+    }
+
+    /**
+     * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
+     *
+     * @return the returnKey
+     * @since 3.5
+     */
+    public boolean isReturnKey() {
+        return returnKey;
+    }
+
+    /**
+     * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * @param returnKey the returnKey
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions returnKey(final boolean returnKey) {
+        this.returnKey = returnKey;
+        return this;
+    }
+
+    /**
+     * Returns the showRecordId.
+     *
+     * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
+     * The default is false.
+     *
+     * @return the showRecordId
+     * @since 3.5
+     */
+    public boolean isShowRecordId() {
+        return showRecordId;
+    }
+
+    /**
+     * Sets the showRecordId. Set to true to add a field {@code $recordId} to the returned documents.
+     *
+     * @param showRecordId the showRecordId
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions showRecordId(final boolean showRecordId) {
+        this.showRecordId = showRecordId;
+        return this;
+    }
+
+    /**
+     * Returns the snapshot.
+     *
+     * Prevents the cursor from returning a document more than once because of an intervening write operation. The default is false.
+     *
+     * @return the snapshot
+     * @since 3.5
+     */
+    public boolean isSnapshot() {
+        return snapshot;
+    }
+
+    /**
+     * Sets the snapshot.
+     *
+     * If true it prevents the cursor from returning a document more than once because of an intervening write operation.
+     *
+     * @param snapshot the snapshot
+     * @return this
+     * @since 3.5
+     */
+    public FindOptions snapshot(final boolean snapshot) {
+        this.snapshot = snapshot;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "FindOptions{"
-               + ", batchSize=" + batchSize
-               + ", limit=" + limit
-               + ", modifiers=" + modifiers
-               + ", projection=" + projection
-               + ", maxTimeMS=" + maxTimeMS
-               + ", skip=" + skip
-               + ", sort=" + sort
-               + ", cursorType=" + cursorType
-               + ", noCursorTimeout=" + noCursorTimeout
-               + ", oplogReplay=" + oplogReplay
-               + ", partial=" + partial
-               + ", collation=" + collation
-               + '}';
+                + "batchSize=" + batchSize
+                + ", limit=" + limit
+                + ", modifiers=" + modifiers
+                + ", projection=" + projection
+                + ", maxTimeMS=" + maxTimeMS
+                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
+                + ", skip=" + skip
+                + ", sort=" + sort
+                + ", cursorType=" + cursorType
+                + ", noCursorTimeout=" + noCursorTimeout
+                + ", oplogReplay=" + oplogReplay
+                + ", partial=" + partial
+                + ", collation=" + collation
+                + ", comment='" + comment + "'"
+                + ", hint=" + hint
+                + ", max=" + max
+                + ", min=" + min
+                + ", maxScan=" + maxScan
+                + ", returnKey=" + returnKey
+                + ", showRecordId=" + showRecordId
+                + ", snapshot=" + snapshot
+                + "}";
     }
 }

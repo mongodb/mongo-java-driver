@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+
+@SuppressWarnings("deprecation")
 class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
@@ -150,6 +152,54 @@ class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
     }
 
     @Override
+    public FindIterable<TResult> comment(final String comment) {
+        findOptions.comment(comment);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> hint(final Bson hint) {
+        findOptions.hint(hint);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> max(final Bson max) {
+        findOptions.max(max);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> min(final Bson min) {
+        findOptions.min(min);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> maxScan(final long maxScan) {
+        findOptions.maxScan(maxScan);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> returnKey(final boolean returnKey) {
+        findOptions.returnKey(returnKey);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> showRecordId(final boolean showRecordId) {
+        findOptions.showRecordId(showRecordId);
+        return this;
+    }
+
+    @Override
+    public FindIterable<TResult> snapshot(final boolean snapshot) {
+        findOptions.snapshot(snapshot);
+        return this;
+    }
+
+    @Override
     public void first(final SingleResultCallback<TResult> callback) {
         notNull("callback", callback);
         execute(createQueryOperation().batchSize(0).limit(-1)).first(callback);
@@ -205,7 +255,15 @@ class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
                .partial(findOptions.isPartial())
                .slaveOk(readPreference.isSlaveOk())
                .readConcern(readConcern)
-               .collation(findOptions.getCollation());
+               .collation(findOptions.getCollation())
+               .comment(findOptions.getComment())
+               .hint(toBsonDocument(findOptions.getHint()))
+               .min(toBsonDocument(findOptions.getMin()))
+               .max(toBsonDocument(findOptions.getMax()))
+               .maxScan(findOptions.getMaxScan())
+               .returnKey(findOptions.isReturnKey())
+               .showRecordId(findOptions.isShowRecordId())
+               .snapshot(findOptions.isSnapshot());
     }
 
     private BsonDocument toBsonDocument(final Bson document) {
