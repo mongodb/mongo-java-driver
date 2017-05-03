@@ -168,6 +168,7 @@ public class JsonPoweredCrudTestHelper {
         return toResult(iterable.into(new BsonArray()));
     }
 
+    @SuppressWarnings("deprecation")
     BsonDocument getFindResult(final BsonDocument arguments) {
         FindIterable<BsonDocument> iterable = collection.find(arguments.getDocument("filter"));
         if (arguments.containsKey("skip")) {

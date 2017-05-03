@@ -66,10 +66,10 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -99,6 +99,14 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private boolean partial;
     private ReadConcern readConcern = ReadConcern.DEFAULT;
     private Collation collation;
+    private String comment;
+    private BsonDocument hint;
+    private BsonDocument max;
+    private BsonDocument min;
+    private long maxScan;
+    private boolean returnKey;
+    private boolean showRecordId;
+    private boolean snapshot;
 
     /**
      * Construct a new instance.
@@ -211,7 +219,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      * @param modifiers the query modifiers to apply, which may be null.
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
+     * @deprecated use the individual setters instead
      */
+    @Deprecated
     public FindOperation<T> modifiers(final BsonDocument modifiers) {
         this.modifiers = modifiers;
         return this;
@@ -505,6 +515,195 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return this;
     }
 
+    /**
+     * Returns the comment to send with the query. The default is not to include a comment with the query.
+     *
+     * @return the comment
+     * @since 3.5
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment to the query. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.5
+     */
+    public BsonDocument getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> hint(final BsonDocument hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Returns the exclusive upper bound for a specific index. By default there is no max bound.
+     *
+     * @return the max
+     * @since 3.5
+     */
+    public BsonDocument getMax() {
+        return max;
+    }
+
+    /**
+     * Sets the exclusive upper bound for a specific index. A null value means no max is set.
+     *
+     * @param max the max
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> max(final BsonDocument max) {
+        this.max = max;
+        return this;
+    }
+
+    /**
+     * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
+     *
+     * @return the min
+     * @since 3.5
+     */
+    public BsonDocument getMin() {
+        return min;
+    }
+
+    /**
+     * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
+     *
+     * @param min the min
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> min(final BsonDocument min) {
+        this.min = min;
+        return this;
+    }
+
+    /**
+     * Returns the maximum number of documents or index keys to scan when executing the query.
+     *
+     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
+     *
+     * @return the maxScan
+     * @since 3.5
+     */
+    public long getMaxScan() {
+        return maxScan;
+    }
+
+    /**
+     * Sets the maximum number of documents or index keys to scan when executing the query.
+     *
+     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
+     *
+     * @param maxScan the maxScan
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> maxScan(final long maxScan) {
+        this.maxScan = maxScan;
+        return this;
+    }
+
+    /**
+     * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
+     *
+     * @return the returnKey
+     * @since 3.5
+     */
+    public boolean isReturnKey() {
+        return returnKey;
+    }
+
+    /**
+     * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * @param returnKey the returnKey
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> returnKey(final boolean returnKey) {
+        this.returnKey = returnKey;
+        return this;
+    }
+
+    /**
+     * Returns the showRecordId.
+     *
+     * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
+     * The default is false.
+     *
+     * @return the showRecordId
+     * @since 3.5
+     */
+    public boolean isShowRecordId() {
+        return showRecordId;
+    }
+
+    /**
+     * Sets the showRecordId. Set to true to add a field {@code $recordId} to the returned documents.
+     *
+     * @param showRecordId the showRecordId
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> showRecordId(final boolean showRecordId) {
+        this.showRecordId = showRecordId;
+        return this;
+    }
+
+    /**
+     * Returns the snapshot.
+     *
+     * Prevents the cursor from returning a document more than once because of an intervening write operation. The default is false.
+     *
+     * @return the snapshot
+     * @since 3.5
+     */
+    public boolean isSnapshot() {
+        return snapshot;
+    }
+
+    /**
+     * Sets the snapshot.
+     *
+     * If true it prevents the cursor from returning a document more than once because of an intervening write operation.
+     *
+     * @param snapshot the snapshot
+     * @return this
+     * @since 3.5
+     */
+    public FindOperation<T> snapshot(final boolean snapshot) {
+        this.snapshot = snapshot;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
@@ -743,6 +942,31 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
         }
+        if (comment != null) {
+            document.put("$comment", new BsonString(comment));
+        }
+        if (hint != null) {
+            document.put("$hint", hint);
+        }
+        if (max != null) {
+            document.put("$max", max);
+        }
+        if (min != null) {
+            document.put("$min", min);
+        }
+        if (maxScan > 0) {
+            document.put("$maxScan", new BsonInt64(maxScan));
+        }
+        if (returnKey) {
+            document.put("$returnKey", BsonBoolean.TRUE);
+        }
+        if (showRecordId) {
+            document.put("$showDiskLoc", BsonBoolean.TRUE);
+        }
+        if (snapshot) {
+            document.put("$snapshot", BsonBoolean.TRUE);
+        }
+
         if (document.isEmpty()) {
             document = filter != null ? filter : new BsonDocument();
         } else if (filter != null) {
@@ -829,6 +1053,30 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         }
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
+        }
+        if (comment != null) {
+            commandDocument.put("comment", new BsonString(comment));
+        }
+        if (hint != null) {
+            commandDocument.put("hint", hint);
+        }
+        if (max != null) {
+            commandDocument.put("max", max);
+        }
+        if (min != null) {
+            commandDocument.put("min", min);
+        }
+        if (maxScan > 0) {
+            commandDocument.put("maxScan", new BsonInt64(maxScan));
+        }
+        if (returnKey) {
+            commandDocument.put("returnKey", BsonBoolean.TRUE);
+        }
+        if (showRecordId) {
+            commandDocument.put("showRecordId", BsonBoolean.TRUE);
+        }
+        if (snapshot) {
+            commandDocument.put("snapshot", BsonBoolean.TRUE);
         }
         return commandDocument;
     }

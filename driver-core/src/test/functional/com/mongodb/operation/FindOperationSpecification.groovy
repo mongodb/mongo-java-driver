@@ -25,15 +25,11 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncClusterBinding
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.binding.ClusterBinding
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
@@ -44,11 +40,9 @@ import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
@@ -658,215 +652,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    // Note that this is a unit test
-    def 'should query with correct arguments'() {
-        given:
-        def serverVersion = new ServerVersion(3, 0)
-        def dbName = 'db'
-        def collectionName = 'coll'
-        def namespace = new MongoNamespace(dbName, collectionName)
-        def decoder = new BsonDocumentCodec()
-        def readPreference = ReadPreference.secondary()
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                serverVersion, STANDALONE, 1000, 16000000, 48000000)
-        def connection = Mock(Connection)
-        def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadPreference() >> readPreference
-            getReadConnectionSource() >> connectionSource
-        }
-        def queryResult = new QueryResult(namespace, [], 0, new ServerAddress());
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-                .filter(new BsonDocument('a', BsonBoolean.TRUE))
-                .projection(new BsonDocument('x', new BsonInt32(1)))
-                .skip(2)
-                .limit(100)
-                .batchSize(10)
-                .cursorType(TailableAwait)
-                .oplogReplay(true)
-                .noCursorTimeout(true)
-                .partial(true)
-                .oplogReplay(true)
-
-        when:
-        operation.execute(readBinding)
-
-        then:
-        _ * connection.getDescription() >> connectionDescription
-        1 * connection.query(namespace,
-                operation.getFilter(),
-                operation.getProjection(),
-                operation.getSkip(),
-                operation.getLimit(),
-                operation.getBatchSize(),
-                readPreference.isSlaveOk(),
-                true, true, true, true, true,
-                decoder) >> queryResult
-        1 * connection.release()
-    }
-
-    // Note that this is a unit test
-    def 'should find with correct command'() {
-        when:
-        def operation = new FindOperation<BsonDocument>(namespace, new DocumentCodec())
-        def expectedCommand = new BsonDocument('find', new BsonString(collectionName))
-
-        then:
-        testOperation(operation, [3, 2, 0], expectedCommand, async, helper.commandResult)
-
-        when:
-        operation.filter(new BsonDocument('a', BsonBoolean.TRUE))
-                .projection(new BsonDocument('x', new BsonInt32(1)))
-                .skip(2)
-                .limit(limit)
-                .batchSize(batchSize)
-                .cursorType(TailableAwait)
-                .oplogReplay(true)
-                .noCursorTimeout(true)
-                .partial(true)
-                .oplogReplay(true)
-                .modifiers(new BsonDocument('$snapshot', BsonBoolean.TRUE))
-                .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
-
-        expectedCommand.append('filter', operation.getFilter())
-                .append('projection', operation.getProjection())
-                .append('skip', new BsonInt32(operation.getSkip()))
-                .append('tailable', BsonBoolean.TRUE)
-                .append('awaitData', BsonBoolean.TRUE)
-                .append('allowPartialResults', BsonBoolean.TRUE)
-                .append('noCursorTimeout', BsonBoolean.TRUE)
-                .append('oplogReplay', BsonBoolean.TRUE)
-                .append('snapshot', BsonBoolean.TRUE)
-                .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
-                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
-
-        if (commandLimit != null) {
-            expectedCommand.append('limit', new BsonInt32(commandLimit))
-        }
-        if (commandBatchSize != null) {
-            expectedCommand.append('batchSize', new BsonInt32(commandBatchSize))
-        }
-        if (commandSingleBatch != null) {
-            expectedCommand.append('singleBatch', BsonBoolean.valueOf(commandSingleBatch))
-        }
-
-        then:
-        testOperation(operation, [3, 2, 0], expectedCommand, async, helper.commandResult)
-
-        where:
-        async << [true, true, true, true, true, false, false, false, false, false]
-        limit << [100, -100, 100, 0, 100, 100, -100, 100, 0, 100]
-        batchSize << [10, 10, -10, 10, 0, 10, 10, -10, 10, 0]
-        commandLimit << [100, 100, 10, null, 100, 100, 100, 10, null, 100]
-        commandBatchSize << [10, null, null, 10, null, 10, null, null, 10, null]
-        commandSingleBatch << [null, true, true, null, null, null, true, true, null, null]
-    }
-
-    def 'should use the readPreference to set slaveOK for commands'() {
-        when:
-        def operation = new FindOperation<BsonDocument>(namespace, new DocumentCodec())
-
-        then:
-        testOperationSlaveOk(operation, [3, 2, 0], readPreference, async, helper.commandResult)
-
-        where:
-        [async, readPreference] << [[true, false], [ReadPreference.primary(), ReadPreference.secondary()]].combinations()
-    }
-
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
-        given:
-        def dbName = 'db'
-        def collectionName = 'coll'
-        def namespace = new MongoNamespace(dbName, collectionName)
-        def decoder = Stub(Decoder)
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
-        def connection = Mock(Connection) {
-            _ * getDescription() >> connectionDescription
-        }
-        def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> Stub(ConnectionSource) {
-                getConnection() >> connection
-            }
-            getReadPreference() >> Stub(ReadPreference) {
-                isSlaveOk() >> slaveOk
-            }
-        }
-        def queryResult = Mock(QueryResult) {
-            _ * getNamespace() >> namespace
-            _ * getResults() >> []
-        }
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-
-        when:
-        operation.execute(readBinding)
-
-        then:
-        1 * connection.query(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _) >> queryResult
-        1 * connection.release()
-
-        where:
-        slaveOk << [true, false]
-    }
-
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
-        given:
-        def dbName = 'db'
-        def collectionName = 'coll'
-        def namespace = new MongoNamespace(dbName, collectionName)
-        def decoder = Stub(Decoder)
-        def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
-
-        def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> connectionDescription
-        }
-        def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
-        }
-        def readBinding = Stub(AsyncReadBinding) {
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getReadPreference() >> Stub(ReadPreference) {
-                isSlaveOk() >> slaveOk
-            }
-        }
-        def queryResult = Mock(QueryResult) {
-            _ * getNamespace() >> namespace
-            _ * getResults() >> []
-        }
-        def operation = new FindOperation<BsonDocument>(namespace, decoder)
-
-        when:
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
-        1 * connection.queryAsync(namespace, _, _, _, _, _, slaveOk, _, _, _, _, _, _, _) >> { it[13].onResult(queryResult, null) }
-        1 * connection.release()
-
-        where:
-        slaveOk << [true, false]
-    }
-
-    def 'should throw an exception when using an unsupported Collation'() {
-        given:
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .filter(BsonDocument.parse('{str: "FOO"}'))
-                .collation(defaultCollation)
-
-        when:
-        testOperationThrows(operation, [3, 2, 0], async)
-
-        then:
-        def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
-
-        where:
-        async << [false, false]
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should support collation'() {
         given:
@@ -885,15 +670,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         async << [true, false]
     }
-
-    def helper = [
-        namespace: new MongoNamespace('db', 'coll'),
-        queryResult: Stub(QueryResult),
-        connectionDescription: Stub(ConnectionDescription),
-        commandResult:  new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(0))
-            .append('ns', new BsonString('db.coll'))
-            .append('firstBatch', new BsonArrayWrapper([])))
-    ]
 
     static BsonDocument sanitizeExplainResult(BsonDocument document) {
         document.remove('ok')
