@@ -45,7 +45,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -154,7 +153,7 @@ public final class CollectionHelper<T> {
     }
 
     public void insertDocuments(final Document... documents) {
-        insertDocuments(new DocumentCodec(registry, new BsonTypeClassMap()), asList(documents));
+        insertDocuments(new DocumentCodec(registry), asList(documents));
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {

@@ -56,10 +56,20 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private final Transformer valueTransformer;
 
     /**
-     * Construct a new instance with a default {@code CodecRegistry} and
+     * Construct a new instance with a default {@code CodecRegistry}.
      */
     public DocumentCodec() {
-        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP);
+        this(DEFAULT_REGISTRY);
+    }
+
+    /**
+     * Construct a new instance with the given registry.
+     *
+     * @param registry         the registry
+     * @since 3.5
+     */
+    public DocumentCodec(final CodecRegistry registry) {
+        this(registry, DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**

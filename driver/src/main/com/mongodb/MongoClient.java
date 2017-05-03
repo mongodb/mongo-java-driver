@@ -27,6 +27,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
+import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -89,6 +90,7 @@ public class MongoClient extends Mongo implements Closeable {
                     new DBObjectCodecProvider(),
                     new BsonValueCodecProvider(),
                     new IterableCodecProvider(new DocumentToDBRefTransformer()),
+                    new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider()));
 
