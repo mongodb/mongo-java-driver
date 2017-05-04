@@ -27,9 +27,9 @@ import org.bson.json.JsonWriterSettings;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.Hex;
 import util.JsonPoweredTestHelper;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -216,7 +216,7 @@ public class GenericBsonTest {
     }
 
     private BsonDocument decodeToDocument(final String subjectHex, final String description) {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(DatatypeConverter.parseHexBinary(subjectHex));
+        ByteBuffer byteBuffer = ByteBuffer.wrap(Hex.decode(subjectHex));
         BsonDocument actualDecodedDocument = new BsonDocumentCodec().decode(new BsonBinaryReader(byteBuffer),
                 DecoderContext.builder().build());
 
@@ -231,7 +231,7 @@ public class GenericBsonTest {
     private String encodeToHex(final BsonDocument decodedDocument) {
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
         new BsonDocumentCodec().encode(new BsonBinaryWriter(outputBuffer), decodedDocument, EncoderContext.builder().build());
-        return DatatypeConverter.printHexBinary(outputBuffer.toByteArray());
+        return Hex.encode(outputBuffer.toByteArray());
     }
 
     private void runDecodeError() {
