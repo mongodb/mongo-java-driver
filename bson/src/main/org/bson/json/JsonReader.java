@@ -36,7 +36,6 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 
-import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
@@ -989,7 +988,7 @@ public class JsonReader extends AbstractBsonReader {
             } else if (valueToken.getType() == JsonTokenType.STRING) {
                 String dateTimeString = valueToken.getValue(String.class);
                 try {
-                    value = DatatypeConverter.parseDateTime(dateTimeString).getTimeInMillis();
+                    value = DateTimeFormatter.parse(dateTimeString);
                 } catch (IllegalArgumentException e) {
                     throw new JsonParseException("Failed to parse string as a date", e);
                 }
