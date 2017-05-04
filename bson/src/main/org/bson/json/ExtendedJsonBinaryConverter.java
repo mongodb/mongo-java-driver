@@ -18,15 +18,14 @@
 package org.bson.json;
 
 import org.bson.BsonBinary;
-
-import static javax.xml.bind.DatatypeConverter.printBase64Binary;
+import org.bson.internal.Base64;
 
 class ExtendedJsonBinaryConverter implements Converter<BsonBinary> {
 
     @Override
     public void convert(final BsonBinary value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeString("$binary", printBase64Binary(value.getData()));
+        writer.writeString("$binary", Base64.encode(value.getData()));
         writer.writeString("$type", String.format("%02X", value.getType()));
         writer.writeEndObject();
     }
