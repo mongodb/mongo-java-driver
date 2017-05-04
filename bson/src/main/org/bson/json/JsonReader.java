@@ -24,12 +24,12 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
 import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonReaderMark;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
 import org.bson.internal.Base64;
-import org.bson.BsonReaderMark;
 import org.bson.internal.UnsignedLongs;
 import org.bson.types.Decimal128;
 import org.bson.types.MaxKey;
@@ -680,7 +680,7 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken(JsonTokenType.RIGHT_PAREN);
         String hexString = bytesToken.getValue(String.class).replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("-", "");
-        byte[] bytes = DatatypeConverter.parseHexBinary(hexString);
+        byte[] bytes = decodeHex(hexString);
         BsonBinarySubType subType = BsonBinarySubType.UUID_STANDARD;
         if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
             subType = BsonBinarySubType.UUID_LEGACY;
@@ -857,10 +857,10 @@ public class JsonReader extends AbstractBsonReader {
 
         for (final BsonBinarySubType subType : BsonBinarySubType.values()) {
             if (subType.getValue() == subTypeToken.getValue(Integer.class)) {
-                return new BsonBinary(subType, DatatypeConverter.parseHexBinary(hex));
+                return new BsonBinary(subType, decodeHex(hex));
             }
         }
-        return new BsonBinary(DatatypeConverter.parseHexBinary(hex));
+        return new BsonBinary(decodeHex(hex));
     }
 
     private long visitDateTimeConstructor() {
@@ -1249,6 +1249,26 @@ public class JsonReader extends AbstractBsonReader {
         protected BsonContextType getContextType() {
             return super.getContextType();
         }
+    }
+
+    private static byte[] decodeHex(final String hex) {
+        if (hex.length() % 2 != 0) {
+            throw new IllegalArgumentException("A hex string must contain an even number of characters: " + hex);
+        }
+
+        byte[] out = new byte[hex.length() / 2];
+
+        for (int i = 0; i < hex.length(); i += 2) {
+            int high = Character.digit(hex.charAt(i), 16);
+            int low = Character.digit(hex.charAt(i + 1), 16);
+            if (high == -1 || low == -1) {
+                throw new IllegalArgumentException("A hex string can only contain the characters 0-9, A-F, a-f: " + hex);
+            }
+
+            out[i / 2] = (byte) (high * 16 + low);
+        }
+
+        return out;
     }
 }
 

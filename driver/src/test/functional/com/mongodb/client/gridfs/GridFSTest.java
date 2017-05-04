@@ -34,9 +34,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.Hex;
 import util.JsonPoweredTestHelper;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -225,7 +224,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         if (assertion.containsKey("result")) {
             assertNull("Should not have thrown an exception", error);
-            assertEquals(printHexBinary(outputStream.toByteArray()).toLowerCase(),
+            assertEquals(Hex.encode(outputStream.toByteArray()).toLowerCase(),
                     assertion.getDocument("result").getString("$hex").getValue());
         } else if (assertion.containsKey("error")) {
             assertNotNull("Should have thrown an exception", error);
@@ -250,7 +249,7 @@ public class GridFSTest extends DatabaseTestCase {
         }
         if (assertion.containsKey("result")) {
             assertNull("Should not have thrown an exception", error);
-            assertEquals(printHexBinary(outputStream.toByteArray()).toLowerCase(),
+            assertEquals(Hex.encode(outputStream.toByteArray()).toLowerCase(),
                     assertion.getDocument("result").getString("$hex").getValue());
         } else if (assertion.containsKey("error")) {
             assertNotNull("Should have thrown an exception", error);
@@ -360,7 +359,7 @@ public class GridFSTest extends DatabaseTestCase {
 
     private BsonDocument parseHexDocument(final BsonDocument document, final String hexDocument) {
         if (document.containsKey(hexDocument) && document.get(hexDocument).isDocument()) {
-            byte[] bytes = DatatypeConverter.parseHexBinary(document.getDocument(hexDocument).getString("$hex").getValue());
+            byte[] bytes = Hex.decode(document.getDocument(hexDocument).getString("$hex").getValue());
             document.put(hexDocument, new BsonBinary(bytes));
         }
         return document;
