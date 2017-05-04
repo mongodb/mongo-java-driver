@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2014-2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection
+package org.bson.json
 
+import org.bson.internal.Base64
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class Base64CodecSpecification extends Specification {
+class Base64Specification extends Specification {
 
     @Unroll
     def 'encodes #encoded into #decoded'() {
-        given:
-        def subject = new Base64Codec();
-
         expect:
-        subject.encode(encoded.getBytes()) == decoded
-        subject.decode(decoded) == encoded.getBytes()
+        Base64.encode(encoded.getBytes()) == decoded
+        Base64.decode(decoded) == encoded.getBytes()
 
         where:
         encoded  | decoded

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2014-2017 MongoDB, Inc.
  * Copyright 1999,2005 The Apache Software Foundation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -8,18 +8,15 @@
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 
-package com.mongodb.connection;
-
-import com.mongodb.MongoException;
-
-import java.io.UnsupportedEncodingException;
+package org.bson.internal;
 
 /**
  * <p>Provides Base64 encoding and decoding.</p>
@@ -27,8 +24,10 @@ import java.io.UnsupportedEncodingException;
  * <p>Thanks to Apache Commons project. This class refactored from org.apache.commons.codec.binary</p>
  * <p>Original Thanks to <a href="http://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/">commons</a> project in
  * ws.apache.org for this code. </p>
+ *
+ * @since 3.5
  */
-class Base64Codec {
+public final class Base64 {
     private static final int BYTES_PER_UNENCODED_BLOCK = 3;
     private static final int BYTES_PER_ENCODED_BLOCK = 4;
 
@@ -61,7 +60,13 @@ class Base64Codec {
         }
     }
 
-    public byte[] decode(final String s) {
+    /**
+     * Decodes the given Base64-encoded string.
+     *
+     * @param s the Base64-encoded string
+     * @return the decoded byte array
+     */
+    public static byte[] decode(final String s) {
         int delta = s.endsWith("==") ? 2 : s.endsWith("=") ? 1 : 0;
         byte[] buffer = new byte[s.length() * BYTES_PER_UNENCODED_BLOCK / BYTES_PER_ENCODED_BLOCK - delta];
         int mask = 0xFF;
@@ -84,7 +89,14 @@ class Base64Codec {
         return buffer;
     }
 
-    public String encode(final byte[] in) {
+    /**
+     * Encodes the given byte array into a Base64-encoded string.
+     *
+     *
+     * @param in the byte array
+     * @return the Base64-encoded string
+     */
+    public static String encode(final byte[] in) {
 
         int modulus = 0;
         int bitWorkArea = 0;
@@ -128,10 +140,14 @@ class Base64Codec {
                 break;
         }
 
-        try {
-            return new String(buffer, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new MongoException("UTF-8 Charset is not available");
-        }
+        return byteArrayToString(buffer);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static String byteArrayToString(final byte[] buffer) {
+        return new String(buffer, 0, 0, buffer.length);
+    }
+
+    private Base64() {
     }
 }

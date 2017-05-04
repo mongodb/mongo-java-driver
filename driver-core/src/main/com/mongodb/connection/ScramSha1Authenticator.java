@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.authentication.NativeAuthenticationHelper;
+import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
@@ -66,7 +67,6 @@ class ScramSha1Authenticator extends SaslAuthenticator {
         private static final String GS2_HEADER = "n,,";
         private static final int RANDOM_LENGTH = 24;
 
-        private final Base64Codec base64Codec;
         private final MongoCredential credential;
         private String clientFirstMessageBare;
         private final RandomStringGenerator randomStringGenerator;
@@ -76,7 +76,6 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
         ScramSha1SaslClient(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
             this.credential = credential;
-            this.base64Codec = new Base64Codec();
             this.randomStringGenerator = randomStringGenerator;
         }
 
@@ -185,7 +184,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
         }
 
         private byte[] decodeBase64(final String str) {
-            return this.base64Codec.decode(str);
+            return Base64.decode(str);
         }
 
         private byte[] decodeUTF8(final String str) throws SaslException {
@@ -198,7 +197,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
         }
 
         private String encodeBase64(final byte[] bytes) {
-            return this.base64Codec.encode(bytes);
+            return Base64.encode(bytes);
         }
 
         private String encodeUTF8(final byte[] bytes) throws SaslException {

@@ -26,6 +26,7 @@ import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.BsonUndefined;
+import org.bson.internal.Base64;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -35,7 +36,6 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 
-import javax.xml.bind.DatatypeConverter;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -129,7 +129,7 @@ public class JSONCallback extends BasicBSONCallback {
             o = UUID.fromString((String) b.get("$uuid"));
         } else if (b.containsField("$binary")) {
             int type = (b.get("$type") instanceof String) ? Integer.valueOf((String) b.get("$type"), 16) : (Integer) b.get("$type");
-            byte[] bytes = DatatypeConverter.parseBase64Binary((String) b.get("$binary"));
+            byte[] bytes = Base64.decode((String) b.get("$binary"));
             o = new Binary((byte) type, bytes);
         } else if (b.containsField("$undefined") && b.get("$undefined").equals(true)) {
             o = new BsonUndefined();

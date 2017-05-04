@@ -19,6 +19,7 @@ package com.mongodb.util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBRef;
 import org.bson.BsonUndefined;
+import org.bson.internal.Base64;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
@@ -31,7 +32,6 @@ import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
 import org.junit.Test;
 
-import javax.xml.bind.DatatypeConverter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -203,7 +203,7 @@ public class JSONSerializersTest {
 
         // test  BINARY
         byte[] b = {1, 2, 3, 4};
-        String base64 = DatatypeConverter.printBase64Binary(b);
+        String base64 = Base64.encode(b);
         StringBuilder buf = new StringBuilder();
         serializer.serialize(new Binary(b), buf);
         assertEquals("{ \"$binary\" : \"" + base64 + "\" , \"$type\" : 0}", buf.toString());

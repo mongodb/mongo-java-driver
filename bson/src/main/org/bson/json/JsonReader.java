@@ -28,6 +28,7 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
+import org.bson.internal.Base64;
 import org.bson.BsonReaderMark;
 import org.bson.internal.UnsignedLongs;
 import org.bson.types.Decimal128;
@@ -666,7 +667,7 @@ public class JsonReader extends AbstractBsonReader {
         }
         verifyToken(JsonTokenType.RIGHT_PAREN);
 
-        byte[] bytes = DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class));
+        byte[] bytes = Base64.decode(bytesToken.getValue(String.class));
         return new BsonBinary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
     }
 
@@ -963,11 +964,11 @@ public class JsonReader extends AbstractBsonReader {
 
         for (final BsonBinarySubType st : BsonBinarySubType.values()) {
             if (st.getValue() == subType) {
-                return new BsonBinary(st, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
+                return new BsonBinary(st, Base64.decode(bytesToken.getValue(String.class)));
             }
         }
 
-        return new BsonBinary(DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
+        return new BsonBinary(Base64.decode(bytesToken.getValue(String.class)));
     }
 
     private long visitDateTimeExtendedJson() {
