@@ -13,7 +13,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       PROJECT_DIRECTORY       The project directory
 
 JDK=${JDK:-jdk}
-JAVA_HOME="/opt/java/${JDK}"
 
 ############################################
 #            Main Program                  #
@@ -36,15 +35,11 @@ echo "Compiling java driver with jdk8"
 
 # We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk8"
-./gradlew -version
-./gradlew --info driver-core:classes driver-core:testClasses
 
 echo "Running tests with ${JDK}"
-JAVA_HOME="/opt/java/${JDK}"
 ./gradlew -version
-
-./gradlew --stacktrace --info \
+./gradlew -PjdkHome=${JDK} --stacktrace --info \
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
 -Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \
--Dtest.single=GSSAPIAuthenticationSpecification -x classes -x testClasses --rerun-tasks driver-core:test
+-Dtest.single=GSSAPIAuthenticationSpecification driver-core:test

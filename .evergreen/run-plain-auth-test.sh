@@ -17,13 +17,9 @@ JAVA_HOME="/opt/java/${JDK}"
 
 echo "Running PLAIN authentication tests"
 
-echo "Compiling java driver with jdk8"
 # We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk8"
-./gradlew -version
-./gradlew --info driver-core:classes driver-core:testClasses
 
 echo "Running tests with ${JDK}"
-JAVA_HOME="/opt/java/${JDK}"
 ./gradlew -version
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=PlainAuthenticationSpecification -x classes -x testClasses --rerun-tasks driver-core:test
+./gradlew -PjdkHome=${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=PlainAuthenticationSpecification driver-core:test

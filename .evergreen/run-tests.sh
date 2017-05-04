@@ -7,7 +7,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       AUTH                    Set to enable authentication. Values are: "auth" / "noauth" (default)
 #       SSL                     Set to enable SSL. Values are "ssl" / "nossl" (default)
 #       MONGODB_URI             Set the suggested connection MONGODB_URI (including credentials and topology info)
-#       TOPOLOGY                Allows you to modify variables and the MONGODB_URI based on test topology 
+#       TOPOLOGY                Allows you to modify variables and the MONGODB_URI based on test topology
 #                               Supported values: "server", "replica_set", "sharded_cluster"
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8"
@@ -72,13 +72,9 @@ if [ "$SSL" != "nossl" ]; then
 fi
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
-echo "Compiling java driver with jdk8"
 # We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk8"
-./gradlew -version
-./gradlew --info classes testClasses
 
 echo "Running tests with ${JDK}"
-JAVA_HOME="/opt/java/${JDK}"
 ./gradlew -version
-./gradlew -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info -x classes -x testClasses --rerun-tasks test
+./gradlew -PjdkHome=${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test

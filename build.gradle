@@ -284,6 +284,19 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
             html.enabled = !project.buildingWith('xmlReports.enabled')
         }
     }
+
+    tasks.withType(Test) {
+        def jdkHome = findProperty("jdkHome")
+        if (jdkHome) {
+            def javaExecutablesPath = new File(jdkHome, 'bin')
+            def javaExecutables = [:].withDefault { execName ->
+                def executable = new File(javaExecutablesPath, execName)
+                assert executable.exists() : "There is no ${execName} executable in ${javaExecutablesPath}"
+                executable
+            }
+            executable = javaExecutables.java
+        }
+    }
 }
 
 task docs(type: Javadoc) {
@@ -299,7 +312,7 @@ task docs(type: Javadoc) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.14.1'
+    gradleVersion = '3.5'
 }
 
 gradle.buildFinished { BuildResult result ->
