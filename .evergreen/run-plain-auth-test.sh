@@ -22,4 +22,4 @@ export JAVA_HOME="/opt/java/jdk8"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=PlainAuthenticationSpecification driver-core:test
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=PlainAuthenticationSpecification driver-core:test

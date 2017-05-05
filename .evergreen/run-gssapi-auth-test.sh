@@ -38,7 +38,7 @@ export JAVA_HOME="/opt/java/jdk8"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JDK} --stacktrace --info \
+./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
 -Pgssapi.enabled=true -Psun.security.krb5.debug=true -Pauth.login.config=file://${PROJECT_DIRECTORY}/.evergreen/java.login.drivers.config \
 -Pkrb5.kdc=${KDC} -Pkrb5.realm=${REALM} -Psun.security.krb5.debug=true \
