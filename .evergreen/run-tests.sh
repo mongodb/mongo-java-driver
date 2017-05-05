@@ -77,4 +77,4 @@ export JAVA_HOME="/opt/java/jdk8"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
+./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
