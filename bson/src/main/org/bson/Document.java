@@ -58,6 +58,14 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     }
 
     /**
+     * Creates an empty Document instance with custom initial capacity
+     * @param initialCapacity initial capacity of LinkedHashMap
+     */
+    public Document(final int initialCapacity) {
+        documentAsMap = new LinkedHashMap<String, Object>(initialCapacity);
+    }
+
+    /**
      * Create a Document instance initialized with the given key/value pair.
      *
      * @param key   key
