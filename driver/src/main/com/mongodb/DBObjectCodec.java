@@ -24,6 +24,7 @@ import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
+import org.bson.BsonSerializationException;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -40,6 +41,9 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.Symbol;
+
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -60,6 +64,8 @@ import static org.bson.BsonBinarySubType.OLD_BINARY;
  */
 @SuppressWarnings("rawtypes")
 public class DBObjectCodec implements CollectibleCodec<DBObject> {
+	
+	public static final Logger LOGGER = Loggers.getLogger("coder");
 
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
     private static final String ID_FIELD_NAME = "_id";
@@ -118,18 +124,23 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     @Override
     public void encode(final BsonWriter writer, final DBObject document, final EncoderContext encoderContext) {
-        writer.writeStartDocument();
+        try {
+			writer.writeStartDocument();
 
-        beforeFields(writer, encoderContext, document);
+			beforeFields(writer, encoderContext, document);
 
-        for (final String key : document.keySet()) {
-            if (skipField(encoderContext, key)) {
-                continue;
-            }
-            writer.writeName(key);
-            writeValue(writer, encoderContext, document.get(key));
-        }
-        writer.writeEndDocument();
+			for (final String key : document.keySet()) {
+			    if (skipField(encoderContext, key)) {
+			        continue;
+			    }
+			    writer.writeName(key);
+			    writeValue(writer, encoderContext, document.get(key));
+			}
+			writer.writeEndDocument();
+		} catch (BsonSerializationException ex) {
+			LOGGER.error("Problem serializing document with id '"+document.get("_id")+"': "+ex.getMessage());
+			throw ex;
+		}
     }
 
     @Override
