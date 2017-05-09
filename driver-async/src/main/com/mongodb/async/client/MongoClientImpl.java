@@ -87,8 +87,13 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
+        return listDatabaseNames(ReadPreference.primary());
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames(final ReadPreference readPreference) {
         return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, MongoClients.getDefaultCodecRegistry(),
-                                                           ReadPreference.primary(), executor).map(new Function<BsonDocument, String>() {
+                readPreference, executor).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument document) {
                 return document.getString("name").getValue();
@@ -98,12 +103,22 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public ListDatabasesIterable<Document> listDatabases() {
-        return listDatabases(Document.class);
+        return listDatabases(Document.class, ReadPreference.primary());
+    }
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases(final ReadPreference readPreference) {
+        return listDatabases(Document.class, readPreference);
     }
 
     @Override
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
-        return new ListDatabasesIterableImpl<T>(resultClass, settings.getCodecRegistry(), ReadPreference.primary(), executor);
+        return listDatabases(resultClass, ReadPreference.primary());
+    }
+
+    @Override
+    public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass, final ReadPreference readPreference) {
+        return new ListDatabasesIterableImpl<T>(resultClass, settings.getCodecRegistry(), readPreference, executor);
     }
 
     Cluster getCluster() {

@@ -576,7 +576,7 @@ public interface MongoCollection<TDocument> {
     List<String> createIndexes(List<IndexModel> indexes);
 
     /**
-     * Get all the indexes in this collection.
+     * Get all the indexes in this collection from primary.
      *
      * @return the list indexes iterable interface
      * @mongodb.driver.manual reference/command/listIndexes/ List indexes
@@ -586,12 +586,33 @@ public interface MongoCollection<TDocument> {
     /**
      * Get all the indexes in this collection.
      *
+     * @param readPreference the read preference used to get the list of indexes
+     * @return the list indexes iterable interface
+     * @mongodb.driver.manual reference/command/listIndexes/ List indexes
+    */
+    ListIndexesIterable<Document> listIndexes(ReadPreference readPreference);
+
+    /**
+     * Get all the indexes in this collection from primary.
+     *
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the list indexes iterable interface
      * @mongodb.driver.manual reference/command/listIndexes/ List indexes
      */
     <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> resultClass);
+
+    /**
+     * Get all the indexes in this collection.
+     *
+     * @param resultClass the class to decode each document into
+     * @param readPreference the read preference use to get the list of indexes
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list indexes iterable interface
+     * @mongodb.driver.manual reference/command/listIndexes/ List indexes
+     */
+    <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> resultClass, ReadPreference readPreference);
+
 
     /**
      * Drops the index given its name.

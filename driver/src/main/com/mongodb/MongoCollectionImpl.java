@@ -494,12 +494,22 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public ListIndexesIterable<Document> listIndexes() {
-        return listIndexes(Document.class);
+        return listIndexes(Document.class, ReadPreference.primary());
+    }
+
+    @Override
+    public ListIndexesIterable<Document> listIndexes(final ReadPreference readPreference) {
+        return listIndexes(Document.class, readPreference);
     }
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass) {
-        return new ListIndexesIterableImpl<TResult>(getNamespace(), resultClass, codecRegistry, ReadPreference.primary(), executor);
+        return listIndexes(resultClass, ReadPreference.primary());
+    }
+
+    @Override
+    public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass, final  ReadPreference readPreference) {
+        return new ListIndexesIterableImpl<TResult>(getNamespace(), resultClass, codecRegistry, readPreference, executor);
     }
 
     @Override

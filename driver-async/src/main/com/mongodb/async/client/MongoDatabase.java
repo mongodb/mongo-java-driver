@@ -180,11 +180,19 @@ public interface MongoDatabase {
     void drop(SingleResultCallback<Void> callback);
 
     /**
-     * Gets the names of all the collections in this database.
+     * Gets the names of all the collections in this database from primary.
      *
      * @return an iterable containing all the names of all the collections in this database
      */
     MongoIterable<String> listCollectionNames();
+
+    /**
+     * Gets the names of all the collections in this database.
+     *
+     * @param readPreference the read preference used to get all collection names
+     * @return an iterable containing all the names of all the collections in this database
+     */
+    MongoIterable<String> listCollectionNames(ReadPreference readPreference);
 
     /**
      * Finds all the collections in this database.
@@ -197,12 +205,32 @@ public interface MongoDatabase {
     /**
      * Finds all the collections in this database.
      *
+     * @param readPreference the read preference used to get all collections
+     * @return the list collections iterable interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    ListCollectionsIterable<Document> listCollections(ReadPreference readPreference);
+
+    /**
+     * Finds all the collections in this database.
+     *
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the list collections iterable interface
      * @mongodb.driver.manual reference/command/listCollections listCollections
      */
     <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass);
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @param resultClass the class to decode each document into
+     * @param readPreference the read preference used to get all collections
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list collections iterable interface
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass, ReadPreference readPreference);
 
     /**
      * Create a new collection with the given name.
