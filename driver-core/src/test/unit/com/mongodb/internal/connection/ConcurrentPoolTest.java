@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotEquals;
 
 public class ConcurrentPoolTest {
     private ConcurrentPool<TestCloseable> pool;
@@ -55,6 +56,23 @@ public class ConcurrentPoolTest {
         pool.get();
         pool.release(pool.get());
         assertNotNull(pool.get());
+    }
+
+    @Test
+    public void testThatReleaseAndGetPickDifferently() {
+        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+
+        //Create two items
+        TestCloseable first = pool.get();
+        TestCloseable second = pool.get();
+        pool.release(first);
+        pool.release(second);
+
+        //Get the first item, release it and make sure that `get` doesn't return the same item back
+        first = pool.get();
+        pool.release(first);
+        second = pool.get();
+        assertNotEquals(first, second);
     }
 
     @Test
