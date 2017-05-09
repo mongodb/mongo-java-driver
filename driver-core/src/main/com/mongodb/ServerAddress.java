@@ -32,6 +32,7 @@ public class ServerAddress implements Serializable {
 
     private final String host;
     private final int port;
+    private final InetSocketAddress address;
 
     /**
      * Creates a ServerAddress with default host and port
@@ -55,7 +56,7 @@ public class ServerAddress implements Serializable {
      * @param inetAddress host address
      */
     public ServerAddress(final InetAddress inetAddress) {
-        this(inetAddress.getHostName(), defaultPort());
+        this(inetAddress.getHostName(), defaultPort(), new InetSocketAddress(inetAddress, defaultPort()));
     }
 
     /**
@@ -65,7 +66,7 @@ public class ServerAddress implements Serializable {
      * @param port        mongod port
      */
     public ServerAddress(final InetAddress inetAddress, final int port) {
-        this(inetAddress.getHostName(), port);
+        this(inetAddress.getHostName(), port, new InetSocketAddress(inetAddress, port));
     }
 
     /**
@@ -74,7 +75,20 @@ public class ServerAddress implements Serializable {
      * @param inetSocketAddress inet socket address containing hostname and port
      */
     public ServerAddress(final InetSocketAddress inetSocketAddress) {
-        this(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
+        this(inetSocketAddress.getHostName(), inetSocketAddress.getPort(), inetSocketAddress);
+    }
+
+    /**
+     * Creates a ServerAddress - intended for internal usage
+     *
+     * @param host hostname
+     * @param port mongod port
+     * @param address an instance of socket address or `null`
+     */
+    protected ServerAddress(final String host, final int port, final InetSocketAddress address) {
+        this.host = host;
+        this.port = port;
+        this.address = address;
     }
 
     /**
@@ -127,6 +141,7 @@ public class ServerAddress implements Serializable {
         }
         this.host = hostToUse.toLowerCase();
         this.port = portToUse;
+        this.address = null;
     }
 
     @Override
@@ -182,6 +197,9 @@ public class ServerAddress implements Serializable {
      * @return socket address
      */
     public InetSocketAddress getSocketAddress() {
+        if (address != null) {
+            return address;
+        }
         try {
             return new InetSocketAddress(InetAddress.getByName(host), port);
         } catch (UnknownHostException e) {
