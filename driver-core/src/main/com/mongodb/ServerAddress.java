@@ -79,6 +79,15 @@ public class ServerAddress implements Serializable {
     }
 
     /**
+     * Creates a ServerAddress
+     *
+     * @param serverAddress an instance to be shallow-copied
+     */
+    public ServerAddress(final ServerAddress serverAddress) {
+        this(serverAddress.host, serverAddress.port, serverAddress.address);
+    }
+
+    /**
      * Creates a ServerAddress - intended for internal usage
      *
      * @param host hostname
