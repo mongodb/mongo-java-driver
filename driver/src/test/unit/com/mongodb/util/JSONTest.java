@@ -173,6 +173,13 @@ public class JSONTest {
         }
         assertEquals(true, threw);
         threw = false;
+        try {
+            JSON.parse("{ a\": 1 }");
+        } catch (JSONParseException e) {
+            threw = true;
+        }
+        assertEquals(threw, true);
+        threw = false;
     }
 
     @Test
