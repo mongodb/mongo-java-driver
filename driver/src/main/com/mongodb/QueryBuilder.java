@@ -35,7 +35,7 @@ public class QueryBuilder {
      * Creates a builder with an empty query
      */
     public QueryBuilder() {
-        _query = new BasicDBObject();
+        emptyQuery = new BasicDBObject();
     }
 
     /**
@@ -64,9 +64,9 @@ public class QueryBuilder {
      * @return {@code this}
      */
     public QueryBuilder put(final String key) {
-        _currentKey = key;
-        if (_query.get(key) == null) {
-            _query.put(_currentKey, new NullObject());
+        currentDocumentKey = key;
+        if (emptyQuery.get(key) == null) {
+            emptyQuery.put(currentDocumentKey, new NullObject());
         }
         return this;
     }
@@ -385,7 +385,7 @@ public class QueryBuilder {
      * @mongodb.server.release 2.6
      */
     public QueryBuilder text(final String search, final String language) {
-        if (_currentKey != null) {
+        if (currentDocumentKey != null) {
             throw new QueryBuilderException("The text operand may only occur at the top-level of a query. It does"
                                             + " not apply to a specific element, but rather to a document as a whole.");
         }
@@ -406,7 +406,7 @@ public class QueryBuilder {
      * @return {@code this}
      */
     public QueryBuilder not() {
-        _hasNot = true;
+        hasNot = true;
         return this;
     }
 
@@ -418,10 +418,10 @@ public class QueryBuilder {
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder or(final DBObject... ors) {
-        List l = (List) _query.get(QueryOperators.OR);
+        List l = (List) emptyQuery.get(QueryOperators.OR);
         if (l == null) {
             l = new ArrayList();
-            _query.put(QueryOperators.OR, l);
+            emptyQuery.put(QueryOperators.OR, l);
         }
         Collections.addAll(l, ors);
         return this;
@@ -435,10 +435,10 @@ public class QueryBuilder {
      */
     @SuppressWarnings("unchecked")
     public QueryBuilder and(final DBObject... ands) {
-        List l = (List) _query.get(QueryOperators.AND);
+        List l = (List) emptyQuery.get(QueryOperators.AND);
         if (l == null) {
             l = new ArrayList();
-            _query.put(QueryOperators.AND, l);
+            emptyQuery.put(QueryOperators.AND, l);
         }
         Collections.addAll(l, ands);
         return this;
@@ -451,38 +451,38 @@ public class QueryBuilder {
      * @throws RuntimeException if a key does not have a matching operand
      */
     public DBObject get() {
-        for (final String key : _query.keySet()) {
-            if (_query.get(key) instanceof NullObject) {
-                throw new QueryBuilderException("No operand for key:" + key);
+        for (final String key : emptyQuery.keySet()) {
+            if (emptyQuery.get(key) instanceof NullObject) {
+                throw new QueryBuilderException("No operand for key: " + key);
             }
         }
-        return _query;
+        return emptyQuery;
     }
 
     private void addOperand(final String op, final Object value) {
         Object valueToPut = value;
         if (op == null) {
-            if (_hasNot) {
+            if (hasNot) {
                 valueToPut = new BasicDBObject(QueryOperators.NOT, valueToPut);
-                _hasNot = false;
+                hasNot = false;
             }
-            _query.put(_currentKey, valueToPut);
+            emptyQuery.put(currentDocumentKey, valueToPut);
             return;
         }
 
-        Object storedValue = _query.get(_currentKey);
+        Object storedValue = emptyQuery.get(currentDocumentKey);
         BasicDBObject operand;
         if (!(storedValue instanceof DBObject)) {
             operand = new BasicDBObject();
-            if (_hasNot) {
+            if (hasNot) {
                 DBObject notOperand = new BasicDBObject(QueryOperators.NOT, operand);
-                _query.put(_currentKey, notOperand);
-                _hasNot = false;
+                emptyQuery.put(currentDocumentKey, notOperand);
+                hasNot = false;
             } else {
-                _query.put(_currentKey, operand);
+                emptyQuery.put(currentDocumentKey, operand);
             }
         } else {
-            operand = (BasicDBObject) _query.get(_currentKey);
+            operand = (BasicDBObject) emptyQuery.get(currentDocumentKey);
             if (operand.get(QueryOperators.NOT) != null) {
                 operand = (BasicDBObject) operand.get(QueryOperators.NOT);
             }
@@ -500,8 +500,8 @@ public class QueryBuilder {
     private static class NullObject {
     }
 
-    private final DBObject _query;
-    private String _currentKey;
-    private boolean _hasNot;
+    private final DBObject emptyQuery;
+    private String currentDocumentKey;
+    private boolean hasNot;
 
 }
