@@ -16,11 +16,13 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 
 import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLContext;
+import java.security.NoSuchAlgorithmException;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -64,7 +66,7 @@ public class SocketStreamFactory implements StreamFactory {
         if (socketFactory != null) {
             stream = new SocketStream(serverAddress, settings, sslSettings, socketFactory, bufferProvider);
         } else if (sslSettings.isEnabled()) {
-            stream = new SocketStream(serverAddress, settings, sslSettings, SSLSocketFactory.getDefault(), bufferProvider);
+            stream = new SocketStream(serverAddress, settings, sslSettings, getSslContext().getSocketFactory(), bufferProvider);
         } else if (System.getProperty("org.mongodb.useSocket", "false").equals("true")) {
             stream = new SocketStream(serverAddress, settings, sslSettings, SocketFactory.getDefault(), bufferProvider);
         } else {
@@ -74,4 +76,11 @@ public class SocketStreamFactory implements StreamFactory {
         return stream;
     }
 
+    private SSLContext getSslContext() {
+        try {
+            return (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+        } catch (NoSuchAlgorithmException e) {
+            throw new MongoClientException("Unable to create default SSLContext", e);
+        }
+    }
 }
