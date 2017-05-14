@@ -28,7 +28,10 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import javax.net.SocketFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLContextSpi
 import javax.net.ssl.SSLSocketFactory
+import java.security.Provider
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -54,6 +57,7 @@ class MongoClientOptionsSpecification extends Specification {
         !options.isSocketKeepAlive()
         !options.isSslEnabled()
         !options.isSslInvalidHostNameAllowed()
+        options.getSslContext() == null
         options.getSocketFactory() != null
         !(options.getSocketFactory() instanceof SSLSocketFactory)
         options.getDbDecoderFactory() == DefaultDBDecoder.FACTORY
@@ -162,6 +166,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .socketFactory(socketFactory)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
+                                        .sslContext(SSLContext.getDefault())
                                         .dbDecoderFactory(LazyDBDecoder.FACTORY)
                                         .heartbeatFrequency(5)
                                         .minHeartbeatFrequency(11)
@@ -191,6 +196,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.socketFactory == socketFactory
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
+        options.getSslContext() == SSLContext.getDefault()
         options.getDbDecoderFactory() == LazyDBDecoder.FACTORY
         options.getDbEncoderFactory() == encoderFactory
         options.getHeartbeatFrequency() == 5
@@ -212,7 +218,8 @@ class MongoClientOptionsSpecification extends Specification {
                                                          .keepAlive(true).build()
         options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
                                                 .build()
-        options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()
+        options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
+                .context(SSLContext.getDefault()).build()
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -228,13 +235,48 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         builder.build().getSocketFactory() == MongoClientOptions.DEFAULT_SSL_SOCKET_FACTORY
+    }
+
+    //  Can't use a Stub for this since SSLContext.getSocketFactory is a final method
+    class SSLContextSubClass extends SSLContext {
+        protected SSLContextSubClass(final SSLContextSpi contextSpi, final Provider provider) {
+            super(contextSpi, provider, 'Default')
+        }
+    }
+
+    @IgnoreIf({ isNotAtLeastJava7() })
+    def 'should get socketFactory based on sslContext'() {
+        given:
+        def expectedSocketFactory = Mock(SSLSocketFactory)
+        def sslContextSpi = Stub(SSLContextSpi) {
+            engineGetSocketFactory() >> expectedSocketFactory
+        }
+        def sslContext = new SSLContextSubClass(sslContextSpi, Stub(Provider))
+        def options = MongoClientOptions.builder()
+                .sslEnabled(true)
+                .sslContext(sslContext)
+                .build()
 
         when:
-        def socketFactory = Mock(SocketFactory)
-        builder.socketFactory(socketFactory)
+        def socketFactory = options.getSocketFactory()
 
         then:
-        builder.build().getSocketFactory() == socketFactory
+        socketFactory == expectedSocketFactory
+    }
+
+    @IgnoreIf({ isNotAtLeastJava7() })
+    def 'should get socketFactory based on configured socketFactory'() {
+        given:
+        def expectedSocketFactory = Mock(SocketFactory)
+        def options = MongoClientOptions.builder()
+                .socketFactory(expectedSocketFactory)
+                .build()
+
+        when:
+        def socketFactory = options.getSocketFactory()
+
+        then:
+        socketFactory == expectedSocketFactory
     }
 
     def 'should be easy to create new options from existing'() {
@@ -256,6 +298,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .socketKeepAlive(true)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
+                .sslContext(SSLContext.getDefault())
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
                 .heartbeatFrequency(5)
                 .minHeartbeatFrequency(11)
@@ -516,6 +559,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .socketKeepAlive(true)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
+                .sslContext(SSLContext.getDefault())
                 .socketFactory(SSLSocketFactory.getDefault())
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
                 .heartbeatFrequency(5)
@@ -548,7 +592,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
                         'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',
                         'readPreference', 'requiredReplicaSetName', 'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout',
-                        'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'socketFactory', 'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:

@@ -29,6 +29,7 @@ import com.mongodb.event.ServerMonitorListener;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ public class MongoClientOptions {
     private final boolean socketKeepAlive;
     private final boolean sslEnabled;
     private final boolean sslInvalidHostNameAllowed;
+    private final SSLContext sslContext;
     private final boolean alwaysUseMBeans;
     private final int heartbeatFrequency;
     private final int minHeartbeatFrequency;
@@ -115,6 +117,7 @@ public class MongoClientOptions {
         codecRegistry = builder.codecRegistry;
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
+        sslContext = builder.sslContext;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
@@ -169,6 +172,7 @@ public class MongoClientOptions {
             sslSettings = SslSettings.builder()
                                      .enabled(sslEnabled)
                                      .invalidHostNameAllowed(sslInvalidHostNameAllowed)
+                                     .context(sslContext)
                                      .build();
         } catch (MongoInternalException e) {
             // The error message from SslSettings needs to be translated to make sense for users of MongoClientOptions
@@ -461,6 +465,16 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns the SSLContext.  This property is ignored when either sslEnabled is false or socketFactory is non-null.
+     *
+     * @return the configured SSLContext, which may be null.  In that case {@code SSLContext.getDefault()} will be used when SSL is enabled.
+     * @since 3.5
+     */
+    public SSLContext getSslContext() {
+        return sslContext;
+    }
+
+    /**
      * <p>The read preference to use for queries, map-reduce, aggregation, and count.</p>
      *
      * <p>Default is {@code ReadPreference.primary()}.</p>
@@ -598,7 +612,7 @@ public class MongoClientOptions {
         if (socketFactory != null) {
             return socketFactory;
         } else if (getSslSettings().isEnabled()) {
-            return DEFAULT_SSL_SOCKET_FACTORY;
+            return sslContext == null ? DEFAULT_SSL_SOCKET_FACTORY : sslContext.getSocketFactory();
         } else {
             return DEFAULT_SOCKET_FACTORY;
         }
@@ -703,6 +717,9 @@ public class MongoClientOptions {
         if (sslInvalidHostNameAllowed != that.sslInvalidHostNameAllowed) {
             return false;
         }
+        if (sslContext != null ? !sslContext.equals(that.sslContext) : that.sslContext != null) {
+            return false;
+        }
         if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
             return false;
         }
@@ -777,6 +794,7 @@ public class MongoClientOptions {
         result = 31 * result + (socketKeepAlive ? 1 : 0);
         result = 31 * result + (sslEnabled ? 1 : 0);
         result = 31 * result + (sslInvalidHostNameAllowed ? 1 : 0);
+        result = 31 * result + (sslContext != null ? sslContext.hashCode() : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         result = 31 * result + heartbeatFrequency;
         result = 31 * result + minHeartbeatFrequency;
@@ -816,6 +834,7 @@ public class MongoClientOptions {
                + ", socketKeepAlive=" + socketKeepAlive
                + ", sslEnabled=" + sslEnabled
                + ", sslInvalidHostNamesAllowed=" + sslInvalidHostNameAllowed
+               + ", sslContext=" + sslContext
                + ", alwaysUseMBeans=" + alwaysUseMBeans
                + ", heartbeatFrequency=" + heartbeatFrequency
                + ", minHeartbeatFrequency=" + minHeartbeatFrequency
@@ -864,6 +883,7 @@ public class MongoClientOptions {
         private boolean socketKeepAlive = false;
         private boolean sslEnabled = false;
         private boolean sslInvalidHostNameAllowed = false;
+        private SSLContext sslContext;
         private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
@@ -913,6 +933,7 @@ public class MongoClientOptions {
             codecRegistry = options.getCodecRegistry();
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
+            sslContext = options.getSslContext();
             alwaysUseMBeans = options.isAlwaysUseMBeans();
             heartbeatFrequency = options.getHeartbeatFrequency();
             minHeartbeatFrequency = options.getMinHeartbeatFrequency();
@@ -1135,6 +1156,18 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets the SSLContext to be used with SSL is enabled.  This property is ignored when either sslEnabled is false or socketFactory is
+         * non-null.
+         *
+         * @param sslContext the SSLContext to be used for SSL connections
+         * @return {@code this}
+         * @since 3.5
+         */
+        public Builder sslContext(final SSLContext sslContext) {
+            this.sslContext = sslContext;
+            return this;
+        }
 
         /**
          * Sets the read preference.

@@ -21,6 +21,8 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 
+import javax.net.ssl.SSLContext;
+
 /**
  * Settings for connecting to MongoDB via SSL.
  *
@@ -30,6 +32,7 @@ import com.mongodb.annotations.NotThreadSafe;
 public class SslSettings {
     private final boolean enabled;
     private final boolean invalidHostNameAllowed;
+    private final SSLContext context;
 
     /**
      * Gets a Builder for creating a new SSLSettings instance.
@@ -47,6 +50,7 @@ public class SslSettings {
     public static class Builder {
         private boolean enabled;
         private boolean invalidHostNameAllowed;
+        private SSLContext context;
 
         /**
          * Define whether SSL should be enabled.
@@ -68,6 +72,18 @@ public class SslSettings {
          */
         public Builder invalidHostNameAllowed(final boolean invalidHostNameAllowed) {
             this.invalidHostNameAllowed = invalidHostNameAllowed;
+            return this;
+        }
+
+        /**
+         * Sets the SSLContext for use when SSL is enabled.
+         *
+         * @param context the SSLContext to use for connections.  Ignored if SSL is not enabled.
+         * @return this
+         * @since 3.5
+         */
+        public Builder context(final SSLContext context) {
+            this.context = context;
             return this;
         }
 
@@ -118,6 +134,18 @@ public class SslSettings {
         return invalidHostNameAllowed;
     }
 
+    /**
+     * Gets the SSLContext configured for use with SSL connections.
+     *
+     * @return the SSLContext, which defaults to null if not configured.  In that case {@code SSLContext.getDefault()} will be used if SSL
+     * is enabled.
+     * @since 3.5
+     * @see SSLContext#getDefault()
+     */
+    public SSLContext getContext() {
+        return context;
+    }
+
     SslSettings(final Builder builder) {
         enabled = builder.enabled;
         invalidHostNameAllowed = builder.invalidHostNameAllowed;
@@ -126,6 +154,7 @@ public class SslSettings {
                                              + "must run on Java 6, you must set the SslSettings.invalidHostNameAllowed property to "
                                              + "true");
         }
+        context = builder.context;
     }
 
     @Override
@@ -145,14 +174,14 @@ public class SslSettings {
         if (invalidHostNameAllowed != that.invalidHostNameAllowed) {
             return false;
         }
-
-        return true;
+        return context != null ? context.equals(that.context) : that.context == null;
     }
 
     @Override
     public int hashCode() {
         int result = (enabled ? 1 : 0);
         result = 31 * result + (invalidHostNameAllowed ? 1 : 0);
+        result = 31 * result + (context != null ? context.hashCode() : 0);
         return result;
     }
 
@@ -161,6 +190,7 @@ public class SslSettings {
         return "SslSettings{"
                + "enabled=" + enabled
                + ", invalidHostNameAllowed=" + invalidHostNameAllowed
+               + ", context=" + context
                + '}';
     }
 }

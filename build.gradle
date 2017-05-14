@@ -194,15 +194,15 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         maxParallelForks = 1
 
         systemProperties(
-                'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
+                'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
                 'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
 
-                'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore', "${System.getProperty('user.home')}/.keystore"),
-                'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
-                'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword', 'changeit'),
-                'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword', 'changeit')
+                'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore'),
+                'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore'),
+                'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword'),
+                'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword')
         )
 
         if (project.buildingWith('ssl.enabled')) {

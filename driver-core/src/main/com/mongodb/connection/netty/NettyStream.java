@@ -16,6 +16,7 @@
 
 package com.mongodb.connection.netty;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
@@ -49,6 +50,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,7 +123,7 @@ final class NettyStream implements Stream {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
                 if (sslSettings.isEnabled()) {
-                    SSLEngine engine = SSLContext.getDefault().createSSLEngine(address.getHost(), address.getPort());
+                    SSLEngine engine = getSslContext().createSSLEngine(address.getHost(), address.getPort());
                     engine.setUseClientMode(true);
                     SSLParameters sslParameters = engine.getSSLParameters();
                     enableSni(address, sslParameters);
@@ -306,6 +308,14 @@ final class NettyStream implements Stream {
 
     public ByteBufAllocator getAllocator() {
         return allocator;
+    }
+
+    private SSLContext getSslContext() {
+        try {
+            return (sslSettings.getContext() == null) ? SSLContext.getDefault() : sslSettings.getContext();
+        } catch (NoSuchAlgorithmException e) {
+            throw new MongoClientException("Unable to create default SSLContext", e);
+        }
     }
 
     private class InboundBufferHandler extends SimpleChannelInboundHandler<io.netty.buffer.ByteBuf> {

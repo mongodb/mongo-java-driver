@@ -21,6 +21,8 @@ import com.mongodb.MongoInternalException
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import javax.net.ssl.SSLContext
+
 import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.SslSettings.builder
 
@@ -45,6 +47,16 @@ class SslSettingsSpecification extends Specification {
     def 'should allow invalid host name'() {
         expect:
         builder().invalidHostNameAllowed(true).build().invalidHostNameAllowed
+    }
+
+    def 'should default to null SSLContext'() {
+        expect:
+        builder().build().getContext() == null
+    }
+
+    def 'should set SSLContext'() {
+        expect:
+        builder().context(SSLContext.getDefault()).build().getContext() == SSLContext.getDefault()
     }
 
     def 'should not allow invalid host name on Java 6'() {
@@ -96,9 +108,18 @@ class SslSettingsSpecification extends Specification {
         expect:
         builder().build() == builder().build()
         builder().build().hashCode() == builder().build().hashCode()
-        builder().enabled(true).invalidHostNameAllowed(true).build() == builder().enabled(true).invalidHostNameAllowed(true).build()
+        builder().enabled(true).invalidHostNameAllowed(true).build() ==
+                builder().enabled(true).invalidHostNameAllowed(true).build()
         builder().enabled(true).invalidHostNameAllowed(true).build().hashCode() ==
-        builder().enabled(true).invalidHostNameAllowed(true).build().hashCode()
+                builder().enabled(true).invalidHostNameAllowed(true).build().hashCode()
+        builder().enabled(true).invalidHostNameAllowed(true).context(SSLContext.getDefault()).build() ==
+                builder().enabled(true).invalidHostNameAllowed(true)
+                        .context(SSLContext.getDefault()).build()
+        builder().enabled(true).invalidHostNameAllowed(true)
+                .context(SSLContext.getDefault()).build().hashCode() ==
+                builder().enabled(true).invalidHostNameAllowed(true)
+                        .context(SSLContext.getDefault()).build().hashCode()
+
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -106,5 +127,6 @@ class SslSettingsSpecification extends Specification {
         expect:
         builder().build() != builder().enabled(true).build()
         builder().build() != builder().invalidHostNameAllowed(true).build()
+        builder().build() != builder().context(SSLContext.getDefault()).build()
     }
 }
