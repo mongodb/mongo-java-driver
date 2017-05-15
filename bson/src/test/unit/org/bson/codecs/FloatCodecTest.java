@@ -36,9 +36,14 @@ public final class FloatCodecTest extends CodecTestCase {
         roundTrip(new Document("a", new Float(1)));
     }
 
+    @Test
+    public void shouldRoundTripNegativeFloatValues() {
+        roundTrip(new Document("a", new Float(-1)));
+    }
+
     @Test(expected = BsonInvalidOperationException.class)
     public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", Double.MIN_VALUE));
+        roundTrip(new Document("a", -Double.MAX_VALUE));
     }
 
     @Test(expected = BsonInvalidOperationException.class)
