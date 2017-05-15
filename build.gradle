@@ -105,6 +105,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         exclude "**/org/bson/**/internal/**"
 
         dependsOn project(':util').compileJava //We need taglets to be compiled
+
         options.author = true
         options.version = true
         options.links 'http://docs.oracle.com/javase/7/docs/api/'
@@ -136,6 +137,14 @@ configure(subprojects.findAll { it.name != 'util' }) {
             }
             </script>
         '''
+
+        // Add --allow-script-in-comments if available (since 1.8.0_121)
+        try {
+            if (Class.forName('com.sun.tools.doclets.formats.html.ConfigurationImpl')
+                     .newInstance().optionLength('--allow-script-in-comments') > 0) {
+                options.addBooleanOption("-allow-script-in-comments", true)
+            }
+        } catch (ignored) {}
     }
 }
 
