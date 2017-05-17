@@ -123,8 +123,8 @@ Text search matches (english): 1
 
 For more information about text search see the following sections in the MongoDB Server Manual:
 
-- [`$text` query operator]({{< docsref "/reference/operator/query/text">}})
+- [`$text` query operator]({{< docsref "reference/operator/query/text">}})
 
-- [`text` index]({{< docsref "/core/index-text" >}})
+- [`text` index]({{< docsref "core/index-text" >}})
 
 - [Text Search Languages]({{<docsref "reference/text-search-languages">}})

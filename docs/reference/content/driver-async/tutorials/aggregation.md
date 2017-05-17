@@ -11,7 +11,7 @@ title = "Aggregation"
 
 ## Aggregation Framework
 
-The [aggregation pipeline]({{<docsref "/core/aggregation-pipeline">}}) is a framework for data aggregation, modeled on the concept of data processing pipelines.
+The [aggregation pipeline]({{<docsref "core/aggregation-pipeline">}}) is a framework for data aggregation, modeled on the concept of data processing pipelines.
 
 ## Prerequisites
 

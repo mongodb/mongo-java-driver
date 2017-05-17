@@ -39,7 +39,7 @@ To specify a single `MongoCredential` instance, you can also use the [`Connectio
 ## Default Authentication Mechanism
 
 Starting in MongoDB 3.0, MongoDB changed the default authentication
-mechanism from [`MONGODB-CR`]({{<docsref "/core/security-mongodb-cr">}}) to
+mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
 [`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1">}}).
 
 To create a credential that will authenticate using the default
