@@ -168,7 +168,7 @@ public final class GridFSFile {
      * All deprecated top level elements including any contentType or aliases data
      *
      * @return the extra elements document or null
-     * @deprecated any extra information should be stored in the metadata document.
+     * @deprecated any extra information should be stored in the metadata document instead.
      */
     @Deprecated
     public Document getExtraElements() {
@@ -179,7 +179,7 @@ public final class GridFSFile {
      * The content type of the file
      *
      * @return the content type of the file
-     * @deprecated content type information stored in the metadata document.
+     * @deprecated content type information should be stored the metadata document instead.
      */
     @Deprecated
     public String getContentType() {
@@ -194,7 +194,7 @@ public final class GridFSFile {
      * The aliases for the file
      *
      * @return the aliases of the file
-     * @deprecated aliases should be stored in the metadata document.
+     * @deprecated any aliases should be stored in the metadata document instead.
      */
     @Deprecated
     @SuppressWarnings("unchecked")
