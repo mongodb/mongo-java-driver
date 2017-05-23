@@ -1,12 +1,13 @@
-baseurl = "/mongo-java-driver/3.4"
+baseURL = "/mongo-java-driver/3.4"
 languageCode = "en-us"
 title = "MongoDB Java Driver"
 theme = "mongodb"
-canonifyurls = false
+canonifyURLs = false
+disableHugoGeneratorInject = true
+disableKinds = ["section", "taxonomy", "taxonomyTerm", "404"]
 
 [blackfriday]
   plainIdAnchors = true
-
 
 # Update versions in mongodb.toml as well
 [[menu.main]]

@@ -3,7 +3,7 @@
 The static front page site for the Java documentation portal.
 
 ## Requirements
-Hugo version 0.13 [download here](https://github.com/spf13/hugo/releases/tag/v0.13)
+Hugo version 0.21 [download here](https://github.com/spf13/hugo/releases/tag/v0.21)
 <br>
 Check out the hugo [quickstart guide](http://gohugo.io/overview/quickstart/).
 
