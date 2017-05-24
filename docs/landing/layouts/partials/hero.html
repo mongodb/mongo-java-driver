@@ -8,8 +8,10 @@
         The next generation Java driver for MongoDB
       </p>
       <p>
-        {{ range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current  }}{{ $.Scratch.Set "qs.currentReleasedVersion" . }}{{end }}
-        {{$currentReleasedVersion := $.Scratch.Get "qs.currentReleasedVersion"}}
+        {{- range where $.Site.Data.releases.versions "version" $.Site.Data.releases.current -}}
+         {{- $.Scratch.Set "qs.currentReleasedVersion" . -}}
+        {{- end -}}
+        {{- $currentReleasedVersion := $.Scratch.Get "qs.currentReleasedVersion" -}}
       <a href="{{$currentReleasedVersion.docs}}" class="btn btn-success btn-dark btn-mongo">Latest documentation</a>
       </p>
 
