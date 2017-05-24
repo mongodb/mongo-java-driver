@@ -23,7 +23,7 @@ information on breaking changes.
 
 ## Getting Started
 
-To get started, see the [Installation Guide]({{< relref "driver/getting-started/installation.md" >}}) and the [Quick Start Guide]({{< relref "driver/getting-started/quick-start.md" >}}).
+To get started, see the [Installation Guide]({{< relref "driver/getting-started/installation.md" >}}), the [Quick Start Guide]({{< relref "driver/getting-started/quick-start.md" >}}) and the [Quick Start with POJOs Guide]({{< relref "driver/getting-started/quick-start-pojo.md" >}}).
 
 ## Tutorials
 
