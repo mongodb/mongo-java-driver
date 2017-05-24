@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    {{ partial "meta.html"}}
-    <link rel="shortcut icon" href="{{.Site.BaseUrl}}/img/favicon.png">
+    {{- partial "meta.html" -}}
+    <link rel="shortcut icon" href="{{.Site.BaseURL}}/img/favicon.png">
 
     <title>{{.Title}}</title>
 
-    {{ partial "assets/css.html" . }}
+    {{- partial "assets/css.html" . -}}
   </head>
 
   <body>
   <!-- container section start -->
   <section id="container" class="">
       <!--header start-->
-      {{ partial "header/main.html" . }}
+      {{- partial "header/main.html" . -}}
       <!--header end-->
 
-      {{ partial "menu.html" . }}
+      {{- partial "menu.html" . -}}
 
       <!--main content start-->
       <section id="main-content" class="content">

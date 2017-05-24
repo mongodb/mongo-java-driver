@@ -1,6 +1,7 @@
 +++
 date = "2015-03-17T15:36:56Z"
 title = "MongoDB Async Driver"
+type = "index"
 [menu.main]
   weight = 30
   identifier = "MongoDB Async Driver"

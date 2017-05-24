@@ -1,34 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    {{ partial "meta.html"}}
-    <link rel="shortcut icon" href="{{.Site.BaseUrl}}/s/img/favicon.png">
+    {{- partial "meta.html" -}}
+    <link rel="shortcut icon" href="{{.Site.BaseURL}}/s/img/favicon.png">
 
     <title>{{.Title}}</title>
 
-    {{ partial "assets/css.html" . }}
+    {{- partial "assets/css.html" . -}}
   </head>
 
   <body>
   <!--header start-->
-  {{ partial "header/main.html" . }}
+  {{- partial "header/main.html" . -}}
   <!--header end-->
 
-  {{ partial "hero.html" . }}
+  {{- partial "hero.html" . -}}
 
   <!-- Main content -->
   <div class="container" id="mainContent">
     <div class="row">
       <div class="col-md-8">
-        {{ partial "introduction.html" . }}
+        {{- partial "introduction.html" . -}}
 
-        {{ partial "features.html" . }}
+        {{- partial "features.html" . -}}
 
-        {{ partial "quickStart.html" . }}
+        {{- partial "quickStart.html" . -}}
       </div>
       <div class="col-md-4">
-        {{ partial "releases.html" . }}
-        {{ partial "mongodbUniversity.html" . }}
+        {{- partial "releases.html" . -}}
+        {{- partial "mongodbUniversity.html" . -}}
      </div>
     </div>
   </div>
@@ -38,7 +38,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        {{ partial "footer.html" .}}
+        {{- partial "footer.html" . -}}
       </div>
     </div>
   </div>
@@ -46,7 +46,7 @@
 
 
 <!-- javascripts -->
-{{ partial "assets/javascripts.html" . }}
-{{ partial "assets/analytics.html" . }}
+{{- partial "assets/javascripts.html" . -}}
+{{- partial "assets/analytics.html" . -}}
 </body>
 </html>
