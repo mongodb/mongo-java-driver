@@ -29,7 +29,7 @@ For OSGi-based applications, use the [mongo-java-driver](#uber-jar-legacy) uber 
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver" version="3.4.2" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.5.0-SNAPSHOT" dependencies="true">}}
 
 
 ## Uber Jar (Legacy)
@@ -41,4 +41,4 @@ For new applications, the preferred artifact is [mongodb-driver](#mongodb-driver
 The `mongo-java-driver` artifact is a valid OSGi bundle.
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.4.2">}}
+{{< install artifactId="mongo-java-driver" version="3.5.0-SNAPSHOT">}}
