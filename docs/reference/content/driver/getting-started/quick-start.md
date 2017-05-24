@@ -176,7 +176,7 @@ If no top-level `_id` field is specified in the document, MongoDB automatically 
 
 ### Insert Multiple Documents
 
-To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany-java.util.List-" >}}) method method which takes a list of documents to insert.
+To add multiple documents, you can use the collection's [`insertMany()`]({{< apiref "com/mongodb/client/MongoCollection.html#insertMany-java.util.List-" >}}) method which takes a list of documents to insert.
 
 The following example will add multiple documents of the form:
 
@@ -286,7 +286,7 @@ for (Document cur : collection.find()) {
 
 ## Specify a Query Filter
 
-To to query for documents that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+To query for documents that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find--">}}) method. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 ### Get A Single Document That Matches a Filter
 
@@ -410,5 +410,7 @@ The following example creates an ascending index on the ``i`` field:
 For a list of other index types, see [Create Indexes]({{< ref "driver/tutorials/indexes.md" >}})
 
 ### Additional Information
+
+For additional tutorials about using MongoDB with Pojos, see the [Pojos Quick Start]({{< ref "driver/getting-started/quick-start-pojo.md" >}}).
 
 For additional tutorials (such as to use the aggregation framework, specify write concern, etc.), see [Java Driver Tutorials]({{< ref "driver/tutorials/index.md" >}})
