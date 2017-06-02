@@ -28,6 +28,13 @@ class JsonWriterSettingsSpecification extends Specification {
         then:
         !settings.isIndent()
         settings.getOutputMode() == JsonMode.STRICT
+
+        when:
+        settings = JsonWriterSettings.builder().build();
+
+        then:
+        !settings.isIndent()
+        settings.getOutputMode() == JsonMode.RELAXED
     }
 
 
@@ -110,7 +117,7 @@ class JsonWriterSettingsSpecification extends Specification {
         def settings = JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build()
 
         then:
-        settings.binaryConverter.class == ExtendedJsonBinaryConverter
+        settings.binaryConverter.class == LegacyExtendedJsonBinaryConverter
         settings.booleanConverter.class == JsonBooleanConverter
         settings.dateTimeConverter.class == LegacyExtendedJsonDateTimeConverter
         settings.decimal128Converter.class == ExtendedJsonDecimal128Converter
@@ -122,10 +129,10 @@ class JsonWriterSettingsSpecification extends Specification {
         settings.minKeyConverter.class == ExtendedJsonMinKeyConverter
         settings.nullConverter.class == JsonNullConverter
         settings.objectIdConverter.class == ExtendedJsonObjectIdConverter
-        settings.regularExpressionConverter.class == ExtendedJsonRegularExpressionConverter
+        settings.regularExpressionConverter.class == LegacyExtendedJsonRegularExpressionConverter
         settings.stringConverter.class == JsonStringConverter
         settings.symbolConverter.class == JsonSymbolConverter
-        settings.timestampConverter.class == LegacyExtendedJsonTimestampConverter
+        settings.timestampConverter.class == ExtendedJsonTimestampConverter
         settings.undefinedConverter.class == ExtendedJsonUndefinedConverter
     }
 

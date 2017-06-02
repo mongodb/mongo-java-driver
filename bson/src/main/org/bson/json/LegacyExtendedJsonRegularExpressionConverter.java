@@ -17,16 +17,14 @@
 
 package org.bson.json;
 
-import org.bson.BsonTimestamp;
+import org.bson.BsonRegularExpression;
 
-class LegacyExtendedJsonTimestampConverter implements Converter<BsonTimestamp> {
+class LegacyExtendedJsonRegularExpressionConverter implements Converter<BsonRegularExpression> {
     @Override
-    public void convert(final BsonTimestamp value, final StrictJsonWriter writer) {
+    public void convert(final BsonRegularExpression value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeStartObject("$timestamp");
-        writer.writeNumber("t", Integer.toString(value.getTime()));
-        writer.writeNumber("i", Integer.toString(value.getInc()));
-        writer.writeEndObject();
+        writer.writeString("$regex", value.getPattern());
+        writer.writeString("$options", value.getOptions());
         writer.writeEndObject();
     }
 }

@@ -41,7 +41,7 @@ public class JsonWriterTest {
     @Before
     public void before() {
         stringWriter = new StringWriter();
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings());
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().build());
     }
 
     private static class TestData<T> {
@@ -261,11 +261,11 @@ public class JsonWriterTest {
                 new TestData<Double>(Double.POSITIVE_INFINITY, "Infinity"));
         for (final TestData<Double> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build());
             writer.writeStartDocument();
             writer.writeDouble("d", cur.value);
             writer.writeEndDocument();
-            String expected = "{ \"d\" : " + cur.expected + " }";
+            String expected = "{ \"d\" : { \"$numberDouble\" : \"" + cur.expected + "\" } }";
             assertEquals(expected, stringWriter.toString());
         }
     }

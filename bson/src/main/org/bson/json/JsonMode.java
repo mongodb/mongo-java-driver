@@ -44,5 +44,13 @@ public enum JsonMode {
      * @since 3.5
      * @see <a href="https://github.com/mongodb/specifications/blob/master/source/extended-json.rst">Extended JSON Specification</a>
      */
-    EXTENDED
+    EXTENDED,
+
+    /**
+     * Standard relaxed extended JSON representation.
+     *
+     * @since 3.5
+     * @see <a href="https://github.com/mongodb/specifications/blob/master/source/extended-json.rst">Extended JSON Specification</a>
+     */
+    RELAXED
 }

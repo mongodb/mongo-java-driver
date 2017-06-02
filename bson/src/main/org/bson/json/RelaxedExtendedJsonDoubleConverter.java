@@ -17,16 +17,15 @@
 
 package org.bson.json;
 
-import org.bson.BsonRegularExpression;
+class RelaxedExtendedJsonDoubleConverter implements Converter<Double> {
+    private static final Converter<Double> FALLBACK_CONVERTER = new ExtendedJsonDoubleConverter();
 
-class ExtendedJsonRegularExpressionConverter implements Converter<BsonRegularExpression> {
     @Override
-    public void convert(final BsonRegularExpression value, final StrictJsonWriter writer) {
-        writer.writeStartObject();
-        writer.writeStartObject("$regularExpression");
-        writer.writeString("pattern", value.getPattern());
-        writer.writeString("options", value.getOptions());
-        writer.writeEndObject();
-        writer.writeEndObject();
+    public void convert(final Double value, final StrictJsonWriter writer) {
+        if (value.isNaN() || value.isInfinite()) {
+            FALLBACK_CONVERTER.convert(value, writer);
+        } else {
+            writer.writeNumber(Double.toString(value));
+        }
     }
 }

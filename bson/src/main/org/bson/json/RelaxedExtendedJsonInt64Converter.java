@@ -17,16 +17,9 @@
 
 package org.bson.json;
 
-import org.bson.BsonRegularExpression;
-
-class ExtendedJsonRegularExpressionConverter implements Converter<BsonRegularExpression> {
+class RelaxedExtendedJsonInt64Converter implements Converter<Long> {
     @Override
-    public void convert(final BsonRegularExpression value, final StrictJsonWriter writer) {
-        writer.writeStartObject();
-        writer.writeStartObject("$regularExpression");
-        writer.writeString("pattern", value.getPattern());
-        writer.writeString("options", value.getOptions());
-        writer.writeEndObject();
-        writer.writeEndObject();
+    public void convert(final Long value, final StrictJsonWriter writer) {
+        writer.writeNumber(Long.toString(value));
     }
 }
