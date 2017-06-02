@@ -17,16 +17,16 @@
 
 package org.bson.json;
 
-import org.bson.BsonRegularExpression;
+import org.bson.BsonBinary;
+import org.bson.internal.Base64;
 
-class ExtendedJsonRegularExpressionConverter implements Converter<BsonRegularExpression> {
+class LegacyExtendedJsonBinaryConverter implements Converter<BsonBinary> {
+
     @Override
-    public void convert(final BsonRegularExpression value, final StrictJsonWriter writer) {
+    public void convert(final BsonBinary value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeStartObject("$regularExpression");
-        writer.writeString("pattern", value.getPattern());
-        writer.writeString("options", value.getOptions());
-        writer.writeEndObject();
+        writer.writeString("$binary", Base64.encode(value.getData()));
+        writer.writeString("$type", String.format("%02X", value.getType()));
         writer.writeEndObject();
     }
 }

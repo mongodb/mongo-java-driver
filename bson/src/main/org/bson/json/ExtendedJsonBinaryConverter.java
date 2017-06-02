@@ -25,8 +25,10 @@ class ExtendedJsonBinaryConverter implements Converter<BsonBinary> {
     @Override
     public void convert(final BsonBinary value, final StrictJsonWriter writer) {
         writer.writeStartObject();
-        writer.writeString("$binary", Base64.encode(value.getData()));
-        writer.writeString("$type", String.format("%02X", value.getType()));
+        writer.writeStartObject("$binary");
+        writer.writeString("base64", Base64.encode(value.getData()));
+        writer.writeString("subType", String.format("%02X", value.getType()));
+        writer.writeEndObject();
         writer.writeEndObject();
     }
 }

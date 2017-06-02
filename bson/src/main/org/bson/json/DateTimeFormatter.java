@@ -20,10 +20,13 @@ package org.bson.json;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQuery;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
@@ -61,19 +64,27 @@ final class DateTimeFormatter {
         return FORMATTER_IMPL.parse(dateTimeString);
     }
 
+    static String format(final long dateTime) {
+        return FORMATTER_IMPL.format(dateTime);
+    }
+
     private interface FormatterImpl {
         long parse(String dateTimeString);
+        String format(long dateTime);
     }
 
     // Reflective use of DatatypeConverter avoids a compile-time dependency on the java.xml.bind module in Java 9
     static class JaxbDateTimeFormatter implements FormatterImpl {
 
         private static final Method DATATYPE_CONVERTER_PARSE_DATE_TIME_METHOD;
+        private static final Method DATATYPE_CONVERTER_PRINT_DATE_TIME_METHOD;
 
         static {
             try {
                 DATATYPE_CONVERTER_PARSE_DATE_TIME_METHOD = Class.forName("javax.xml.bind.DatatypeConverter")
                                                                     .getDeclaredMethod("parseDateTime", String.class);
+                DATATYPE_CONVERTER_PRINT_DATE_TIME_METHOD = Class.forName("javax.xml.bind.DatatypeConverter")
+                                                                    .getDeclaredMethod("printDateTime", Calendar.class);
             } catch (NoSuchMethodException e) {
                 throw new ExceptionInInitializerError(e);
             } catch (ClassNotFoundException e) {
@@ -87,6 +98,20 @@ final class DateTimeFormatter {
                 return ((Calendar) DATATYPE_CONVERTER_PARSE_DATE_TIME_METHOD.invoke(null, dateTimeString)).getTimeInMillis();
             } catch (IllegalAccessException e) {
                 throw new IllegalStateException(e);
+            } catch (InvocationTargetException e) {
+                throw (RuntimeException) e.getCause();
+            }
+        }
+
+        @Override
+        public String format(final long dateTime) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(dateTime);
+            calendar.setTimeZone(TimeZone.getTimeZone("Z"));
+            try {
+                return (String) DATATYPE_CONVERTER_PRINT_DATE_TIME_METHOD.invoke(null, calendar);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException();
             } catch (InvocationTargetException e) {
                 throw (RuntimeException) e.getCause();
             }
@@ -117,6 +142,11 @@ final class DateTimeFormatter {
             } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException(e.getMessage());
             }
+        }
+
+        @Override
+        public String format(final long dateTime) {
+            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(dateTime), ZoneId.of("Z")).format(ISO_OFFSET_DATE_TIME);
         }
     }
 

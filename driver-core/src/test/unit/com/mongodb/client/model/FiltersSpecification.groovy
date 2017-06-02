@@ -265,9 +265,9 @@ class FiltersSpecification extends Specification {
 
     def 'should render $regex'() {
         expect:
-        toBson(regex('name', 'acme.*corp')) == parse('{name : {$regex : "acme.*corp"}}')
+        toBson(regex('name', 'acme.*corp')) == parse('{name : {$regex : "acme.*corp", $options : ""}}')
         toBson(regex('name', 'acme.*corp', 'si')) == parse('{name : {$regex : "acme.*corp", $options : "si"}}')
-        toBson(regex('name', Pattern.compile('acme.*corp'))) == parse('{name : {$regex : "acme.*corp"}}')
+        toBson(regex('name', Pattern.compile('acme.*corp'))) == parse('{name : {$regex : "acme.*corp", $options : ""}}')
     }
 
     def 'should render $where'() {

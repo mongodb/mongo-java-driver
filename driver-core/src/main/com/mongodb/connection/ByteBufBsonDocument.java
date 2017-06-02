@@ -236,6 +236,7 @@ class ByteBufBsonDocument extends BsonDocument implements Cloneable {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public String toJson() {
         return toJson(new JsonWriterSettings());
     }

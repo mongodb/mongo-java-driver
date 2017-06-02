@@ -66,7 +66,7 @@ public abstract class Geometry {
      *
      * @return the GeoJSON representation
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     public String toJson() {
         StringWriter stringWriter = new StringWriter();
         JsonWriter writer = new JsonWriter(stringWriter, new JsonWriterSettings());

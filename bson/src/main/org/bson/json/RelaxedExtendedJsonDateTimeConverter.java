@@ -17,16 +17,18 @@
 
 package org.bson.json;
 
-import org.bson.BsonRegularExpression;
+class RelaxedExtendedJsonDateTimeConverter implements Converter<Long> {
+    private static final Converter<Long> FALLBACK_CONVERTER = new ExtendedJsonDateTimeConverter();
+    private static final long LAST_MS_OF_YEAR_9999 = 253402300799999L;
 
-class ExtendedJsonRegularExpressionConverter implements Converter<BsonRegularExpression> {
     @Override
-    public void convert(final BsonRegularExpression value, final StrictJsonWriter writer) {
-        writer.writeStartObject();
-        writer.writeStartObject("$regularExpression");
-        writer.writeString("pattern", value.getPattern());
-        writer.writeString("options", value.getOptions());
-        writer.writeEndObject();
-        writer.writeEndObject();
+    public void convert(final Long value, final StrictJsonWriter writer) {
+        if (value < 0 || value > LAST_MS_OF_YEAR_9999) {
+            FALLBACK_CONVERTER.convert(value, writer);
+        } else {
+            writer.writeStartObject();
+            writer.writeString("$date", DateTimeFormatter.format(value));
+            writer.writeEndObject();
+        }
     }
 }

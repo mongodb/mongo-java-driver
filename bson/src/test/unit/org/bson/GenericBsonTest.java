@@ -23,7 +23,10 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.json.JsonMode;
+import org.bson.json.JsonParseException;
 import org.bson.json.JsonWriterSettings;
+import org.bson.types.Decimal128;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,28 +43,28 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static java.lang.String.format;
+import static org.bson.BsonDocument.parse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 // BSON tests powered by language-agnostic JSON-based tests included in test resources
 @RunWith(Parameterized.class)
 public class GenericBsonTest {
 
+    private static final List<String> IGNORED_PARSE_ERRORS = Arrays.asList(
+            "Bad $binary (type is number, not string)", // for backwards compat, JsonReader supports number for binary type
+            "Bad $date (number, not string or hash)",   // for backwards compat, JsonReader supports numbers for $date
+            "Bad DBRef (ref is number, not string)",    // JsonReader knows nothing of DBRef so these are not parse errors
+            "Bad DBRef (db is number, not string)");
+
     enum TestCaseType {
         VALID,
+        DECODE_ERROR,
         PARSE_ERROR
     }
-
-    private final Set<String> testsToSkip = new HashSet<String>(Arrays.asList(
-            "DBpointer with opposite key order",                             // JsonReader does not support out of order keys
-            "DBpointer with extra keys"                                      // JsonReader does not support extra keys
-            ));
 
     private final BsonDocument testDefinition;
     private final BsonDocument testCase;
@@ -76,13 +79,15 @@ public class GenericBsonTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        assumeTrue(!testsToSkip.contains(testCase.getString("description").getValue()));
         switch (testCaseType) {
             case VALID:
                 runValid();
                 break;
-            case PARSE_ERROR:
+            case DECODE_ERROR:
                 runDecodeError();
+                break;
+            case PARSE_ERROR:
+                runParseError();
                 break;
             default:
                 throw new IllegalArgumentException(format("Unsupported test case type %s", testCaseType));
@@ -90,64 +95,61 @@ public class GenericBsonTest {
     }
 
     private void runValid() {
-        String bsonHex = testCase.getString("bson").getValue().toUpperCase();
-        String json = replaceUnicodeEscapes(testCase.getString("extjson", new BsonString("")).getValue());
-        String canonicalJson = replaceUnicodeEscapes(testCase.getString("canonical_extjson", new BsonString(json)).getValue());
-        String canonicalBsonHex = testCase.getString("canonical_bson", new BsonString(bsonHex)).getValue().toUpperCase();
         String description = testCase.getString("description").getValue();
+        String canonicalBsonHex = testCase.getString("canonical_bson").getValue().toUpperCase();
+        String degenerateBsonHex = testCase.getString("degenerate_bson", new BsonString("")).getValue().toUpperCase();
+        String canonicalJson = replaceUnicodeEscapes(testCase.getString("canonical_extjson").getValue());
+        String relaxedJson = replaceUnicodeEscapes(testCase.getString("relaxed_extjson", new BsonString("")).getValue());
+        String degenerateJson = replaceUnicodeEscapes(testCase.getString("degenerate_extjson", new BsonString("")).getValue());
         boolean lossy = testCase.getBoolean("lossy", new BsonBoolean(false)).getValue();
 
-        BsonDocument decodedDocument = decodeToDocument(bsonHex, description);
+        BsonDocument decodedDocument = decodeToDocument(canonicalBsonHex, description);
 
-        // B -> B
+        // native_to_bson( bson_to_native(cB) ) = cB
         assertEquals(format("Failed to create expected BSON for document with description '%s'", description),
                 canonicalBsonHex, encodeToHex(decodedDocument));
 
-        JsonWriterSettings jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
+        JsonWriterSettings canonicalJsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
+        JsonWriterSettings relaxedJsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build();
 
-        // B -> E
         if (!canonicalJson.isEmpty()) {
-            assertEquals(format("Failed to create expected JSON for document with description '%s'", description),
-                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedDocument.toJson(jsonWriterSettings)));
-        }
+            // native_to_canonical_extended_json( bson_to_native(cB) ) = cEJ
+            assertEquals(format("Failed to create expected canonical JSON for document with description '%s'", description),
+                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedDocument.toJson(canonicalJsonWriterSettings)));
 
-        if (!canonicalBsonHex.equals(bsonHex)) {
-            BsonDocument decodedCanonicalDocument = decodeToDocument(canonicalBsonHex, description);
-            // B -> B
-            assertEquals(format("Failed to create expected BSON for canonical document with description '%s'", description),
-                    canonicalBsonHex, encodeToHex(decodedCanonicalDocument));
-            // B -> E
-            assertEquals(format("Failed to create expected JSON for canonical document with description '%s'", description),
-                    stripWhiteSpace(canonicalJson), stripWhiteSpace(decodedCanonicalDocument.toJson(jsonWriterSettings)));
-        }
-
-        if (!json.isEmpty()) {
-            BsonDocument parsedDocument = BsonDocument.parse(json);
-            // E -> E
-            assertEquals(format("Failed to parse expected JSON for document with description '%s'", description),
-                    stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedDocument.toJson(jsonWriterSettings)));
+            // native_to_canonical_extended_json( json_to_native(cEJ) ) = cEJ
+            BsonDocument parsedCanonicalJsonDocument = parse(canonicalJson);
+            assertEquals("Failed to create expected canonical JSON from parsing canonical JSON",
+                    stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedCanonicalJsonDocument.toJson(canonicalJsonWriterSettings)));
 
             if (!lossy) {
-                // E -> B
-                assertEquals(format("Failed to create expected BsonDocument for parsed canonical JSON document with description '%s'",
-                        description), decodedDocument, parsedDocument);
-                assertEquals(format("Failed to create expected BSON for parsed JSON document with description '%s'", description),
-                        canonicalBsonHex, encodeToHex(parsedDocument));
+                // native_to_bson( json_to_native(cEJ) ) = cB
+                assertEquals("Failed to create expected canonical BSON from parsing canonical JSON",
+                        canonicalBsonHex, encodeToHex(parsedCanonicalJsonDocument));
+            }
+        }
 
-            }
-            if (!canonicalJson.equals(json)) {
-                BsonDocument parsedCanonicalDocument = BsonDocument.parse(canonicalJson);
-                // E -> E
-                assertEquals(format("Failed to create expected JSON for parsed canonical JSON document with description '%s'",
-                        description), stripWhiteSpace(canonicalJson), stripWhiteSpace(parsedCanonicalDocument.toJson(jsonWriterSettings)));
-                if (!lossy) {
-                    // E -> B
-                    assertEquals(format("Failed to create expected BsonDocument for parsed canonical JSON document "
-                                                + "with description '%s'", description), decodedDocument, parsedCanonicalDocument);
-                    assertEquals(format("Failed to create expected BSON for parsed canonical JSON document with description '%s'",
-                            description), bsonHex, encodeToHex(parsedDocument));
-                }
-            }
+        if (!relaxedJson.isEmpty()) {
+            // native_to_relaxed_extended_json( bson_to_native(cB) ) = rEJ
+            assertEquals(format("Failed to create expected relaxed JSON for document with description '%s'", description),
+                    stripWhiteSpace(relaxedJson), stripWhiteSpace(decodedDocument.toJson(relaxedJsonWriterSettings)));
+
+            // native_to_relaxed_extended_json( json_to_native(rEJ) ) = rEJ
+            assertEquals("Failed to create expected relaxed JSON from parsing relaxed JSON", stripWhiteSpace(relaxedJson),
+                    stripWhiteSpace(parse(relaxedJson).toJson(relaxedJsonWriterSettings)));
+        }
+
+        if (!degenerateJson.isEmpty()) {
+            // native_to_bson( json_to_native(dEJ) ) = cB
+            assertEquals("Failed to create expected canonical BSON from parsing canonical JSON",
+                    canonicalBsonHex, encodeToHex(parse(degenerateJson)));
+        }
+
+        if (!degenerateBsonHex.isEmpty()) {
+            BsonDocument decodedDegenerateDocument = decodeToDocument(degenerateBsonHex, description);
+            // native_to_bson( bson_to_native(dB) ) = cB
+            assertEquals(format("Failed to create expected canonical BSON from degenerate BSON for document with description "
+                                        + "'%s'", description), canonicalBsonHex, encodeToHex(decodedDegenerateDocument));
         }
     }
 
@@ -175,7 +177,7 @@ public class GenericBsonTest {
                 reader.read(codePointString);
                 char escapedChar = (char) Integer.parseInt(new String(codePointString), 16);
                 if (shouldEscapeCharacter(escapedChar)) {
-                    writer.write("\\u0000");
+                    writer.write("\\u" + new String(codePointString));
                 } else {
                     writer.write(escapedChar);
                 }
@@ -244,6 +246,40 @@ public class GenericBsonTest {
         }
     }
 
+    private void runParseError() {
+        String description = testCase.getString("description").getValue();
+
+        Assume.assumeFalse(IGNORED_PARSE_ERRORS.contains(description));
+
+        String str = testCase.getString("string").getValue();
+
+        String testDefinitionDescription = testDefinition.getString("description").getValue();
+        if (testDefinitionDescription.startsWith("Decimal128")) {
+            try {
+                Decimal128.parse(str);
+                fail(format("Should fail to parse '" + str + "' with description '%s'", description + "'"));
+            } catch (NumberFormatException e) {
+                // all good
+            }
+        } else if (testDefinitionDescription.startsWith("Top-level")) {
+            try {
+                parse(str);
+                fail("Should fail to parse JSON '" + str + "' with description '" + description + "'");
+            } catch (JsonParseException e) {
+                // all good
+            } catch (BsonInvalidOperationException e) {
+                if (!description.equals("Bad $code with $scope (scope is number, not doc)")) {
+                    fail("Should throw JsonParseException for '" + str + "' with description '" + description + "'");
+                }
+                // all good
+            }
+        } else {
+            fail("Unrecognized test definition description: " + testDefinitionDescription);
+        }
+    }
+
+
+
     // TODO: Working around the fact that the Java driver doesn't report an error for invalid UTF-8, but rather replaces the invalid
     // sequence with the replacement character
     private void throwIfValueIsStringContainingReplacementCharacter(final String description) {
@@ -278,6 +314,11 @@ public class GenericBsonTest {
             }
 
             for (BsonValue curValue : testDocument.getArray("decodeErrors", new BsonArray())) {
+                BsonDocument testCaseDocument = curValue.asDocument();
+                data.add(new Object[]{createTestCaseDescription(testDocument, testCaseDocument, "decodeError"), testDocument,
+                        testCaseDocument, TestCaseType.DECODE_ERROR});
+            }
+            for (BsonValue curValue : testDocument.getArray("parseErrors", new BsonArray())) {
                 BsonDocument testCaseDocument = curValue.asDocument();
                 data.add(new Object[]{createTestCaseDescription(testDocument, testCaseDocument, "parseError"), testDocument,
                         testCaseDocument, TestCaseType.PARSE_ERROR});

@@ -41,6 +41,7 @@ public class JsonWriter extends AbstractBsonWriter {
      *
      * @param writer the writer to write JSON to.
      */
+    @SuppressWarnings("deprecation")
     public JsonWriter(final Writer writer) {
         this(writer, new JsonWriterSettings());
     }

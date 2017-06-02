@@ -7,23 +7,29 @@ title = "Extended JSON"
   pre = "<i class='fa'></i>"
 +++
 
-## MongoDB Extended JSON
+## JSON
 
-As discussed earlier, the Java driver supports reading and writing BSON documents represented as  
-[MongoDB Extended JSON](http://docs.mongodb.org/manual/reference/mongodb-extended-json/).  Both variants are supported: 
+As discussed earlier, the Java driver supports reading and writing BSON documents represented as JSON values. The driver supports four 
+standard variants:   
 
-- Strict Mode: representations of BSON types that conform to the [JSON RFC](http://www.json.org/). This is the 
-format that [mongoexport](http://docs.mongodb.org/manual/reference/program/mongoexport/) produces and 
-[mongoimport](http://docs.mongodb.org/manual/reference/program/mongoimport/) consumes.
+- Extended Mode: Canonical representation that avoids any loss of BSON type information. See the 
+[Extended JSON specification](https://github.com/mongodb/specifications/blob/master/source/extended-json.rst) for a description of this 
+mode.
+- Relaxed Mode:  Relaxed representation that loses type information for BSON numeric types and uses a more human-readable representation
+of BSON dates. See the 
+[Extended JSON specification](https://github.com/mongodb/specifications/blob/master/source/extended-json.rst) for a description of this 
+mode.
 - Shell Mode: a superset of JSON that the 
 [MongoDB shell](http://docs.mongodb.org/manual/tutorial/getting-started-with-the-mongo-shell/) can parse. 
+- Strict Mode: Legacy representation.  Though now deprecated, this is still the default mode when writing JSON in order to avoid breaking
+backwards compatibility.  This may change in a future major release of the driver.
 
-Furthermore, the `Document` class provides two sets of convenience methods for this purpose:
+Furthermore, the `Document`, `BsonDocument`, and `BasicDBObject` classes each provide two sets of convenience methods for this purpose:
 
-- toJson(): a set of overloaded methods that convert a `Document` instance to a JSON string
-- parse(): a set of overloaded static factory methods that convert a JSON string to a `Document` instance
+- toJson(): a set of overloaded methods that convert an instance to a JSON string
+- parse(): a set of overloaded static factory methods that convert a JSON string to an instance of the class
  
-## Writing JSON
+### Writing JSON
 
 Consider the task of implementing a [mongoexport](http://docs.mongodb.org/manual/reference/program/mongoexport/)-like tool using the 
 Java driver.  
@@ -35,12 +41,15 @@ MongoCollection<Document> collection;  // initialize to the collection from whic
 BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilename));
 
 try {
+    JsonWriterSettings settings = JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build();
     for (Document doc : collection.find()) {
-        writer.write(doc.toJson());
+        writer.write(doc.toJson(settings));
         writer.newLine();
-} finally {
-   writer.close();
+    } finally{
+        writer.close();
+    }
 }
+
 ```
 
 The `Document.toJson()` method constructs an instance of a `JsonWriter` with its default settings, which will write in strict mode with 
@@ -63,7 +72,26 @@ This code snippet will print out MongoDB shell-compatible JSON, which can then b
 { "startDate" : { "$gt" : ISODate("2014-01-01T05:00:00.000Z"), "$lt" : ISODate("2015-01-01T05:00:00.000Z") } }
 ```
 
-## Reading JSON
+#### Customizing the output
+
+Often applications have specific requirements on the structure of JSON that is generated from documents stored in MongoDB, where none of
+the modes described above will suffice.   For those situations a `JsonWriterSettings` instance can be customized with an application-provided 
+[`Converter`]({{< apiref "org/bson/json/Converter" >}}) for each BSON type.
+  
+Consider a situation where an application wants to output the hex string representation of an ObjectId as a simple JSON string.  Simply 
+register a custom `Converter` with `JsonWriterSettings` for the ObjectId type:
+
+```java
+        JsonWriterSettings settings = JsonWriterSettings.builder()
+                                              .outputMode(JsonMode.RELAXED)
+                                              .objectIdConverter((value, writer) -> writer.writeString(value.toHexString()))
+                                              .build();
+```
+
+A `JsonWriter` configured with these settings will use the given `JsonMode` as the default for all BSON types, but override the mode
+with any registered converters.
+
+### Reading JSON
 
 Consider the task of implementing a [mongoimport](http://docs.mongodb.org/manual/reference/program/mongoimport/)-like tool using the 
 Java driver.  
@@ -86,9 +114,7 @@ try {
 ```
 
 The `Document.parse()` static factory method constructs an instance of a `JsonReader` with the given string and returns an instance of an
-equivalent Document instance. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it. 
-
- 
+equivalent Document. `JsonReader` automatically detects the JSON flavor in the string, so you do not need to specify it.
 
 
 
