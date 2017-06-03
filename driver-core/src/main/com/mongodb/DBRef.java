@@ -123,7 +123,7 @@ public class DBRef implements Serializable {
     @Override
     public String toString() {
         return "{ "
-                       + "\"$ref\" : \"" + collectionName + "\", \"$id\" : \"" + id + ""
+                       + "\"$ref\" : \"" + collectionName + "\", \"$id\" : \"" + id + "\""
                        + (databaseName == null ? "" : ", \"$db\" : \"" + databaseName + "\"")
                        + " }";
     }
