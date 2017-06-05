@@ -13,6 +13,13 @@ title = "Quick Start"
 The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-async/src/examples/tour/QuickTour.java">}}) example code
 that can be found with the async driver source on github.
 
+{{% note %}}
+There are two higher level MongoDB Asynchronous Java Drivers available, that users may find easier to work with due to their friendlier APIs:
+
+* [MongoDB RxJava Driver](http://mongodb.github.io/mongo-java-driver-rx/) An RxJava implementation of the MongoDB Driver.
+* [MongoDB Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/) A Reactive Streams implementation for the JVM.
+{{% /note %}}
+
 ## SingleResultCallback
 
 The MongoDB Async driver provides an asynchronous API that can leverage either Netty or Java 7's `AsynchronousSocketChannel` for fast and non-blocking I/O.
