@@ -92,8 +92,8 @@ class DBRefSpecification extends Specification {
 
     def 'should stringify'() {
         expect:
-        new DBRef('foo.bar', 4).toString() == '{ "$ref" : "foo.bar", "$id" : "4 }'
-        new DBRef('mydb', 'foo.bar', 4).toString() == '{ "$ref" : "foo.bar", "$id" : "4, "$db" : "mydb" }'
+        new DBRef('foo.bar', 4).toString() == '{ "$ref" : "foo.bar", "$id" : "4" }'
+        new DBRef('mydb', 'foo.bar', 4).toString() == '{ "$ref" : "foo.bar", "$id" : "4", "$db" : "mydb" }'
     }
 
     def 'testSerialization'() throws Exception {
