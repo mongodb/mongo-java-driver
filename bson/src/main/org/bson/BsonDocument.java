@@ -69,7 +69,10 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      */
     public BsonDocument(final List<BsonElement> bsonElements) {
         for (BsonElement cur : bsonElements) {
-            put(cur.getName(), cur.getValue());
+            final String name = cur.getName();
+            if (!containsKey(name)) {
+                put(name, cur.getValue());
+            }
         }
     }
 
