@@ -60,6 +60,7 @@ import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
+import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -463,10 +464,12 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         Document profileDocument = profileCollectionHelper.find().get(0)
-        if (serverVersionAtLeast(3, 2)) {
-            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('comment'));
+        if (serverVersionAtLeast(asList(3, 5, 8))) {
+            assertEquals(expectedComment, ((Document) profileDocument.get('command')).get('comment'))
+        } else if (serverVersionAtLeast(3, 2)) {
+            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('comment'))
         } else {
-            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('$comment'));
+            assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('$comment'))
         }
 
         cleanup:
