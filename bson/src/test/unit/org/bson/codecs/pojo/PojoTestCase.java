@@ -40,6 +40,7 @@ import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
+import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
@@ -295,6 +296,32 @@ abstract class PojoTestCase {
         @Override
         public String decode(final BsonReader reader, final DecoderContext decoderContext) {
             return reader.readObjectId().toHexString();
+        }
+    }
+
+    class SimpleEnumCodec implements Codec<SimpleEnum> {
+
+        @Override
+        public void encode(final BsonWriter writer, final SimpleEnum value, final EncoderContext encoderContext) {
+            writer.writeInt32(value.ordinal());
+        }
+
+        @Override
+        public Class<SimpleEnum> getEncoderClass() {
+            return SimpleEnum.class;
+        }
+
+        @Override
+        public SimpleEnum decode(final BsonReader reader, final DecoderContext decoderContext) {
+            int ordinal = reader.readInt32();
+            switch (ordinal){
+                case 0:
+                    return SimpleEnum.ALPHA;
+                case 1:
+                    return SimpleEnum.BRAVO;
+                default:
+                    return SimpleEnum.CHARLIE;
+            }
         }
     }
 }
