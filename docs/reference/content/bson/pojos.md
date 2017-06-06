@@ -149,6 +149,40 @@ serializable because they are bound to the concrete types `Integer`, `String` an
 On their own, instances of `GenericTree` or `GenericClass` are not serializable by the `PojoCodec`. This is because the runtime type parameter
 information is erased by the JVM, and the type parameters cannot be specialized accurately.
 
+### Enum support
+
+Enums are fully supported. The `PojoCodec` uses the name of the enum constant as the field value. This is then converted back into an Enum 
+value by the codec using the static `Enum.valueOf` method.
+
+Take the following example:
+
+```Java
+
+public enum Membership {
+    UNREGISTERED,
+    SUBSCRIBER,
+    PREMIUM
+}
+
+public class Person {
+    private String firstName;
+    private String lastName;
+    private Member membership = Member.UNREGISTERED;
+
+    public Person() { }
+
+    public Person(final String firstName, final String lastName, final Membership membership) { }
+
+    // Rest of implementation
+}
+```
+
+The instance of `new Person("Bryan", "May", SUBSCRIBER);` would be serialized to the equivalent of 
+`{ firstName: "Bryan", lastName: "May", membership: "SUBSCRIBER"}`. 
+
+If you require an alternative representation of the Enum, you can override how a Enum is stored by registering a custom `Codec` for the Enum in the `CodecRegistry`.
+
+
 ### Conventions
 
 The [`Convention`]({{<apiref "org/bson/codecs/pojo/Convention.html">}}) interface provides a mechanism for `ClassModelBuilder`
