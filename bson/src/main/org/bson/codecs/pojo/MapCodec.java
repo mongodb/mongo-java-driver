@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-class MapCodec<T> implements Codec<Map<String, T>> {
+final class MapCodec<T> implements Codec<Map<String, T>> {
     private final Class<Map<String, T>> encoderClass;
     private final Codec<T> codec;
 

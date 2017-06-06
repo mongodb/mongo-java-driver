@@ -27,7 +27,7 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import java.util.Collection;
 
 
-class CollectionCodec<T> implements Codec<Collection<T>> {
+final class CollectionCodec<T> implements Codec<Collection<T>> {
     private final Class<Collection<T>> encoderClass;
     private final Codec<T> codec;
 
