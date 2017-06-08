@@ -10,7 +10,7 @@ title = "Observables"
 
 ## Observables
 
-The MongoDB Async Driver is fully callback based and makes extensive use of [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/client/SingleResultCallback" >}}) to achieve this. The `SingleResultCallback<T>` interface requires the implementation of a single method `onResult(T result, Throwable t)` which is called once the operation has completed or errored. The `result` parameter contains the result of the operation if successful. If the operation failed for any reason then the `t` contains the `Throwable` reason for the failure. This pattern allows the users application logic to be deferred until the underlying network IO to MongoDB has been completed. 
+The MongoDB Async Driver is fully callback-based and makes extensive use of [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/client/SingleResultCallback" >}}) to achieve this. The `SingleResultCallback<T>` interface requires the implementation of a single method `onResult(T result, Throwable t)` which is called once the operation has completed or errored. The `result` parameter contains the result of the operation if successful. If the operation failed for any reason then the `t` contains the `Throwable` reason for the failure. This pattern allows the users application logic to be deferred until the underlying network IO to MongoDB has been completed. 
 
 The callback pattern is extremely flexible but can quickly become unwieldy if the application logic requires a chain of operations. Nesting of callbacks can make code harder to read and give the appearance of making the codebase more complex that it actually is. To help with this we also have released two observable based asynchronous drivers: 
 
@@ -19,7 +19,7 @@ The callback pattern is extremely flexible but can quickly become unwieldy if th
 
 These observable drivers follow similar patterns that split the logic into `onNext`, `onError` and `onComplete(d)` methods. These methods split out the logic used by `SingleResultCallback<T>.onResult(T result, Throwable t)` into individual components that can make the code  easier to reason with.
 
-The MongoDB Async Driver provides a factory and interfaces that do the heavy lifting of converting callback based operations into an observable operations.  There are three interfaces [`Observable`]({{< apiref "com/mongodb/async/client/Observable" >}}), [`Subscription`]({{< apiref "com/mongodb/async/client/Subscription" >}}) and [`Observer`]({{< apiref "com/mongodb/async/client/Observer" >}}). The [`Observables`]({{< apiref "com/mongodb/async/client/Observables" >}}) helpers convert any callback based operations into observable operations.
+The MongoDB Async Driver provides a factory and interfaces that do the heavy lifting of converting callback-based operations into an observable operations.  There are three interfaces [`Observable`]({{< apiref "com/mongodb/async/client/Observable" >}}), [`Subscription`]({{< apiref "com/mongodb/async/client/Subscription" >}}) and [`Observer`]({{< apiref "com/mongodb/async/client/Observer" >}}). The [`Observables`]({{< apiref "com/mongodb/async/client/Observables" >}}) helpers convert any callback-based operations into observable operations.
 
 {{% note %}}
 The interfaces are similar to `Publisher`, `Subscription` and `Subscriber` interfaces from the [reactive streams](http://www.reactive-streams.org/) JVM implementation.  However, we prefer the name `Observerable` to `Publisher` and `Observer` to `Subscriber` for readability purposes.
@@ -68,9 +68,9 @@ In the following example we iterate and print out all json forms of documents in
     });
 ```
 
-## Wrapping a callback based method
+## Wrapping a callback-based method
 
-Creating an `Observable` from any callback based methods requires the wrapping of the method inside a [`Block`]({{< apiref "com/mongodb/Block" >}}). This allows the execution of the operation to be delayed, until demand is request by the `Subscription`.  The method *must* use the supplied callback to convert the results into an `Observable`. 
+Creating an `Observable` from any callback-based methods requires the wrapping of the method inside a [`Block`]({{< apiref "com/mongodb/Block" >}}). This allows the execution of the operation to be delayed, until demand is request by the `Subscription`.  The method *must* use the supplied callback to convert the results into an `Observable`. 
 
 In the following example we print out the count of the number of documents in a collection:
 

@@ -1,6 +1,6 @@
 ## The MongoDB Asynchronous Java Driver
 
-A callback based fully non-blocking and asynchronous I/O operations MongoDB Java driver.
+A callback-based fully non-blocking and asynchronous I/O operations MongoDB Java driver.
 
 ## Binaries
 
