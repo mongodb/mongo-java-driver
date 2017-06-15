@@ -101,6 +101,7 @@ final class NettyStream implements Stream {
         handler.get();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         Bootstrap bootstrap = new Bootstrap();

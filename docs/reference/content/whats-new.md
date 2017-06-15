@@ -7,9 +7,22 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-# What's New
+# What's New 3.5
 
-This release includes full support for the upcoming MongoDB 3.4 server release.  Key new features include:
+
+### KeepAlive configuration deprecated
+
+The 3.5 release deprecated socket keep-alive settings, also socket keep-alive checks are now on by default.
+It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
+
+See the 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+documentation for more information.
+
+
+## What's New in 3.4
+
+The 3.4 release included full support for the upcoming MongoDB 3.4 server release.  Key new features include:
 
 ### Support for Decimal128 Format
 

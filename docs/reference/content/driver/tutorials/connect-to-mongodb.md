@@ -19,6 +19,15 @@ MongoClient constructors, see
 [`MongoClient() API documentation`]({{< apiref "com/mongodb/MongoClient.html">}}).
 {{% /note %}}
 
+{{% note %}}
+The 3.5 release deprecated socket keep-alive settings, also socket keep-alive checks are now on by default.
+It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
+
+See the 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+documentation for more information.
+{{% /note %}}
+
 ## Prerequisites
 
 - Running MongoDB deployments to which to connect. For example, to connect to a standalone, you must have a running standalone.

@@ -21,7 +21,9 @@ import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+@SuppressWarnings('deprecation')
 class SocketSettingsSpecification extends Specification {
+
     def 'should have correct defaults'() {
         when:
         def settings = SocketSettings.builder().build()
@@ -29,7 +31,7 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 10000
         settings.getReadTimeout(MILLISECONDS) == 0
-        !settings.keepAlive
+        settings.keepAlive
         settings.receiveBufferSize == 0
         settings.sendBufferSize == 0
     }
@@ -39,17 +41,16 @@ class SocketSettingsSpecification extends Specification {
         def settings = SocketSettings.builder()
                                      .connectTimeout(5000, MILLISECONDS)
                                      .readTimeout(2000, MILLISECONDS)
-                                     .keepAlive(true)
+                                     .keepAlive(false)
                                      .sendBufferSize(1000)
                                      .receiveBufferSize(1500)
-                                     .keepAlive(true)
                                      .build()
 
 
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
         settings.getReadTimeout(MILLISECONDS) == 2000
-        settings.keepAlive
+        !settings.keepAlive
         settings.sendBufferSize == 1000
         settings.receiveBufferSize == 1500
     }
@@ -65,7 +66,7 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
         settings.getReadTimeout(MILLISECONDS) == 2000
-        !settings.keepAlive
+        settings.keepAlive
         settings.sendBufferSize == 0
         settings.receiveBufferSize == 0
     }
@@ -79,7 +80,6 @@ class SocketSettingsSpecification extends Specification {
                       .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
-                      .keepAlive(true)
                       .build() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
@@ -87,7 +87,6 @@ class SocketSettingsSpecification extends Specification {
                       .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
-                      .keepAlive(true)
                       .build()
     }
 
@@ -105,7 +104,6 @@ class SocketSettingsSpecification extends Specification {
                       .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
-                      .keepAlive(true)
                       .build().hashCode() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
@@ -113,7 +111,6 @@ class SocketSettingsSpecification extends Specification {
                       .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
-                      .keepAlive(true)
                       .build().hashCode()
     }
 

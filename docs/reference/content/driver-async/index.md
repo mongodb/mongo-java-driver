@@ -18,7 +18,7 @@ There are two higher level MongoDB Asynchronous Java Drivers available, that use
 * [MongoDB Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/) A Reactive Streams implementation for the JVM.
 {{% /note %}}
 
-### What's New in 3.4
+### What's New in 3.5
 
 The [What's New]({{< relref "whats-new.md" >}}) guide explains the major new features of the driver.
 
