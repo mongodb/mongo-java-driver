@@ -18,9 +18,12 @@ package com.mongodb.event;
 
 import com.mongodb.annotations.Beta;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.newSetFromMap;
 
 /**
@@ -30,6 +33,24 @@ import static java.util.Collections.newSetFromMap;
 public final class ConnectionPoolEventMulticaster implements ConnectionPoolListener {
     private final Set<ConnectionPoolListener> connectionPoolListeners
         = newSetFromMap(new ConcurrentHashMap<ConnectionPoolListener, Boolean>());
+
+    /**
+     * Default Constructor
+     */
+    public ConnectionPoolEventMulticaster() {
+
+    }
+
+    /**
+     * Creates multicaster from a collection of connection pool listeners
+     *
+     * @param connectionPoolListeners list of connection pool listeners
+     */
+    public ConnectionPoolEventMulticaster(final List<ConnectionPoolListener> connectionPoolListeners) {
+        notNull("connectionPoolListeners", connectionPoolListeners);
+        isTrue("All ConnectionPoolListener instances are non-null", !connectionPoolListeners.contains(null));
+        this.connectionPoolListeners.addAll(connectionPoolListeners);
+    }
 
     /**
      * Adds the given connection pool listener to the list of listeners to invoke on connection pool events.

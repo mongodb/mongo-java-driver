@@ -589,6 +589,7 @@ class MongoClientOptionsSpecification extends Specification {
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
+                        'connectionListeners', 'connectionPoolListeners',
                         'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout',
                         'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
                         'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',

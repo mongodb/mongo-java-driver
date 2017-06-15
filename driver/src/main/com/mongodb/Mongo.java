@@ -33,9 +33,14 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
+
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandEventMulticaster;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ConnectionEventMulticaster;
+import com.mongodb.event.ConnectionListener;
+import com.mongodb.event.ConnectionPoolEventMulticaster;
+import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
@@ -49,9 +54,11 @@ import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonBoolean;
 
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -751,7 +758,8 @@ public class Mongo {
                                                                           options.getSslSettings(),
                                                                           options.getSocketFactory()),
                                                   credentialsList, null,
-                                                  new JMXConnectionPoolListener(), null,
+                                                  createConnectionPoolListener(options.getConnectionPoolListeners()),
+                                                  createConnectionListener(options.getConnectionListeners()),
                                                   createCommandListener(options.getCommandListeners()),
                                                   options.getApplicationName(),
                                                   mongoDriverInformation);
@@ -765,6 +773,29 @@ public class Mongo {
                 return commandListeners.get(0);
             default:
                 return new CommandEventMulticaster(commandListeners);
+        }
+    }
+
+    private static ConnectionListener createConnectionListener(final List<ConnectionListener> connectionListeners) {
+        switch (connectionListeners.size()) {
+            case 0:
+                return null;
+            case 1:
+                return connectionListeners.get(0);
+            default:
+                return new ConnectionEventMulticaster(connectionListeners);
+        }
+    }
+
+    private static ConnectionPoolListener createConnectionPoolListener(final List<ConnectionPoolListener> connectionPoolListeners) {
+        switch (connectionPoolListeners.size()) {
+            case 0:
+                return new JMXConnectionPoolListener();
+            default:
+                List<ConnectionPoolListener> listeners = new LinkedList<ConnectionPoolListener>();
+                listeners.add(new JMXConnectionPoolListener());
+                listeners.addAll(connectionPoolListeners);
+                return new ConnectionPoolEventMulticaster(listeners);
         }
     }
 

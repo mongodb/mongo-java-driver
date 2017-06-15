@@ -18,6 +18,8 @@ package com.mongodb
 
 import com.mongodb.event.ClusterListener
 import com.mongodb.event.CommandListener
+import com.mongodb.event.ConnectionListener
+import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import org.bson.Document
@@ -80,12 +82,20 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 }
             }
         }
+        def connectionPoolListener = Mock(ConnectionPoolListener){
+            (1.._) * connectionPoolOpened(_)
+        }
+        def connectionListener = Mock(ConnectionListener){
+            (1.._) * connectionOpened(_)
+        }
 
         def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
                 MongoClientOptions.builder(mongoClientURI.options)
                         .addClusterListener(clusterListener)
                         .addServerListener(serverListener)
                         .addServerMonitorListener(serverMonitorListener)
+                        .addConnectionPoolListener(connectionPoolListener)
+                        .addConnectionListener(connectionListener)
                         .build());
 
         when:
@@ -114,6 +124,12 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 }
             }
         }
+        def connectionPoolListener = Mock(ConnectionPoolListener){
+            (1.._) * connectionPoolOpened(_)
+        }
+        def connectionListener = Mock(ConnectionListener){
+            (1.._) * connectionOpened(_)
+        }
         def clusterListenerTwo = Mock(ClusterListener) {
             1 * clusterOpening(_)
         }
@@ -127,15 +143,25 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 }
             }
         }
+        def connectionPoolListenerTwo = Mock(ConnectionPoolListener){
+            (1.._) * connectionPoolOpened(_)
+        }
+        def connectionListenerTwo = Mock(ConnectionListener){
+            (1.._) * connectionOpened(_)
+        }
 
         def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
                 MongoClientOptions.builder(mongoClientURI.options)
                         .addClusterListener(clusterListener)
                         .addServerListener(serverListener)
                         .addServerMonitorListener(serverMonitorListener)
+                        .addConnectionPoolListener(connectionPoolListener)
+                        .addConnectionListener(connectionListener)
                         .addClusterListener(clusterListenerTwo)
                         .addServerListener(serverListenerTwo)
                         .addServerMonitorListener(serverMonitorListenerTwo)
+                        .addConnectionPoolListener(connectionPoolListenerTwo)
+                        .addConnectionListener(connectionListenerTwo)
                         .build());
 
         when:

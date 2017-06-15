@@ -22,8 +22,11 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
+import com.mongodb.event.ConnectionListener;
+import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -97,6 +100,8 @@ public class MongoClientOptions {
     private final List<ClusterListener> clusterListeners;
     private final List<ServerListener> serverListeners;
     private final List<ServerMonitorListener> serverMonitorListeners;
+    private final List<ConnectionListener> connectionListeners;
+    private final List<ConnectionPoolListener> connectionPoolListeners;
 
     @SuppressWarnings("deprecation")
     private MongoClientOptions(final Builder builder) {
@@ -134,6 +139,8 @@ public class MongoClientOptions {
         clusterListeners = builder.clusterListeners;
         serverListeners = builder.serverListeners;
         serverMonitorListeners = builder.serverMonitorListeners;
+        connectionListeners = builder.connectionListeners;
+        connectionPoolListeners = builder.connectionPoolListeners;
 
         connectionPoolSettings = ConnectionPoolSettings.builder()
                                                        .minSize(getMinConnectionsPerHost())
@@ -573,6 +580,26 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the list of added {@code ConnectionListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of connection listeners
+     * @since 3.5
+     */
+    public List<ConnectionListener> getConnectionListeners() {
+        return Collections.unmodifiableList(connectionListeners);
+    }
+
+    /**
+     * Gets the list of added {@code ConnectionPoolListener}. The default is an empty list.
+     *
+     * @return the unmodifiable list of connection pool listeners
+     * @since 3.5
+     */
+    public List<ConnectionPoolListener> getConnectionPoolListeners() {
+        return Collections.unmodifiableList(connectionPoolListeners);
+    }
+
+    /**
      * Override the decoder factory.
      *
      * <p>Default is for the standard Mongo Java driver configuration.</p>
@@ -875,6 +902,8 @@ public class MongoClientOptions {
         private final List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
         private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
         private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
+        private final List<ConnectionListener> connectionListeners = new ArrayList<ConnectionListener>();
+        private final List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
 
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
@@ -955,6 +984,8 @@ public class MongoClientOptions {
             clusterListeners.addAll(options.getClusterListeners());
             serverListeners.addAll(options.getServerListeners());
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
+            connectionListeners.addAll(options.getConnectionListeners());
+            connectionPoolListeners.addAll(options.getConnectionPoolListeners());
         }
 
         /**
@@ -1274,7 +1305,7 @@ public class MongoClientOptions {
         }
 
         /**
-         * Adds the given server monitro listener.
+         * Adds the given server monitor listener.
          *
          * @param serverMonitorListener the non-null server monitor listener
          * @return this
@@ -1283,6 +1314,32 @@ public class MongoClientOptions {
         public Builder addServerMonitorListener(final ServerMonitorListener serverMonitorListener) {
             notNull("serverMonitorListener", serverMonitorListener);
             serverMonitorListeners.add(serverMonitorListener);
+            return this;
+        }
+
+        /**
+         * Adds the given connectoin listener.
+         *
+         * @param connectionListener the non-null connection listener
+         * @return this
+         * @since 3.5
+         */
+        public Builder addConnectionListener(final ConnectionListener connectionListener) {
+            notNull("connectionListener", connectionListener);
+            connectionListeners.add(connectionListener);
+            return this;
+        }
+
+        /**
+         * Adds the given connection pool listener.
+         *
+         * @param connectionPoolListener the non-null connection pool listener
+         * @return this
+         * @since 3.5
+         */
+        public Builder addConnectionPoolListener(final ConnectionPoolListener connectionPoolListener) {
+            notNull("connectionPoolListener", connectionPoolListener);
+            connectionPoolListeners.add(connectionPoolListener);
             return this;
         }
 
