@@ -29,6 +29,8 @@ import static com.mongodb.internal.connection.SslHelper.enableSni;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class SocketStreamHelper {
+
+    @SuppressWarnings("deprecation")
     static void initialize(final Socket socket, final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings)
     throws IOException {
         socket.setTcpNoDelay(true);

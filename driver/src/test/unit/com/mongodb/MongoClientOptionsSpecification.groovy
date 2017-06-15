@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static spock.util.matcher.HamcrestSupport.expect
 
+@SuppressWarnings('deprecation')
 class MongoClientOptionsSpecification extends Specification {
 
     def 'should set the correct default values'() {
@@ -54,7 +55,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
-        !options.isSocketKeepAlive()
+        options.isSocketKeepAlive()
         !options.isSslEnabled()
         !options.isSslInvalidHostNameAllowed()
         options.getSslContext() == null
@@ -162,7 +163,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
                                         .threadsAllowedToBlockForConnectionMultiplier(2)
-                                        .socketKeepAlive(true)
+                                        .socketKeepAlive(false)
                                         .socketFactory(socketFactory)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
@@ -192,7 +193,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
-        options.isSocketKeepAlive()
+        !options.isSocketKeepAlive()
         options.socketFactory == socketFactory
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
@@ -213,9 +214,9 @@ class MongoClientOptionsSpecification extends Specification {
                                                                 .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
                                                                 .maxConnectionIdleTime(300, MILLISECONDS).build()
         options.socketSettings == SocketSettings.builder().connectTimeout(100, MILLISECONDS).readTimeout(700, MILLISECONDS)
-                                                .keepAlive(true).build()
+                                                .keepAlive(false).build()
         options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(15, MILLISECONDS).readTimeout(20, MILLISECONDS)
-                                                         .keepAlive(true).build()
+                                                         .keepAlive(false).build()
         options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
                                                 .build()
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
@@ -295,7 +296,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(true)
+                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -556,7 +557,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(true)
+                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())

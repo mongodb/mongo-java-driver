@@ -24,6 +24,15 @@ deployment (e.g. standalone, replica set, or a sharded cluster) and use it acros
 -  To dispose of an instance, call `MongoClient.close()` to clean up resources.
 {{% /note %}}
 
+{{% note %}}
+The 3.5 release deprecated socket keep-alive settings, also socket keep-alive checks are now on by default.
+It is *strongly recommended* that system keep-alive settings should be configured with shorter timeouts. 
+
+See the 
+['does TCP keep-alive time affect MongoDB deployments?']({{<docsref "/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">}}) 
+documentation for more information.
+{{% /note %}}
+
 
 ## Prerequisites
 

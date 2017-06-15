@@ -165,14 +165,13 @@ class MongoClientURISpecification extends Specification {
         MongoClientOptions options = new MongoClientURI('mongodb://localhost').getOptions();
 
         then:
-        options.getConnectionsPerHost() == 100;
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 5;
-        options.getMaxWaitTime() == 120000;
-        options.getConnectTimeout() == 10000;
-        options.getSocketTimeout() == 0;
-        !options.isSocketKeepAlive();
-        options.getDescription() == null;
-        options.getReadPreference() == ReadPreference.primary();
+        options.getConnectionsPerHost() == 100
+        options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
+        options.getMaxWaitTime() == 120000
+        options.getConnectTimeout() == 10000
+        options.getSocketTimeout() == 0
+        options.getDescription() == null
+        options.getReadPreference() == ReadPreference.primary()
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
     }
