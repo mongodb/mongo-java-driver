@@ -21,6 +21,7 @@ import com.mongodb.annotations.Immutable;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -32,7 +33,7 @@ public class ServerAddress implements Serializable {
 
     private final String host;
     private final int port;
-    private final InetSocketAddress address;
+    private final SocketAddress address;
 
     /**
      * Creates a ServerAddress with default host and port
@@ -94,7 +95,7 @@ public class ServerAddress implements Serializable {
      * @param port mongod port
      * @param address an instance of socket address or `null`
      */
-    protected ServerAddress(final String host, final int port, final InetSocketAddress address) {
+    protected ServerAddress(final String host, final int port, final SocketAddress address) {
         this.host = host;
         this.port = port;
         this.address = address;
@@ -205,7 +206,7 @@ public class ServerAddress implements Serializable {
      *
      * @return socket address
      */
-    public InetSocketAddress getSocketAddress() {
+    public SocketAddress getSocketAddress() {
         if (address != null) {
             return address;
         }
