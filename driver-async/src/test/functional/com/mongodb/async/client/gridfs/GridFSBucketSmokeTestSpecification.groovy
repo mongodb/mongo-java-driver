@@ -44,6 +44,7 @@ import static com.mongodb.async.client.TestHelper.runSlow
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Updates.unset
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
@@ -510,6 +511,48 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         fileAsDocument.getDocument('metadata').getBinary('uuid').getType() == 4 as byte
+    }
+
+    @Unroll
+    def 'should handle missing file name data when downloading #description'() {
+        given:
+        def content = multiChunkString
+        def contentBytes = content as byte[]
+        ObjectId fileId
+
+        when:
+        if (direct) {
+            fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()));
+        } else {
+            def outputStream = gridFSBucket.openUploadStream('myFile')
+            run(outputStream.&write, ByteBuffer.wrap(contentBytes))
+            run(outputStream.&close)
+            fileId = outputStream.getObjectId()
+        }
+
+        then:
+        run(filesCollection.&count) == 1
+
+        when:
+        // Remove filename
+        run(filesCollection.&updateOne, eq('_id', fileId), unset('filename'))
+
+        def byteBuffer = ByteBuffer.allocate(contentBytes.length)
+        if (direct) {
+            run(gridFSBucket.openDownloadStream(fileId).&read, byteBuffer)
+        } else {
+            def outputStream = toAsyncOutputStream(byteBuffer)
+            run(gridFSBucket.&downloadToStream, fileId, outputStream)
+            run(outputStream.&close)
+        }
+
+        then:
+        byteBuffer.array() == contentBytes
+
+        where:
+        description | direct
+        'directly'  | true
+        'a stream'  | false
     }
 }
 

@@ -35,6 +35,8 @@ import java.security.MessageDigest
 
 import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Updates.unset
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
@@ -556,5 +558,48 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         gridFSContentBytes == contentBytes
+    }
+
+    @Unroll
+    def 'should handle missing file name data when downloading #description'() {
+        given:
+        def content = multiChunkString
+        def contentBytes = content as byte[]
+        ObjectId fileId
+        byte[] gridFSContentBytes
+
+        when:
+        if (direct) {
+            fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
+        } else {
+            def outputStream = gridFSBucket.openUploadStream('myFile')
+            outputStream.write(contentBytes)
+            outputStream.close()
+            fileId = outputStream.getObjectId()
+        }
+
+        then:
+        filesCollection.count() == 1
+
+        when:
+        // Remove filename
+        filesCollection.updateOne(eq('_id', fileId), unset('filename'))
+
+        if (direct) {
+            gridFSContentBytes = gridFSBucket.openDownloadStream(fileId).getBytes()
+        } else {
+            def outputStream = new ByteArrayOutputStream(contentBytes.length)
+            gridFSBucket.downloadToStream(fileId, outputStream)
+            outputStream.close()
+            gridFSContentBytes = outputStream.toByteArray()
+        }
+
+        then:
+        gridFSContentBytes == contentBytes
+
+        where:
+        description | direct
+        'directly'  | true
+        'a stream'  | false
     }
 }
