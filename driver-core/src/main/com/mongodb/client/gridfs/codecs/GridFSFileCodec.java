@@ -65,7 +65,7 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         BsonDocument bsonDocument = bsonDocumentCodec.decode(reader, decoderContext);
 
         BsonValue id = bsonDocument.get("_id");
-        String filename = bsonDocument.getString("filename").getValue();
+        String filename = bsonDocument.get("filename", new BsonString("")).asString().getValue();
         long length = bsonDocument.getNumber("length").longValue();
         int chunkSize = bsonDocument.getNumber("chunkSize").intValue();
         Date uploadDate = new Date(bsonDocument.getDateTime("uploadDate").getValue());
