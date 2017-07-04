@@ -20,30 +20,25 @@ import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import org.junit.Test;
 
-public final class ByteCodecTest extends CodecTestCase {
+public final class LongCodecTest extends CodecTestCase {
 
     @Test
-    public void shouldRoundTripByteValues() {
-        roundTrip(new Document("a", Byte.MAX_VALUE));
-        roundTrip(new Document("a", Byte.MIN_VALUE));
+    public void shouldRoundTripLongValues() {
+        roundTrip(new Document("a", Long.MAX_VALUE));
+        roundTrip(new Document("a", Long.MIN_VALUE));
     }
 
     @Test
     public void shouldHandleAlternativeNumberValues() {
-        Document expected = new Document("a", new Byte("10"));
+        Document expected = new Document("a", 10L);
         roundTrip(new Document("a", 10), expected);
         roundTrip(new Document("a", 10.00), expected);
         roundTrip(new Document("a", 9.9999999999999992), expected);
     }
 
     @Test(expected = BsonInvalidOperationException.class)
-    public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", Integer.MIN_VALUE));
-    }
-
-    @Test(expected = BsonInvalidOperationException.class)
-    public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Integer.MAX_VALUE));
+    public void shouldThrowWhenHandlingLossyValues() {
+        roundTrip(new Document("a", Double.MAX_VALUE));
     }
 
     @Test(expected = BsonInvalidOperationException.class)
@@ -53,6 +48,6 @@ public final class ByteCodecTest extends CodecTestCase {
 
     @Override
     DocumentCodecProvider getDocumentCodecProvider() {
-        return getSpecificNumberDocumentCodecProvider(Byte.class);
+        return getSpecificNumberDocumentCodecProvider(Long.class);
     }
 }

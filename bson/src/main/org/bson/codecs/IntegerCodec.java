@@ -19,12 +19,15 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
+import static org.bson.codecs.NumberCodecHelper.decodeInt;
+
 /**
  * Encodes and decodes {@code Integer} objects.
  *
  * @since 3.0
  */
 public class IntegerCodec implements Codec<Integer> {
+
     @Override
     public void encode(final BsonWriter writer, final Integer value, final EncoderContext encoderContext) {
         writer.writeInt32(value);
@@ -32,7 +35,7 @@ public class IntegerCodec implements Codec<Integer> {
 
     @Override
     public Integer decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return reader.readInt32();
+        return decodeInt(reader);
     }
 
     @Override

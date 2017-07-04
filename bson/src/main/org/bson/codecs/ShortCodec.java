@@ -21,6 +21,7 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
 import static java.lang.String.format;
+import static org.bson.codecs.NumberCodecHelper.decodeInt;
 
 /**
  * Encodes and decodes {@code Short} objects.
@@ -28,6 +29,7 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class ShortCodec implements Codec<Short> {
+
     @Override
     public void encode(final BsonWriter writer, final Short value, final EncoderContext encoderContext) {
         writer.writeInt32(value);
@@ -35,7 +37,7 @@ public class ShortCodec implements Codec<Short> {
 
     @Override
     public Short decode(final BsonReader reader, final DecoderContext decoderContext) {
-        int value = reader.readInt32();
+        int value = decodeInt(reader);
         if (value < Short.MIN_VALUE || value > Short.MAX_VALUE) {
             throw new BsonInvalidOperationException(format("%s can not be converted into a Short.", value));
         }

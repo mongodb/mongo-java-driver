@@ -20,39 +20,33 @@ import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
 import org.junit.Test;
 
-public final class ByteCodecTest extends CodecTestCase {
+public final class DoubleCodecTest extends CodecTestCase {
 
     @Test
-    public void shouldRoundTripByteValues() {
-        roundTrip(new Document("a", Byte.MAX_VALUE));
-        roundTrip(new Document("a", Byte.MIN_VALUE));
+    public void shouldRoundTripDoubleValues() {
+        roundTrip(new Document("a", Long.MAX_VALUE), new Document("a", (double) Long.MAX_VALUE));
+        roundTrip(new Document("a", Long.MIN_VALUE), new Document("a", (double) Long.MIN_VALUE));
     }
 
     @Test
     public void shouldHandleAlternativeNumberValues() {
-        Document expected = new Document("a", new Byte("10"));
+        Document expected = new Document("a", 10.00);
         roundTrip(new Document("a", 10), expected);
-        roundTrip(new Document("a", 10.00), expected);
-        roundTrip(new Document("a", 9.9999999999999992), expected);
+        roundTrip(new Document("a", 10L), expected);
     }
 
     @Test(expected = BsonInvalidOperationException.class)
-    public void shouldErrorDecodingOutsideMinRange() {
-        roundTrip(new Document("a", Integer.MIN_VALUE));
+    public void shouldThrowWhenHandlingLossyLongValues() {
+        roundTrip(new Document("a", Long.MAX_VALUE - 1));
     }
 
     @Test(expected = BsonInvalidOperationException.class)
-    public void shouldErrorDecodingOutsideMaxRange() {
-        roundTrip(new Document("a", Integer.MAX_VALUE));
-    }
-
-    @Test(expected = BsonInvalidOperationException.class)
-    public void shouldThrowWhenHandlingLossyDoubleValues() {
-        roundTrip(new Document("a", 9.9999999999999991));
+    public void shouldThrowWhenHandlingLossyLongValues2() {
+        roundTrip(new Document("a", Long.MIN_VALUE + 1));
     }
 
     @Override
     DocumentCodecProvider getDocumentCodecProvider() {
-        return getSpecificNumberDocumentCodecProvider(Byte.class);
+        return getSpecificNumberDocumentCodecProvider(Double.class);
     }
 }
