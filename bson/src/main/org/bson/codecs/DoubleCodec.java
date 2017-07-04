@@ -19,6 +19,8 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
+import static org.bson.codecs.NumberCodecHelper.decodeDouble;
+
 /**
  * Encodes and decodes {@code Double} objects.
  *
@@ -32,7 +34,7 @@ public class DoubleCodec implements Codec<Double> {
 
     @Override
     public Double decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return reader.readDouble();
+        return decodeDouble(reader);
     }
 
     @Override

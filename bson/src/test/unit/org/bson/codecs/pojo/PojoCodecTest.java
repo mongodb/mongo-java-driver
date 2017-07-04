@@ -90,6 +90,14 @@ public final class PojoCodecTest extends PojoTestCase {
     }
 
     @Test
+    public void testNumberCoercionInPrimitivesModel() {
+        PrimitivesModel model = getPrimitivesModel();
+        decodesTo(getCodecRegistry(getPojoCodecProviderBuilder(PrimitivesModel.class)),
+                "{ 'myBoolean': true, 'myByte': 1.0, 'myCharacter': '1', 'myDouble': 1, 'myFloat': 2, "
+                        + "'myInteger': { '$numberLong': '3' }, 'myLong': 5.0, 'myShort': { '$numberLong': '6' }}", model);
+    }
+
+    @Test
     public void testRoundTripConcreteCollectionsModel() {
         ConcreteCollectionsModel  model = getConcreteCollectionsModel();
         roundTrip(getPojoCodecProviderBuilder(ConcreteCollectionsModel.class), model,

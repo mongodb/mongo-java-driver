@@ -17,23 +17,24 @@
 package org.bson.codecs;
 
 import org.bson.BsonInvalidOperationException;
-import org.bson.BsonType;
 import org.bson.Document;
 import org.junit.Test;
 
-import java.util.HashMap;
-
 public final class ShortCodecTest extends CodecTestCase {
-
-    DocumentCodecProvider getDocumentCodecProvider() {
-        HashMap<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
-        replacements.put(BsonType.INT32, Short.class);
-        return new DocumentCodecProvider(new BsonTypeClassMap(replacements));
-    }
 
     @Test
     public void shouldRoundTripFloatValues() {
-        roundTrip(new Document("a", new Short("1")));
+        roundTrip(new Document("a", Short.MAX_VALUE));
+        roundTrip(new Document("a", Short.MIN_VALUE));
+    }
+
+    @Test
+    public void shouldHandleAlternativeNumberValues() {
+        Document expected = new Document("a", new Short("10"));
+        roundTrip(new Document("a", 10), expected);
+        roundTrip(new Document("a", 10L), expected);
+        roundTrip(new Document("a", 10.00), expected);
+        roundTrip(new Document("a", 9.9999999999999992), expected);
     }
 
     @Test(expected = BsonInvalidOperationException.class)
@@ -44,5 +45,10 @@ public final class ShortCodecTest extends CodecTestCase {
     @Test(expected = BsonInvalidOperationException.class)
     public void shouldErrorDecodingOutsideMaxRange() {
         roundTrip(new Document("a", Integer.MAX_VALUE));
+    }
+
+    @Override
+    DocumentCodecProvider getDocumentCodecProvider() {
+        return getSpecificNumberDocumentCodecProvider(Short.class);
     }
 }

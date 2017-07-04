@@ -21,6 +21,7 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
 import static java.lang.String.format;
+import static org.bson.codecs.NumberCodecHelper.decodeInt;
 
 /**
  * Encodes and decodes {@code Byte} objects.
@@ -28,6 +29,7 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class ByteCodec implements Codec<Byte> {
+
     @Override
     public void encode(final BsonWriter writer, final Byte value, final EncoderContext encoderContext) {
         writer.writeInt32(value);
@@ -35,7 +37,7 @@ public class ByteCodec implements Codec<Byte> {
 
     @Override
     public Byte decode(final BsonReader reader, final DecoderContext decoderContext) {
-        int value = reader.readInt32();
+        int value = decodeInt(reader);
         if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
             throw new BsonInvalidOperationException(format("%s can not be converted into a Byte.", value));
         }

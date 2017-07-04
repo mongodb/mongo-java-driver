@@ -21,6 +21,7 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 
 import static java.lang.String.format;
+import static org.bson.codecs.NumberCodecHelper.decodeDouble;
 
 /**
  * Encodes and decodes {@code Float} objects.
@@ -28,6 +29,7 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class FloatCodec implements Codec<Float> {
+
     @Override
     public void encode(final BsonWriter writer, final Float value, final EncoderContext encoderContext) {
         writer.writeDouble(value);
@@ -35,7 +37,7 @@ public class FloatCodec implements Codec<Float> {
 
     @Override
     public Float decode(final BsonReader reader, final DecoderContext decoderContext) {
-        double value = reader.readDouble();
+        double value = decodeDouble(reader);
         if (value < -Float.MAX_VALUE || value > Float.MAX_VALUE) {
             throw new BsonInvalidOperationException(format("%s can not be converted into a Float.", value));
         }

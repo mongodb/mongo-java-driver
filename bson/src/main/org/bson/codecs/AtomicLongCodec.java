@@ -21,6 +21,8 @@ import org.bson.BsonWriter;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.bson.codecs.NumberCodecHelper.decodeLong;
+
 /**
  * Encodes and decodes {@code AtomicLong} objects.
  *
@@ -28,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 
 public class AtomicLongCodec implements Codec<AtomicLong> {
+
     @Override
     public void encode(final BsonWriter writer, final AtomicLong value, final EncoderContext encoderContext) {
         writer.writeInt64(value.longValue());
@@ -35,7 +38,7 @@ public class AtomicLongCodec implements Codec<AtomicLong> {
 
     @Override
     public AtomicLong decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return new AtomicLong(reader.readInt64());
+        return new AtomicLong(decodeLong(reader));
     }
 
     @Override
