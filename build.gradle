@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import static org.gradle.util.CollectionUtils.single
 
 apply plugin: 'eclipse'
@@ -27,12 +28,14 @@ buildscript {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         jcenter()
         mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
         mavenLocal()
     }
     dependencies {
         classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.2'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
         classpath 'com.bmuschko:gradle-nexus-plugin:2.2'
+        classpath "gradle.plugin.com.github.spotbugs:gradlePlugin:1.6.0"
     }
 }
 
@@ -165,7 +168,7 @@ def getGitVersion() {
 
 configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
     apply plugin: 'checkstyle'
-    apply plugin: 'findbugs'
+    apply plugin: "com.github.spotbugs"
     apply plugin: 'jacoco'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
@@ -266,10 +269,10 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         configProperties.checkstyleConfigDir = configDir
     }
 
-    findbugs {
+    spotbugs {
         excludeFilter = new File(configDir, 'findbugs-exclude.xml')
         sourceSets = [sourceSets.main]
-        toolVersion = '3.0.1'
+        toolVersion = '3.1.0'
     }
 
     codenarc {
@@ -277,7 +280,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
-    tasks.withType(FindBugs) {
+    tasks.withType(com.github.spotbugs.SpotBugsTask) {
         reports {
             xml.enabled = project.buildingWith('xmlReports.enabled')
             html.enabled = !project.buildingWith('xmlReports.enabled')
