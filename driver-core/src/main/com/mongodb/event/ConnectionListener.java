@@ -22,8 +22,11 @@ import java.util.EventListener;
 
 /**
  * A listener for connection-related events.
+ *
+ * @deprecated - No longer used
  */
 @Beta
+@Deprecated
 public interface ConnectionListener extends EventListener {
 
     /**

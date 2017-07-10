@@ -17,15 +17,15 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for adding a new connection to the pool.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionAddedEvent {
     private final ConnectionId connectionId;
 

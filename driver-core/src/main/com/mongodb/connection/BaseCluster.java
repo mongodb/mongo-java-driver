@@ -27,7 +27,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
-import com.mongodb.event.ClusterEventMulticaster;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerListener;
@@ -46,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
+import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -72,8 +73,7 @@ abstract class BaseCluster implements Cluster {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
-        this.clusterListener = settings.getClusterListeners().isEmpty()
-                                       ? new NoOpClusterListener() : new ClusterEventMulticaster(settings.getClusterListeners());
+        this.clusterListener = getClusterListener(settings);
         clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
     }
 
@@ -189,7 +189,7 @@ abstract class BaseCluster implements Cluster {
             }
             return curDescription;
         } catch (InterruptedException e) {
-            throw new MongoInterruptedException(format("Interrupted while waiting to connect"), e);
+            throw new MongoInterruptedException("Interrupted while waiting to connect", e);
         }
     }
 
@@ -355,10 +355,8 @@ abstract class BaseCluster implements Cluster {
         return result;
     }
 
-    protected ClusterableServer createServer(final ServerAddress serverAddress,
-                                             final ServerListener serverListener) {
-        ClusterableServer server = serverFactory.create(serverAddress, serverListener);
-        return server;
+    protected ClusterableServer createServer(final ServerAddress serverAddress, final ServerListener serverListener) {
+        return serverFactory.create(serverAddress, createServerListener(serverFactory.getSettings(), serverListener));
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {

@@ -58,6 +58,29 @@ class ConnectionPoolSettingsSpecification extends Specification {
                 .maintenanceFrequency(
                 1000, SECONDS)
                 .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
+        ConnectionPoolSettings
+                .builder(ConnectionPoolSettings.builder()
+                    .maxWaitTime(5, SECONDS)
+                    .maxSize(75)
+                    .maxWaitQueueSize(11)
+                    .maxConnectionLifeTime(101, SECONDS)
+                    .maxConnectionIdleTime(51, SECONDS)
+                    .minSize(1)
+                    .maintenanceInitialDelay(5, SECONDS)
+                    .maintenanceFrequency(1000, SECONDS)
+                    .build())
+                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
+        ConnectionPoolSettings
+                .builder(ConnectionPoolSettings.builder().build())
+                .maxWaitTime(5, SECONDS)
+                .maxSize(75)
+                .maxWaitQueueSize(11)
+                .maxConnectionLifeTime(101, SECONDS)
+                .maxConnectionIdleTime(51, SECONDS)
+                .minSize(1)
+                .maintenanceInitialDelay(5, SECONDS)
+                .maintenanceFrequency(1000, SECONDS)
+                .build()                      | 5000 | 75 | 11 | 101000 | 51000 | 1 | 5000 | 1000000
     }
 
     def 'should throw exception on invalid argument'() {

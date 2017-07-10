@@ -16,7 +16,6 @@
 
 package com.mongodb.management;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.ConnectionAddedEvent;
@@ -40,9 +39,8 @@ import static java.util.Arrays.asList;
 /**
  * A connection pool listener that manages a set of JMX MBeans, one for each connection pool.
  *
- * @since 3.0
+ * @since 3.5
  */
-@Beta
 public class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ServerId, ConnectionPoolStatistics> map =
         new ConcurrentHashMap<ServerId, ConnectionPoolStatistics>();

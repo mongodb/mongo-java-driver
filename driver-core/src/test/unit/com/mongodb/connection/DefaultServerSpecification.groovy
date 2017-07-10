@@ -42,6 +42,7 @@ import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -61,7 +62,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_, _) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
 
         when:
         def receivedConnection = server.getConnection()
@@ -89,7 +90,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_, _) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
 
         when:
         def latch = new CountDownLatch(1)
@@ -113,11 +114,10 @@ class DefaultServerSpecification extends Specification {
 
         def connectionFactory = Mock(ConnectionFactory)
         def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(), connectionFactory,
-                new TestServerMonitorFactory(serverId),
-                [serverListener], null)
+                new TestServerMonitorFactory(serverId), serverListener, null)
 
         when:
-        server.invalidate();
+        server.invalidate()
 
         then:
         1 * serverListener.serverDescriptionChanged(_)
@@ -136,7 +136,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
 
         when:
         server.getConnection()
@@ -158,7 +158,7 @@ class DefaultServerSpecification extends Specification {
                 '123'.toCharArray()),
                 'Auth failed')
         def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(exceptionToThrow), connectionFactory,
-                serverMonitorFactory, [new NoOpServerListener()], null)
+                serverMonitorFactory, NO_OP_SERVER_LISTENER, null)
 
         when:
         def latch = new CountDownLatch(1)
@@ -185,7 +185,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -233,7 +233,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -260,7 +260,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -297,7 +297,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], null)
+                NO_OP_SERVER_LISTENER, null)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
@@ -337,7 +337,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                [new NoOpServerListener()], commandListener)
+                NO_OP_SERVER_LISTENER, commandListener)
         def testConnection = (TestConnection) server.getConnection()
 
         testConnection.enqueueProtocol(protocol)

@@ -17,26 +17,23 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
 /**
  * An event for entering the wait queue of the connection pool.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionPoolWaitQueueEnteredEvent {
     private final ServerId serverId;
-    private final long threadId;
 
     /**
      * Construct an instance.
      *
      * @param serverId the server id
-     * @param threadId the id of the thread that's waiting
      */
-    public ConnectionPoolWaitQueueEnteredEvent(final ServerId serverId, final long threadId) {
+    public ConnectionPoolWaitQueueEnteredEvent(final ServerId serverId) {
         this.serverId = serverId;
-        this.threadId = threadId;
     }
 
     /**
@@ -48,19 +45,10 @@ public final class ConnectionPoolWaitQueueEnteredEvent {
         return serverId;
     }
 
-    /**
-     * Gets the thread id
-     * @return the thread id
-     */
-    public long getThreadId() {
-        return threadId;
-    }
-
     @Override
     public String toString() {
         return "ConnectionPoolWaitQueueEnteredEvent{"
                        + "serverId=" + serverId
-                       + ", threadId=" + threadId
                        + '}';
     }
 }

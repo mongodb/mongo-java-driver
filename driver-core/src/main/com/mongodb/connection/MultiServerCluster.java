@@ -21,6 +21,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
+import com.mongodb.event.ServerListenerAdapter;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -120,7 +121,7 @@ final class MultiServerCluster extends BaseCluster {
     }
 
 
-    private final class DefaultServerStateListener extends NoOpServerListener {
+    private final class DefaultServerStateListener extends ServerListenerAdapter {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             onChange(event);

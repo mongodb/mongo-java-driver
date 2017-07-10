@@ -17,36 +17,68 @@
 package com.mongodb.async.client
 
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.connection.ClusterSettings
+import com.mongodb.connection.ConnectionPoolSettings
+import com.mongodb.connection.ServerSettings
+import com.mongodb.event.ClusterListener
 import com.mongodb.event.CommandListener
+import com.mongodb.event.ConnectionPoolListener
+import com.mongodb.event.ServerListener
+import com.mongodb.event.ServerMonitorListener
 import org.bson.Document
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class MongoClientListenerRegistrationSpecification extends FunctionalSpecification {
 
-    def 'should register single command listener'() {
+    def 'should register event listeners'() {
         given:
-        def first = Mock(CommandListener)
-        def client = MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
-                .addCommandListener(first)
-                .build());
+        def clusterListener = Mock(ClusterListener) {
+            (1.._) * _
+        }
+        def commandListener = Mock(CommandListener) {
+            (1.._) * _
+        }
+        def connectionPoolListener = Mock(ConnectionPoolListener) {
+            (1.._) * _
+        }
+        def serverListener = Mock(ServerListener) {
+            (1.._) * _
+        }
+        def serverMonitorListener = Mock(ServerMonitorListener) {
+            (1.._) * _
+        }
 
         when:
-        run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
+        def defaultSettings = Fixture.mongoClientBuilderFromConnectionString.build()
+
+        def clusterSettings = ClusterSettings.builder(defaultSettings.getClusterSettings()).addClusterListener(clusterListener).build()
+        def connectionPoolSettings = ConnectionPoolSettings.builder(defaultSettings.getConnectionPoolSettings())
+                .addConnectionPoolListener(connectionPoolListener).build()
+        def serverSettings = ServerSettings.builder(defaultSettings.getServerSettings()).addServerListener(serverListener)
+                .addServerMonitorListener(serverMonitorListener).build()
+        def clientSettings = MongoClientSettings.builder()
+                .clusterSettings(clusterSettings)
+                .connectionPoolSettings(connectionPoolSettings)
+                .serverSettings(serverSettings)
+                .credentialList(defaultSettings.getCredentialList())
+                .sslSettings(defaultSettings.getSslSettings())
+                .socketSettings(defaultSettings.getSocketSettings())
+                .addCommandListener(commandListener)
+                .build()
+
+        def client = MongoClients.create(clientSettings)
 
         then:
-        1 * first.commandStarted(_)
-        1 * first.commandSucceeded(_)
+        run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
     }
 
     def 'should register multiple command listeners'() {
         given:
         def first = Mock(CommandListener)
         def second = Mock(CommandListener)
-        def client = MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
-                .addCommandListener(first)
-                .addCommandListener(second)
-                .build());
+        def client =  MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
+                .addCommandListener(first).addCommandListener(second).build())
 
         when:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))

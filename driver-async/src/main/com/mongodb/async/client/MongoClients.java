@@ -31,9 +31,6 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
-import com.mongodb.event.CommandEventMulticaster;
-import com.mongodb.event.CommandListener;
-import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
@@ -42,8 +39,8 @@ import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
-import java.util.List;
 
+import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -188,12 +185,10 @@ public final class MongoClients {
     static MongoClient createMongoClient(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          final Closeable externalResourceCloser) {
-        return new MongoClientImpl(settings, new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), streamFactory,
-                heartbeatStreamFactory,
-                settings.getCredentialList(), null, new JMXConnectionPoolListener(), null,
-                createCommandListener(settings.getCommandListeners()),
-                settings.getApplicationName(), mongoDriverInformation), externalResourceCloser);
+        return new MongoClientImpl(settings, new DefaultClusterFactory().createCluster(settings.getClusterSettings(),
+                settings.getServerSettings(), settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory,
+                settings.getCredentialList(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
+                mongoDriverInformation), externalResourceCloser);
     }
 
     /**
@@ -249,17 +244,6 @@ public final class MongoClients {
             return requestedStreamType;
         } else {
             return System.getProperty("org.mongodb.async.type", "nio2");
-        }
-    }
-
-    static CommandListener createCommandListener(final List<CommandListener> commandListeners) {
-        switch (commandListeners.size()) {
-            case 0:
-                return null;
-            case 1:
-                return commandListeners.get(0);
-            default:
-                return new CommandEventMulticaster(commandListeners);
         }
     }
 

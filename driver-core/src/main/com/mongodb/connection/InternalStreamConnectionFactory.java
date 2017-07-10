@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoDriverInformation;
-import com.mongodb.event.ConnectionListener;
 import org.bson.BsonDocument;
 
 import java.util.ArrayList;
@@ -29,15 +28,12 @@ import static com.mongodb.connection.ClientMetadataHelper.createClientMetadataDo
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
-    private final ConnectionListener connectionListener;
     private final BsonDocument clientMetadataDocument;
     private final List<Authenticator> authenticators;
 
     InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
-                                    final ConnectionListener connectionListener, final String applicationName,
-                                    final MongoDriverInformation mongoDriverInformation) {
+                                    final String applicationName, final MongoDriverInformation mongoDriverInformation) {
         this.streamFactory = notNull("streamFactory", streamFactory);
-        this.connectionListener = notNull("connectionListener", connectionListener);
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         notNull("credentialList", credentialList);
         this.authenticators = new ArrayList<Authenticator>(credentialList.size());
@@ -49,8 +45,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Override
     public InternalConnection create(final ServerId serverId) {
         return new InternalStreamConnection(serverId, streamFactory,
-                                            new InternalStreamConnectionInitializer(authenticators, clientMetadataDocument),
-                                                   connectionListener);
+                                            new InternalStreamConnectionInitializer(authenticators, clientMetadataDocument));
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {

@@ -23,7 +23,7 @@ import com.mongodb.event.ServerListener;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.Arrays.asList;
+import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 
 public class DefaultTestClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings settings = ServerSettings.builder().build();
@@ -45,11 +45,10 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
         TestServerMonitorFactory serverMonitorFactory = new TestServerMonitorFactory(new ServerId(clusterId, serverAddress));
         serverAddressToServerMonitorFactoryMap.put(serverAddress, serverMonitorFactory);
 
-
-
         return new DefaultServer(new ServerId(clusterId, serverAddress), clusterConnectionMode, new TestConnectionPool(),
                 new TestConnectionFactory(), serverMonitorFactory,
-                                        asList(serverListener, serverListenerFactory.create(serverAddress)), null);
+                createServerListener(ServerSettings.builder().addServerListener(serverListener).build(),
+                        serverListenerFactory.create(serverAddress)), null);
     }
 
     @Override
@@ -61,4 +60,5 @@ public class DefaultTestClusterableServerFactory implements ClusterableServerFac
     public void sendNotification(final ServerAddress serverAddress, final ServerDescription serverDescription) {
         serverAddressToServerMonitorFactoryMap.get(serverAddress).sendNotification(serverDescription);
     }
+
 }

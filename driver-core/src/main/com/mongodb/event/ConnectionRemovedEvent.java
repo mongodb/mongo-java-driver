@@ -17,15 +17,15 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for removing a connection from the pool.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionRemovedEvent {
     private final ConnectionId connectionId;
 

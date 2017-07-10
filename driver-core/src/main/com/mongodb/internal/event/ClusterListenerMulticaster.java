@@ -1,11 +1,11 @@
 /*
- * Copyright 2008-2016 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,51 +14,30 @@
  * limitations under the License.
  */
 
-package com.mongodb.event;
+package com.mongodb.internal.event;
 
-import com.mongodb.annotations.Immutable;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.ClusterClosedEvent;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.ClusterOpeningEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
-import static java.util.Collections.unmodifiableList;
 
-/**
- * A multicaster for cluster events.
- *
- * @since 3.3
- * @deprecated register multiple cluster listeners instead
- */
-@Deprecated
-@Immutable
-public final class ClusterEventMulticaster implements ClusterListener {
+
+final class ClusterListenerMulticaster implements ClusterListener {
     private static final Logger LOGGER = Loggers.getLogger("cluster.event");
 
     private final List<ClusterListener> clusterListeners;
 
-    /**
-     * Construct an instance with the given list of cluster listeners
-     *
-     * @param clusterListeners the non-null list of cluster listeners, none of which may be null
-     */
-    public ClusterEventMulticaster(final List<ClusterListener> clusterListeners) {
-        notNull("clusterListeners", clusterListeners);
+    ClusterListenerMulticaster(final List<ClusterListener> clusterListeners) {
         isTrue("All ClusterListener instances are non-null", !clusterListeners.contains(null));
         this.clusterListeners = new ArrayList<ClusterListener>(clusterListeners);
-    }
-
-    /**
-     * Gets the cluster listeners.
-     *
-     * @return the cluster listeners
-     */
-    public List<ClusterListener> getClusterListeners() {
-        return unmodifiableList(clusterListeners);
     }
 
     @Override

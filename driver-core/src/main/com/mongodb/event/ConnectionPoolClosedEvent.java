@@ -17,15 +17,15 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ServerId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event signifying the closing of a connection pool.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionPoolClosedEvent {
     private final ServerId serverId;
 

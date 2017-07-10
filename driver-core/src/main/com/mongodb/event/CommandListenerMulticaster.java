@@ -25,7 +25,7 @@ import java.util.List;
  * logged.
  *
  * @since 3.1
- * @deprecated Prefer {@link CommandEventMulticaster}
+ * @deprecated register multiple command listeners in the settings
  */
 @Immutable
 @Deprecated

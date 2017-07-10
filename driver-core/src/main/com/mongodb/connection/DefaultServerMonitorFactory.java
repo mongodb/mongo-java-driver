@@ -25,7 +25,8 @@ class DefaultServerMonitorFactory implements ServerMonitorFactory {
     private final ConnectionPool connectionPool;
 
     DefaultServerMonitorFactory(final ServerId serverId, final ServerSettings settings,
-                                final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
+                                final InternalConnectionFactory internalConnectionFactory,
+                                final ConnectionPool connectionPool) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
