@@ -169,18 +169,19 @@ class GridFSDownloadStreamSpecification extends Specification {
 
     def 'should skip to the correct point'() {
         given:
-        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 60L, 25, new Date(), 'abc', new Document())
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 4194297L, 32,
+                new Date(), 'abc', new Document())
 
-        def firstChunkBytes = 1..25 as byte[]
-        def thirdChunkBytes = 51 .. 60 as byte[]
+        def firstChunkBytes = 1..32 as byte[]
+        def lastChunkBytes = 33 .. 57 as byte[]
 
         def sort = new Document('n', 1)
 
         def findQueries = [new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 0)),
-                           new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 2))]
+                           new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 131071))]
         def chunkDocuments =
                 [new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes)),
-                 new Document('files_id', fileInfo.getId()).append('n', 2).append('data', new Binary(thirdChunkBytes))]
+                 new Document('files_id', fileInfo.getId()).append('n', 131071).append('data', new Binary(lastChunkBytes))]
 
         def mongoCursor = Mock(MongoCursor)
         def findIterable = Mock(FindIterable)
@@ -210,10 +211,10 @@ class GridFSDownloadStreamSpecification extends Specification {
         readByte == [16, 17, 18, 19, 20] as byte[]
 
         when:
-        skipResult = downloadStream.skip(35)
+        skipResult = downloadStream.skip(4194272)
 
         then:
-        skipResult == 35L
+        skipResult == 4194272L
         0 * chunksCollection.find(_)
 
         when:
@@ -228,7 +229,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         1 * mongoCursor.next() >> chunkDocuments[1]
 
         then:
-        readByte == [56, 57, 58, 59, 60] as byte[]
+        readByte == [53, 54, 55, 56, 57] as byte[]
 
         when:
         skipResult = downloadStream.skip(1)
