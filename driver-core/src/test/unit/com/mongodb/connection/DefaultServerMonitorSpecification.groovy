@@ -43,24 +43,23 @@ class DefaultServerMonitorSpecification extends Specification {
         def changeListener = new ChangeListener<ServerDescription>() {
             @Override
             void stateChanged(final ChangeEvent<ServerDescription> event) {
-                stateChanged = true;
+                stateChanged = true
             }
         }
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(100); }
+                    open() >> { sleep(100) }
                 }
             }
         }
-        monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
-                ServerSettings.builder().addServerListener(new NoOpServerListener()).build(), changeListener, internalConnectionFactory,
-                new TestConnectionPool())
+        monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
+                changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
 
         when:
         monitor.close()
-        monitor.monitorThread.join();
+        monitor.monitorThread.join()
 
         then:
         !stateChanged
@@ -76,8 +75,8 @@ class DefaultServerMonitorSpecification extends Specification {
 
         def latch = new CountDownLatch(1)
         def startedEvent
-        def succeededEvent;
-        def failedEvent;
+        def succeededEvent
+        def failedEvent
 
         def serverMonitorListener = new ServerMonitorListener() {
             @Override
@@ -161,8 +160,8 @@ class DefaultServerMonitorSpecification extends Specification {
 
         def latch = new CountDownLatch(1)
         def startedEvent
-        def succeededEvent;
-        def failedEvent;
+        def succeededEvent
+        def failedEvent
 
         def serverMonitorListener = new ServerMonitorListener() {
             @Override

@@ -28,11 +28,8 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerEventMulticaster;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
-
-import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -54,10 +51,8 @@ class DefaultServer implements ClusterableServer {
 
     DefaultServer(final ServerId serverId, final ClusterConnectionMode clusterConnectionMode, final ConnectionPool connectionPool,
                   final ConnectionFactory connectionFactory, final ServerMonitorFactory serverMonitorFactory,
-                  final List<ServerListener> serverListeners, final CommandListener commandListener) {
-        notNull("serverListeners", serverListeners);
-        serverListener = serverListeners.isEmpty() ? new NoOpServerListener() : new ServerEventMulticaster(serverListeners);
-
+                  final ServerListener serverListener, final CommandListener commandListener) {
+        this.serverListener = notNull("serverListener", serverListener);
         this.commandListener = commandListener;
         notNull("serverAddress", serverId);
         notNull("serverMonitorFactory", serverMonitorFactory);

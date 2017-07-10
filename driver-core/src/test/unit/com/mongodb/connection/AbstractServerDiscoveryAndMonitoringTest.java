@@ -130,17 +130,19 @@ public class AbstractServerDiscoveryAndMonitoringTest {
                                            .hosts(getHosts(connectionString))
                                            .mode(mode)
                                            .requiredReplicaSetName(connectionString.getRequiredReplicaSetName())
-                                           .addClusterListener(clusterListener)
                                            .build();
 
         ClusterId clusterId = new ClusterId();
 
         factory = new DefaultTestClusterableServerFactory(clusterId, mode, serverListenerFactory);
 
+        ClusterSettings clusterSettings = settings.getClusterListeners().contains(clusterListener) ? settings
+                : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
+
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, settings, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
         } else {
-            cluster = new MultiServerCluster(clusterId, settings, factory);
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
         }
     }
 

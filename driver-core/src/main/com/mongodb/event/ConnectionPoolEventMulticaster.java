@@ -25,8 +25,11 @@ import static java.util.Collections.newSetFromMap;
 
 /**
  * A multicaster for connection pool events.
+ *
+ * @deprecated register multiple command listeners instead
  */
 @Beta
+@Deprecated
 public final class ConnectionPoolEventMulticaster implements ConnectionPoolListener {
     private final Set<ConnectionPoolListener> connectionPoolListeners
         = newSetFromMap(new ConcurrentHashMap<ConnectionPoolListener, Boolean>());

@@ -23,7 +23,6 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ServerHeartbeatFailedEvent;
 import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
-import com.mongodb.event.ServerMonitorEventMulticaster;
 import com.mongodb.event.ServerMonitorListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -36,6 +35,7 @@ import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.UNKNOWN;
+import static com.mongodb.internal.event.EventListenerHelper.getServerMonitorListener;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -50,21 +50,19 @@ class DefaultServerMonitor implements ServerMonitor {
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
-    private final ServerSettings settings;
+    private final ServerSettings serverSettings;
     private final ServerMonitorRunnable monitor;
     private final Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile boolean isClosed;
 
-    DefaultServerMonitor(final ServerId serverId, final ServerSettings settings,
+    DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
                          final ChangeListener<ServerDescription> serverStateListener,
                          final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
-        this.settings = settings;
+        this.serverSettings = serverSettings;
         this.serverId = serverId;
-        this.serverMonitorListener = settings.getServerMonitorListeners().isEmpty()
-                                             ? new NoOpServerMonitorListener()
-                                             : new ServerMonitorEventMulticaster(settings.getServerMonitorListeners());
+        this.serverMonitorListener = getServerMonitorListener(serverSettings);
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
@@ -146,7 +144,7 @@ class DefaultServerMonitor implements ServerMonitor {
                         try {
                             logStateChange(previousServerDescription, currentServerDescription);
                             serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
-                                                                                                       currentServerDescription));
+                                    currentServerDescription));
                         } catch (Throwable t) {
                             LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
                         }
@@ -204,8 +202,8 @@ class DefaultServerMonitor implements ServerMonitor {
             try {
                 long timeRemaining = waitForSignalOrTimeout();
                 if (timeRemaining > 0) {
-                    long timeWaiting = settings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
-                    long minimumNanosToWait = settings.getMinHeartbeatFrequency(NANOSECONDS);
+                    long timeWaiting = serverSettings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
+                    long minimumNanosToWait = serverSettings.getMinHeartbeatFrequency(NANOSECONDS);
                     if (timeWaiting < minimumNanosToWait) {
                         long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
                         if (millisToSleep > 0) {
@@ -221,7 +219,7 @@ class DefaultServerMonitor implements ServerMonitor {
         private long waitForSignalOrTimeout() throws InterruptedException {
             lock.lock();
             try {
-                return condition.awaitNanos(settings.getHeartbeatFrequency(NANOSECONDS));
+                return condition.awaitNanos(serverSettings.getHeartbeatFrequency(NANOSECONDS));
             } finally {
                 lock.unlock();
             }

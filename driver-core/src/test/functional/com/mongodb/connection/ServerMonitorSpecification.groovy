@@ -45,7 +45,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     CountDownLatch latch = new CountDownLatch(1)
 
     def cleanup() {
-        serverMonitor?.close();
+        serverMonitor?.close()
     }
 
     def 'should have positive round trip time'() {
@@ -215,7 +215,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                     }
                 },
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                        getSslSettings()), getCredentialList(), new NoOpConnectionListener(), null, null),
+                        getSslSettings()), getCredentialList(), null, null),
                 new TestConnectionPool())
         serverMonitor.start()
         serverMonitor

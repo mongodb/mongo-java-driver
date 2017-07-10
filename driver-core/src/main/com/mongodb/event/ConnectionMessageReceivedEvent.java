@@ -23,8 +23,11 @@ import static org.bson.assertions.Assertions.notNull;
 
 /**
  * An event signifying that a message has been received on a connection.
+ *
+ * @deprecated - No longer used
  */
 @Beta
+@Deprecated
 public final class ConnectionMessageReceivedEvent {
     private final int responseTo;
     private final int size;

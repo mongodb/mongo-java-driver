@@ -18,6 +18,7 @@ package com.mongodb.connection
 
 import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
+import com.mongodb.event.ClusterListener
 import com.mongodb.selector.WritableServerSelector
 import spock.lang.Specification
 
@@ -31,7 +32,7 @@ class ClusterSettingsSpecification extends Specification {
         when:
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
-                                      .build();
+                                      .build()
 
         then:
         settings.hosts == hosts
@@ -46,8 +47,8 @@ class ClusterSettingsSpecification extends Specification {
 
     def 'should set all properties'() {
         when:
-        def listenerOne = new NoOpClusterListener()
-        def listenerTwo = new NoOpClusterListener()
+        def listenerOne = Mock(ClusterListener)
+        def listenerTwo = Mock(ClusterListener)
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
@@ -317,7 +318,7 @@ class ClusterSettingsSpecification extends Specification {
         def settings = ClusterSettings.builder().hosts(hosts).build()
 
         when:
-        settings.clusterListeners.add(new NoOpClusterListener())
+        settings.clusterListeners.add(Mock(ClusterListener))
 
         then:
         thrown(UnsupportedOperationException)

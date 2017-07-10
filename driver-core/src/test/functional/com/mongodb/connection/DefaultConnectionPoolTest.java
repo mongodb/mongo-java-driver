@@ -58,8 +58,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maxWaitTime(50, MILLISECONDS)
-                                                                   .build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .build());
         provider.get();
 
         // when
@@ -80,8 +79,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maxWaitTime(500, MILLISECONDS)
-                                                                   .build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .build());
 
         provider.get();
 
@@ -107,8 +105,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxConnectionLifeTime(50, MILLISECONDS)
-                                                                   .build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .build());
 
         // when
         provider.get().close();
@@ -128,8 +125,7 @@ public class DefaultConnectionPoolTest {
                                              ConnectionPoolSettings.builder()
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         // when
         InternalConnection connection = provider.get();
@@ -149,8 +145,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionIdleTime(50, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .maxConnectionIdleTime(50, MILLISECONDS).build());
 
         // when
         provider.get().close();
@@ -171,8 +166,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         // when
         provider.get().close();
@@ -193,8 +187,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
-                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .maxConnectionLifeTime(20, MILLISECONDS).build());
 
         // when
         provider.get().close();
@@ -217,8 +210,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxConnectionLifeTime(1, MILLISECONDS)
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxWaitQueueSize(1)
-                                                                   .build(),
-                                             new NoOpConnectionPoolListener());
+                                                                   .build());
         provider.get().close();
 
         // when
@@ -234,35 +226,39 @@ public class DefaultConnectionPoolTest {
         // given
         QueueEventsConnectionPoolListener listener = new QueueEventsConnectionPoolListener();
 
+        // when
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                              ConnectionPoolSettings.builder()
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maxWaitTime(5, SECONDS)
-                                                                   .build(),
-                                             listener);
+                                                                   .addConnectionPoolListener(listener)
+                                                                   .build());
+
+        // then
+        assertEquals(0, listener.getWaitQueueSize());
 
         // when
         InternalConnection connection = provider.get();
-
         TimeoutTrackingConnectionGetter timeoutTrackingConnectionGetter = new TimeoutTrackingConnectionGetter(provider);
         new Thread(timeoutTrackingConnectionGetter).start();
         Thread.sleep(100);
 
+        // then
         try {
             provider.get();
             fail();
         } catch (MongoWaitQueueFullException e) {
-            // all good
+            assertEquals(1, listener.getWaitQueueSize());
         }
 
         // when
         connection.close();
-
         timeoutTrackingConnectionGetter.getLatch().await();
+        connection = provider.get();
 
         // then
-        connection = provider.get();
+        assertEquals(0, listener.getWaitQueueSize());
 
         // cleanup
         connection.close();

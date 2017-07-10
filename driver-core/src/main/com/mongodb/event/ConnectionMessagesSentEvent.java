@@ -23,8 +23,11 @@ import static org.bson.assertions.Assertions.notNull;
 
 /**
  * An event signifying that a message has been sent on a connection.
+ *
+ * @deprecated - No longer used
  */
 @Beta
+@Deprecated
 public final class ConnectionMessagesSentEvent {
     private final ConnectionId connectionId;
     private final int requestId;

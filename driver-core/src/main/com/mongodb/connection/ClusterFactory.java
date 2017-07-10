@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
 
 import java.util.List;
@@ -47,6 +46,7 @@ public interface ClusterFactory {
      * @param connectionListener       an optional listener for connection-related events
      * @return the cluster
      */
+    @SuppressWarnings("deprecation")
     Cluster create(ClusterSettings settings,
                    ServerSettings serverSettings,
                    ConnectionPoolSettings connectionPoolSettings,
@@ -55,7 +55,7 @@ public interface ClusterFactory {
                    List<MongoCredential> credentialList,
                    ClusterListener clusterListener,
                    ConnectionPoolListener connectionPoolListener,
-                   ConnectionListener connectionListener);
+                   com.mongodb.event.ConnectionListener connectionListener);
 
     // CHECKSTYLE:ON
 }

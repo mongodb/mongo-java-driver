@@ -34,11 +34,8 @@ import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.event.CommandEventMulticaster;
-import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
-import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
@@ -46,7 +43,6 @@ import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
-import com.mongodb.selector.ServerSelector;
 import org.bson.BsonBoolean;
 
 import java.util.ArrayList;
@@ -63,6 +59,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -695,7 +692,7 @@ public class Mongo {
     private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
-                                               ? asList(mongoURI.getCredentials())
+                                               ? singletonList(mongoURI.getCredentials())
                                                : Collections.<MongoCredential>emptyList();
 
         if (mongoURI.getHosts().size() == 1) {
@@ -714,70 +711,49 @@ public class Mongo {
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options,
                                          final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
-                                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                            .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
-                                            .serverSelector(createServerSelector(options))
-                                            .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
-                             credentialsList, options, mongoDriverInformation);
+        return createCluster(getClusterSettings(seedList, options, ClusterConnectionMode.MULTIPLE), credentialsList, options,
+                mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(ClusterSettings.builder()
-                                            .mode(getSingleServerClusterMode(options))
-                                            .hosts(asList(serverAddress))
-                                            .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                            .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
-                                            .serverSelector(createServerSelector(options))
-                                            .description(options.getDescription())
-                                            .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize()),
-                             credentialsList, options, mongoDriverInformation);
+        return createCluster(getClusterSettings(singletonList(serverAddress), options, getSingleServerClusterMode(options)),
+                credentialsList, options, mongoDriverInformation);
     }
 
-    private static Cluster createCluster(final ClusterSettings.Builder settingsBuilder, final List<MongoCredential> credentialsList,
+    private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
-        for (ClusterListener cur : options.getClusterListeners()) {
-            settingsBuilder.addClusterListener(cur);
-        }
-        return new DefaultClusterFactory().create(settingsBuilder.build(),
-                                                  options.getServerSettings(),
-                                                  options.getConnectionPoolSettings(),
-                                                  new SocketStreamFactory(options.getSocketSettings(),
-                                                                          options.getSslSettings(),
-                                                                          options.getSocketFactory()),
-                                                  new SocketStreamFactory(options.getHeartbeatSocketSettings(),
-                                                                          options.getSslSettings(),
-                                                                          options.getSocketFactory()),
-                                                  credentialsList, null,
-                                                  new JMXConnectionPoolListener(), null,
-                                                  createCommandListener(options.getCommandListeners()),
-                                                  options.getApplicationName(),
-                                                  mongoDriverInformation);
+        return new DefaultClusterFactory().createCluster(clusterSettings,
+                options.getServerSettings(),
+                options.getConnectionPoolSettings(),
+                new SocketStreamFactory(options.getSocketSettings(),
+                                        options.getSslSettings(),
+                                        options.getSocketFactory()),
+                new SocketStreamFactory(options.getHeartbeatSocketSettings(),
+                                        options.getSslSettings(),
+                                        options.getSocketFactory()),
+                credentialsList,
+                getCommandListener(options.getCommandListeners()),
+                options.getApplicationName(),
+                mongoDriverInformation);
     }
 
-    private static CommandListener createCommandListener(final List<CommandListener> commandListeners) {
-        switch (commandListeners.size()) {
-            case 0:
-                return null;
-            case 1:
-                return commandListeners.get(0);
-            default:
-                return new CommandEventMulticaster(commandListeners);
+    private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
+                                                      final ClusterConnectionMode clusterConnectionMode) {
+        List<ServerAddress> hosts = new ArrayList<ServerAddress>();
+        hosts.addAll(seedList);
+        ClusterSettings.Builder builder = ClusterSettings.builder()
+                .hosts(hosts)
+                .mode(clusterConnectionMode)
+                .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
+                .serverSelector(new LatencyMinimizingServerSelector(options.getLocalThreshold(), MILLISECONDS))
+                .description(options.getDescription())
+                .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize());
+        for (ClusterListener clusterListener: options.getClusterListeners()) {
+            builder.addClusterListener(clusterListener);
         }
-    }
-
-    private static List<ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        List<ServerAddress> retVal = new ArrayList<ServerAddress>(seedList.size());
-        for (final ServerAddress cur : seedList) {
-            retVal.add(cur);
-        }
-        return retVal;
-    }
-
-    private static ServerSelector createServerSelector(final MongoClientOptions options) {
-        return new LatencyMinimizingServerSelector(options.getLocalThreshold(), MILLISECONDS);
+        return builder.build();
     }
 
     Cluster getCluster() {

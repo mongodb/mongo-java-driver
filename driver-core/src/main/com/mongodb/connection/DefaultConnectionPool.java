@@ -50,8 +50,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
 import static java.lang.String.format;
-import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class DefaultConnectionPool implements ConnectionPool {
@@ -69,7 +69,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private volatile boolean closed;
 
     DefaultConnectionPool(final ServerId serverId, final InternalConnectionFactory internalConnectionFactory,
-                          final ConnectionPoolSettings settings, final ConnectionPoolListener connectionPoolListener) {
+                          final ConnectionPoolSettings settings) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory
@@ -77,7 +77,7 @@ class DefaultConnectionPool implements ConnectionPool {
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
-        this.connectionPoolListener = notNull("connectionPoolListener", connectionPoolListener);
+        this.connectionPoolListener = getConnectionPoolListener(settings);
         connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, settings));
     }
 
@@ -93,7 +93,7 @@ class DefaultConnectionPool implements ConnectionPool {
                 throw createWaitQueueFullException();
             }
             try {
-                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId));
                 PooledConnection pooledConnection = getPooledConnection(timeout, timeUnit);
                 if (!pooledConnection.opened()) {
                     try {
@@ -110,7 +110,7 @@ class DefaultConnectionPool implements ConnectionPool {
 
                 return pooledConnection;
             } finally {
-                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
+                connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId));
             }
         } finally {
             waitQueueSize.decrementAndGet();
@@ -150,7 +150,7 @@ class DefaultConnectionPool implements ConnectionPool {
             callback.onResult(null, createWaitQueueFullException());
         } else {
             final long startTimeMillis = System.currentTimeMillis();
-            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId, currentThread().getId()));
+            connectionPoolListener.waitQueueEntered(new ConnectionPoolWaitQueueEnteredEvent(serverId));
             getAsyncGetter().submit(new Runnable() {
                 @Override
                 public void run() {
@@ -165,7 +165,7 @@ class DefaultConnectionPool implements ConnectionPool {
                         errHandlingCallback.onResult(null, t);
                     } finally {
                         waitQueueSize.decrementAndGet();
-                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId, currentThread().getId()));
+                        connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueExitedEvent(serverId));
                     }
                 }
 

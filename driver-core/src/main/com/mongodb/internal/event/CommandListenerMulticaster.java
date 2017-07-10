@@ -1,67 +1,43 @@
 /*
- * Copyright 2016 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package com.mongodb.event;
+package com.mongodb.internal.event;
 
-import com.mongodb.annotations.Immutable;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.CommandFailedEvent;
+import com.mongodb.event.CommandListener;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
-import static java.util.Collections.unmodifiableList;
 
-/**
- * A multicaster for command events. Any exception thrown by one of the listeners will be caught and not re-thrown, but may be
- * logged.
- *
- * @since 3.3
- *
- * @deprecated register multiple command listeners instead
- */
-@Immutable
-@Deprecated
-public final class CommandEventMulticaster implements CommandListener {
+
+final class CommandListenerMulticaster implements CommandListener {
     private static final Logger LOGGER = Loggers.getLogger("protocol.event");
 
     private final List<CommandListener> commandListeners;
 
-    /**
-     * Construct an instance with the given list of command listeners
-     *
-     * @param commandListeners the non-null list of command listeners, none of which may be null
-     */
-    public CommandEventMulticaster(final List<CommandListener> commandListeners) {
-        notNull("commandListeners", commandListeners);
+    CommandListenerMulticaster(final List<CommandListener> commandListeners) {
         isTrue("All CommandListener instances are non-null", !commandListeners.contains(null));
         this.commandListeners = new ArrayList<CommandListener>(commandListeners);
-    }
-
-    /**
-     * Gets the command listeners.
-     *
-     * @return the unmodifiable set of command listeners
-     */
-    public List<CommandListener> getCommandListeners() {
-        return unmodifiableList(commandListeners);
     }
 
     @Override

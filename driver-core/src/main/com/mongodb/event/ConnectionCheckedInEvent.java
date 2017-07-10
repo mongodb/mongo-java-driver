@@ -17,15 +17,15 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An event for checking in a connection to the pool.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionCheckedInEvent {
     private final ConnectionId connectionId;
 

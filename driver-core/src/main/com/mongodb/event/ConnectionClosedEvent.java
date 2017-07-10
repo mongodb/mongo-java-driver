@@ -17,15 +17,15 @@
 
 package com.mongodb.event;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.connection.ConnectionId;
 
 import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A connection closed event.
+ *
+ * @since 3.5
  */
-@Beta
 public final class ConnectionClosedEvent {
 
     private final ConnectionId connectionId;
