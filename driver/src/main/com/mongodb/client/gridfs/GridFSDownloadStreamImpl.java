@@ -114,7 +114,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         }
 
         long skippedPosition = currentPosition + bytesToSkip;
-        bufferOffset = (int) skippedPosition % chunkSizeInBytes;
+        bufferOffset = (int) (skippedPosition % chunkSizeInBytes);
         if (skippedPosition >= length) {
             long skipped = length - currentPosition;
             chunkIndex = numberOfChunks - 1;
@@ -123,7 +123,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
             discardCursor();
             return skipped;
         } else {
-            int newChunkIndex = (int) Math.floor((float) skippedPosition / chunkSizeInBytes);
+            int newChunkIndex = (int) Math.floor(skippedPosition / (double) chunkSizeInBytes);
             if (chunkIndex != newChunkIndex) {
                 chunkIndex = newChunkIndex;
                 buffer = null;
@@ -161,9 +161,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
             return;
         }
 
-        bufferOffset = (int) markPosition % chunkSizeInBytes;
+        bufferOffset = (int) (markPosition % chunkSizeInBytes);
         currentPosition = markPosition;
-        int markChunkIndex = (int) Math.floor((float) markPosition / chunkSizeInBytes);
+        int markChunkIndex = (int) Math.floor(markPosition / (double) chunkSizeInBytes);
         if (markChunkIndex != chunkIndex) {
             chunkIndex = markChunkIndex;
             buffer = null;
