@@ -35,8 +35,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-//import static com.mongodb.connection.EventListeners.NOOP_CLUSTER_LISTENER;
-
 // See https://github.com/mongodb/specifications/tree/master/source/server-discovery-and-monitoring/tests
 @RunWith(Parameterized.class)
 public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAndMonitoringTest {
