@@ -740,10 +740,8 @@ public class Mongo {
 
     private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
                                                       final ClusterConnectionMode clusterConnectionMode) {
-        List<ServerAddress> hosts = new ArrayList<ServerAddress>();
-        hosts.addAll(seedList);
         ClusterSettings.Builder builder = ClusterSettings.builder()
-                .hosts(hosts)
+                .hosts(new ArrayList<ServerAddress>(seedList))
                 .mode(clusterConnectionMode)
                 .requiredReplicaSetName(options.getRequiredReplicaSetName())
                 .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
