@@ -29,6 +29,7 @@ import org.bson.io.BsonInput;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonReader;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -75,7 +76,7 @@ final class MessageHelper {
         headerByteBuffer.putLong(0); // cursorId
         headerByteBuffer.putInt(0); // startingFrom
         headerByteBuffer.putInt(numDocuments); //numberReturned
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
         return new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));

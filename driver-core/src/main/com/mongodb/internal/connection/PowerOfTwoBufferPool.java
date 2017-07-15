@@ -20,6 +20,7 @@ import com.mongodb.connection.BufferProvider;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -75,8 +76,8 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         ConcurrentPool<ByteBuffer> pool = powerOfTwoToPoolMap.get(log2(roundUpToNextHighestPowerOfTwo(size)));
         ByteBuffer byteBuffer = (pool == null) ? createNew(size) : pool.get();
 
-        byteBuffer.clear();
-        byteBuffer.limit(size);
+        ((Buffer) byteBuffer).clear();
+        ((Buffer) byteBuffer).limit(size);
         return new PooledByteBufNIO(byteBuffer);
     }
 

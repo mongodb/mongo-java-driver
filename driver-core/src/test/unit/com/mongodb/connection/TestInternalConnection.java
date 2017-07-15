@@ -27,6 +27,7 @@ import org.bson.codecs.Decoder;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Deque;
@@ -124,7 +125,7 @@ class TestInternalConnection implements InternalConnection {
             combined.put(buf.array(), 0, buf.remaining());
         }
 
-        combined.flip();
+        ((Buffer) combined).flip();
 
         Interaction interaction = replies.getFirst();
         if (interaction.responseBuffers != null) {
@@ -190,7 +191,7 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putLong(header.getCursorId());
         headerByteBuffer.putInt(header.getStartingFrom());
         headerByteBuffer.putInt(header.getNumberReturned());
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
         MessageHeader messageHeader = new MessageHeader(buffer, ConnectionDescription.getDefaultMaxMessageSize());

@@ -16,6 +16,7 @@
 
 package org.bson;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -98,7 +99,7 @@ public class ByteBufNIO implements ByteBuf {
 
     @Override
     public ByteBuf flip() {
-        buf.flip();
+        ((Buffer) buf).flip();
         return this;
     }
 
@@ -114,13 +115,13 @@ public class ByteBufNIO implements ByteBuf {
 
     @Override
     public ByteBuf position(final int newPosition) {
-        buf.position(newPosition);
+        ((Buffer) buf).position(newPosition);
         return this;
     }
 
     @Override
     public ByteBuf clear() {
-        buf.clear();
+        ((Buffer) buf).clear();
         return this;
     }
 
@@ -202,7 +203,7 @@ public class ByteBufNIO implements ByteBuf {
 
     @Override
     public ByteBuf limit(final int newLimit) {
-        buf.limit(newLimit);
+        ((Buffer) buf).limit(newLimit);
         return this;
     }
 
