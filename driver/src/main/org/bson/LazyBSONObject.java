@@ -29,6 +29,7 @@ import org.bson.types.Symbol;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channels;
@@ -261,8 +262,8 @@ public class LazyBSONObject implements BSONObject {
     private ByteBuffer getBufferForInternalBytes() {
         ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, bytes.length - offset).slice();
         buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.limit(buffer.getInt());
-        buffer.rewind();
+        ((Buffer) buffer).limit(buffer.getInt());
+        ((Buffer) buffer).rewind();
         return buffer;
     }
 

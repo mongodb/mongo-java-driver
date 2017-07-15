@@ -40,6 +40,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -378,7 +379,7 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private void readAndWriteInputStream(final AsyncInputStream source, final GridFSUploadStream uploadStream, final ByteBuffer buffer,
                                          final SingleResultCallback<Void> callback) {
-        buffer.clear();
+        ((Buffer) buffer).clear();
         source.read(buffer, new SingleResultCallback<Integer>() {
             @Override
             public void onResult(final Integer result, final Throwable t) {
@@ -398,7 +399,7 @@ final class GridFSBucketImpl implements GridFSBucket {
                         callback.onResult(null, t);
                     }
                 } else if (result > 0) {
-                    buffer.flip();
+                    ((Buffer) buffer).flip();
                     uploadStream.write(buffer, new SingleResultCallback<Integer>() {
                         @Override
                         public void onResult(final Integer result, final Throwable t) {
@@ -418,14 +419,14 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private void readAndWriteOutputStream(final AsyncOutputStream destination, final GridFSDownloadStream downloadStream,
                                           final ByteBuffer buffer, final long amountRead, final SingleResultCallback<Long> callback) {
-        buffer.clear();
+        ((Buffer) buffer).clear();
         downloadStream.read(buffer, new SingleResultCallback<Integer>() {
             @Override
             public void onResult(final Integer readResult, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else if (readResult > 0) {
-                    buffer.flip();
+                    ((Buffer) buffer).flip();
                     destination.write(buffer, new SingleResultCallback<Integer>() {
                         @Override
                         public void onResult(final Integer writeResult, final Throwable t) {

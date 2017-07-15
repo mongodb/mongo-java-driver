@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import org.bson.ByteBuf;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -255,7 +256,7 @@ class CompositeByteBuf implements ByteBuf {
     public ByteBuffer asNIO() {
         if (components.size() == 1) {
             ByteBuffer byteBuffer = components.get(0).buffer.asNIO().duplicate();
-            byteBuffer.position(position).limit(limit);
+            ((Buffer) byteBuffer).position(position).limit(limit);
             return byteBuffer;
         } else {
            byte[] bytes = new byte[remaining()];

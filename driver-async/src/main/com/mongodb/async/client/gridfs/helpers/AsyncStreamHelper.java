@@ -23,6 +23,7 @@ import com.mongodb.async.client.gridfs.AsyncOutputStream;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -209,9 +210,9 @@ public final class AsyncStreamHelper {
         int transferAmount = Math.min(dstByteBuffer.remaining(), srcByteBuffer.remaining());
         if (transferAmount > 0) {
             ByteBuffer temp = srcByteBuffer.duplicate();
-            temp.limit(temp.position() + transferAmount);
+            ((Buffer) temp).limit(temp.position() + transferAmount);
             dstByteBuffer.put(temp);
-            srcByteBuffer.position(srcByteBuffer.position() + transferAmount);
+            ((Buffer) srcByteBuffer).position(srcByteBuffer.position() + transferAmount);
         }
         callback.onResult(transferAmount, null);
     }

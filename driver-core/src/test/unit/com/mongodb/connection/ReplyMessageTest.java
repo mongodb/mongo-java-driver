@@ -21,6 +21,7 @@ import org.bson.ByteBufNIO;
 import org.bson.Document;
 import org.junit.Test;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -42,7 +43,7 @@ public class ReplyMessageTest {
         headerByteBuffer.putLong(0);
         headerByteBuffer.putInt(0);
         headerByteBuffer.putInt(0);
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
         ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
@@ -63,7 +64,7 @@ public class ReplyMessageTest {
         headerByteBuffer.putLong(0);
         headerByteBuffer.putInt(0);
         headerByteBuffer.putInt(0);
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
         ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
         ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
