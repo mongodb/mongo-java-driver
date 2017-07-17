@@ -28,7 +28,7 @@ class CurrentOpOperationSpecification extends Specification {
         def op = new CurrentOpOperation().execute(getBinding())
 
         then:
-        op
+        !op.isEmpty()
         op.containsKey('inprog')
     }
 }

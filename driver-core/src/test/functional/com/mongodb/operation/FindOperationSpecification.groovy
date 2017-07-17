@@ -586,7 +586,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         BsonDocument result = execute(operation, async)
 
         then:
-        result
+        !result.isEmpty()
 
         where:
         [async, modifiers] << [

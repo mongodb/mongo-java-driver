@@ -449,9 +449,10 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         when:
         execute(operation, async)
         def indexCollation = new BsonDocumentWrapper<Document>(getIndex('a_1').get('collation'), new DocumentCodec())
+        indexCollation.remove('version')
 
         then:
-        defaultCollation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+        indexCollation == defaultCollation.asDocument()
 
         where:
         async << [true, false]

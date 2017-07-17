@@ -299,9 +299,10 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         when:
         execute(operation, async)
         def collectionCollation = getCollectionInfo(getCollectionName()).get('options').get('collation')
+        collectionCollation.remove('version')
 
         then:
-        defaultCollation.asDocument().each { assert collectionCollation.get(it.key) == it.value }
+        collectionCollation == defaultCollation.asDocument()
 
         where:
         async << [true, false]
