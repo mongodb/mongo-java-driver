@@ -30,7 +30,7 @@ public final class FloatCodecTest extends CodecTestCase {
 
     @Test
     public void shouldRoundTripNegativeFloatValues() {
-        roundTrip(new Document("a", new Float(-1)));
+        roundTrip(new Document("a", -1f));
     }
 
     @Test

@@ -37,6 +37,7 @@ import static com.mongodb.connection.ServerDescription.builder;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -116,15 +117,15 @@ public class ServerDescriptionTest {
                                                                                 "localhost:27018",
                                                                                 "localhost:27019",
                                                                                 "localhost:27020")))
-                                              .arbiters(new HashSet<String>(asList("localhost:27019")))
-                                              .passives(new HashSet<String>(asList("localhost:27020")))
+                                              .arbiters(new HashSet<String>(singletonList("localhost:27019")))
+                                              .passives(new HashSet<String>(singletonList("localhost:27020")))
                                               .ok(true)
                                               .state(CONNECTED)
                                               .version(new ServerVersion(asList(2, 4, 1)))
                                               .minWireVersion(1)
                                               .maxWireVersion(2)
                                               .electionId(new ObjectId("123412341234123412341234"))
-                                              .setVersion(new Integer(2))
+                                              .setVersion(2)
                                               .lastWriteDate(new Date(1234L))
                                               .lastUpdateTimeNanos(40000L)
                                               .exception(exception)
@@ -152,14 +153,14 @@ public class ServerDescriptionTest {
         assertEquals(new HashSet<String>(asList("localhost:27017", "localhost:27018", "localhost:27019", "localhost:27020")),
                      serverDescription.getHosts());
         assertEquals(new TagSet(new Tag("dc", "ny")), serverDescription.getTagSet());
-        assertEquals(new HashSet<String>(asList("localhost:27019")), serverDescription.getArbiters());
-        assertEquals(new HashSet<String>(asList("localhost:27020")), serverDescription.getPassives());
+        assertEquals(new HashSet<String>(singletonList("localhost:27019")), serverDescription.getArbiters());
+        assertEquals(new HashSet<String>(singletonList("localhost:27020")), serverDescription.getPassives());
         assertEquals("test", serverDescription.getSetName());
         assertEquals(new ServerVersion(asList(2, 4, 1)), serverDescription.getVersion());
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
         assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
-        assertEquals(new Integer(2), serverDescription.getSetVersion());
+        assertEquals(Integer.valueOf(2), serverDescription.getSetVersion());
         assertEquals(new Date(1234), serverDescription.getLastWriteDate());
         assertEquals(40000L, serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS));
         assertEquals(exception, serverDescription.getException());
@@ -200,13 +201,13 @@ public class ServerDescriptionTest {
         otherDescription = createBuilder().canonicalAddress("localhost:27018").build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().hosts(new HashSet<String>(asList("localhost:27018"))).build();
+        otherDescription = createBuilder().hosts(new HashSet<String>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().arbiters(new HashSet<String>(asList("localhost:27018"))).build();
+        otherDescription = createBuilder().arbiters(new HashSet<String>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().passives(new HashSet<String>(asList("localhost:27018"))).build();
+        otherDescription = createBuilder().passives(new HashSet<String>(singletonList("localhost:27018"))).build();
         assertNotEquals(builder.build(), otherDescription);
 
         otherDescription = createBuilder().ok(false).build();
@@ -227,7 +228,7 @@ public class ServerDescriptionTest {
         otherDescription = createBuilder().electionId(new ObjectId()).build();
         assertNotEquals(builder.build(), otherDescription);
 
-        otherDescription = createBuilder().setVersion(new Integer(3)).build();
+        otherDescription = createBuilder().setVersion(3).build();
         assertNotEquals(builder.build(), otherDescription);
 
         // test exception state changes
@@ -253,15 +254,15 @@ public class ServerDescriptionTest {
     private ServerDescription.Builder createBuilder() {
         return builder().address(new ServerAddress())
                        .type(ServerType.SHARD_ROUTER)
-                       .tagSet(new TagSet(asList(new Tag("dc", "ny"))))
+                       .tagSet(new TagSet(singletonList(new Tag("dc", "ny"))))
                        .setName("test")
                        .maxDocumentSize(100)
                        .roundTripTime(50000, TimeUnit.NANOSECONDS)
                        .primary("localhost:27017")
                        .canonicalAddress("localhost:27017")
                        .hosts(new HashSet<String>(asList("localhost:27017", "localhost:27018")))
-                       .passives(new HashSet<String>(asList("localhost:27019")))
-                       .arbiters(new HashSet<String>(asList("localhost:27020")))
+                       .passives(new HashSet<String>(singletonList("localhost:27019")))
+                       .arbiters(new HashSet<String>(singletonList("localhost:27020")))
                        .ok(true)
                        .state(CONNECTED)
                        .version(new ServerVersion(asList(2, 4, 1)))
@@ -269,7 +270,7 @@ public class ServerDescriptionTest {
                        .lastWriteDate(new Date())
                        .maxWireVersion(2)
                        .electionId(new ObjectId("abcdabcdabcdabcdabcdabcd"))
-                       .setVersion(new Integer(2))
+                       .setVersion(2)
                        .lastUpdateTimeNanos(1)
                        .lastWriteDate(new Date(42))
                        .roundTripTime(56, TimeUnit.MILLISECONDS);
@@ -375,7 +376,7 @@ public class ServerDescriptionTest {
                                                                .ok(false)
                                                                .state(CONNECTED)
                                                                .build();
-        assertFalse(serverDescription.hasTags(new TagSet(asList(new Tag("dc", "ny")))));
+        assertFalse(serverDescription.hasTags(new TagSet(singletonList(new Tag("dc", "ny")))));
 
         serverDescription = builder()
                                              .address(new ServerAddress())
@@ -383,7 +384,7 @@ public class ServerDescriptionTest {
                                              .ok(true)
                                              .state(CONNECTED)
                                              .build();
-        assertTrue(serverDescription.hasTags(new TagSet(asList(new Tag("dc", "ny")))));
+        assertTrue(serverDescription.hasTags(new TagSet(singletonList(new Tag("dc", "ny")))));
 
         serverDescription = builder()
                                              .address(new ServerAddress())
@@ -391,7 +392,7 @@ public class ServerDescriptionTest {
                                              .ok(true)
                                              .state(CONNECTED)
                                              .build();
-        assertTrue(serverDescription.hasTags(new TagSet(asList(new Tag("dc", "ny")))));
+        assertTrue(serverDescription.hasTags(new TagSet(singletonList(new Tag("dc", "ny")))));
 
         serverDescription = builder()
                                              .address(new ServerAddress())
@@ -405,28 +406,28 @@ public class ServerDescriptionTest {
                                              .address(new ServerAddress())
                                              .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
-                                             .tagSet(new TagSet(asList(new Tag("dc", "ca"))))
+                                             .tagSet(new TagSet(singletonList(new Tag("dc", "ca"))))
                                              .state(CONNECTED)
                                              .build();
-        assertFalse(serverDescription.hasTags(new TagSet(asList(new Tag("dc", "ny")))));
+        assertFalse(serverDescription.hasTags(new TagSet(singletonList(new Tag("dc", "ny")))));
 
         serverDescription = builder()
                                              .address(new ServerAddress())
                                              .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
-                                             .tagSet(new TagSet(asList(new Tag("rack", "1"))))
+                                             .tagSet(new TagSet(singletonList(new Tag("rack", "1"))))
                                              .state(CONNECTED)
                                              .build();
-        assertFalse(serverDescription.hasTags(new TagSet(asList(new Tag("rack", "2")))));
+        assertFalse(serverDescription.hasTags(new TagSet(singletonList(new Tag("rack", "2")))));
 
         serverDescription = builder()
                                              .address(new ServerAddress())
                                              .type(REPLICA_SET_PRIMARY)
                                              .ok(true)
-                                             .tagSet(new TagSet(asList(new Tag("rack", "1"))))
+                                             .tagSet(new TagSet(singletonList(new Tag("rack", "1"))))
                                              .state(CONNECTED)
                                              .build();
-        assertTrue(serverDescription.hasTags(new TagSet(asList(new Tag("rack", "1")))));
+        assertTrue(serverDescription.hasTags(new TagSet(singletonList(new Tag("rack", "1")))));
     }
 
     @Test

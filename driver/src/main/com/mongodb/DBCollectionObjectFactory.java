@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,11 +49,15 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     public DBObject getInstance(final List<String> path) {
         Class<? extends DBObject> aClass = getClassForPath(path);
         try {
-            return aClass.newInstance();
+            return aClass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException e) {
             throw createInternalException(aClass, e);
         } catch (IllegalAccessException e) {
             throw createInternalException(aClass, e);
+        } catch (NoSuchMethodException e) {
+            throw createInternalException(aClass, e);
+        } catch (InvocationTargetException e) {
+            throw createInternalException(aClass, e.getTargetException());
         }
     }
 
@@ -89,7 +94,7 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
         return aClass != null && ReflectionDBObject.class.isAssignableFrom(aClass);
     }
 
-    private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Exception e) {
+    private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Throwable e) {
         throw new MongoInternalException("Can't instantiate class " + aClass, e);
     }
 }
